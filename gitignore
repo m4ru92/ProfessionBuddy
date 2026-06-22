@@ -1,0 +1,14 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artifacts -- attach zips to GitHub Releases, don't commit them
+*.zip
+
+# Backups / editor temp
+*.bak
+*.bak-*
+*.v*bak
+*.swp
+*~
