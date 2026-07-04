@@ -14,19 +14,23 @@ local recipes = {
     -- CONSUMABLE
     -- ================================================================
     ["Adamantite Rod"] = {
+        spellID = 32656,
         itemID = 25844,
         skillReq = 350,
-        source = "vendor",
-        sourceDetail = "Aaron Hollman, Shattrath City",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Aaron Hollman" },
+        },
         category = "Consumable",
         skillRange = { 350, 350, 355, 360 },
         reagents = { { itemID = 23446, count = 10, name = "Adamantite Bar" } },
     },
     ["Adamantite Sharpening Stone"] = {
+        spellID = 29656,
         itemID = 23529,
         skillReq = 350,
-        source = "vendor",
-        sourceDetail = "Fedryen Swiftspear, Zangarmarsh",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Friendly" },
+        },
         category = "Consumable",
         skillRange = { 350, 350, 355, 360 },
         reagents = {
@@ -35,9 +39,12 @@ local recipes = {
         },
     },
     ["Adamantite Weapon Chain"] = {
+        spellID = 42688,
         itemID = 33185,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 335, 345, 350, 355 },
         reagents = {
@@ -46,10 +53,12 @@ local recipes = {
         },
     },
     ["Adamantite Weightstone"] = {
+        spellID = 34608,
         itemID = 28421,
         skillReq = 350,
-        source = "vendor",
-        sourceDetail = "Fedryen Swiftspear, Zangarmarsh",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Friendly" },
+        },
         category = "Consumable",
         skillRange = { 350, 350, 355, 360 },
         reagents = {
@@ -58,9 +67,12 @@ local recipes = {
         },
     },
     ["Arcanite Rod"] = {
+        spellID = 20201,
         itemID = 16206,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 275, 275, 280, 285 },
         reagents = {
@@ -69,9 +81,12 @@ local recipes = {
         },
     },
     ["Arcanite Skeleton Key"] = {
+        spellID = 19669,
         itemID = 15872,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 275, 275, 280, 285 },
         reagents = {
@@ -80,25 +95,34 @@ local recipes = {
         },
     },
     ["Coarse Grinding Stone"] = {
+        spellID = 3326,
         itemID = 3478,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 75, 75, 87, 100 },
         reagents = { { itemID = 2836, count = 2, name = "Coarse Stone" } },
     },
     ["Coarse Sharpening Stone"] = {
+        spellID = 2665,
         itemID = 2863,
         skillReq = 65,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 65, 65, 72, 80 },
         reagents = { { itemID = 2836, count = 1, name = "Coarse Stone" } },
     },
     ["Coarse Weightstone"] = {
+        spellID = 3116,
         itemID = 3240,
         skillReq = 65,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 65, 65, 72, 80 },
         reagents = {
@@ -107,25 +131,34 @@ local recipes = {
         },
     },
     ["Dense Grinding Stone"] = {
+        spellID = 16639,
         itemID = 12644,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 250, 255, 257, 260 },
         reagents = { { itemID = 12365, count = 4, name = "Dense Stone" } },
     },
     ["Dense Sharpening Stone"] = {
+        spellID = 16641,
         itemID = 12404,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 250, 255, 257, 260 },
         reagents = { { itemID = 12365, count = 1, name = "Dense Stone" } },
     },
     ["Dense Weightstone"] = {
+        spellID = 16640,
         itemID = 12643,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 250, 255, 257, 260 },
         reagents = {
@@ -134,9 +167,12 @@ local recipes = {
         },
     },
     ["Elemental Sharpening Stone"] = {
+        spellID = 22757,
         itemID = 18262,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 300, 300, 310, 320 },
         reagents = {
@@ -145,25 +181,34 @@ local recipes = {
         },
     },
     ["Eternium Rod"] = {
+        spellID = 32657,
         itemID = 25845,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Mari Stonehand, Rohok" },
+        },
         category = "Consumable",
         skillRange = { 375, 375, 380, 385 },
         reagents = { { itemID = 23447, count = 4, name = "Eternium Bar" } },
     },
     ["Fel Iron Rod"] = {
+        spellID = 32655,
         itemID = 25843,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 300, 300, 305, 310 },
         reagents = { { itemID = 23445, count = 6, name = "Fel Iron Bar" } },
     },
     ["Fel Sharpening Stone"] = {
+        spellID = 29654,
         itemID = 23528,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 300, 300, 305, 310 },
         reagents = {
@@ -172,9 +217,12 @@ local recipes = {
         },
     },
     ["Fel Weightstone"] = {
+        spellID = 34607,
         itemID = 28420,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 300, 300, 305, 310 },
         reagents = {
@@ -183,10 +231,13 @@ local recipes = {
         },
     },
     ["Felsteel Shield Spike"] = {
+        spellID = 29657,
         itemID = 23530,
         skillReq = 360,
-        source = "vendor",
-        sourceDetail = "Logistics Officer Ulrike (A) / QM Urgronn (H), Hellfire Peninsula",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Revered" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Revered" },
+        },
         category = "Consumable",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -196,9 +247,12 @@ local recipes = {
         },
     },
     ["Golden Rod"] = {
+        spellID = 14379,
         itemID = 11128,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 150, 155, 157, 160 },
         reagents = {
@@ -207,9 +261,12 @@ local recipes = {
         },
     },
     ["Golden Skeleton Key"] = {
+        spellID = 19667,
         itemID = 15870,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 150, 150, 160, 170 },
         reagents = {
@@ -218,41 +275,56 @@ local recipes = {
         },
     },
     ["Greater Rune of Warding"] = {
+        spellID = 32285,
         itemID = 25521,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Friendly" },
+        },
         category = "Consumable",
         skillRange = { 350, 350, 355, 360 },
         reagents = { { itemID = 23449, count = 1, name = "Khorium Bar" } },
     },
     ["Greater Ward of Shielding"] = {
+        spellID = 29729,
         itemID = 23576,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 375, 375, 375, 375 },
         reagents = { { itemID = 23447, count = 1, name = "Eternium Bar" } },
     },
     ["Heavy Grinding Stone"] = {
+        spellID = 3337,
         itemID = 3486,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 125, 125, 137, 150 },
         reagents = { { itemID = 2838, count = 3, name = "Heavy Stone" } },
     },
     ["Heavy Sharpening Stone"] = {
+        spellID = 2674,
         itemID = 2871,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 125, 125, 132, 140 },
         reagents = { { itemID = 2838, count = 1, name = "Heavy Stone" } },
     },
     ["Heavy Weightstone"] = {
+        spellID = 3117,
         itemID = 3241,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 125, 125, 132, 140 },
         reagents = {
@@ -261,9 +333,12 @@ local recipes = {
         },
     },
     ["Iron Counterweight"] = {
+        spellID = 7222,
         itemID = 6043,
         skillReq = 165,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 165, 190, 202, 215 },
         reagents = {
@@ -273,9 +348,12 @@ local recipes = {
         },
     },
     ["Iron Shield Spike"] = {
+        spellID = 7221,
         itemID = 6042,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 150, 180, 195, 210 },
         reagents = {
@@ -284,26 +362,34 @@ local recipes = {
         },
     },
     ["Lesser Rune of Warding"] = {
+        spellID = 32284,
         itemID = 23559,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 325, 325, 330, 335 },
         reagents = { { itemID = 23446, count = 1, name = "Adamantite Bar" } },
     },
     ["Lesser Ward of Shielding"] = {
+        spellID = 29728,
         itemID = 23575,
         skillReq = 340,
-        source = "vendor",
-        sourceDetail = "Rohok (H, Thrallmar, Hellfire Peninsula) / Mari Stonehand (A, Wildhammer Stronghold, Shadowmoon Valley)",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Mari Stonehand, Rohok" },
+        },
         category = "Consumable",
         skillRange = { 340, 340, 345, 350 },
         reagents = { { itemID = 23446, count = 1, name = "Adamantite Bar" } },
     },
     ["Mithril Shield Spike"] = {
+        spellID = 9939,
         itemID = 7967,
         skillReq = 215,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 215, 235, 245, 255 },
         reagents = {
@@ -313,9 +399,12 @@ local recipes = {
         },
     },
     ["Mithril Spurs"] = {
+        spellID = 9964,
         itemID = 7969,
         skillReq = 235,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 235, 255, 265, 275 },
         reagents = {
@@ -324,25 +413,34 @@ local recipes = {
         },
     },
     ["Rough Grinding Stone"] = {
+        spellID = 3320,
         itemID = 3470,
         skillReq = 25,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 25, 45, 65, 85 },
         reagents = { { itemID = 2835, count = 2, name = "Rough Stone" } },
     },
     ["Rough Sharpening Stone"] = {
+        spellID = 2660,
         itemID = 2862,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 1, 15, 35, 55 },
         reagents = { { itemID = 2835, count = 1, name = "Rough Stone" } },
     },
     ["Rough Weightstone"] = {
+        spellID = 3115,
         itemID = 3239,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 1, 15, 35, 55 },
         reagents = {
@@ -351,9 +449,12 @@ local recipes = {
         },
     },
     ["Silver Rod"] = {
+        spellID = 7818,
         itemID = 6338,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 100, 105, 107, 110 },
         reagents = {
@@ -362,9 +463,12 @@ local recipes = {
         },
     },
     ["Silver Skeleton Key"] = {
+        spellID = 19666,
         itemID = 15869,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 100, 100, 110, 120 },
         reagents = {
@@ -373,25 +477,34 @@ local recipes = {
         },
     },
     ["Solid Grinding Stone"] = {
+        spellID = 9920,
         itemID = 7966,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 200, 200, 205, 210 },
         reagents = { { itemID = 7912, count = 4, name = "Solid Stone" } },
     },
     ["Solid Sharpening Stone"] = {
+        spellID = 9918,
         itemID = 7964,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 200, 200, 205, 210 },
         reagents = { { itemID = 7912, count = 1, name = "Solid Stone" } },
     },
     ["Solid Weightstone"] = {
+        spellID = 9921,
         itemID = 7965,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 200, 200, 205, 210 },
         reagents = {
@@ -400,9 +513,12 @@ local recipes = {
         },
     },
     ["Steel Weapon Chain"] = {
+        spellID = 7224,
         itemID = 6041,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 190, 215, 227, 240 },
         reagents = {
@@ -412,9 +528,12 @@ local recipes = {
         },
     },
     ["Thorium Shield Spike"] = {
+        spellID = 16651,
         itemID = 12645,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 275, 295, 305, 315 },
         reagents = {
@@ -424,9 +543,12 @@ local recipes = {
         },
     },
     ["Truesilver Rod"] = {
+        spellID = 14380,
         itemID = 11144,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 200, 205, 207, 210 },
         reagents = {
@@ -435,9 +557,12 @@ local recipes = {
         },
     },
     ["Truesilver Skeleton Key"] = {
+        spellID = 19668,
         itemID = 15871,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Consumable",
         skillRange = { 200, 200, 210, 220 },
         reagents = {
@@ -452,9 +577,12 @@ local recipes = {
     -- Chest
     -- --------------------------------
     ["Barbaric Iron Breastplate"] = {
+        spellID = 9813,
         itemID = 7914,
         skillReq = 160,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Horde", detail = "Quest: Barbaric Battlements" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 160, 185, 197, 210 },
@@ -464,9 +592,12 @@ local recipes = {
         },
     },
     ["Bloodsoul Breastplate"] = {
+        spellID = 24136,
         itemID = 19690,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Honored" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -478,9 +609,12 @@ local recipes = {
         },
     },
     ["Copper Chain Vest"] = {
+        spellID = 3321,
         itemID = 3471,
         skillReq = 35,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 35, 75, 95, 115 },
@@ -490,9 +624,12 @@ local recipes = {
         },
     },
     ["Dark Iron Mail"] = {
+        spellID = 15293,
         itemID = 11606,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 270, 290, 300, 310 },
@@ -502,9 +639,12 @@ local recipes = {
         },
     },
     ["Earthpeace Breastplate"] = {
+        spellID = 29649,
         itemID = 23527,
         skillReq = 370,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 370, 380, 390, 400 },
@@ -515,9 +655,12 @@ local recipes = {
         },
     },
     ["Embrace of the Twisting Nether"] = {
+        spellID = 36256,
         itemID = 23565,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -527,18 +670,24 @@ local recipes = {
         },
     },
     ["Fel Iron Chain Tunic"] = {
+        spellID = 29556,
         itemID = 23490,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 320, 330, 340, 350 },
         reagents = { { itemID = 23445, count = 9, name = "Fel Iron Bar" } },
     },
     ["Golden Scale Cuirass"] = {
+        spellID = 3511,
         itemID = 3845,
         skillReq = 195,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 195, 220, 232, 245 },
@@ -549,9 +698,12 @@ local recipes = {
         },
     },
     ["Green Iron Hauberk"] = {
+        spellID = 3508,
         itemID = 3844,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 180, 205, 217, 230 },
@@ -564,9 +716,12 @@ local recipes = {
         },
     },
     ["Invulnerable Mail"] = {
+        spellID = 16746,
         itemID = 12641,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -578,9 +733,12 @@ local recipes = {
         },
     },
     ["Ironforge Breastplate"] = {
+        spellID = 8367,
         itemID = 6731,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Alliance", detail = "Quest: Gearing Redridge" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 100, 140, 160, 180 },
@@ -591,9 +749,12 @@ local recipes = {
         },
     },
     ["Nether Chain Shirt"] = {
+        spellID = 34529,
         itemID = 23563,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 350, 360, 370, 380 },
@@ -606,9 +767,12 @@ local recipes = {
         },
     },
     ["Obsidian Mail Tunic"] = {
+        spellID = 27590,
         itemID = 22191,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Revered" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -621,9 +785,12 @@ local recipes = {
         },
     },
     ["Radiant Breastplate"] = {
+        spellID = 16648,
         itemID = 12415,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 270, 290, 300, 310 },
@@ -634,27 +801,36 @@ local recipes = {
         },
     },
     ["Rough Bronze Cuirass"] = {
+        spellID = 2670,
         itemID = 2866,
         skillReq = 105,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 105, 145, 160, 175 },
         reagents = { { itemID = 2841, count = 7, name = "Bronze Bar" } },
     },
     ["Rough Copper Vest"] = {
+        spellID = 12260,
         itemID = 10421,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 1, 15, 35, 55 },
         reagents = { { itemID = 2840, count = 4, name = "Copper Bar" } },
     },
     ["Runed Copper Breastplate"] = {
+        spellID = 2667,
         itemID = 2864,
         skillReq = 80,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 80, 120, 140, 160 },
@@ -665,9 +841,12 @@ local recipes = {
         },
     },
     ["Shining Silver Breastplate"] = {
+        spellID = 2675,
         itemID = 2870,
         skillReq = 145,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 145, 175, 190, 205 },
@@ -680,9 +859,12 @@ local recipes = {
         },
     },
     ["Silvered Bronze Breastplate"] = {
+        spellID = 2673,
         itemID = 2869,
         skillReq = 130,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 130, 160, 175, 190 },
@@ -693,9 +875,12 @@ local recipes = {
         },
     },
     ["Steel Breastplate"] = {
+        spellID = 9916,
         itemID = 7963,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 200, 225, 237, 250 },
@@ -705,9 +890,12 @@ local recipes = {
         },
     },
     ["Stormforged Hauberk"] = {
+        spellID = 36130,
         itemID = 30076,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 330, 340, 350, 360 },
@@ -718,9 +906,12 @@ local recipes = {
         },
     },
     ["Twisting Nether Chain Shirt"] = {
+        spellID = 34530,
         itemID = 23564,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -731,9 +922,12 @@ local recipes = {
         },
     },
     ["Wildthorn Mail"] = {
+        spellID = 16650,
         itemID = 12624,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 270, 290, 300, 310 },
@@ -748,9 +942,12 @@ local recipes = {
     -- Feet
     -- --------------------------------
     ["Barbaric Iron Boots"] = {
+        spellID = 9818,
         itemID = 7916,
         skillReq = 180,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Horde", detail = "Quest: Trampled Under Foot" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 180, 205, 217, 230 },
@@ -761,18 +958,24 @@ local recipes = {
         },
     },
     ["Copper Chain Boots"] = {
+        spellID = 3319,
         itemID = 3469,
         skillReq = 20,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 20, 60, 80, 100 },
         reagents = { { itemID = 2840, count = 8, name = "Copper Bar" } },
     },
     ["Golden Scale Boots"] = {
+        spellID = 3515,
         itemID = 3847,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 200, 225, 237, 250 },
@@ -783,9 +986,12 @@ local recipes = {
         },
     },
     ["Green Iron Boots"] = {
+        spellID = 3334,
         itemID = 3484,
         skillReq = 145,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 145, 175, 190, 205 },
@@ -796,9 +1002,12 @@ local recipes = {
         },
     },
     ["Heavy Timbermaw Boots"] = {
+        spellID = 23629,
         itemID = 19048,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Honored" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 300, 320, 330, 340 },
@@ -809,9 +1018,12 @@ local recipes = {
         },
     },
     ["Polished Steel Boots"] = {
+        spellID = 3513,
         itemID = 3846,
         skillReq = 185,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 185, 210, 222, 235 },
@@ -823,9 +1035,12 @@ local recipes = {
         },
     },
     ["Radiant Boots"] = {
+        spellID = 16656,
         itemID = 12419,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 290, 310, 320, 330 },
@@ -835,9 +1050,12 @@ local recipes = {
         },
     },
     ["Rough Bronze Boots"] = {
+        spellID = 7817,
         itemID = 6350,
         skillReq = 95,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 95, 125, 140, 155 },
@@ -847,9 +1065,12 @@ local recipes = {
         },
     },
     ["Silvered Bronze Boots"] = {
+        spellID = 3331,
         itemID = 3482,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 130, 160, 175, 190 },
@@ -862,9 +1083,12 @@ local recipes = {
     -- Hands
     -- --------------------------------
     ["Barbaric Iron Gloves"] = {
+        spellID = 9820,
         itemID = 7917,
         skillReq = 185,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Horde", detail = "Quest: Joys of Omosh" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 185, 210, 222, 235 },
@@ -875,9 +1099,12 @@ local recipes = {
         },
     },
     ["Black Grasp of the Destroyer"] = {
+        spellID = 27589,
         itemID = 22194,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -889,9 +1116,12 @@ local recipes = {
         },
     },
     ["Bloodsoul Gauntlets"] = {
+        spellID = 24138,
         itemID = 19692,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Neutral" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -903,18 +1133,24 @@ local recipes = {
         },
     },
     ["Fel Iron Chain Gloves"] = {
+        spellID = 29552,
         itemID = 23491,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 310, 320, 330, 340 },
         reagents = { { itemID = 23445, count = 5, name = "Fel Iron Bar" } },
     },
     ["Felfury Gauntlets"] = {
+        spellID = 29658,
         itemID = 23531,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 385, 395 },
@@ -925,9 +1161,12 @@ local recipes = {
         },
     },
     ["Gemmed Copper Gauntlets"] = {
+        spellID = 3325,
         itemID = 3474,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 60, 100, 120, 140 },
@@ -938,9 +1177,12 @@ local recipes = {
         },
     },
     ["Golden Scale Gauntlets"] = {
+        spellID = 11643,
         itemID = 9366,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Alliance", detail = "Quest: The Origins of Smithing" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 205, 225, 235, 245 },
@@ -951,9 +1193,12 @@ local recipes = {
         },
     },
     ["Green Iron Gauntlets"] = {
+        spellID = 3336,
         itemID = 3485,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 150, 180, 195, 210 },
@@ -965,9 +1210,12 @@ local recipes = {
         },
     },
     ["Radiant Gloves"] = {
+        spellID = 16654,
         itemID = 12418,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 285, 305, 315, 325 },
@@ -977,9 +1225,12 @@ local recipes = {
         },
     },
     ["Runed Copper Gauntlets"] = {
+        spellID = 3323,
         itemID = 3472,
         skillReq = 40,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 40, 80, 100, 120 },
@@ -989,9 +1240,12 @@ local recipes = {
         },
     },
     ["Silvered Bronze Gauntlets"] = {
+        spellID = 3333,
         itemID = 3483,
         skillReq = 135,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 135, 165, 180, 195 },
@@ -1002,9 +1256,13 @@ local recipes = {
         },
     },
     ["Storm Gauntlets"] = {
+        spellID = 16661,
         itemID = 12632,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Magnus Frostwake" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 295, 315, 325, 335 },
@@ -1016,9 +1274,12 @@ local recipes = {
         },
     },
     ["Swiftsteel Gloves"] = {
+        spellID = 29648,
         itemID = 23526,
         skillReq = 370,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 370, 380, 390, 400 },
@@ -1032,9 +1293,12 @@ local recipes = {
     -- Head
     -- --------------------------------
     ["Barbaric Iron Helm"] = {
+        spellID = 9814,
         itemID = 7915,
         skillReq = 175,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Horde", detail = "Quest: Horns of Frenzy" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 175, 200, 212, 225 },
@@ -1045,18 +1309,24 @@ local recipes = {
         },
     },
     ["Fel Iron Chain Coif"] = {
+        spellID = 29551,
         itemID = 23493,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 300, 310, 320, 330 },
         reagents = { { itemID = 23445, count = 4, name = "Fel Iron Bar" } },
     },
     ["Golden Scale Coif"] = {
+        spellID = 3503,
         itemID = 3837,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Krinkle Goodsteel" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 190, 215, 227, 240 },
@@ -1067,9 +1337,12 @@ local recipes = {
         },
     },
     ["Green Iron Helm"] = {
+        spellID = 3502,
         itemID = 3836,
         skillReq = 170,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 170, 195, 207, 220 },
@@ -1080,9 +1353,12 @@ local recipes = {
         },
     },
     ["Helm of the Great Chief"] = {
+        spellID = 16728,
         itemID = 12636,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 300, 320, 330, 340 },
@@ -1095,9 +1371,12 @@ local recipes = {
         },
     },
     ["Mithril Coif"] = {
+        spellID = 9961,
         itemID = 7931,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 230, 250, 260, 270 },
@@ -1107,9 +1386,12 @@ local recipes = {
         },
     },
     ["Radiant Circlet"] = {
+        spellID = 16659,
         itemID = 12417,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 295, 315, 325, 335 },
@@ -1119,9 +1401,12 @@ local recipes = {
         },
     },
     ["Storm Helm"] = {
+        spellID = 29663,
         itemID = 23534,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
@@ -1135,18 +1420,24 @@ local recipes = {
     -- Legs
     -- --------------------------------
     ["Copper Chain Pants"] = {
+        spellID = 2662,
         itemID = 2852,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 1, 50, 70, 90 },
         reagents = { { itemID = 2840, count = 4, name = "Copper Bar" } },
     },
     ["Golden Scale Leggings"] = {
+        spellID = 3507,
         itemID = 3843,
         skillReq = 170,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 170, 195, 207, 220 },
@@ -1157,9 +1448,12 @@ local recipes = {
         },
     },
     ["Green Iron Leggings"] = {
+        spellID = 3506,
         itemID = 3842,
         skillReq = 155,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 155, 180, 192, 205 },
@@ -1170,18 +1464,24 @@ local recipes = {
         },
     },
     ["Mithril Scale Pants"] = {
+        spellID = 9931,
         itemID = 7920,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 210, 230, 240, 250 },
         reagents = { { itemID = 3860, count = 12, name = "Mithril Bar" } },
     },
     ["Orcish War Leggings"] = {
+        spellID = 9957,
         itemID = 7929,
         skillReq = 230,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Horde", detail = "quest: The Old Ways (Aturk, Orgrimmar) - Horde only" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 230, 250, 260, 270 },
@@ -1191,9 +1491,12 @@ local recipes = {
         },
     },
     ["Radiant Leggings"] = {
+        spellID = 16725,
         itemID = 12420,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -1203,18 +1506,24 @@ local recipes = {
         },
     },
     ["Rough Bronze Leggings"] = {
+        spellID = 2668,
         itemID = 2865,
         skillReq = 105,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 105, 145, 160, 175 },
         reagents = { { itemID = 2841, count = 6, name = "Bronze Bar" } },
     },
     ["Runed Copper Pants"] = {
+        spellID = 3324,
         itemID = 3473,
         skillReq = 45,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 45, 85, 105, 125 },
@@ -1225,9 +1534,12 @@ local recipes = {
         },
     },
     ["Silvered Bronze Leggings"] = {
+        spellID = 12259,
         itemID = 10423,
         skillReq = 155,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 155, 180, 192, 205 },
@@ -1238,9 +1550,12 @@ local recipes = {
         },
     },
     ["Windforged Leggings"] = {
+        spellID = 36124,
         itemID = 30070,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 260, 280, 290, 300 },
@@ -1252,9 +1567,12 @@ local recipes = {
     -- Shoulder
     -- --------------------------------
     ["Barbaric Iron Shoulders"] = {
+        spellID = 9811,
         itemID = 7913,
         skillReq = 160,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Horde", detail = "Quest: On Iron Pauldrons" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 160, 185, 197, 210 },
@@ -1265,9 +1583,12 @@ local recipes = {
         },
     },
     ["Bloodsoul Shoulders"] = {
+        spellID = 24137,
         itemID = 19691,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -1279,9 +1600,12 @@ local recipes = {
         },
     },
     ["Fiery Chain Shoulders"] = {
+        spellID = 20873,
         itemID = 16988,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -1292,9 +1616,12 @@ local recipes = {
         },
     },
     ["Golden Scale Shoulders"] = {
+        spellID = 3505,
         itemID = 3841,
         skillReq = 175,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 175, 200, 212, 225 },
@@ -1305,9 +1632,12 @@ local recipes = {
         },
     },
     ["Green Iron Shoulders"] = {
+        spellID = 3504,
         itemID = 3840,
         skillReq = 160,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 160, 185, 197, 210 },
@@ -1318,9 +1648,12 @@ local recipes = {
         },
     },
     ["Mithril Scale Shoulders"] = {
+        spellID = 9966,
         itemID = 7932,
         skillReq = 235,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 235, 255, 265, 275 },
@@ -1330,9 +1663,12 @@ local recipes = {
         },
     },
     ["Rough Bronze Shoulders"] = {
+        spellID = 3328,
         itemID = 3480,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 110, 140, 155, 170 },
@@ -1342,9 +1678,12 @@ local recipes = {
         },
     },
     ["Silvered Bronze Shoulders"] = {
+        spellID = 3330,
         itemID = 3481,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 125, 155, 170, 185 },
@@ -1357,18 +1696,24 @@ local recipes = {
     -- Waist
     -- --------------------------------
     ["Copper Chain Belt"] = {
+        spellID = 2661,
         itemID = 2851,
         skillReq = 35,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 35, 75, 95, 115 },
         reagents = { { itemID = 2840, count = 6, name = "Copper Bar" } },
     },
     ["Fiery Chain Girdle"] = {
+        spellID = 20872,
         itemID = 16989,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 295, 315, 325, 335 },
@@ -1379,9 +1724,12 @@ local recipes = {
         },
     },
     ["Heavy Timbermaw Belt"] = {
+        spellID = 23628,
         itemID = 19043,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 290, 310, 320, 330 },
@@ -1392,9 +1740,12 @@ local recipes = {
         },
     },
     ["Light Obsidian Belt"] = {
+        spellID = 27588,
         itemID = 22195,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 300, 320, 330, 340 },
@@ -1404,9 +1755,12 @@ local recipes = {
         },
     },
     ["Radiant Belt"] = {
+        spellID = 16645,
         itemID = 12416,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 260, 280, 290, 300 },
@@ -1416,9 +1770,12 @@ local recipes = {
         },
     },
     ["Runed Copper Belt"] = {
+        spellID = 2666,
         itemID = 2857,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 70, 110, 130, 150 },
@@ -1427,27 +1784,36 @@ local recipes = {
     -- Wrist
     -- --------------------------------
     ["Copper Bracers"] = {
+        spellID = 2663,
         itemID = 2853,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 1, 20, 40, 60 },
         reagents = { { itemID = 2840, count = 2, name = "Copper Bar" } },
     },
     ["Fel Iron Chain Bracers"] = {
+        spellID = 29553,
         itemID = 23494,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 315, 325, 335, 345 },
         reagents = { { itemID = 23445, count = 6, name = "Fel Iron Bar" } },
     },
     ["Golden Scale Bracers"] = {
+        spellID = 7223,
         itemID = 6040,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 185, 210, 222, 235 },
@@ -1457,9 +1823,12 @@ local recipes = {
         },
     },
     ["Green Iron Bracers"] = {
+        spellID = 3501,
         itemID = 3835,
         skillReq = 165,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 165, 190, 202, 215 },
@@ -1469,18 +1838,24 @@ local recipes = {
         },
     },
     ["Mithril Scale Bracers"] = {
+        spellID = 9937,
         itemID = 7924,
         skillReq = 215,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gharash, Harggan" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 215, 235, 245, 255 },
         reagents = { { itemID = 3860, count = 8, name = "Mithril Bar" } },
     },
     ["Patterned Bronze Bracers"] = {
+        spellID = 2672,
         itemID = 2868,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 120, 150, 165, 180 },
@@ -1490,9 +1865,12 @@ local recipes = {
         },
     },
     ["Runed Copper Bracers"] = {
+        spellID = 2664,
         itemID = 2854,
         skillReq = 90,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 90, 115, 127, 140 },
@@ -1508,10 +1886,12 @@ local recipes = {
     -- Chest
     -- --------------------------------
     ["Adamantite Breastplate"] = {
+        spellID = 29606,
         itemID = 23507,
         skillReq = 340,
-        source = "vendor",
-        sourceDetail = "Loolruna (A, Zangarmarsh) / Krek Cragcrush (H, Shadowmoon Valley)",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Krek Cragcrush, Loolruna" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 340, 350, 360, 370 },
@@ -1522,9 +1902,12 @@ local recipes = {
         },
     },
     ["Breastplate of Kings"] = {
+        spellID = 34533,
         itemID = 28483,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 350, 360, 370, 380 },
@@ -1536,9 +1919,12 @@ local recipes = {
         },
     },
     ["Bulwark of Kings"] = {
+        spellID = 34534,
         itemID = 28484,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -1549,9 +1935,12 @@ local recipes = {
         },
     },
     ["Bulwark of the Ancient Kings"] = {
+        spellID = 36257,
         itemID = 28485,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -1561,9 +1950,12 @@ local recipes = {
         },
     },
     ["Dark Iron Plate"] = {
+        spellID = 15296,
         itemID = 11604,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 285, 305, 315, 325 },
@@ -1573,9 +1965,12 @@ local recipes = {
         },
     },
     ["Darkrune Breastplate"] = {
+        spellID = 24914,
         itemID = 20550,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -1586,9 +1981,12 @@ local recipes = {
         },
     },
     ["Darksoul Breastplate"] = {
+        spellID = 24139,
         itemID = 19693,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -1599,9 +1997,12 @@ local recipes = {
         },
     },
     ["Demon Forged Breastplate"] = {
+        spellID = 16667,
         itemID = 12628,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: The Demon Forge" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 285, 305, 315, 325 },
@@ -1613,10 +2014,12 @@ local recipes = {
         },
     },
     ["Enchanted Adamantite Breastplate"] = {
+        spellID = 29610,
         itemID = 23509,
         skillReq = 360,
-        source = "vendor",
-        sourceDetail = "QM Enuril, Shattrath City",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 360, 370, 380, 390 },
@@ -1627,9 +2030,12 @@ local recipes = {
         },
     },
     ["Enchanted Thorium Breastplate"] = {
+        spellID = 16745,
         itemID = 12618,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Enchanted Thorium Platemail: Volume I" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -1643,18 +2049,24 @@ local recipes = {
         },
     },
     ["Fel Iron Breastplate"] = {
+        spellID = 29550,
         itemID = 23489,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 325, 335, 345, 355 },
         reagents = { { itemID = 23445, count = 10, name = "Fel Iron Bar" } },
     },
     ["Flamebane Breastplate"] = {
+        spellID = 29617,
         itemID = 23513,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 385, 395 },
@@ -1665,9 +2077,12 @@ local recipes = {
         },
     },
     ["Hard Khorium Battleplate"] = {
+        spellID = 46144,
         itemID = 34377,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 392, 410 },
@@ -1680,9 +2095,12 @@ local recipes = {
         },
     },
     ["Heavy Earthforged Breastplate"] = {
+        spellID = 36129,
         itemID = 30074,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 330, 340, 350, 360 },
@@ -1692,18 +2110,24 @@ local recipes = {
         },
     },
     ["Heavy Mithril Breastplate"] = {
+        spellID = 9959,
         itemID = 7930,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 230, 250, 260, 270 },
         reagents = { { itemID = 3860, count = 16, name = "Mithril Bar" } },
     },
     ["Icebane Breastplate"] = {
+        spellID = 28242,
         itemID = 22669,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Revered" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -1715,10 +2139,12 @@ local recipes = {
         },
     },
     ["Iceguard Breastplate"] = {
+        spellID = 38477,
         itemID = 31369,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Koren, Karazhan",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Violet Eye @ Friendly" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -1730,18 +2156,24 @@ local recipes = {
         },
     },
     ["Imperial Plate Chest"] = {
+        spellID = 16663,
         itemID = 12422,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Imperial Plate Chest" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
         reagents = { { itemID = 12359, count = 20, name = "Thorium Bar" } },
     },
     ["Ironvine Breastplate"] = {
+        spellID = 28461,
         itemID = 22762,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -1753,9 +2185,12 @@ local recipes = {
         },
     },
     ["Ornate Mithril Breastplate"] = {
+        spellID = 9972,
         itemID = 7935,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "quest: The Mithril Kid (Trenton, Gadgetzan)" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 240, 260, 270, 280 },
@@ -1767,9 +2202,12 @@ local recipes = {
         },
     },
     ["Ragesteel Breastplate"] = {
+        spellID = 29645,
         itemID = 23522,
         skillReq = 370,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 370, 380, 390, 400 },
@@ -1781,9 +2219,12 @@ local recipes = {
         },
     },
     ["Runic Breastplate"] = {
+        spellID = 16731,
         itemID = 12613,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -1794,9 +2235,12 @@ local recipes = {
         },
     },
     ["Sunblessed Breastplate"] = {
+        spellID = 46142,
         itemID = 34379,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 392, 410 },
@@ -1809,9 +2253,12 @@ local recipes = {
         },
     },
     ["Thick Obsidian Breastplate"] = {
+        spellID = 27587,
         itemID = 22196,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -1824,9 +2271,12 @@ local recipes = {
         },
     },
     ["Thorium Armor"] = {
+        spellID = 16642,
         itemID = 12405,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 250, 270, 280, 290 },
@@ -1837,9 +2287,12 @@ local recipes = {
         },
     },
     ["Truesilver Breastplate"] = {
+        spellID = 9974,
         itemID = 7939,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 245, 265, 275, 285 },
@@ -1852,10 +2305,12 @@ local recipes = {
         },
     },
     ["Wildguard Breastplate"] = {
+        spellID = 38473,
         itemID = 31364,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Fedryen Swiftspear, Zangarmarsh",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Revered" },
+        },
         category = "Plate Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -1869,9 +2324,12 @@ local recipes = {
     -- Feet
     -- --------------------------------
     ["Boots of the Protector"] = {
+        spellID = 36391,
         itemID = 30033,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 395, 405 },
@@ -1882,9 +2340,12 @@ local recipes = {
         },
     },
     ["Dark Iron Boots"] = {
+        spellID = 24399,
         itemID = 20039,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 300, 320, 330, 340 },
@@ -1896,10 +2357,12 @@ local recipes = {
         },
     },
     ["Enchanted Adamantite Boots"] = {
+        spellID = 29611,
         itemID = 23511,
         skillReq = 355,
-        source = "vendor",
-        sourceDetail = "QM Enuril, Shattrath City",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Friendly" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 355, 365, 375, 385 },
@@ -1910,18 +2373,24 @@ local recipes = {
         },
     },
     ["Fel Iron Plate Boots"] = {
+        spellID = 29548,
         itemID = 23487,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 315, 325, 335, 345 },
         reagents = { { itemID = 23445, count = 6, name = "Fel Iron Bar" } },
     },
     ["Heavy Mithril Boots"] = {
+        spellID = 9968,
         itemID = 7933,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 235, 255, 265, 275 },
@@ -1931,18 +2400,24 @@ local recipes = {
         },
     },
     ["Imperial Plate Boots"] = {
+        spellID = 16657,
         itemID = 12426,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Imperial Plate Boots" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 295, 315, 325, 335 },
         reagents = { { itemID = 12359, count = 18, name = "Thorium Bar" } },
     },
     ["Khorium Boots"] = {
+        spellID = 29630,
         itemID = 23525,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 365, 375, 385, 395 },
@@ -1953,9 +2428,12 @@ local recipes = {
         },
     },
     ["Ornate Mithril Boots"] = {
+        spellID = 9979,
         itemID = 7936,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "quest: The World At Your Feet (Trenton, Gadgetzan)" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 245, 265, 275, 285 },
@@ -1968,9 +2446,12 @@ local recipes = {
         },
     },
     ["Red Havoc Boots"] = {
+        spellID = 36392,
         itemID = 30031,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 395, 405 },
@@ -1981,9 +2462,12 @@ local recipes = {
         },
     },
     ["Runic Plate Boots"] = {
+        spellID = 16665,
         itemID = 12611,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 300, 320, 330, 340 },
@@ -1994,10 +2478,12 @@ local recipes = {
         },
     },
     ["Shadesteel Sabots"] = {
+        spellID = 40033,
         itemID = 32402,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Okuno, Black Temple",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Friendly" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 395, 405 },
@@ -2010,9 +2496,12 @@ local recipes = {
         },
     },
     ["Thorium Boots"] = {
+        spellID = 16652,
         itemID = 12409,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Feet",
         skillRange = { 280, 300, 310, 320 },
@@ -2025,10 +2514,12 @@ local recipes = {
     -- Hands
     -- --------------------------------
     ["Adamantite Plate Gloves"] = {
+        spellID = 29605,
         itemID = 23508,
         skillReq = 335,
-        source = "vendor",
-        sourceDetail = "Loolruna (A, Zangarmarsh) / Krek Cragcrush (H, Shadowmoon Valley)",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Krek Cragcrush, Loolruna" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 335, 345, 355, 365 },
@@ -2040,9 +2531,12 @@ local recipes = {
         },
     },
     ["Dark Iron Gauntlets"] = {
+        spellID = 23637,
         itemID = 19164,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -2055,9 +2549,12 @@ local recipes = {
         },
     },
     ["Darkrune Gauntlets"] = {
+        spellID = 24912,
         itemID = 20549,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -2069,27 +2566,36 @@ local recipes = {
         },
     },
     ["Fel Iron Plate Gloves"] = {
+        spellID = 29545,
         itemID = 23482,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 300, 310, 320, 330 },
         reagents = { { itemID = 23445, count = 4, name = "Fel Iron Bar" } },
     },
     ["Felsteel Gloves"] = {
+        spellID = 29619,
         itemID = 23517,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 360, 370, 380, 390 },
         reagents = { { itemID = 23448, count = 6, name = "Felsteel Bar" } },
     },
     ["Fiery Plate Gauntlets"] = {
+        spellID = 16655,
         itemID = 12631,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Fiery Plate Gauntlets" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 290, 310, 320, 330 },
@@ -2101,10 +2607,12 @@ local recipes = {
         },
     },
     ["Flamebane Gloves"] = {
+        spellID = 29616,
         itemID = 23514,
         skillReq = 360,
-        source = "vendor",
-        sourceDetail = "QM Endarin (Aldor), Shattrath City",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Friendly" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 360, 370, 380, 390 },
@@ -2115,9 +2623,12 @@ local recipes = {
         },
     },
     ["Gauntlets of the Iron Tower"] = {
+        spellID = 29622,
         itemID = 23532,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 385, 395 },
@@ -2129,9 +2640,12 @@ local recipes = {
         },
     },
     ["Gloves of the Dawn"] = {
+        spellID = 23633,
         itemID = 19057,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -2142,9 +2656,12 @@ local recipes = {
         },
     },
     ["Hard Khorium Battlefists"] = {
+        spellID = 46141,
         itemID = 34378,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 392, 410 },
@@ -2157,9 +2674,12 @@ local recipes = {
         },
     },
     ["Heavy Mithril Gauntlet"] = {
+        spellID = 9928,
         itemID = 7919,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 205, 225, 235, 245 },
@@ -2169,9 +2689,12 @@ local recipes = {
         },
     },
     ["Icebane Gauntlets"] = {
+        spellID = 28243,
         itemID = 22670,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -2183,9 +2706,12 @@ local recipes = {
         },
     },
     ["Ironvine Gloves"] = {
+        spellID = 28462,
         itemID = 22763,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Friendly" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -2196,9 +2722,12 @@ local recipes = {
         },
     },
     ["Ornate Mithril Gloves"] = {
+        spellID = 9950,
         itemID = 7927,
         skillReq = 220,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: The Great Silver Deceiver" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 220, 240, 250, 260 },
@@ -2210,9 +2739,12 @@ local recipes = {
         },
     },
     ["Ragesteel Gloves"] = {
+        spellID = 29642,
         itemID = 23520,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 385, 395 },
@@ -2224,9 +2756,12 @@ local recipes = {
         },
     },
     ["Steelgrip Gauntlets"] = {
+        spellID = 29662,
         itemID = 23533,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 385, 395 },
@@ -2237,9 +2772,12 @@ local recipes = {
         },
     },
     ["Stronghold Gauntlets"] = {
+        spellID = 16741,
         itemID = 12639,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -2252,9 +2790,12 @@ local recipes = {
         },
     },
     ["Sunblessed Gauntlets"] = {
+        spellID = 46140,
         itemID = 34380,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 392, 410 },
@@ -2266,9 +2807,12 @@ local recipes = {
         },
     },
     ["Truesilver Gauntlets"] = {
+        spellID = 9954,
         itemID = 7938,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Hands",
         skillRange = { 225, 245, 255, 265 },
@@ -2284,9 +2828,12 @@ local recipes = {
     -- Head
     -- --------------------------------
     ["Dark Iron Helm"] = {
+        spellID = 23636,
         itemID = 19148,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 300, 320, 330, 340 },
@@ -2297,9 +2844,12 @@ local recipes = {
         },
     },
     ["Darkrune Helm"] = {
+        spellID = 24913,
         itemID = 20551,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 300, 320, 330, 340 },
@@ -2311,9 +2861,12 @@ local recipes = {
         },
     },
     ["Enchanted Thorium Helm"] = {
+        spellID = 16742,
         itemID = 12620,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Enchanted Thorium Platemail: Volume III" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 300, 320, 330, 340 },
@@ -2326,19 +2879,24 @@ local recipes = {
         },
     },
     ["Felsteel Helm"] = {
+        spellID = 29621,
         itemID = 23519,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 23448, count = 8, name = "Felsteel Bar" } },
     },
     ["Flamebane Helm"] = {
+        spellID = 29615,
         itemID = 23516,
         skillReq = 355,
-        source = "vendor",
-        sourceDetail = "QM Endarin (Aldor), Shattrath City",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Revered" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 355, 365, 375, 385 },
@@ -2349,9 +2907,12 @@ local recipes = {
         },
     },
     ["Heavy Mithril Helm"] = {
+        spellID = 9970,
         itemID = 7934,
         skillReq = 245,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 245, 255, 265, 275 },
@@ -2361,9 +2922,12 @@ local recipes = {
         },
     },
     ["Helm of the Stalwart Defender"] = {
+        spellID = 29664,
         itemID = 23535,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
@@ -2375,10 +2939,12 @@ local recipes = {
         },
     },
     ["Iceguard Helm"] = {
+        spellID = 38479,
         itemID = 31371,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Koren, Karazhan",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Violet Eye @ Friendly" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 375, 385, 395, 405 },
@@ -2390,9 +2956,12 @@ local recipes = {
         },
     },
     ["Imperial Plate Helm"] = {
+        spellID = 16658,
         itemID = 12427,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Imperial Plate Helm" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 295, 315, 325, 335 },
@@ -2402,9 +2971,12 @@ local recipes = {
         },
     },
     ["Lionheart Helm"] = {
+        spellID = 16729,
         itemID = 12640,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 300, 320, 330, 340 },
@@ -2417,9 +2989,12 @@ local recipes = {
         },
     },
     ["Oathkeeper's Helm"] = {
+        spellID = 29668,
         itemID = 23536,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
@@ -2431,9 +3006,12 @@ local recipes = {
         },
     },
     ["Ornate Mithril Helm"] = {
+        spellID = 9980,
         itemID = 7937,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "quest: A Good Head On Your Shoulders (Trenton, Gadgetzan)" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 245, 265, 275, 285 },
@@ -2444,9 +3022,12 @@ local recipes = {
         },
     },
     ["Ragesteel Helm"] = {
+        spellID = 29643,
         itemID = 23521,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
@@ -2458,9 +3039,12 @@ local recipes = {
         },
     },
     ["Runic Plate Helm"] = {
+        spellID = 16726,
         itemID = 12612,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 300, 320, 330, 340 },
@@ -2472,9 +3056,12 @@ local recipes = {
         },
     },
     ["Steel Plate Helm"] = {
+        spellID = 9935,
         itemID = 7922,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 215, 235, 245, 255 },
@@ -2484,9 +3071,12 @@ local recipes = {
         },
     },
     ["Thorium Helm"] = {
+        spellID = 16653,
         itemID = 12410,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 280, 300, 310, 320 },
@@ -2497,9 +3087,12 @@ local recipes = {
         },
     },
     ["Whitesoul Helm"] = {
+        spellID = 16724,
         itemID = 12633,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 300, 320, 330, 340 },
@@ -2512,10 +3105,12 @@ local recipes = {
         },
     },
     ["Wildguard Helm"] = {
+        spellID = 38476,
         itemID = 31368,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Fedryen Swiftspear, Zangarmarsh",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Head",
         skillRange = { 375, 385, 395, 405 },
@@ -2529,9 +3124,12 @@ local recipes = {
     -- Legs
     -- --------------------------------
     ["Dark Iron Leggings"] = {
+        spellID = 20876,
         itemID = 17013,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -2542,9 +3140,12 @@ local recipes = {
         },
     },
     ["Darksoul Leggings"] = {
+        spellID = 24140,
         itemID = 19694,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Friendly" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -2555,9 +3156,12 @@ local recipes = {
         },
     },
     ["Earthforged Leggings"] = {
+        spellID = 36122,
         itemID = 30069,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 260, 280, 290, 300 },
@@ -2567,10 +3171,12 @@ local recipes = {
         },
     },
     ["Enchanted Adamantite Leggings"] = {
+        spellID = 29613,
         itemID = 23512,
         skillReq = 365,
-        source = "vendor",
-        sourceDetail = "QM Enuril, Shattrath City",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Revered" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 365, 375, 385, 395 },
@@ -2581,9 +3187,12 @@ local recipes = {
         },
     },
     ["Enchanted Thorium Leggings"] = {
+        spellID = 16744,
         itemID = 12619,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Enchanted Thorium Platemail: Volume II" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -2596,37 +3205,48 @@ local recipes = {
         },
     },
     ["Fel Iron Plate Pants"] = {
+        spellID = 29549,
         itemID = 23488,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 315, 325, 335, 345 },
         reagents = { { itemID = 23445, count = 8, name = "Fel Iron Bar" } },
     },
     ["Felsteel Leggings"] = {
+        spellID = 29620,
         itemID = 23518,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 360, 370, 380, 390 },
         reagents = { { itemID = 23448, count = 8, name = "Felsteel Bar" } },
     },
     ["Heavy Mithril Pants"] = {
+        spellID = 9933,
         itemID = 7921,
         skillReq = 210,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 210, 230, 240, 250 },
         reagents = { { itemID = 3860, count = 10, name = "Mithril Bar" } },
     },
     ["Iceguard Leggings"] = {
+        spellID = 38478,
         itemID = 31370,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Koren, Karazhan",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Violet Eye @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 375, 385, 395, 405 },
@@ -2638,18 +3258,24 @@ local recipes = {
         },
     },
     ["Imperial Plate Leggings"] = {
+        spellID = 16730,
         itemID = 12429,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Imperial Plate Leggings" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
         reagents = { { itemID = 12359, count = 24, name = "Thorium Bar" } },
     },
     ["Khorium Pants"] = {
+        spellID = 29629,
         itemID = 23523,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 360, 370, 380, 390 },
@@ -2660,9 +3286,12 @@ local recipes = {
         },
     },
     ["Ornate Mithril Pants"] = {
+        spellID = 9945,
         itemID = 7926,
         skillReq = 220,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Smelt On, Smelt Off" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 220, 240, 250, 260 },
@@ -2673,9 +3302,12 @@ local recipes = {
         },
     },
     ["Runic Plate Leggings"] = {
+        spellID = 16732,
         itemID = 12614,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -2686,10 +3318,12 @@ local recipes = {
         },
     },
     ["Shadesteel Greaves"] = {
+        spellID = 40035,
         itemID = 32404,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Okuno, Black Temple",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Friendly" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 375, 385, 395, 405 },
@@ -2702,9 +3336,12 @@ local recipes = {
         },
     },
     ["Thorium Leggings"] = {
+        spellID = 16662,
         itemID = 12414,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -2714,9 +3351,12 @@ local recipes = {
         },
     },
     ["Titanic Leggings"] = {
+        spellID = 27829,
         itemID = 22385,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -2728,10 +3368,12 @@ local recipes = {
         },
     },
     ["Wildguard Leggings"] = {
+        spellID = 38475,
         itemID = 31367,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Fedryen Swiftspear, Zangarmarsh",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Legs",
         skillRange = { 375, 385, 395, 405 },
@@ -2745,9 +3387,12 @@ local recipes = {
     -- Shoulder
     -- --------------------------------
     ["Dark Iron Shoulders"] = {
+        spellID = 15295,
         itemID = 11605,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 280, 300, 310, 320 },
@@ -2757,9 +3402,12 @@ local recipes = {
         },
     },
     ["Darksoul Shoulders"] = {
+        spellID = 24141,
         itemID = 19695,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Neutral" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -2770,9 +3418,12 @@ local recipes = {
         },
     },
     ["Dawnbringer Shoulders"] = {
+        spellID = 16660,
         itemID = 12625,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 290, 310, 320, 330 },
@@ -2784,9 +3435,12 @@ local recipes = {
         },
     },
     ["Dawnsteel Shoulders"] = {
+        spellID = 41135,
         itemID = 32573,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 375, 385, 395, 405 },
@@ -2798,9 +3452,12 @@ local recipes = {
         },
     },
     ["Heavy Mithril Shoulder"] = {
+        spellID = 9926,
         itemID = 7918,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 205, 225, 235, 245 },
@@ -2810,9 +3467,12 @@ local recipes = {
         },
     },
     ["Imperial Plate Shoulders"] = {
+        spellID = 16646,
         itemID = 12428,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Imperial Plate Shoulders" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 265, 285, 295, 305 },
@@ -2822,9 +3482,12 @@ local recipes = {
         },
     },
     ["Ornate Mithril Shoulder"] = {
+        spellID = 9952,
         itemID = 7928,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: The Art of the Imbue" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 225, 245, 255, 265 },
@@ -2835,9 +3498,12 @@ local recipes = {
         },
     },
     ["Ragesteel Shoulders"] = {
+        spellID = 42662,
         itemID = 33173,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 365, 375, 385, 395 },
@@ -2849,9 +3515,12 @@ local recipes = {
         },
     },
     ["Runic Plate Shoulders"] = {
+        spellID = 16664,
         itemID = 12610,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -2862,9 +3531,12 @@ local recipes = {
         },
     },
     ["Swiftsteel Shoulders"] = {
+        spellID = 41133,
         itemID = 32570,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Shoulder",
         skillRange = { 375, 385, 395, 405 },
@@ -2878,9 +3550,12 @@ local recipes = {
     -- Waist
     -- --------------------------------
     ["Belt of the Guardian"] = {
+        spellID = 36389,
         itemID = 30034,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -2892,10 +3567,12 @@ local recipes = {
         },
     },
     ["Enchanted Adamantite Belt"] = {
+        spellID = 29608,
         itemID = 23510,
         skillReq = 355,
-        source = "vendor",
-        sourceDetail = "QM Enuril, Shattrath City",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Neutral" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 355, 365, 375, 385 },
@@ -2906,18 +3583,24 @@ local recipes = {
         },
     },
     ["Fel Iron Plate Belt"] = {
+        spellID = 29547,
         itemID = 23484,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 305, 315, 325, 335 },
         reagents = { { itemID = 23445, count = 4, name = "Fel Iron Bar" } },
     },
     ["Girdle of the Dawn"] = {
+        spellID = 23632,
         itemID = 19051,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Friendly" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 290, 310, 320, 330 },
@@ -2928,9 +3611,12 @@ local recipes = {
         },
     },
     ["Heavy Obsidian Belt"] = {
+        spellID = 27585,
         itemID = 22197,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Neutral" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 300, 320, 330, 340 },
@@ -2941,9 +3627,12 @@ local recipes = {
         },
     },
     ["Imperial Plate Belt"] = {
+        spellID = 16647,
         itemID = 12424,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Imperial Plate Belt" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 265, 285, 295, 305 },
@@ -2953,9 +3642,12 @@ local recipes = {
         },
     },
     ["Ironvine Belt"] = {
+        spellID = 28463,
         itemID = 22764,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Neutral" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 300, 320, 330, 340 },
@@ -2965,9 +3657,12 @@ local recipes = {
         },
     },
     ["Khorium Belt"] = {
+        spellID = 29628,
         itemID = 23524,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 360, 370, 380, 390 },
@@ -2978,9 +3673,12 @@ local recipes = {
         },
     },
     ["Red Belt of Battle"] = {
+        spellID = 36390,
         itemID = 30032,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -2991,10 +3689,12 @@ local recipes = {
         },
     },
     ["Shadesteel Girdle"] = {
+        spellID = 40036,
         itemID = 32401,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Okuno, Black Temple",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Neutral" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -3007,9 +3707,12 @@ local recipes = {
         },
     },
     ["Thorium Belt"] = {
+        spellID = 16643,
         itemID = 12406,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Waist",
         skillRange = { 250, 270, 280, 290 },
@@ -3021,10 +3724,12 @@ local recipes = {
     -- Wrist
     -- --------------------------------
     ["Adamantite Plate Bracers"] = {
+        spellID = 29603,
         itemID = 23506,
         skillReq = 335,
-        source = "vendor",
-        sourceDetail = "Loolruna (A, Zangarmarsh) / Krek Cragcrush (H, Shadowmoon Valley)",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Krek Cragcrush, Loolruna" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 335, 345, 355, 365 },
@@ -3035,9 +3740,12 @@ local recipes = {
         },
     },
     ["Black Felsteel Bracers"] = {
+        spellID = 29669,
         itemID = 23537,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 365, 375, 385, 395 },
@@ -3048,9 +3756,12 @@ local recipes = {
         },
     },
     ["Blessed Bracers"] = {
+        spellID = 29672,
         itemID = 23539,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 365, 375, 385, 395 },
@@ -3062,9 +3773,12 @@ local recipes = {
         },
     },
     ["Bracers of the Green Fortress"] = {
+        spellID = 29671,
         itemID = 23538,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 365, 375, 385, 395 },
@@ -3075,9 +3789,12 @@ local recipes = {
         },
     },
     ["Dark Iron Bracers"] = {
+        spellID = 20874,
         itemID = 17014,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 295, 315, 325, 335 },
@@ -3088,9 +3805,12 @@ local recipes = {
         },
     },
     ["Dawnsteel Bracers"] = {
+        spellID = 41134,
         itemID = 32571,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -3102,10 +3822,12 @@ local recipes = {
         },
     },
     ["Flamebane Bracers"] = {
+        spellID = 29614,
         itemID = 23515,
         skillReq = 350,
-        source = "vendor",
-        sourceDetail = "QM Endarin (Aldor), Shattrath City",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Neutral" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 350, 360, 370, 380 },
@@ -3116,9 +3838,12 @@ local recipes = {
         },
     },
     ["Icebane Bracers"] = {
+        spellID = 28244,
         itemID = 22671,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Hydraxian Waterlords @ Honored" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 300, 320, 330, 340 },
@@ -3130,19 +3855,24 @@ local recipes = {
         },
     },
     ["Imperial Plate Bracers"] = {
+        spellID = 16649,
         itemID = 12425,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Imperial Plate Bracer" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 270, 290, 300, 310 },
         reagents = { { itemID = 12359, count = 12, name = "Thorium Bar" } },
     },
     ["Shadesteel Bracers"] = {
+        spellID = 40034,
         itemID = 32403,
         skillReq = 375,
-        source = "vendor",
-        sourceDetail = "Okuno, Black Temple",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Neutral" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -3155,9 +3885,12 @@ local recipes = {
         },
     },
     ["Swiftsteel Bracers"] = {
+        spellID = 41132,
         itemID = 32568,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -3169,9 +3902,12 @@ local recipes = {
         },
     },
     ["Thorium Bracers"] = {
+        spellID = 16644,
         itemID = 12408,
         skillReq = 255,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Plate Armor",
         subcategory = "Wrist",
         skillRange = { 255, 275, 285, 295 },
@@ -3185,9 +3921,12 @@ local recipes = {
     -- SHIELD
     -- ================================================================
     ["Jagged Obsidian Shield"] = {
+        spellID = 27586,
         itemID = 22198,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Honored" },
+        },
         category = "Shield",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -3202,9 +3941,12 @@ local recipes = {
     -- TRADE GOOD
     -- ================================================================
     ["Inlaid Mithril Cylinder"] = {
+        spellID = 11454,
         itemID = 9060,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "vendor-sold BS plan (specific vendor unconfirmed)" },
+        },
         category = "Trade Good",
         skillRange = { 200, 225, 237, 250 },
         reagents = {
@@ -3214,9 +3956,12 @@ local recipes = {
         },
     },
     ["Iron Buckle"] = {
+        spellID = 8768,
         itemID = 7071,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 150, 150, 152, 155 },
         reagents = { { itemID = 3575, count = 1, name = "Iron Bar" } },
@@ -3228,9 +3973,12 @@ local recipes = {
     -- 1H Axe
     -- --------------------------------
     ["Annihilator"] = {
+        spellID = 16991,
         itemID = 12798,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 300, 320, 330, 340 },
@@ -3244,9 +3992,12 @@ local recipes = {
         },
     },
     ["Black Planar Edge"] = {
+        spellID = 34542,
         itemID = 28432,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 375, 385, 395, 405 },
@@ -3257,9 +4008,12 @@ local recipes = {
         },
     },
     ["Blue Glittering Axe"] = {
+        spellID = 9995,
         itemID = 7942,
         skillReq = 220,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 220, 245, 257, 270 },
@@ -3271,9 +4025,12 @@ local recipes = {
         },
     },
     ["Bronze Axe"] = {
+        spellID = 2741,
         itemID = 2849,
         skillReq = 115,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 115, 145, 160, 175 },
@@ -3284,9 +4041,12 @@ local recipes = {
         },
     },
     ["Copper Axe"] = {
+        spellID = 2738,
         itemID = 2845,
         skillReq = 20,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 20, 60, 80, 100 },
@@ -3297,9 +4057,12 @@ local recipes = {
         },
     },
     ["Dark Iron Destroyer"] = {
+        spellID = 20897,
         itemID = 17016,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 300, 320, 330, 340 },
@@ -3311,9 +4074,12 @@ local recipes = {
         },
     },
     ["Dawn's Edge"] = {
+        spellID = 16970,
         itemID = 12774,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Snakestone of the Shadow Huntress" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 275, 300, 312, 325 },
@@ -3327,9 +4093,12 @@ local recipes = {
         },
     },
     ["Edge of Winter"] = {
+        spellID = 21913,
         itemID = 17704,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 190, 215, 227, 240 },
@@ -3342,9 +4111,12 @@ local recipes = {
         },
     },
     ["Fel Edged Battleaxe"] = {
+        spellID = 29694,
         itemID = 23542,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 365, 375, 385, 395 },
@@ -3356,18 +4128,24 @@ local recipes = {
         },
     },
     ["Fel Iron Hatchet"] = {
+        spellID = 29557,
         itemID = 23497,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 310, 320, 330, 340 },
         reagents = { { itemID = 23445, count = 9, name = "Fel Iron Bar" } },
     },
     ["Heavy Mithril Axe"] = {
+        spellID = 9993,
         itemID = 7941,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 210, 235, 247, 260 },
@@ -3379,9 +4157,12 @@ local recipes = {
         },
     },
     ["Light Skyforged Axe"] = {
+        spellID = 36126,
         itemID = 30072,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 260, 280, 290, 300 },
@@ -3391,9 +4172,12 @@ local recipes = {
         },
     },
     ["Ornate Thorium Handaxe"] = {
+        spellID = 16969,
         itemID = 12773,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Magnus Frostwake" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 275, 300, 312, 325 },
@@ -3405,9 +4189,12 @@ local recipes = {
         },
     },
     ["Stormforged Axe"] = {
+        spellID = 36134,
         itemID = 30087,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 330, 340, 350, 360 },
@@ -3418,9 +4205,12 @@ local recipes = {
         },
     },
     ["The Planar Edge"] = {
+        spellID = 34541,
         itemID = 28431,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 350, 360, 370, 380 },
@@ -3432,9 +4222,12 @@ local recipes = {
         },
     },
     ["Thick War Axe"] = {
+        spellID = 3294,
         itemID = 3489,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 70, 110, 130, 150 },
@@ -3447,9 +4240,12 @@ local recipes = {
         },
     },
     ["Wicked Edge of the Planes"] = {
+        spellID = 36260,
         itemID = 28433,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Axe",
         skillRange = { 375, 385, 395, 405 },
@@ -3461,9 +4257,12 @@ local recipes = {
     -- 1H Mace
     -- --------------------------------
     ["Big Black Mace"] = {
+        spellID = 10001,
         itemID = 7945,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 230, 255, 267, 280 },
@@ -3476,9 +4275,12 @@ local recipes = {
         },
     },
     ["Bronze Mace"] = {
+        spellID = 2740,
         itemID = 2848,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 110, 140, 155, 170 },
@@ -3489,9 +4291,12 @@ local recipes = {
         },
     },
     ["Copper Mace"] = {
+        spellID = 2737,
         itemID = 2844,
         skillReq = 15,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 15, 55, 75, 95 },
@@ -3502,9 +4307,12 @@ local recipes = {
         },
     },
     ["Dragonmaw"] = {
+        spellID = 34546,
         itemID = 28438,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 375, 385, 395, 405 },
@@ -3515,9 +4323,12 @@ local recipes = {
         },
     },
     ["Dragonstrike"] = {
+        spellID = 36262,
         itemID = 28439,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 375, 385, 395, 405 },
@@ -3527,9 +4338,12 @@ local recipes = {
         },
     },
     ["Drakefist Hammer"] = {
+        spellID = 34545,
         itemID = 28437,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 350, 360, 370, 380 },
@@ -3541,9 +4355,12 @@ local recipes = {
         },
     },
     ["Ebon Hand"] = {
+        spellID = 23650,
         itemID = 19170,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 300, 320, 330, 340 },
@@ -3556,18 +4373,24 @@ local recipes = {
         },
     },
     ["Fel Iron Hammer"] = {
+        spellID = 29558,
         itemID = 23498,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 315, 325, 335, 345 },
         reagents = { { itemID = 23445, count = 10, name = "Fel Iron Bar" } },
     },
     ["Hand of Eternity"] = {
+        spellID = 29700,
         itemID = 23556,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 365, 375, 385, 395 },
@@ -3580,9 +4403,12 @@ local recipes = {
         },
     },
     ["Heavy Bronze Mace"] = {
+        spellID = 3296,
         itemID = 3491,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 130, 160, 175, 190 },
@@ -3596,9 +4422,12 @@ local recipes = {
         },
     },
     ["Iridescent Hammer"] = {
+        spellID = 6518,
         itemID = 5541,
         skillReq = 140,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 140, 170, 185, 200 },
@@ -3611,9 +4440,12 @@ local recipes = {
         },
     },
     ["Lavaforged Warhammer"] = {
+        spellID = 36136,
         itemID = 30089,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 330, 340, 350, 360 },
@@ -3623,9 +4455,12 @@ local recipes = {
         },
     },
     ["Light Emberforged Hammer"] = {
+        spellID = 36128,
         itemID = 30073,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 260, 280, 290, 300 },
@@ -3635,9 +4470,12 @@ local recipes = {
         },
     },
     ["Masterwork Stormhammer"] = {
+        spellID = 16993,
         itemID = 12794,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 300, 320, 330, 340 },
@@ -3650,9 +4488,12 @@ local recipes = {
         },
     },
     ["Mighty Iron Hammer"] = {
+        spellID = 3297,
         itemID = 3492,
         skillReq = 145,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 145, 175, 190, 205 },
@@ -3666,9 +4507,12 @@ local recipes = {
         },
     },
     ["Persuader"] = {
+        spellID = 27830,
         itemID = 22384,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 300, 320, 330, 340 },
@@ -3682,9 +4526,12 @@ local recipes = {
         },
     },
     ["Runed Mithril Hammer"] = {
+        spellID = 10009,
         itemID = 7946,
         skillReq = 245,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 245, 270, 282, 295 },
@@ -3696,9 +4543,12 @@ local recipes = {
         },
     },
     ["Runic Hammer"] = {
+        spellID = 29696,
         itemID = 23544,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 365, 375, 385, 395 },
@@ -3710,9 +4560,12 @@ local recipes = {
         },
     },
     ["Serenity"] = {
+        spellID = 16983,
         itemID = 12781,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 285, 310, 322, 335 },
@@ -3726,9 +4579,12 @@ local recipes = {
         },
     },
     ["The Shatterer"] = {
+        spellID = 10003,
         itemID = 7954,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 235, 260, 272, 285 },
@@ -3743,9 +4599,12 @@ local recipes = {
         },
     },
     ["Volcanic Hammer"] = {
+        spellID = 16984,
         itemID = 12792,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Mace",
         skillRange = { 290, 315, 327, 340 },
@@ -3759,19 +4618,24 @@ local recipes = {
     -- 1H Sword
     -- --------------------------------
     ["Adamantite Rapier"] = {
+        spellID = 29571,
         itemID = 23505,
         skillReq = 335,
-        source = "vendor",
-        sourceDetail = "Aaron Hollman, Shattrath City",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Aaron Hollman, Arras +1 more" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 335, 345, 355, 365 },
         reagents = { { itemID = 23446, count = 12, name = "Adamantite Bar" } },
     },
     ["Blackguard"] = {
+        spellID = 23652,
         itemID = 19168,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 300, 320, 330, 340 },
@@ -3784,9 +4648,12 @@ local recipes = {
         },
     },
     ["Blazefury"] = {
+        spellID = 36258,
         itemID = 28427,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 375, 385, 395, 405 },
@@ -3796,9 +4663,12 @@ local recipes = {
         },
     },
     ["Blazeguard"] = {
+        spellID = 34537,
         itemID = 28426,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 375, 385, 395, 405 },
@@ -3809,9 +4679,12 @@ local recipes = {
         },
     },
     ["Blazing Rapier"] = {
+        spellID = 16978,
         itemID = 12777,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Corruption" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 280, 305, 317, 330 },
@@ -3824,9 +4697,12 @@ local recipes = {
         },
     },
     ["Bronze Shortsword"] = {
+        spellID = 2742,
         itemID = 2850,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 120, 150, 165, 180 },
@@ -3837,9 +4713,12 @@ local recipes = {
         },
     },
     ["Copper Shortsword"] = {
+        spellID = 2739,
         itemID = 2847,
         skillReq = 25,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 25, 65, 85, 105 },
@@ -3850,9 +4729,12 @@ local recipes = {
         },
     },
     ["Dark Iron Reaver"] = {
+        spellID = 20890,
         itemID = 17015,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 300, 320, 330, 340 },
@@ -3864,9 +4746,12 @@ local recipes = {
         },
     },
     ["Dazzling Mithril Rapier"] = {
+        spellID = 10005,
         itemID = 7944,
         skillReq = 240,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 240, 265, 277, 290 },
@@ -3880,9 +4765,12 @@ local recipes = {
         },
     },
     ["Felsteel Longblade"] = {
+        spellID = 29692,
         itemID = 23540,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 365, 375, 385, 395 },
@@ -3894,9 +4782,12 @@ local recipes = {
         },
     },
     ["Fireguard"] = {
+        spellID = 34535,
         itemID = 28425,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 350, 360, 370, 380 },
@@ -3907,9 +4798,12 @@ local recipes = {
         },
     },
     ["Frostguard"] = {
+        spellID = 16992,
         itemID = 12797,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 300, 320, 330, 340 },
@@ -3923,9 +4817,13 @@ local recipes = {
         },
     },
     ["Hardened Iron Shortsword"] = {
+        spellID = 3492,
         itemID = 3849,
         skillReq = 160,
-        source = "drop",
+        sources = {
+            { method = "trainer", faction = "Alliance" },
+            { method = "vendor", faction = "Both", detail = "Sold by Jutak, Kaita Deepforge +1 more" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 160, 185, 197, 210 },
@@ -3938,9 +4836,12 @@ local recipes = {
         },
     },
     ["Heavy Copper Longsword"] = {
+        spellID = 43549,
         itemID = 33791,
         skillReq = 35,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Alliance", detail = "Quest: Supplying the Front" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 35, 75, 95, 115 },
@@ -3951,9 +4852,12 @@ local recipes = {
         },
     },
     ["Jade Serpentblade"] = {
+        spellID = 3493,
         itemID = 3850,
         skillReq = 175,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 175, 200, 212, 225 },
@@ -3966,9 +4870,12 @@ local recipes = {
         },
     },
     ["Light Earthforged Blade"] = {
+        spellID = 36125,
         itemID = 30071,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 260, 280, 290, 300 },
@@ -3978,9 +4885,12 @@ local recipes = {
         },
     },
     ["Phantom Blade"] = {
+        spellID = 10007,
         itemID = 7961,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 245, 270, 282, 295 },
@@ -3995,9 +4905,12 @@ local recipes = {
         },
     },
     ["Sageblade"] = {
+        spellID = 27832,
         itemID = 22383,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 300, 320, 330, 340 },
@@ -4009,9 +4922,12 @@ local recipes = {
         },
     },
     ["Wicked Mithril Blade"] = {
+        spellID = 9997,
         itemID = 7943,
         skillReq = 225,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 225, 250, 262, 275 },
@@ -4023,9 +4939,12 @@ local recipes = {
         },
     },
     ["Windforged Rapier"] = {
+        spellID = 36131,
         itemID = 30077,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "1H Sword",
         skillRange = { 330, 340, 350, 360 },
@@ -4037,19 +4956,24 @@ local recipes = {
     -- 2H Axe
     -- --------------------------------
     ["Adamantite Cleaver"] = {
+        spellID = 29568,
         itemID = 23503,
         skillReq = 330,
-        source = "vendor",
-        sourceDetail = "Aaron Hollman, Shattrath City",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Aaron Hollman, Arras +1 more" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 330, 340, 350, 360 },
         reagents = { { itemID = 23446, count = 8, name = "Adamantite Bar" } },
     },
     ["Arcanite Reaper"] = {
+        spellID = 16994,
         itemID = 12784,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 300, 320, 330, 340 },
@@ -4060,9 +4984,12 @@ local recipes = {
         },
     },
     ["Bloodmoon"] = {
+        spellID = 36261,
         itemID = 28436,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 375, 385, 395, 405 },
@@ -4072,9 +4999,12 @@ local recipes = {
         },
     },
     ["Bronze Battle Axe"] = {
+        spellID = 9987,
         itemID = 7958,
         skillReq = 135,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 135, 165, 180, 195 },
@@ -4085,9 +5015,12 @@ local recipes = {
         },
     },
     ["Copper Battle Axe"] = {
+        spellID = 3293,
         itemID = 3488,
         skillReq = 35,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 35, 75, 95, 115 },
@@ -4100,9 +5033,12 @@ local recipes = {
         },
     },
     ["Dark Iron Sunderer"] = {
+        spellID = 15294,
         itemID = 11607,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 275, 295, 305, 315 },
@@ -4112,9 +5048,12 @@ local recipes = {
         },
     },
     ["Felsteel Reaper"] = {
+        spellID = 29695,
         itemID = 23543,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 365, 375, 385, 395 },
@@ -4126,9 +5065,12 @@ local recipes = {
         },
     },
     ["Huge Thorium Battleaxe"] = {
+        spellID = 16971,
         itemID = 12775,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Magnus Frostwake" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 280, 305, 317, 330 },
@@ -4139,9 +5081,12 @@ local recipes = {
         },
     },
     ["Lunar Crescent"] = {
+        spellID = 34543,
         itemID = 28434,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 350, 360, 370, 380 },
@@ -4153,9 +5098,13 @@ local recipes = {
         },
     },
     ["Massive Iron Axe"] = {
+        spellID = 3498,
         itemID = 3855,
         skillReq = 185,
-        source = "drop",
+        sources = {
+            { method = "trainer", faction = "Alliance" },
+            { method = "vendor", faction = "Both", detail = "Sold by Jaquilina Dramet, Vharr" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 185, 210, 222, 235 },
@@ -4168,9 +5117,12 @@ local recipes = {
         },
     },
     ["Mooncleaver"] = {
+        spellID = 34544,
         itemID = 28435,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 375, 385, 395, 405 },
@@ -4181,9 +5133,12 @@ local recipes = {
         },
     },
     ["Nightfall"] = {
+        spellID = 23653,
         itemID = 19169,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 300, 320, 330, 340 },
@@ -4196,9 +5151,12 @@ local recipes = {
         },
     },
     ["Shadow Crescent Axe"] = {
+        spellID = 3500,
         itemID = 3856,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 200, 225, 237, 250 },
@@ -4212,9 +5170,12 @@ local recipes = {
         },
     },
     ["Skyforged Great Axe"] = {
+        spellID = 36135,
         itemID = 30088,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Axe",
         skillRange = { 330, 340, 350, 360 },
@@ -4226,19 +5187,24 @@ local recipes = {
     -- 2H Mace
     -- --------------------------------
     ["Adamantite Maul"] = {
+        spellID = 29566,
         itemID = 23502,
         skillReq = 325,
-        source = "vendor",
-        sourceDetail = "Aaron Hollman, Shattrath City",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Aaron Hollman, Arras +1 more" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 325, 335, 345, 355 },
         reagents = { { itemID = 23446, count = 8, name = "Adamantite Bar" } },
     },
     ["Bronze Warhammer"] = {
+        spellID = 9985,
         itemID = 7956,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 125, 155, 170, 185 },
@@ -4249,9 +5215,12 @@ local recipes = {
         },
     },
     ["Dark Iron Pulverizer"] = {
+        spellID = 15292,
         itemID = 11608,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 265, 285, 295, 305 },
@@ -4261,9 +5230,12 @@ local recipes = {
         },
     },
     ["Deep Thunder"] = {
+        spellID = 34548,
         itemID = 28441,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 375, 385, 395, 405 },
@@ -4274,9 +5246,12 @@ local recipes = {
         },
     },
     ["Enchanted Battlehammer"] = {
+        spellID = 16973,
         itemID = 12776,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Sweet Serenity" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 280, 305, 317, 330 },
@@ -4289,9 +5264,12 @@ local recipes = {
         },
     },
     ["Fel Hardened Maul"] = {
+        spellID = 29697,
         itemID = 23546,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 365, 375, 385, 395 },
@@ -4303,9 +5281,12 @@ local recipes = {
         },
     },
     ["Golden Iron Destroyer"] = {
+        spellID = 3495,
         itemID = 3852,
         skillReq = 170,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 170, 195, 207, 220 },
@@ -4319,9 +5300,12 @@ local recipes = {
         },
     },
     ["Great Earthforged Hammer"] = {
+        spellID = 36137,
         itemID = 30093,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 330, 340, 350, 360 },
@@ -4331,9 +5315,12 @@ local recipes = {
         },
     },
     ["Hammer of Righteous Might"] = {
+        spellID = 43846,
         itemID = 32854,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 365, 375, 385, 395 },
@@ -4345,9 +5332,12 @@ local recipes = {
         },
     },
     ["Hammer of the Titans"] = {
+        spellID = 16988,
         itemID = 12796,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 300, 320, 330, 340 },
@@ -4360,9 +5350,12 @@ local recipes = {
         },
     },
     ["Heavy Copper Maul"] = {
+        spellID = 7408,
         itemID = 6214,
         skillReq = 65,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 65, 105, 125, 145 },
@@ -4372,25 +5365,14 @@ local recipes = {
             { itemID = 2318, count = 2, name = "Light Leather" },
         },
     },
-    ["Inlaid Thorium Hammer"] = {
-        itemID = 12772,
-        skillReq = 270,
-        source = "trainer",
-        category = "Weapon",
-        subcategory = "2H Mace",
-        skillRange = { 1, 295, 307, 320 },
-        reagents = {
-            { itemID = 12359, count = 30, name = "Thorium Bar" },
-            { itemID = 3577, count = 4, name = "Gold Bar" },
-            { itemID = 6037, count = 2, name = "Truesilver Bar" },
-            { itemID = 12361, count = 2, name = "Blue Sapphire" },
-            { itemID = 8170, count = 4, name = "Rugged Leather" },
-        },
-    },
     ["Solid Iron Maul"] = {
+        spellID = 3494,
         itemID = 3851,
         skillReq = 155,
-        source = "drop",
+        sources = {
+            { method = "trainer", faction = "Alliance" },
+            { method = "vendor", faction = "Both", detail = "Sold by High Admiral \'Shelly\' Jorrik, Jannos Ironwill +2 more" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 155, 180, 192, 205 },
@@ -4403,9 +5385,12 @@ local recipes = {
         },
     },
     ["Stormherald"] = {
+        spellID = 36263,
         itemID = 28442,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 375, 385, 395, 405 },
@@ -4415,9 +5400,12 @@ local recipes = {
         },
     },
     ["Sulfuron Hammer"] = {
+        spellID = 21161,
         itemID = 17193,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: A Binding Contract" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 300, 325, 337, 350 },
@@ -4432,9 +5420,12 @@ local recipes = {
         },
     },
     ["Thunder"] = {
+        spellID = 34547,
         itemID = 28440,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Mace",
         skillRange = { 350, 360, 370, 380 },
@@ -4448,9 +5439,12 @@ local recipes = {
     -- 2H Sword
     -- --------------------------------
     ["Arcanite Champion"] = {
+        spellID = 16990,
         itemID = 12790,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 300, 320, 330, 340 },
@@ -4464,9 +5458,12 @@ local recipes = {
         },
     },
     ["Bronze Greatsword"] = {
+        spellID = 9986,
         itemID = 7957,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 130, 160, 175, 190 },
@@ -4477,9 +5474,12 @@ local recipes = {
         },
     },
     ["Copper Claymore"] = {
+        spellID = 9983,
         itemID = 7955,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 30, 70, 90, 110 },
@@ -4491,9 +5491,12 @@ local recipes = {
         },
     },
     ["Corruption"] = {
+        spellID = 16985,
         itemID = 12782,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 290, 315, 327, 340 },
@@ -4508,18 +5511,24 @@ local recipes = {
         },
     },
     ["Fel Iron Greatsword"] = {
+        spellID = 29565,
         itemID = 23499,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 320, 330, 340, 350 },
         reagents = { { itemID = 23445, count = 12, name = "Fel Iron Bar" } },
     },
     ["Frost Tiger Blade"] = {
+        spellID = 3497,
         itemID = 3854,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 200, 225, 237, 250 },
@@ -4533,9 +5542,12 @@ local recipes = {
         },
     },
     ["Heavy Copper Broadsword"] = {
+        spellID = 3292,
         itemID = 3487,
         skillReq = 95,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 95, 135, 155, 175 },
@@ -4547,9 +5559,12 @@ local recipes = {
         },
     },
     ["Khorium Champion"] = {
+        spellID = 29693,
         itemID = 23541,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 365, 375, 385, 395 },
@@ -4561,9 +5576,12 @@ local recipes = {
         },
     },
     ["Lionheart Blade"] = {
+        spellID = 34538,
         itemID = 28428,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 350, 360, 370, 380 },
@@ -4574,9 +5592,12 @@ local recipes = {
         },
     },
     ["Lionheart Champion"] = {
+        spellID = 34540,
         itemID = 28429,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 375, 385, 395, 405 },
@@ -4587,9 +5608,12 @@ local recipes = {
         },
     },
     ["Lionheart Executioner"] = {
+        spellID = 36259,
         itemID = 28430,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 375, 385, 395, 405 },
@@ -4599,9 +5623,13 @@ local recipes = {
         },
     },
     ["Moonsteel Broadsword"] = {
+        spellID = 3496,
         itemID = 3853,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Alliance" },
+            { method = "vendor", faction = "Both", detail = "Sold by Zarena Cromwind" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 180, 205, 217, 230 },
@@ -4614,9 +5642,12 @@ local recipes = {
         },
     },
     ["Stoneforged Claymore"] = {
+        spellID = 36133,
         itemID = 30086,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 330, 340, 350, 360 },
@@ -4626,9 +5657,12 @@ local recipes = {
         },
     },
     ["Truesilver Champion"] = {
+        spellID = 10015,
         itemID = 7960,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "2H Sword",
         skillRange = { 260, 285, 297, 310 },
@@ -4644,10 +5678,12 @@ local recipes = {
     -- Dagger
     -- --------------------------------
     ["Adamantite Dagger"] = {
+        spellID = 29569,
         itemID = 23504,
         skillReq = 330,
-        source = "vendor",
-        sourceDetail = "Aaron Hollman, Shattrath City",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Aaron Hollman, Arras +1 more" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 330, 340, 350, 360 },
@@ -4657,9 +5693,12 @@ local recipes = {
         },
     },
     ["Big Bronze Knife"] = {
+        spellID = 3491,
         itemID = 3848,
         skillReq = 105,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 105, 135, 150, 165 },
@@ -4672,9 +5711,12 @@ local recipes = {
         },
     },
     ["Black Amnesty"] = {
+        spellID = 23638,
         itemID = 19166,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 300, 320, 330, 340 },
@@ -4687,9 +5729,12 @@ local recipes = {
         },
     },
     ["Copper Dagger"] = {
+        spellID = 8880,
         itemID = 7166,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 30, 70, 90, 110 },
@@ -4701,9 +5746,12 @@ local recipes = {
         },
     },
     ["Deadly Bronze Poniard"] = {
+        spellID = 3295,
         itemID = 3490,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 125, 155, 170, 185 },
@@ -4717,9 +5765,12 @@ local recipes = {
         },
     },
     ["Dirge"] = {
+        spellID = 29699,
         itemID = 23555,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 365, 375, 385, 395 },
@@ -4731,9 +5782,12 @@ local recipes = {
         },
     },
     ["Ebon Shiv"] = {
+        spellID = 10013,
         itemID = 7947,
         skillReq = 255,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Magnus Frostwake" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 255, 280, 292, 305 },
@@ -4746,9 +5800,12 @@ local recipes = {
         },
     },
     ["Eternium Runed Blade"] = {
+        spellID = 29698,
         itemID = 23554,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 365, 375, 385, 395 },
@@ -4761,9 +5818,12 @@ local recipes = {
         },
     },
     ["Glinting Steel Dagger"] = {
+        spellID = 15972,
         itemID = 12259,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 180, 205, 217, 230 },
@@ -4776,9 +5836,12 @@ local recipes = {
         },
     },
     ["Heartseeker"] = {
+        spellID = 16995,
         itemID = 12783,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 300, 320, 330, 340 },
@@ -4793,9 +5856,12 @@ local recipes = {
         },
     },
     ["Pearl-handled Dagger"] = {
+        spellID = 6517,
         itemID = 5540,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 110, 140, 155, 170 },
@@ -4807,9 +5873,12 @@ local recipes = {
         },
     },
     ["Searing Golden Blade"] = {
+        spellID = 15973,
         itemID = 12260,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Dagger",
         skillRange = { 190, 215, 227, 240 },
@@ -4825,9 +5894,12 @@ local recipes = {
     -- Polearm
     -- --------------------------------
     ["Blackfury"] = {
+        spellID = 23639,
         itemID = 19167,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Weapon",
         subcategory = "Polearm",
         skillRange = { 300, 320, 330, 340 },
@@ -4839,9 +5911,12 @@ local recipes = {
         },
     },
     ["Blight"] = {
+        spellID = 10011,
         itemID = 7959,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Polearm",
         skillRange = { 250, 275, 287, 300 },
@@ -4856,9 +5931,12 @@ local recipes = {
     -- Thrown
     -- --------------------------------
     ["Enchanted Thorium Blades"] = {
+        spellID = 34982,
         itemID = 29203,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Thrown",
         skillRange = { 300, 320, 330, 340 },
@@ -4869,9 +5947,12 @@ local recipes = {
         },
     },
     ["Felsteel Whisper Knives"] = {
+        spellID = 34983,
         itemID = 29204,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Thrown",
         skillRange = { 350, 360, 370, 380 },
@@ -4883,9 +5964,12 @@ local recipes = {
         },
     },
     ["Thick Bronze Darts"] = {
+        spellID = 34979,
         itemID = 29201,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Thrown",
         skillRange = { 100, 130, 145, 160 },
@@ -4896,9 +5980,12 @@ local recipes = {
         },
     },
     ["Whirling Steel Axes"] = {
+        spellID = 34981,
         itemID = 29202,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         subcategory = "Thrown",
         skillRange = { 200, 220, 230, 240 },

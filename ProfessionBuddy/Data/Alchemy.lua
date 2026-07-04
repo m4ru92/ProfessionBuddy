@@ -16,9 +16,12 @@ local recipes = {
     -- Battle
     -- --------------------------------
     ["Adept's Elixir"] = {
+        spellID = 33740,
         itemID = 28103,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 300, 315, 322, 330 },
@@ -29,9 +32,12 @@ local recipes = {
         },
     },
     ["Arcane Elixir"] = {
+        spellID = 11461,
         itemID = 9155,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 235, 250, 270, 290 },
@@ -42,9 +48,12 @@ local recipes = {
         },
     },
     ["Catseye Elixir"] = {
+        spellID = 12609,
         itemID = 10592,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 200, 220, 240, 260 },
@@ -55,9 +64,12 @@ local recipes = {
         },
     },
     ["Earthen Elixir"] = {
+        spellID = 39637,
         itemID = 32063,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Friendly" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 320, 335, 342, 350 },
@@ -68,9 +80,12 @@ local recipes = {
         },
     },
     ["Elixir of Agility"] = {
+        spellID = 11449,
         itemID = 8949,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 185, 205, 225, 245 },
@@ -81,9 +96,12 @@ local recipes = {
         },
     },
     ["Elixir of Brute Force"] = {
+        spellID = 17557,
         itemID = 13453,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 275, 290, 310, 330 },
@@ -94,10 +112,12 @@ local recipes = {
         },
     },
     ["Elixir of Demonslaying"] = {
+        spellID = 11477,
         itemID = 9224,
         skillReq = 250,
-        source = "vendor",
-        sourceDetail = "Nina Lightbrew (A, Nethergarde Keep) / Rartar (H, Stonard), Blasted Lands / Swamp of Sorrows",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Nina Lightbrew, Rartar" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 250, 265, 285, 305 },
@@ -108,9 +128,12 @@ local recipes = {
         },
     },
     ["Elixir of Empowerment"] = {
+        spellID = 28578,
         itemID = 22848,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 365, 380, 387, 395 },
@@ -121,9 +144,12 @@ local recipes = {
         },
     },
     ["Elixir of Firepower"] = {
+        spellID = 7845,
         itemID = 6373,
         skillReq = 140,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 140, 165, 185, 205 },
@@ -134,9 +160,12 @@ local recipes = {
         },
     },
     ["Elixir of Frost Power"] = {
+        spellID = 21923,
         itemID = 17708,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 190, 210, 230, 250 },
@@ -147,9 +176,12 @@ local recipes = {
         },
     },
     ["Elixir of Giant Growth"] = {
+        spellID = 8240,
         itemID = 6662,
         skillReq = 90,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 90, 120, 140, 160 },
@@ -160,9 +192,12 @@ local recipes = {
         },
     },
     ["Elixir of Giants"] = {
+        spellID = 11472,
         itemID = 9206,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 245, 260, 280, 300 },
@@ -173,9 +208,12 @@ local recipes = {
         },
     },
     ["Elixir of Greater Agility"] = {
+        spellID = 11467,
         itemID = 9187,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 240, 255, 275, 295 },
@@ -186,9 +224,12 @@ local recipes = {
         },
     },
     ["Elixir of Greater Firepower"] = {
+        spellID = 26277,
         itemID = 21546,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 250, 265, 285, 305 },
@@ -199,9 +240,12 @@ local recipes = {
         },
     },
     ["Elixir of Greater Intellect"] = {
+        spellID = 11465,
         itemID = 9179,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 235, 250, 270, 290 },
@@ -212,9 +256,12 @@ local recipes = {
         },
     },
     ["Elixir of Greater Water Breathing"] = {
+        spellID = 22808,
         itemID = 18294,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 215, 230, 250, 270 },
@@ -225,9 +272,12 @@ local recipes = {
         },
     },
     ["Elixir of Healing Power"] = {
+        spellID = 28545,
         itemID = 22825,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 310, 325, 332, 340 },
@@ -238,9 +288,12 @@ local recipes = {
         },
     },
     ["Elixir of Lesser Agility"] = {
+        spellID = 2333,
         itemID = 3390,
         skillReq = 140,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 140, 165, 185, 205 },
@@ -251,9 +304,12 @@ local recipes = {
         },
     },
     ["Elixir of Lion's Strength"] = {
+        spellID = 2329,
         itemID = 2454,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 1, 55, 75, 95 },
@@ -264,9 +320,13 @@ local recipes = {
         },
     },
     ["Elixir of Major Agility"] = {
+        spellID = 28553,
         itemID = 22831,
         skillReq = 330,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Friendly" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 330, 345, 352, 360 },
@@ -277,9 +337,12 @@ local recipes = {
         },
     },
     ["Elixir of Major Firepower"] = {
+        spellID = 28556,
         itemID = 22833,
         skillReq = 345,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Honored" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 345, 360, 367, 375 },
@@ -290,10 +353,12 @@ local recipes = {
         },
     },
     ["Elixir of Major Frost Power"] = {
+        spellID = 28549,
         itemID = 22827,
         skillReq = 320,
-        source = "vendor",
-        sourceDetail = "Haalrun (A, Telredor) / Seer Janidi (H, Zabra'jin), Zangarmarsh",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Haalrun, Seer Janidi" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 320, 335, 342, 350 },
@@ -304,9 +369,12 @@ local recipes = {
         },
     },
     ["Elixir of Major Shadow Power"] = {
+        spellID = 28558,
         itemID = 22835,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Honored" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 350, 365, 372, 380 },
@@ -317,9 +385,12 @@ local recipes = {
         },
     },
     ["Elixir of Major Strength"] = {
+        spellID = 28544,
         itemID = 22824,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 305, 320, 327, 335 },
@@ -330,9 +401,12 @@ local recipes = {
         },
     },
     ["Elixir of Mastery"] = {
+        spellID = 33741,
         itemID = 28104,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 315, 330, 337, 345 },
@@ -343,9 +417,12 @@ local recipes = {
         },
     },
     ["Elixir of Minor Agility"] = {
+        spellID = 3230,
         itemID = 2457,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 50, 80, 100, 120 },
@@ -356,9 +433,12 @@ local recipes = {
         },
     },
     ["Elixir of Ogre's Strength"] = {
+        spellID = 3188,
         itemID = 3391,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 150, 175, 195, 215 },
@@ -369,10 +449,13 @@ local recipes = {
         },
     },
     ["Elixir of Shadow Power"] = {
+        spellID = 11476,
         itemID = 9264,
         skillReq = 250,
-        source = "vendor",
-        sourceDetail = "Algernon (H) / Maria Lumere (A), Undercity / Stormwind",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "vendor", faction = "Both", detail = "Sold by Algernon, Maria Lumere" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 250, 265, 285, 305 },
@@ -382,9 +465,12 @@ local recipes = {
         },
     },
     ["Elixir of Tongues"] = {
+        spellID = 2336,
         itemID = 2460,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "undetermined", faction = "Both", detail = "Beta only" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 70, 100, 120, 140 },
@@ -395,9 +481,12 @@ local recipes = {
         },
     },
     ["Elixir of Water Breathing"] = {
+        spellID = 7179,
         itemID = 5996,
         skillReq = 90,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 90, 120, 140, 160 },
@@ -408,9 +497,12 @@ local recipes = {
         },
     },
     ["Elixir of Wisdom"] = {
+        spellID = 3171,
         itemID = 3383,
         skillReq = 90,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 90, 120, 140, 160 },
@@ -421,9 +513,12 @@ local recipes = {
         },
     },
     ["Elixir of the Mongoose"] = {
+        spellID = 17571,
         itemID = 13452,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 280, 295, 315, 335 },
@@ -434,9 +529,13 @@ local recipes = {
         },
     },
     ["Elixir of the Sages"] = {
+        spellID = 17555,
         itemID = 13447,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 270, 285, 305, 325 },
@@ -447,9 +546,12 @@ local recipes = {
         },
     },
     ["Elixir of the Searching Eye"] = {
+        spellID = 28552,
         itemID = 22830,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 325, 340, 347, 355 },
@@ -460,9 +562,12 @@ local recipes = {
         },
     },
     ["Fel Strength Elixir"] = {
+        spellID = 38960,
         itemID = 31679,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 335, 350, 357, 365 },
@@ -473,9 +578,13 @@ local recipes = {
         },
     },
     ["Greater Arcane Elixir"] = {
+        spellID = 17573,
         itemID = 13454,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 285, 300, 320, 340 },
@@ -486,9 +595,12 @@ local recipes = {
         },
     },
     ["Onslaught Elixir"] = {
+        spellID = 33738,
         itemID = 28102,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Battle",
         skillRange = { 300, 315, 322, 330 },
@@ -501,10 +613,12 @@ local recipes = {
     -- Guardian
     -- --------------------------------
     ["Elixir of Camouflage"] = {
+        spellID = 28543,
         itemID = 22823,
         skillReq = 305,
-        source = "vendor",
-        sourceDetail = "Alchemist Gribble (A) / Apothecary Antonivich (H), Hellfire Peninsula",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Alchemist Gribble, Altaa +3 more" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 305, 320, 327, 335 },
@@ -515,9 +629,12 @@ local recipes = {
         },
     },
     ["Elixir of Defense"] = {
+        spellID = 3177,
         itemID = 3389,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 130, 155, 175, 195 },
@@ -528,9 +645,12 @@ local recipes = {
         },
     },
     ["Elixir of Detect Demon"] = {
+        spellID = 11478,
         itemID = 9233,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 250, 265, 285, 305 },
@@ -540,9 +660,12 @@ local recipes = {
         },
     },
     ["Elixir of Detect Lesser Invisibility"] = {
+        spellID = 3453,
         itemID = 3828,
         skillReq = 195,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 195, 215, 235, 255 },
@@ -553,9 +676,12 @@ local recipes = {
         },
     },
     ["Elixir of Detect Undead"] = {
+        spellID = 11460,
         itemID = 9154,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 230, 245, 265, 285 },
@@ -565,9 +691,12 @@ local recipes = {
         },
     },
     ["Elixir of Draenic Wisdom"] = {
+        spellID = 39638,
         itemID = 32067,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 320, 335, 342, 350 },
@@ -578,9 +707,12 @@ local recipes = {
         },
     },
     ["Elixir of Dream Vision"] = {
+        spellID = 11468,
         itemID = 9197,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Utility",
         skillRange = { 240, 255, 275, 295 },
@@ -590,9 +722,13 @@ local recipes = {
         },
     },
     ["Elixir of Fortitude"] = {
+        spellID = 3450,
         itemID = 3825,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 175, 195, 215, 235 },
@@ -603,9 +739,12 @@ local recipes = {
         },
     },
     ["Elixir of Greater Defense"] = {
+        spellID = 11450,
         itemID = 8951,
         skillReq = 195,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 195, 215, 235, 255 },
@@ -616,10 +755,12 @@ local recipes = {
         },
     },
     ["Elixir of Ironskin"] = {
+        spellID = 39639,
         itemID = 32068,
         skillReq = 330,
-        source = "vendor",
-        sourceDetail = "QM Davian Vaclav (A) / QM Jaffrey Noreliqe (H), Nagrand (Halaa)",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Alchemy supplies" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 330, 345, 352, 360 },
@@ -630,10 +771,12 @@ local recipes = {
         },
     },
     ["Elixir of Major Defense"] = {
+        spellID = 28557,
         itemID = 22834,
         skillReq = 345,
-        source = "vendor",
-        sourceDetail = "Haalrun (A, Telredor) / Daga Ramba (H, Thunderlord Stronghold), Zangarmarsh / Blade's Edge Mountains",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Daga Ramba, Haalrun" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 345, 360, 367, 375 },
@@ -644,9 +787,12 @@ local recipes = {
         },
     },
     ["Elixir of Major Fortitude"] = {
+        spellID = 39636,
         itemID = 32062,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 310, 325, 332, 340 },
@@ -657,9 +803,12 @@ local recipes = {
         },
     },
     ["Elixir of Major Mageblood"] = {
+        spellID = 28570,
         itemID = 22840,
         skillReq = 355,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 355, 370, 377, 385 },
@@ -670,9 +819,12 @@ local recipes = {
         },
     },
     ["Elixir of Minor Defense"] = {
+        spellID = 7183,
         itemID = 5997,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 1, 55, 75, 95 },
@@ -682,9 +834,12 @@ local recipes = {
         },
     },
     ["Elixir of Minor Fortitude"] = {
+        spellID = 2334,
         itemID = 2458,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 50, 80, 100, 120 },
@@ -695,10 +850,12 @@ local recipes = {
         },
     },
     ["Elixir of Superior Defense"] = {
+        spellID = 17554,
         itemID = 13445,
         skillReq = 265,
-        source = "vendor",
-        sourceDetail = "Soolie Berryfizz (A, Ironforge) / Kor'geld (H, Orgrimmar)",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kor\'geld, Soolie Berryfizz" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 265, 280, 300, 320 },
@@ -713,9 +870,12 @@ local recipes = {
     -- FLASK
     -- ================================================================
     ["Flask of Blinding Light"] = {
+        spellID = 28590,
         itemID = 22861,
         skillReq = 390,
-        source = "trainer",
+        sources = {
+            { method = "discovery", faction = "Both", detail = "discovered while crafting" },
+        },
         category = "Flask",
         skillRange = { 390, 390, 397, 405 },
         reagents = {
@@ -726,9 +886,13 @@ local recipes = {
         },
     },
     ["Flask of Chromatic Resistance"] = {
+        spellID = 17638,
         itemID = 13513,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Flask",
         skillRange = { 300, 315, 322, 330 },
         reagents = {
@@ -739,9 +903,12 @@ local recipes = {
         },
     },
     ["Flask of Chromatic Wonder"] = {
+        spellID = 42736,
         itemID = 33208,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Violet Eye @ Friendly" },
+        },
         category = "Flask",
         skillRange = { 375, 390, 397, 405 },
         reagents = {
@@ -752,9 +919,13 @@ local recipes = {
         },
     },
     ["Flask of Distilled Wisdom"] = {
+        spellID = 17636,
         itemID = 13511,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Flask",
         skillRange = { 300, 315, 322, 330 },
         reagents = {
@@ -765,9 +936,12 @@ local recipes = {
         },
     },
     ["Flask of Fortification"] = {
+        spellID = 28587,
         itemID = 22851,
         skillReq = 390,
-        source = "trainer",
+        sources = {
+            { method = "discovery", faction = "Both", detail = "discovered while crafting" },
+        },
         category = "Flask",
         skillRange = { 390, 390, 397, 405 },
         reagents = {
@@ -778,9 +952,12 @@ local recipes = {
         },
     },
     ["Flask of Mighty Restoration"] = {
+        spellID = 28588,
         itemID = 22853,
         skillReq = 390,
-        source = "trainer",
+        sources = {
+            { method = "discovery", faction = "Both", detail = "discovered while crafting" },
+        },
         category = "Flask",
         skillRange = { 390, 390, 397, 405 },
         reagents = {
@@ -791,9 +968,12 @@ local recipes = {
         },
     },
     ["Flask of Petrification"] = {
+        spellID = 17634,
         itemID = 13506,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Flask",
         skillRange = { 300, 315, 322, 330 },
         reagents = {
@@ -804,9 +984,12 @@ local recipes = {
         },
     },
     ["Flask of Pure Death"] = {
+        spellID = 28591,
         itemID = 22866,
         skillReq = 390,
-        source = "trainer",
+        sources = {
+            { method = "discovery", faction = "Both", detail = "discovered while crafting" },
+        },
         category = "Flask",
         skillRange = { 390, 390, 397, 405 },
         reagents = {
@@ -817,9 +1000,12 @@ local recipes = {
         },
     },
     ["Flask of Relentless Assault"] = {
+        spellID = 28589,
         itemID = 22854,
         skillReq = 390,
-        source = "trainer",
+        sources = {
+            { method = "discovery", faction = "Both", detail = "discovered while crafting" },
+        },
         category = "Flask",
         skillRange = { 390, 390, 397, 405 },
         reagents = {
@@ -830,9 +1016,13 @@ local recipes = {
         },
     },
     ["Flask of Supreme Power"] = {
+        spellID = 17637,
         itemID = 13512,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Flask",
         skillRange = { 300, 315, 322, 330 },
         reagents = {
@@ -843,9 +1033,13 @@ local recipes = {
         },
     },
     ["Flask of the Titans"] = {
+        spellID = 17635,
         itemID = 13510,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Flask",
         skillRange = { 300, 315, 322, 330 },
         reagents = {
@@ -860,9 +1054,12 @@ local recipes = {
     -- OIL
     -- ================================================================
     ["Blackmouth Oil"] = {
+        spellID = 7836,
         itemID = 6370,
         skillReq = 80,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Oil",
         skillRange = { 80, 80, 90, 100 },
         reagents = {
@@ -871,9 +1068,12 @@ local recipes = {
         },
     },
     ["Fire Oil"] = {
+        spellID = 7837,
         itemID = 6371,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Oil",
         skillRange = { 130, 150, 160, 170 },
         reagents = {
@@ -882,9 +1082,13 @@ local recipes = {
         },
     },
     ["Frost Oil"] = {
+        spellID = 3454,
         itemID = 3829,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Alliance" },
+            { method = "vendor", faction = "Both", detail = "Sold by Bro\'kin" },
+        },
         category = "Oil",
         skillRange = { 200, 220, 240, 260 },
         reagents = {
@@ -894,9 +1098,12 @@ local recipes = {
         },
     },
     ["Oil of Immolation"] = {
+        spellID = 11451,
         itemID = 8956,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Oil",
         skillRange = { 205, 220, 240, 260 },
         reagents = {
@@ -906,9 +1113,13 @@ local recipes = {
         },
     },
     ["Shadow Oil"] = {
+        spellID = 3449,
         itemID = 3824,
         skillReq = 165,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Alliance" },
+            { method = "vendor", faction = "Both", detail = "Sold by Bliztik, Montarr" },
+        },
         category = "Oil",
         skillRange = { 165, 190, 210, 230 },
         reagents = {
@@ -918,9 +1129,12 @@ local recipes = {
         },
     },
     ["Stonescale Oil"] = {
+        spellID = 17551,
         itemID = 13423,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Oil",
         skillRange = { 250, 250, 255, 260 },
         reagents = {
@@ -935,9 +1149,12 @@ local recipes = {
     -- Healing
     -- --------------------------------
     ["Discolored Healing Potion"] = {
+        spellID = 4508,
         itemID = 4596,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Wild Hearts" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 50, 80, 100, 120 },
@@ -948,9 +1165,12 @@ local recipes = {
         },
     },
     ["Fel Regeneration Potion"] = {
+        spellID = 38962,
         itemID = 31676,
         skillReq = 345,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 345, 360, 367, 375 },
@@ -961,9 +1181,12 @@ local recipes = {
         },
     },
     ["Greater Healing Potion"] = {
+        spellID = 7181,
         itemID = 1710,
         skillReq = 155,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 155, 175, 195, 215 },
@@ -974,9 +1197,12 @@ local recipes = {
         },
     },
     ["Healing Potion"] = {
+        spellID = 3447,
         itemID = 929,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 110, 135, 155, 175 },
@@ -987,9 +1213,12 @@ local recipes = {
         },
     },
     ["Lesser Healing Potion"] = {
+        spellID = 2337,
         itemID = 858,
         skillReq = 55,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 55, 85, 105, 125 },
@@ -999,9 +1228,12 @@ local recipes = {
         },
     },
     ["Major Healing Potion"] = {
+        spellID = 17556,
         itemID = 13446,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 275, 290, 310, 330 },
@@ -1012,9 +1244,12 @@ local recipes = {
         },
     },
     ["Minor Healing Potion"] = {
+        spellID = 2330,
         itemID = 118,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 1, 55, 75, 95 },
@@ -1025,9 +1260,12 @@ local recipes = {
         },
     },
     ["Super Healing Potion"] = {
+        spellID = 28551,
         itemID = 22829,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 325, 340, 347, 355 },
@@ -1038,9 +1276,12 @@ local recipes = {
         },
     },
     ["Superior Healing Potion"] = {
+        spellID = 11457,
         itemID = 3928,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 215, 230, 250, 270 },
@@ -1051,9 +1292,12 @@ local recipes = {
         },
     },
     ["Volatile Healing Potion"] = {
+        spellID = 33732,
         itemID = 28100,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Healing",
         skillRange = { 300, 315, 322, 330 },
@@ -1066,9 +1310,12 @@ local recipes = {
     -- Mana
     -- --------------------------------
     ["Fel Mana Potion"] = {
+        spellID = 38961,
         itemID = 31677,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Mana",
         skillRange = { 360, 375, 382, 390 },
@@ -1079,9 +1326,12 @@ local recipes = {
         },
     },
     ["Greater Mana Potion"] = {
+        spellID = 11448,
         itemID = 6149,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Mana",
         skillRange = { 205, 220, 240, 260 },
@@ -1092,9 +1342,12 @@ local recipes = {
         },
     },
     ["Lesser Mana Potion"] = {
+        spellID = 3173,
         itemID = 3385,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Mana",
         skillRange = { 120, 145, 165, 185 },
@@ -1105,10 +1358,13 @@ local recipes = {
         },
     },
     ["Major Mana Potion"] = {
+        spellID = 17580,
         itemID = 13444,
         skillReq = 295,
-        source = "vendor",
-        sourceDetail = "Magnus Frostwake, Western Plaguelands",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Magnus Frostwake" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Mana",
         skillRange = { 295, 310, 330, 350 },
@@ -1119,9 +1375,12 @@ local recipes = {
         },
     },
     ["Mana Potion"] = {
+        spellID = 3452,
         itemID = 3827,
         skillReq = 160,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Mana",
         skillRange = { 160, 180, 200, 220 },
@@ -1132,9 +1391,12 @@ local recipes = {
         },
     },
     ["Minor Mana Potion"] = {
+        spellID = 2331,
         itemID = 2455,
         skillReq = 25,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Mana",
         skillRange = { 25, 65, 85, 105 },
@@ -1145,10 +1407,12 @@ local recipes = {
         },
     },
     ["Super Mana Potion"] = {
+        spellID = 28555,
         itemID = 22832,
         skillReq = 340,
-        source = "vendor",
-        sourceDetail = "Haalrun (A, Telredor) / Daga Ramba (H, Thunderlord Stronghold), Zangarmarsh / Blade's Edge Mountains",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Daga Ramba, Haalrun" },
+        },
         category = "Potion",
         subcategory = "Mana",
         skillRange = { 340, 355, 362, 370 },
@@ -1159,9 +1423,13 @@ local recipes = {
         },
     },
     ["Superior Mana Potion"] = {
+        spellID = 17553,
         itemID = 13443,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "vendor", faction = "Alliance", detail = "Sold by Ulthir" },
+        },
         category = "Potion",
         subcategory = "Mana",
         skillRange = { 260, 275, 295, 315 },
@@ -1172,9 +1440,12 @@ local recipes = {
         },
     },
     ["Unstable Mana Potion"] = {
+        spellID = 33733,
         itemID = 28101,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Mana",
         skillRange = { 310, 325, 332, 340 },
@@ -1187,9 +1458,12 @@ local recipes = {
     -- Resistance
     -- --------------------------------
     ["Cauldron of Major Arcane Protection"] = {
+        spellID = 41458,
         itemID = 32839,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 360, 370, 380 },
@@ -1200,9 +1474,12 @@ local recipes = {
         },
     },
     ["Cauldron of Major Fire Protection"] = {
+        spellID = 41500,
         itemID = 32849,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 360, 370, 380 },
@@ -1213,9 +1490,12 @@ local recipes = {
         },
     },
     ["Cauldron of Major Frost Protection"] = {
+        spellID = 41501,
         itemID = 32850,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 360, 370, 380 },
@@ -1226,9 +1506,12 @@ local recipes = {
         },
     },
     ["Cauldron of Major Nature Protection"] = {
+        spellID = 41502,
         itemID = 32851,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 360, 370, 380 },
@@ -1239,9 +1522,12 @@ local recipes = {
         },
     },
     ["Cauldron of Major Shadow Protection"] = {
+        spellID = 41503,
         itemID = 32852,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 360, 370, 380 },
@@ -1252,9 +1538,12 @@ local recipes = {
         },
     },
     ["Fire Protection Potion"] = {
+        spellID = 7257,
         itemID = 6049,
         skillReq = 165,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Jeeda, Nandar Branson" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 165, 210, 230, 250 },
@@ -1265,9 +1554,12 @@ local recipes = {
         },
     },
     ["Frost Protection Potion"] = {
+        spellID = 7258,
         itemID = 6050,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Drovnar Strongbrew, Glyx Brewright" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 190, 205, 225, 245 },
@@ -1278,9 +1570,12 @@ local recipes = {
         },
     },
     ["Greater Arcane Protection Potion"] = {
+        spellID = 17577,
         itemID = 13461,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 290, 305, 325, 345 },
@@ -1291,9 +1586,12 @@ local recipes = {
         },
     },
     ["Greater Fire Protection Potion"] = {
+        spellID = 17574,
         itemID = 13457,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 290, 305, 325, 345 },
@@ -1304,9 +1602,12 @@ local recipes = {
         },
     },
     ["Greater Frost Protection Potion"] = {
+        spellID = 17575,
         itemID = 13456,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 290, 305, 325, 345 },
@@ -1317,9 +1618,12 @@ local recipes = {
         },
     },
     ["Greater Nature Protection Potion"] = {
+        spellID = 17576,
         itemID = 13458,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 290, 305, 325, 345 },
@@ -1330,9 +1634,12 @@ local recipes = {
         },
     },
     ["Greater Shadow Protection Potion"] = {
+        spellID = 17578,
         itemID = 13459,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 290, 305, 325, 345 },
@@ -1343,9 +1650,12 @@ local recipes = {
         },
     },
     ["Holy Protection Potion"] = {
+        spellID = 7255,
         itemID = 6051,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Hula\'mahi, Kzixx +1 more" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 100, 130, 150, 170 },
@@ -1356,9 +1666,12 @@ local recipes = {
         },
     },
     ["Magic Resistance Potion"] = {
+        spellID = 11453,
         itemID = 9036,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 210, 225, 245, 265 },
@@ -1369,9 +1682,12 @@ local recipes = {
         },
     },
     ["Major Arcane Protection Potion"] = {
+        spellID = 28575,
         itemID = 22845,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
@@ -1382,9 +1698,12 @@ local recipes = {
         },
     },
     ["Major Fire Protection Potion"] = {
+        spellID = 28571,
         itemID = 22841,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
@@ -1395,9 +1714,12 @@ local recipes = {
         },
     },
     ["Major Frost Protection Potion"] = {
+        spellID = 28572,
         itemID = 22842,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
@@ -1408,9 +1730,12 @@ local recipes = {
         },
     },
     ["Major Holy Protection Potion"] = {
+        spellID = 28577,
         itemID = 22847,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
@@ -1421,9 +1746,12 @@ local recipes = {
         },
     },
     ["Major Nature Protection Potion"] = {
+        spellID = 28573,
         itemID = 22844,
         skillReq = 360,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Revered" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
@@ -1434,9 +1762,12 @@ local recipes = {
         },
     },
     ["Major Shadow Protection Potion"] = {
+        spellID = 28576,
         itemID = 22846,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
@@ -1447,9 +1778,12 @@ local recipes = {
         },
     },
     ["Minor Magic Resistance Potion"] = {
+        spellID = 3172,
         itemID = 3384,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 110, 135, 155, 175 },
@@ -1460,9 +1794,12 @@ local recipes = {
         },
     },
     ["Nature Protection Potion"] = {
+        spellID = 7259,
         itemID = 6052,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Alchemist Pestlezugg, Bronk +2 more" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 190, 210, 230, 250 },
@@ -1473,10 +1810,12 @@ local recipes = {
         },
     },
     ["Restorative Potion"] = {
+        spellID = 11452,
         itemID = 9030,
         skillReq = 215,
-        source = "quest",
-        sourceDetail = "Quest: Badlands Reagent Run II",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 215, 225, 245, 265 },
@@ -1487,9 +1826,12 @@ local recipes = {
         },
     },
     ["Shadow Protection Potion"] = {
+        spellID = 7256,
         itemID = 6048,
         skillReq = 135,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Christoph Jeffcoat, Harklan Moongrove" },
+        },
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 135, 160, 180, 200 },
@@ -1502,9 +1844,12 @@ local recipes = {
     -- Utility
     -- --------------------------------
     ["Destruction Potion"] = {
+        spellID = 28565,
         itemID = 22839,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 350, 365, 372, 380 },
@@ -1515,9 +1860,12 @@ local recipes = {
         },
     },
     ["Dreamless Sleep Potion"] = {
+        spellID = 15833,
         itemID = 12190,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 230, 245, 265, 285 },
@@ -1527,9 +1875,12 @@ local recipes = {
         },
     },
     ["Free Action Potion"] = {
+        spellID = 6624,
         itemID = 5634,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kor\'geld, Soolie Berryfizz +1 more" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 150, 175, 195, 215 },
@@ -1540,10 +1891,13 @@ local recipes = {
         },
     },
     ["Ghost Dye"] = {
+        spellID = 11473,
         itemID = 9210,
         skillReq = 245,
-        source = "vendor",
-        sourceDetail = "Logannas (A, Feathermoon Stronghold) / Bronk (H, Camp Mojache), Feralas",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "vendor", faction = "Both", detail = "Sold by Bronk, Logannas" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 245, 260, 280, 300 },
@@ -1554,9 +1908,12 @@ local recipes = {
         },
     },
     ["Gift of Arthas"] = {
+        spellID = 11466,
         itemID = 9088,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 240, 255, 275, 295 },
@@ -1567,9 +1924,12 @@ local recipes = {
         },
     },
     ["Goblin Rocket Fuel"] = {
+        spellID = 11456,
         itemID = 9061,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 210, 225, 245, 265 },
@@ -1580,9 +1940,12 @@ local recipes = {
         },
     },
     ["Great Rage Potion"] = {
+        spellID = 6618,
         itemID = 5633,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Hagrus, Ulthir" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 175, 195, 215, 235 },
@@ -1593,9 +1956,12 @@ local recipes = {
         },
     },
     ["Greater Dreamless Sleep Potion"] = {
+        spellID = 24366,
         itemID = 20002,
         skillReq = 275,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Neutral" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 275, 290, 310, 330 },
@@ -1606,9 +1972,12 @@ local recipes = {
         },
     },
     ["Greater Stoneshield Potion"] = {
+        spellID = 17570,
         itemID = 13455,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 280, 295, 315, 335 },
@@ -1619,9 +1988,12 @@ local recipes = {
         },
     },
     ["Gurubashi Mojo Madness"] = {
+        spellID = 24266,
         itemID = 19931,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 315, 315, 322, 330 },
@@ -1633,9 +2005,12 @@ local recipes = {
         },
     },
     ["Haste Potion"] = {
+        spellID = 28564,
         itemID = 22838,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 350, 365, 372, 380 },
@@ -1646,9 +2021,12 @@ local recipes = {
         },
     },
     ["Heroic Potion"] = {
+        spellID = 28563,
         itemID = 22837,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 350, 365, 372, 380 },
@@ -1659,9 +2037,12 @@ local recipes = {
         },
     },
     ["Insane Strength Potion"] = {
+        spellID = 28550,
         itemID = 22828,
         skillReq = 320,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 320, 335, 342, 350 },
@@ -1671,9 +2052,12 @@ local recipes = {
         },
     },
     ["Invisibility Potion"] = {
+        spellID = 11464,
         itemID = 9172,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 235, 250, 270, 290 },
@@ -1684,9 +2068,12 @@ local recipes = {
         },
     },
     ["Ironshield Potion"] = {
+        spellID = 28579,
         itemID = 22849,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 365, 380, 387, 395 },
@@ -1697,9 +2084,12 @@ local recipes = {
         },
     },
     ["Lesser Invisibility Potion"] = {
+        spellID = 3448,
         itemID = 3823,
         skillReq = 165,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 165, 185, 205, 225 },
@@ -1710,9 +2100,12 @@ local recipes = {
         },
     },
     ["Lesser Stoneshield Potion"] = {
+        spellID = 4942,
         itemID = 4623,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Liquid Stone" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 215, 230, 250, 270 },
@@ -1723,9 +2116,12 @@ local recipes = {
         },
     },
     ["Limited Invulnerability Potion"] = {
+        spellID = 3175,
         itemID = 3387,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 250, 275, 295, 315 },
@@ -1736,9 +2132,12 @@ local recipes = {
         },
     },
     ["Living Action Potion"] = {
+        spellID = 24367,
         itemID = 20008,
         skillReq = 285,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Revered" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 285, 300, 320, 340 },
@@ -1750,9 +2149,12 @@ local recipes = {
         },
     },
     ["Mageblood Potion"] = {
+        spellID = 24365,
         itemID = 20007,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Honored" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 275, 290, 310, 330 },
@@ -1763,10 +2165,12 @@ local recipes = {
         },
     },
     ["Major Dreamless Sleep Potion"] = {
+        spellID = 28562,
         itemID = 22836,
         skillReq = 350,
-        source = "vendor",
-        sourceDetail = "Leeli Longhaggle, Terokkar Forest",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Daga Ramba, Leeli Longhaggle" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 350, 365, 372, 380 },
@@ -1777,9 +2181,12 @@ local recipes = {
         },
     },
     ["Major Rejuvenation Potion"] = {
+        spellID = 22732,
         itemID = 18253,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 300, 310, 320, 330 },
@@ -1791,9 +2198,12 @@ local recipes = {
         },
     },
     ["Major Troll's Blood Potion"] = {
+        spellID = 24368,
         itemID = 20004,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Friendly" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 290, 305, 325, 345 },
@@ -1804,9 +2214,13 @@ local recipes = {
         },
     },
     ["Mighty Rage Potion"] = {
+        spellID = 17552,
         itemID = 13442,
         skillReq = 255,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 255, 270, 290, 310 },
@@ -1816,9 +2230,12 @@ local recipes = {
         },
     },
     ["Mighty Troll's Blood Potion"] = {
+        spellID = 3451,
         itemID = 3826,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 180, 200, 220, 240 },
@@ -1829,9 +2246,12 @@ local recipes = {
         },
     },
     ["Minor Rejuvenation Potion"] = {
+        spellID = 2332,
         itemID = 2456,
         skillReq = 40,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 40, 70, 90, 110 },
@@ -1842,9 +2262,12 @@ local recipes = {
         },
     },
     ["Potion of Curing"] = {
+        spellID = 3174,
         itemID = 3386,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 120, 145, 165, 185 },
@@ -1855,9 +2278,13 @@ local recipes = {
         },
     },
     ["Purification Potion"] = {
+        spellID = 17572,
         itemID = 13462,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 285, 300, 320, 340 },
@@ -1868,9 +2295,12 @@ local recipes = {
         },
     },
     ["Rage Potion"] = {
+        spellID = 6617,
         itemID = 5631,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Defias Profiteer, Hagrus +2 more" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 60, 90, 110, 130 },
@@ -1880,9 +2310,12 @@ local recipes = {
         },
     },
     ["Shrouding Potion"] = {
+        spellID = 28554,
         itemID = 22871,
         skillReq = 335,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Sporeggar @ Revered" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 335, 350, 357, 365 },
@@ -1893,10 +2326,12 @@ local recipes = {
         },
     },
     ["Sneaking Potion"] = {
+        spellID = 28546,
         itemID = 22826,
         skillReq = 315,
-        source = "vendor",
-        sourceDetail = "Leeli Longhaggle, Terokkar Forest",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Leeli Longhaggle, Seer Janidi" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 315, 330, 337, 345 },
@@ -1907,9 +2342,12 @@ local recipes = {
         },
     },
     ["Strong Troll's Blood Potion"] = {
+        spellID = 3176,
         itemID = 3388,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 125, 150, 170, 190 },
@@ -1920,9 +2358,12 @@ local recipes = {
         },
     },
     ["Super Rejuvenation Potion"] = {
+        spellID = 28586,
         itemID = 22850,
         skillReq = 390,
-        source = "trainer",
+        sources = {
+            { method = "discovery", faction = "Both", detail = "discovered while crafting" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 390, 390, 397, 405 },
@@ -1934,9 +2375,12 @@ local recipes = {
         },
     },
     ["Swiftness Potion"] = {
+        spellID = 2335,
         itemID = 2459,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 60, 90, 110, 130 },
@@ -1947,9 +2391,12 @@ local recipes = {
         },
     },
     ["Swim Speed Potion"] = {
+        spellID = 7841,
         itemID = 6372,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 100, 130, 150, 170 },
@@ -1960,9 +2407,12 @@ local recipes = {
         },
     },
     ["Weak Troll's Blood Potion"] = {
+        spellID = 3170,
         itemID = 3382,
         skillReq = 15,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Elixir",
         subcategory = "Guardian",
         skillRange = { 15, 60, 80, 100 },
@@ -1973,9 +2423,12 @@ local recipes = {
         },
     },
     ["Wildvine Potion"] = {
+        spellID = 11458,
         itemID = 9144,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 225, 240, 260, 280 },
@@ -1992,36 +2445,48 @@ local recipes = {
     -- Elemental
     -- --------------------------------
     ["Transmute: Air to Fire"] = {
+        spellID = 17559,
         itemID = 7078,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Friendly" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 275, 275, 282, 290 },
         reagents = { { itemID = 7082, count = 1, name = "Essence of Air" } },
     },
     ["Transmute: Earth to Life"] = {
+        spellID = 17566,
         itemID = 12803,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 275, 275, 282, 290 },
         reagents = { { itemID = 7076, count = 1, name = "Essence of Earth" } },
     },
     ["Transmute: Earth to Water"] = {
+        spellID = 17561,
         itemID = 7080,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Neutral" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 275, 275, 282, 290 },
         reagents = { { itemID = 7076, count = 1, name = "Essence of Earth" } },
     },
     ["Transmute: Earthstorm Diamond"] = {
+        spellID = 32765,
         itemID = 25867,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Friendly" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 350, 365, 372, 380 },
@@ -2034,36 +2499,49 @@ local recipes = {
         },
     },
     ["Transmute: Elemental Fire"] = {
+        spellID = 25146,
         itemID = 7068,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Thorium Brotherhood @ Neutral" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 300, 301, 305, 310 },
         reagents = { { itemID = 7077, count = 1, name = "Heart of Fire" } },
     },
     ["Transmute: Fire to Earth"] = {
+        spellID = 17560,
         itemID = 7076,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Plugger Spazzring" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 275, 275, 282, 290 },
         reagents = { { itemID = 7078, count = 1, name = "Essence of Fire" } },
     },
     ["Transmute: Life to Earth"] = {
+        spellID = 17565,
         itemID = 7076,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 275, 275, 282, 290 },
         reagents = { { itemID = 12803, count = 1, name = "Living Essence" } },
     },
     ["Transmute: Skyfire Diamond"] = {
+        spellID = 32766,
         itemID = 25868,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Friendly" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 350, 365, 372, 380 },
@@ -2076,27 +2554,36 @@ local recipes = {
         },
     },
     ["Transmute: Undeath to Water"] = {
+        spellID = 17563,
         itemID = 7080,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 275, 275, 282, 290 },
         reagents = { { itemID = 12808, count = 1, name = "Essence of Undeath" } },
     },
     ["Transmute: Water to Air"] = {
+        spellID = 17562,
         itemID = 7082,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Magnus Frostwake" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 275, 275, 282, 290 },
         reagents = { { itemID = 7080, count = 1, name = "Essence of Water" } },
     },
     ["Transmute: Water to Undeath"] = {
+        spellID = 17564,
         itemID = 12808,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 275, 275, 282, 290 },
@@ -2105,9 +2592,12 @@ local recipes = {
     -- Metal
     -- --------------------------------
     ["Transmute: Arcanite"] = {
+        spellID = 17187,
         itemID = 12360,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Alchemist Pestlezugg" },
+        },
         category = "Transmute",
         subcategory = "Metal",
         skillRange = { 275, 275, 282, 290 },
@@ -2117,18 +2607,26 @@ local recipes = {
         },
     },
     ["Transmute: Iron to Gold"] = {
+        spellID = 11479,
         itemID = 3577,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Alliance" },
+            { method = "vendor", faction = "Both", detail = "Sold by Alchemist Pestlezugg" },
+        },
         category = "Transmute",
         subcategory = "Metal",
         skillRange = { 225, 240, 260, 280 },
         reagents = { { itemID = 3575, count = 1, name = "Iron Bar" } },
     },
     ["Transmute: Mithril to Truesilver"] = {
+        spellID = 11480,
         itemID = 6037,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Alliance" },
+            { method = "vendor", faction = "Both", detail = "Sold by Alchemist Pestlezugg" },
+        },
         category = "Transmute",
         subcategory = "Metal",
         skillRange = { 225, 240, 260, 280 },
@@ -2137,72 +2635,97 @@ local recipes = {
     -- Primal
     -- --------------------------------
     ["Transmute: Primal Air to Fire"] = {
+        spellID = 28566,
         itemID = 21884,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Honored" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 350, 365, 372, 380 },
         reagents = { { itemID = 22451, count = 1, name = "Primal Air" } },
     },
     ["Transmute: Primal Earth to Life"] = {
+        spellID = 28585,
         itemID = 21886,
         skillReq = 385,
-        source = "trainer",
+        sources = {
+            { method = "discovery", faction = "Both", detail = "discovered while crafting" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 385, 385, 392, 400 },
         reagents = { { itemID = 22452, count = 1, name = "Primal Earth" } },
     },
     ["Transmute: Primal Earth to Water"] = {
+        spellID = 28567,
         itemID = 21885,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Sporeggar @ Honored" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 350, 365, 372, 380 },
         reagents = { { itemID = 22452, count = 1, name = "Primal Earth" } },
     },
     ["Transmute: Primal Fire to Earth"] = {
+        spellID = 28568,
         itemID = 22452,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "The Mag'har @ Honored" },
+            { method = "reputation", faction = "Alliance", detail = "Kurenai @ Honored" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 350, 365, 372, 380 },
         reagents = { { itemID = 21884, count = 1, name = "Primal Fire" } },
     },
     ["Transmute: Primal Fire to Mana"] = {
+        spellID = 28583,
         itemID = 22457,
         skillReq = 385,
-        source = "trainer",
+        sources = {
+            { method = "discovery", faction = "Both", detail = "discovered while crafting" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 385, 385, 392, 400 },
         reagents = { { itemID = 21884, count = 1, name = "Primal Fire" } },
     },
     ["Transmute: Primal Life to Earth"] = {
+        spellID = 28584,
         itemID = 22452,
         skillReq = 385,
-        source = "trainer",
+        sources = {
+            { method = "discovery", faction = "Both", detail = "discovered while crafting" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 385, 385, 392, 400 },
         reagents = { { itemID = 21886, count = 1, name = "Primal Life" } },
     },
     ["Transmute: Primal Mana to Fire"] = {
+        spellID = 28582,
         itemID = 21884,
         skillReq = 385,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 385, 385, 392, 400 },
         reagents = { { itemID = 22457, count = 1, name = "Primal Mana" } },
     },
     ["Transmute: Primal Might"] = {
+        spellID = 29688,
         itemID = 23571,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Altaa, Melaris +1 more" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 350, 365, 372, 380 },
@@ -2215,27 +2738,36 @@ local recipes = {
         },
     },
     ["Transmute: Primal Shadow to Water"] = {
+        spellID = 28580,
         itemID = 21885,
         skillReq = 385,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 385, 385, 392, 400 },
         reagents = { { itemID = 22456, count = 1, name = "Primal Shadow" } },
     },
     ["Transmute: Primal Water to Air"] = {
+        spellID = 28569,
         itemID = 22451,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Honored" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 350, 365, 372, 380 },
         reagents = { { itemID = 21885, count = 1, name = "Primal Water" } },
     },
     ["Transmute: Primal Water to Shadow"] = {
+        spellID = 28581,
         itemID = 22456,
         skillReq = 385,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Transmute",
         subcategory = "Primal",
         skillRange = { 385, 385, 392, 400 },
@@ -2246,9 +2778,12 @@ local recipes = {
     -- TRINKET
     -- ================================================================
     ["Alchemist's Stone"] = {
+        spellID = 17632,
         itemID = 13503,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 300, 365, 372, 380 },
         reagents = {
@@ -2260,9 +2795,12 @@ local recipes = {
         },
     },
     ["Assassin's Alchemist Stone"] = {
+        spellID = 47050,
         itemID = 35751,
         skillReq = 375,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+        },
         category = "Trinket",
         skillRange = { 375, 390, 397, 405 },
         reagents = {
@@ -2272,9 +2810,12 @@ local recipes = {
         },
     },
     ["Guardian's Alchemist Stone"] = {
+        spellID = 47046,
         itemID = 35748,
         skillReq = 375,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+        },
         category = "Trinket",
         skillRange = { 375, 390, 397, 405 },
         reagents = {
@@ -2284,9 +2825,12 @@ local recipes = {
         },
     },
     ["Mad Alchemist's Potion"] = {
+        spellID = 45061,
         itemID = 34440,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 325, 335, 342, 350 },
         reagents = {
@@ -2295,9 +2839,12 @@ local recipes = {
         },
     },
     ["Mercurial Stone"] = {
+        spellID = 38070,
         itemID = 31080,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 325, 340, 347, 355 },
         reagents = {
@@ -2307,10 +2854,13 @@ local recipes = {
         },
     },
     ["Philosopher's Stone"] = {
+        spellID = 11459,
         itemID = 9149,
         skillReq = 225,
-        source = "vendor",
-        sourceDetail = "Alchemist Pestlezugg, Tanaris",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "vendor", faction = "Both", detail = "Sold by Alchemist Pestlezugg" },
+        },
         category = "Trinket",
         skillRange = { 225, 240, 260, 280 },
         reagents = {
@@ -2321,9 +2871,12 @@ local recipes = {
         },
     },
     ["Redeemer's Alchemist Stone"] = {
+        spellID = 47049,
         itemID = 35750,
         skillReq = 375,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+        },
         category = "Trinket",
         skillRange = { 375, 390, 397, 405 },
         reagents = {
@@ -2333,9 +2886,12 @@ local recipes = {
         },
     },
     ["Sorcerer's Alchemist Stone"] = {
+        spellID = 47048,
         itemID = 35749,
         skillReq = 375,
-        source = "reputation",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+        },
         category = "Trinket",
         skillRange = { 375, 390, 397, 405 },
         reagents = {

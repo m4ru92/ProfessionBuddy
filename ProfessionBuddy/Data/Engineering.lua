@@ -14,9 +14,12 @@ local recipes = {
     -- AMMUNITION
     -- ================================================================
     ["Crafted Heavy Shot"] = {
+        spellID = 3930,
         itemID = 8068,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ammunition",
         skillRange = { 75, 85, 90, 95 },
         reagents = {
@@ -25,9 +28,12 @@ local recipes = {
         },
     },
     ["Crafted Light Shot"] = {
+        spellID = 3920,
         itemID = 8067,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Ammunition",
         skillRange = { 30, 30, 45, 60 },
         reagents = {
@@ -36,9 +42,12 @@ local recipes = {
         },
     },
     ["Crafted Solid Shot"] = {
+        spellID = 3947,
         itemID = 8069,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ammunition",
         skillRange = { 125, 125, 135, 145 },
         reagents = {
@@ -47,9 +56,12 @@ local recipes = {
         },
     },
     ["Fel Iron Shells"] = {
+        spellID = 30346,
         itemID = 23772,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ammunition",
         skillRange = { 310, 310, 320, 330 },
         reagents = {
@@ -58,9 +70,12 @@ local recipes = {
         },
     },
     ["Hi-Impact Mithril Slugs"] = {
+        spellID = 12596,
         itemID = 10512,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ammunition",
         skillRange = { 210, 210, 230, 250 },
         reagents = {
@@ -69,9 +84,12 @@ local recipes = {
         },
     },
     ["Mithril Gyro-Shot"] = {
+        spellID = 12621,
         itemID = 10513,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ammunition",
         skillRange = { 245, 245, 265, 285 },
         reagents = {
@@ -80,9 +98,13 @@ local recipes = {
         },
     },
     ["Thorium Shells"] = {
+        spellID = 19800,
         itemID = 15997,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Ammunition",
         skillRange = { 285, 295, 300, 305 },
         reagents = {
@@ -95,9 +117,12 @@ local recipes = {
     -- ARMOR
     -- ================================================================
     ["Annihilator Holo-Gogs"] = {
+        spellID = 46111,
         itemID = 34847,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -109,9 +134,12 @@ local recipes = {
         },
     },
     ["Bloodvine Goggles"] = {
+        spellID = 24356,
         itemID = 19999,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Friendly" },
+        },
         category = "Armor",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -123,9 +151,12 @@ local recipes = {
         },
     },
     ["Bloodvine Lens"] = {
+        spellID = 24357,
         itemID = 19998,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Neutral" },
+        },
         category = "Armor",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -137,9 +168,12 @@ local recipes = {
         },
     },
     ["Bright-Eye Goggles"] = {
+        spellID = 12587,
         itemID = 10499,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 175, 195, 205, 215 },
         reagents = {
@@ -148,9 +182,12 @@ local recipes = {
         },
     },
     ["Catseye Ultra Goggles"] = {
+        spellID = 12607,
         itemID = 10501,
         skillReq = 220,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 220, 240, 250, 260 },
         reagents = {
@@ -160,9 +197,12 @@ local recipes = {
         },
     },
     ["Cogspinner Goggles"] = {
+        spellID = 30316,
         itemID = 23758,
         skillReq = 340,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lebowski, Mixie Farshot" },
+        },
         category = "Armor",
         skillRange = { 340, 350, 360, 370 },
         reagents = {
@@ -172,9 +212,12 @@ local recipes = {
         },
     },
     ["Craftsman's Monocle"] = {
+        spellID = 3966,
         itemID = 4393,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 185, 205, 215, 225 },
         reagents = {
@@ -183,9 +226,12 @@ local recipes = {
         },
     },
     ["Deathblow X11 Goggles"] = {
+        spellID = 41317,
         itemID = 32478,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -198,9 +244,12 @@ local recipes = {
         },
     },
     ["Deepdive Helmet"] = {
+        spellID = 12617,
         itemID = 10506,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Jubie Gadgetspring" },
+        },
         category = "Armor",
         skillRange = { 230, 250, 260, 270 },
         reagents = {
@@ -212,9 +261,12 @@ local recipes = {
         },
     },
     ["Destruction Holo-gogs"] = {
+        spellID = 41320,
         itemID = 32494,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -227,9 +279,12 @@ local recipes = {
         },
     },
     ["Fire Goggles"] = {
+        spellID = 12594,
         itemID = 10500,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 205, 225, 235, 245 },
         reagents = {
@@ -240,9 +295,12 @@ local recipes = {
         },
     },
     ["Flying Tiger Goggles"] = {
+        spellID = 3934,
         itemID = 4368,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 100, 130, 145, 160 },
         reagents = {
@@ -251,9 +309,12 @@ local recipes = {
         },
     },
     ["Foreman's Enchanted Helmet"] = {
+        spellID = 30565,
         itemID = 23838,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 375, 375, 385, 395 },
         reagents = {
@@ -263,9 +324,12 @@ local recipes = {
         },
     },
     ["Foreman's Reinforced Helmet"] = {
+        spellID = 30566,
         itemID = 23839,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 375, 375, 385, 395 },
         reagents = {
@@ -275,9 +339,12 @@ local recipes = {
         },
     },
     ["Furious Gizmatic Goggles"] = {
+        spellID = 40274,
         itemID = 32461,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -290,9 +357,12 @@ local recipes = {
         },
     },
     ["Gadgetstorm Goggles"] = {
+        spellID = 41315,
         itemID = 32476,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -305,9 +375,12 @@ local recipes = {
         },
     },
     ["Gnomish Battle Goggles"] = {
+        spellID = 30575,
         itemID = 23829,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 375, 375, 385, 395 },
         reagents = {
@@ -319,9 +392,12 @@ local recipes = {
         },
     },
     ["Gnomish Goggles"] = {
+        spellID = 12897,
         itemID = 10545,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 210, 230, 240, 250 },
         reagents = {
@@ -333,9 +409,12 @@ local recipes = {
         },
     },
     ["Gnomish Harm Prevention Belt"] = {
+        spellID = 12903,
         itemID = 10721,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 215, 235, 245, 255 },
         reagents = {
@@ -347,9 +426,12 @@ local recipes = {
         },
     },
     ["Gnomish Mind Control Cap"] = {
+        spellID = 12907,
         itemID = 10726,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 235, 255, 265, 275 },
         reagents = {
@@ -361,9 +443,12 @@ local recipes = {
         },
     },
     ["Gnomish Power Goggles"] = {
+        spellID = 30574,
         itemID = 23828,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 375, 375, 385, 395 },
         reagents = {
@@ -376,9 +461,12 @@ local recipes = {
         },
     },
     ["Gnomish Rocket Boots"] = {
+        spellID = 12905,
         itemID = 10724,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 225, 245, 255, 265 },
         reagents = {
@@ -390,9 +478,12 @@ local recipes = {
         },
     },
     ["Goblin Construction Helmet"] = {
+        spellID = 12718,
         itemID = 10543,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 205, 225, 235, 245 },
         reagents = {
@@ -402,9 +493,12 @@ local recipes = {
         },
     },
     ["Goblin Mining Helmet"] = {
+        spellID = 12717,
         itemID = 10542,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 205, 225, 235, 245 },
         reagents = {
@@ -414,9 +508,13 @@ local recipes = {
         },
     },
     ["Goblin Rocket Boots"] = {
+        spellID = 8895,
         itemID = 7189,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 225, 245, 255, 265 },
         reagents = {
@@ -428,9 +526,12 @@ local recipes = {
         },
     },
     ["Goblin Rocket Helmet"] = {
+        spellID = 12758,
         itemID = 10588,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 245, 265, 275, 285 },
         reagents = {
@@ -441,9 +542,12 @@ local recipes = {
         },
     },
     ["Green Lens"] = {
+        spellID = 12622,
         itemID = 10504,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 245, 265, 275, 285 },
         reagents = {
@@ -455,9 +559,12 @@ local recipes = {
         },
     },
     ["Green Tinted Goggles"] = {
+        spellID = 3956,
         itemID = 4385,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 150, 175, 187, 200 },
         reagents = {
@@ -467,9 +574,12 @@ local recipes = {
         },
     },
     ["Hard Khorium Goggles"] = {
+        spellID = 46115,
         itemID = 34357,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -480,9 +590,12 @@ local recipes = {
         },
     },
     ["Hyper-Magnified Moon Specs"] = {
+        spellID = 46109,
         itemID = 35182,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -493,9 +606,12 @@ local recipes = {
         },
     },
     ["Hyper-Vision Goggles"] = {
+        spellID = 30325,
         itemID = 23763,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -506,9 +622,12 @@ local recipes = {
         },
     },
     ["Justicebringer 2000 Specs"] = {
+        spellID = 41311,
         itemID = 32472,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -521,9 +640,12 @@ local recipes = {
         },
     },
     ["Justicebringer 3000 Specs"] = {
+        spellID = 46107,
         itemID = 35185,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -535,9 +657,12 @@ local recipes = {
         },
     },
     ["Lightning Etched Specs"] = {
+        spellID = 46112,
         itemID = 34355,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -548,9 +673,12 @@ local recipes = {
         },
     },
     ["Living Replicator Specs"] = {
+        spellID = 41316,
         itemID = 32475,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -563,9 +691,12 @@ local recipes = {
         },
     },
     ["Magnified Moon Specs"] = {
+        spellID = 41319,
         itemID = 32480,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -578,9 +709,13 @@ local recipes = {
         },
     },
     ["Master Engineer's Goggles"] = {
+        spellID = 19825,
         itemID = 16008,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 290, 310, 320, 330 },
         reagents = {
@@ -590,9 +725,12 @@ local recipes = {
         },
     },
     ["Mayhem Projection Goggles"] = {
+        spellID = 46114,
         itemID = 34354,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -602,9 +740,12 @@ local recipes = {
         },
     },
     ["Nigh-Invulnerability Belt"] = {
+        spellID = 30570,
         itemID = 23825,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 350, 360, 370, 380 },
         reagents = {
@@ -616,9 +757,12 @@ local recipes = {
         },
     },
     ["Power Amplification Goggles"] = {
+        spellID = 30317,
         itemID = 23761,
         skillReq = 340,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 340, 350, 360, 370 },
         reagents = {
@@ -628,9 +772,12 @@ local recipes = {
         },
     },
     ["Powerheal 4000 Lens"] = {
+        spellID = 41321,
         itemID = 32495,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -643,9 +790,12 @@ local recipes = {
         },
     },
     ["Powerheal 9000 Lens"] = {
+        spellID = 46108,
         itemID = 35181,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -656,9 +806,12 @@ local recipes = {
         },
     },
     ["Primal-Attuned Goggles"] = {
+        spellID = 46110,
         itemID = 35184,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -670,9 +823,12 @@ local recipes = {
         },
     },
     ["Quad Deathblow X44 Goggles"] = {
+        spellID = 46116,
         itemID = 34353,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -682,9 +838,12 @@ local recipes = {
         },
     },
     ["Rocket Boots Xtreme"] = {
+        spellID = 30556,
         itemID = 23824,
         skillReq = 355,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 355, 365, 375, 385 },
         reagents = {
@@ -695,9 +854,12 @@ local recipes = {
         },
     },
     ["Rocket Boots Xtreme Lite"] = {
+        spellID = 46697,
         itemID = 35581,
         skillReq = 355,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 355, 365, 375, 385 },
         reagents = {
@@ -708,9 +870,12 @@ local recipes = {
         },
     },
     ["Rose Colored Goggles"] = {
+        spellID = 12618,
         itemID = 10503,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 230, 250, 260, 270 },
         reagents = {
@@ -719,9 +884,12 @@ local recipes = {
         },
     },
     ["Shadow Goggles"] = {
+        spellID = 3940,
         itemID = 4373,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 120, 145, 157, 170 },
         reagents = {
@@ -730,9 +898,13 @@ local recipes = {
         },
     },
     ["Spellpower Goggles Xtreme"] = {
+        spellID = 12615,
         itemID = 10502,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 225, 245, 255, 265 },
         reagents = {
@@ -741,9 +913,13 @@ local recipes = {
         },
     },
     ["Spellpower Goggles Xtreme Plus"] = {
+        spellID = 19794,
         itemID = 15999,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 270, 290, 300, 310 },
         reagents = {
@@ -754,9 +930,12 @@ local recipes = {
         },
     },
     ["Surestrike Goggles v2.0"] = {
+        spellID = 41314,
         itemID = 32474,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -769,9 +948,12 @@ local recipes = {
         },
     },
     ["Surestrike Goggles v3.0"] = {
+        spellID = 46113,
         itemID = 34356,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -781,9 +963,12 @@ local recipes = {
         },
     },
     ["Tankatronic Goggles"] = {
+        spellID = 41312,
         itemID = 32473,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -796,9 +981,12 @@ local recipes = {
         },
     },
     ["Ultra-Spectropic Detection Goggles"] = {
+        spellID = 30318,
         itemID = 23762,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Captured Gnome, Lebowski" },
+        },
         category = "Armor",
         skillRange = { 350, 360, 370, 380 },
         reagents = {
@@ -809,9 +997,12 @@ local recipes = {
         },
     },
     ["Wonderheal XT40 Shades"] = {
+        spellID = 41318,
         itemID = 32479,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 370, 380, 390 },
         reagents = {
@@ -824,9 +1015,12 @@ local recipes = {
         },
     },
     ["Wonderheal XT68 Shades"] = {
+        spellID = 46106,
         itemID = 35183,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Armor",
         skillRange = { 1, 390, 410, 430 },
         reagents = {
@@ -841,9 +1035,12 @@ local recipes = {
     -- BAG
     -- ================================================================
     ["Fel Iron Toolbox"] = {
+        spellID = 30348,
         itemID = 23774,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Feera, Wind Trader Lathrai +1 more" },
+        },
         category = "Bag",
         skillRange = { 325, 325, 335, 345 },
         reagents = {
@@ -852,26 +1049,17 @@ local recipes = {
             { itemID = 23783, count = 2, name = "Handful of Fel Iron Bolts" },
         },
     },
-    ["Khorium Toolbox"] = {
-        itemID = 23775,
-        skillReq = 350,
-        source = "trainer",
-        category = "Bag",
-        skillRange = { 350, 360, 370, 380 },
-        reagents = {
-            { itemID = 23782, count = 1, name = "Fel Iron Casing" },
-            { itemID = 23449, count = 5, name = "Khorium Bar" },
-            { itemID = 23783, count = 2, name = "Handful of Fel Iron Bolts" },
-        },
-    },
 
     -- ================================================================
     -- COMPANION
     -- ================================================================
     ["Alarm-O-Bot"] = {
+        spellID = 23096,
         itemID = 18645,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Companion",
         skillRange = { 265, 275, 280, 285 },
         reagents = {
@@ -883,9 +1071,12 @@ local recipes = {
         },
     },
     ["Crashin' Thrashin' Robot"] = {
+        spellID = 30337,
         itemID = 23767,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Companion",
         skillRange = { 325, 335, 345, 355 },
         reagents = {
@@ -896,9 +1087,12 @@ local recipes = {
         },
     },
     ["Field Repair Bot 110G"] = {
+        spellID = 44391,
         itemID = 34113,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Companion",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -908,9 +1102,12 @@ local recipes = {
         },
     },
     ["Field Repair Bot 74A"] = {
+        spellID = 22704,
         itemID = 18232,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both", detail = "ground object in Blackrock Depths (300 Engineering)" },
+        },
         category = "Companion",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -919,9 +1116,12 @@ local recipes = {
         },
     },
     ["Mechanical Squirrel"] = {
+        spellID = 3928,
         itemID = 4401,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Companion",
         skillRange = { 75, 105, 120, 135 },
         reagents = {
@@ -932,10 +1132,12 @@ local recipes = {
         },
     },
     ["Tranquil Mechanical Yeti"] = {
+        spellID = 26011,
         itemID = 21277,
         skillReq = 250,
-        source = "vendor",
-        sourceDetail = "Xizzer Fizzbolt, Winterspring",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Companion",
         skillRange = { 250, 320, 330, 340 },
         reagents = {
@@ -951,9 +1153,12 @@ local recipes = {
     -- DEVICE
     -- ================================================================
     ["Adamantite Arrow Maker"] = {
+        spellID = 43676,
         itemID = 20475,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 335, 335, 345, 355 },
         reagents = {
@@ -963,9 +1168,12 @@ local recipes = {
         },
     },
     ["Adamantite Frame"] = {
+        spellID = 30306,
         itemID = 23784,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 325, 325, 330, 335 },
         reagents = {
@@ -974,9 +1182,12 @@ local recipes = {
         },
     },
     ["Adamantite Shell Machine"] = {
+        spellID = 30347,
         itemID = 34504,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Feera, Wind Trader Lathrai +1 more" },
+        },
         category = "Device",
         skillRange = { 335, 335, 345, 355 },
         reagents = {
@@ -986,9 +1197,12 @@ local recipes = {
         },
     },
     ["Advanced Target Dummy"] = {
+        spellID = 3965,
         itemID = 4392,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 185, 185, 205, 225 },
         reagents = {
@@ -999,9 +1213,12 @@ local recipes = {
         },
     },
     ["Aquadynamic Fish Attractor"] = {
+        spellID = 9271,
         itemID = 6533,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 150, 150, 160, 170 },
         reagents = {
@@ -1011,23 +1228,32 @@ local recipes = {
         },
     },
     ["Arcanite Dragonling"] = {
+        spellID = 19830,
         itemID = 0,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
-        skillRange = { 300, 0, 0, 0 },
+        skillRange = { 300, 300, 300, 300},
     },
     ["Battle Chicken"] = {
+        spellID = 13166,
         itemID = 0,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Device",
-        skillRange = { 1, 0, 0, 0 },
+        skillRange = { 0, 0, 0, 0},
     },
     ["Blue Firework"] = {
+        spellID = 23067,
         itemID = 9312,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Darian Singh, Gearcutter Cogspinner" },
+        },
         category = "Device",
         skillRange = { 150, 150, 162, 175 },
         reagents = {
@@ -1035,22 +1261,13 @@ local recipes = {
             { itemID = 4234, count = 1, name = "Heavy Leather" },
         },
     },
-    ["Blue Smoke Flare"] = {
-        itemID = 23770,
-        skillReq = 335,
-        source = "trainer",
-        category = "Device",
-        skillRange = { 1, 335, 345, 355 },
-        reagents = {
-            { itemID = 23781, count = 1, name = "Elemental Blasting Powder" },
-            { itemID = 21877, count = 1, name = "Netherweave Cloth" },
-            { itemID = 6260, count = 1, name = "Blue Dye" },
-        },
-    },
     ["Bronze Framework"] = {
+        spellID = 3953,
         itemID = 4382,
         skillReq = 145,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 145, 145, 170, 195 },
         reagents = {
@@ -1060,9 +1277,12 @@ local recipes = {
         },
     },
     ["Bronze Tube"] = {
+        spellID = 3938,
         itemID = 4371,
         skillReq = 105,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 105, 105, 130, 155 },
         reagents = {
@@ -1071,17 +1291,23 @@ local recipes = {
         },
     },
     ["Coarse Blasting Powder"] = {
+        spellID = 3929,
         itemID = 4364,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 75, 85, 90, 95 },
         reagents = { { itemID = 2836, count = 1, name = "Coarse Stone" } },
     },
     ["Compact Harvest Reaper Kit"] = {
+        spellID = 3963,
         itemID = 4391,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 175, 175, 195, 215 },
         reagents = {
@@ -1092,9 +1318,12 @@ local recipes = {
         },
     },
     ["Copper Modulator"] = {
+        spellID = 3926,
         itemID = 4363,
         skillReq = 65,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 65, 95, 110, 125 },
         reagents = {
@@ -1104,9 +1333,12 @@ local recipes = {
         },
     },
     ["Copper Tube"] = {
+        spellID = 3924,
         itemID = 4361,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 50, 80, 95, 110 },
         reagents = {
@@ -1115,9 +1347,12 @@ local recipes = {
         },
     },
     ["Delicate Arcanite Converter"] = {
+        spellID = 19815,
         itemID = 16006,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Xizzer Fizzbolt" },
+        },
         category = "Device",
         skillRange = { 285, 305, 315, 325 },
         reagents = {
@@ -1126,17 +1361,23 @@ local recipes = {
         },
     },
     ["Dense Blasting Powder"] = {
+        spellID = 19788,
         itemID = 15992,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 250, 250, 255, 260 },
         reagents = { { itemID = 12365, count = 2, name = "Dense Stone" } },
     },
     ["Discombobulator Ray"] = {
+        spellID = 3959,
         itemID = 4388,
         skillReq = 160,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 160, 180, 190, 200 },
         reagents = {
@@ -1147,9 +1388,12 @@ local recipes = {
         },
     },
     ["Elemental Blasting Powder"] = {
+        spellID = 30303,
         itemID = 23781,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 300, 300, 310, 320 },
         reagents = {
@@ -1158,9 +1402,12 @@ local recipes = {
         },
     },
     ["Explosive Sheep"] = {
+        spellID = 3955,
         itemID = 4384,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 150, 175, 187, 200 },
         reagents = {
@@ -1171,25 +1418,34 @@ local recipes = {
         },
     },
     ["Fel Iron Casing"] = {
+        spellID = 30304,
         itemID = 23782,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 300, 300, 310, 320 },
         reagents = { { itemID = 23445, count = 3, name = "Fel Iron Bar" } },
     },
     ["Felsteel Stabilizer"] = {
+        spellID = 30309,
         itemID = 23787,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 340, 350, 360, 370 },
         reagents = { { itemID = 23448, count = 2, name = "Felsteel Bar" } },
     },
     ["Firework Cluster Launcher"] = {
+        spellID = 26443,
         itemID = 21570,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Cluster Launcher" },
+        },
         category = "Device",
         skillRange = { 275, 295, 305, 315 },
         reagents = {
@@ -1200,9 +1456,12 @@ local recipes = {
         },
     },
     ["Firework Launcher"] = {
+        spellID = 26442,
         itemID = 21569,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Firework Launcher" },
+        },
         category = "Device",
         skillRange = { 225, 245, 255, 265 },
         reagents = {
@@ -1213,9 +1472,12 @@ local recipes = {
         },
     },
     ["Flame Deflector"] = {
+        spellID = 3944,
         itemID = 4376,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 125, 125, 150, 175 },
         reagents = {
@@ -1224,9 +1486,12 @@ local recipes = {
         },
     },
     ["Flying Machine"] = {
+        spellID = 44155,
         itemID = 34060,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 350, 375, 380, 385 },
         reagents = {
@@ -1239,9 +1504,12 @@ local recipes = {
         },
     },
     ["Force Reactive Disk"] = {
+        spellID = 22797,
         itemID = 18168,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -1253,9 +1521,12 @@ local recipes = {
         },
     },
     ["Fused Wiring"] = {
+        spellID = 39895,
         itemID = 7191,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Viggz Shinesparked, Xizzer Fizzbolt" },
+        },
         category = "Device",
         skillRange = { 275, 275, 280, 285 },
         reagents = {
@@ -1264,9 +1535,12 @@ local recipes = {
         },
     },
     ["Gnomish Flame Turret"] = {
+        spellID = 30568,
         itemID = 23841,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 325, 335, 345, 355 },
         reagents = {
@@ -1277,9 +1551,12 @@ local recipes = {
         },
     },
     ["Goblin Land Mine"] = {
+        spellID = 3968,
         itemID = 4395,
         skillReq = 195,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 195, 215, 225, 235 },
         reagents = {
@@ -1289,17 +1566,23 @@ local recipes = {
         },
     },
     ["Gold Power Core"] = {
+        spellID = 12584,
         itemID = 10558,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 150, 150, 170, 190 },
         reagents = { { itemID = 3577, count = 1, name = "Gold Bar" } },
     },
     ["Green Firework"] = {
+        spellID = 23068,
         itemID = 9313,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Crazk Sparks, Gagsprocket" },
+        },
         category = "Device",
         skillRange = { 150, 150, 162, 175 },
         reagents = {
@@ -1308,9 +1591,12 @@ local recipes = {
         },
     },
     ["Green Smoke Flare"] = {
+        spellID = 30344,
         itemID = 23771,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Neutral" },
+        },
         category = "Device",
         skillRange = { 335, 335, 345, 355 },
         reagents = {
@@ -1320,9 +1606,12 @@ local recipes = {
         },
     },
     ["Gyrochronatom"] = {
+        spellID = 3961,
         itemID = 4389,
         skillReq = 170,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 170, 170, 190, 210 },
         reagents = {
@@ -1331,43 +1620,58 @@ local recipes = {
         },
     },
     ["Gyromatic Micro-Adjustor"] = {
+        spellID = 12590,
         itemID = 10498,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 175, 175, 195, 215 },
         reagents = { { itemID = 3859, count = 4, name = "Steel Bar" } },
     },
     ["Handful of Copper Bolts"] = {
+        spellID = 3922,
         itemID = 4359,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 30, 45, 52, 60 },
         yield = 2,
         reagents = { { itemID = 2840, count = 1, name = "Copper Bar" } },
     },
     ["Handful of Fel Iron Bolts"] = {
+        spellID = 30305,
         itemID = 23783,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 300, 300, 305, 310 },
         yield = 3,
         reagents = { { itemID = 23445, count = 1, name = "Fel Iron Bar" } },
     },
     ["Hardened Adamantite Tube"] = {
+        spellID = 30307,
         itemID = 23785,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 340, 350, 360, 370 },
         reagents = { { itemID = 23573, count = 3, name = "Hardened Adamantite Bar" } },
     },
     ["Healing Potion Injector"] = {
+        spellID = 30551,
         itemID = 33092,
         skillReq = 330,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 330, 330, 340, 350 },
         reagents = {
@@ -1378,17 +1682,23 @@ local recipes = {
         },
     },
     ["Heavy Blasting Powder"] = {
+        spellID = 3945,
         itemID = 4377,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 125, 125, 135, 145 },
         reagents = { { itemID = 2838, count = 1, name = "Heavy Stone" } },
     },
     ["Ice Deflector"] = {
+        spellID = 3957,
         itemID = 4386,
         skillReq = 155,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Rizz Loosebolt" },
+        },
         category = "Device",
         skillRange = { 155, 175, 185, 195 },
         reagents = {
@@ -1397,9 +1707,12 @@ local recipes = {
         },
     },
     ["Icy Blasting Primers"] = {
+        spellID = 39971,
         itemID = 32423,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 335, 335, 340, 345 },
         reagents = {
@@ -1409,9 +1722,12 @@ local recipes = {
         },
     },
     ["Inlaid Mithril Cylinder Plans"] = {
+        spellID = 12895,
         itemID = 10713,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 205, 205, 205, 205 },
         reagents = {
@@ -1420,17 +1736,23 @@ local recipes = {
         },
     },
     ["Iron Strut"] = {
+        spellID = 3958,
         itemID = 4387,
         skillReq = 160,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 160, 160, 170, 180 },
         reagents = { { itemID = 3575, count = 2, name = "Iron Bar" } },
     },
     ["Khorium Power Core"] = {
+        spellID = 30308,
         itemID = 23786,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 340, 350, 360, 370 },
         reagents = {
@@ -1439,9 +1761,12 @@ local recipes = {
         },
     },
     ["Lifelike Mechanical Toad"] = {
+        spellID = 19793,
         itemID = 15996,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 265, 285, 295, 305 },
         reagents = {
@@ -1452,9 +1777,12 @@ local recipes = {
         },
     },
     ["Lil' Smoky"] = {
+        spellID = 15633,
         itemID = 11826,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 205, 205, 205, 205 },
         reagents = {
@@ -1466,9 +1794,12 @@ local recipes = {
         },
     },
     ["Mana Potion Injector"] = {
+        spellID = 30552,
         itemID = 33093,
         skillReq = 345,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 345, 345, 355, 365 },
         reagents = {
@@ -1479,9 +1810,12 @@ local recipes = {
         },
     },
     ["Masterwork Target Dummy"] = {
+        spellID = 19814,
         itemID = 16023,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Xizzer Fizzbolt" },
+        },
         category = "Device",
         skillRange = { 275, 295, 305, 315 },
         reagents = {
@@ -1494,39 +1828,54 @@ local recipes = {
         },
     },
     ["Mechanical Dragonling"] = {
+        spellID = 3969,
         itemID = 0,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gnaz Blunderflame" },
+        },
         category = "Device",
-        skillRange = { 200, 0, 0, 0 },
+        skillRange = { 200, 200, 200, 200},
     },
     ["Mithril Casing"] = {
+        spellID = 12599,
         itemID = 10561,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 215, 215, 235, 255 },
         reagents = { { itemID = 3860, count = 3, name = "Mithril Bar" } },
     },
     ["Mithril Mechanical Dragonling"] = {
+        spellID = 12624,
         itemID = 0,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Ruppo Zipcoil" },
+        },
         category = "Device",
-        skillRange = { 250, 0, 0, 0 },
+        skillRange = { 250, 250, 250, 250},
     },
     ["Mithril Tube"] = {
+        spellID = 12589,
         itemID = 10559,
         skillReq = 195,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 195, 195, 215, 235 },
         reagents = { { itemID = 3860, count = 3, name = "Mithril Bar" } },
     },
     ["Ornate Spyglass"] = {
+        spellID = 6458,
         itemID = 5507,
         skillReq = 135,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 135, 160, 172, 185 },
         reagents = {
@@ -1537,9 +1886,12 @@ local recipes = {
         },
     },
     ["Portable Bronze Mortar"] = {
+        spellID = 3960,
         itemID = 4403,
         skillReq = 165,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 165, 185, 195, 205 },
         reagents = {
@@ -1550,9 +1902,12 @@ local recipes = {
         },
     },
     ["Practice Lock"] = {
+        spellID = 8334,
         itemID = 6712,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 100, 115, 122, 130 },
         reagents = {
@@ -1562,9 +1917,12 @@ local recipes = {
         },
     },
     ["Purple Smoke Flare"] = {
+        spellID = 32814,
         itemID = 25886,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 335, 335, 345, 355 },
         reagents = {
@@ -1574,9 +1932,12 @@ local recipes = {
         },
     },
     ["Red Firework"] = {
+        spellID = 23066,
         itemID = 9318,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Sovik" },
+        },
         category = "Device",
         skillRange = { 150, 150, 162, 175 },
         reagents = {
@@ -1584,30 +1945,24 @@ local recipes = {
             { itemID = 4234, count = 1, name = "Heavy Leather" },
         },
     },
-    ["Red Smoke Flare"] = {
-        itemID = 23769,
-        skillReq = 335,
-        source = "trainer",
-        category = "Device",
-        skillRange = { 1, 335, 345, 355 },
-        reagents = {
-            { itemID = 23781, count = 1, name = "Elemental Blasting Powder" },
-            { itemID = 21877, count = 1, name = "Netherweave Cloth" },
-            { itemID = 2604, count = 1, name = "Red Dye" },
-        },
-    },
     ["Rough Blasting Powder"] = {
+        spellID = 3918,
         itemID = 4357,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 1, 20, 30, 40 },
         reagents = { { itemID = 2835, count = 1, name = "Rough Stone" } },
     },
     ["Salt Shaker"] = {
+        spellID = 19567,
         itemID = 15846,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 250, 270, 280, 290 },
         reagents = {
@@ -1618,17 +1973,23 @@ local recipes = {
         },
     },
     ["Silver Contact"] = {
+        spellID = 3973,
         itemID = 4404,
         skillReq = 90,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 90, 110, 125, 140 },
         reagents = { { itemID = 2842, count = 1, name = "Silver Bar" } },
     },
     ["Snake Burst Firework"] = {
+        spellID = 23507,
         itemID = 19026,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Zorbin Fandazzle" },
+        },
         category = "Device",
         skillRange = { 250, 250, 260, 270 },
         reagents = {
@@ -1638,9 +1999,12 @@ local recipes = {
         },
     },
     ["Snowmaster 9000"] = {
+        spellID = 21940,
         itemID = 17716,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 190, 190, 210, 230 },
         reagents = {
@@ -1651,17 +2015,24 @@ local recipes = {
         },
     },
     ["Solid Blasting Powder"] = {
+        spellID = 12585,
         itemID = 10505,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 175, 175, 185, 195 },
         reagents = { { itemID = 7912, count = 2, name = "Solid Stone" } },
     },
     ["Steam Tonk Controller"] = {
+        spellID = 28327,
         itemID = 22728,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gearcutter Cogspinner, Sovik" },
+            { method = "quest", faction = "Both", detail = "Quest: 40 Tickets - Schematic: Steam Tonk Controller" },
+        },
         category = "Device",
         skillRange = { 275, 275, 280, 285 },
         reagents = {
@@ -1670,9 +2041,12 @@ local recipes = {
         },
     },
     ["Target Dummy"] = {
+        spellID = 3932,
         itemID = 4366,
         skillReq = 85,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 85, 115, 130, 145 },
         reagents = {
@@ -1683,9 +2057,12 @@ local recipes = {
         },
     },
     ["The Big One"] = {
+        spellID = 12754,
         itemID = 10586,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 235, 235, 255, 275 },
         reagents = {
@@ -1696,9 +2073,12 @@ local recipes = {
         },
     },
     ["The Bigger One"] = {
+        spellID = 30558,
         itemID = 23826,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 325, 325, 335, 345 },
         reagents = {
@@ -1709,17 +2089,23 @@ local recipes = {
         },
     },
     ["Thorium Tube"] = {
+        spellID = 19795,
         itemID = 16000,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 275, 295, 305, 315 },
         reagents = { { itemID = 12359, count = 6, name = "Thorium Bar" } },
     },
     ["Thorium Widget"] = {
+        spellID = 19791,
         itemID = 15994,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 260, 280, 290, 300 },
         reagents = {
@@ -1728,9 +2114,12 @@ local recipes = {
         },
     },
     ["Truesilver Transformer"] = {
+        spellID = 23071,
         itemID = 18631,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 260, 270, 275, 280 },
         reagents = {
@@ -1740,9 +2129,12 @@ local recipes = {
         },
     },
     ["Unstable Trigger"] = {
+        spellID = 12591,
         itemID = 10560,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 200, 200, 220, 240 },
         reagents = {
@@ -1752,9 +2144,12 @@ local recipes = {
         },
     },
     ["Voice Amplification Modulator"] = {
+        spellID = 19819,
         itemID = 16009,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 290, 310, 320, 330 },
         reagents = {
@@ -1765,9 +2160,12 @@ local recipes = {
         },
     },
     ["Whirring Bronze Gizmo"] = {
+        spellID = 3942,
         itemID = 4375,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 125, 125, 150, 175 },
         reagents = {
@@ -1776,9 +2174,12 @@ local recipes = {
         },
     },
     ["White Smoke Flare"] = {
+        spellID = 30341,
         itemID = 23768,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Captured Gnome, Feera +2 more" },
+        },
         category = "Device",
         skillRange = { 335, 335, 345, 355 },
         reagents = {
@@ -1787,9 +2188,12 @@ local recipes = {
         },
     },
     ["World Enlarger"] = {
+        spellID = 23129,
         itemID = 18660,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Device",
         skillRange = { 260, 260, 265, 270 },
         reagents = {
@@ -1801,9 +2205,12 @@ local recipes = {
         },
     },
     ["Zapthrottle Mote Extractor"] = {
+        spellID = 30548,
         itemID = 23821,
         skillReq = 305,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: The Zapthrottle Mote Extractor!" },
+        },
         category = "Device",
         skillRange = { 305, 305, 315, 325 },
         reagents = {
@@ -1818,9 +2225,12 @@ local recipes = {
     -- ENHANCEMENT
     -- ================================================================
     ["Accurate Scope"] = {
+        spellID = 3979,
         itemID = 4407,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Mazk Snipeshot" },
+        },
         category = "Enhancement",
         skillRange = { 180, 200, 210, 220 },
         reagents = {
@@ -1830,9 +2240,12 @@ local recipes = {
         },
     },
     ["Adamantite Scope"] = {
+        spellID = 30329,
         itemID = 23764,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Daggle Ironshaper, Mixie Farshot" },
+        },
         category = "Enhancement",
         skillRange = { 335, 345, 355, 365 },
         reagents = {
@@ -1841,9 +2254,12 @@ local recipes = {
         },
     },
     ["Biznicks 247x128 Accurascope"] = {
+        spellID = 22793,
         itemID = 18283,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enhancement",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -1855,9 +2271,12 @@ local recipes = {
         },
     },
     ["Crude Scope"] = {
+        spellID = 3977,
         itemID = 4405,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enhancement",
         skillRange = { 60, 90, 105, 120 },
         reagents = {
@@ -1867,9 +2286,12 @@ local recipes = {
         },
     },
     ["Deadly Scope"] = {
+        spellID = 12597,
         itemID = 10546,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Knaz Blunderflame, Yuka Screwspigot" },
+        },
         category = "Enhancement",
         skillRange = { 210, 230, 240, 250 },
         reagents = {
@@ -1879,9 +2301,12 @@ local recipes = {
         },
     },
     ["Khorium Scope"] = {
+        spellID = 30332,
         itemID = 23765,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enhancement",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -1891,9 +2316,12 @@ local recipes = {
         },
     },
     ["Sniper Scope"] = {
+        spellID = 12620,
         itemID = 10548,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enhancement",
         skillRange = { 240, 260, 270, 280 },
         reagents = {
@@ -1903,9 +2331,12 @@ local recipes = {
         },
     },
     ["Stabilized Eternium Scope"] = {
+        spellID = 30334,
         itemID = 23766,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enhancement",
         skillRange = { 375, 385, 395, 405 },
         reagents = {
@@ -1915,9 +2346,12 @@ local recipes = {
         },
     },
     ["Standard Scope"] = {
+        spellID = 3978,
         itemID = 4406,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enhancement",
         skillRange = { 110, 135, 147, 160 },
         reagents = {
@@ -1930,9 +2364,12 @@ local recipes = {
     -- EXPLOSIVE
     -- ================================================================
     ["Adamantite Grenade"] = {
+        spellID = 30311,
         itemID = 23737,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 325, 335, 345, 355 },
         reagents = {
@@ -1942,9 +2379,12 @@ local recipes = {
         },
     },
     ["Arcane Bomb"] = {
+        spellID = 19831,
         itemID = 16040,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -1954,9 +2394,12 @@ local recipes = {
         },
     },
     ["Big Bronze Bomb"] = {
+        spellID = 3950,
         itemID = 4380,
         skillReq = 140,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 140, 140, 165, 190 },
         reagents = {
@@ -1966,9 +2409,12 @@ local recipes = {
         },
     },
     ["Big Iron Bomb"] = {
+        spellID = 3967,
         itemID = 4394,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 190, 190, 210, 230 },
         reagents = {
@@ -1978,9 +2424,12 @@ local recipes = {
         },
     },
     ["Coarse Dynamite"] = {
+        spellID = 3931,
         itemID = 4365,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 75, 90, 97, 105 },
         reagents = {
@@ -1989,9 +2438,12 @@ local recipes = {
         },
     },
     ["Dark Iron Bomb"] = {
+        spellID = 19799,
         itemID = 16005,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 285, 305, 315, 325 },
         reagents = {
@@ -2002,9 +2454,12 @@ local recipes = {
         },
     },
     ["Dense Dynamite"] = {
+        spellID = 23070,
         itemID = 18641,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 250, 250, 260, 270 },
         reagents = {
@@ -2013,9 +2468,12 @@ local recipes = {
         },
     },
     ["EZ-Thro Dynamite"] = {
+        spellID = 8339,
         itemID = 6714,
         skillReq = 100,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 100, 115, 122, 130 },
         reagents = {
@@ -2024,9 +2482,12 @@ local recipes = {
         },
     },
     ["EZ-Thro Dynamite II"] = {
+        spellID = 23069,
         itemID = 18588,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Blizrik Buckshot" },
+        },
         category = "Explosive",
         skillRange = { 200, 200, 210, 220 },
         reagents = {
@@ -2035,9 +2496,12 @@ local recipes = {
         },
     },
     ["Elemental Seaforium Charge"] = {
+        spellID = 30547,
         itemID = 23819,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Honored" },
+        },
         category = "Explosive",
         skillRange = { 350, 350, 355, 360 },
         reagents = {
@@ -2047,9 +2511,12 @@ local recipes = {
         },
     },
     ["Fel Iron Bomb"] = {
+        spellID = 30310,
         itemID = 23736,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -2059,9 +2526,13 @@ local recipes = {
         },
     },
     ["Flash Bomb"] = {
+        spellID = 8243,
         itemID = 4852,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+            { method = "quest", faction = "Both", detail = "Quest: Flash Bomb Recipe" },
+        },
         category = "Explosive",
         skillRange = { 185, 185, 205, 225 },
         reagents = {
@@ -2071,9 +2542,12 @@ local recipes = {
         },
     },
     ["Frost Grenades"] = {
+        spellID = 39973,
         itemID = 32413,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 335, 345, 355, 365 },
         reagents = {
@@ -2083,9 +2557,12 @@ local recipes = {
         },
     },
     ["Goblin Sapper Charge"] = {
+        spellID = 12760,
         itemID = 10646,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 205, 205, 225, 245 },
         reagents = {
@@ -2095,9 +2572,12 @@ local recipes = {
         },
     },
     ["Heavy Dynamite"] = {
+        spellID = 3946,
         itemID = 4378,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 125, 125, 135, 145 },
         reagents = {
@@ -2106,9 +2586,12 @@ local recipes = {
         },
     },
     ["Hi-Explosive Bomb"] = {
+        spellID = 12619,
         itemID = 10562,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 235, 235, 255, 275 },
         reagents = {
@@ -2118,9 +2601,12 @@ local recipes = {
         },
     },
     ["Iron Grenade"] = {
+        spellID = 3962,
         itemID = 4390,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 175, 175, 195, 215 },
         reagents = {
@@ -2130,9 +2616,12 @@ local recipes = {
         },
     },
     ["Large Copper Bomb"] = {
+        spellID = 3937,
         itemID = 4370,
         skillReq = 105,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 105, 105, 130, 155 },
         reagents = {
@@ -2142,9 +2631,12 @@ local recipes = {
         },
     },
     ["Large Seaforium Charge"] = {
+        spellID = 3972,
         itemID = 4398,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 200, 200, 220, 240 },
         reagents = {
@@ -2154,9 +2646,12 @@ local recipes = {
         },
     },
     ["Mithril Frag Bomb"] = {
+        spellID = 12603,
         itemID = 10514,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 215, 215, 235, 255 },
         reagents = {
@@ -2166,9 +2661,12 @@ local recipes = {
         },
     },
     ["Pet Bombling"] = {
+        spellID = 15628,
         itemID = 11825,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 205, 205, 205, 205 },
         reagents = {
@@ -2179,9 +2677,12 @@ local recipes = {
         },
     },
     ["Powerful Seaforium Charge"] = {
+        spellID = 23080,
         itemID = 18594,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Xizzer Fizzbolt" },
+        },
         category = "Explosive",
         skillRange = { 275, 275, 285, 295 },
         reagents = {
@@ -2192,9 +2693,12 @@ local recipes = {
         },
     },
     ["Rough Copper Bomb"] = {
+        spellID = 3923,
         itemID = 4360,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 30, 60, 75, 90 },
         reagents = {
@@ -2205,9 +2709,12 @@ local recipes = {
         },
     },
     ["Rough Dynamite"] = {
+        spellID = 3919,
         itemID = 4358,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 1, 30, 45, 60 },
         reagents = {
@@ -2216,9 +2723,12 @@ local recipes = {
         },
     },
     ["Small Bronze Bomb"] = {
+        spellID = 3941,
         itemID = 4374,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 120, 120, 145, 170 },
         reagents = {
@@ -2229,9 +2739,12 @@ local recipes = {
         },
     },
     ["Small Seaforium Charge"] = {
+        spellID = 3933,
         itemID = 4367,
         skillReq = 100,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 100, 130, 145, 160 },
         reagents = {
@@ -2242,9 +2755,12 @@ local recipes = {
         },
     },
     ["Solid Dynamite"] = {
+        spellID = 12586,
         itemID = 10507,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 175, 175, 185, 195 },
         reagents = {
@@ -2253,16 +2769,22 @@ local recipes = {
         },
     },
     ["Summon Goblin Bomb"] = {
+        spellID = 13258,
         itemID = 0,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Explosive",
-        skillRange = { 1, 0, 0, 0 },
+        skillRange = { 0, 0, 0, 0},
     },
     ["Super Sapper Charge"] = {
+        spellID = 30560,
         itemID = 23827,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 340, 340, 350, 360 },
         reagents = {
@@ -2272,9 +2794,12 @@ local recipes = {
         },
     },
     ["Thorium Grenade"] = {
+        spellID = 19790,
         itemID = 15993,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 260, 280, 290, 300 },
         reagents = {
@@ -2285,9 +2810,12 @@ local recipes = {
         },
     },
     ["Turbo-Charged Flying Machine"] = {
+        spellID = 44157,
         itemID = 34061,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Explosive",
         skillRange = { 375, 385, 390, 395 },
         reagents = {
@@ -2302,9 +2830,12 @@ local recipes = {
     -- GADGET
     -- ================================================================
     ["Blue Rocket Cluster"] = {
+        spellID = 26423,
         itemID = 21571,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 225, 225, 237, 250 },
         reagents = {
@@ -2313,11 +2844,15 @@ local recipes = {
         },
     },
     ["Goblin Jumper Cables"] = {
+        spellID = 9273,
         itemID = 7148,
         skillReq = 165,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kzixx, Veenix +1 more" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
-        skillRange = { 165, 160, 180, 200 },
+        skillRange = { 160, 160, 180, 200},
         reagents = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
             { itemID = 4375, count = 2, name = "Whirring Bronze Gizmo" },
@@ -2328,9 +2863,12 @@ local recipes = {
         },
     },
     ["Goblin Jumper Cables XL"] = {
+        spellID = 23078,
         itemID = 18587,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 265, 285, 295, 305 },
         reagents = {
@@ -2342,9 +2880,12 @@ local recipes = {
         },
     },
     ["Goblin Rocket Fuel Recipe"] = {
+        spellID = 12715,
         itemID = 10644,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 205, 205, 205, 205 },
         reagents = {
@@ -2353,9 +2894,12 @@ local recipes = {
         },
     },
     ["Green Rocket Cluster"] = {
+        spellID = 26424,
         itemID = 21574,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 225, 225, 237, 250 },
         reagents = {
@@ -2364,9 +2908,12 @@ local recipes = {
         },
     },
     ["Large Blue Rocket"] = {
+        spellID = 26420,
         itemID = 21589,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 175, 175, 187, 200 },
         reagents = {
@@ -2375,9 +2922,12 @@ local recipes = {
         },
     },
     ["Large Blue Rocket Cluster"] = {
+        spellID = 26426,
         itemID = 21714,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 275, 275, 280, 285 },
         reagents = {
@@ -2386,9 +2936,12 @@ local recipes = {
         },
     },
     ["Large Green Rocket"] = {
+        spellID = 26421,
         itemID = 21590,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 175, 175, 187, 200 },
         reagents = {
@@ -2397,9 +2950,12 @@ local recipes = {
         },
     },
     ["Large Green Rocket Cluster"] = {
+        spellID = 26427,
         itemID = 21716,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 275, 275, 280, 285 },
         reagents = {
@@ -2408,9 +2964,12 @@ local recipes = {
         },
     },
     ["Large Red Rocket"] = {
+        spellID = 26422,
         itemID = 21592,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 175, 175, 187, 200 },
         reagents = {
@@ -2419,9 +2978,12 @@ local recipes = {
         },
     },
     ["Large Red Rocket Cluster"] = {
+        spellID = 26428,
         itemID = 21718,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 275, 275, 280, 285 },
         reagents = {
@@ -2430,9 +2992,12 @@ local recipes = {
         },
     },
     ["Mechanical Repair Kit"] = {
+        spellID = 15255,
         itemID = 11590,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 200, 200, 220, 240 },
         reagents = {
@@ -2442,9 +3007,12 @@ local recipes = {
         },
     },
     ["Parachute Cloak"] = {
+        spellID = 12616,
         itemID = 10518,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 225, 245, 255, 265 },
         reagents = {
@@ -2455,9 +3023,12 @@ local recipes = {
         },
     },
     ["Red Rocket Cluster"] = {
+        spellID = 26425,
         itemID = 21576,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 225, 225, 237, 250 },
         reagents = {
@@ -2466,9 +3037,12 @@ local recipes = {
         },
     },
     ["Small Blue Rocket"] = {
+        spellID = 26416,
         itemID = 21558,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 125, 125, 137, 150 },
         reagents = {
@@ -2477,9 +3051,12 @@ local recipes = {
         },
     },
     ["Small Green Rocket"] = {
+        spellID = 26417,
         itemID = 21559,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 125, 125, 137, 150 },
         reagents = {
@@ -2488,9 +3065,12 @@ local recipes = {
         },
     },
     ["Small Red Rocket"] = {
+        spellID = 26418,
         itemID = 21557,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gadget",
         skillRange = { 125, 125, 137, 150 },
         reagents = {
@@ -2503,9 +3083,12 @@ local recipes = {
     -- TRINKET
     -- ================================================================
     ["Dimensional Ripper - Area 52"] = {
+        spellID = 36954,
         itemID = 30542,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Trinket",
         skillRange = { 350, 350, 360, 370 },
         reagents = {
@@ -2517,9 +3100,12 @@ local recipes = {
         },
     },
     ["Dimensional Ripper - Everlook"] = {
+        spellID = 23486,
         itemID = 18984,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Trinket",
         skillRange = { 285, 285, 295, 305 },
         reagents = {
@@ -2531,9 +3117,12 @@ local recipes = {
         },
     },
     ["Gnomish Battle Chicken"] = {
+        spellID = 12906,
         itemID = 10725,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 230, 250, 260, 270 },
         reagents = {
@@ -2546,9 +3135,13 @@ local recipes = {
         },
     },
     ["Gnomish Cloaking Device"] = {
+        spellID = 3971,
         itemID = 4397,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Zan Shivsproket" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 200, 220, 230, 240 },
         reagents = {
@@ -2560,9 +3153,12 @@ local recipes = {
         },
     },
     ["Gnomish Death Ray"] = {
+        spellID = 12759,
         itemID = 10645,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 240, 260, 270, 280 },
         reagents = {
@@ -2574,9 +3170,12 @@ local recipes = {
         },
     },
     ["Gnomish Net-o-Matic Projector"] = {
+        spellID = 12902,
         itemID = 10720,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 210, 230, 240, 250 },
         reagents = {
@@ -2588,9 +3187,12 @@ local recipes = {
         },
     },
     ["Gnomish Poultryizer"] = {
+        spellID = 30569,
         itemID = 23835,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 340, 360, 370, 380 },
         reagents = {
@@ -2601,9 +3203,12 @@ local recipes = {
         },
     },
     ["Gnomish Shrink Ray"] = {
+        spellID = 12899,
         itemID = 10716,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 205, 225, 235, 245 },
         reagents = {
@@ -2615,9 +3220,13 @@ local recipes = {
         },
     },
     ["Gnomish Universal Remote"] = {
+        spellID = 9269,
         itemID = 7506,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gearcutter Cogspinner, Jinky Twizzlefixxit" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 125, 150, 162, 175 },
         reagents = {
@@ -2629,9 +3238,12 @@ local recipes = {
         },
     },
     ["Goblin Bomb Dispenser"] = {
+        spellID = 12755,
         itemID = 10587,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 230, 230, 250, 270 },
         reagents = {
@@ -2643,9 +3255,12 @@ local recipes = {
         },
     },
     ["Goblin Dragon Gun"] = {
+        spellID = 12908,
         itemID = 10727,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 240, 260, 270, 280 },
         reagents = {
@@ -2657,9 +3272,12 @@ local recipes = {
         },
     },
     ["Goblin Mortar"] = {
+        spellID = 12716,
         itemID = 10577,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 225, 225, 235, 245 },
         reagents = {
@@ -2671,9 +3289,12 @@ local recipes = {
         },
     },
     ["Goblin Rocket Launcher"] = {
+        spellID = 30563,
         itemID = 23836,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 350, 360, 370, 380 },
         reagents = {
@@ -2686,9 +3307,12 @@ local recipes = {
         },
     },
     ["Gyrofreeze Ice Reflector"] = {
+        spellID = 23077,
         itemID = 18634,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Xizzer Fizzbolt" },
+        },
         category = "Trinket",
         skillRange = { 260, 280, 290, 300 },
         reagents = {
@@ -2701,9 +3325,12 @@ local recipes = {
         },
     },
     ["Hyper-Radiant Flame Reflector"] = {
+        spellID = 23081,
         itemID = 18638,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 290, 310, 320, 330 },
         reagents = {
@@ -2715,9 +3342,12 @@ local recipes = {
         },
     },
     ["Major Recombobulator"] = {
+        spellID = 23079,
         itemID = 18637,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 275, 285, 290, 295 },
         reagents = {
@@ -2727,9 +3357,12 @@ local recipes = {
         },
     },
     ["Minor Recombobulator"] = {
+        spellID = 3952,
         itemID = 4381,
         skillReq = 140,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Fradd Swiftgear, Gagsprocket +1 more" },
+        },
         category = "Trinket",
         skillRange = { 140, 165, 177, 190 },
         reagents = {
@@ -2740,11 +3373,14 @@ local recipes = {
         },
     },
     ["The Mortar: Reloaded"] = {
+        spellID = 13240,
         itemID = 10577,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Trinket",
-        skillRange = { 205, 1, 1, 1 },
+        skillRange = { 205, 205, 205, 205},
         reagents = {
             { itemID = 10577, count = 1, name = "Goblin Mortar" },
             { itemID = 3860, count = 1, name = "Mithril Bar" },
@@ -2752,9 +3388,12 @@ local recipes = {
         },
     },
     ["Ultra-Flash Shadow Reflector"] = {
+        spellID = 23082,
         itemID = 18639,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -2767,9 +3406,12 @@ local recipes = {
         },
     },
     ["Ultrasafe Transporter - Gadgetzan"] = {
+        spellID = 23489,
         itemID = 18986,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Trinket",
         skillRange = { 285, 285, 295, 305 },
         reagents = {
@@ -2782,9 +3424,12 @@ local recipes = {
         },
     },
     ["Ultrasafe Transporter - Toshley's Station"] = {
+        spellID = 36955,
         itemID = 30544,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Trinket",
         skillRange = { 350, 350, 360, 370 },
         reagents = {
@@ -2800,9 +3445,12 @@ local recipes = {
     -- WEAPON
     -- ================================================================
     ["Adamantite Rifle"] = {
+        spellID = 30313,
         itemID = 23746,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Feera, Viggz Shinesparked +1 more" },
+        },
         category = "Weapon",
         skillRange = { 350, 360, 370, 380 },
         reagents = {
@@ -2812,17 +3460,23 @@ local recipes = {
         },
     },
     ["Arclight Spanner"] = {
+        spellID = 7430,
         itemID = 6219,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 50, 70, 80, 90 },
         reagents = { { itemID = 2840, count = 6, name = "Copper Bar" } },
     },
     ["Core Marksman Rifle"] = {
+        spellID = 22795,
         itemID = 18282,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -2834,9 +3488,12 @@ local recipes = {
         },
     },
     ["Dark Iron Rifle"] = {
+        spellID = 19796,
         itemID = 16004,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 275, 295, 305, 315 },
         reagents = {
@@ -2849,9 +3506,12 @@ local recipes = {
         },
     },
     ["Deadly Blunderbuss"] = {
+        spellID = 3936,
         itemID = 4369,
         skillReq = 105,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 105, 130, 142, 155 },
         reagents = {
@@ -2862,9 +3522,12 @@ local recipes = {
         },
     },
     ["Fel Iron Musket"] = {
+        spellID = 30312,
         itemID = 23742,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 320, 330, 340, 350 },
         reagents = {
@@ -2874,9 +3537,12 @@ local recipes = {
         },
     },
     ["Felsteel Boomstick"] = {
+        spellID = 30314,
         itemID = 23747,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -2886,9 +3552,12 @@ local recipes = {
         },
     },
     ["Flawless Arcanite Rifle"] = {
+        spellID = 19833,
         itemID = 16007,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -2901,9 +3570,12 @@ local recipes = {
         },
     },
     ["Gyro-balanced Khorium Destroyer"] = {
+        spellID = 41307,
         itemID = 32756,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 375, 375, 392, 410 },
         reagents = {
@@ -2916,9 +3588,12 @@ local recipes = {
         },
     },
     ["Lovingly Crafted Boomstick"] = {
+        spellID = 3939,
         itemID = 4372,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Fradd Swiftgear, Jinky Twizzlefixxit" },
+        },
         category = "Weapon",
         skillRange = { 120, 145, 157, 170 },
         reagents = {
@@ -2929,9 +3604,12 @@ local recipes = {
         },
     },
     ["Mithril Blunderbuss"] = {
+        spellID = 12595,
         itemID = 10508,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 205, 225, 235, 245 },
         reagents = {
@@ -2943,9 +3621,12 @@ local recipes = {
         },
     },
     ["Mithril Heavy-bore Rifle"] = {
+        spellID = 12614,
         itemID = 10510,
         skillReq = 220,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 220, 240, 250, 260 },
         reagents = {
@@ -2957,9 +3638,12 @@ local recipes = {
         },
     },
     ["Moonsight Rifle"] = {
+        spellID = 3954,
         itemID = 4383,
         skillReq = 145,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 145, 170, 182, 195 },
         reagents = {
@@ -2970,9 +3654,12 @@ local recipes = {
         },
     },
     ["Ornate Khorium Rifle"] = {
+        spellID = 30315,
         itemID = 23748,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 375, 385, 395, 405 },
         reagents = {
@@ -2983,9 +3670,12 @@ local recipes = {
         },
     },
     ["Rough Boomstick"] = {
+        spellID = 3925,
         itemID = 4362,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 50, 80, 95, 110 },
         reagents = {
@@ -2995,9 +3685,12 @@ local recipes = {
         },
     },
     ["Silver-plated Shotgun"] = {
+        spellID = 3949,
         itemID = 4379,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 130, 155, 167, 180 },
         reagents = {
@@ -3008,9 +3701,13 @@ local recipes = {
         },
     },
     ["Thorium Rifle"] = {
+        spellID = 19792,
         itemID = 15995,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Weapon",
         skillRange = { 260, 280, 290, 300 },
         reagents = {

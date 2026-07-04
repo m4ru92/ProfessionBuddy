@@ -65,6 +65,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         includeRemoteInCalc = false,
         orderChatMessages   = true,
         orderSoundOnRequest = false,
+        shareData           = true,  -- master switch for AceComm data sharing
     }
     -- Migrate old single-slider setting
     if ProfBuddyDB.settings.tooltipMaxRecipes then
@@ -113,6 +114,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.orderSoundOnRequest == nil then
         ProfBuddyDB.settings.orderSoundOnRequest = false
+    end
+    if ProfBuddyDB.settings.shareData == nil then
+        ProfBuddyDB.settings.shareData = true
     end
 
     addon.db = ProfBuddyDB
@@ -180,6 +184,15 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         if addon.OrdersPanel then
             addon.OrdersPanel:Toggle()
         end
+
+    elseif msg:sub(1, 4) == "comm" or msg:sub(1, 5) == "share" then
+        local arg = msg:match("(%a+)$")
+        local s = ProfBuddyDB.settings
+        if arg == "on" then s.shareData = true
+        elseif arg == "off" then s.shareData = false
+        else s.shareData = not s.shareData end
+        print("|cff00ccffProfessionBuddy:|r data sharing is now "
+            .. (s.shareData and "ON." or "OFF (no profession/inventory data sent to others)."))
 
     elseif msg:sub(1, 4) == "sync" then
         local target = strtrim(msg:sub(5))

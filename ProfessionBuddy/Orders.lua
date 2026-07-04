@@ -336,17 +336,50 @@ local STATUS_RANK = {
     cancelled = 3,
 }
 
+local VALID_MATRESP = { requester = true, crafter = true, split = true }
+
+-- Neutralize WoW escape codes (|H hyperlink, |T texture, |c color) in a
+-- remote string and cap its length, so a peer can't inject clickable
+-- links / textures / colored text into our chat or tooltips.
+local function sanitize(s, maxlen)
+    if type(s) ~= "string" then return nil end
+    s = s:gsub("|", "||")
+    if maxlen and #s > maxlen then s = s:sub(1, maxlen) end
+    return s
+end
+
 -- Store a full order record received from the counterparty (ORDER_NEW).
--- The requester mints the order and sends it to the crafter, who has
--- no prior copy. Returns (order, applied); applied is false for a
--- duplicate (we already have it) so the caller can ack without
--- re-notifying.
-function Orders:UpsertFromRemote(order)
-    if not order or not order.id then return nil, "bad order record" end
-    if addon.db.orders[order.id] then
-        return addon.db.orders[order.id], false  -- duplicate ORDER_NEW
+-- Builds a CLEAN copy field-by-field -- never stores the raw attacker-
+-- influenced table by reference -- validating + sanitizing every field.
+-- Returns (order, applied); applied is false for a duplicate.
+function Orders:UpsertFromRemote(remote)
+    if type(remote) ~= "table" then return nil, "bad order record" end
+    local id = remote.id
+    if type(id) ~= "string" or #id == 0 or #id > 64 then return nil, "bad id" end
+    if not STATUS_RANK[remote.status] then return nil, "bad status" end
+    if type(remote.item) ~= "table" then return nil, "bad item" end
+    if addon.db.orders[id] then
+        return addon.db.orders[id], false  -- duplicate ORDER_NEW
     end
-    addon.db.orders[order.id] = order
+    local order = {
+        id          = id,
+        requester   = sanitize(remote.requester, 64) or "?",
+        crafter     = sanitize(remote.crafter, 64) or "?",
+        item = {
+            id         = tonumber(remote.item.id) or 0,
+            name       = sanitize(remote.item.name, 80) or "?",
+            profession = sanitize(remote.item.profession, 40) or "?",
+        },
+        quantity          = math.max(1, math.min(999, tonumber(remote.quantity) or 1)),
+        matResponsibility = VALID_MATRESP[remote.matResponsibility] and remote.matResponsibility or "requester",
+        note              = remote.note and sanitize(remote.note, 200) or nil,
+        status            = remote.status,
+        completedBy       = (remote.completedBy == "requester" or remote.completedBy == "crafter") and remote.completedBy or nil,
+        dismissed         = false,
+        createdAt         = tonumber(remote.createdAt) or time(),
+        updatedAt         = tonumber(remote.updatedAt) or time(),
+    }
+    addon.db.orders[id] = order
     return order, true
 end
 
@@ -358,17 +391,26 @@ end
 function Orders:ApplyRemoteStatus(id, newStatus, completedBy, updatedAt)
     local o = addon.db.orders[id]
     if not o then return nil, "no such order" end
+    if not STATUS_RANK[newStatus] then return nil, "bad status" end
+    if completedBy ~= nil and completedBy ~= "requester" and completedBy ~= "crafter" then
+        completedBy = nil
+    end
+    -- Clamp the remote timestamp to a sane window so a forged huge value
+    -- can't make every future legit update look "stale" (freeze attack).
+    local now = time()
+    local newU = tonumber(updatedAt) or now
+    if newU > now + 300 then newU = now + 300 end
+    if newU < 0 then newU = 0 end
     local curRank = STATUS_RANK[o.status] or 0
     local newRank = STATUS_RANK[newStatus] or 0
     local curU    = o.updatedAt or 0
-    local newU    = updatedAt or 0
     if curRank >= 3 then return o, false end          -- already terminal
     if newU < curU then return o, false end           -- stale
     if newU == curU and newRank <= curRank then       -- duplicate
         return o, false
     end
-    if newStatus then o.status = newStatus end
+    o.status = newStatus
     if completedBy ~= nil then o.completedBy = completedBy end
-    o.updatedAt = updatedAt or time()
+    o.updatedAt = newU
     return o, true
 end

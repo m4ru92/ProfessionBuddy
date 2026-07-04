@@ -14,9 +14,12 @@ local recipes = {
     -- BAG
     -- ================================================================
     ["Bag of Jewels"] = {
+        spellID = 31459,
         itemID = 24270,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Friendly" },
+        },
         category = "Bag",
         skillRange = { 340, 350, 355, 360 },
         reagents = {
@@ -25,9 +28,12 @@ local recipes = {
         },
     },
     ["Big Bag of Enchantment"] = {
+        spellID = 27660,
         itemID = 22249,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 300, 315, 330, 345 },
         reagents = {
@@ -38,9 +44,12 @@ local recipes = {
         },
     },
     ["Black Silk Pack"] = {
+        spellID = 6695,
         itemID = 5765,
         skillReq = 185,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 185, 205, 220, 235 },
         reagents = {
@@ -50,9 +59,12 @@ local recipes = {
         },
     },
     ["Bottomless Bag"] = {
+        spellID = 18455,
         itemID = 14156,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 300, 315, 330, 345 },
         reagents = {
@@ -64,9 +76,12 @@ local recipes = {
         },
     },
     ["Cenarion Herb Bag"] = {
+        spellID = 27724,
         itemID = 22251,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Neutral" },
+        },
         category = "Bag",
         skillRange = { 275, 290, 305, 320 },
         reagents = {
@@ -77,9 +92,12 @@ local recipes = {
         },
     },
     ["Core Felcloth Bag"] = {
+        spellID = 26087,
         itemID = 21342,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 300, 315, 330, 345 },
         reagents = {
@@ -91,9 +109,12 @@ local recipes = {
         },
     },
     ["Ebon Shadowbag"] = {
+        spellID = 26759,
         itemID = 21872,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Andrion Darkspinner" },
+        },
         category = "Bag",
         skillRange = { 375, 385, 390, 395 },
         reagents = {
@@ -102,9 +123,12 @@ local recipes = {
         },
     },
     ["Enchanted Mageweave Pouch"] = {
+        spellID = 27658,
         itemID = 22246,
         skillReq = 225,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Trade supplies" },
+        },
         category = "Bag",
         skillRange = { 225, 240, 255, 270 },
         reagents = {
@@ -114,9 +138,12 @@ local recipes = {
         },
     },
     ["Enchanted Runecloth Bag"] = {
+        spellID = 27659,
         itemID = 22248,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kania" },
+        },
         category = "Bag",
         skillRange = { 275, 290, 305, 320 },
         reagents = {
@@ -126,9 +153,12 @@ local recipes = {
         },
     },
     ["Felcloth Bag"] = {
+        spellID = 26086,
         itemID = 21341,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both", detail = "Jandice Barov ground-drop, Scholomance" },
+        },
         category = "Bag",
         skillRange = { 285, 300, 315, 330 },
         reagents = {
@@ -139,9 +169,12 @@ local recipes = {
         },
     },
     ["Green Silk Pack"] = {
+        spellID = 6693,
         itemID = 5764,
         skillReq = 175,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 175, 195, 210, 225 },
         reagents = {
@@ -152,9 +185,12 @@ local recipes = {
         },
     },
     ["Green Woolen Bag"] = {
+        spellID = 3758,
         itemID = 4241,
         skillReq = 95,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 95, 120, 137, 155 },
         reagents = {
@@ -164,9 +200,12 @@ local recipes = {
         },
     },
     ["Imbued Netherweave Bag"] = {
+        spellID = 26749,
         itemID = 21843,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Eiin, Mathar G\'ochar" },
+        },
         category = "Bag",
         skillRange = { 340, 340, 345, 350 },
         reagents = {
@@ -176,9 +215,12 @@ local recipes = {
         },
     },
     ["Linen Bag"] = {
+        spellID = 3755,
         itemID = 4238,
         skillReq = 45,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 45, 70, 87, 105 },
         reagents = {
@@ -187,9 +229,12 @@ local recipes = {
         },
     },
     ["Mageweave Bag"] = {
+        spellID = 12065,
         itemID = 10050,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 225, 240, 255, 270 },
         reagents = {
@@ -198,9 +243,12 @@ local recipes = {
         },
     },
     ["Mooncloth Bag"] = {
+        spellID = 18445,
         itemID = 14155,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 300, 315, 330, 345 },
         reagents = {
@@ -210,9 +258,12 @@ local recipes = {
         },
     },
     ["Mycah's Botanical Bag"] = {
+        spellID = 50194,
         itemID = 38225,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Sporeggar @ Honored" },
+        },
         category = "Bag",
         skillRange = { 375, 385, 390, 395 },
         reagents = {
@@ -221,9 +272,12 @@ local recipes = {
         },
     },
     ["Netherweave Bag"] = {
+        spellID = 26746,
         itemID = 21841,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 315, 320, 330, 340 },
         reagents = {
@@ -232,9 +286,13 @@ local recipes = {
         },
     },
     ["Primal Mooncloth Bag"] = {
+        spellID = 26763,
         itemID = 21876,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Nasmara Moonsong" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 375, 385, 390, 395 },
         reagents = {
@@ -243,9 +301,13 @@ local recipes = {
         },
     },
     ["Red Linen Bag"] = {
+        spellID = 6686,
         itemID = 5762,
         skillReq = 70,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Andrew Hilbert, Gina MacGregor +3 more" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 70, 95, 112, 130 },
         reagents = {
@@ -255,9 +317,12 @@ local recipes = {
         },
     },
     ["Red Mageweave Bag"] = {
+        spellID = 12079,
         itemID = 10051,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 235, 250, 265, 280 },
         reagents = {
@@ -267,9 +332,13 @@ local recipes = {
         },
     },
     ["Red Woolen Bag"] = {
+        spellID = 6688,
         itemID = 5763,
         skillReq = 115,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Amy Davenport, Borya +9 more" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 115, 140, 157, 175 },
         reagents = {
@@ -279,9 +348,12 @@ local recipes = {
         },
     },
     ["Runecloth Bag"] = {
+        spellID = 18405,
         itemID = 14046,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Qia" },
+        },
         category = "Bag",
         skillRange = { 260, 275, 290, 305 },
         reagents = {
@@ -291,9 +363,12 @@ local recipes = {
         },
     },
     ["Satchel of Cenarius"] = {
+        spellID = 27725,
         itemID = 22252,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Honored" },
+        },
         category = "Bag",
         skillRange = { 300, 315, 330, 345 },
         reagents = {
@@ -304,9 +379,12 @@ local recipes = {
         },
     },
     ["Small Silk Pack"] = {
+        spellID = 3813,
         itemID = 4245,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 150, 170, 185, 200 },
         reagents = {
@@ -316,9 +394,12 @@ local recipes = {
         },
     },
     ["Soul Pouch"] = {
+        spellID = 26085,
         itemID = 21340,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Vizzklick" },
+        },
         category = "Bag",
         skillRange = { 260, 275, 290, 305 },
         reagents = {
@@ -329,9 +410,13 @@ local recipes = {
         },
     },
     ["Spellfire Bag"] = {
+        spellID = 26755,
         itemID = 21858,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gidge Spellweaver" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 375, 385, 390, 395 },
         reagents = {
@@ -341,9 +426,12 @@ local recipes = {
         },
     },
     ["Woolen Bag"] = {
+        spellID = 3757,
         itemID = 4240,
         skillReq = 80,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 80, 105, 122, 140 },
         reagents = {
@@ -356,9 +444,12 @@ local recipes = {
     -- CLOAK
     -- ================================================================
     ["Azure Silk Cloak"] = {
+        spellID = 8786,
         itemID = 7053,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Brienna Starglow, Jun\'ha" },
+        },
         category = "Cloak",
         skillRange = { 175, 195, 210, 225 },
         reagents = {
@@ -368,9 +459,13 @@ local recipes = {
         },
     },
     ["Brightcloth Cloak"] = {
+        spellID = 18420,
         itemID = 14103,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 275, 290, 305, 320 },
         reagents = {
@@ -380,9 +475,12 @@ local recipes = {
         },
     },
     ["Cindercloth Cloak"] = {
+        spellID = 18418,
         itemID = 14044,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 275, 290, 305, 320 },
         reagents = {
@@ -392,9 +490,12 @@ local recipes = {
         },
     },
     ["Cloak of Arcane Evasion"] = {
+        spellID = 37873,
         itemID = 30831,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Friendly" },
+        },
         category = "Cloak",
         skillRange = { 350, 360, 365, 370 },
         reagents = {
@@ -405,9 +506,12 @@ local recipes = {
         },
     },
     ["Cloak of Eternity"] = {
+        spellID = 31440,
         itemID = 24253,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 350, 360, 365, 370 },
         reagents = {
@@ -416,9 +520,12 @@ local recipes = {
         },
     },
     ["Cloak of Fire"] = {
+        spellID = 18422,
         itemID = 14134,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 275, 290, 305, 320 },
         reagents = {
@@ -430,9 +537,12 @@ local recipes = {
         },
     },
     ["Cloak of Warding"] = {
+        spellID = 22870,
         itemID = 18413,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 300, 315, 330, 345 },
         reagents = {
@@ -443,9 +553,12 @@ local recipes = {
         },
     },
     ["Cloak of the Black Void"] = {
+        spellID = 31438,
         itemID = 24252,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 350, 360, 365, 370 },
         reagents = {
@@ -455,9 +568,12 @@ local recipes = {
         },
     },
     ["Crimson Silk Cloak"] = {
+        spellID = 8789,
         itemID = 7056,
         skillReq = 180,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Xizk Goodstitch" },
+        },
         category = "Cloak",
         skillRange = { 180, 200, 215, 230 },
         reagents = {
@@ -468,9 +584,12 @@ local recipes = {
         },
     },
     ["Gaea's Embrace"] = {
+        spellID = 28210,
         itemID = 22660,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Honored" },
+        },
         category = "Cloak",
         skillRange = { 300, 315, 330, 345 },
         reagents = {
@@ -481,9 +600,12 @@ local recipes = {
         },
     },
     ["Glacial Cloak"] = {
+        spellID = 28208,
         itemID = 22658,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Cloak",
         skillRange = { 300, 315, 330, 345 },
         reagents = {
@@ -494,9 +616,12 @@ local recipes = {
         },
     },
     ["Heavy Woolen Cloak"] = {
+        spellID = 3844,
         itemID = 4311,
         skillReq = 100,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 100, 125, 142, 160 },
         reagents = {
@@ -506,9 +631,12 @@ local recipes = {
         },
     },
     ["Icy Cloak"] = {
+        spellID = 3862,
         itemID = 4327,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Ghok\'kah, Micha Yance" },
+        },
         category = "Cloak",
         skillRange = { 200, 220, 235, 250 },
         reagents = {
@@ -519,9 +647,12 @@ local recipes = {
         },
     },
     ["Linen Cloak"] = {
+        spellID = 2387,
         itemID = 2570,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 1, 35, 47, 60 },
         reagents = {
@@ -530,9 +661,12 @@ local recipes = {
         },
     },
     ["Long Silken Cloak"] = {
+        spellID = 3861,
         itemID = 4326,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 185, 205, 220, 235 },
         reagents = {
@@ -542,9 +676,12 @@ local recipes = {
         },
     },
     ["Manaweave Cloak"] = {
+        spellID = 31450,
         itemID = 24260,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 365, 375, 380, 385 },
         reagents = {
@@ -554,9 +691,12 @@ local recipes = {
         },
     },
     ["Night's End"] = {
+        spellID = 40060,
         itemID = 32420,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Friendly" },
+        },
         category = "Cloak",
         skillRange = { 375, 385, 390, 395 },
         reagents = {
@@ -568,9 +708,12 @@ local recipes = {
         },
     },
     ["Pearl-clasped Cloak"] = {
+        spellID = 6521,
         itemID = 5542,
         skillReq = 90,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 90, 115, 132, 150 },
         reagents = {
@@ -580,9 +723,12 @@ local recipes = {
         },
     },
     ["Reinforced Linen Cape"] = {
+        spellID = 2397,
         itemID = 2580,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 60, 85, 102, 120 },
         reagents = {
@@ -591,9 +737,12 @@ local recipes = {
         },
     },
     ["Resolute Cape"] = {
+        spellID = 31448,
         itemID = 24258,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 365, 375, 380, 385 },
         reagents = {
@@ -603,9 +752,12 @@ local recipes = {
         },
     },
     ["Runecloth Cloak"] = {
+        spellID = 18409,
         itemID = 13860,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 265, 280, 295, 310 },
         reagents = {
@@ -615,9 +767,12 @@ local recipes = {
         },
     },
     ["Vengeance Wrap"] = {
+        spellID = 31449,
         itemID = 24259,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 365, 375, 380, 385 },
         reagents = {
@@ -627,9 +782,12 @@ local recipes = {
         },
     },
     ["White Remedy Cape"] = {
+        spellID = 31441,
         itemID = 24254,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 350, 360, 365, 370 },
         reagents = {
@@ -638,9 +796,12 @@ local recipes = {
         },
     },
     ["Woolen Cape"] = {
+        spellID = 2402,
         itemID = 2584,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloak",
         skillRange = { 75, 100, 117, 135 },
         reagents = {
@@ -655,9 +816,12 @@ local recipes = {
     -- Chest
     -- --------------------------------
     ["Arcanoweave Robe"] = {
+        spellID = 26784,
         itemID = 21868,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 370, 380, 385, 390 },
@@ -668,9 +832,12 @@ local recipes = {
         },
     },
     ["Azure Silk Vest"] = {
+        spellID = 3859,
         itemID = 4324,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 150, 170, 185, 200 },
@@ -680,9 +847,12 @@ local recipes = {
         },
     },
     ["Barbaric Linen Vest"] = {
+        spellID = 2395,
         itemID = 2578,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 70, 95, 112, 130 },
@@ -693,9 +863,12 @@ local recipes = {
         },
     },
     ["Black Mageweave Robe"] = {
+        spellID = 12050,
         itemID = 10001,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 210, 225, 240, 255 },
@@ -705,9 +878,12 @@ local recipes = {
         },
     },
     ["Black Mageweave Vest"] = {
+        spellID = 12048,
         itemID = 9998,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 205, 220, 235, 250 },
@@ -717,9 +893,12 @@ local recipes = {
         },
     },
     ["Bloodvine Vest"] = {
+        spellID = 24091,
         itemID = 19682,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Honored" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -732,9 +911,12 @@ local recipes = {
         },
     },
     ["Blue Linen Robe"] = {
+        spellID = 7633,
         itemID = 6242,
         skillReq = 70,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Andrew Hilbert, Drake Lindgren +3 more" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 70, 95, 112, 130 },
@@ -745,9 +927,12 @@ local recipes = {
         },
     },
     ["Blue Linen Vest"] = {
+        spellID = 7630,
         itemID = 6240,
         skillReq = 55,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Borya, Tharynn Bouden +1 more" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 55, 80, 97, 115 },
@@ -758,9 +943,12 @@ local recipes = {
         },
     },
     ["Blue Overalls"] = {
+        spellID = 7639,
         itemID = 6263,
         skillReq = 100,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Alexandra Bolero, Borya +2 more" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 100, 125, 142, 160 },
@@ -771,9 +959,13 @@ local recipes = {
         },
     },
     ["Brightcloth Robe"] = {
+        spellID = 18414,
         itemID = 14100,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 270, 285, 300, 315 },
@@ -784,9 +976,12 @@ local recipes = {
         },
     },
     ["Brown Linen Robe"] = {
+        spellID = 7623,
         itemID = 6238,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 30, 55, 72, 90 },
@@ -796,9 +991,12 @@ local recipes = {
         },
     },
     ["Brown Linen Vest"] = {
+        spellID = 2385,
         itemID = 2568,
         skillReq = 10,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 10, 45, 57, 70 },
@@ -808,9 +1006,12 @@ local recipes = {
         },
     },
     ["Cindercloth Robe"] = {
+        spellID = 12069,
         itemID = 10042,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 225, 240, 255, 270 },
@@ -821,9 +1022,12 @@ local recipes = {
         },
     },
     ["Cindercloth Vest"] = {
+        spellID = 18408,
         itemID = 14042,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 260, 275, 290, 305 },
@@ -834,9 +1038,12 @@ local recipes = {
         },
     },
     ["Crimson Silk Robe"] = {
+        spellID = 8802,
         itemID = 7063,
         skillReq = 205,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Vizzklick" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 205, 220, 235, 250 },
@@ -849,9 +1056,12 @@ local recipes = {
         },
     },
     ["Crimson Silk Vest"] = {
+        spellID = 8791,
         itemID = 7058,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 185, 205, 215, 225 },
@@ -862,9 +1072,12 @@ local recipes = {
         },
     },
     ["Dreamweave Vest"] = {
+        spellID = 12070,
         itemID = 10021,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 225, 240, 255, 270 },
@@ -876,9 +1089,12 @@ local recipes = {
         },
     },
     ["Earthen Vest"] = {
+        spellID = 8764,
         itemID = 7051,
         skillReq = 170,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 170, 190, 205, 220 },
@@ -889,9 +1105,13 @@ local recipes = {
         },
     },
     ["Felcloth Robe"] = {
+        spellID = 18451,
         itemID = 14106,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -903,9 +1123,12 @@ local recipes = {
         },
     },
     ["Festival Dress"] = {
+        spellID = 26403,
         itemID = 21154,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Festive Recipes" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 250, 265, 280, 295 },
@@ -917,9 +1140,12 @@ local recipes = {
         },
     },
     ["Festive Red Pant Suit"] = {
+        spellID = 26407,
         itemID = 21542,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Festive Recipes" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 250, 265, 280, 295 },
@@ -931,9 +1157,12 @@ local recipes = {
         },
     },
     ["Flameheart Vest"] = {
+        spellID = 37884,
         itemID = 30839,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Revered" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 370, 380, 385, 390 },
@@ -944,9 +1173,12 @@ local recipes = {
         },
     },
     ["Flarecore Robe"] = {
+        spellID = 23666,
         itemID = 19156,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -959,9 +1191,12 @@ local recipes = {
         },
     },
     ["Frostweave Robe"] = {
+        spellID = 18404,
         itemID = 13868,
         skillReq = 255,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 255, 270, 285, 300 },
@@ -972,9 +1207,13 @@ local recipes = {
         },
     },
     ["Frostweave Tunic"] = {
+        spellID = 18403,
         itemID = 13869,
         skillReq = 255,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 255, 270, 285, 300 },
@@ -985,9 +1224,12 @@ local recipes = {
         },
     },
     ["Frozen Shadoweave Robe"] = {
+        spellID = 26758,
         itemID = 21871,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Andrion Darkspinner" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 390, 395 },
@@ -998,9 +1240,13 @@ local recipes = {
         },
     },
     ["Ghostweave Vest"] = {
+        spellID = 18416,
         itemID = 14141,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 275, 290, 305, 320 },
@@ -1012,9 +1258,12 @@ local recipes = {
         },
     },
     ["Glacial Vest"] = {
+        spellID = 28207,
         itemID = 22652,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -1026,9 +1275,12 @@ local recipes = {
         },
     },
     ["Gray Woolen Robe"] = {
+        spellID = 2403,
         itemID = 2585,
         skillReq = 105,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 105, 130, 147, 165 },
@@ -1039,9 +1291,12 @@ local recipes = {
         },
     },
     ["Greater Adept's Robe"] = {
+        spellID = 7643,
         itemID = 6264,
         skillReq = 115,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Elynna, Jennabink Powerseam +3 more" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 115, 140, 157, 175 },
@@ -1052,9 +1307,12 @@ local recipes = {
         },
     },
     ["Green Silk Armor"] = {
+        spellID = 8784,
         itemID = 7065,
         skillReq = 165,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 165, 185, 200, 215 },
@@ -1065,9 +1323,12 @@ local recipes = {
         },
     },
     ["Green Winter Clothes"] = {
+        spellID = 44950,
         itemID = 34087,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Penney Copperpinch" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 250, 250, 250, 250 },
@@ -1078,23 +1339,13 @@ local recipes = {
             { itemID = 14341, count = 1, name = "Rune Thread" },
         },
     },
-    ["Green Woolen Robe"] = {
-        itemID = 6243,
-        skillReq = 90,
-        source = "trainer",
-        category = "Cloth Armor",
-        subcategory = "Chest",
-        skillRange = { 1, 115, 132, 150 },
-        reagents = {
-            { itemID = 2997, count = 3, name = "Bolt of Woolen Cloth" },
-            { itemID = 2321, count = 2, name = "Fine Thread" },
-            { itemID = 2605, count = 1, name = "Green Dye" },
-        },
-    },
     ["Green Woolen Vest"] = {
+        spellID = 2399,
         itemID = 2582,
         skillReq = 85,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 85, 110, 127, 145 },
@@ -1105,9 +1356,12 @@ local recipes = {
         },
     },
     ["Haliscan Jacket"] = {
+        spellID = 50644,
         itemID = 38277,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Haughty Modiste" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 250, 265, 280, 295 },
@@ -1119,9 +1373,12 @@ local recipes = {
         },
     },
     ["Imbued Netherweave Robe"] = {
+        spellID = 26777,
         itemID = 21861,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Arrond" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 360, 370, 375, 380 },
@@ -1132,9 +1389,12 @@ local recipes = {
         },
     },
     ["Imbued Netherweave Tunic"] = {
+        spellID = 26778,
         itemID = 21862,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Arrond" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 360, 370, 375, 380 },
@@ -1145,9 +1405,12 @@ local recipes = {
         },
     },
     ["Lesser Wizard's Robe"] = {
+        spellID = 6690,
         itemID = 5766,
         skillReq = 135,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 135, 155, 170, 185 },
@@ -1158,9 +1421,12 @@ local recipes = {
         },
     },
     ["Mooncloth Robe"] = {
+        spellID = 22902,
         itemID = 18486,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Shen\'dralar Provisioner" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -1172,9 +1438,12 @@ local recipes = {
         },
     },
     ["Mooncloth Vest"] = {
+        spellID = 18447,
         itemID = 14138,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -1185,9 +1454,12 @@ local recipes = {
         },
     },
     ["Netherweave Robe"] = {
+        spellID = 26773,
         itemID = 21854,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Deynna, Eiin +1 more" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 340, 350, 355, 360 },
@@ -1197,9 +1469,12 @@ local recipes = {
         },
     },
     ["Netherweave Tunic"] = {
+        spellID = 26774,
         itemID = 21855,
         skillReq = 345,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Deynna, Eiin +1 more" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 345, 355, 360, 365 },
@@ -1209,9 +1484,12 @@ local recipes = {
         },
     },
     ["Primal Mooncloth Robe"] = {
+        spellID = 26762,
         itemID = 21875,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Nasmara Moonsong" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 390, 395 },
@@ -1222,9 +1500,12 @@ local recipes = {
         },
     },
     ["Red Linen Robe"] = {
+        spellID = 2389,
         itemID = 2572,
         skillReq = 40,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 40, 65, 82, 100 },
@@ -1235,9 +1516,12 @@ local recipes = {
         },
     },
     ["Red Linen Vest"] = {
+        spellID = 7629,
         itemID = 6239,
         skillReq = 55,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 55, 80, 97, 115 },
@@ -1248,9 +1532,12 @@ local recipes = {
         },
     },
     ["Red Mageweave Vest"] = {
+        spellID = 12056,
         itemID = 10007,
         skillReq = 215,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 215, 230, 245, 260 },
@@ -1261,9 +1548,12 @@ local recipes = {
         },
     },
     ["Red Winter Clothes"] = {
+        spellID = 44958,
         itemID = 34085,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Wulmort Jinglepocket" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 250, 250, 250, 250 },
@@ -1275,9 +1565,12 @@ local recipes = {
         },
     },
     ["Robe of Eternal Light"] = {
+        spellID = 46131,
         itemID = 34365,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 392, 410 },
@@ -1287,9 +1580,12 @@ local recipes = {
         },
     },
     ["Robe of Power"] = {
+        spellID = 8770,
         itemID = 7054,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 190, 210, 225, 240 },
@@ -1303,9 +1599,12 @@ local recipes = {
         },
     },
     ["Robe of Winter Night"] = {
+        spellID = 18436,
         itemID = 14136,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 285, 300, 315, 330 },
@@ -1318,9 +1617,12 @@ local recipes = {
         },
     },
     ["Robe of the Archmage"] = {
+        spellID = 18457,
         itemID = 14152,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -1334,9 +1636,12 @@ local recipes = {
         },
     },
     ["Robe of the Void"] = {
+        spellID = 18458,
         itemID = 14153,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -1350,9 +1655,12 @@ local recipes = {
         },
     },
     ["Robes of Arcana"] = {
+        spellID = 6692,
         itemID = 5770,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 150, 170, 185, 200 },
@@ -1363,9 +1671,12 @@ local recipes = {
         },
     },
     ["Runecloth Robe"] = {
+        spellID = 18406,
         itemID = 13858,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 260, 275, 290, 305 },
@@ -1376,9 +1687,13 @@ local recipes = {
         },
     },
     ["Runecloth Tunic"] = {
+        spellID = 18407,
         itemID = 13857,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 260, 275, 290, 305 },
@@ -1389,9 +1704,12 @@ local recipes = {
         },
     },
     ["Shadoweave Robe"] = {
+        spellID = 12055,
         itemID = 10004,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 215, 230, 245, 260 },
@@ -1402,9 +1720,12 @@ local recipes = {
         },
     },
     ["Simple Black Dress"] = {
+        spellID = 12077,
         itemID = 10053,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 235, 240, 245, 250 },
@@ -1416,9 +1737,12 @@ local recipes = {
         },
     },
     ["Simple Dress"] = {
+        spellID = 8465,
         itemID = 6786,
         skillReq = 40,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 40, 65, 82, 100 },
@@ -1430,9 +1754,12 @@ local recipes = {
         },
     },
     ["Soulcloth Vest"] = {
+        spellID = 26781,
         itemID = 21865,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 390, 395 },
@@ -1442,9 +1769,12 @@ local recipes = {
         },
     },
     ["Spellfire Robe"] = {
+        spellID = 26754,
         itemID = 21848,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gidge Spellweaver" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 390, 395 },
@@ -1454,23 +1784,13 @@ local recipes = {
             { itemID = 21881, count = 4, name = "Netherweb Spider Silk" },
         },
     },
-    ["Stormcloth Vest"] = {
-        itemID = 10020,
-        skillReq = 225,
-        source = "trainer",
-        category = "Cloth Armor",
-        subcategory = "Chest",
-        skillRange = { 1, 240, 255, 270 },
-        reagents = {
-            { itemID = 4339, count = 5, name = "Bolt of Mageweave" },
-            { itemID = 7079, count = 3, name = "Globe of Water" },
-            { itemID = 8343, count = 2, name = "Heavy Silken Thread" },
-        },
-    },
     ["Sunfire Robe"] = {
+        spellID = 46130,
         itemID = 34364,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 392, 410 },
@@ -1481,9 +1801,12 @@ local recipes = {
         },
     },
     ["Sylvan Vest"] = {
+        spellID = 28480,
         itemID = 22756,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Honored" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -1495,9 +1818,12 @@ local recipes = {
         },
     },
     ["Truefaith Vestments"] = {
+        spellID = 18456,
         itemID = 14154,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -1511,9 +1837,12 @@ local recipes = {
         },
     },
     ["Tuxedo Jacket"] = {
+        spellID = 12093,
         itemID = 10036,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Millie Gregorian, Outfitter Eric" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 250, 265, 280, 295 },
@@ -1523,9 +1852,12 @@ local recipes = {
         },
     },
     ["White Linen Robe"] = {
+        spellID = 7624,
         itemID = 6241,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 30, 55, 72, 90 },
@@ -1536,9 +1868,12 @@ local recipes = {
         },
     },
     ["White Wedding Dress"] = {
+        spellID = 12091,
         itemID = 10040,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Alexandra Bolero, Mahu" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 250, 255, 260, 265 },
@@ -1549,9 +1884,12 @@ local recipes = {
         },
     },
     ["White Woolen Dress"] = {
+        spellID = 8467,
         itemID = 6787,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 110, 135, 152, 170 },
@@ -1562,9 +1900,13 @@ local recipes = {
         },
     },
     ["Wizardweave Robe"] = {
+        spellID = 18446,
         itemID = 14128,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Chest",
         skillRange = { 300, 315, 330, 345 },
@@ -1577,9 +1919,12 @@ local recipes = {
     -- Feet
     -- --------------------------------
     ["Arcanoweave Boots"] = {
+        spellID = 26783,
         itemID = 21867,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 360, 370, 375, 380 },
@@ -1590,9 +1935,12 @@ local recipes = {
         },
     },
     ["Argent Boots"] = {
+        spellID = 23664,
         itemID = 19056,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Friendly" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 290, 305, 320, 335 },
@@ -1605,9 +1953,12 @@ local recipes = {
         },
     },
     ["Black Mageweave Boots"] = {
+        spellID = 12073,
         itemID = 10026,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 230, 245, 260, 275 },
@@ -1618,9 +1969,12 @@ local recipes = {
         },
     },
     ["Bloodvine Boots"] = {
+        spellID = 24093,
         itemID = 19684,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Neutral" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 300, 315, 330, 345 },
@@ -1633,9 +1987,12 @@ local recipes = {
         },
     },
     ["Boots of Blasting"] = {
+        spellID = 36317,
         itemID = 30037,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 390, 395 },
@@ -1646,24 +2003,13 @@ local recipes = {
             { itemID = 14341, count = 2, name = "Rune Thread" },
         },
     },
-    ["Boots of Darkness"] = {
-        itemID = 7027,
-        skillReq = 140,
-        source = "trainer",
-        category = "Cloth Armor",
-        subcategory = "Feet",
-        skillRange = { 1, 160, 175, 190 },
-        reagents = {
-            { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
-            { itemID = 2319, count = 2, name = "Medium Leather" },
-            { itemID = 6048, count = 1, name = "Shadow Protection Potion" },
-            { itemID = 2321, count = 2, name = "Fine Thread" },
-        },
-    },
     ["Boots of the Enchanter"] = {
+        spellID = 3860,
         itemID = 4325,
         skillReq = 175,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 175, 195, 210, 225 },
@@ -1674,9 +2020,12 @@ local recipes = {
         },
     },
     ["Boots of the Long Road"] = {
+        spellID = 36318,
         itemID = 30035,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 390, 395 },
@@ -1688,9 +2037,12 @@ local recipes = {
         },
     },
     ["Cindercloth Boots"] = {
+        spellID = 12088,
         itemID = 10044,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 245, 260, 275, 290 },
@@ -1702,9 +2054,12 @@ local recipes = {
         },
     },
     ["Dress Shoes"] = {
+        spellID = 49677,
         itemID = 6836,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Haughty Modiste" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 250, 255, 270, 285 },
@@ -1714,9 +2069,13 @@ local recipes = {
         },
     },
     ["Felcloth Boots"] = {
+        spellID = 18437,
         itemID = 14108,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 285, 300, 315, 330 },
@@ -1728,9 +2087,12 @@ local recipes = {
         },
     },
     ["Frozen Shadoweave Boots"] = {
+        spellID = 26757,
         itemID = 21870,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Andrion Darkspinner" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 365, 375, 380, 385 },
@@ -1741,9 +2103,12 @@ local recipes = {
         },
     },
     ["Imbued Netherweave Boots"] = {
+        spellID = 26776,
         itemID = 21860,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Muheru the Weaver, Zurai" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 350, 360, 365, 370 },
@@ -1755,9 +2120,12 @@ local recipes = {
         },
     },
     ["Linen Boots"] = {
+        spellID = 2386,
         itemID = 2569,
         skillReq = 65,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 65, 90, 107, 125 },
@@ -1768,9 +2136,12 @@ local recipes = {
         },
     },
     ["Mooncloth Boots"] = {
+        spellID = 19435,
         itemID = 15802,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 290, 295, 310, 325 },
@@ -1782,9 +2153,12 @@ local recipes = {
         },
     },
     ["Netherweave Boots"] = {
+        spellID = 26772,
         itemID = 21853,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 335, 345, 350, 355 },
@@ -1795,9 +2169,12 @@ local recipes = {
         },
     },
     ["Red Woolen Boots"] = {
+        spellID = 3847,
         itemID = 4313,
         skillReq = 95,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 95, 120, 137, 155 },
@@ -1809,9 +2186,12 @@ local recipes = {
         },
     },
     ["Runecloth Boots"] = {
+        spellID = 18423,
         itemID = 13864,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 280, 295, 310, 325 },
@@ -1823,9 +2203,12 @@ local recipes = {
         },
     },
     ["Runed Stygian Boots"] = {
+        spellID = 24903,
         itemID = 20537,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 300, 315, 330, 345 },
@@ -1838,9 +2221,12 @@ local recipes = {
         },
     },
     ["Shadoweave Boots"] = {
+        spellID = 12082,
         itemID = 10031,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 240, 255, 270, 285 },
@@ -1852,9 +2238,12 @@ local recipes = {
         },
     },
     ["Simple Linen Boots"] = {
+        spellID = 12045,
         itemID = 10046,
         skillReq = 20,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 20, 50, 67, 85 },
@@ -1865,9 +2254,12 @@ local recipes = {
         },
     },
     ["Soft-soled Linen Boots"] = {
+        spellID = 3845,
         itemID = 4312,
         skillReq = 80,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 80, 105, 122, 140 },
@@ -1878,9 +2270,12 @@ local recipes = {
         },
     },
     ["Soulguard Slippers"] = {
+        spellID = 40020,
         itemID = 32391,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Friendly" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 390, 395 },
@@ -1893,9 +2288,12 @@ local recipes = {
         },
     },
     ["Spider Silk Slippers"] = {
+        spellID = 3856,
         itemID = 4321,
         skillReq = 140,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 140, 160, 175, 190 },
@@ -1906,9 +2304,12 @@ local recipes = {
         },
     },
     ["Spidersilk Boots"] = {
+        spellID = 3855,
         itemID = 4320,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 125, 150, 167, 185 },
@@ -1919,24 +2320,13 @@ local recipes = {
             { itemID = 5500, count = 2, name = "Iridescent Pearl" },
         },
     },
-    ["Stormcloth Boots"] = {
-        itemID = 10039,
-        skillReq = 250,
-        source = "trainer",
-        category = "Cloth Armor",
-        subcategory = "Feet",
-        skillRange = { 1, 265, 280, 295 },
-        reagents = {
-            { itemID = 4339, count = 6, name = "Bolt of Mageweave" },
-            { itemID = 7079, count = 6, name = "Globe of Water" },
-            { itemID = 8343, count = 3, name = "Heavy Silken Thread" },
-            { itemID = 4304, count = 2, name = "Thick Leather" },
-        },
-    },
     ["Woolen Boots"] = {
+        spellID = 2401,
         itemID = 2583,
         skillReq = 95,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 95, 120, 137, 155 },
@@ -1949,9 +2339,12 @@ local recipes = {
     -- Hands
     -- --------------------------------
     ["Azure Silk Gloves"] = {
+        spellID = 3854,
         itemID = 4319,
         skillReq = 145,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kireena, Wenna Silkbeard" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 145, 165, 180, 195 },
@@ -1963,9 +2356,12 @@ local recipes = {
         },
     },
     ["Black Mageweave Gloves"] = {
+        spellID = 12053,
         itemID = 10003,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 215, 230, 245, 260 },
@@ -1975,9 +2371,13 @@ local recipes = {
         },
     },
     ["Brightcloth Gloves"] = {
+        spellID = 18415,
         itemID = 14101,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 270, 285, 300, 315 },
@@ -1988,9 +2388,12 @@ local recipes = {
         },
     },
     ["Cindercloth Gloves"] = {
+        spellID = 18412,
         itemID = 14043,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 270, 285, 300, 315 },
@@ -2001,9 +2404,12 @@ local recipes = {
         },
     },
     ["Crimson Silk Gloves"] = {
+        spellID = 8804,
         itemID = 7064,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 210, 225, 240, 255 },
@@ -2017,9 +2423,12 @@ local recipes = {
         },
     },
     ["Dreamweave Gloves"] = {
+        spellID = 12067,
         itemID = 10019,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 225, 240, 255, 270 },
@@ -2031,9 +2440,12 @@ local recipes = {
         },
     },
     ["Felcloth Gloves"] = {
+        spellID = 22867,
         itemID = 18407,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 300, 315, 330, 345 },
@@ -2046,9 +2458,12 @@ local recipes = {
         },
     },
     ["Flameheart Gloves"] = {
+        spellID = 37883,
         itemID = 30838,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Friendly" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 360, 370, 375, 380 },
@@ -2059,9 +2474,12 @@ local recipes = {
         },
     },
     ["Flarecore Gloves"] = {
+        spellID = 20849,
         itemID = 16979,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 300, 315, 330, 345 },
@@ -2074,9 +2492,13 @@ local recipes = {
         },
     },
     ["Frostweave Gloves"] = {
+        spellID = 18411,
         itemID = 13870,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 265, 280, 295, 310 },
@@ -2087,9 +2509,13 @@ local recipes = {
         },
     },
     ["Ghostweave Gloves"] = {
+        spellID = 18413,
         itemID = 14142,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 270, 285, 300, 315 },
@@ -2101,9 +2527,12 @@ local recipes = {
         },
     },
     ["Glacial Gloves"] = {
+        spellID = 28205,
         itemID = 22654,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 300, 315, 330, 345 },
@@ -2115,9 +2544,12 @@ local recipes = {
         },
     },
     ["Gloves of Meditation"] = {
+        spellID = 3852,
         itemID = 4318,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 130, 150, 165, 180 },
@@ -2128,9 +2560,12 @@ local recipes = {
         },
     },
     ["Gloves of Spell Mastery"] = {
+        spellID = 18454,
         itemID = 14146,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 300, 315, 330, 345 },
@@ -2145,9 +2580,12 @@ local recipes = {
         },
     },
     ["Hands of Darkness"] = {
+        spellID = 8780,
         itemID = 7047,
         skillReq = 145,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 145, 165, 180, 195 },
@@ -2159,9 +2597,12 @@ local recipes = {
         },
     },
     ["Hands of Eternal Light"] = {
+        spellID = 46129,
         itemID = 34367,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 392, 410 },
@@ -2173,9 +2614,12 @@ local recipes = {
         },
     },
     ["Heavy Linen Gloves"] = {
+        spellID = 3840,
         itemID = 4307,
         skillReq = 35,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 35, 60, 77, 95 },
@@ -2185,9 +2629,12 @@ local recipes = {
         },
     },
     ["Heavy Woolen Gloves"] = {
+        spellID = 3843,
         itemID = 4310,
         skillReq = 85,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 85, 110, 127, 145 },
@@ -2197,9 +2644,12 @@ local recipes = {
         },
     },
     ["Inferno Gloves"] = {
+        spellID = 22868,
         itemID = 18408,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 300, 315, 330, 345 },
@@ -2211,9 +2661,12 @@ local recipes = {
         },
     },
     ["Mooncloth Gloves"] = {
+        spellID = 22869,
         itemID = 18409,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 300, 315, 330, 345 },
@@ -2225,9 +2678,12 @@ local recipes = {
         },
     },
     ["Netherweave Gloves"] = {
+        spellID = 26770,
         itemID = 21851,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 320, 330, 335, 340 },
@@ -2238,9 +2694,12 @@ local recipes = {
         },
     },
     ["Phoenix Gloves"] = {
+        spellID = 3868,
         itemID = 4331,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 125, 150, 167, 185 },
@@ -2252,9 +2711,12 @@ local recipes = {
         },
     },
     ["Red Mageweave Gloves"] = {
+        spellID = 12066,
         itemID = 10018,
         skillReq = 225,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 225, 240, 255, 270 },
@@ -2265,9 +2727,12 @@ local recipes = {
         },
     },
     ["Runecloth Gloves"] = {
+        spellID = 18417,
         itemID = 13863,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 275, 290, 305, 320 },
@@ -2278,9 +2743,12 @@ local recipes = {
         },
     },
     ["Shadoweave Gloves"] = {
+        spellID = 12071,
         itemID = 10023,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 225, 240, 255, 270 },
@@ -2291,9 +2759,12 @@ local recipes = {
         },
     },
     ["Soulcloth Gloves"] = {
+        spellID = 26779,
         itemID = 21863,
         skillReq = 355,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Borto, Mathar G\'ochar" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 355, 365, 370, 375 },
@@ -2304,9 +2775,12 @@ local recipes = {
         },
     },
     ["Spellfire Gloves"] = {
+        spellID = 26753,
         itemID = 21847,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gidge Spellweaver" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 380, 385 },
@@ -2316,23 +2790,13 @@ local recipes = {
             { itemID = 21881, count = 4, name = "Netherweb Spider Silk" },
         },
     },
-    ["Stormcloth Gloves"] = {
-        itemID = 10011,
-        skillReq = 220,
-        source = "trainer",
-        category = "Cloth Armor",
-        subcategory = "Hands",
-        skillRange = { 1, 235, 250, 265 },
-        reagents = {
-            { itemID = 4339, count = 3, name = "Bolt of Mageweave" },
-            { itemID = 7079, count = 2, name = "Globe of Water" },
-            { itemID = 8343, count = 2, name = "Heavy Silken Thread" },
-        },
-    },
     ["Sunfire Handwraps"] = {
+        spellID = 46128,
         itemID = 34366,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 392, 410 },
@@ -2343,9 +2807,12 @@ local recipes = {
         },
     },
     ["Truefaith Gloves"] = {
+        spellID = 8782,
         itemID = 7049,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Hands",
         skillRange = { 150, 170, 185, 200 },
@@ -2359,9 +2826,12 @@ local recipes = {
     -- Head
     -- --------------------------------
     ["Admiral's Hat"] = {
+        spellID = 12081,
         itemID = 10030,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Cowardly Crosby" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 240, 255, 270, 285 },
@@ -2372,9 +2842,12 @@ local recipes = {
         },
     },
     ["Azure Silk Hood"] = {
+        spellID = 8760,
         itemID = 7048,
         skillReq = 145,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 145, 155, 160, 165 },
@@ -2385,9 +2858,12 @@ local recipes = {
         },
     },
     ["Battlecast Hood"] = {
+        spellID = 31456,
         itemID = 24267,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 375, 385, 390, 395 },
@@ -2398,9 +2874,12 @@ local recipes = {
         },
     },
     ["Black Mageweave Headband"] = {
+        spellID = 12072,
         itemID = 10024,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 230, 245, 260, 275 },
@@ -2410,9 +2889,12 @@ local recipes = {
         },
     },
     ["Dreamweave Circlet"] = {
+        spellID = 12092,
         itemID = 10041,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 250, 265, 280, 295 },
@@ -2426,9 +2908,12 @@ local recipes = {
         },
     },
     ["Enchanter's Cowl"] = {
+        spellID = 3857,
         itemID = 4322,
         skillReq = 165,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Xizk Goodstitch" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 165, 185, 200, 215 },
@@ -2439,9 +2924,13 @@ local recipes = {
         },
     },
     ["Felcloth Hood"] = {
+        spellID = 18442,
         itemID = 14111,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 290, 305, 320, 335 },
@@ -2452,9 +2941,12 @@ local recipes = {
         },
     },
     ["Mooncloth Circlet"] = {
+        spellID = 18452,
         itemID = 14140,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 300, 315, 330, 345 },
@@ -2467,9 +2959,12 @@ local recipes = {
         },
     },
     ["Red Mageweave Headband"] = {
+        spellID = 12084,
         itemID = 10033,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 240, 255, 270, 285 },
@@ -2480,9 +2975,13 @@ local recipes = {
         },
     },
     ["Runecloth Headband"] = {
+        spellID = 18444,
         itemID = 13866,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 295, 310, 325, 340 },
@@ -2493,9 +2992,12 @@ local recipes = {
         },
     },
     ["Shadow Hood"] = {
+        spellID = 3858,
         itemID = 4323,
         skillReq = 170,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 170, 190, 205, 220 },
@@ -2506,9 +3008,12 @@ local recipes = {
         },
     },
     ["Shadoweave Mask"] = {
+        spellID = 12086,
         itemID = 10025,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: The Undermarket" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 245, 260, 275, 290 },
@@ -2519,9 +3024,12 @@ local recipes = {
         },
     },
     ["Silk Headband"] = {
+        spellID = 8762,
         itemID = 7050,
         skillReq = 160,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 160, 170, 175, 180 },
@@ -2531,9 +3039,12 @@ local recipes = {
         },
     },
     ["Spellstrike Hood"] = {
+        spellID = 31455,
         itemID = 24266,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 375, 385, 390, 395 },
@@ -2543,23 +3054,13 @@ local recipes = {
             { itemID = 23572, count = 1, name = "Primal Nether" },
         },
     },
-    ["Stormcloth Headband"] = {
-        itemID = 10032,
-        skillReq = 240,
-        source = "trainer",
-        category = "Cloth Armor",
-        subcategory = "Head",
-        skillRange = { 1, 255, 270, 285 },
-        reagents = {
-            { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
-            { itemID = 7079, count = 4, name = "Globe of Water" },
-            { itemID = 8343, count = 2, name = "Heavy Silken Thread" },
-        },
-    },
     ["Sylvan Crown"] = {
+        spellID = 28481,
         itemID = 22757,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Friendly" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 300, 315, 330, 345 },
@@ -2571,9 +3072,12 @@ local recipes = {
         },
     },
     ["White Bandit Mask"] = {
+        spellID = 12059,
         itemID = 10008,
         skillReq = 215,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 215, 220, 225, 230 },
@@ -2584,9 +3088,12 @@ local recipes = {
         },
     },
     ["Whitemend Hood"] = {
+        spellID = 31454,
         itemID = 24264,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 375, 385, 390, 395 },
@@ -2597,9 +3104,13 @@ local recipes = {
         },
     },
     ["Wizardweave Turban"] = {
+        spellID = 18450,
         itemID = 14130,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Head",
         skillRange = { 300, 315, 330, 345 },
@@ -2613,9 +3124,12 @@ local recipes = {
     -- Legs
     -- --------------------------------
     ["Azure Silk Pants"] = {
+        spellID = 8758,
         itemID = 7046,
         skillReq = 140,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 140, 160, 175, 190 },
@@ -2626,9 +3140,12 @@ local recipes = {
         },
     },
     ["Battlecast Pants"] = {
+        spellID = 31453,
         itemID = 24263,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 375, 385, 390, 395 },
@@ -2639,9 +3156,12 @@ local recipes = {
         },
     },
     ["Black Mageweave Leggings"] = {
+        spellID = 12049,
         itemID = 9999,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 205, 220, 235, 250 },
@@ -2651,9 +3171,12 @@ local recipes = {
         },
     },
     ["Bloodvine Leggings"] = {
+        spellID = 24092,
         itemID = 19683,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Friendly" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 300, 315, 330, 345 },
@@ -2666,9 +3189,12 @@ local recipes = {
         },
     },
     ["Brightcloth Pants"] = {
+        spellID = 18439,
         itemID = 14104,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 290, 305, 320, 335 },
@@ -2680,9 +3206,12 @@ local recipes = {
         },
     },
     ["Brown Linen Pants"] = {
+        spellID = 3914,
         itemID = 4343,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 30, 55, 72, 90 },
@@ -2692,9 +3221,12 @@ local recipes = {
         },
     },
     ["Cindercloth Pants"] = {
+        spellID = 18434,
         itemID = 14045,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 280, 295, 310, 325 },
@@ -2705,9 +3237,12 @@ local recipes = {
         },
     },
     ["Colorful Kilt"] = {
+        spellID = 12047,
         itemID = 10048,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 120, 145, 162, 180 },
@@ -2718,9 +3253,12 @@ local recipes = {
         },
     },
     ["Crimson Silk Pantaloons"] = {
+        spellID = 8799,
         itemID = 7062,
         skillReq = 195,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 195, 215, 225, 235 },
@@ -2731,9 +3269,12 @@ local recipes = {
         },
     },
     ["Felcloth Pants"] = {
+        spellID = 18419,
         itemID = 14107,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lorelae Wintersong" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 275, 290, 305, 320 },
@@ -2744,9 +3285,12 @@ local recipes = {
         },
     },
     ["Flarecore Leggings"] = {
+        spellID = 23667,
         itemID = 19165,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 300, 315, 330, 345 },
@@ -2759,9 +3303,13 @@ local recipes = {
         },
     },
     ["Frostweave Pants"] = {
+        spellID = 18424,
         itemID = 13871,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 280, 295, 310, 325 },
@@ -2772,9 +3320,13 @@ local recipes = {
         },
     },
     ["Ghostweave Pants"] = {
+        spellID = 18441,
         itemID = 14144,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 290, 305, 320, 335 },
@@ -2785,9 +3337,12 @@ local recipes = {
         },
     },
     ["Haliscan Pantaloons"] = {
+        spellID = 50647,
         itemID = 38278,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Haughty Modiste" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 245, 250, 255, 260 },
@@ -2798,9 +3353,12 @@ local recipes = {
         },
     },
     ["Handstitched Linen Britches"] = {
+        spellID = 3842,
         itemID = 4309,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 70, 95, 112, 130 },
@@ -2810,9 +3368,12 @@ local recipes = {
         },
     },
     ["Heavy Woolen Pants"] = {
+        spellID = 3850,
         itemID = 4316,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 110, 135, 152, 170 },
@@ -2822,9 +3383,12 @@ local recipes = {
         },
     },
     ["Imbued Netherweave Pants"] = {
+        spellID = 26775,
         itemID = 21859,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Muheru the Weaver, Zurai" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 340, 350, 355, 360 },
@@ -2835,9 +3399,12 @@ local recipes = {
         },
     },
     ["Mooncloth Leggings"] = {
+        spellID = 18440,
         itemID = 14137,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 290, 305, 320, 335 },
@@ -2848,9 +3415,12 @@ local recipes = {
         },
     },
     ["Netherweave Pants"] = {
+        spellID = 26771,
         itemID = 21852,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 325, 335, 340, 345 },
@@ -2860,9 +3430,12 @@ local recipes = {
         },
     },
     ["Phoenix Pants"] = {
+        spellID = 3851,
         itemID = 4317,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 125, 150, 167, 185 },
@@ -2873,9 +3446,12 @@ local recipes = {
         },
     },
     ["Red Mageweave Pants"] = {
+        spellID = 12060,
         itemID = 10009,
         skillReq = 215,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 215, 230, 245, 260 },
@@ -2886,9 +3462,13 @@ local recipes = {
         },
     },
     ["Runecloth Pants"] = {
+        spellID = 18438,
         itemID = 13865,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 285, 300, 315, 330 },
@@ -2899,9 +3479,12 @@ local recipes = {
         },
     },
     ["Runed Stygian Leggings"] = {
+        spellID = 24901,
         itemID = 20538,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 300, 315, 330, 345 },
@@ -2913,9 +3496,12 @@ local recipes = {
         },
     },
     ["Shadoweave Pants"] = {
+        spellID = 12052,
         itemID = 10002,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 210, 225, 240, 255 },
@@ -2926,9 +3512,12 @@ local recipes = {
         },
     },
     ["Simple Kilt"] = {
+        spellID = 12046,
         itemID = 10047,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 75, 100, 117, 135 },
@@ -2938,9 +3527,12 @@ local recipes = {
         },
     },
     ["Simple Linen Pants"] = {
+        spellID = 12044,
         itemID = 10045,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 1, 35, 47, 60 },
@@ -2950,9 +3542,12 @@ local recipes = {
         },
     },
     ["Soulguard Leggings"] = {
+        spellID = 40023,
         itemID = 32389,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Friendly" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 375, 385, 390, 395 },
@@ -2965,9 +3560,12 @@ local recipes = {
         },
     },
     ["Spellstrike Pants"] = {
+        spellID = 31452,
         itemID = 24262,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 375, 385, 390, 395 },
@@ -2977,23 +3575,13 @@ local recipes = {
             { itemID = 23572, count = 1, name = "Primal Nether" },
         },
     },
-    ["Stormcloth Pants"] = {
-        itemID = 10010,
-        skillReq = 220,
-        source = "trainer",
-        category = "Cloth Armor",
-        subcategory = "Legs",
-        skillRange = { 1, 235, 250, 265 },
-        reagents = {
-            { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
-            { itemID = 7079, count = 2, name = "Globe of Water" },
-            { itemID = 8343, count = 2, name = "Heavy Silken Thread" },
-        },
-    },
     ["Tuxedo Pants"] = {
+        spellID = 12089,
         itemID = 10035,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Millie Gregorian, Outfitter Eric" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 245, 250, 255, 260 },
@@ -3003,9 +3591,12 @@ local recipes = {
         },
     },
     ["Whitemend Pants"] = {
+        spellID = 31451,
         itemID = 24261,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 375, 385, 390, 395 },
@@ -3016,9 +3607,13 @@ local recipes = {
         },
     },
     ["Wizardweave Leggings"] = {
+        spellID = 18421,
         itemID = 14132,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Legs",
         skillRange = { 275, 290, 305, 320 },
@@ -3031,9 +3626,12 @@ local recipes = {
     -- Shoulder
     -- --------------------------------
     ["Argent Shoulders"] = {
+        spellID = 23665,
         itemID = 19059,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 315, 330, 345 },
@@ -3044,9 +3642,12 @@ local recipes = {
         },
     },
     ["Azure Shoulders"] = {
+        spellID = 8795,
         itemID = 7060,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 190, 210, 225, 240 },
@@ -3058,9 +3659,12 @@ local recipes = {
         },
     },
     ["Black Mageweave Shoulders"] = {
+        spellID = 12074,
         itemID = 10027,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 230, 245, 260, 275 },
@@ -3070,9 +3674,12 @@ local recipes = {
         },
     },
     ["Crimson Silk Shoulders"] = {
+        spellID = 8793,
         itemID = 7059,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 190, 210, 225, 240 },
@@ -3084,9 +3691,12 @@ local recipes = {
         },
     },
     ["Double-stitched Woolen Shoulders"] = {
+        spellID = 3848,
         itemID = 4314,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 110, 135, 152, 170 },
@@ -3096,9 +3706,13 @@ local recipes = {
         },
     },
     ["Felcloth Shoulders"] = {
+        spellID = 18453,
         itemID = 14112,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 315, 330, 345 },
@@ -3111,9 +3725,12 @@ local recipes = {
         },
     },
     ["Flarecore Mantle"] = {
+        spellID = 20848,
         itemID = 16980,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 315, 330, 345 },
@@ -3126,9 +3743,12 @@ local recipes = {
         },
     },
     ["Frozen Shadoweave Shoulders"] = {
+        spellID = 26756,
         itemID = 21869,
         skillReq = 355,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Andrion Darkspinner" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 355, 365, 370, 375 },
@@ -3139,9 +3759,12 @@ local recipes = {
         },
     },
     ["Green Silken Shoulders"] = {
+        spellID = 8774,
         itemID = 7057,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 180, 200, 215, 230 },
@@ -3151,9 +3774,12 @@ local recipes = {
         },
     },
     ["Mantle of Nimble Thought"] = {
+        spellID = 41206,
         itemID = 32587,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 375, 385, 390, 395 },
@@ -3165,9 +3791,12 @@ local recipes = {
         },
     },
     ["Mantle of the Timbermaw"] = {
+        spellID = 23663,
         itemID = 19050,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Honored" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 315, 330, 345 },
@@ -3179,9 +3808,12 @@ local recipes = {
         },
     },
     ["Mooncloth Shoulders"] = {
+        spellID = 18448,
         itemID = 14139,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 315, 330, 345 },
@@ -3192,9 +3824,12 @@ local recipes = {
         },
     },
     ["Primal Mooncloth Shoulders"] = {
+        spellID = 26761,
         itemID = 21874,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Nasmara Moonsong" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 365, 375, 380, 385 },
@@ -3205,9 +3840,12 @@ local recipes = {
         },
     },
     ["Red Mageweave Shoulders"] = {
+        spellID = 12078,
         itemID = 10029,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 235, 250, 265, 280 },
@@ -3218,9 +3856,12 @@ local recipes = {
         },
     },
     ["Reinforced Woolen Shoulders"] = {
+        spellID = 3849,
         itemID = 4315,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 120, 145, 162, 180 },
@@ -3231,9 +3872,13 @@ local recipes = {
         },
     },
     ["Runecloth Shoulders"] = {
+        spellID = 18449,
         itemID = 13867,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 315, 330, 345 },
@@ -3245,9 +3890,12 @@ local recipes = {
         },
     },
     ["Shadoweave Shoulders"] = {
+        spellID = 12076,
         itemID = 10028,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 235, 250, 265, 280 },
@@ -3258,9 +3906,12 @@ local recipes = {
         },
     },
     ["Soulcloth Shoulders"] = {
+        spellID = 26780,
         itemID = 21864,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 365, 375, 380, 385 },
@@ -3269,23 +3920,13 @@ local recipes = {
             { itemID = 14341, count = 4, name = "Rune Thread" },
         },
     },
-    ["Stormcloth Shoulders"] = {
-        itemID = 10038,
-        skillReq = 245,
-        source = "trainer",
-        category = "Cloth Armor",
-        subcategory = "Shoulder",
-        skillRange = { 1, 260, 275, 290 },
-        reagents = {
-            { itemID = 4339, count = 5, name = "Bolt of Mageweave" },
-            { itemID = 7079, count = 6, name = "Globe of Water" },
-            { itemID = 8343, count = 3, name = "Heavy Silken Thread" },
-        },
-    },
     ["Swiftheal Mantle"] = {
+        spellID = 41208,
         itemID = 32585,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 375, 385, 390, 395 },
@@ -3297,9 +3938,12 @@ local recipes = {
         },
     },
     ["Sylvan Shoulders"] = {
+        spellID = 28482,
         itemID = 22758,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Neutral" },
+        },
         category = "Cloth Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 315, 330, 345 },
@@ -3312,9 +3956,12 @@ local recipes = {
     -- Waist
     -- --------------------------------
     ["Azure Silk Belt"] = {
+        spellID = 8766,
         itemID = 7052,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 175, 195, 210, 225 },
@@ -3327,9 +3974,12 @@ local recipes = {
         },
     },
     ["Belt of Blasting"] = {
+        spellID = 36315,
         itemID = 30038,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 390, 395 },
@@ -3341,9 +3991,12 @@ local recipes = {
         },
     },
     ["Belt of the Archmage"] = {
+        spellID = 22866,
         itemID = 18405,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 300, 315, 330, 345 },
@@ -3358,9 +4011,12 @@ local recipes = {
         },
     },
     ["Belt of the Long Road"] = {
+        spellID = 36316,
         itemID = 30036,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 390, 395 },
@@ -3373,9 +4029,12 @@ local recipes = {
         },
     },
     ["Black Belt of Knowledge"] = {
+        spellID = 31444,
         itemID = 24257,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 365, 375, 380, 385 },
@@ -3386,9 +4045,12 @@ local recipes = {
         },
     },
     ["Crimson Silk Belt"] = {
+        spellID = 8772,
         itemID = 7055,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 175, 195, 210, 225 },
@@ -3400,9 +4062,12 @@ local recipes = {
         },
     },
     ["Earthen Silk Belt"] = {
+        spellID = 8797,
         itemID = 7061,
         skillReq = 195,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 195, 215, 230, 245 },
@@ -3415,9 +4080,13 @@ local recipes = {
         },
     },
     ["Ghostweave Belt"] = {
+        spellID = 18410,
         itemID = 14143,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 265, 280, 295, 310 },
@@ -3429,9 +4098,12 @@ local recipes = {
         },
     },
     ["Girdle of Ruination"] = {
+        spellID = 31443,
         itemID = 24256,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 365, 375, 380, 385 },
@@ -3442,9 +4114,12 @@ local recipes = {
         },
     },
     ["Linen Belt"] = {
+        spellID = 8776,
         itemID = 7026,
         skillReq = 15,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 15, 50, 67, 85 },
@@ -3454,9 +4129,12 @@ local recipes = {
         },
     },
     ["Netherweave Belt"] = {
+        spellID = 26765,
         itemID = 21850,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 310, 320, 325, 330 },
@@ -3466,9 +4144,12 @@ local recipes = {
         },
     },
     ["Primal Mooncloth Belt"] = {
+        spellID = 26760,
         itemID = 21873,
         skillReq = 355,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Nasmara Moonsong" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 355, 365, 370, 375 },
@@ -3479,9 +4160,12 @@ local recipes = {
         },
     },
     ["Runecloth Belt"] = {
+        spellID = 18402,
         itemID = 13856,
         skillReq = 255,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 255, 270, 285, 300 },
@@ -3491,9 +4175,12 @@ local recipes = {
         },
     },
     ["Runed Stygian Belt"] = {
+        spellID = 24902,
         itemID = 20539,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 300, 315, 330, 345 },
@@ -3506,9 +4193,12 @@ local recipes = {
         },
     },
     ["Soulguard Girdle"] = {
+        spellID = 40024,
         itemID = 32390,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Neutral" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 390, 395 },
@@ -3521,9 +4211,12 @@ local recipes = {
         },
     },
     ["Spellfire Belt"] = {
+        spellID = 26752,
         itemID = 21846,
         skillReq = 355,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gidge Spellweaver" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 355, 365, 370, 375 },
@@ -3534,9 +4227,12 @@ local recipes = {
         },
     },
     ["Spider Belt"] = {
+        spellID = 3863,
         itemID = 4328,
         skillReq = 180,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 180, 200, 215, 230 },
@@ -3547,9 +4243,12 @@ local recipes = {
         },
     },
     ["Star Belt"] = {
+        spellID = 3864,
         itemID = 4329,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 200, 220, 235, 250 },
@@ -3562,9 +4261,12 @@ local recipes = {
         },
     },
     ["Unyielding Girdle"] = {
+        spellID = 31442,
         itemID = 24255,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 365, 375, 380, 385 },
@@ -3575,9 +4277,12 @@ local recipes = {
         },
     },
     ["Wisdom of the Timbermaw"] = {
+        spellID = 23662,
         itemID = 19047,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Friendly" },
+        },
         category = "Cloth Armor",
         subcategory = "Waist",
         skillRange = { 290, 305, 320, 335 },
@@ -3591,9 +4296,12 @@ local recipes = {
     -- Wrist
     -- --------------------------------
     ["Arcanoweave Bracers"] = {
+        spellID = 26782,
         itemID = 21866,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 350, 360, 365, 370 },
@@ -3604,9 +4312,12 @@ local recipes = {
         },
     },
     ["Blackstrike Bracers"] = {
+        spellID = 31437,
         itemID = 24251,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 350, 360, 365, 370 },
@@ -3616,9 +4327,12 @@ local recipes = {
         },
     },
     ["Bracers of Havok"] = {
+        spellID = 31435,
         itemID = 24250,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 350, 360, 365, 370 },
@@ -3629,9 +4343,12 @@ local recipes = {
         },
     },
     ["Bracers of Nimble Thought"] = {
+        spellID = 41205,
         itemID = 32586,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 390, 395 },
@@ -3643,9 +4360,12 @@ local recipes = {
         },
     },
     ["Flameheart Bracers"] = {
+        spellID = 37882,
         itemID = 30837,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Neutral" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 350, 360, 365, 370 },
@@ -3656,9 +4376,12 @@ local recipes = {
         },
     },
     ["Flarecore Wraps"] = {
+        spellID = 22759,
         itemID = 18263,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 300, 320, 335, 350 },
@@ -3671,9 +4394,12 @@ local recipes = {
         },
     },
     ["Glacial Wrists"] = {
+        spellID = 28209,
         itemID = 22655,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Hydraxian Waterlords @ Honored" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 300, 315, 330, 345 },
@@ -3685,9 +4411,12 @@ local recipes = {
         },
     },
     ["Green Linen Bracers"] = {
+        spellID = 3841,
         itemID = 4308,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 60, 85, 102, 120 },
@@ -3698,9 +4427,12 @@ local recipes = {
         },
     },
     ["Netherweave Bracers"] = {
+        spellID = 26764,
         itemID = 21849,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 310, 320, 325, 330 },
@@ -3710,9 +4442,12 @@ local recipes = {
         },
     },
     ["Soulguard Bracers"] = {
+        spellID = 40021,
         itemID = 32392,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Neutral" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 390, 395 },
@@ -3725,9 +4460,12 @@ local recipes = {
         },
     },
     ["Swiftheal Wraps"] = {
+        spellID = 41207,
         itemID = 32584,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 390, 395 },
@@ -3739,9 +4477,12 @@ local recipes = {
         },
     },
     ["Unyielding Bracers"] = {
+        spellID = 31434,
         itemID = 24249,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Cloth Armor",
         subcategory = "Wrist",
         skillRange = { 350, 360, 365, 370 },
@@ -3755,9 +4496,12 @@ local recipes = {
     -- SHIRT
     -- ================================================================
     ["Black Swashbuckler's Shirt"] = {
+        spellID = 3873,
         itemID = 4336,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Narkk" },
+        },
         category = "Shirt",
         skillRange = { 200, 210, 215, 220 },
         reagents = {
@@ -3767,9 +4511,12 @@ local recipes = {
         },
     },
     ["Blue Linen Shirt"] = {
+        spellID = 2394,
         itemID = 2577,
         skillReq = 40,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 40, 65, 82, 100 },
         reagents = {
@@ -3779,9 +4526,12 @@ local recipes = {
         },
     },
     ["Bright Yellow Shirt"] = {
+        spellID = 3869,
         itemID = 4332,
         skillReq = 135,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Danielle Zipstitch" },
+        },
         category = "Shirt",
         skillRange = { 135, 145, 150, 155 },
         reagents = {
@@ -3791,9 +4541,12 @@ local recipes = {
         },
     },
     ["Brown Linen Shirt"] = {
+        spellID = 3915,
         itemID = 4344,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 1, 35, 47, 60 },
         reagents = {
@@ -3802,9 +4555,12 @@ local recipes = {
         },
     },
     ["Dark Silk Shirt"] = {
+        spellID = 3870,
         itemID = 4333,
         skillReq = 155,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Mallen Swain, Sheri Zipstitch" },
+        },
         category = "Shirt",
         skillRange = { 155, 165, 170, 175 },
         reagents = {
@@ -3814,9 +4570,12 @@ local recipes = {
         },
     },
     ["Formal White Shirt"] = {
+        spellID = 3871,
         itemID = 4334,
         skillReq = 170,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 170, 180, 185, 190 },
         reagents = {
@@ -3826,9 +4585,12 @@ local recipes = {
         },
     },
     ["Gray Woolen Shirt"] = {
+        spellID = 2406,
         itemID = 2587,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 100, 110, 120, 130 },
         reagents = {
@@ -3838,9 +4600,12 @@ local recipes = {
         },
     },
     ["Green Holiday Shirt"] = {
+        spellID = 21945,
         itemID = 17723,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 190, 200, 205, 210 },
         reagents = {
@@ -3850,9 +4615,12 @@ local recipes = {
         },
     },
     ["Green Linen Shirt"] = {
+        spellID = 2396,
         itemID = 2579,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 70, 95, 112, 130 },
         reagents = {
@@ -3862,9 +4630,12 @@ local recipes = {
         },
     },
     ["Lavender Mageweave Shirt"] = {
+        spellID = 12075,
         itemID = 10054,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Borya, Outfitter Eric" },
+        },
         category = "Shirt",
         skillRange = { 230, 235, 240, 245 },
         reagents = {
@@ -3874,9 +4645,12 @@ local recipes = {
         },
     },
     ["Orange Mageweave Shirt"] = {
+        spellID = 12061,
         itemID = 10056,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 215, 220, 225, 230 },
         reagents = {
@@ -3886,9 +4660,12 @@ local recipes = {
         },
     },
     ["Orange Martial Shirt"] = {
+        spellID = 12064,
         itemID = 10052,
         skillReq = 220,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Elynna, Mahu" },
+        },
         category = "Shirt",
         skillRange = { 220, 225, 230, 235 },
         reagents = {
@@ -3898,9 +4675,12 @@ local recipes = {
         },
     },
     ["Pink Mageweave Shirt"] = {
+        spellID = 12080,
         itemID = 10055,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Borya, Outfitter Eric" },
+        },
         category = "Shirt",
         skillRange = { 235, 240, 245, 250 },
         reagents = {
@@ -3910,9 +4690,12 @@ local recipes = {
         },
     },
     ["Red Linen Shirt"] = {
+        spellID = 2392,
         itemID = 2575,
         skillReq = 40,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 40, 65, 82, 100 },
         reagents = {
@@ -3922,9 +4705,12 @@ local recipes = {
         },
     },
     ["Red Swashbuckler's Shirt"] = {
+        spellID = 8489,
         itemID = 6796,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 175, 185, 190, 195 },
         reagents = {
@@ -3934,9 +4720,12 @@ local recipes = {
         },
     },
     ["Rich Purple Silk Shirt"] = {
+        spellID = 3872,
         itemID = 4335,
         skillReq = 185,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 185, 195, 200, 205 },
         reagents = {
@@ -3946,9 +4735,12 @@ local recipes = {
         },
     },
     ["Stylish Blue Shirt"] = {
+        spellID = 7892,
         itemID = 6384,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 120, 145, 162, 180 },
         reagents = {
@@ -3959,9 +4751,12 @@ local recipes = {
         },
     },
     ["Stylish Green Shirt"] = {
+        spellID = 7893,
         itemID = 6385,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 120, 145, 162, 180 },
         reagents = {
@@ -3972,9 +4767,12 @@ local recipes = {
         },
     },
     ["Stylish Red Shirt"] = {
+        spellID = 3866,
         itemID = 4330,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 110, 135, 152, 170 },
         reagents = {
@@ -3984,9 +4782,12 @@ local recipes = {
         },
     },
     ["Tuxedo Shirt"] = {
+        spellID = 12085,
         itemID = 10034,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Millie Gregorian, Outfitter Eric" },
+        },
         category = "Shirt",
         skillRange = { 240, 245, 250, 255 },
         reagents = {
@@ -3995,9 +4796,12 @@ local recipes = {
         },
     },
     ["White Linen Shirt"] = {
+        spellID = 2393,
         itemID = 2576,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 1, 35, 47, 60 },
         reagents = {
@@ -4007,9 +4811,12 @@ local recipes = {
         },
     },
     ["White Swashbuckler's Shirt"] = {
+        spellID = 8483,
         itemID = 6795,
         skillReq = 160,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Shirt",
         skillRange = { 160, 170, 175, 180 },
         reagents = {
@@ -4023,9 +4830,12 @@ local recipes = {
     -- TRADE GOOD
     -- ================================================================
     ["Bolt of Imbued Netherweave"] = {
+        spellID = 26747,
         itemID = 21842,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Deynna, Eiin +1 more" },
+        },
         category = "Trade Good",
         skillRange = { 325, 330, 335, 340 },
         reagents = {
@@ -4034,49 +4844,67 @@ local recipes = {
         },
     },
     ["Bolt of Linen Cloth"] = {
+        spellID = 2963,
         itemID = 2996,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 1, 25, 37, 50 },
         reagents = { { itemID = 2589, count = 2, name = "Linen Cloth" } },
     },
     ["Bolt of Mageweave"] = {
+        spellID = 3865,
         itemID = 4339,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 175, 180, 182, 185 },
         reagents = { { itemID = 4338, count = 5, name = "Mageweave Cloth" } },
     },
     ["Bolt of Netherweave"] = {
+        spellID = 26745,
         itemID = 21840,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 300, 305, 315, 325 },
         reagents = { { itemID = 21877, count = 6, name = "Netherweave Cloth" } },
     },
     ["Bolt of Runecloth"] = {
+        spellID = 18401,
         itemID = 14048,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 250, 255, 257, 260 },
         reagents = { { itemID = 14047, count = 5, name = "Runecloth" } },
     },
     ["Bolt of Silk Cloth"] = {
+        spellID = 3839,
         itemID = 4305,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 125, 135, 140, 145 },
         reagents = { { itemID = 4306, count = 4, name = "Silk Cloth" } },
     },
     ["Bolt of Soulcloth"] = {
+        spellID = 26750,
         itemID = 21844,
         skillReq = 345,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Borto, Deynna +2 more" },
+        },
         category = "Trade Good",
         skillRange = { 345, 345, 350, 355 },
         reagents = {
@@ -4085,17 +4913,23 @@ local recipes = {
         },
     },
     ["Bolt of Woolen Cloth"] = {
+        spellID = 2964,
         itemID = 2997,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 75, 90, 97, 105 },
         reagents = { { itemID = 2592, count = 3, name = "Wool Cloth" } },
     },
     ["Golden Spellthread"] = {
+        spellID = 31433,
         itemID = 24276,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Revered" },
+        },
         category = "Trade Good",
         skillRange = { 375, 385, 390, 395 },
         reagents = {
@@ -4105,9 +4939,12 @@ local recipes = {
         },
     },
     ["Gordok Ogre Suit"] = {
+        spellID = 22813,
         itemID = 18258,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both", detail = "Dire Maul (Gordok Ogres)" },
+        },
         category = "Trade Good",
         skillRange = { 285, 285, 290, 295 },
         reagents = {
@@ -4118,25 +4955,34 @@ local recipes = {
         },
     },
     ["Heavy Netherweave Net"] = {
+        spellID = 31461,
         itemID = 24269,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Neutral" },
+        },
         category = "Trade Good",
         skillRange = { 1, 325, 330, 335 },
         reagents = { { itemID = 21877, count = 6, name = "Netherweave Cloth" } },
     },
     ["Mooncloth"] = {
+        spellID = 18560,
         itemID = 14342,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Qia" },
+        },
         category = "Trade Good",
         skillRange = { 250, 290, 305, 320 },
         reagents = { { itemID = 14256, count = 2, name = "Felcloth" } },
     },
     ["Mystic Spellthread"] = {
+        spellID = 31430,
         itemID = 24273,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 335, 345, 350, 355 },
         reagents = {
@@ -4145,17 +4991,23 @@ local recipes = {
         },
     },
     ["Netherweave Net"] = {
+        spellID = 31460,
         itemID = 24268,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 300, 300, 310, 320 },
         reagents = { { itemID = 21877, count = 3, name = "Netherweave Cloth" } },
     },
     ["Primal Mooncloth"] = {
+        spellID = 26751,
         itemID = 21845,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Nasmara Moonsong" },
+        },
         category = "Trade Good",
         skillRange = { 350, 350, 355, 360 },
         reagents = {
@@ -4165,9 +5017,12 @@ local recipes = {
         },
     },
     ["Runic Spellthread"] = {
+        spellID = 31432,
         itemID = 24274,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Revered" },
+        },
         category = "Trade Good",
         skillRange = { 375, 385, 390, 395 },
         reagents = {
@@ -4177,9 +5032,12 @@ local recipes = {
         },
     },
     ["Shadowcloth"] = {
+        spellID = 36686,
         itemID = 24272,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Andrion Darkspinner" },
+        },
         category = "Trade Good",
         skillRange = { 350, 350, 355, 360 },
         reagents = {
@@ -4189,9 +5047,12 @@ local recipes = {
         },
     },
     ["Silver Spellthread"] = {
+        spellID = 31431,
         itemID = 24275,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 335, 345, 350, 355 },
         reagents = {
@@ -4200,9 +5061,12 @@ local recipes = {
         },
     },
     ["Spellcloth"] = {
+        spellID = 31373,
         itemID = 24271,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gidge Spellweaver" },
+        },
         category = "Trade Good",
         skillRange = { 350, 350, 355, 360 },
         reagents = {

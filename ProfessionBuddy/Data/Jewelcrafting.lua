@@ -13,23 +13,13 @@ local recipes = {
     -- ================================================================
     -- CROWN
     -- ================================================================
-    ["Blood Crown"] = {
-        itemID = 21780,
-        skillReq = 325,
-        source = "trainer",
-        category = "Crown",
-        skillRange = { 325, 335, 345, 355 },
-        reagents = {
-            { itemID = 12359, count = 8, name = "Thorium Bar" },
-            { itemID = 11382, count = 2, name = "Blood of the Mountain" },
-            { itemID = 7910, count = 4, name = "Star Ruby" },
-            { itemID = 12938, count = 2, name = "Blood of Heroes" },
-        },
-    },
     ["Circlet of Arcane Might"] = {
+        spellID = 31078,
         itemID = 24123,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Crown",
         skillRange = { 370, 380, 390, 400 },
         reagents = {
@@ -40,9 +30,12 @@ local recipes = {
         },
     },
     ["Coronet of the Verdant Flame"] = {
+        spellID = 31077,
         itemID = 24122,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Crown",
         skillRange = { 370, 380, 390, 400 },
         reagents = {
@@ -53,9 +46,12 @@ local recipes = {
         },
     },
     ["Crown of the Sea Witch"] = {
+        spellID = 41418,
         itemID = 32776,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Crown",
         skillRange = { 365, 375, 385, 395 },
         reagents = {
@@ -66,9 +62,12 @@ local recipes = {
         },
     },
     ["Emerald Crown of Destruction"] = {
+        spellID = 26906,
         itemID = 21774,
         skillReq = 275,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Mishta" },
+        },
         category = "Crown",
         skillRange = { 275, 285, 295, 305 },
         reagents = {
@@ -80,9 +79,12 @@ local recipes = {
         },
     },
     ["Moonsoul Crown"] = {
+        spellID = 25321,
         itemID = 20832,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Crown",
         skillRange = { 120, 150, 165, 180 },
         reagents = {
@@ -94,9 +96,12 @@ local recipes = {
         },
     },
     ["Ruby Crown of Restoration"] = {
+        spellID = 26878,
         itemID = 20969,
         skillReq = 225,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Hammon Karwn, Keena" },
+        },
         category = "Crown",
         skillRange = { 225, 250, 265, 280 },
         reagents = {
@@ -114,117 +119,157 @@ local recipes = {
     -- Blue
     -- --------------------------------
     ["Falling Star"] = {
+        spellID = 42590,
         itemID = 33135,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Honored" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 360, 365, 370, 375 },
         reagents = { { itemID = 23438, count = 1, name = "Star of Elune" } },
     },
     ["Lustrous Azure Moonstone"] = {
+        spellID = 28957,
         itemID = 23121,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 23117, count = 1, name = "Azure Moonstone" } },
     },
     ["Lustrous Empyrean Sapphire"] = {
+        spellID = 39717,
         itemID = 32202,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32228, count = 1, name = "Empyrean Sapphire" } },
     },
     ["Lustrous Star of Elune"] = {
+        spellID = 31094,
         itemID = 24037,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23438, count = 1, name = "Star of Elune" } },
     },
     ["Solid Azure Moonstone"] = {
+        spellID = 28950,
         itemID = 23118,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 300, 300, 320, 340 },
         reagents = { { itemID = 23117, count = 1, name = "Azure Moonstone" } },
     },
     ["Solid Empyrean Sapphire"] = {
+        spellID = 39715,
         itemID = 32200,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32228, count = 1, name = "Empyrean Sapphire" } },
     },
     ["Solid Star of Elune"] = {
+        spellID = 31092,
         itemID = 24033,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23438, count = 1, name = "Star of Elune" } },
     },
     ["Sparkling Azure Moonstone"] = {
+        spellID = 28953,
         itemID = 23119,
         skillReq = 305,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 305, 305, 325, 345 },
         reagents = { { itemID = 23117, count = 1, name = "Azure Moonstone" } },
     },
     ["Sparkling Empyrean Sapphire"] = {
+        spellID = 39716,
         itemID = 32201,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32228, count = 1, name = "Empyrean Sapphire" } },
     },
     ["Sparkling Star of Elune"] = {
+        spellID = 31149,
         itemID = 24035,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23438, count = 1, name = "Star of Elune" } },
     },
     ["Stormy Azure Moonstone"] = {
+        spellID = 28955,
         itemID = 23120,
         skillReq = 315,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 315, 315, 335, 355 },
         reagents = { { itemID = 23117, count = 1, name = "Azure Moonstone" } },
     },
     ["Stormy Empyrean Sapphire"] = {
+        spellID = 39718,
         itemID = 32203,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32228, count = 1, name = "Empyrean Sapphire" } },
     },
     ["Stormy Star of Elune"] = {
+        spellID = 31095,
         itemID = 24039,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Blue",
         skillRange = { 350, 350, 365, 380 },
@@ -233,144 +278,193 @@ local recipes = {
     -- Green
     -- --------------------------------
     ["Dazzling Deep Peridot"] = {
+        spellID = 28924,
         itemID = 23106,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 23079, count = 1, name = "Deep Peridot" } },
     },
     ["Dazzling Seaspray Emerald"] = {
+        spellID = 39741,
         itemID = 32225,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32249, count = 1, name = "Seaspray Emerald" } },
     },
     ["Dazzling Talasite"] = {
+        spellID = 31112,
         itemID = 24065,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23437, count = 1, name = "Talasite" } },
     },
     ["Enduring Deep Peridot"] = {
+        spellID = 28918,
         itemID = 23105,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Neutral" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 315, 315, 335, 355 },
         reagents = { { itemID = 23079, count = 1, name = "Deep Peridot" } },
     },
     ["Enduring Seaspray Emerald"] = {
+        spellID = 39739,
         itemID = 32223,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Honored" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32249, count = 1, name = "Seaspray Emerald" } },
     },
     ["Enduring Talasite"] = {
+        spellID = 31110,
         itemID = 24062,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23437, count = 1, name = "Talasite" } },
     },
     ["Forceful Seaspray Emerald"] = {
+        spellID = 47053,
         itemID = 35759,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32249, count = 1, name = "Seaspray Emerald" } },
     },
     ["Forceful Talasite"] = {
+        spellID = 46405,
         itemID = 35318,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23437, count = 1, name = "Talasite" } },
     },
     ["Jagged Deep Peridot"] = {
+        spellID = 28917,
         itemID = 23104,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 305, 305, 325, 345 },
         reagents = { { itemID = 23079, count = 1, name = "Deep Peridot" } },
     },
     ["Jagged Seaspray Emerald"] = {
+        spellID = 39742,
         itemID = 32226,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32249, count = 1, name = "Seaspray Emerald" } },
     },
     ["Jagged Talasite"] = {
+        spellID = 31113,
         itemID = 24067,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23437, count = 1, name = "Talasite" } },
     },
     ["Radiant Deep Peridot"] = {
+        spellID = 28916,
         itemID = 23103,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 300, 300, 320, 340 },
         reagents = { { itemID = 23079, count = 1, name = "Deep Peridot" } },
     },
     ["Radiant Seaspray Emerald"] = {
+        spellID = 39740,
         itemID = 32224,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32249, count = 1, name = "Seaspray Emerald" } },
     },
     ["Radiant Talasite"] = {
+        spellID = 31111,
         itemID = 24066,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23437, count = 1, name = "Talasite" } },
     },
     ["Steady Seaspray Emerald"] = {
+        spellID = 47054,
         itemID = 35758,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32249, count = 1, name = "Seaspray Emerald" } },
     },
     ["Steady Talasite"] = {
+        spellID = 43493,
         itemID = 33782,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Green",
         skillRange = { 350, 350, 365, 380 },
@@ -379,126 +473,168 @@ local recipes = {
     -- Meta
     -- --------------------------------
     ["Bracing Earthstorm Diamond"] = {
+        spellID = 32867,
         itemID = 25897,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Honored" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25867, count = 1, name = "Earthstorm Diamond" } },
     },
     ["Brutal Earthstorm Diamond"] = {
+        spellID = 32869,
         itemID = 25899,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25867, count = 1, name = "Earthstorm Diamond" } },
     },
     ["Chaotic Skyfire Diamond"] = {
+        spellID = 44794,
         itemID = 34220,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25868, count = 1, name = "Skyfire Diamond" } },
     },
     ["Destructive Skyfire Diamond"] = {
+        spellID = 32871,
         itemID = 25890,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25868, count = 1, name = "Skyfire Diamond" } },
     },
     ["Ember Skyfire Diamond"] = {
+        spellID = 46601,
         itemID = 35503,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Honored" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 370, 380, 390, 400 },
         reagents = { { itemID = 25868, count = 1, name = "Skyfire Diamond" } },
     },
     ["Enigmatic Skyfire Diamond"] = {
+        spellID = 32874,
         itemID = 25895,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25868, count = 1, name = "Skyfire Diamond" } },
     },
     ["Eternal Earthstorm Diamond"] = {
+        spellID = 46597,
         itemID = 35501,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Honored" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 370, 380, 390, 400 },
         reagents = { { itemID = 25867, count = 1, name = "Earthstorm Diamond" } },
     },
     ["Insightful Earthstorm Diamond"] = {
+        spellID = 32870,
         itemID = 25901,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25867, count = 1, name = "Earthstorm Diamond" } },
     },
     ["Mystical Skyfire Diamond"] = {
+        spellID = 32872,
         itemID = 25893,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25868, count = 1, name = "Skyfire Diamond" } },
     },
     ["Powerful Earthstorm Diamond"] = {
+        spellID = 32866,
         itemID = 25896,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25867, count = 1, name = "Earthstorm Diamond" } },
     },
     ["Relentless Earthstorm Diamond"] = {
+        spellID = 39961,
         itemID = 32409,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Revered" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25867, count = 1, name = "Earthstorm Diamond" } },
     },
     ["Swift Skyfire Diamond"] = {
+        spellID = 32873,
         itemID = 25894,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25868, count = 1, name = "Skyfire Diamond" } },
     },
     ["Tenacious Earthstorm Diamond"] = {
+        spellID = 32868,
         itemID = 25898,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
         reagents = { { itemID = 25867, count = 1, name = "Earthstorm Diamond" } },
     },
     ["Thundering Skyfire Diamond"] = {
+        spellID = 39963,
         itemID = 32410,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Meta",
         skillRange = { 365, 375, 385, 395 },
@@ -507,180 +643,242 @@ local recipes = {
     -- Orange
     -- --------------------------------
     ["Glinting Flame Spessarite"] = {
+        spellID = 28914,
         itemID = 23100,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 315, 315, 335, 355 },
         reagents = { { itemID = 21929, count = 1, name = "Flame Spessarite" } },
     },
     ["Glinting Noble Topaz"] = {
+        spellID = 31109,
         itemID = 24061,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23439, count = 1, name = "Noble Topaz" } },
     },
     ["Glinting Pyrestone"] = {
+        spellID = 39736,
         itemID = 32220,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32231, count = 1, name = "Pyrestone" } },
     },
     ["Inscribed Flame Spessarite"] = {
+        spellID = 28910,
         itemID = 23098,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 300, 300, 320, 340 },
         reagents = { { itemID = 21929, count = 1, name = "Flame Spessarite" } },
     },
     ["Inscribed Noble Topaz"] = {
+        spellID = 31106,
         itemID = 24058,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23439, count = 1, name = "Noble Topaz" } },
     },
     ["Inscribed Pyrestone"] = {
+        spellID = 39733,
         itemID = 32217,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32231, count = 1, name = "Pyrestone" } },
     },
     ["Luminous Flame Spessarite"] = {
+        spellID = 28912,
         itemID = 23099,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 305, 305, 325, 345 },
         reagents = { { itemID = 21929, count = 1, name = "Flame Spessarite" } },
     },
     ["Luminous Noble Topaz"] = {
+        spellID = 31108,
         itemID = 24060,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23439, count = 1, name = "Noble Topaz" } },
     },
     ["Luminous Pyrestone"] = {
+        spellID = 39735,
         itemID = 32219,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32231, count = 1, name = "Pyrestone" } },
     },
     ["Potent Flame Spessarite"] = {
+        spellID = 28915,
         itemID = 23101,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 21929, count = 1, name = "Flame Spessarite" } },
     },
     ["Potent Noble Topaz"] = {
+        spellID = 31107,
         itemID = 24059,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23439, count = 1, name = "Noble Topaz" } },
     },
     ["Potent Pyrestone"] = {
+        spellID = 39734,
         itemID = 32218,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32231, count = 1, name = "Pyrestone" } },
     },
     ["Reckless Noble Topaz"] = {
+        spellID = 46404,
         itemID = 35316,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23439, count = 1, name = "Noble Topaz" } },
     },
     ["Reckless Pyrestone"] = {
+        spellID = 47055,
         itemID = 35760,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32231, count = 1, name = "Pyrestone" } },
     },
     ["Veiled Flame Spessarite"] = {
+        spellID = 39466,
         itemID = 31866,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 21929, count = 1, name = "Flame Spessarite" } },
     },
     ["Veiled Noble Topaz"] = {
+        spellID = 39470,
         itemID = 31867,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23439, count = 1, name = "Noble Topaz" } },
     },
     ["Veiled Pyrestone"] = {
+        spellID = 39737,
         itemID = 32221,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32231, count = 1, name = "Pyrestone" } },
     },
     ["Wicked Flame Spessarite"] = {
+        spellID = 39467,
         itemID = 31869,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 21929, count = 1, name = "Flame Spessarite" } },
     },
     ["Wicked Noble Topaz"] = {
+        spellID = 39471,
         itemID = 31868,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23439, count = 1, name = "Noble Topaz" } },
     },
     ["Wicked Pyrestone"] = {
+        spellID = 39738,
         itemID = 32222,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Honored" },
+        },
         category = "Gem",
         subcategory = "Orange",
         skillRange = { 375, 375, 387, 400 },
@@ -689,90 +887,120 @@ local recipes = {
     -- Purple
     -- --------------------------------
     ["Balanced Nightseye"] = {
+        spellID = 39463,
         itemID = 31863,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23441, count = 1, name = "Nightseye" } },
     },
     ["Balanced Shadow Draenite"] = {
+        spellID = 39455,
         itemID = 31862,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 23107, count = 1, name = "Shadow Draenite" } },
     },
     ["Balanced Shadowsong Amethyst"] = {
+        spellID = 39729,
         itemID = 32213,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32230, count = 1, name = "Shadowsong Amethyst" } },
     },
     ["Glowing Nightseye"] = {
+        spellID = 31104,
         itemID = 24056,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23441, count = 1, name = "Nightseye" } },
     },
     ["Glowing Shadow Draenite"] = {
+        spellID = 28925,
         itemID = 23108,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 300, 300, 320, 340 },
         reagents = { { itemID = 23107, count = 1, name = "Shadow Draenite" } },
     },
     ["Glowing Shadowsong Amethyst"] = {
+        spellID = 39731,
         itemID = 32215,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32230, count = 1, name = "Shadowsong Amethyst" } },
     },
     ["Infused Nightseye"] = {
+        spellID = 39462,
         itemID = 31865,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23441, count = 1, name = "Nightseye" } },
     },
     ["Infused Shadow Draenite"] = {
+        spellID = 39458,
         itemID = 31864,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 23107, count = 1, name = "Shadow Draenite" } },
     },
     ["Infused Shadowsong Amethyst"] = {
+        spellID = 39730,
         itemID = 32214,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32230, count = 1, name = "Shadowsong Amethyst" } },
     },
     ["Purified Jaggal Pearl"] = {
+        spellID = 41420,
         itemID = 32833,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 325, 325, 332, 340 },
@@ -782,9 +1010,12 @@ local recipes = {
         },
     },
     ["Purified Shadow Pearl"] = {
+        spellID = 41429,
         itemID = 32836,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 350, 350, 365, 380 },
@@ -794,99 +1025,134 @@ local recipes = {
         },
     },
     ["Purified Shadowsong Amethyst"] = {
+        spellID = 48789,
         itemID = 37503,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32230, count = 1, name = "Shadowsong Amethyst" } },
     },
     ["Regal Nightseye"] = {
+        spellID = 46803,
         itemID = 35707,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Honored" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23441, count = 1, name = "Nightseye" } },
     },
     ["Royal Nightseye"] = {
+        spellID = 31105,
         itemID = 24057,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23441, count = 1, name = "Nightseye" } },
     },
     ["Royal Shadow Draenite"] = {
+        spellID = 28927,
         itemID = 23109,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 305, 305, 325, 345 },
         reagents = { { itemID = 23107, count = 1, name = "Shadow Draenite" } },
     },
     ["Royal Shadowsong Amethyst"] = {
+        spellID = 39732,
         itemID = 32216,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Honored" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32230, count = 1, name = "Shadowsong Amethyst" } },
     },
     ["Shifting Nightseye"] = {
+        spellID = 31103,
         itemID = 24055,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23441, count = 1, name = "Nightseye" } },
     },
     ["Shifting Shadow Draenite"] = {
+        spellID = 28933,
         itemID = 23110,
         skillReq = 315,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 315, 315, 335, 355 },
         reagents = { { itemID = 23107, count = 1, name = "Shadow Draenite" } },
     },
     ["Shifting Shadowsong Amethyst"] = {
+        spellID = 39728,
         itemID = 32212,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32230, count = 1, name = "Shadowsong Amethyst" } },
     },
     ["Sovereign Nightseye"] = {
+        spellID = 31102,
         itemID = 24054,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23441, count = 1, name = "Nightseye" } },
     },
     ["Sovereign Shadow Draenite"] = {
+        spellID = 28936,
         itemID = 23111,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 23107, count = 1, name = "Shadow Draenite" } },
     },
     ["Sovereign Shadowsong Amethyst"] = {
+        spellID = 39727,
         itemID = 32211,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Purple",
         skillRange = { 375, 375, 387, 400 },
@@ -895,198 +1161,265 @@ local recipes = {
     -- Red
     -- --------------------------------
     ["Bold Blood Garnet"] = {
+        spellID = 28905,
         itemID = 23095,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 305, 305, 325, 345 },
         reagents = { { itemID = 23077, count = 1, name = "Blood Garnet" } },
     },
     ["Bold Crimson Spinel"] = {
+        spellID = 39705,
         itemID = 32193,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32227, count = 1, name = "Crimson Spinel" } },
     },
     ["Bold Living Ruby"] = {
+        spellID = 31084,
         itemID = 24027,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23436, count = 1, name = "Living Ruby" } },
     },
     ["Bright Blood Garnet"] = {
+        spellID = 34590,
         itemID = 28595,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 305, 305, 325, 345 },
         reagents = { { itemID = 23077, count = 1, name = "Blood Garnet" } },
     },
     ["Bright Crimson Spinel"] = {
+        spellID = 39712,
         itemID = 32197,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32227, count = 1, name = "Crimson Spinel" } },
     },
     ["Bright Living Ruby"] = {
+        spellID = 31089,
         itemID = 24031,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23436, count = 1, name = "Living Ruby" } },
     },
     ["Crimson Sun"] = {
+        spellID = 42589,
         itemID = 33131,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Honored" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 360, 365, 370, 375 },
         reagents = { { itemID = 23436, count = 1, name = "Living Ruby" } },
     },
     ["Delicate Blood Garnet"] = {
+        spellID = 28907,
         itemID = 23097,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 23077, count = 1, name = "Blood Garnet" } },
     },
     ["Delicate Crimson Spinel"] = {
+        spellID = 39706,
         itemID = 32194,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32227, count = 1, name = "Crimson Spinel" } },
     },
     ["Delicate Living Ruby"] = {
+        spellID = 31085,
         itemID = 24028,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23436, count = 1, name = "Living Ruby" } },
     },
     ["Don Julio's Heart"] = {
+        spellID = 42558,
         itemID = 33133,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Honored" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 360, 365, 370, 375 },
         reagents = { { itemID = 23436, count = 1, name = "Living Ruby" } },
     },
     ["Flashing Crimson Spinel"] = {
+        spellID = 39714,
         itemID = 32199,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32227, count = 1, name = "Crimson Spinel" } },
     },
     ["Flashing Living Ruby"] = {
+        spellID = 31091,
         itemID = 24036,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23436, count = 1, name = "Living Ruby" } },
     },
     ["Kailee's Rose"] = {
+        spellID = 42588,
         itemID = 33134,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 360, 365, 370, 375 },
         reagents = { { itemID = 23436, count = 1, name = "Living Ruby" } },
     },
     ["Runed Blood Garnet"] = {
+        spellID = 28906,
         itemID = 23096,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 315, 315, 335, 355 },
         reagents = { { itemID = 23077, count = 1, name = "Blood Garnet" } },
     },
     ["Runed Crimson Spinel"] = {
+        spellID = 39711,
         itemID = 32196,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32227, count = 1, name = "Crimson Spinel" } },
     },
     ["Runed Living Ruby"] = {
+        spellID = 31088,
         itemID = 24030,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23436, count = 1, name = "Living Ruby" } },
     },
     ["Subtle Crimson Spinel"] = {
+        spellID = 39713,
         itemID = 32198,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32227, count = 1, name = "Crimson Spinel" } },
     },
     ["Subtle Living Ruby"] = {
+        spellID = 31090,
         itemID = 24032,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23436, count = 1, name = "Living Ruby" } },
     },
     ["Teardrop Blood Garnet"] = {
+        spellID = 28903,
         itemID = 23094,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 300, 300, 320, 340 },
         reagents = { { itemID = 23077, count = 1, name = "Blood Garnet" } },
     },
     ["Teardrop Crimson Spinel"] = {
+        spellID = 39710,
         itemID = 32195,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32227, count = 1, name = "Crimson Spinel" } },
     },
     ["Teardrop Living Ruby"] = {
+        spellID = 31087,
         itemID = 24029,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Red",
         skillRange = { 350, 350, 365, 380 },
@@ -1095,225 +1428,302 @@ local recipes = {
     -- Yellow
     -- --------------------------------
     ["Blood of Amber"] = {
+        spellID = 42592,
         itemID = 33140,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Honored" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 360, 365, 370, 375 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Brilliant Dawnstone"] = {
+        spellID = 31096,
         itemID = 24047,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Brilliant Golden Draenite"] = {
+        spellID = 28938,
         itemID = 23113,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 300, 300, 320, 340 },
         reagents = { { itemID = 23112, count = 1, name = "Golden Draenite" } },
     },
     ["Brilliant Lionseye"] = {
+        spellID = 39719,
         itemID = 32204,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32229, count = 1, name = "Lionseye" } },
     },
     ["Facet of Eternity"] = {
+        spellID = 42593,
         itemID = 33144,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 360, 365, 370, 375 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Gleaming Dawnstone"] = {
+        spellID = 31099,
         itemID = 24050,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Gleaming Golden Draenite"] = {
+        spellID = 28944,
         itemID = 23114,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 305, 305, 325, 345 },
         reagents = { { itemID = 23112, count = 1, name = "Golden Draenite" } },
     },
     ["Gleaming Lionseye"] = {
+        spellID = 39722,
         itemID = 32207,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32229, count = 1, name = "Lionseye" } },
     },
     ["Great Dawnstone"] = {
+        spellID = 39452,
         itemID = 31861,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Great Golden Draenite"] = {
+        spellID = 39451,
         itemID = 31860,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 23112, count = 1, name = "Golden Draenite" } },
     },
     ["Great Lionseye"] = {
+        spellID = 39725,
         itemID = 32210,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32229, count = 1, name = "Lionseye" } },
     },
     ["Mystic Dawnstone"] = {
+        spellID = 31101,
         itemID = 24053,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Aldraan, Coreiel" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Mystic Lionseye"] = {
+        spellID = 39724,
         itemID = 32209,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32229, count = 1, name = "Lionseye" } },
     },
     ["Quick Dawnstone"] = {
+        spellID = 46403,
         itemID = 35315,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Revered" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Quick Lionseye"] = {
+        spellID = 47056,
         itemID = 35761,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32229, count = 1, name = "Lionseye" } },
     },
     ["Rigid Dawnstone"] = {
+        spellID = 31098,
         itemID = 24051,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Rigid Golden Draenite"] = {
+        spellID = 28948,
         itemID = 23116,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 23112, count = 1, name = "Golden Draenite" } },
     },
     ["Rigid Lionseye"] = {
+        spellID = 39721,
         itemID = 32206,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Honored" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32229, count = 1, name = "Lionseye" } },
     },
     ["Smooth Dawnstone"] = {
+        spellID = 31097,
         itemID = 24048,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Smooth Golden Draenite"] = {
+        spellID = 34069,
         itemID = 28290,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Jewelcrafting supplies" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 325, 325, 340, 355 },
         reagents = { { itemID = 23112, count = 1, name = "Golden Draenite" } },
     },
     ["Smooth Lionseye"] = {
+        spellID = 39720,
         itemID = 32205,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 375, 375, 387, 400 },
         reagents = { { itemID = 32229, count = 1, name = "Lionseye" } },
     },
     ["Stone of Blades"] = {
+        spellID = 42591,
         itemID = 33143,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Honored" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 360, 365, 370, 375 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Thick Dawnstone"] = {
+        spellID = 31100,
         itemID = 24052,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 350, 350, 365, 380 },
         reagents = { { itemID = 23440, count = 1, name = "Dawnstone" } },
     },
     ["Thick Golden Draenite"] = {
+        spellID = 28947,
         itemID = 23115,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Friendly" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 315, 315, 335, 355 },
         reagents = { { itemID = 23112, count = 1, name = "Golden Draenite" } },
     },
     ["Thick Lionseye"] = {
+        spellID = 39723,
         itemID = 32208,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scale of the Sands @ Neutral" },
+        },
         category = "Gem",
         subcategory = "Yellow",
         skillRange = { 375, 375, 387, 400 },
@@ -1324,9 +1734,12 @@ local recipes = {
     -- NECKLACE
     -- ================================================================
     ["Amulet of Flowing Life"] = {
+        spellID = 46126,
         itemID = 34360,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 365, 375, 392, 410 },
         reagents = {
@@ -1335,9 +1748,12 @@ local recipes = {
         },
     },
     ["Amulet of the Moon"] = {
+        spellID = 25339,
         itemID = 20830,
         skillReq = 110,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Arred, Daniel Bartlett +2 more" },
+        },
         category = "Necklace",
         skillRange = { 110, 140, 155, 170 },
         reagents = {
@@ -1346,9 +1762,12 @@ local recipes = {
         },
     },
     ["Aquamarine Pendant of the Warrior"] = {
+        spellID = 26876,
         itemID = 21755,
         skillReq = 220,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 220, 245, 260, 275 },
         reagents = {
@@ -1356,22 +1775,13 @@ local recipes = {
             { itemID = 20963, count = 3, name = "Mithril Filigree" },
         },
     },
-    ["Arcanite Sword Pendant"] = {
-        itemID = 21793,
-        skillReq = 315,
-        source = "trainer",
-        category = "Necklace",
-        skillRange = { 315, 325, 335, 345 },
-        reagents = {
-            { itemID = 12360, count = 4, name = "Arcanite Bar" },
-            { itemID = 7076, count = 4, name = "Essence of Earth" },
-            { itemID = 7082, count = 4, name = "Essence of Air" },
-        },
-    },
     ["Barbaric Iron Collar"] = {
+        spellID = 25498,
         itemID = 20909,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 110, 140, 155, 170 },
         reagents = {
@@ -1381,9 +1791,12 @@ local recipes = {
         },
     },
     ["Braided Eternium Chain"] = {
+        spellID = 31070,
         itemID = 24114,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -1392,9 +1805,12 @@ local recipes = {
         },
     },
     ["Brilliant Necklace"] = {
+        spellID = 36523,
         itemID = 30419,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 75, 105, 120, 135 },
         reagents = {
@@ -1404,9 +1820,12 @@ local recipes = {
         },
     },
     ["Bronze Torc"] = {
+        spellID = 38175,
         itemID = 31154,
         skillReq = 80,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 80, 110, 125, 140 },
         reagents = {
@@ -1416,9 +1835,12 @@ local recipes = {
         },
     },
     ["Chain of the Twilight Owl"] = {
+        spellID = 31076,
         itemID = 24121,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 365, 375, 385, 395 },
         reagents = {
@@ -1428,9 +1850,12 @@ local recipes = {
         },
     },
     ["Citrine Pendant of Golden Healing"] = {
+        spellID = 25622,
         itemID = 20967,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 190, 220, 235, 250 },
         reagents = {
@@ -1441,9 +1866,12 @@ local recipes = {
         },
     },
     ["Embrace of the Dawn"] = {
+        spellID = 31072,
         itemID = 24117,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 365, 375, 385, 395 },
         reagents = {
@@ -1453,9 +1881,12 @@ local recipes = {
         },
     },
     ["Eye of the Night"] = {
+        spellID = 31071,
         itemID = 24116,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -1465,9 +1896,12 @@ local recipes = {
         },
     },
     ["Hard Khorium Choker"] = {
+        spellID = 46127,
         itemID = 34358,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 365, 375, 392, 410 },
         reagents = {
@@ -1476,9 +1910,12 @@ local recipes = {
         },
     },
     ["Heavy Golden Necklace of Battle"] = {
+        spellID = 25320,
         itemID = 20831,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Arred, Edna Mullby +2 more" },
+        },
         category = "Necklace",
         skillRange = { 150, 180, 195, 210 },
         reagents = {
@@ -1488,9 +1925,12 @@ local recipes = {
         },
     },
     ["Jade Pendant of Blasting"] = {
+        spellID = 25618,
         itemID = 20966,
         skillReq = 160,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 160, 190, 205, 220 },
         reagents = {
@@ -1499,9 +1939,12 @@ local recipes = {
         },
     },
     ["Living Emerald Pendant"] = {
+        spellID = 26911,
         itemID = 21791,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 290, 300, 310, 320 },
         reagents = {
@@ -1511,9 +1954,12 @@ local recipes = {
         },
     },
     ["Living Ruby Pendant"] = {
+        spellID = 31068,
         itemID = 24110,
         skillReq = 355,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 355, 365, 375, 385 },
         reagents = {
@@ -1523,9 +1969,12 @@ local recipes = {
         },
     },
     ["Malachite Pendant"] = {
+        spellID = 32178,
         itemID = 25438,
         skillReq = 20,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 20, 50, 65, 80 },
         reagents = {
@@ -1534,9 +1983,12 @@ local recipes = {
         },
     },
     ["Necklace of the Deep"] = {
+        spellID = 40514,
         itemID = 32508,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 340, 340, 355, 370 },
         reagents = {
@@ -1546,9 +1998,12 @@ local recipes = {
         },
     },
     ["Necklace of the Diamond Tower"] = {
+        spellID = 26915,
         itemID = 21792,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Qia" },
+        },
         category = "Necklace",
         skillRange = { 305, 315, 325, 335 },
         reagents = {
@@ -1558,9 +2013,12 @@ local recipes = {
         },
     },
     ["Opal Necklace of Impact"] = {
+        spellID = 26897,
         itemID = 21766,
         skillReq = 250,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Arred, Burbik Gearspanner +2 more" },
+        },
         category = "Necklace",
         skillRange = { 250, 275, 290, 305 },
         reagents = {
@@ -1572,9 +2030,12 @@ local recipes = {
         },
     },
     ["Ornate Tigerseye Necklace"] = {
+        spellID = 26928,
         itemID = 21934,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 30, 60, 75, 90 },
         reagents = {
@@ -1584,9 +2045,12 @@ local recipes = {
         },
     },
     ["Pendant of Frozen Flame"] = {
+        spellID = 31062,
         itemID = 24092,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Honored" },
+        },
         category = "Necklace",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -1597,9 +2061,12 @@ local recipes = {
         },
     },
     ["Pendant of Shadow's End"] = {
+        spellID = 31065,
         itemID = 24097,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Honored" },
+        },
         category = "Necklace",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -1610,9 +2077,12 @@ local recipes = {
         },
     },
     ["Pendant of Sunfire"] = {
+        spellID = 46125,
         itemID = 34359,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 365, 375, 392, 410 },
         reagents = {
@@ -1622,9 +2092,12 @@ local recipes = {
         },
     },
     ["Pendant of Thawing"] = {
+        spellID = 31063,
         itemID = 24093,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Honored" },
+        },
         category = "Necklace",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -1635,9 +2108,12 @@ local recipes = {
         },
     },
     ["Pendant of Withering"] = {
+        spellID = 31064,
         itemID = 24095,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Honored" },
+        },
         category = "Necklace",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -1648,9 +2124,12 @@ local recipes = {
         },
     },
     ["Pendant of the Agate Shield"] = {
+        spellID = 25610,
         itemID = 20950,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Jandia, Neal Allen" },
+        },
         category = "Necklace",
         skillRange = { 120, 150, 165, 180 },
         reagents = {
@@ -1659,9 +2138,12 @@ local recipes = {
         },
     },
     ["Pendant of the Null Rune"] = {
+        spellID = 31066,
         itemID = 24098,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Honored" },
+        },
         category = "Necklace",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -1671,9 +2153,12 @@ local recipes = {
         },
     },
     ["Ruby Pendant of Fire"] = {
+        spellID = 26883,
         itemID = 21764,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 235, 260, 275, 290 },
         reagents = {
@@ -1682,9 +2167,12 @@ local recipes = {
         },
     },
     ["Sapphire Pendant of Winter Night"] = {
+        spellID = 26908,
         itemID = 21790,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 280, 290, 300, 310 },
         reagents = {
@@ -1693,23 +2181,13 @@ local recipes = {
             { itemID = 21752, count = 1, name = "Thorium Setting" },
         },
     },
-    ["Silver Rose Pendant"] = {
-        itemID = 20956,
-        skillReq = 145,
-        source = "trainer",
-        category = "Necklace",
-        skillRange = { 1, 175, 190, 205 },
-        reagents = {
-            { itemID = 1206, count = 1, name = "Moss Agate" },
-            { itemID = 1529, count = 1, name = "Jade" },
-            { itemID = 2842, count = 2, name = "Silver Bar" },
-            { itemID = 20817, count = 2, name = "Bronze Setting" },
-        },
-    },
     ["Thick Adamantite Necklace"] = {
+        spellID = 31051,
         itemID = 24077,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 335, 345, 355, 365 },
         reagents = {
@@ -1718,9 +2196,12 @@ local recipes = {
         },
     },
     ["Thick Bronze Necklace"] = {
+        spellID = 26927,
         itemID = 21933,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 50, 80, 95, 110 },
         reagents = {
@@ -1730,9 +2211,12 @@ local recipes = {
         },
     },
     ["Thick Felsteel Necklace"] = {
+        spellID = 31067,
         itemID = 24106,
         skillReq = 355,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Necklace",
         skillRange = { 355, 365, 375, 385 },
         reagents = {
@@ -1745,9 +2229,12 @@ local recipes = {
     -- RING
     -- ================================================================
     ["Aquamarine Signet"] = {
+        spellID = 26874,
         itemID = 20964,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 210, 235, 250, 265 },
         reagents = {
@@ -1756,9 +2243,12 @@ local recipes = {
         },
     },
     ["Arcane Khorium Band"] = {
+        spellID = 31057,
         itemID = 24086,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 365, 375, 385, 395 },
         reagents = {
@@ -1768,9 +2258,12 @@ local recipes = {
         },
     },
     ["Azure Moonstone Ring"] = {
+        spellID = 31050,
         itemID = 24076,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 320, 330, 340, 350 },
         reagents = {
@@ -1780,9 +2273,12 @@ local recipes = {
         },
     },
     ["Band of Natural Fire"] = {
+        spellID = 26916,
         itemID = 21779,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 310, 320, 330, 340 },
         reagents = {
@@ -1792,9 +2288,12 @@ local recipes = {
         },
     },
     ["Blazing Citrine Ring"] = {
+        spellID = 25617,
         itemID = 20958,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kireena, Micha Yance" },
+        },
         category = "Ring",
         skillRange = { 150, 180, 195, 210 },
         reagents = {
@@ -1803,9 +2302,12 @@ local recipes = {
         },
     },
     ["Blazing Eternium Band"] = {
+        spellID = 31061,
         itemID = 24089,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 365, 375, 385, 395 },
         reagents = {
@@ -1815,17 +2317,23 @@ local recipes = {
         },
     },
     ["Braided Copper Ring"] = {
+        spellID = 25493,
         itemID = 20906,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 30, 30, 45, 60 },
         reagents = { { itemID = 20816, count = 2, name = "Delicate Copper Wire" } },
     },
     ["Brilliant Pearl Band"] = {
+        spellID = 41414,
         itemID = 32772,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 325, 335, 345, 355 },
         reagents = {
@@ -1834,9 +2342,12 @@ local recipes = {
         },
     },
     ["Bronze Band of Force"] = {
+        spellID = 37818,
         itemID = 30804,
         skillReq = 65,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 65, 95, 110, 125 },
         reagents = {
@@ -1848,9 +2359,12 @@ local recipes = {
         },
     },
     ["Citrine Ring of Rapid Healing"] = {
+        spellID = 25621,
         itemID = 20961,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 180, 210, 225, 240 },
         reagents = {
@@ -1860,9 +2374,12 @@ local recipes = {
         },
     },
     ["Delicate Eternium Ring"] = {
+        spellID = 31060,
         itemID = 24088,
         skillReq = 355,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 355, 365, 375, 385 },
         reagents = {
@@ -1871,9 +2388,12 @@ local recipes = {
         },
     },
     ["Diamond Focus Ring"] = {
+        spellID = 36526,
         itemID = 30422,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 265, 285, 295, 305 },
         reagents = {
@@ -1882,17 +2402,23 @@ local recipes = {
         },
     },
     ["Elegant Silver Ring"] = {
+        spellID = 25280,
         itemID = 20818,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 50, 80, 95, 110 },
         reagents = { { itemID = 2842, count = 1, name = "Silver Bar" } },
     },
     ["Emerald Lion Ring"] = {
+        spellID = 34961,
         itemID = 29160,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 290, 300, 310, 320 },
         reagents = {
@@ -1901,9 +2427,12 @@ local recipes = {
         },
     },
     ["Engraved Truesilver Ring"] = {
+        spellID = 25620,
         itemID = 20960,
         skillReq = 170,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 170, 200, 215, 230 },
         reagents = {
@@ -1912,9 +2441,12 @@ local recipes = {
         },
     },
     ["Fel Iron Blood Ring"] = {
+        spellID = 31048,
         itemID = 24074,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 310, 320, 330, 340 },
         reagents = {
@@ -1923,9 +2455,12 @@ local recipes = {
         },
     },
     ["Gem Studded Band"] = {
+        spellID = 26896,
         itemID = 21753,
         skillReq = 250,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 250, 275, 290, 305 },
         reagents = {
@@ -1936,9 +2471,12 @@ local recipes = {
         },
     },
     ["Gloom Band"] = {
+        spellID = 25287,
         itemID = 20823,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 70, 100, 115, 130 },
         reagents = {
@@ -1948,9 +2486,12 @@ local recipes = {
         },
     },
     ["Glowing Thorium Band"] = {
+        spellID = 34960,
         itemID = 29159,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 280, 290, 300, 310 },
         reagents = {
@@ -1959,9 +2500,12 @@ local recipes = {
         },
     },
     ["Golden Draenite Ring"] = {
+        spellID = 31049,
         itemID = 24075,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 310, 320, 335, 350 },
         reagents = {
@@ -1970,9 +2514,12 @@ local recipes = {
         },
     },
     ["Golden Dragon Ring"] = {
+        spellID = 25613,
         itemID = 20955,
         skillReq = 135,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 135, 165, 180, 195 },
         reagents = {
@@ -1982,9 +2529,12 @@ local recipes = {
         },
     },
     ["Golden Ring of Power"] = {
+        spellID = 34955,
         itemID = 29157,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 180, 190, 200, 210 },
         reagents = {
@@ -1995,9 +2545,12 @@ local recipes = {
         },
     },
     ["Hard Khorium Band"] = {
+        spellID = 46124,
         itemID = 34361,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 365, 375, 392, 410 },
         reagents = {
@@ -2008,9 +2561,12 @@ local recipes = {
         },
     },
     ["Heavy Adamantite Ring"] = {
+        spellID = 31052,
         itemID = 24078,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 335, 345, 355, 365 },
         reagents = {
@@ -2019,9 +2575,12 @@ local recipes = {
         },
     },
     ["Heavy Copper Ring"] = {
+        spellID = 26926,
         itemID = 21932,
         skillReq = 5,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 5, 35, 50, 65 },
         reagents = {
@@ -2030,9 +2589,12 @@ local recipes = {
         },
     },
     ["Heavy Felsteel Ring"] = {
+        spellID = 31058,
         itemID = 24087,
         skillReq = 345,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 345, 355, 365, 375 },
         reagents = {
@@ -2041,9 +2603,12 @@ local recipes = {
         },
     },
     ["Heavy Jade Ring"] = {
+        spellID = 36524,
         itemID = 30420,
         skillReq = 105,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 105, 135, 150, 165 },
         reagents = {
@@ -2053,9 +2618,12 @@ local recipes = {
         },
     },
     ["Heavy Silver Ring"] = {
+        spellID = 25305,
         itemID = 20826,
         skillReq = 90,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 90, 120, 135, 150 },
         reagents = {
@@ -2066,9 +2634,12 @@ local recipes = {
         },
     },
     ["Inlaid Malachite Ring"] = {
+        spellID = 25283,
         itemID = 20821,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 30, 60, 75, 90 },
         reagents = {
@@ -2077,9 +2648,12 @@ local recipes = {
         },
     },
     ["Khorium Band of Frost"] = {
+        spellID = 31054,
         itemID = 24080,
         skillReq = 355,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 355, 365, 375, 385 },
         reagents = {
@@ -2089,9 +2663,12 @@ local recipes = {
         },
     },
     ["Khorium Band of Leaves"] = {
+        spellID = 31056,
         itemID = 24085,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both", detail = "Vekh'nir Dreadhawk, Blade's Edge Mountains" },
+        },
         category = "Ring",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -2101,9 +2678,12 @@ local recipes = {
         },
     },
     ["Khorium Band of Shadows"] = {
+        spellID = 31053,
         itemID = 24079,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 350, 360, 370, 380 },
         reagents = {
@@ -2113,9 +2693,12 @@ local recipes = {
         },
     },
     ["Khorium Inferno Band"] = {
+        spellID = 31055,
         itemID = 24082,
         skillReq = 355,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 355, 365, 375, 385 },
         reagents = {
@@ -2125,9 +2708,12 @@ local recipes = {
         },
     },
     ["Loop of Forged Power"] = {
+        spellID = 46122,
         itemID = 34362,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 365, 375, 392, 410 },
         reagents = {
@@ -2138,9 +2724,12 @@ local recipes = {
         },
     },
     ["Onslaught Ring"] = {
+        spellID = 26907,
         itemID = 21775,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 280, 290, 300, 310 },
         reagents = {
@@ -2150,9 +2739,12 @@ local recipes = {
         },
     },
     ["Red Ring of Destruction"] = {
+        spellID = 36525,
         itemID = 30421,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 230, 255, 270, 285 },
         reagents = {
@@ -2161,9 +2753,12 @@ local recipes = {
         },
     },
     ["Ring of Arcane Shielding"] = {
+        spellID = 37855,
         itemID = 30825,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Friendly" },
+        },
         category = "Ring",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -2172,9 +2767,12 @@ local recipes = {
         },
     },
     ["Ring of Bitter Shadows"] = {
+        spellID = 26910,
         itemID = 21778,
         skillReq = 285,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Jase Farlane" },
+        },
         category = "Ring",
         skillRange = { 285, 295, 305, 315 },
         reagents = {
@@ -2184,9 +2782,12 @@ local recipes = {
         },
     },
     ["Ring of Flowing Life"] = {
+        spellID = 46123,
         itemID = 34363,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 365, 375, 392, 410 },
         reagents = {
@@ -2197,17 +2798,23 @@ local recipes = {
         },
     },
     ["Ring of Silver Might"] = {
+        spellID = 25317,
         itemID = 20827,
         skillReq = 80,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 80, 110, 125, 140 },
         reagents = { { itemID = 2842, count = 2, name = "Silver Bar" } },
     },
     ["Ring of Twilight Shadows"] = {
+        spellID = 25318,
         itemID = 20828,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 100, 130, 145, 160 },
         reagents = {
@@ -2216,9 +2823,12 @@ local recipes = {
         },
     },
     ["Sapphire Signet"] = {
+        spellID = 26903,
         itemID = 21768,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 275, 285, 295, 305 },
         reagents = {
@@ -2228,9 +2838,12 @@ local recipes = {
         },
     },
     ["Simple Opal Ring"] = {
+        spellID = 26902,
         itemID = 21767,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 260, 280, 290, 300 },
         reagents = {
@@ -2239,9 +2852,12 @@ local recipes = {
         },
     },
     ["Simple Pearl Ring"] = {
+        spellID = 25284,
         itemID = 20820,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 60, 90, 105, 120 },
         reagents = {
@@ -2251,17 +2867,23 @@ local recipes = {
         },
     },
     ["Solid Bronze Ring"] = {
+        spellID = 25490,
         itemID = 20907,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 50, 80, 95, 110 },
         reagents = { { itemID = 2841, count = 4, name = "Bronze Bar" } },
     },
     ["The Aquamarine Ward"] = {
+        spellID = 26887,
         itemID = 21754,
         skillReq = 245,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 245, 270, 285, 300 },
         reagents = {
@@ -2270,9 +2892,12 @@ local recipes = {
         },
     },
     ["The Black Pearl"] = {
+        spellID = 41415,
         itemID = 32774,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 330, 340, 350, 360 },
         reagents = {
@@ -2281,9 +2906,12 @@ local recipes = {
         },
     },
     ["The Frozen Eye"] = {
+        spellID = 38503,
         itemID = 31398,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Violet Eye @ Friendly" },
+        },
         category = "Ring",
         skillRange = { 375, 385, 395, 405 },
         reagents = {
@@ -2294,9 +2922,12 @@ local recipes = {
         },
     },
     ["The Jade Eye"] = {
+        spellID = 25619,
         itemID = 20959,
         skillReq = 170,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Arred, Burbik Gearspanner +2 more" },
+        },
         category = "Ring",
         skillRange = { 170, 200, 215, 230 },
         reagents = {
@@ -2305,9 +2936,12 @@ local recipes = {
         },
     },
     ["The Natural Ward"] = {
+        spellID = 38504,
         itemID = 31399,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Revered" },
+        },
         category = "Ring",
         skillRange = { 375, 385, 395, 405 },
         reagents = {
@@ -2318,9 +2952,12 @@ local recipes = {
         },
     },
     ["Tigerseye Band"] = {
+        spellID = 32179,
         itemID = 25439,
         skillReq = 20,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 20, 50, 65, 80 },
         reagents = {
@@ -2329,9 +2966,12 @@ local recipes = {
         },
     },
     ["Truesilver Commander's Ring"] = {
+        spellID = 34959,
         itemID = 29158,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 200, 210, 220, 230 },
         reagents = {
@@ -2341,9 +2981,12 @@ local recipes = {
         },
     },
     ["Truesilver Healing Ring"] = {
+        spellID = 26885,
         itemID = 21765,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 240, 265, 280, 295 },
         reagents = {
@@ -2352,9 +2995,12 @@ local recipes = {
         },
     },
     ["Wicked Moonstone Ring"] = {
+        spellID = 25323,
         itemID = 20833,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Dalria, Ranik" },
+        },
         category = "Ring",
         skillRange = { 125, 155, 170, 185 },
         reagents = {
@@ -2364,9 +3010,12 @@ local recipes = {
         },
     },
     ["Woven Copper Ring"] = {
+        spellID = 26925,
         itemID = 21931,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Ring",
         skillRange = { 30, 30, 45, 60 },
         reagents = {
@@ -2379,9 +3028,12 @@ local recipes = {
     -- TRADE GOOD
     -- ================================================================
     ["Brilliant Glass"] = {
+        spellID = 47280,
         itemID = 191061,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 350, 350, 365, 380 },
         reagents = {
@@ -2394,41 +3046,56 @@ local recipes = {
         },
     },
     ["Bronze Setting"] = {
+        spellID = 25278,
         itemID = 20817,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 50, 70, 80, 90 },
         reagents = { { itemID = 2841, count = 2, name = "Bronze Bar" } },
     },
     ["Coarse Stone Statue"] = {
+        spellID = 32801,
         itemID = 25880,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 50, 70, 80, 90 },
         reagents = { { itemID = 2836, count = 8, name = "Coarse Stone" } },
     },
     ["Delicate Copper Wire"] = {
+        spellID = 25255,
         itemID = 20816,
         skillReq = 20,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 20, 20, 35, 50 },
         reagents = { { itemID = 2840, count = 2, name = "Copper Bar" } },
     },
     ["Dense Stone Statue"] = {
+        spellID = 32809,
         itemID = 25883,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 225, 225, 235, 245 },
         reagents = { { itemID = 12365, count = 10, name = "Dense Stone" } },
     },
     ["Heavy Iron Knuckles"] = {
+        spellID = 25612,
         itemID = 20954,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Christoph Jeffcoat, Micha Yance" },
+        },
         category = "Trade Good",
         skillRange = { 125, 155, 170, 185 },
         reagents = {
@@ -2437,17 +3104,23 @@ local recipes = {
         },
     },
     ["Heavy Stone Statue"] = {
+        spellID = 32807,
         itemID = 25881,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 110, 120, 130, 140 },
         reagents = { { itemID = 2838, count = 8, name = "Heavy Stone" } },
     },
     ["Mercurial Adamantite"] = {
+        spellID = 38068,
         itemID = 31079,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 325, 325, 335, 345 },
         reagents = {
@@ -2456,33 +3129,45 @@ local recipes = {
         },
     },
     ["Mithril Filigree"] = {
+        spellID = 25615,
         itemID = 20963,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 150, 170, 180, 190 },
         reagents = { { itemID = 3860, count = 2, name = "Mithril Bar" } },
     },
     ["Rough Stone Statue"] = {
+        spellID = 32259,
         itemID = 25498,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 30, 30, 40, 50 },
         reagents = { { itemID = 2835, count = 8, name = "Rough Stone" } },
     },
     ["Solid Stone Statue"] = {
+        spellID = 32808,
         itemID = 25882,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 175, 175, 185, 195 },
         reagents = { { itemID = 7912, count = 10, name = "Solid Stone" } },
     },
     ["Thorium Setting"] = {
+        spellID = 26880,
         itemID = 21752,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 225, 235, 245, 255 },
         reagents = { { itemID = 12359, count = 1, name = "Thorium Bar" } },
@@ -2492,9 +3177,12 @@ local recipes = {
     -- TRINKET
     -- ================================================================
     ["Figurine - Black Diamond Crab"] = {
+        spellID = 26912,
         itemID = 21784,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 300, 310, 320, 330 },
         reagents = {
@@ -2506,9 +3194,12 @@ local recipes = {
         },
     },
     ["Figurine - Black Pearl Panther"] = {
+        spellID = 26875,
         itemID = 21758,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Banalash, Helenia Olden" },
+        },
         category = "Trinket",
         skillRange = { 215, 240, 255, 270 },
         reagents = {
@@ -2517,9 +3208,12 @@ local recipes = {
         },
     },
     ["Figurine - Crimson Serpent"] = {
+        spellID = 46777,
         itemID = 35700,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 375, 375, 387, 400 },
         reagents = {
@@ -2529,9 +3223,12 @@ local recipes = {
         },
     },
     ["Figurine - Dark Iron Scorpid"] = {
+        spellID = 26914,
         itemID = 21789,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 300, 310, 320, 330 },
         reagents = {
@@ -2541,9 +3238,13 @@ local recipes = {
         },
     },
     ["Figurine - Dawnstone Crab"] = {
+        spellID = 31080,
         itemID = 24125,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Honored" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 370, 380, 390, 400 },
         reagents = {
@@ -2553,9 +3254,12 @@ local recipes = {
         },
     },
     ["Figurine - Emerald Owl"] = {
+        spellID = 26909,
         itemID = 21777,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 285, 295, 305, 315 },
         reagents = {
@@ -2566,9 +3270,12 @@ local recipes = {
         },
     },
     ["Figurine - Empyrean Tortoise"] = {
+        spellID = 46775,
         itemID = 35693,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 375, 375, 387, 400 },
         reagents = {
@@ -2578,9 +3285,12 @@ local recipes = {
         },
     },
     ["Figurine - Felsteel Boar"] = {
+        spellID = 31079,
         itemID = 24124,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 370, 380, 390, 400 },
         reagents = {
@@ -2590,9 +3300,12 @@ local recipes = {
         },
     },
     ["Figurine - Golden Hare"] = {
+        spellID = 26873,
         itemID = 21756,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 200, 225, 240, 255 },
         reagents = {
@@ -2601,9 +3314,12 @@ local recipes = {
         },
     },
     ["Figurine - Jade Owl"] = {
+        spellID = 26872,
         itemID = 21748,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 200, 225, 240, 255 },
         reagents = {
@@ -2614,9 +3330,12 @@ local recipes = {
         },
     },
     ["Figurine - Khorium Boar"] = {
+        spellID = 46776,
         itemID = 35694,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 375, 375, 387, 400 },
         reagents = {
@@ -2626,9 +3345,12 @@ local recipes = {
         },
     },
     ["Figurine - Living Ruby Serpent"] = {
+        spellID = 31081,
         itemID = 24126,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 370, 380, 390, 400 },
         reagents = {
@@ -2638,9 +3360,12 @@ local recipes = {
         },
     },
     ["Figurine - Nightseye Panther"] = {
+        spellID = 31083,
         itemID = 24128,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 370, 380, 390, 400 },
         reagents = {
@@ -2650,9 +3375,12 @@ local recipes = {
         },
     },
     ["Figurine - Ruby Serpent"] = {
+        spellID = 26900,
         itemID = 21769,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 260, 280, 290, 300 },
         reagents = {
@@ -2663,9 +3391,12 @@ local recipes = {
         },
     },
     ["Figurine - Seaspray Albatross"] = {
+        spellID = 46779,
         itemID = 35703,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 375, 375, 387, 400 },
         reagents = {
@@ -2675,9 +3406,12 @@ local recipes = {
         },
     },
     ["Figurine - Shadowsong Panther"] = {
+        spellID = 46778,
         itemID = 35702,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 375, 375, 387, 400 },
         reagents = {
@@ -2687,9 +3421,12 @@ local recipes = {
         },
     },
     ["Figurine - Talasite Owl"] = {
+        spellID = 31082,
         itemID = 24127,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Honored" },
+        },
         category = "Trinket",
         skillRange = { 370, 380, 390, 400 },
         reagents = {
@@ -2699,9 +3436,12 @@ local recipes = {
         },
     },
     ["Figurine - Truesilver Boar"] = {
+        spellID = 26882,
         itemID = 21763,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trinket",
         skillRange = { 235, 260, 275, 290 },
         reagents = {
@@ -2713,9 +3453,12 @@ local recipes = {
         },
     },
     ["Figurine - Truesilver Crab"] = {
+        spellID = 26881,
         itemID = 21760,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Helenia Olden, Nerrist" },
+        },
         category = "Trinket",
         skillRange = { 225, 250, 265, 280 },
         reagents = {

@@ -14,9 +14,12 @@ local recipes = {
     -- BAG
     -- ================================================================
     ["Bag of Many Hides"] = {
+        spellID = 45117,
         itemID = 34490,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -29,9 +32,12 @@ local recipes = {
         },
     },
     ["Heavy Leather Ammo Pouch"] = {
+        spellID = 9194,
         itemID = 7372,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 150, 170, 180, 190 },
         reagents = {
@@ -40,9 +46,12 @@ local recipes = {
         },
     },
     ["Heavy Quiver"] = {
+        spellID = 9193,
         itemID = 7371,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 150, 170, 180, 190 },
         reagents = {
@@ -51,9 +60,12 @@ local recipes = {
         },
     },
     ["Knothide Ammo Pouch"] = {
+        spellID = 44343,
         itemID = 34099,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 315, 325, 335, 345 },
         reagents = {
@@ -63,9 +75,12 @@ local recipes = {
         },
     },
     ["Knothide Quiver"] = {
+        spellID = 44344,
         itemID = 34100,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 315, 325, 335, 345 },
         reagents = {
@@ -75,9 +90,12 @@ local recipes = {
         },
     },
     ["Kodo Hide Bag"] = {
+        spellID = 5244,
         itemID = 5081,
         skillReq = 40,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Horde", detail = "Quest: Kodo Hide Bag" },
+        },
         category = "Bag",
         skillRange = { 40, 70, 85, 100 },
         reagents = {
@@ -87,9 +105,12 @@ local recipes = {
         },
     },
     ["Leatherworker's Satchel"] = {
+        spellID = 45100,
         itemID = 34482,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 300, 310, 320, 330 },
         reagents = {
@@ -100,9 +121,12 @@ local recipes = {
         },
     },
     ["Light Leather Quiver"] = {
+        spellID = 9060,
         itemID = 7278,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 30, 60, 75, 90 },
         reagents = {
@@ -111,9 +135,13 @@ local recipes = {
         },
     },
     ["Netherscale Ammo Pouch"] = {
+        spellID = 44768,
         itemID = 34106,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Honored" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Honored" },
+        },
         category = "Bag",
         skillRange = { 350, 360, 370, 380 },
         reagents = {
@@ -124,9 +152,12 @@ local recipes = {
         },
     },
     ["Quickdraw Quiver"] = {
+        spellID = 14930,
         itemID = 8217,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 225, 245, 255, 265 },
         reagents = {
@@ -137,9 +168,12 @@ local recipes = {
         },
     },
     ["Quiver of a Thousand Feathers"] = {
+        spellID = 44359,
         itemID = 34105,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Honored" },
+        },
         category = "Bag",
         skillRange = { 350, 360, 370, 380 },
         reagents = {
@@ -150,9 +184,13 @@ local recipes = {
         },
     },
     ["Reinforced Mining Bag"] = {
+        spellID = 35530,
         itemID = 29540,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "The Mag'har @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Kurenai @ Friendly" },
+        },
         category = "Bag",
         skillRange = { 325, 335, 340, 345 },
         reagents = {
@@ -161,9 +199,12 @@ local recipes = {
         },
     },
     ["Small Leather Ammo Pouch"] = {
+        spellID = 9062,
         itemID = 7279,
         skillReq = 30,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 30, 60, 75, 90 },
         reagents = {
@@ -172,9 +213,12 @@ local recipes = {
         },
     },
     ["Thick Leather Ammo Pouch"] = {
+        spellID = 14932,
         itemID = 8218,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Bag",
         skillRange = { 225, 245, 255, 265 },
         reagents = {
@@ -191,9 +235,12 @@ local recipes = {
     -- Feet
     -- --------------------------------
     ["Winter Boots"] = {
+        spellID = 44953,
         itemID = 34086,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Penney Copperpinch, Wulmort Jinglepocket" },
+        },
         category = "Cloth Armor",
         subcategory = "Feet",
         skillRange = { 285, 285, 285, 285 },
@@ -211,9 +258,12 @@ local recipes = {
     -- Chest
     -- --------------------------------
     ["Barbaric Harness"] = {
+        spellID = 6661,
         itemID = 5739,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 190, 210, 220, 230 },
@@ -224,9 +274,12 @@ local recipes = {
         },
     },
     ["Big Voodoo Robe"] = {
+        spellID = 10520,
         itemID = 8200,
         skillReq = 215,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 215, 235, 245, 255 },
@@ -237,9 +290,12 @@ local recipes = {
         },
     },
     ["Black Whelp Tunic"] = {
+        spellID = 24940,
         itemID = 20575,
         skillReq = 100,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Amy Davenport" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 100, 125, 137, 150 },
@@ -251,9 +307,12 @@ local recipes = {
         },
     },
     ["Blood Tiger Breastplate"] = {
+        spellID = 24124,
         itemID = 19688,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -265,9 +324,12 @@ local recipes = {
         },
     },
     ["Carapace of Sun and Shadow"] = {
+        spellID = 46138,
         itemID = 34369,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 392, 410 },
@@ -279,9 +341,12 @@ local recipes = {
         },
     },
     ["Chimeric Vest"] = {
+        spellID = 19081,
         itemID = 15075,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 290, 310, 320, 330 },
@@ -292,9 +357,12 @@ local recipes = {
         },
     },
     ["Dark Leather Tunic"] = {
+        spellID = 2169,
         itemID = 2317,
         skillReq = 100,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 100, 125, 137, 150 },
@@ -305,9 +373,12 @@ local recipes = {
         },
     },
     ["Dusky Leather Armor"] = {
+        spellID = 9196,
         itemID = 7374,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 175, 195, 205, 215 },
@@ -318,9 +389,12 @@ local recipes = {
         },
     },
     ["Embossed Leather Vest"] = {
+        spellID = 2160,
         itemID = 2300,
         skillReq = 40,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 40, 70, 85, 100 },
@@ -330,9 +404,12 @@ local recipes = {
         },
     },
     ["Feathered Breastplate"] = {
+        spellID = 10647,
         itemID = 8349,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 250, 270, 280, 290 },
@@ -345,9 +422,12 @@ local recipes = {
         },
     },
     ["Fine Leather Tunic"] = {
+        spellID = 3761,
         itemID = 4243,
         skillReq = 85,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 85, 115, 130, 145 },
@@ -358,9 +438,12 @@ local recipes = {
         },
     },
     ["Frostsaber Tunic"] = {
+        spellID = 19104,
         itemID = 15068,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -372,9 +455,12 @@ local recipes = {
         },
     },
     ["Green Leather Armor"] = {
+        spellID = 3772,
         itemID = 4255,
         skillReq = 155,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by George Candarte, Wenna Silkbeard" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 155, 175, 185, 195 },
@@ -385,9 +471,12 @@ local recipes = {
         },
     },
     ["Green Whelp Armor"] = {
+        spellID = 9197,
         itemID = 7375,
         skillReq = 175,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 175, 195, 205, 215 },
@@ -398,9 +487,12 @@ local recipes = {
         },
     },
     ["Guardian Armor"] = {
+        spellID = 3773,
         itemID = 4256,
         skillReq = 175,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 175, 195, 205, 215 },
@@ -412,9 +504,12 @@ local recipes = {
         },
     },
     ["Handstitched Leather Vest"] = {
+        spellID = 7126,
         itemID = 5957,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 1, 40, 55, 70 },
@@ -424,9 +519,12 @@ local recipes = {
         },
     },
     ["Heavy Clefthoof Vest"] = {
+        spellID = 32495,
         itemID = 25689,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 360, 370, 380, 390 },
@@ -438,9 +536,12 @@ local recipes = {
         },
     },
     ["Hillman's Leather Vest"] = {
+        spellID = 3762,
         itemID = 4244,
         skillReq = 100,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 100, 125, 137, 150 },
@@ -451,9 +552,12 @@ local recipes = {
         },
     },
     ["Ironfeather Breastplate"] = {
+        spellID = 19086,
         itemID = 15066,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 290, 310, 320, 330 },
@@ -466,9 +570,12 @@ local recipes = {
         },
     },
     ["Leather Chestguard of the Sun"] = {
+        spellID = 46136,
         itemID = 34371,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 392, 410 },
@@ -480,9 +587,12 @@ local recipes = {
         },
     },
     ["Living Breastplate"] = {
+        spellID = 19095,
         itemID = 15059,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -495,9 +605,12 @@ local recipes = {
         },
     },
     ["Living Crystal Breastplate"] = {
+        spellID = 36078,
         itemID = 29974,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 330, 350, 360, 370 },
@@ -509,9 +622,12 @@ local recipes = {
         },
     },
     ["Moonglow Vest"] = {
+        spellID = 8322,
         itemID = 6709,
         skillReq = 90,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Alliance", detail = "Quest: Moonglow Vest" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 90, 115, 130, 145 },
@@ -523,9 +639,13 @@ local recipes = {
         },
     },
     ["Murloc Scale Breastplate"] = {
+        spellID = 6703,
         itemID = 5781,
         skillReq = 95,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Andrew Hilbert, Gina MacGregor +1 more" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 95, 125, 140, 155 },
@@ -537,9 +657,12 @@ local recipes = {
         },
     },
     ["Nightscape Tunic"] = {
+        spellID = 10499,
         itemID = 8175,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 205, 225, 235, 245 },
@@ -549,9 +672,12 @@ local recipes = {
         },
     },
     ["Polar Tunic"] = {
+        spellID = 28219,
         itemID = 22661,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Revered" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -564,9 +690,12 @@ local recipes = {
         },
     },
     ["Primal Batskin Jerkin"] = {
+        spellID = 24121,
         itemID = 19685,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -578,9 +707,12 @@ local recipes = {
         },
     },
     ["Primalstorm Breastplate"] = {
+        spellID = 36077,
         itemID = 29973,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 330, 350, 360, 370 },
@@ -592,9 +724,12 @@ local recipes = {
         },
     },
     ["Primalstrike Vest"] = {
+        spellID = 35589,
         itemID = 29525,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -605,9 +740,12 @@ local recipes = {
         },
     },
     ["Raptor Hide Harness"] = {
+        spellID = 4096,
         itemID = 4455,
         skillReq = 165,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Tunkk" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 165, 185, 195, 205 },
@@ -618,9 +756,13 @@ local recipes = {
         },
     },
     ["Runic Leather Armor"] = {
+        spellID = 19102,
         itemID = 15090,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -633,9 +775,12 @@ local recipes = {
         },
     },
     ["Shadowprowler's Chestguard"] = {
+        spellID = 42731,
         itemID = 33204,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Violet Eye @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 385, 395 },
@@ -648,9 +793,12 @@ local recipes = {
         },
     },
     ["Stormshroud Armor"] = {
+        spellID = 19079,
         itemID = 15056,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 285, 305, 315, 325 },
@@ -663,9 +811,12 @@ local recipes = {
         },
     },
     ["Thick Draenic Vest"] = {
+        spellID = 32473,
         itemID = 25671,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 330, 340, 350, 360 },
@@ -675,9 +826,13 @@ local recipes = {
         },
     },
     ["Thick Murloc Armor"] = {
+        spellID = 6704,
         itemID = 5782,
         skillReq = 170,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Blixrez Goodstitch, Christoph Jeffcoat +1 more" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 170, 190, 200, 210 },
@@ -689,9 +844,12 @@ local recipes = {
         },
     },
     ["Toughened Leather Armor"] = {
+        spellID = 2166,
         itemID = 2314,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 120, 145, 157, 170 },
@@ -702,9 +860,12 @@ local recipes = {
         },
     },
     ["Volcanic Breastplate"] = {
+        spellID = 19076,
         itemID = 15053,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 285, 305, 315, 325 },
@@ -716,9 +877,13 @@ local recipes = {
         },
     },
     ["Warbear Harness"] = {
+        spellID = 19068,
         itemID = 15064,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Neutral" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 275, 295, 305, 315 },
@@ -729,9 +894,12 @@ local recipes = {
         },
     },
     ["White Leather Jerkin"] = {
+        spellID = 2163,
         itemID = 2311,
         skillReq = 60,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 60, 90, 105, 120 },
@@ -742,9 +910,13 @@ local recipes = {
         },
     },
     ["Wicked Leather Armor"] = {
+        spellID = 19098,
         itemID = 15085,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -757,9 +929,12 @@ local recipes = {
         },
     },
     ["Wild Draenish Vest"] = {
+        spellID = 32481,
         itemID = 25676,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 330, 340, 350, 360 },
@@ -769,9 +944,12 @@ local recipes = {
         },
     },
     ["Wild Leather Vest"] = {
+        spellID = 10544,
         itemID = 8211,
         skillReq = 225,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Wild Leather Vest" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 225, 245, 255, 265 },
@@ -782,9 +960,12 @@ local recipes = {
         },
     },
     ["Windhawk Hauberk"] = {
+        spellID = 35585,
         itemID = 29522,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -799,9 +980,12 @@ local recipes = {
     -- Feet
     -- --------------------------------
     ["Blastguard Boots"] = {
+        spellID = 35536,
         itemID = 29499,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 350, 360, 370, 380 },
@@ -813,9 +997,12 @@ local recipes = {
         },
     },
     ["Boots of Natural Grace"] = {
+        spellID = 36355,
         itemID = 30041,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 395, 405 },
@@ -827,9 +1014,12 @@ local recipes = {
         },
     },
     ["Boots of Utter Darkness"] = {
+        spellID = 36357,
         itemID = 30039,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 395, 405 },
@@ -841,9 +1031,12 @@ local recipes = {
         },
     },
     ["Bramblewood Boots"] = {
+        spellID = 28473,
         itemID = 22760,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 300, 320, 330, 340 },
@@ -855,9 +1048,12 @@ local recipes = {
         },
     },
     ["Chimeric Boots"] = {
+        spellID = 19063,
         itemID = 15073,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 275, 295, 305, 315 },
@@ -868,9 +1064,12 @@ local recipes = {
         },
     },
     ["Corehound Boots"] = {
+        spellID = 20853,
         itemID = 16982,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 295, 315, 325, 335 },
@@ -882,9 +1081,12 @@ local recipes = {
         },
     },
     ["Dark Leather Boots"] = {
+        spellID = 2167,
         itemID = 2315,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 100, 125, 137, 150 },
@@ -895,9 +1097,12 @@ local recipes = {
         },
     },
     ["Dawn Treaders"] = {
+        spellID = 23705,
         itemID = 19052,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 290, 310, 320, 330 },
@@ -910,9 +1115,12 @@ local recipes = {
         },
     },
     ["Dusky Boots"] = {
+        spellID = 9207,
         itemID = 7390,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 200, 220, 230, 240 },
@@ -924,9 +1132,12 @@ local recipes = {
         },
     },
     ["Embossed Leather Boots"] = {
+        spellID = 2161,
         itemID = 2309,
         skillReq = 55,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 55, 85, 100, 115 },
@@ -936,9 +1147,12 @@ local recipes = {
         },
     },
     ["Enchanted Clefthoof Boots"] = {
+        spellID = 35534,
         itemID = 29497,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 350, 360, 370, 380 },
@@ -949,9 +1163,12 @@ local recipes = {
         },
     },
     ["Fel Leather Boots"] = {
+        spellID = 32493,
         itemID = 25686,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 350, 360, 370, 380 },
@@ -963,9 +1180,12 @@ local recipes = {
         },
     },
     ["Fine Leather Boots"] = {
+        spellID = 2158,
         itemID = 2307,
         skillReq = 90,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 90, 120, 135, 150 },
@@ -975,9 +1195,12 @@ local recipes = {
         },
     },
     ["Frostsaber Boots"] = {
+        spellID = 19066,
         itemID = 15071,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Qia" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 275, 295, 305, 315 },
@@ -988,9 +1211,12 @@ local recipes = {
         },
     },
     ["Handstitched Leather Boots"] = {
+        spellID = 2149,
         itemID = 2302,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 1, 40, 55, 70 },
@@ -1000,9 +1226,12 @@ local recipes = {
         },
     },
     ["Heavy Clefthoof Boots"] = {
+        spellID = 32497,
         itemID = 25691,
         skillReq = 355,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Neutral" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 355, 365, 375, 385 },
@@ -1014,9 +1243,12 @@ local recipes = {
         },
     },
     ["Mongoose Boots"] = {
+        spellID = 22922,
         itemID = 18506,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 300, 320, 330, 340 },
@@ -1029,9 +1261,12 @@ local recipes = {
         },
     },
     ["Nightscape Boots"] = {
+        spellID = 10558,
         itemID = 8197,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 235, 255, 265, 275 },
@@ -1041,9 +1276,12 @@ local recipes = {
         },
     },
     ["Redeemed Soul Moccasins"] = {
+        spellID = 40003,
         itemID = 32394,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 395, 405 },
@@ -1056,9 +1294,12 @@ local recipes = {
         },
     },
     ["Swift Boots"] = {
+        spellID = 9208,
         itemID = 7391,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 200, 220, 230, 240 },
@@ -1070,9 +1311,12 @@ local recipes = {
         },
     },
     ["Thick Draenic Boots"] = {
+        spellID = 32472,
         itemID = 25668,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 320, 330, 340, 350 },
@@ -1082,9 +1326,12 @@ local recipes = {
         },
     },
     ["Wild Draenish Boots"] = {
+        spellID = 32478,
         itemID = 25673,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 300, 310, 320, 330 },
@@ -1094,9 +1341,12 @@ local recipes = {
         },
     },
     ["Wild Leather Boots"] = {
+        spellID = 10566,
         itemID = 8213,
         skillReq = 245,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Wild Leather Boots" },
+        },
         category = "Leather Armor",
         subcategory = "Feet",
         skillRange = { 245, 265, 275, 285 },
@@ -1109,9 +1359,12 @@ local recipes = {
     -- Hands
     -- --------------------------------
     ["Barbaric Gloves"] = {
+        spellID = 3771,
         itemID = 4254,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 150, 170, 180, 190 },
@@ -1122,9 +1375,12 @@ local recipes = {
         },
     },
     ["Chimeric Gloves"] = {
+        spellID = 19053,
         itemID = 15074,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Blimo Gadgetspring" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 265, 285, 295, 305 },
@@ -1135,9 +1391,12 @@ local recipes = {
         },
     },
     ["Cobrascale Gloves"] = {
+        spellID = 35559,
         itemID = 29503,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 385, 395 },
@@ -1150,9 +1409,12 @@ local recipes = {
         },
     },
     ["Dark Leather Gloves"] = {
+        spellID = 3765,
         itemID = 4248,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 120, 155, 167, 180 },
@@ -1164,9 +1426,12 @@ local recipes = {
         },
     },
     ["Deviate Scale Gloves"] = {
+        spellID = 7954,
         itemID = 6467,
         skillReq = 105,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kalldan Felmoon" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 105, 130, 142, 155 },
@@ -1176,9 +1441,12 @@ local recipes = {
         },
     },
     ["Devilsaur Gauntlets"] = {
+        spellID = 19084,
         itemID = 15063,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Nergal" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 290, 310, 320, 330 },
@@ -1189,9 +1457,12 @@ local recipes = {
         },
     },
     ["Embossed Leather Gloves"] = {
+        spellID = 3756,
         itemID = 4239,
         skillReq = 55,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 55, 85, 100, 115 },
@@ -1201,9 +1472,12 @@ local recipes = {
         },
     },
     ["Enchanted Clefthoof Gloves"] = {
+        spellID = 35533,
         itemID = 29496,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 350, 360, 370, 380 },
@@ -1214,9 +1488,12 @@ local recipes = {
         },
     },
     ["Fel Leather Gloves"] = {
+        spellID = 32490,
         itemID = 25685,
         skillReq = 340,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Neutral" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 340, 350, 360, 370 },
@@ -1228,9 +1505,12 @@ local recipes = {
         },
     },
     ["Fine Leather Gloves"] = {
+        spellID = 2164,
         itemID = 2312,
         skillReq = 75,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 75, 105, 120, 135 },
@@ -1241,9 +1521,12 @@ local recipes = {
         },
     },
     ["Fletcher's Gloves"] = {
+        spellID = 9145,
         itemID = 7348,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 125, 150, 162, 175 },
@@ -1254,9 +1537,12 @@ local recipes = {
         },
     },
     ["Frostsaber Gloves"] = {
+        spellID = 19087,
         itemID = 15070,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 295, 315, 325, 335 },
@@ -1267,9 +1553,12 @@ local recipes = {
         },
     },
     ["Gauntlets of the Sea"] = {
+        spellID = 10630,
         itemID = 8346,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 230, 250, 260, 270 },
@@ -1282,9 +1571,12 @@ local recipes = {
         },
     },
     ["Gloves of Immortal Dusk"] = {
+        spellID = 46134,
         itemID = 34370,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 392, 410 },
@@ -1297,9 +1589,12 @@ local recipes = {
         },
     },
     ["Gloves of the Greatfather"] = {
+        spellID = 21943,
         itemID = 17721,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 190, 210, 220, 230 },
@@ -1310,9 +1605,12 @@ local recipes = {
         },
     },
     ["Gloves of the Living Touch"] = {
+        spellID = 35562,
         itemID = 29506,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 385, 395 },
@@ -1324,9 +1622,12 @@ local recipes = {
         },
     },
     ["Guardian Gloves"] = {
+        spellID = 7156,
         itemID = 5966,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 190, 210, 220, 230 },
@@ -1337,9 +1638,12 @@ local recipes = {
         },
     },
     ["Heavy Earthen Gloves"] = {
+        spellID = 9149,
         itemID = 7359,
         skillReq = 145,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 145, 170, 182, 195 },
@@ -1351,9 +1655,12 @@ local recipes = {
         },
     },
     ["Herbalist's Gloves"] = {
+        spellID = 9146,
         itemID = 7349,
         skillReq = 135,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Harlown Darkweave" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 135, 160, 172, 185 },
@@ -1364,9 +1671,12 @@ local recipes = {
         },
     },
     ["Hillman's Leather Gloves"] = {
+        spellID = 3764,
         itemID = 4247,
         skillReq = 145,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 145, 170, 182, 195 },
@@ -1376,9 +1686,12 @@ local recipes = {
         },
     },
     ["Leather Gauntlets of the Sun"] = {
+        spellID = 46132,
         itemID = 34372,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 392, 410 },
@@ -1391,9 +1704,12 @@ local recipes = {
         },
     },
     ["Nimble Leather Gloves"] = {
+        spellID = 9074,
         itemID = 7285,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 120, 145, 157, 170 },
@@ -1404,9 +1720,12 @@ local recipes = {
         },
     },
     ["Pilferer's Gloves"] = {
+        spellID = 9148,
         itemID = 7358,
         skillReq = 140,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 140, 165, 177, 190 },
@@ -1417,9 +1736,12 @@ local recipes = {
         },
     },
     ["Polar Gloves"] = {
+        spellID = 28220,
         itemID = 22662,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -1432,9 +1754,12 @@ local recipes = {
         },
     },
     ["Primal Batskin Gloves"] = {
+        spellID = 24122,
         itemID = 19686,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -1446,9 +1771,12 @@ local recipes = {
         },
     },
     ["Red Whelp Gloves"] = {
+        spellID = 9072,
         itemID = 7284,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Wenna Silkbeard" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 120, 145, 157, 170 },
@@ -1459,9 +1787,13 @@ local recipes = {
         },
     },
     ["Runic Leather Gauntlets"] = {
+        spellID = 19055,
         itemID = 15091,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 270, 290, 300, 310 },
@@ -1472,9 +1804,12 @@ local recipes = {
         },
     },
     ["Shadowskin Gloves"] = {
+        spellID = 22711,
         itemID = 18238,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Rikqiz" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 200, 210, 220, 230 },
@@ -1488,9 +1823,12 @@ local recipes = {
         },
     },
     ["Stormshroud Gloves"] = {
+        spellID = 26279,
         itemID = 21278,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -1503,9 +1841,12 @@ local recipes = {
         },
     },
     ["Thick Draenic Gloves"] = {
+        spellID = 32470,
         itemID = 25669,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 300, 310, 320, 330 },
@@ -1515,9 +1856,12 @@ local recipes = {
         },
     },
     ["Timbermaw Brawlers"] = {
+        spellID = 23704,
         itemID = 19049,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -1530,9 +1874,12 @@ local recipes = {
         },
     },
     ["Toughened Leather Gloves"] = {
+        spellID = 3770,
         itemID = 4253,
         skillReq = 135,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 135, 160, 172, 185 },
@@ -1545,9 +1892,12 @@ local recipes = {
         },
     },
     ["Wicked Leather Gauntlets"] = {
+        spellID = 19049,
         itemID = 15083,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Leonard Porter, Werg Thickblade" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 260, 280, 290, 300 },
@@ -1558,9 +1908,12 @@ local recipes = {
         },
     },
     ["Wild Draenish Gloves"] = {
+        spellID = 32479,
         itemID = 25674,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 310, 320, 330, 340 },
@@ -1570,9 +1923,12 @@ local recipes = {
         },
     },
     ["Windslayer Wraps"] = {
+        spellID = 35563,
         itemID = 29507,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 385, 395 },
@@ -1587,9 +1943,12 @@ local recipes = {
     -- Head
     -- --------------------------------
     ["Big Voodoo Mask"] = {
+        spellID = 10531,
         itemID = 8201,
         skillReq = 220,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 220, 240, 250, 260 },
@@ -1600,9 +1959,12 @@ local recipes = {
         },
     },
     ["Bramblewood Helm"] = {
+        spellID = 28472,
         itemID = 22759,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 300, 320, 330, 340 },
@@ -1614,9 +1976,12 @@ local recipes = {
         },
     },
     ["Cobrascale Hood"] = {
+        spellID = 35558,
         itemID = 29502,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
@@ -1629,9 +1994,12 @@ local recipes = {
         },
     },
     ["Comfortable Leather Hat"] = {
+        spellID = 10490,
         itemID = 8174,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 200, 220, 230, 240 },
@@ -1642,9 +2010,12 @@ local recipes = {
         },
     },
     ["Helm of Fire"] = {
+        spellID = 10632,
         itemID = 8348,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 250, 270, 280, 290 },
@@ -1657,9 +2028,12 @@ local recipes = {
         },
     },
     ["Hood of Primal Life"] = {
+        spellID = 35561,
         itemID = 29505,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
@@ -1671,9 +2045,12 @@ local recipes = {
         },
     },
     ["Molten Helm"] = {
+        spellID = 20854,
         itemID = 16983,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 300, 320, 330, 340 },
@@ -1685,9 +2062,12 @@ local recipes = {
         },
     },
     ["Nightscape Headband"] = {
+        spellID = 10507,
         itemID = 8176,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 205, 225, 235, 245 },
@@ -1697,9 +2077,12 @@ local recipes = {
         },
     },
     ["Runic Leather Headband"] = {
+        spellID = 19082,
         itemID = 15094,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 290, 310, 320, 330 },
@@ -1710,9 +2093,12 @@ local recipes = {
         },
     },
     ["Stylin' Jungle Hat"] = {
+        spellID = 32489,
         itemID = 25682,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 350, 360, 370, 380 },
@@ -1724,9 +2110,12 @@ local recipes = {
         },
     },
     ["Stylin' Purple Hat"] = {
+        spellID = 32485,
         itemID = 25680,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 350, 360, 370, 380 },
@@ -1739,9 +2128,13 @@ local recipes = {
         },
     },
     ["Wicked Leather Headband"] = {
+        spellID = 19071,
         itemID = 15086,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 280, 300, 310, 320 },
@@ -1752,9 +2145,12 @@ local recipes = {
         },
     },
     ["Wild Leather Helmet"] = {
+        spellID = 10546,
         itemID = 8214,
         skillReq = 225,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Wild Leather Helmet" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 225, 245, 255, 265 },
@@ -1765,9 +2161,12 @@ local recipes = {
         },
     },
     ["Windscale Hood"] = {
+        spellID = 35560,
         itemID = 29504,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
@@ -1780,9 +2179,12 @@ local recipes = {
         },
     },
     ["Wolfshead Helm"] = {
+        spellID = 10621,
         itemID = 8345,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Head",
         skillRange = { 225, 245, 255, 265 },
@@ -1797,9 +2199,12 @@ local recipes = {
     -- Legs
     -- --------------------------------
     ["Barbaric Leggings"] = {
+        spellID = 7149,
         itemID = 5963,
         skillReq = 170,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Hammon Karwn, Jandia +2 more" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 170, 190, 200, 210 },
@@ -1810,9 +2215,12 @@ local recipes = {
         },
     },
     ["Big Voodoo Pants"] = {
+        spellID = 10560,
         itemID = 8202,
         skillReq = 240,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 240, 260, 270, 280 },
@@ -1823,9 +2231,12 @@ local recipes = {
         },
     },
     ["Blackstorm Leggings"] = {
+        spellID = 36074,
         itemID = 29964,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 260, 280, 290, 300 },
@@ -1837,9 +2248,12 @@ local recipes = {
         },
     },
     ["Blastguard Pants"] = {
+        spellID = 35535,
         itemID = 29498,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Revered" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 350, 360, 370, 380 },
@@ -1851,9 +2265,12 @@ local recipes = {
         },
     },
     ["Chimeric Leggings"] = {
+        spellID = 19073,
         itemID = 15072,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 280, 300, 310, 320 },
@@ -1864,9 +2281,12 @@ local recipes = {
         },
     },
     ["Dark Leather Pants"] = {
+        spellID = 7135,
         itemID = 5961,
         skillReq = 115,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 115, 140, 152, 165 },
@@ -1877,9 +2297,12 @@ local recipes = {
         },
     },
     ["Devilsaur Leggings"] = {
+        spellID = 19097,
         itemID = 15062,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -1891,9 +2314,12 @@ local recipes = {
         },
     },
     ["Dusky Leather Leggings"] = {
+        spellID = 9195,
         itemID = 7373,
         skillReq = 165,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 165, 185, 195, 205 },
@@ -1904,9 +2330,12 @@ local recipes = {
         },
     },
     ["Embossed Leather Pants"] = {
+        spellID = 3759,
         itemID = 4242,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 75, 105, 120, 135 },
@@ -1917,9 +2346,12 @@ local recipes = {
         },
     },
     ["Enchanted Clefthoof Leggings"] = {
+        spellID = 35532,
         itemID = 29495,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Revered" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 350, 360, 370, 380 },
@@ -1930,9 +2362,12 @@ local recipes = {
         },
     },
     ["Fel Leather Leggings"] = {
+        spellID = 32494,
         itemID = 25687,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 350, 360, 370, 380 },
@@ -1944,9 +2379,12 @@ local recipes = {
         },
     },
     ["Fine Leather Pants"] = {
+        spellID = 7133,
         itemID = 5958,
         skillReq = 105,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 105, 130, 142, 155 },
@@ -1957,9 +2395,12 @@ local recipes = {
         },
     },
     ["Frostsaber Leggings"] = {
+        spellID = 19074,
         itemID = 15069,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 285, 305, 315, 325 },
@@ -1970,9 +2411,12 @@ local recipes = {
         },
     },
     ["Guardian Pants"] = {
+        spellID = 7147,
         itemID = 5962,
         skillReq = 160,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 160, 180, 190, 200 },
@@ -1983,9 +2427,12 @@ local recipes = {
         },
     },
     ["Handstitched Leather Pants"] = {
+        spellID = 2153,
         itemID = 2303,
         skillReq = 15,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 15, 45, 60, 75 },
@@ -1995,9 +2442,12 @@ local recipes = {
         },
     },
     ["Heavy Clefthoof Leggings"] = {
+        spellID = 32496,
         itemID = 25690,
         skillReq = 355,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 355, 365, 375, 385 },
@@ -2009,9 +2459,12 @@ local recipes = {
         },
     },
     ["Light Leather Pants"] = {
+        spellID = 9068,
         itemID = 7282,
         skillReq = 95,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 95, 125, 140, 155 },
@@ -2022,9 +2475,12 @@ local recipes = {
         },
     },
     ["Living Leggings"] = {
+        spellID = 19078,
         itemID = 15060,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 285, 305, 315, 325 },
@@ -2036,9 +2492,12 @@ local recipes = {
         },
     },
     ["Nightscape Pants"] = {
+        spellID = 10548,
         itemID = 8193,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 230, 250, 260, 270 },
@@ -2048,9 +2507,12 @@ local recipes = {
         },
     },
     ["Redeemed Soul Legguards"] = {
+        spellID = 40005,
         itemID = 32396,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Neutral" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 375, 385, 395, 405 },
@@ -2063,9 +2525,12 @@ local recipes = {
         },
     },
     ["Rugged Leather Pants"] = {
+        spellID = 9064,
         itemID = 7280,
         skillReq = 35,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 35, 65, 80, 95 },
@@ -2075,9 +2540,13 @@ local recipes = {
         },
     },
     ["Runic Leather Pants"] = {
+        spellID = 19091,
         itemID = 15095,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -2089,9 +2558,12 @@ local recipes = {
         },
     },
     ["Stormshroud Pants"] = {
+        spellID = 19067,
         itemID = 15057,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Leonard Porter, Werg Thickblade" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 275, 295, 305, 315 },
@@ -2103,9 +2575,12 @@ local recipes = {
         },
     },
     ["Thick Draenic Pants"] = {
+        spellID = 32471,
         itemID = 25670,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 315, 325, 335, 345 },
@@ -2115,9 +2590,12 @@ local recipes = {
         },
     },
     ["Volcanic Leggings"] = {
+        spellID = 19059,
         itemID = 15054,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 270, 290, 300, 310 },
@@ -2129,9 +2607,13 @@ local recipes = {
         },
     },
     ["Warbear Woolies"] = {
+        spellID = 19080,
         itemID = 15065,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Neutral" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 285, 305, 315, 325 },
@@ -2142,9 +2624,13 @@ local recipes = {
         },
     },
     ["Wicked Leather Pants"] = {
+        spellID = 19083,
         itemID = 15087,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 290, 310, 320, 330 },
@@ -2156,9 +2642,12 @@ local recipes = {
         },
     },
     ["Wild Draenish Leggings"] = {
+        spellID = 32480,
         itemID = 25675,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 320, 330, 340, 350 },
@@ -2168,9 +2657,12 @@ local recipes = {
         },
     },
     ["Wild Leather Leggings"] = {
+        spellID = 10572,
         itemID = 8212,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Wild Leather Leggings" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 250, 270, 280, 290 },
@@ -2181,9 +2673,12 @@ local recipes = {
         },
     },
     ["Wildfeather Leggings"] = {
+        spellID = 36075,
         itemID = 29970,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Legs",
         skillRange = { 260, 280, 290, 300 },
@@ -2198,9 +2693,12 @@ local recipes = {
     -- Shoulder
     -- --------------------------------
     ["Barbaric Shoulders"] = {
+        spellID = 7151,
         itemID = 5964,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 175, 195, 205, 215 },
@@ -2211,9 +2709,12 @@ local recipes = {
         },
     },
     ["Blood Tiger Shoulders"] = {
+        spellID = 24125,
         itemID = 19689,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -2225,9 +2726,12 @@ local recipes = {
         },
     },
     ["Dark Leather Shoulders"] = {
+        spellID = 3769,
         itemID = 4252,
         skillReq = 140,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 140, 165, 177, 190 },
@@ -2239,9 +2743,12 @@ local recipes = {
         },
     },
     ["Earthen Leather Shoulders"] = {
+        spellID = 9147,
         itemID = 7352,
         skillReq = 135,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Zixil" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 135, 160, 172, 185 },
@@ -2252,9 +2759,12 @@ local recipes = {
         },
     },
     ["Golden Mantle of the Dawn"] = {
+        spellID = 23706,
         itemID = 19058,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -2267,9 +2777,12 @@ local recipes = {
         },
     },
     ["Hillman's Shoulders"] = {
+        spellID = 3768,
         itemID = 4251,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 130, 155, 167, 180 },
@@ -2280,9 +2793,12 @@ local recipes = {
         },
     },
     ["Ironfeather Shoulders"] = {
+        spellID = 19062,
         itemID = 15067,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Gigget Zipcoil" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 270, 290, 300, 310 },
@@ -2294,9 +2810,12 @@ local recipes = {
         },
     },
     ["Living Shoulders"] = {
+        spellID = 19061,
         itemID = 15061,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Jangdor Swiftstrider, Pratt McGrubben" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 270, 290, 300, 310 },
@@ -2307,9 +2826,12 @@ local recipes = {
         },
     },
     ["Nightscape Shoulders"] = {
+        spellID = 10516,
         itemID = 8192,
         skillReq = 210,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Jangdor Swiftstrider, Nioma" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 210, 230, 240, 250 },
@@ -2320,9 +2842,13 @@ local recipes = {
         },
     },
     ["Runic Leather Shoulders"] = {
+        spellID = 19103,
         itemID = 15096,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -2335,9 +2861,12 @@ local recipes = {
         },
     },
     ["Shoulderpads of Renewed Life"] = {
+        spellID = 41157,
         itemID = 32583,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 375, 385, 395, 405 },
@@ -2349,9 +2878,12 @@ local recipes = {
         },
     },
     ["Stormshroud Shoulders"] = {
+        spellID = 19090,
         itemID = 15058,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 295, 315, 325, 335 },
@@ -2364,9 +2896,12 @@ local recipes = {
         },
     },
     ["Swiftstrike Shoulders"] = {
+        spellID = 41160,
         itemID = 32581,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 375, 385, 395, 405 },
@@ -2377,9 +2912,12 @@ local recipes = {
         },
     },
     ["Volcanic Shoulders"] = {
+        spellID = 19101,
         itemID = 15055,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -2391,9 +2929,12 @@ local recipes = {
         },
     },
     ["Wild Leather Shoulders"] = {
+        spellID = 10529,
         itemID = 8210,
         skillReq = 220,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Wild Leather Shoulders" },
+        },
         category = "Leather Armor",
         subcategory = "Shoulder",
         skillRange = { 220, 240, 250, 260 },
@@ -2406,9 +2947,12 @@ local recipes = {
     -- Waist
     -- --------------------------------
     ["Barbaric Belt"] = {
+        spellID = 3779,
         itemID = 4264,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 200, 220, 230, 240 },
@@ -2422,9 +2966,12 @@ local recipes = {
         },
     },
     ["Belt of Deep Shadow"] = {
+        spellID = 36351,
         itemID = 30040,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -2437,9 +2984,12 @@ local recipes = {
         },
     },
     ["Belt of Natural Power"] = {
+        spellID = 36349,
         itemID = 30042,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -2452,9 +3002,12 @@ local recipes = {
         },
     },
     ["Blastguard Belt"] = {
+        spellID = 35537,
         itemID = 29500,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 350, 360, 370, 380 },
@@ -2466,9 +3019,12 @@ local recipes = {
         },
     },
     ["Bramblewood Belt"] = {
+        spellID = 28474,
         itemID = 22761,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Neutral" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 300, 320, 330, 340 },
@@ -2479,9 +3035,12 @@ local recipes = {
         },
     },
     ["Corehound Belt"] = {
+        spellID = 23709,
         itemID = 19162,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 300, 320, 330, 340 },
@@ -2494,9 +3053,12 @@ local recipes = {
         },
     },
     ["Dark Leather Belt"] = {
+        spellID = 3766,
         itemID = 4249,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 125, 150, 162, 175 },
@@ -2508,9 +3070,12 @@ local recipes = {
         },
     },
     ["Deviate Scale Belt"] = {
+        spellID = 7955,
         itemID = 6468,
         skillReq = 115,
-        source = "drop",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Deviate Eradication" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 115, 140, 152, 165 },
@@ -2521,9 +3086,12 @@ local recipes = {
         },
     },
     ["Dusky Belt"] = {
+        spellID = 9206,
         itemID = 7387,
         skillReq = 195,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 195, 215, 225, 235 },
@@ -2535,9 +3103,12 @@ local recipes = {
         },
     },
     ["Fine Leather Belt"] = {
+        spellID = 3763,
         itemID = 4246,
         skillReq = 80,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 80, 110, 125, 140 },
@@ -2547,9 +3118,12 @@ local recipes = {
         },
     },
     ["Gem-studded Leather Belt"] = {
+        spellID = 3778,
         itemID = 4262,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Rikqiz" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 185, 205, 215, 225 },
@@ -2562,9 +3136,12 @@ local recipes = {
         },
     },
     ["Girdle of Insight"] = {
+        spellID = 22921,
         itemID = 18504,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 300, 320, 330, 340 },
@@ -2576,9 +3153,12 @@ local recipes = {
         },
     },
     ["Green Leather Belt"] = {
+        spellID = 3774,
         itemID = 4257,
         skillReq = 160,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 160, 180, 190, 200 },
@@ -2591,9 +3171,12 @@ local recipes = {
         },
     },
     ["Guardian Belt"] = {
+        spellID = 3775,
         itemID = 4258,
         skillReq = 170,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 170, 190, 200, 210 },
@@ -2605,9 +3188,12 @@ local recipes = {
         },
     },
     ["Handstitched Leather Belt"] = {
+        spellID = 3753,
         itemID = 4237,
         skillReq = 25,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 25, 55, 70, 85 },
@@ -2617,9 +3203,12 @@ local recipes = {
         },
     },
     ["Hillman's Belt"] = {
+        spellID = 3767,
         itemID = 4250,
         skillReq = 120,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 120, 145, 157, 170 },
@@ -2630,9 +3219,12 @@ local recipes = {
         },
     },
     ["Lava Belt"] = {
+        spellID = 23707,
         itemID = 19149,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 300, 320, 330, 340 },
@@ -2643,9 +3235,12 @@ local recipes = {
         },
     },
     ["Might of the Timbermaw"] = {
+        spellID = 23703,
         itemID = 19044,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 290, 310, 320, 330 },
@@ -2658,9 +3253,12 @@ local recipes = {
         },
     },
     ["Molten Belt"] = {
+        spellID = 23710,
         itemID = 19163,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 300, 320, 330, 340 },
@@ -2673,9 +3271,13 @@ local recipes = {
         },
     },
     ["Murloc Scale Belt"] = {
+        spellID = 6702,
         itemID = 5780,
         skillReq = 90,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Andrew Hilbert, Gina MacGregor +1 more" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 90, 120, 135, 150 },
@@ -2686,9 +3288,12 @@ local recipes = {
         },
     },
     ["Primalstrike Belt"] = {
+        spellID = 35590,
         itemID = 29526,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -2699,9 +3304,12 @@ local recipes = {
         },
     },
     ["Raptor Hide Belt"] = {
+        spellID = 4097,
         itemID = 4456,
         skillReq = 165,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Androd Fadran" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 165, 185, 195, 205 },
@@ -2712,9 +3320,12 @@ local recipes = {
         },
     },
     ["Redeemed Soul Cinch"] = {
+        spellID = 40006,
         itemID = 32393,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Neutral" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -2727,9 +3338,13 @@ local recipes = {
         },
     },
     ["Runic Leather Belt"] = {
+        spellID = 19072,
         itemID = 15093,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 280, 300, 310, 320 },
@@ -2740,9 +3355,13 @@ local recipes = {
         },
     },
     ["Wicked Leather Belt"] = {
+        spellID = 19092,
         itemID = 15088,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 300, 320, 330, 340 },
@@ -2753,9 +3372,12 @@ local recipes = {
         },
     },
     ["Windhawk Belt"] = {
+        spellID = 35587,
         itemID = 29524,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -2770,9 +3392,12 @@ local recipes = {
     -- Wrist
     -- --------------------------------
     ["Barbaric Bracers"] = {
+        spellID = 23399,
         itemID = 18948,
         skillReq = 155,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Joseph Moore, Saenorion" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 155, 175, 185, 195 },
@@ -2785,9 +3410,12 @@ local recipes = {
         },
     },
     ["Bracers of Renewed Life"] = {
+        spellID = 41156,
         itemID = 32582,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -2799,9 +3427,12 @@ local recipes = {
         },
     },
     ["Dusky Bracers"] = {
+        spellID = 9201,
         itemID = 7378,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 185, 205, 215, 225 },
@@ -2812,9 +3443,12 @@ local recipes = {
         },
     },
     ["Green Leather Bracers"] = {
+        spellID = 3776,
         itemID = 4259,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 180, 200, 210, 220 },
@@ -2826,9 +3460,12 @@ local recipes = {
         },
     },
     ["Green Whelp Bracers"] = {
+        spellID = 9202,
         itemID = 7386,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Jangdor Swiftstrider, Pratt McGrubben +1 more" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 190, 210, 220, 230 },
@@ -2839,9 +3476,12 @@ local recipes = {
         },
     },
     ["Guardian Leather Bracers"] = {
+        spellID = 3777,
         itemID = 4260,
         skillReq = 195,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 195, 215, 225, 235 },
@@ -2852,9 +3492,12 @@ local recipes = {
         },
     },
     ["Handstitched Leather Bracers"] = {
+        spellID = 9059,
         itemID = 7277,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 1, 40, 55, 70 },
@@ -2864,9 +3507,12 @@ local recipes = {
         },
     },
     ["Light Leather Bracers"] = {
+        spellID = 9065,
         itemID = 7281,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 70, 100, 115, 130 },
@@ -2876,9 +3522,13 @@ local recipes = {
         },
     },
     ["Murloc Scale Bracers"] = {
+        spellID = 6705,
         itemID = 5783,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Blixrez Goodstitch, Helenia Olden" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 190, 210, 220, 230 },
@@ -2890,9 +3540,12 @@ local recipes = {
         },
     },
     ["Polar Bracers"] = {
+        spellID = 28221,
         itemID = 22663,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Hydraxian Waterlords @ Honored" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 300, 320, 330, 340 },
@@ -2905,9 +3558,12 @@ local recipes = {
         },
     },
     ["Primal Batskin Bracers"] = {
+        spellID = 24123,
         itemID = 19687,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Neutral" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 300, 320, 330, 340 },
@@ -2919,9 +3575,12 @@ local recipes = {
         },
     },
     ["Primalstrike Bracers"] = {
+        spellID = 35591,
         itemID = 29527,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -2931,9 +3590,12 @@ local recipes = {
         },
     },
     ["Redeemed Soul Wristguards"] = {
+        spellID = 40004,
         itemID = 32395,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Friendly" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -2946,9 +3608,13 @@ local recipes = {
         },
     },
     ["Runic Leather Bracers"] = {
+        spellID = 19065,
         itemID = 15092,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 275, 295, 305, 315 },
@@ -2960,9 +3626,12 @@ local recipes = {
         },
     },
     ["Swiftstrike Bracers"] = {
+        spellID = 41158,
         itemID = 32580,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -2973,9 +3642,13 @@ local recipes = {
         },
     },
     ["Wicked Leather Bracers"] = {
+        spellID = 19052,
         itemID = 15084,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 265, 285, 295, 305 },
@@ -2986,9 +3659,12 @@ local recipes = {
         },
     },
     ["Windhawk Bracers"] = {
+        spellID = 35588,
         itemID = 29523,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Leather Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -3006,9 +3682,12 @@ local recipes = {
     -- Chest
     -- --------------------------------
     ["Black Dragonscale Breastplate"] = {
+        spellID = 19085,
         itemID = 15050,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Plugger Spazzring" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 290, 310, 320, 330 },
@@ -3020,9 +3699,12 @@ local recipes = {
         },
     },
     ["Blue Dragonscale Breastplate"] = {
+        spellID = 19077,
         itemID = 15048,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Blimo Gadgetspring" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 285, 305, 315, 325 },
@@ -3034,9 +3716,12 @@ local recipes = {
         },
     },
     ["Dragonscale Breastplate"] = {
+        spellID = 10650,
         itemID = 8367,
         skillReq = 255,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 255, 275, 285, 295 },
@@ -3048,9 +3733,12 @@ local recipes = {
         },
     },
     ["Dreamscale Breastplate"] = {
+        spellID = 24703,
         itemID = 20380,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Revered" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -3063,9 +3751,12 @@ local recipes = {
         },
     },
     ["Ebon Netherscale Breastplate"] = {
+        spellID = 35575,
         itemID = 29515,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -3078,9 +3769,12 @@ local recipes = {
         },
     },
     ["Embrace of the Phoenix"] = {
+        spellID = 46137,
         itemID = 34373,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 392, 410 },
@@ -3092,9 +3786,12 @@ local recipes = {
         },
     },
     ["Felscale Breastplate"] = {
+        spellID = 32465,
         itemID = 25657,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 335, 345, 355, 365 },
@@ -3105,9 +3802,13 @@ local recipes = {
         },
     },
     ["Felstalker Breastplate"] = {
+        spellID = 32500,
         itemID = 25696,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 360, 370, 380, 390 },
@@ -3120,9 +3821,12 @@ local recipes = {
         },
     },
     ["Golden Dragonstrike Breastplate"] = {
+        spellID = 36079,
         itemID = 29975,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 330, 350, 360, 370 },
@@ -3134,9 +3838,12 @@ local recipes = {
         },
     },
     ["Green Dragonscale Breastplate"] = {
+        spellID = 19050,
         itemID = 15045,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Masat T\'andr" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 260, 280, 290, 300 },
@@ -3147,9 +3854,12 @@ local recipes = {
         },
     },
     ["Heavy Scorpid Vest"] = {
+        spellID = 19051,
         itemID = 15076,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 265, 285, 295, 305 },
@@ -3160,9 +3870,12 @@ local recipes = {
         },
     },
     ["Icy Scale Breastplate"] = {
+        spellID = 28222,
         itemID = 22664,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Revered" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -3175,9 +3888,12 @@ local recipes = {
         },
     },
     ["Netherstrike Breastplate"] = {
+        spellID = 35580,
         itemID = 29519,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 375, 385, 395, 405 },
@@ -3189,24 +3905,13 @@ local recipes = {
             { itemID = 23572, count = 2, name = "Primal Nether" },
         },
     },
-    ["Onyxia Scale Breastplate"] = {
-        itemID = 15141,
-        skillReq = 300,
-        source = "trainer",
-        category = "Mail Armor",
-        subcategory = "Chest",
-        skillRange = { 1, 320, 330, 340 },
-        reagents = {
-            { itemID = 8170, count = 40, name = "Rugged Leather" },
-            { itemID = 15410, count = 12, name = "Scale of Onyxia" },
-            { itemID = 15416, count = 60, name = "Black Dragonscale" },
-            { itemID = 14341, count = 2, name = "Rune Thread" },
-        },
-    },
     ["Red Dragonscale Breastplate"] = {
+        spellID = 19054,
         itemID = 15047,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -3217,9 +3922,12 @@ local recipes = {
         },
     },
     ["Sandstalker Breastplate"] = {
+        spellID = 24851,
         itemID = 20478,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Honored" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -3231,9 +3939,12 @@ local recipes = {
         },
     },
     ["Scaled Draenic Vest"] = {
+        spellID = 32468,
         itemID = 25660,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 325, 335, 345, 355 },
@@ -3244,9 +3955,12 @@ local recipes = {
         },
     },
     ["Spitfire Breastplate"] = {
+        spellID = 24848,
         itemID = 20479,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Honored" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 300, 320, 330, 340 },
@@ -3258,9 +3972,12 @@ local recipes = {
         },
     },
     ["Sun-Drenched Scale Chestguard"] = {
+        spellID = 46139,
         itemID = 34375,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 392, 410 },
@@ -3272,9 +3989,12 @@ local recipes = {
         },
     },
     ["Thick Netherscale Breastplate"] = {
+        spellID = 35574,
         itemID = 29514,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 365, 375, 385, 395 },
@@ -3287,9 +4007,12 @@ local recipes = {
         },
     },
     ["Tough Scorpid Breastplate"] = {
+        spellID = 10525,
         itemID = 8203,
         skillReq = 220,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 220, 240, 250, 260 },
@@ -3300,9 +4023,12 @@ local recipes = {
         },
     },
     ["Turtle Scale Breastplate"] = {
+        spellID = 10511,
         itemID = 8189,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Chest",
         skillRange = { 210, 230, 240, 250 },
@@ -3315,9 +4041,12 @@ local recipes = {
     -- Feet
     -- --------------------------------
     ["Black Dragonscale Boots"] = {
+        spellID = 20855,
         itemID = 16984,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 300, 320, 330, 340 },
@@ -3330,9 +4059,12 @@ local recipes = {
         },
     },
     ["Boots of Shackled Souls"] = {
+        spellID = 39997,
         itemID = 32398,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Neutral" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 395, 405 },
@@ -3345,9 +4077,12 @@ local recipes = {
         },
     },
     ["Boots of the Crimson Hawk"] = {
+        spellID = 36358,
         itemID = 30045,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 395, 405 },
@@ -3360,9 +4095,12 @@ local recipes = {
         },
     },
     ["Earthen Netherscale Boots"] = {
+        spellID = 35567,
         itemID = 29512,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 365, 375, 385, 395 },
@@ -3375,9 +4113,12 @@ local recipes = {
         },
     },
     ["Enchanted Felscale Boots"] = {
+        spellID = 35527,
         itemID = 29491,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Honored" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 350, 360, 370, 380 },
@@ -3388,9 +4129,12 @@ local recipes = {
         },
     },
     ["Felscale Boots"] = {
+        spellID = 32463,
         itemID = 25655,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 310, 320, 330, 340 },
@@ -3401,9 +4145,12 @@ local recipes = {
         },
     },
     ["Flamescale Boots"] = {
+        spellID = 35528,
         itemID = 29493,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Honored" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 350, 360, 370, 380 },
@@ -3415,9 +4162,12 @@ local recipes = {
         },
     },
     ["Hurricane Boots"] = {
+        spellID = 36359,
         itemID = 30043,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 375, 385, 395, 405 },
@@ -3430,9 +4180,13 @@ local recipes = {
         },
     },
     ["Netherfury Boots"] = {
+        spellID = 32503,
         itemID = 25693,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "The Mag'har @ Honored" },
+            { method = "reputation", faction = "Alliance", detail = "Kurenai @ Honored" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 350, 360, 370, 380 },
@@ -3445,9 +4199,12 @@ local recipes = {
         },
     },
     ["Scaled Draenic Boots"] = {
+        spellID = 32469,
         itemID = 25659,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 335, 345, 355, 365 },
@@ -3458,9 +4215,12 @@ local recipes = {
         },
     },
     ["Tough Scorpid Boots"] = {
+        spellID = 10554,
         itemID = 8209,
         skillReq = 235,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Feet",
         skillRange = { 235, 255, 265, 275 },
@@ -3473,9 +4233,12 @@ local recipes = {
     -- Hands
     -- --------------------------------
     ["Chromatic Gauntlets"] = {
+        spellID = 23708,
         itemID = 19157,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -3489,9 +4252,12 @@ local recipes = {
         },
     },
     ["Dragonscale Gauntlets"] = {
+        spellID = 10619,
         itemID = 8347,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 225, 245, 255, 265 },
@@ -3503,9 +4269,12 @@ local recipes = {
         },
     },
     ["Enchanted Felscale Gloves"] = {
+        spellID = 35526,
         itemID = 29490,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 350, 360, 370, 380 },
@@ -3516,9 +4285,12 @@ local recipes = {
         },
     },
     ["Felscale Gloves"] = {
+        spellID = 32462,
         itemID = 25654,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 300, 310, 320, 330 },
@@ -3529,9 +4301,12 @@ local recipes = {
         },
     },
     ["Fletcher's Gloves of the Phoenix"] = {
+        spellID = 46133,
         itemID = 34374,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 392, 410 },
@@ -3544,9 +4319,12 @@ local recipes = {
         },
     },
     ["Green Dragonscale Gauntlets"] = {
+        spellID = 24655,
         itemID = 20296,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 280, 300, 310, 320 },
@@ -3558,9 +4336,12 @@ local recipes = {
         },
     },
     ["Heavy Scorpid Gauntlets"] = {
+        spellID = 19064,
         itemID = 15078,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 275, 295, 305, 315 },
@@ -3571,9 +4352,12 @@ local recipes = {
         },
     },
     ["Icy Scale Gauntlets"] = {
+        spellID = 28223,
         itemID = 22666,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -3586,9 +4370,12 @@ local recipes = {
         },
     },
     ["Netherdrake Gloves"] = {
+        spellID = 35573,
         itemID = 29511,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 385, 395 },
@@ -3601,9 +4388,12 @@ local recipes = {
         },
     },
     ["Sandstalker Gauntlets"] = {
+        spellID = 24850,
         itemID = 20477,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -3615,9 +4405,12 @@ local recipes = {
         },
     },
     ["Scaled Draenic Gloves"] = {
+        spellID = 32467,
         itemID = 25661,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 310, 320, 330, 340 },
@@ -3628,9 +4421,12 @@ local recipes = {
         },
     },
     ["Spitfire Gauntlets"] = {
+        spellID = 24847,
         itemID = 20480,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 300, 320, 330, 340 },
@@ -3642,9 +4438,12 @@ local recipes = {
         },
     },
     ["Sun-Drenched Scale Gloves"] = {
+        spellID = 46135,
         itemID = 34376,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 392, 410 },
@@ -3657,9 +4456,12 @@ local recipes = {
         },
     },
     ["Tough Scorpid Gloves"] = {
+        spellID = 10542,
         itemID = 8204,
         skillReq = 225,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 225, 245, 255, 265 },
@@ -3670,9 +4472,13 @@ local recipes = {
         },
     },
     ["Turtle Scale Gloves"] = {
+        spellID = 10509,
         itemID = 8187,
         skillReq = 205,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Jangdor Swiftstrider, Pratt McGrubben" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 205, 225, 235, 245 },
@@ -3683,9 +4489,12 @@ local recipes = {
         },
     },
     ["Windstrike Gloves"] = {
+        spellID = 35568,
         itemID = 29509,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Hands",
         skillRange = { 365, 375, 385, 395 },
@@ -3700,9 +4509,12 @@ local recipes = {
     -- Head
     -- --------------------------------
     ["Heavy Scorpid Helm"] = {
+        spellID = 19088,
         itemID = 15080,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Zannok Hidepiercer" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 295, 315, 325, 335 },
@@ -3714,9 +4526,12 @@ local recipes = {
         },
     },
     ["Living Dragonscale Helm"] = {
+        spellID = 35564,
         itemID = 29508,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
@@ -3729,9 +4544,12 @@ local recipes = {
         },
     },
     ["Netherdrake Helm"] = {
+        spellID = 35572,
         itemID = 29510,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 365, 375, 385, 395 },
@@ -3744,9 +4562,12 @@ local recipes = {
         },
     },
     ["Stylin' Adventure Hat"] = {
+        spellID = 32487,
         itemID = 25681,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 350, 360, 370, 380 },
@@ -3759,9 +4580,12 @@ local recipes = {
         },
     },
     ["Stylin' Crimson Hat"] = {
+        spellID = 32488,
         itemID = 25683,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 350, 360, 370, 380 },
@@ -3774,9 +4598,12 @@ local recipes = {
         },
     },
     ["Tough Scorpid Helm"] = {
+        spellID = 10570,
         itemID = 8208,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 250, 270, 280, 290 },
@@ -3787,9 +4614,12 @@ local recipes = {
         },
     },
     ["Turtle Scale Helm"] = {
+        spellID = 10552,
         itemID = 8191,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Head",
         skillRange = { 230, 250, 260, 270 },
@@ -3802,9 +4632,12 @@ local recipes = {
     -- Legs
     -- --------------------------------
     ["Black Dragonscale Leggings"] = {
+        spellID = 19107,
         itemID = 15052,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -3817,9 +4650,12 @@ local recipes = {
         },
     },
     ["Blue Dragonscale Leggings"] = {
+        spellID = 24654,
         itemID = 20295,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 300, 320, 330, 340 },
@@ -3831,9 +4667,12 @@ local recipes = {
         },
     },
     ["Dragonstrike Leggings"] = {
+        spellID = 36076,
         itemID = 29971,
         skillReq = 260,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 260, 280, 290, 300 },
@@ -3846,9 +4685,12 @@ local recipes = {
         },
     },
     ["Enchanted Felscale Leggings"] = {
+        spellID = 35525,
         itemID = 29489,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Revered" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 350, 360, 370, 380 },
@@ -3859,9 +4701,12 @@ local recipes = {
         },
     },
     ["Felscale Pants"] = {
+        spellID = 32464,
         itemID = 25656,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 320, 330, 340, 350 },
@@ -3872,9 +4717,12 @@ local recipes = {
         },
     },
     ["Flamescale Leggings"] = {
+        spellID = 35529,
         itemID = 29492,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Revered" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 350, 360, 370, 380 },
@@ -3886,9 +4734,12 @@ local recipes = {
         },
     },
     ["Greaves of Shackled Souls"] = {
+        spellID = 40001,
         itemID = 32400,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 375, 385, 395, 405 },
@@ -3901,9 +4752,12 @@ local recipes = {
         },
     },
     ["Green Dragonscale Leggings"] = {
+        spellID = 19060,
         itemID = 15046,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 270, 290, 300, 310 },
@@ -3914,9 +4768,12 @@ local recipes = {
         },
     },
     ["Heavy Scorpid Leggings"] = {
+        spellID = 19075,
         itemID = 15079,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 285, 305, 315, 325 },
@@ -3927,9 +4784,13 @@ local recipes = {
         },
     },
     ["Netherfury Leggings"] = {
+        spellID = 32502,
         itemID = 25692,
         skillReq = 340,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "The Mag'har @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Kurenai @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 340, 350, 360, 370 },
@@ -3942,9 +4803,12 @@ local recipes = {
         },
     },
     ["Scaled Draenic Pants"] = {
+        spellID = 32466,
         itemID = 25662,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 300, 310, 320, 330 },
@@ -3955,9 +4819,12 @@ local recipes = {
         },
     },
     ["Tough Scorpid Leggings"] = {
+        spellID = 10568,
         itemID = 8206,
         skillReq = 245,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 245, 265, 275, 285 },
@@ -3968,9 +4835,12 @@ local recipes = {
         },
     },
     ["Turtle Scale Leggings"] = {
+        spellID = 10556,
         itemID = 8185,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Legs",
         skillRange = { 235, 255, 265, 275 },
@@ -3983,9 +4853,12 @@ local recipes = {
     -- Shoulder
     -- --------------------------------
     ["Black Dragonscale Shoulders"] = {
+        spellID = 19094,
         itemID = 15051,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -3998,9 +4871,12 @@ local recipes = {
         },
     },
     ["Blue Dragonscale Shoulders"] = {
+        spellID = 19089,
         itemID = 15049,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 295, 315, 325, 335 },
@@ -4013,9 +4889,12 @@ local recipes = {
         },
     },
     ["Heavy Scorpid Shoulders"] = {
+        spellID = 19100,
         itemID = 15081,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 300, 320, 330, 340 },
@@ -4027,9 +4906,12 @@ local recipes = {
         },
     },
     ["Living Earth Shoulders"] = {
+        spellID = 41164,
         itemID = 32579,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 375, 385, 395, 405 },
@@ -4042,9 +4924,12 @@ local recipes = {
         },
     },
     ["Shoulders of Lightning Reflexes"] = {
+        spellID = 41162,
         itemID = 32575,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 375, 385, 395, 405 },
@@ -4057,9 +4942,12 @@ local recipes = {
         },
     },
     ["Tough Scorpid Shoulders"] = {
+        spellID = 10564,
         itemID = 8207,
         skillReq = 240,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Shoulder",
         skillRange = { 240, 260, 270, 280 },
@@ -4072,9 +4960,12 @@ local recipes = {
     -- Waist
     -- --------------------------------
     ["Belt of the Black Eagle"] = {
+        spellID = 36352,
         itemID = 30046,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -4087,9 +4978,12 @@ local recipes = {
         },
     },
     ["Ebon Netherscale Belt"] = {
+        spellID = 35576,
         itemID = 29516,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -4102,9 +4996,13 @@ local recipes = {
         },
     },
     ["Felstalker Belt"] = {
+        spellID = 32498,
         itemID = 25695,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Neutral" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Neutral" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 350, 360, 370, 380 },
@@ -4117,9 +5015,12 @@ local recipes = {
         },
     },
     ["Flamescale Belt"] = {
+        spellID = 35531,
         itemID = 29494,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 350, 360, 370, 380 },
@@ -4131,9 +5032,12 @@ local recipes = {
         },
     },
     ["Heavy Scorpid Belt"] = {
+        spellID = 19070,
         itemID = 15082,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 280, 300, 310, 320 },
@@ -4144,9 +5048,12 @@ local recipes = {
         },
     },
     ["Monsoon Belt"] = {
+        spellID = 36353,
         itemID = 30044,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -4159,9 +5066,13 @@ local recipes = {
         },
     },
     ["Netherfury Belt"] = {
+        spellID = 32501,
         itemID = 25694,
         skillReq = 340,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "The Mag'har @ Neutral" },
+            { method = "reputation", faction = "Alliance", detail = "Kurenai @ Neutral" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 340, 350, 360, 370 },
@@ -4174,9 +5085,12 @@ local recipes = {
         },
     },
     ["Netherstrike Belt"] = {
+        spellID = 35582,
         itemID = 29520,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -4189,9 +5103,12 @@ local recipes = {
         },
     },
     ["Waistguard of Shackled Souls"] = {
+        spellID = 40002,
         itemID = 32397,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Waist",
         skillRange = { 375, 385, 395, 405 },
@@ -4206,9 +5123,12 @@ local recipes = {
     -- Wrist
     -- --------------------------------
     ["Bindings of Lightning Reflexes"] = {
+        spellID = 41161,
         itemID = 32574,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -4221,9 +5141,12 @@ local recipes = {
         },
     },
     ["Bracers of Shackled Souls"] = {
+        spellID = 40000,
         itemID = 32399,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Ashtongue Deathsworn @ Neutral" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -4236,9 +5159,12 @@ local recipes = {
         },
     },
     ["Ebon Netherscale Bracers"] = {
+        spellID = 35577,
         itemID = 29517,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -4250,9 +5176,13 @@ local recipes = {
         },
     },
     ["Felstalker Bracer"] = {
+        spellID = 32499,
         itemID = 25697,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Friendly" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 360, 370, 380, 390 },
@@ -4265,9 +5195,12 @@ local recipes = {
         },
     },
     ["Heavy Scorpid Bracers"] = {
+        spellID = 19048,
         itemID = 15077,
         skillReq = 255,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Zannok Hidepiercer" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 255, 275, 285, 295 },
@@ -4278,9 +5211,12 @@ local recipes = {
         },
     },
     ["Icy Scale Bracers"] = {
+        spellID = 28224,
         itemID = 22665,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Hydraxian Waterlords @ Honored" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 300, 320, 330, 340 },
@@ -4293,9 +5229,12 @@ local recipes = {
         },
     },
     ["Living Earth Bindings"] = {
+        spellID = 41163,
         itemID = 32577,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -4308,9 +5247,12 @@ local recipes = {
         },
     },
     ["Netherstrike Bracers"] = {
+        spellID = 35584,
         itemID = 29521,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 375, 385, 395, 405 },
@@ -4322,9 +5264,12 @@ local recipes = {
         },
     },
     ["Sandstalker Bracers"] = {
+        spellID = 24849,
         itemID = 20476,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Neutral" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 300, 320, 330, 340 },
@@ -4335,9 +5280,12 @@ local recipes = {
         },
     },
     ["Spitfire Bracers"] = {
+        spellID = 24846,
         itemID = 20481,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Neutral" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 300, 320, 330, 340 },
@@ -4348,9 +5296,12 @@ local recipes = {
         },
     },
     ["Swift Flight Bracers"] = {
+        spellID = 22923,
         itemID = 18508,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 300, 320, 330, 340 },
@@ -4363,9 +5314,12 @@ local recipes = {
         },
     },
     ["Tough Scorpid Bracers"] = {
+        spellID = 10533,
         itemID = 8205,
         skillReq = 220,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 220, 240, 250, 260 },
@@ -4376,9 +5330,12 @@ local recipes = {
         },
     },
     ["Turtle Scale Bracers"] = {
+        spellID = 10518,
         itemID = 8198,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Mail Armor",
         subcategory = "Wrist",
         skillRange = { 210, 230, 240, 250 },
@@ -4393,9 +5350,12 @@ local recipes = {
     -- TRADE GOOD
     -- ================================================================
     ["Arcane Armor Kit"] = {
+        spellID = 35524,
         itemID = 29488,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 340, 350, 355, 360 },
         reagents = {
@@ -4404,9 +5364,12 @@ local recipes = {
         },
     },
     ["Big Voodoo Cloak"] = {
+        spellID = 10562,
         itemID = 8216,
         skillReq = 240,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 240, 260, 270, 280 },
         reagents = {
@@ -4416,9 +5379,12 @@ local recipes = {
         },
     },
     ["Black Whelp Cloak"] = {
+        spellID = 9070,
         itemID = 7283,
         skillReq = 100,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Clyde Ranthal" },
+        },
         category = "Trade Good",
         skillRange = { 100, 125, 137, 150 },
         reagents = {
@@ -4428,9 +5394,12 @@ local recipes = {
         },
     },
     ["Chromatic Cloak"] = {
+        spellID = 22926,
         itemID = 18509,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -4443,9 +5412,12 @@ local recipes = {
         },
     },
     ["Clefthide Leg Armor"] = {
+        spellID = 35555,
         itemID = 29534,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 335, 335, 345, 355 },
         reagents = {
@@ -4455,9 +5427,12 @@ local recipes = {
         },
     },
     ["Cloak of Darkness"] = {
+        spellID = 42546,
         itemID = 33122,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Violet Eye @ Revered" },
+        },
         category = "Trade Good",
         skillRange = { 360, 370, 380, 390 },
         reagents = {
@@ -4468,9 +5443,13 @@ local recipes = {
         },
     },
     ["Cobrahide Leg Armor"] = {
+        spellID = 35549,
         itemID = 29533,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 335, 335, 345, 355 },
         reagents = {
@@ -4480,17 +5459,23 @@ local recipes = {
         },
     },
     ["Comfortable Insoles"] = {
+        spellID = 32482,
         itemID = 25679,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Haferet, Zaralda" },
+        },
         category = "Trade Good",
         skillRange = { 300, 300, 305, 310 },
         reagents = { { itemID = 21887, count = 2, name = "Knothide Leather" } },
     },
     ["Core Armor Kit"] = {
+        spellID = 22727,
         itemID = 18251,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -4499,9 +5484,12 @@ local recipes = {
         },
     },
     ["Cured Heavy Hide"] = {
+        spellID = 3818,
         itemID = 4236,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 150, 160, 165, 170 },
         reagents = {
@@ -4510,9 +5498,12 @@ local recipes = {
         },
     },
     ["Cured Light Hide"] = {
+        spellID = 3816,
         itemID = 4231,
         skillReq = 35,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 35, 55, 65, 75 },
         reagents = {
@@ -4521,9 +5512,12 @@ local recipes = {
         },
     },
     ["Cured Medium Hide"] = {
+        spellID = 3817,
         itemID = 4233,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 100, 115, 122, 130 },
         reagents = {
@@ -4532,9 +5526,12 @@ local recipes = {
         },
     },
     ["Cured Rugged Hide"] = {
+        spellID = 19047,
         itemID = 15407,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 250, 250, 255, 260 },
         reagents = {
@@ -4543,9 +5540,12 @@ local recipes = {
         },
     },
     ["Cured Thick Hide"] = {
+        spellID = 10482,
         itemID = 8172,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 200, 200, 200, 200 },
         reagents = {
@@ -4554,9 +5554,12 @@ local recipes = {
         },
     },
     ["Dark Leather Cloak"] = {
+        spellID = 2168,
         itemID = 2316,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 110, 135, 147, 160 },
         reagents = {
@@ -4566,9 +5569,12 @@ local recipes = {
         },
     },
     ["Deviate Scale Cloak"] = {
+        spellID = 7953,
         itemID = 6466,
         skillReq = 90,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kalldan Felmoon" },
+        },
         category = "Trade Good",
         skillRange = { 90, 120, 135, 150 },
         reagents = {
@@ -4578,9 +5584,12 @@ local recipes = {
         },
     },
     ["Drums of Battle"] = {
+        spellID = 35543,
         itemID = 29529,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 365, 365, 372, 380 },
         reagents = {
@@ -4589,9 +5598,12 @@ local recipes = {
         },
     },
     ["Drums of Panic"] = {
+        spellID = 35538,
         itemID = 29532,
         skillReq = 370,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 370, 370, 377, 385 },
         reagents = {
@@ -4600,9 +5612,13 @@ local recipes = {
         },
     },
     ["Drums of Restoration"] = {
+        spellID = 35539,
         itemID = 29531,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "The Mag'har @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Kurenai @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 350, 350, 357, 365 },
         reagents = {
@@ -4611,9 +5627,13 @@ local recipes = {
         },
     },
     ["Drums of Speed"] = {
+        spellID = 35544,
         itemID = 29530,
         skillReq = 345,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "The Mag'har @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Kurenai @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 345, 345, 352, 360 },
         reagents = {
@@ -4622,9 +5642,12 @@ local recipes = {
         },
     },
     ["Drums of War"] = {
+        spellID = 35540,
         itemID = 29528,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 340, 340, 347, 355 },
         reagents = {
@@ -4633,9 +5656,12 @@ local recipes = {
         },
     },
     ["Embossed Leather Cloak"] = {
+        spellID = 2162,
         itemID = 2310,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 60, 90, 105, 120 },
         reagents = {
@@ -4644,9 +5670,12 @@ local recipes = {
         },
     },
     ["Fine Leather Cloak"] = {
+        spellID = 2159,
         itemID = 2308,
         skillReq = 85,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 85, 105, 120, 135 },
         reagents = {
@@ -4655,9 +5684,12 @@ local recipes = {
         },
     },
     ["Flame Armor Kit"] = {
+        spellID = 35521,
         itemID = 29485,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 340, 350, 355, 360 },
         reagents = {
@@ -4666,9 +5698,12 @@ local recipes = {
         },
     },
     ["Frost Armor Kit"] = {
+        spellID = 35522,
         itemID = 29486,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 340, 350, 355, 360 },
         reagents = {
@@ -4677,9 +5712,12 @@ local recipes = {
         },
     },
     ["Frost Leather Cloak"] = {
+        spellID = 9198,
         itemID = 7377,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 180, 200, 210, 220 },
         reagents = {
@@ -4690,9 +5728,12 @@ local recipes = {
         },
     },
     ["Glove Reinforcements"] = {
+        spellID = 44770,
         itemID = 34207,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 350, 355, 360, 365 },
         reagents = {
@@ -4701,9 +5742,12 @@ local recipes = {
         },
     },
     ["Gordok Ogre Suit"] = {
+        spellID = 22815,
         itemID = 18258,
         skillReq = 285,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both", detail = "Dire Maul (Gordok Ogres)" },
+        },
         category = "Trade Good",
         skillRange = { 285, 285, 290, 295 },
         reagents = {
@@ -4714,9 +5758,12 @@ local recipes = {
         },
     },
     ["Greater Drums of Battle"] = {
+        spellID = 351771,
         itemID = 185848,
         skillReq = 365,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 365, 365, 372, 380 },
         reagents = {
@@ -4725,9 +5772,12 @@ local recipes = {
         },
     },
     ["Greater Drums of Panic"] = {
+        spellID = 351770,
         itemID = 185849,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 370, 370, 377, 385 },
         reagents = {
@@ -4736,9 +5786,13 @@ local recipes = {
         },
     },
     ["Greater Drums of Restoration"] = {
+        spellID = 351769,
         itemID = 185850,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "The Mag'har @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Kurenai @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 350, 350, 357, 365 },
         reagents = {
@@ -4747,9 +5801,13 @@ local recipes = {
         },
     },
     ["Greater Drums of Speed"] = {
+        spellID = 351768,
         itemID = 185851,
         skillReq = 345,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "The Mag'har @ Friendly" },
+            { method = "reputation", faction = "Alliance", detail = "Kurenai @ Friendly" },
+        },
         category = "Trade Good",
         skillRange = { 345, 345, 352, 360 },
         reagents = {
@@ -4758,9 +5816,12 @@ local recipes = {
         },
     },
     ["Greater Drums of War"] = {
+        spellID = 351766,
         itemID = 185852,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 340, 340, 347, 355 },
         reagents = {
@@ -4769,9 +5830,12 @@ local recipes = {
         },
     },
     ["Guardian Cloak"] = {
+        spellID = 7153,
         itemID = 5965,
         skillReq = 185,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 185, 205, 215, 225 },
         reagents = {
@@ -4781,9 +5845,12 @@ local recipes = {
         },
     },
     ["Handstitched Leather Cloak"] = {
+        spellID = 9058,
         itemID = 7276,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 1, 40, 55, 70 },
         reagents = {
@@ -4792,9 +5859,12 @@ local recipes = {
         },
     },
     ["Heavy Armor Kit"] = {
+        spellID = 3780,
         itemID = 4265,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 150, 170, 180, 190 },
         reagents = {
@@ -4803,33 +5873,45 @@ local recipes = {
         },
     },
     ["Heavy Knothide Armor Kit"] = {
+        spellID = 44970,
         itemID = 34330,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 350, 355, 360, 365 },
         reagents = { { itemID = 23793, count = 3, name = "Heavy Knothide Leather" } },
     },
     ["Heavy Knothide Leather"] = {
+        spellID = 32455,
         itemID = 23793,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Cro Threadstrong, Haferet +1 more" },
+        },
         category = "Trade Good",
         skillRange = { 325, 325, 330, 335 },
         reagents = { { itemID = 21887, count = 5, name = "Knothide Leather" } },
     },
     ["Heavy Leather"] = {
+        spellID = 20649,
         itemID = 4234,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 150, 150, 155, 160 },
         reagents = { { itemID = 2319, count = 5, name = "Medium Leather" } },
     },
     ["Heavy Leather Ball"] = {
+        spellID = 23190,
         itemID = 18662,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Bombus Finespindle, Tamar" },
+        },
         category = "Trade Good",
         skillRange = { 150, 150, 155, 160 },
         reagents = {
@@ -4838,9 +5920,12 @@ local recipes = {
         },
     },
     ["Hide of the Wild"] = {
+        spellID = 22927,
         itemID = 18510,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -4853,9 +5938,12 @@ local recipes = {
         },
     },
     ["Hillman's Cloak"] = {
+        spellID = 3760,
         itemID = 3719,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 150, 170, 180, 190 },
         reagents = {
@@ -4864,41 +5952,56 @@ local recipes = {
         },
     },
     ["Knothide Armor Kit"] = {
+        spellID = 32456,
         itemID = 25650,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 300, 310, 325, 340 },
         reagents = { { itemID = 21887, count = 4, name = "Knothide Leather" } },
     },
     ["Knothide Leather"] = {
+        spellID = 32454,
         itemID = 21887,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 300, 300, 305, 310 },
         reagents = { { itemID = 25649, count = 5, name = "Knothide Leather Scraps" } },
     },
     ["Light Armor Kit"] = {
+        spellID = 2152,
         itemID = 2304,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 1, 30, 45, 60 },
         reagents = { { itemID = 2318, count = 1, name = "Light Leather" } },
     },
     ["Light Leather"] = {
+        spellID = 2881,
         itemID = 2318,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 1, 20, 30, 40 },
         reagents = { { itemID = 2934, count = 3, name = "Ruined Leather Scraps" } },
     },
     ["Magister's Armor Kit"] = {
+        spellID = 32458,
         itemID = 25652,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Scryers @ Honored" },
+        },
         category = "Trade Good",
         skillRange = { 325, 335, 340, 345 },
         reagents = {
@@ -4907,9 +6010,12 @@ local recipes = {
         },
     },
     ["Medium Armor Kit"] = {
+        spellID = 2165,
         itemID = 2313,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 100, 115, 122, 130 },
         reagents = {
@@ -4918,17 +6024,23 @@ local recipes = {
         },
     },
     ["Medium Leather"] = {
+        spellID = 20648,
         itemID = 2319,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 100, 100, 105, 110 },
         reagents = { { itemID = 2318, count = 4, name = "Light Leather" } },
     },
     ["Nature Armor Kit"] = {
+        spellID = 35523,
         itemID = 29487,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 340, 350, 355, 360 },
         reagents = {
@@ -4937,9 +6049,12 @@ local recipes = {
         },
     },
     ["Nethercleft Leg Armor"] = {
+        spellID = 35557,
         itemID = 29536,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Revered" },
+        },
         category = "Trade Good",
         skillRange = { 365, 365, 375, 385 },
         reagents = {
@@ -4950,9 +6065,13 @@ local recipes = {
         },
     },
     ["Nethercobra Leg Armor"] = {
+        spellID = 35554,
         itemID = 29535,
         skillReq = 365,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Revered" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Revered" },
+        },
         category = "Trade Good",
         skillRange = { 365, 365, 375, 385 },
         reagents = {
@@ -4962,21 +6081,13 @@ local recipes = {
             { itemID = 23572, count = 1, name = "Primal Nether" },
         },
     },
-    ["Nightscape Cloak"] = {
-        itemID = 8195,
-        skillReq = 230,
-        source = "trainer",
-        category = "Trade Good",
-        skillRange = { 1, 250, 260, 270 },
-        reagents = {
-            { itemID = 4304, count = 12, name = "Thick Leather" },
-            { itemID = 4291, count = 4, name = "Silken Thread" },
-        },
-    },
     ["Onyxia Scale Cloak"] = {
+        spellID = 19093,
         itemID = 15138,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "quest: The Journey Has Begun (both factions, separate quests)" },
+        },
         category = "Trade Good",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -4986,9 +6097,12 @@ local recipes = {
         },
     },
     ["Riding Crop"] = {
+        spellID = 32461,
         itemID = 25653,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Thomas Yance" },
+        },
         category = "Trade Good",
         skillRange = { 350, 360, 370, 380 },
         reagents = {
@@ -4999,25 +6113,34 @@ local recipes = {
         },
     },
     ["Rugged Armor Kit"] = {
+        spellID = 19058,
         itemID = 15564,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 250, 250, 260, 270 },
         reagents = { { itemID = 8170, count = 5, name = "Rugged Leather" } },
     },
     ["Rugged Leather"] = {
+        spellID = 22331,
         itemID = 8170,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 250, 250, 250, 250 },
         reagents = { { itemID = 4304, count = 6, name = "Thick Leather" } },
     },
     ["Shadow Armor Kit"] = {
+        spellID = 35520,
         itemID = 29483,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 340, 350, 355, 360 },
         reagents = {
@@ -5026,9 +6149,12 @@ local recipes = {
         },
     },
     ["Shifting Cloak"] = {
+        spellID = 22928,
         itemID = 18511,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 300, 320, 330, 340 },
         reagents = {
@@ -5041,9 +6167,12 @@ local recipes = {
         },
     },
     ["Thick Armor Kit"] = {
+        spellID = 10487,
         itemID = 8173,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 200, 220, 230, 240 },
         reagents = {
@@ -5052,17 +6181,23 @@ local recipes = {
         },
     },
     ["Thick Leather"] = {
+        spellID = 20650,
         itemID = 4304,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = { 200, 200, 202, 205 },
         reagents = { { itemID = 4234, count = 6, name = "Heavy Leather" } },
     },
     ["Vindicator's Armor Kit"] = {
+        spellID = 32457,
         itemID = 25651,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Aldor @ Honored" },
+        },
         category = "Trade Good",
         skillRange = { 325, 335, 340, 345 },
         reagents = {
@@ -5071,9 +6206,12 @@ local recipes = {
         },
     },
     ["Wild Leather Cloak"] = {
+        spellID = 10574,
         itemID = 8215,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "quest", faction = "Both", detail = "Quest: Master of the Wild Leather" },
+        },
         category = "Trade Good",
         skillRange = { 250, 270, 280, 290 },
         reagents = {

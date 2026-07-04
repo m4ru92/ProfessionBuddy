@@ -26,6 +26,10 @@ local DS     -- DataStore, set in Init
 local incrTimer = nil
 local INCR_DEBOUNCE = 5  -- seconds
 
+-- Security: per-sender rate limit on expensive replies (SYNC_REQ).
+local lastServed = {}          -- senderKey -> time() of last served reply
+local SERVE_COOLDOWN = 30      -- seconds
+
 ----------------------------------------------------------------------
 -- Init
 ----------------------------------------------------------------------
@@ -105,6 +109,38 @@ end
 ----------------------------------------------------------------------
 -- Receiving
 ----------------------------------------------------------------------
+-- Trust gate: we only act on messages from players we already know --
+-- a saved contact, or a current party/raid member. Random players who
+-- merely know your character name are ignored, which blocks data
+-- pulls, fake orders, spoofed chat lines, and malformed-payload errors
+-- right at the door. (Grouping bootstraps trust: a HELLO from a
+-- group-mate is accepted and auto-creates the contact, so friends who
+-- play together sync seamlessly thereafter.)
+function Comm:IsGroupMember(senderKey)
+    if not IsInGroup() then return false end
+    local short = senderKey:match("^([^-]+)") or senderKey
+    local prefix, n
+    if IsInRaid() then prefix, n = "raid", GetNumGroupMembers()
+    else prefix, n = "party", GetNumSubgroupMembers() end
+    for i = 1, n do
+        local name = UnitName(prefix .. i)
+        if name and name == short then return true end
+    end
+    return false
+end
+
+function Comm:IsTrusted(senderKey)
+    if addon.db.contacts and addon.db.contacts[senderKey] then return true end
+    return self:IsGroupMember(senderKey)
+end
+
+-- Privacy master switch: when off, we send NO profession/inventory data
+-- to anyone (gated at the two payload builders, which covers every
+-- outbound path). Toggle with /pb comm on|off. Default on.
+function Comm:SharingEnabled()
+    return not (addon.db and addon.db.settings) or addon.db.settings.shareData ~= false
+end
+
 function Comm:OnMessageReceived(prefix, message, distribution, sender)
     if prefix ~= PREFIX then return end
 
@@ -116,32 +152,38 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
     -- Ignore our own messages
     if sender == addon:PlayerKey() then return end
 
+    -- SECURITY: only process messages from known players (a saved
+    -- contact or a current group member). Everyone else is ignored.
+    if not self:IsTrusted(sender) then return end
+
     local ok, data = AceSerializer:Deserialize(message)
     if not ok or type(data) ~= "table" then return end
 
     local msgType = data._type
-    if not msgType then return end
+    if type(msgType) ~= "string" then return end
 
-    if msgType == "HELLO" then
-        self:HandleHello(sender, data)
-    elseif msgType == "HELLO_ACK" then
-        self:HandleHelloAck(sender, data)
-    elseif msgType == "SYNC_REQ" then
-        self:HandleSyncRequest(sender, data)
-    elseif msgType == "SYNC_DATA" then
-        self:HandleSyncData(sender, data)
-    elseif msgType == "INCR" then
-        self:HandleIncremental(sender, data)
-    elseif msgType == "ORDER_NEW" then
-        self:HandleOrderNew(sender, data)
-    elseif msgType == "ORDER_UPDATE" then
-        self:HandleOrderUpdate(sender, data)
-    elseif msgType == "ORDER_ACK" then
-        self:HandleOrderAck(sender, data)
-    end
+    -- Dispatch under pcall so a malformed payload (even from a trusted
+    -- player) can never throw a visible Lua error in our client.
+    pcall(function()
+        if msgType == "HELLO" then
+            self:HandleHello(sender, data)
+        elseif msgType == "HELLO_ACK" then
+            self:HandleHelloAck(sender, data)
+        elseif msgType == "SYNC_REQ" then
+            self:HandleSyncRequest(sender, data)
+        elseif msgType == "SYNC_DATA" then
+            self:HandleSyncData(sender, data)
+        elseif msgType == "ORDER_NEW" then
+            self:HandleOrderNew(sender, data)
+        elseif msgType == "ORDER_UPDATE" then
+            self:HandleOrderUpdate(sender, data)
+        elseif msgType == "ORDER_ACK" then
+            self:HandleOrderAck(sender, data)
+        end
+    end)
 
-    -- Any message from a contact proves they're online -- deliver any
-    -- order messages we had queued for them while they were offline.
+    -- Any message from a (trusted) contact proves they're online --
+    -- deliver any order messages we had queued for them while offline.
     self:FlushOutbox(sender)
 end
 
@@ -175,6 +217,17 @@ end
 
 local function shortName(key)
     return (key and key:match("^([^-]+)")) or key or "?"
+end
+
+-- Canonical key for matching a player name regardless of letter case or a
+-- missing realm suffix. Reconciles a user-typed sync target (which the slash
+-- handler lowercases and may lack a realm) with the proper-case Name-Realm
+-- form AceComm reports for the reply, so the manual-sync watch clears
+-- correctly instead of firing a false "didn't respond".
+local function normKey(key)
+    if not key or key == "" then return nil end
+    if not key:find("-") then key = key .. "-" .. GetRealmName() end
+    return key:lower()
 end
 
 -- Send an order message to the counterparty and track delivery. If no
@@ -293,7 +346,17 @@ local ORDER_STATUS_KIND = {
 function Comm:HandleOrderNew(sender, data)
     local Orders = addon.Orders
     if not Orders or type(data.order) ~= "table" then return end
-    local order, applied = Orders:UpsertFromRemote(data.order)
+    local o = data.order
+    -- Validate shape + anti-spoof: required fields must be the right
+    -- type, the creator must BE the sender (can't forge "requester"),
+    -- and the order must be addressed to US.
+    if type(o.id) ~= "string" or type(o.requester) ~= "string"
+       or type(o.crafter) ~= "string" or type(o.item) ~= "table" then
+        return
+    end
+    if shortName(o.requester) ~= shortName(sender) then return end
+    if shortName(o.crafter) ~= shortName(addon:PlayerKey()) then return end
+    local order, applied = Orders:UpsertFromRemote(o)
     -- Ack even duplicates (clears the sender's offline warning); only
     -- notify on a genuinely new order so dupes don't double-chat.
     if order then self:SendOrderAck(sender, data.token) end
@@ -302,7 +365,14 @@ end
 
 function Comm:HandleOrderUpdate(sender, data)
     local Orders = addon.Orders
-    if not Orders or not data.id then return end
+    if not Orders or type(data.id) ~= "string" then return end
+    -- Anti-spoof: the update may only come from the order's actual
+    -- counterparty. Reject updates to orders we don't have or that the
+    -- sender isn't a party to (blocks strangers/others poking orders).
+    local existing = addon.db.orders and addon.db.orders[data.id]
+    if not existing then return end
+    local cp = self:OrderCounterparty(existing)
+    if not cp or shortName(cp) ~= shortName(sender) then return end
     local order, applied = Orders:ApplyRemoteStatus(data.id, data.status,
         data.completedBy, data.updatedAt)
     if order then self:SendOrderAck(sender, data.token) end
@@ -326,6 +396,7 @@ end
 -- HELLO: lightweight broadcast on group join
 ----------------------------------------------------------------------
 function Comm:BuildHelloPayload()
+    if not self:SharingEnabled() then return nil end
     local charData = DS:GetCharacter(addon:PlayerKey())
     if not charData then return nil end
 
@@ -418,17 +489,19 @@ function Comm:StoreLightweight(sender, data)
 
     -- Update profession summaries without wiping recipe data
     -- (a full SYNC_DATA will populate recipes later)
-    if data.professions then
+    if type(data.professions) == "table" then
         for profName, summary in pairs(data.professions) do
-            if not char.professions[profName] then
-                char.professions[profName] = {
-                    skillLevel = summary.skillLevel or 0,
-                    maxSkill = summary.maxSkill or 375,
-                    recipes = {},
-                }
-            else
-                char.professions[profName].skillLevel = summary.skillLevel or char.professions[profName].skillLevel
-                char.professions[profName].maxSkill = summary.maxSkill or char.professions[profName].maxSkill
+            if type(profName) == "string" and type(summary) == "table" then
+                if not char.professions[profName] then
+                    char.professions[profName] = {
+                        skillLevel = tonumber(summary.skillLevel) or 0,
+                        maxSkill = tonumber(summary.maxSkill) or 375,
+                        recipes = {},
+                    }
+                else
+                    char.professions[profName].skillLevel = tonumber(summary.skillLevel) or char.professions[profName].skillLevel
+                    char.professions[profName].maxSkill = tonumber(summary.maxSkill) or char.professions[profName].maxSkill
+                end
             end
         end
     end
@@ -494,10 +567,11 @@ function Comm:RequestSync(target, isManual)
     if isManual then
         print("|cff00ccffProfessionBuddy:|r Requesting sync from " .. target .. "...")
         self._pendingSync = self._pendingSync or {}
-        self._pendingSync[target] = true
+        local pkey = normKey(target)
+        self._pendingSync[pkey] = true
         C_Timer.After(10, function()
-            if self._pendingSync and self._pendingSync[target] then
-                self._pendingSync[target] = nil
+            if self._pendingSync and self._pendingSync[pkey] then
+                self._pendingSync[pkey] = nil
                 print("|cff00ccffProfessionBuddy:|r " .. target
                     .. " didn't respond (offline or not running ProfessionBuddy).")
             end
@@ -508,14 +582,19 @@ function Comm:RequestSync(target, isManual)
 end
 
 function Comm:HandleSyncRequest(sender, data)
-    -- Someone wants our full data -- send it
+    -- Rate-limit so a SYNC_REQ flood can't make us repeatedly build and
+    -- whisper our full payload. (Sharing-off is enforced in the builder.)
+    local now = time()
+    if lastServed[sender] and (now - lastServed[sender]) < SERVE_COOLDOWN then return end
     local payload = self:BuildFullPayload()
     if payload then
+        lastServed[sender] = now
         self:SendWhisper("SYNC_DATA", payload, sender)
     end
 end
 
 function Comm:BuildFullPayload()
+    if not self:SharingEnabled() then return nil end
     local charData = DS:GetCharacter(addon:PlayerKey())
     if not charData then return nil end
 
@@ -524,16 +603,22 @@ function Comm:BuildFullPayload()
     -- reagents, itemIDs, etc. -- just which recipes are known)
     local professions = {}
     for profName, profData in pairs(charData.professions or {}) do
+        -- Build recipeNames and recipeSpells in lockstep (same loop, so the
+        -- two arrays stay index-aligned). spellID is locale-stable; the name
+        -- is kept for backward compat with clients that lack spellID matching.
         local recipeNames = {}
+        local recipeSpells = {}
         if profData.recipes then
-            for recipeName, _ in pairs(profData.recipes) do
+            for recipeName, info in pairs(profData.recipes) do
                 table.insert(recipeNames, recipeName)
+                recipeSpells[#recipeNames] = info.spellID or 0
             end
         end
         professions[profName] = {
             skillLevel = profData.skillLevel or 0,
             maxSkill = profData.maxSkill or 375,
             recipeNames = recipeNames,
+            recipeSpells = recipeSpells,
         }
     end
 
@@ -567,8 +652,9 @@ function Comm:HandleSyncData(sender, data)
     -- timeout watch and confirm in chat below; background / incremental
     -- syncs stay silent so chat doesn't flood (e.g. several friends
     -- crafting at once).
-    local wasManual = self._pendingSync and self._pendingSync[sender]
-    if self._pendingSync then self._pendingSync[sender] = nil end
+    local pkey = normKey(sender)
+    local wasManual = self._pendingSync and self._pendingSync[pkey]
+    if self._pendingSync then self._pendingSync[pkey] = nil end
 
     -- Reconstruct the character record from the payload
     local charRecord = {
@@ -577,8 +663,10 @@ function Comm:HandleSyncData(sender, data)
         faction = data.faction or "Unknown",
         professions = {},
         inventory = {
-            bags = data.inventory and data.inventory.bags or {},
-            bank = data.inventory and data.inventory.bank or {},
+            bags = (type(data.inventory) == "table" and type(data.inventory.bags) == "table")
+                   and data.inventory.bags or {},
+            bank = (type(data.inventory) == "table" and type(data.inventory.bank) == "table")
+                   and data.inventory.bank or {},
         },
         isRemote = true,
         lastSync = time(),
@@ -587,19 +675,29 @@ function Comm:HandleSyncData(sender, data)
     -- Rebuild profession data with recipe entries
     -- We store recipe names as keys pointing to minimal info
     -- (the UI will cross-reference RecipeDB for full details)
-    if data.professions then
+    if type(data.professions) == "table" then
         for profName, profPayload in pairs(data.professions) do
-            local recipes = {}
-            if profPayload.recipeNames then
-                for _, recipeName in ipairs(profPayload.recipeNames) do
-                    recipes[recipeName] = { isKnown = true }
+            if type(profName) == "string" and type(profPayload) == "table" then
+                local recipes = {}
+                if type(profPayload.recipeNames) == "table" then
+                    local spells = type(profPayload.recipeSpells) == "table"
+                                   and profPayload.recipeSpells or nil
+                    for idx, recipeName in ipairs(profPayload.recipeNames) do
+                        if type(recipeName) == "string" then
+                            -- carry the locale-stable spellID when present so
+                            -- remote recipes match the static DB across locales
+                            local sid = spells and tonumber(spells[idx])
+                            if sid == 0 then sid = nil end
+                            recipes[recipeName] = { isKnown = true, spellID = sid }
+                        end
+                    end
                 end
+                charRecord.professions[profName] = {
+                    skillLevel = tonumber(profPayload.skillLevel) or 0,
+                    maxSkill = tonumber(profPayload.maxSkill) or 375,
+                    recipes = recipes,
+                }
             end
-            charRecord.professions[profName] = {
-                skillLevel = profPayload.skillLevel or 0,
-                maxSkill = profPayload.maxSkill or 375,
-                recipes = recipes,
-            }
         end
     end
 

@@ -44,13 +44,53 @@ local DIFF_COLORS = {
 }
 
 local SOURCE_COLORS = {
-    trainer    = "|cff00ff00",
-    vendor     = "|cffffff00",
-    drop       = "|cffff8800",
-    quest      = "|cff4488ff",
-    reputation = "|cff8844ff",
-    discovery  = "|cffff44ff",
+    trainer      = "|cff00ff00",
+    vendor       = "|cffffff00",
+    drop         = "|cffff8800",
+    quest        = "|cff4488ff",
+    reputation   = "|cff8844ff",
+    discovery    = "|cffff44ff",
+    automatic    = "|cff88ccff",
+    undetermined = "|cff888888",
 }
+
+----------------------------------------------------------------------
+-- Source-overhaul (Increment 3): per-faction source visibility.
+-- Recipes carry a sources[] array of { method, faction, detail }; a recipe
+-- may have several sources, each tagged Alliance / Horde / Both. We show
+-- only the sources usable by the current character's faction (so an
+-- Alliance char never sees a Horde-only quartermaster, and vice-versa).
+----------------------------------------------------------------------
+local function PlayerFaction()
+    return UnitFactionGroup("player")  -- "Alliance" or "Horde"
+end
+
+-- Normalize a recipe to a sources[] array (falls back to the legacy
+-- single source/sourceDetail fields for any un-migrated data).
+local function RecipeSources(recipe)
+    if type(recipe.sources) == "table" and #recipe.sources > 0 then
+        return recipe.sources
+    elseif recipe.source then
+        return { { method = recipe.source, faction = "Both", detail = recipe.sourceDetail } }
+    end
+    return nil
+end
+
+-- The subset of a recipe's sources usable by the current character. Returns
+-- nil if the recipe has no source data at all; an empty table means it has
+-- sources but all are for the opposite faction.
+local function VisibleSources(recipe)
+    local all = RecipeSources(recipe)
+    if not all then return nil end
+    local mine = PlayerFaction()
+    local out = {}
+    for _, s in ipairs(all) do
+        if s.faction == nil or s.faction == "Both" or s.faction == mine then
+            out[#out + 1] = s
+        end
+    end
+    return out
+end
 
 local DIFF_ORDER = { optimal = 1, medium = 2, easy = 3, trivial = 4 }
 
@@ -1823,9 +1863,12 @@ function TSF:UpdateListRows()
                         row.rightText:SetText(rangeStr)
                     end
                 else
-                    local src = entry.source or ""
+                    local vis = VisibleSources(entry)
+                    local src = (vis and vis[1] and vis[1].method) or entry.source or ""
                     local c = SOURCE_COLORS[src] or "|cff888888"
                     local displaySrc = src:sub(1,1):upper() .. src:sub(2)
+                    -- flag recipes obtainable more than one way (this faction)
+                    if vis and #vis > 1 then displaySrc = displaySrc .. "+" end
                     local skillText = ""
                     local entryReq = GetSkillReq(entry)
                     if entryReq then
@@ -2247,18 +2290,25 @@ function TSF:RefreshDetailPanel(preserveScroll)
         self.detCat:SetText("")
     end
 
-    if recipe.source then
-        local src = recipe.source
-        local displaySrc = src:sub(1,1):upper() .. src:sub(2)
-        local detail = recipe.sourceDetail
-        if detail and src == "quest" then
-            detail = detail:gsub("^Quest:%s*", "")
+    local vis = VisibleSources(recipe)
+    if vis and #vis > 0 then
+        local lines = {}
+        for _, s in ipairs(vis) do
+            local m = s.method or "?"
+            local disp = m:sub(1,1):upper() .. m:sub(2)
+            local detail = s.detail
+            if detail and m == "quest" then
+                detail = detail:gsub("^[Qq]uest:%s*", "")
+            end
+            local line = disp
+            if detail then line = line .. " - " .. detail end
+            lines[#lines + 1] = (SOURCE_COLORS[m] or "") .. line .. "|r"
         end
-        local srcText = "Source: " .. displaySrc
-        if detail then
-            srcText = srcText .. " - " .. detail
-        end
-        self.detSource:SetText((SOURCE_COLORS[src] or "") .. srcText .. "|r")
+        local label = (#lines > 1) and "Sources: " or "Source: "
+        self.detSource:SetText(label .. table.concat(lines, "  |cff888888/|r  "))
+    elseif recipe.sources or recipe.source then
+        -- Has source data, but all of it is for the opposite faction.
+        self.detSource:SetText("|cff888888Source: not available to your faction|r")
     else
         self.detSource:SetText("")
     end
@@ -4268,6 +4318,7 @@ function TSF:LoadRecipes()
                 skillRange   = info.skillRange,
                 source       = info.source,
                 sourceDetail = info.sourceDetail,
+                sources      = info.sources,
                 reagents     = info.reagents,
                 category     = info.category or GetItemCategory(info.itemID),
                 subcategory  = info.subcategory,
@@ -4302,16 +4353,16 @@ function TSF:LoadRecipes()
         if state.showTab == "known" then
             self.diffDropdown:SetOptions({"All", "Orange", "Yellow", "Green", "Grey"})
         elseif state.showTab == "missing" then
-            self.diffDropdown:SetOptions({"All", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery"})
+            self.diffDropdown:SetOptions({"All", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic"})
         else
-            self.diffDropdown:SetOptions({"All", "Orange", "Yellow", "Green", "Grey", "Trainer", "Vendor", "Drop"})
+            self.diffDropdown:SetOptions({"All", "Orange", "Yellow", "Green", "Grey", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic"})
         end
     end
 
     -- Filter
     local filtered = {}
     local diffMap = { Orange = "optimal", Yellow = "medium", Green = "easy", Grey = "trivial" }
-    local srcMap  = { Trainer = "trainer", Vendor = "vendor", Drop = "drop", Quest = "quest", Reputation = "reputation", Discovery = "discovery" }
+    local srcMap  = { Trainer = "trainer", Vendor = "vendor", Drop = "drop", Quest = "quest", Reputation = "reputation", Discovery = "discovery", Automatic = "automatic" }
 
     for _, r in ipairs(rawList) do
         local passSearch = true
@@ -4324,15 +4375,31 @@ function TSF:LoadRecipes()
         if state.filterCat ~= "All" then
             passCat = (r.category == state.filterCat)
         end
-        if state.filterDiff ~= "All" then
-            if r.isKnown then
+        -- Faction visibility (Inc 3): hide unknown recipes whose only
+        -- source is the opposite faction; filter by visible sources.
+        local passFaction = true
+        if r.isKnown then
+            if state.filterDiff ~= "All" then
                 passDiff = (r.difficulty == diffMap[state.filterDiff])
-            else
-                passDiff = (r.source == srcMap[state.filterDiff])
+            end
+        else
+            local vis = VisibleSources(r)
+            if vis ~= nil and #vis == 0 then
+                passFaction = false
+            elseif state.filterDiff ~= "All" then
+                local want = srcMap[state.filterDiff]
+                if vis ~= nil then
+                    passDiff = false
+                    for _, s in ipairs(vis) do
+                        if s.method == want then passDiff = true; break end
+                    end
+                else
+                    passDiff = (r.source == want)
+                end
             end
         end
 
-        if passSearch and passDiff and passCat then
+        if passSearch and passDiff and passCat and passFaction then
             table.insert(filtered, r)
         end
     end

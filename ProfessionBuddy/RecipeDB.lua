@@ -6,8 +6,15 @@
 -- Each recipe entry:
 --   itemID       = crafted item ID
 --   skillReq     = skill level required to learn
---   source       = "trainer" | "drop" | "vendor" | "quest" | "reputation" | "discovery"
---   sourceDetail = description of where to get it (e.g. "Scryer - Honored")
+--   sources      = { { method = "trainer"|"vendor"|"drop"|"quest"|
+--                      "reputation"|"discovery"|"automatic"|"undetermined",
+--                      faction = "Alliance"|"Horde"|"Both",
+--                      detail = "where to get it (optional)" }, ... }
+--                  A recipe may have several sources; faction is per-source
+--                  so the UI can show only the current character's faction.
+--   source/sourceDetail = LEGACY single-source fields, auto-back-filled from
+--                  sources[1] at RegisterProfession for readers not yet
+--                  migrated to sources[] (UI migration = source-overhaul Inc 3).
 --   reagents     = { { itemID = X, count = N }, ... }
 ----------------------------------------------------------------------
 
@@ -20,6 +27,9 @@ RDB.data = {}
 -- Reverse lookup: itemID -> { recipeName, profName }
 RDB.itemToRecipe = {}
 
+-- Reverse lookup: locale-stable recipe spellID -> { recipeName, profName }
+RDB.spellToRecipe = {}
+
 -- Reverse lookup: reagentItemID -> { { recipeName, profName, count }, ... }
 RDB.reagentUsedIn = {}
 
@@ -30,11 +40,30 @@ function RDB:RegisterProfession(profName, recipes)
     self.data[profName] = self.data[profName] or {}
 
     for recipeName, info in pairs(recipes) do
+        -- Back-fill legacy source/sourceDetail from the new sources[] array
+        -- so readers not yet migrated to sources[] keep working. The UI
+        -- switches to sources[] (per-faction) in the source-overhaul Inc 3.
+        if info.sources and info.source == nil then
+            local primary = info.sources[1]
+            if primary then
+                info.source = primary.method
+                info.sourceDetail = primary.detail
+            end
+        end
+
         self.data[profName][recipeName] = info
 
         -- Build reverse: crafted item -> recipe
         if info.itemID then
             self.itemToRecipe[info.itemID] = {
+                recipeName = recipeName,
+                profName   = profName,
+            }
+        end
+
+        -- Build reverse: recipe spellID -> recipe (locale-stable matching)
+        if info.spellID then
+            self.spellToRecipe[info.spellID] = {
                 recipeName = recipeName,
                 profName   = profName,
             }
@@ -75,11 +104,25 @@ function RDB:GetUnknownRecipes(charKey, profName)
         return unknown
     end
 
+    -- Build the set of spellIDs the character actually knows, from the
+    -- scanned recipes. spellID is locale-stable; the name key is not.
+    local knownSpells = {}
+    for _, recipe in pairs(profData.recipes) do
+        if recipe.spellID then
+            knownSpells[recipe.spellID] = true
+        end
+    end
+
     local unknown = {}
     for recipeName, info in pairs(allRecipes) do
         -- Show ALL unknown recipes regardless of current max skill.
         -- The UI indicates which are learnable now vs need higher skill tier.
-        if not profData.recipes[recipeName] then
+        -- Match by spellID first (locale-independent); fall back to the
+        -- recipe name so enUS behaviour is identical and any recipe with a
+        -- missing/unparsed spellID still resolves.
+        local known = (info.spellID and knownSpells[info.spellID])
+                      or (profData.recipes[recipeName] ~= nil)
+        if not known then
             unknown[recipeName] = info
         end
     end

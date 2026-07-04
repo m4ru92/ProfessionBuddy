@@ -18,17 +18,23 @@ local recipes = {
     -- ENCHANT BOOTS
     -- ================================================================
     ["Enchant Boots - Agility"] = {
+        spellID = 13935,
         itemID = 0,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  235, 255, 275, 295 },
         reagents = { { itemID = 11175, count = 2, name = "Greater Nether Essence" } },
     },
     ["Enchant Boots - Boar's Speed"] = {
+        spellID = 34008,
         itemID = 0,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -37,9 +43,12 @@ local recipes = {
         },
     },
     ["Enchant Boots - Cat's Swiftness"] = {
+        spellID = 34007,
         itemID = 0,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -48,9 +57,12 @@ local recipes = {
         },
     },
     ["Enchant Boots - Dexterity"] = {
+        spellID = 27951,
         itemID = 0,
         skillReq = 340,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  340, 350, 365, 380 },
         reagents = {
@@ -59,33 +71,46 @@ local recipes = {
         },
     },
     ["Enchant Boots - Fortitude"] = {
+        spellID = 27950,
         itemID = 0,
         skillReq = 320,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  320, 330, 345, 360 },
         reagents = { { itemID = 22445, count = 12, name = "Arcane Dust" } },
     },
     ["Enchant Boots - Greater Agility"] = {
+        spellID = 20023,
         itemID = 0,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  295, 310, 325, 340 },
         reagents = { { itemID = 16203, count = 8, name = "Greater Eternal Essence" } },
     },
     ["Enchant Boots - Greater Stamina"] = {
+        spellID = 20020,
         itemID = 0,
         skillReq = 260,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  260, 280, 300, 320 },
         reagents = { { itemID = 11176, count = 10, name = "Dream Dust" } },
     },
     ["Enchant Boots - Lesser Agility"] = {
+        spellID = 13637,
         itemID = 0,
         skillReq = 160,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  160, 180, 200, 220 },
         reagents = {
@@ -94,9 +119,12 @@ local recipes = {
         },
     },
     ["Enchant Boots - Lesser Spirit"] = {
+        spellID = 13687,
         itemID = 0,
         skillReq = 190,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  190, 210, 230, 250 },
         reagents = {
@@ -105,17 +133,23 @@ local recipes = {
         },
     },
     ["Enchant Boots - Lesser Stamina"] = {
+        spellID = 13644,
         itemID = 0,
         skillReq = 170,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  170, 190, 210, 230 },
         reagents = { { itemID = 11083, count = 4, name = "Soul Dust" } },
     },
     ["Enchant Boots - Minor Agility"] = {
+        spellID = 7867,
         itemID = 0,
         skillReq = 125,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Nata Dawnstrider, Zixil" },
+        },
         category = "Enchant Boots",
         skillRange = {  125, 150, 170, 190 },
         reagents = {
@@ -124,9 +158,12 @@ local recipes = {
         },
     },
     ["Enchant Boots - Minor Speed"] = {
+        spellID = 13890,
         itemID = 0,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  225, 245, 265, 285 },
         reagents = {
@@ -136,17 +173,23 @@ local recipes = {
         },
     },
     ["Enchant Boots - Minor Stamina"] = {
+        spellID = 7863,
         itemID = 0,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  125, 150, 170, 190 },
         reagents = { { itemID = 10940, count = 8, name = "Strange Dust" } },
     },
     ["Enchant Boots - Spirit"] = {
+        spellID = 20024,
         itemID = 0,
         skillReq = 275,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  275, 295, 315, 335 },
         reagents = {
@@ -155,17 +198,23 @@ local recipes = {
         },
     },
     ["Enchant Boots - Stamina"] = {
+        spellID = 13836,
         itemID = 0,
         skillReq = 215,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  215, 235, 255, 275 },
         reagents = { { itemID = 11137, count = 5, name = "Vision Dust" } },
     },
     ["Enchant Boots - Surefooted"] = {
+        spellID = 27954,
         itemID = 0,
         skillReq = 370,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  370, 380, 395, 410 },
         reagents = {
@@ -175,9 +224,12 @@ local recipes = {
         },
     },
     ["Enchant Boots - Vitality"] = {
+        spellID = 27948,
         itemID = 0,
         skillReq = 305,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Boots",
         skillRange = {  305, 315, 330, 345 },
         reagents = {
@@ -191,25 +243,34 @@ local recipes = {
     -- ENCHANT BRACER
     -- ================================================================
     ["Enchant Bracer - Assault"] = {
+        spellID = 34002,
         itemID = 0,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  300, 310, 325, 340 },
         reagents = { { itemID = 22445, count = 6, name = "Arcane Dust" } },
     },
     ["Enchant Bracer - Brawn"] = {
+        spellID = 27899,
         itemID = 0,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  305, 315, 330, 345 },
         reagents = { { itemID = 22445, count = 6, name = "Arcane Dust" } },
     },
     ["Enchant Bracer - Deflection"] = {
+        spellID = 13931,
         itemID = 0,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Banalash, Mythrin\'dir" },
+        },
         category = "Enchant Bracer",
         skillRange = {  235, 255, 275, 295 },
         reagents = {
@@ -218,9 +279,12 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Fortitude"] = {
+        spellID = 27914,
         itemID = 0,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  350, 360, 375, 390 },
         reagents = {
@@ -230,17 +294,24 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Greater Intellect"] = {
+        spellID = 20008,
         itemID = 0,
         skillReq = 255,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  255, 275, 295, 315 },
         reagents = { { itemID = 16202, count = 3, name = "Lesser Eternal Essence" } },
     },
     ["Enchant Bracer - Greater Spirit"] = {
+        spellID = 13846,
         itemID = 0,
         skillReq = 220,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  220, 240, 260, 280 },
         reagents = {
@@ -249,17 +320,23 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Greater Stamina"] = {
+        spellID = 13945,
         itemID = 0,
         skillReq = 245,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  245, 265, 285, 305 },
         reagents = { { itemID = 11176, count = 5, name = "Dream Dust" } },
     },
     ["Enchant Bracer - Greater Strength"] = {
+        spellID = 13939,
         itemID = 0,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  240, 260, 280, 300 },
         reagents = {
@@ -268,9 +345,12 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Healing Power"] = {
+        spellID = 23802,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Honored" },
+        },
         category = "Enchant Bracer",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -281,17 +361,23 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Intellect"] = {
+        spellID = 13822,
         itemID = 0,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  210, 230, 250, 270 },
         reagents = { { itemID = 11174, count = 2, name = "Lesser Nether Essence" } },
     },
     ["Enchant Bracer - Lesser Deflection"] = {
+        spellID = 13646,
         itemID = 0,
         skillReq = 170,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Keena, Micha Yance" },
+        },
         category = "Enchant Bracer",
         skillRange = {  170, 190, 210, 230 },
         reagents = {
@@ -300,41 +386,56 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Lesser Intellect"] = {
+        spellID = 13622,
         itemID = 0,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  150, 175, 195, 215 },
         reagents = { { itemID = 11082, count = 2, name = "Greater Astral Essence" } },
     },
     ["Enchant Bracer - Lesser Spirit"] = {
+        spellID = 7859,
         itemID = 0,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  120, 145, 165, 185 },
         reagents = { { itemID = 10998, count = 2, name = "Lesser Astral Essence" } },
     },
     ["Enchant Bracer - Lesser Stamina"] = {
+        spellID = 13501,
         itemID = 0,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  130, 155, 175, 195 },
         reagents = { { itemID = 11083, count = 2, name = "Soul Dust" } },
     },
     ["Enchant Bracer - Lesser Strength"] = {
+        spellID = 13536,
         itemID = 0,
         skillReq = 140,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Dalria, Kulwia" },
+        },
         category = "Enchant Bracer",
         skillRange = {  140, 165, 185, 205 },
         reagents = { { itemID = 11083, count = 2, name = "Soul Dust" } },
     },
     ["Enchant Bracer - Major Defense"] = {
+        spellID = 27906,
         itemID = 0,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  320, 330, 345, 360 },
         reagents = {
@@ -343,17 +444,23 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Major Intellect"] = {
+        spellID = 34001,
         itemID = 0,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  305, 315, 330, 345 },
         reagents = { { itemID = 22447, count = 3, name = "Lesser Planar Essence" } },
     },
     ["Enchant Bracer - Mana Regeneration"] = {
+        spellID = 23801,
         itemID = 0,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Argent Dawn @ Friendly" },
+        },
         category = "Enchant Bracer",
         skillRange = {  290, 305, 322, 340 },
         reagents = {
@@ -363,9 +470,12 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Minor Agility"] = {
+        spellID = 7779,
         itemID = 0,
         skillReq = 80,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  80, 115, 135, 155 },
         reagents = {
@@ -374,9 +484,12 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Minor Deflection"] = {
+        spellID = 7428,
         itemID = 0,
         skillReq = 75,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  75, 80, 100, 120 },
         reagents = {
@@ -385,49 +498,67 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Minor Health"] = {
+        spellID = 7418,
         itemID = 0,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  1, 70, 90, 110 },
         reagents = { { itemID = 10940, count = 1, name = "Strange Dust" } },
     },
     ["Enchant Bracer - Minor Spirit"] = {
+        spellID = 7766,
         itemID = 0,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  60, 105, 125, 145 },
         reagents = { { itemID = 10938, count = 2, name = "Lesser Magic Essence" } },
     },
     ["Enchant Bracer - Minor Stamina"] = {
+        spellID = 7457,
         itemID = 0,
         skillReq = 50,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  50, 100, 120, 140 },
         reagents = { { itemID = 10940, count = 3, name = "Strange Dust" } },
     },
     ["Enchant Bracer - Minor Strength"] = {
+        spellID = 7782,
         itemID = 0,
         skillReq = 80,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  80, 115, 135, 155 },
         reagents = { { itemID = 10940, count = 5, name = "Strange Dust" } },
     },
     ["Enchant Bracer - Restore Mana Prime"] = {
+        spellID = 27913,
         itemID = 0,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  335, 345, 360, 375 },
         reagents = { { itemID = 22446, count = 8, name = "Greater Planar Essence" } },
     },
     ["Enchant Bracer - Spellpower"] = {
+        spellID = 27917,
         itemID = 0,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -437,25 +568,34 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Spirit"] = {
+        spellID = 13642,
         itemID = 0,
         skillReq = 165,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  165, 185, 205, 225 },
         reagents = { { itemID = 11134, count = 1, name = "Lesser Mystic Essence" } },
     },
     ["Enchant Bracer - Stamina"] = {
+        spellID = 13648,
         itemID = 0,
         skillReq = 170,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  170, 190, 210, 230 },
         reagents = { { itemID = 11083, count = 6, name = "Soul Dust" } },
     },
     ["Enchant Bracer - Stats"] = {
+        spellID = 27905,
         itemID = 0,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  315, 325, 340, 355 },
         reagents = {
@@ -464,17 +604,24 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Strength"] = {
+        spellID = 13661,
         itemID = 0,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  180, 200, 220, 240 },
         reagents = { { itemID = 11137, count = 1, name = "Vision Dust" } },
     },
     ["Enchant Bracer - Superior Healing"] = {
+        spellID = 27911,
         itemID = 0,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Neutral" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Neutral" },
+        },
         category = "Enchant Bracer",
         skillRange = {  325, 335, 350, 365 },
         reagents = {
@@ -483,9 +630,12 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Superior Spirit"] = {
+        spellID = 20009,
         itemID = 0,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  270, 290, 310, 330 },
         reagents = {
@@ -494,17 +644,23 @@ local recipes = {
         },
     },
     ["Enchant Bracer - Superior Stamina"] = {
+        spellID = 20011,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  300, 310, 325, 340 },
         reagents = { { itemID = 16204, count = 15, name = "Illusion Dust" } },
     },
     ["Enchant Bracer - Superior Strength"] = {
+        spellID = 20010,
         itemID = 0,
         skillReq = 295,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Bracer",
         skillRange = {  295, 310, 325, 340 },
         reagents = {
@@ -517,9 +673,12 @@ local recipes = {
     -- ENCHANT CHEST
     -- ================================================================
     ["Enchant Chest - Defense"] = {
+        spellID = 46594,
         itemID = 0,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Friendly" },
+        },
         category = "Enchant Chest",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -529,9 +688,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Exceptional Health"] = {
+        spellID = 27957,
         itemID = 0,
         skillReq = 315,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  315, 325, 340, 355 },
         reagents = {
@@ -540,22 +702,14 @@ local recipes = {
             { itemID = 14344, count = 2, name = "Large Brilliant Shard" },
         },
     },
-    ["Enchant Chest - Exceptional Mana"] = {
-        itemID = 0,
-        skillReq = 325,
-        source = "trainer",
-        category = "Enchant Chest",
-        skillRange = {  325, 335, 350, 365 },
-        reagents = {
-            { itemID = 22449, count = 1, name = "Large Prismatic Shard" },
-            { itemID = 13444, count = 4, name = "Major Mana Potion" },
-            { itemID = 22446, count = 3, name = "Greater Planar Essence" },
-        },
-    },
     ["Enchant Chest - Exceptional Stats"] = {
+        spellID = 27960,
         itemID = 0,
         skillReq = 345,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Honored" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Honored" },
+        },
         category = "Enchant Chest",
         skillRange = {  345, 355, 370, 385 },
         reagents = {
@@ -565,25 +719,34 @@ local recipes = {
         },
     },
     ["Enchant Chest - Greater Health"] = {
+        spellID = 13640,
         itemID = 0,
         skillReq = 160,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  160, 180, 200, 220 },
         reagents = { { itemID = 11083, count = 3, name = "Soul Dust" } },
     },
     ["Enchant Chest - Greater Mana"] = {
+        spellID = 13663,
         itemID = 0,
         skillReq = 185,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  185, 205, 225, 245 },
         reagents = { { itemID = 11135, count = 1, name = "Greater Mystic Essence" } },
     },
     ["Enchant Chest - Greater Stats"] = {
+        spellID = 20025,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -593,9 +756,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Health"] = {
+        spellID = 7857,
         itemID = 0,
         skillReq = 120,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  120, 145, 165, 185 },
         reagents = {
@@ -604,9 +770,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Lesser Absorption"] = {
+        spellID = 13538,
         itemID = 0,
         skillReq = 140,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  140, 165, 185, 205 },
         reagents = {
@@ -616,9 +785,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Lesser Health"] = {
+        spellID = 7748,
         itemID = 0,
         skillReq = 60,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  60, 105, 125, 145 },
         reagents = {
@@ -627,9 +799,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Lesser Mana"] = {
+        spellID = 7776,
         itemID = 0,
         skillReq = 80,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kithas, Lilly" },
+        },
         category = "Enchant Chest",
         skillRange = {  80, 115, 135, 155 },
         reagents = {
@@ -638,9 +813,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Lesser Stats"] = {
+        spellID = 13700,
         itemID = 0,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  200, 220, 240, 260 },
         reagents = {
@@ -650,9 +828,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Major Health"] = {
+        spellID = 20026,
         itemID = 0,
         skillReq = 275,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Qia" },
+        },
         category = "Enchant Chest",
         skillRange = {  275, 295, 315, 335 },
         reagents = {
@@ -661,9 +842,13 @@ local recipes = {
         },
     },
     ["Enchant Chest - Major Mana"] = {
+        spellID = 20028,
         itemID = 0,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  290, 305, 322, 340 },
         reagents = {
@@ -672,9 +857,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Major Resilience"] = {
+        spellID = 33992,
         itemID = 0,
         skillReq = 345,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  345, 355, 370, 385 },
         reagents = {
@@ -683,17 +871,23 @@ local recipes = {
         },
     },
     ["Enchant Chest - Major Spirit"] = {
+        spellID = 33990,
         itemID = 0,
         skillReq = 320,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  320, 330, 345, 360 },
         reagents = { { itemID = 22446, count = 2, name = "Greater Planar Essence" } },
     },
     ["Enchant Chest - Mana"] = {
+        spellID = 13607,
         itemID = 0,
         skillReq = 145,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  145, 170, 190, 210 },
         reagents = {
@@ -702,9 +896,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Minor Absorption"] = {
+        spellID = 7426,
         itemID = 0,
         skillReq = 40,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  40, 90, 110, 130 },
         reagents = {
@@ -713,25 +910,34 @@ local recipes = {
         },
     },
     ["Enchant Chest - Minor Health"] = {
+        spellID = 7420,
         itemID = 0,
         skillReq = 15,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  15, 70, 90, 110 },
         reagents = { { itemID = 10940, count = 1, name = "Strange Dust" } },
     },
     ["Enchant Chest - Minor Mana"] = {
+        spellID = 7443,
         itemID = 0,
         skillReq = 20,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Enchanting supplies" },
+        },
         category = "Enchant Chest",
         skillRange = {  20, 80, 100, 120 },
         reagents = { { itemID = 10938, count = 1, name = "Lesser Magic Essence" } },
     },
     ["Enchant Chest - Minor Stats"] = {
+        spellID = 13626,
         itemID = 0,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  150, 175, 195, 215 },
         reagents = {
@@ -741,9 +947,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Restore Mana Prime"] = {
+        spellID = 33991,
         itemID = 0,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -752,9 +961,12 @@ local recipes = {
         },
     },
     ["Enchant Chest - Stats"] = {
+        spellID = 13941,
         itemID = 0,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  245, 265, 285, 305 },
         reagents = {
@@ -764,17 +976,23 @@ local recipes = {
         },
     },
     ["Enchant Chest - Superior Health"] = {
+        spellID = 13858,
         itemID = 0,
         skillReq = 220,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  220, 240, 260, 280 },
         reagents = { { itemID = 11137, count = 6, name = "Vision Dust" } },
     },
     ["Enchant Chest - Superior Mana"] = {
+        spellID = 13917,
         itemID = 0,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Chest",
         skillRange = {  230, 250, 270, 290 },
         reagents = {
@@ -787,9 +1005,12 @@ local recipes = {
     -- ENCHANT CLOAK
     -- ================================================================
     ["Enchant Cloak - Defense"] = {
+        spellID = 13635,
         itemID = 0,
         skillReq = 155,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  155, 175, 195, 215 },
         reagents = {
@@ -798,9 +1019,13 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Dodge"] = {
+        spellID = 25086,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -810,9 +1035,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Fire Resistance"] = {
+        spellID = 13657,
         itemID = 0,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  175, 195, 215, 235 },
         reagents = {
@@ -821,9 +1049,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Greater Agility"] = {
+        spellID = 34004,
         itemID = 0,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  310, 320, 335, 350 },
         reagents = {
@@ -833,9 +1064,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Greater Arcane Resistance"] = {
+        spellID = 34005,
         itemID = 0,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  350, 360, 375, 390 },
         reagents = {
@@ -844,17 +1078,23 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Greater Defense"] = {
+        spellID = 13746,
         itemID = 0,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  205, 225, 245, 265 },
         reagents = { { itemID = 11137, count = 3, name = "Vision Dust" } },
     },
     ["Enchant Cloak - Greater Fire Resistance"] = {
+        spellID = 25081,
         itemID = 0,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Neutral" },
+        },
         category = "Enchant Cloak",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -864,9 +1104,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Greater Nature Resistance"] = {
+        spellID = 25082,
         itemID = 0,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Circle @ Friendly" },
+        },
         category = "Enchant Cloak",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -876,9 +1119,13 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Greater Resistance"] = {
+        spellID = 20014,
         itemID = 0,
         skillReq = 265,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  265, 285, 305, 325 },
         reagents = {
@@ -891,9 +1138,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Greater Shadow Resistance"] = {
+        spellID = 34006,
         itemID = 0,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  350, 360, 375, 390 },
         reagents = {
@@ -902,17 +1152,23 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Lesser Agility"] = {
+        spellID = 13882,
         itemID = 0,
         skillReq = 225,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  225, 245, 265, 285 },
         reagents = { { itemID = 11174, count = 2, name = "Lesser Nether Essence" } },
     },
     ["Enchant Cloak - Lesser Fire Resistance"] = {
+        spellID = 7861,
         itemID = 0,
         skillReq = 125,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  125, 150, 170, 190 },
         reagents = {
@@ -921,9 +1177,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Lesser Protection"] = {
+        spellID = 13421,
         itemID = 0,
         skillReq = 115,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  115, 140, 160, 180 },
         reagents = {
@@ -932,9 +1191,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Lesser Shadow Resistance"] = {
+        spellID = 13522,
         itemID = 0,
         skillReq = 135,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  135, 160, 180, 200 },
         reagents = {
@@ -943,17 +1205,23 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Major Armor"] = {
+        spellID = 27961,
         itemID = 0,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  310, 320, 335, 350 },
         reagents = { { itemID = 22445, count = 8, name = "Arcane Dust" } },
     },
     ["Enchant Cloak - Major Resistance"] = {
+        spellID = 27962,
         itemID = 0,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  330, 340, 355, 370 },
         reagents = {
@@ -965,17 +1233,24 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Minor Agility"] = {
+        spellID = 13419,
         itemID = 0,
         skillReq = 110,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Dalria, Kulwia" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  110, 135, 155, 175 },
         reagents = { { itemID = 10998, count = 1, name = "Lesser Astral Essence" } },
     },
     ["Enchant Cloak - Minor Protection"] = {
+        spellID = 7771,
         itemID = 0,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  70, 110, 130, 150 },
         reagents = {
@@ -984,9 +1259,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Minor Resistance"] = {
+        spellID = 7454,
         itemID = 0,
         skillReq = 45,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  45, 95, 115, 135 },
         reagents = {
@@ -995,17 +1273,23 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Resistance"] = {
+        spellID = 13794,
         itemID = 0,
         skillReq = 205,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  205, 225, 245, 265 },
         reagents = { { itemID = 11174, count = 1, name = "Lesser Nether Essence" } },
     },
     ["Enchant Cloak - Spell Penetration"] = {
+        spellID = 34003,
         itemID = 0,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Neutral" },
+        },
         category = "Enchant Cloak",
         skillRange = {  325, 335, 350, 365 },
         reagents = {
@@ -1015,9 +1299,13 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Stealth"] = {
+        spellID = 25083,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1027,9 +1315,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Steelweave"] = {
+        spellID = 47051,
         itemID = 0,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Cloak",
         skillRange = {  375, 380, 395, 410 },
         reagents = {
@@ -1038,9 +1329,13 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Subtlety"] = {
+        spellID = 25084,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Horde", detail = "Thrallmar @ Revered" },
+            { method = "reputation", faction = "Alliance", detail = "Honor Hold @ Revered" },
+        },
         category = "Enchant Cloak",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1050,9 +1345,12 @@ local recipes = {
         },
     },
     ["Enchant Cloak - Superior Defense"] = {
+        spellID = 20015,
         itemID = 0,
         skillReq = 285,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lorelae Wintersong" },
+        },
         category = "Enchant Cloak",
         skillRange = {  285, 300, 317, 335 },
         reagents = { { itemID = 16204, count = 8, name = "Illusion Dust" } },
@@ -1062,9 +1360,12 @@ local recipes = {
     -- ENCHANT GLOVES
     -- ================================================================
     ["Enchant Gloves - Advanced Herbalism"] = {
+        spellID = 13868,
         itemID = 0,
         skillReq = 225,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  225, 245, 265, 285 },
         reagents = {
@@ -1073,9 +1374,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Advanced Mining"] = {
+        spellID = 13841,
         itemID = 0,
         skillReq = 215,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  215, 235, 255, 275 },
         reagents = {
@@ -1084,9 +1388,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Agility"] = {
+        spellID = 13815,
         itemID = 0,
         skillReq = 210,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  210, 230, 250, 270 },
         reagents = {
@@ -1095,17 +1402,23 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Assault"] = {
+        spellID = 33996,
         itemID = 0,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  310, 320, 335, 350 },
         reagents = { { itemID = 22445, count = 8, name = "Arcane Dust" } },
     },
     ["Enchant Gloves - Blasting"] = {
+        spellID = 33993,
         itemID = 0,
         skillReq = 305,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  305, 315, 330, 345 },
         reagents = {
@@ -1114,9 +1427,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Fire Power"] = {
+        spellID = 25078,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1126,9 +1442,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Fishing"] = {
+        spellID = 13620,
         itemID = 0,
         skillReq = 145,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  145, 170, 190, 210 },
         reagents = {
@@ -1137,9 +1456,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Frost Power"] = {
+        spellID = 25074,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1149,9 +1471,13 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Greater Agility"] = {
+        spellID = 20012,
         itemID = 0,
         skillReq = 270,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  270, 290, 310, 330 },
         reagents = {
@@ -1160,9 +1486,13 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Greater Strength"] = {
+        spellID = 20013,
         itemID = 0,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  295, 310, 325, 340 },
         reagents = {
@@ -1171,9 +1501,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Healing Power"] = {
+        spellID = 25079,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1183,9 +1516,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Herbalism"] = {
+        spellID = 13617,
         itemID = 0,
         skillReq = 145,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  145, 170, 190, 210 },
         reagents = {
@@ -1194,9 +1530,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Major Healing"] = {
+        spellID = 33999,
         itemID = 0,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Friendly" },
+        },
         category = "Enchant Gloves",
         skillRange = {  350, 360, 375, 390 },
         reagents = {
@@ -1206,9 +1545,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Major Spellpower"] = {
+        spellID = 33997,
         itemID = 0,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Friendly" },
+        },
         category = "Enchant Gloves",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -1218,9 +1560,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Major Strength"] = {
+        spellID = 33995,
         itemID = 0,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  340, 350, 365, 380 },
         reagents = {
@@ -1229,9 +1574,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Mining"] = {
+        spellID = 13612,
         itemID = 0,
         skillReq = 145,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  145, 170, 190, 210 },
         reagents = {
@@ -1240,9 +1588,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Minor Haste"] = {
+        spellID = 13948,
         itemID = 0,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  250, 270, 290, 310 },
         reagents = {
@@ -1251,9 +1602,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Riding Skill"] = {
+        spellID = 13947,
         itemID = 0,
         skillReq = 250,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  250, 270, 290, 310 },
         reagents = {
@@ -1262,9 +1616,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Shadow Power"] = {
+        spellID = 25073,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1274,9 +1631,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Skinning"] = {
+        spellID = 13698,
         itemID = 0,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  200, 220, 240, 260 },
         reagents = {
@@ -1285,9 +1645,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Spell Strike"] = {
+        spellID = 33994,
         itemID = 0,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Honored" },
+        },
         category = "Enchant Gloves",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -1297,9 +1660,12 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Strength"] = {
+        spellID = 13887,
         itemID = 0,
         skillReq = 225,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  225, 245, 265, 285 },
         reagents = {
@@ -1308,9 +1674,13 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Superior Agility"] = {
+        spellID = 25080,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1320,9 +1690,13 @@ local recipes = {
         },
     },
     ["Enchant Gloves - Threat"] = {
+        spellID = 25072,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Revered" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Gloves",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1336,9 +1710,12 @@ local recipes = {
     -- ENCHANT RING
     -- ================================================================
     ["Enchant Ring - Healing Power"] = {
+        spellID = 27926,
         itemID = 0,
         skillReq = 370,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Honored" },
+        },
         category = "Enchant Ring",
         skillRange = {  370, 380, 395, 410 },
         reagents = {
@@ -1348,9 +1725,12 @@ local recipes = {
         },
     },
     ["Enchant Ring - Spellpower"] = {
+        spellID = 27924,
         itemID = 0,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Keepers of Time @ Friendly" },
+        },
         category = "Enchant Ring",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -1359,9 +1739,12 @@ local recipes = {
         },
     },
     ["Enchant Ring - Stats"] = {
+        spellID = 27927,
         itemID = 0,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Lower City @ Friendly" },
+        },
         category = "Enchant Ring",
         skillRange = {  375, 385, 400, 415 },
         reagents = {
@@ -1370,9 +1753,12 @@ local recipes = {
         },
     },
     ["Enchant Ring - Striking"] = {
+        spellID = 27920,
         itemID = 0,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Honored" },
+        },
         category = "Enchant Ring",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -1385,9 +1771,12 @@ local recipes = {
     -- ENCHANT SHIELD
     -- ================================================================
     ["Enchant Shield - Frost Resistance"] = {
+        spellID = 13933,
         itemID = 0,
         skillReq = 235,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  235, 255, 275, 295 },
         reagents = {
@@ -1396,9 +1785,12 @@ local recipes = {
         },
     },
     ["Enchant Shield - Greater Spirit"] = {
+        spellID = 13905,
         itemID = 0,
         skillReq = 230,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  230, 250, 270, 290 },
         reagents = {
@@ -1407,25 +1799,34 @@ local recipes = {
         },
     },
     ["Enchant Shield - Greater Stamina"] = {
+        spellID = 20017,
         itemID = 0,
         skillReq = 265,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Daniel Bartlett, Mythrin\'dir" },
+        },
         category = "Enchant Shield",
         skillRange = {  265, 285, 305, 325 },
         reagents = { { itemID = 11176, count = 10, name = "Dream Dust" } },
     },
     ["Enchant Shield - Intellect"] = {
+        spellID = 27945,
         itemID = 0,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Aged Dalaran Wizard" },
+        },
         category = "Enchant Shield",
         skillRange = {  325, 335, 350, 365 },
         reagents = { { itemID = 22446, count = 4, name = "Greater Planar Essence" } },
     },
     ["Enchant Shield - Lesser Block"] = {
+        spellID = 13689,
         itemID = 0,
         skillReq = 195,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  195, 215, 235, 255 },
         reagents = {
@@ -1435,9 +1836,12 @@ local recipes = {
         },
     },
     ["Enchant Shield - Lesser Protection"] = {
+        spellID = 13464,
         itemID = 0,
         skillReq = 115,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  115, 140, 160, 180 },
         reagents = {
@@ -1447,9 +1851,12 @@ local recipes = {
         },
     },
     ["Enchant Shield - Lesser Spirit"] = {
+        spellID = 13485,
         itemID = 0,
         skillReq = 130,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  130, 155, 175, 195 },
         reagents = {
@@ -1458,9 +1865,12 @@ local recipes = {
         },
     },
     ["Enchant Shield - Lesser Stamina"] = {
+        spellID = 13631,
         itemID = 0,
         skillReq = 155,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  155, 175, 195, 215 },
         reagents = {
@@ -1469,17 +1879,23 @@ local recipes = {
         },
     },
     ["Enchant Shield - Major Stamina"] = {
+        spellID = 34009,
         itemID = 0,
         skillReq = 325,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Madame Ruby" },
+        },
         category = "Enchant Shield",
         skillRange = {  325, 335, 350, 365 },
         reagents = { { itemID = 22445, count = 15, name = "Arcane Dust" } },
     },
     ["Enchant Shield - Minor Stamina"] = {
+        spellID = 13378,
         itemID = 0,
         skillReq = 105,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  105, 130, 150, 170 },
         reagents = {
@@ -1488,9 +1904,12 @@ local recipes = {
         },
     },
     ["Enchant Shield - Resilience"] = {
+        spellID = 44383,
         itemID = 0,
         skillReq = 330,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  330, 340, 355, 370 },
         reagents = {
@@ -1499,9 +1918,12 @@ local recipes = {
         },
     },
     ["Enchant Shield - Resistance"] = {
+        spellID = 27947,
         itemID = 0,
         skillReq = 360,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -1513,9 +1935,12 @@ local recipes = {
         },
     },
     ["Enchant Shield - Shield Block"] = {
+        spellID = 27946,
         itemID = 0,
         skillReq = 340,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  340, 350, 365, 380 },
         reagents = {
@@ -1525,9 +1950,12 @@ local recipes = {
         },
     },
     ["Enchant Shield - Spirit"] = {
+        spellID = 13659,
         itemID = 0,
         skillReq = 180,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  180, 200, 220, 240 },
         reagents = {
@@ -1536,17 +1964,24 @@ local recipes = {
         },
     },
     ["Enchant Shield - Stamina"] = {
+        spellID = 13817,
         itemID = 0,
         skillReq = 210,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  210, 230, 250, 270 },
         reagents = { { itemID = 11137, count = 5, name = "Vision Dust" } },
     },
     ["Enchant Shield - Superior Spirit"] = {
+        spellID = 20016,
         itemID = 0,
         skillReq = 280,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  280, 300, 320, 340 },
         reagents = {
@@ -1555,9 +1990,12 @@ local recipes = {
         },
     },
     ["Enchant Shield - Tough Shield"] = {
+        spellID = 27944,
         itemID = 0,
         skillReq = 310,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Shield",
         skillRange = {  310, 320, 335, 350 },
         reagents = {
@@ -1570,9 +2008,12 @@ local recipes = {
     -- ENCHANT WEAPON
     -- ================================================================
     ["Enchant 2H Weapon - Agility"] = {
+        spellID = 27837,
         itemID = 0,
         skillReq = 290,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Neutral" },
+        },
         category = "Enchant Weapon",
         skillRange = {  290, 305, 322, 340 },
         reagents = {
@@ -1583,9 +2024,12 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Greater Impact"] = {
+        spellID = 13937,
         itemID = 0,
         skillReq = 240,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  240, 260, 280, 300 },
         reagents = {
@@ -1594,9 +2038,12 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Impact"] = {
+        spellID = 13695,
         itemID = 0,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  200, 220, 240, 260 },
         reagents = {
@@ -1605,9 +2052,12 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Lesser Impact"] = {
+        spellID = 13529,
         itemID = 0,
         skillReq = 145,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  145, 170, 190, 210 },
         reagents = {
@@ -1616,17 +2066,23 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Lesser Intellect"] = {
+        spellID = 7793,
         itemID = 0,
         skillReq = 100,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kithas, Leo Sarn +2 more" },
+        },
         category = "Enchant Weapon",
         skillRange = {  100, 130, 150, 170 },
         reagents = { { itemID = 10939, count = 3, name = "Greater Magic Essence" } },
     },
     ["Enchant 2H Weapon - Lesser Spirit"] = {
+        spellID = 13380,
         itemID = 0,
         skillReq = 110,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  110, 135, 155, 175 },
         reagents = {
@@ -1635,9 +2091,12 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Major Agility"] = {
+        spellID = 27977,
         itemID = 0,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -1647,9 +2106,12 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Major Intellect"] = {
+        spellID = 20036,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1658,9 +2120,12 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Major Spirit"] = {
+        spellID = 20035,
         itemID = 0,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1669,9 +2134,12 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Minor Impact"] = {
+        spellID = 7745,
         itemID = 0,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  100, 130, 150, 170 },
         reagents = {
@@ -1680,9 +2148,12 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Savagery"] = {
+        spellID = 27971,
         itemID = 0,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  350, 360, 375, 390 },
         reagents = {
@@ -1691,9 +2162,12 @@ local recipes = {
         },
     },
     ["Enchant 2H Weapon - Superior Impact"] = {
+        spellID = 20030,
         itemID = 0,
         skillReq = 295,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  295, 310, 325, 340 },
         reagents = {
@@ -1702,9 +2176,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Agility"] = {
+        spellID = 23800,
         itemID = 0,
         skillReq = 290,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Timbermaw Hold @ Friendly" },
+        },
         category = "Enchant Weapon",
         skillRange = {  290, 305, 322, 340 },
         reagents = {
@@ -1715,9 +2192,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Battlemaster"] = {
+        spellID = 28004,
         itemID = 0,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -1727,9 +2207,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Crusader"] = {
+        spellID = 20034,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1738,9 +2221,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Deathfrost"] = {
+        spellID = 46578,
         itemID = 0,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  350, 350, 357, 365 },
         reagents = {
@@ -1749,9 +2235,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Demonslaying"] = {
+        spellID = 13915,
         itemID = 0,
         skillReq = 230,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  230, 250, 270, 290 },
         reagents = {
@@ -1761,9 +2250,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Executioner"] = {
+        spellID = 42974,
         itemID = 0,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  375, 385, 400, 415 },
         reagents = {
@@ -1775,9 +2267,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Fiery Weapon"] = {
+        spellID = 13898,
         itemID = 0,
         skillReq = 265,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  265, 285, 305, 325 },
         reagents = {
@@ -1786,9 +2281,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Greater Agility"] = {
+        spellID = 42620,
         itemID = 0,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Violet Eye @ Revered" },
+        },
         category = "Enchant Weapon",
         skillRange = {  350, 360, 367, 375 },
         reagents = {
@@ -1799,9 +2297,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Greater Striking"] = {
+        spellID = 13943,
         itemID = 0,
         skillReq = 245,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  245, 265, 285, 305 },
         reagents = {
@@ -1810,9 +2311,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Healing Power"] = {
+        spellID = 22750,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1824,9 +2328,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Icy Chill"] = {
+        spellID = 20029,
         itemID = 0,
         skillReq = 285,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  285, 300, 317, 335 },
         reagents = {
@@ -1837,9 +2344,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Lesser Beastslayer"] = {
+        spellID = 13653,
         itemID = 0,
         skillReq = 175,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  175, 195, 215, 235 },
         reagents = {
@@ -1849,9 +2359,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Lesser Elemental Slayer"] = {
+        spellID = 13655,
         itemID = 0,
         skillReq = 175,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  175, 195, 215, 235 },
         reagents = {
@@ -1861,9 +2374,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Lesser Striking"] = {
+        spellID = 13503,
         itemID = 0,
         skillReq = 140,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  140, 165, 185, 205 },
         reagents = {
@@ -1872,9 +2388,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Lifestealing"] = {
+        spellID = 20032,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1884,9 +2403,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Major Healing"] = {
+        spellID = 34010,
         itemID = 0,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Sha'tar @ Honored" },
+        },
         category = "Enchant Weapon",
         skillRange = {  350, 360, 375, 390 },
         reagents = {
@@ -1896,9 +2418,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Major Intellect"] = {
+        spellID = 27968,
         itemID = 0,
         skillReq = 340,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  340, 350, 365, 380 },
         reagents = {
@@ -1907,9 +2432,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Major Spellpower"] = {
+        spellID = 27975,
         itemID = 0,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  350, 360, 375, 390 },
         reagents = {
@@ -1918,9 +2446,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Major Striking"] = {
+        spellID = 27967,
         itemID = 0,
         skillReq = 340,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "The Consortium @ Friendly" },
+        },
         category = "Enchant Weapon",
         skillRange = {  340, 350, 365, 380 },
         reagents = {
@@ -1930,9 +2461,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Mighty Intellect"] = {
+        spellID = 23804,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Enchant Weapon",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1942,9 +2476,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Mighty Spirit"] = {
+        spellID = 23803,
         itemID = 0,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Enchant Weapon",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -1954,9 +2491,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Minor Beastslayer"] = {
+        spellID = 7786,
         itemID = 0,
         skillReq = 90,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  90, 120, 140, 160 },
         reagents = {
@@ -1965,9 +2505,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Minor Striking"] = {
+        spellID = 7788,
         itemID = 0,
         skillReq = 90,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  90, 120, 140, 160 },
         reagents = {
@@ -1977,9 +2520,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Mongoose"] = {
+        spellID = 27984,
         itemID = 0,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  375, 385, 400, 415 },
         reagents = {
@@ -1990,9 +2536,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Potency"] = {
+        spellID = 27972,
         itemID = 0,
         skillReq = 350,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  350, 360, 375, 390 },
         reagents = {
@@ -2002,9 +2551,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Soulfrost"] = {
+        spellID = 27982,
         itemID = 0,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  375, 385, 400, 415 },
         reagents = {
@@ -2016,9 +2568,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Spell Power"] = {
+        spellID = 22749,
         itemID = 0,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -2031,9 +2586,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Spellsurge"] = {
+        spellID = 28003,
         itemID = 0,
         skillReq = 360,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  360, 370, 385, 400 },
         reagents = {
@@ -2043,9 +2601,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Strength"] = {
+        spellID = 23799,
         itemID = 0,
         skillReq = 290,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lokhtos Darkbargainer" },
+        },
         category = "Enchant Weapon",
         skillRange = {  290, 305, 322, 340 },
         reagents = {
@@ -2056,9 +2617,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Striking"] = {
+        spellID = 13693,
         itemID = 0,
         skillReq = 195,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  195, 215, 235, 255 },
         reagents = {
@@ -2067,9 +2631,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Sunfire"] = {
+        spellID = 27981,
         itemID = 0,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  375, 385, 400, 415 },
         reagents = {
@@ -2081,9 +2648,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Superior Striking"] = {
+        spellID = 20031,
         itemID = 0,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -2092,9 +2662,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Unholy Weapon"] = {
+        spellID = 20033,
         itemID = 0,
         skillReq = 295,
-        source = "trainer",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  295, 310, 325, 340 },
         reagents = {
@@ -2103,9 +2676,12 @@ local recipes = {
         },
     },
     ["Enchant Weapon - Winter's Might"] = {
+        spellID = 21931,
         itemID = 0,
         skillReq = 190,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Enchant Weapon",
         skillRange = {  190, 210, 230, 250 },
         reagents = {
@@ -2120,9 +2696,12 @@ local recipes = {
     -- OIL
     -- ================================================================
     ["Brilliant Mana Oil"] = {
+        spellID = 25130,
         itemID = 20748,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Neutral" },
+        },
         category = "Oil",
         skillRange = {  300, 310, 320, 330 },
         reagents = {
@@ -2132,9 +2711,12 @@ local recipes = {
         },
     },
     ["Brilliant Wizard Oil"] = {
+        spellID = 25129,
         itemID = 20749,
         skillReq = 300,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Zandalar Tribe @ Friendly" },
+        },
         category = "Oil",
         skillRange = {  300, 310, 320, 330 },
         reagents = {
@@ -2144,9 +2726,12 @@ local recipes = {
         },
     },
     ["Lesser Mana Oil"] = {
+        spellID = 25127,
         itemID = 20747,
         skillReq = 250,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kania" },
+        },
         category = "Oil",
         skillRange = {  250, 260, 270, 280 },
         reagents = {
@@ -2156,9 +2741,12 @@ local recipes = {
         },
     },
     ["Lesser Wizard Oil"] = {
+        spellID = 25126,
         itemID = 20746,
         skillReq = 200,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Enchanting supplies" },
+        },
         category = "Oil",
         skillRange = {  200, 210, 220, 230 },
         reagents = {
@@ -2168,9 +2756,12 @@ local recipes = {
         },
     },
     ["Minor Mana Oil"] = {
+        spellID = 25125,
         itemID = 20745,
         skillReq = 150,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Enchanting supplies" },
+        },
         category = "Oil",
         skillRange = {  150, 160, 170, 180 },
         reagents = {
@@ -2180,9 +2771,12 @@ local recipes = {
         },
     },
     ["Minor Wizard Oil"] = {
+        spellID = 25124,
         itemID = 20744,
         skillReq = 45,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Enchanting supplies" },
+        },
         category = "Oil",
         skillRange = {  45, 55, 65, 75 },
         reagents = {
@@ -2192,9 +2786,12 @@ local recipes = {
         },
     },
     ["Superior Mana Oil"] = {
+        spellID = 28016,
         itemID = 22521,
         skillReq = 310,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Egomis, Lyna +1 more" },
+        },
         category = "Oil",
         skillRange = {  310, 310, 320, 330 },
         reagents = {
@@ -2204,9 +2801,12 @@ local recipes = {
         },
     },
     ["Superior Wizard Oil"] = {
+        spellID = 28019,
         itemID = 22522,
         skillReq = 340,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Egomis, Lyna +1 more" },
+        },
         category = "Oil",
         skillRange = {  340, 340, 350, 360 },
         reagents = {
@@ -2216,9 +2816,12 @@ local recipes = {
         },
     },
     ["Wizard Oil"] = {
+        spellID = 25128,
         itemID = 20750,
         skillReq = 275,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Kania" },
+        },
         category = "Oil",
         skillRange = {  275, 285, 295, 305 },
         reagents = {
@@ -2232,9 +2835,12 @@ local recipes = {
     -- ROD
     -- ================================================================
     ["Runed Adamantite Rod"] = {
+        spellID = 32665,
         itemID = 22462,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Rungor, Vodesiin" },
+        },
         category = "Rod",
         skillRange = {  350, 360, 375, 390 },
         reagents = {
@@ -2246,9 +2852,12 @@ local recipes = {
         },
     },
     ["Runed Arcanite Rod"] = {
+        spellID = 20051,
         itemID = 16207,
         skillReq = 290,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Lorelae Wintersong" },
+        },
         category = "Rod",
         skillRange = {  290, 305, 322, 340 },
         reagents = {
@@ -2261,9 +2870,12 @@ local recipes = {
         },
     },
     ["Runed Copper Rod"] = {
+        spellID = 7421,
         itemID = 6218,
         skillReq = 1,
-        source = "trainer",
+        sources = {
+            { method = "automatic", faction = "Both" },
+        },
         category = "Rod",
         skillRange = {  1, 5, 7, 10 },
         reagents = {
@@ -2273,11 +2885,14 @@ local recipes = {
         },
     },
     ["Runed Eternium Rod"] = {
+        spellID = 32667,
         itemID = 22463,
         skillReq = 375,
-        source = "trainer",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Madame Ruby" },
+        },
         category = "Rod",
-        skillRange = {  375, 370, 385, 400 },
+        skillRange = {  370, 370, 385, 400},
         reagents = {
             { itemID = 25845, count = 1, name = "Eternium Rod" },
             { itemID = 22446, count = 12, name = "Greater Planar Essence" },
@@ -2287,9 +2902,12 @@ local recipes = {
         },
     },
     ["Runed Fel Iron Rod"] = {
+        spellID = 32664,
         itemID = 22461,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Rod",
         skillRange = {  300, 310, 325, 340 },
         reagents = {
@@ -2300,9 +2918,12 @@ local recipes = {
         },
     },
     ["Runed Golden Rod"] = {
+        spellID = 13628,
         itemID = 11130,
         skillReq = 150,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Rod",
         skillRange = {  150, 175, 195, 215 },
         reagents = {
@@ -2314,9 +2935,12 @@ local recipes = {
         },
     },
     ["Runed Silver Rod"] = {
+        spellID = 7795,
         itemID = 6339,
         skillReq = 100,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Rod",
         skillRange = {  100, 130, 150, 170 },
         reagents = {
@@ -2327,9 +2951,12 @@ local recipes = {
         },
     },
     ["Runed Truesilver Rod"] = {
+        spellID = 13702,
         itemID = 11145,
         skillReq = 200,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Rod",
         skillRange = {  200, 220, 240, 260 },
         reagents = {
@@ -2345,9 +2972,12 @@ local recipes = {
     -- TRADE GOOD
     -- ================================================================
     ["Enchanted Leather"] = {
+        spellID = 17181,
         itemID = 12810,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = {  250, 250, 255, 260 },
         reagents = {
@@ -2356,9 +2986,12 @@ local recipes = {
         },
     },
     ["Enchanted Thorium"] = {
+        spellID = 17180,
         itemID = 12655,
         skillReq = 250,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = {  250, 250, 255, 260 },
         reagents = {
@@ -2367,41 +3000,56 @@ local recipes = {
         },
     },
     ["Large Prismatic Shard"] = {
+        spellID = 28022,
         itemID = 22449,
         skillReq = 335,
-        source = "drop",
+        sources = {
+            { method = "vendor", faction = "Both", detail = "Sold by Egomis, Lyna +1 more" },
+        },
         category = "Trade Good",
-        skillRange = {  335, 5, 7, 10 },
+        skillRange = {  335, 335, 335, 335},
         reagents = { { itemID = 22448, count = 3, name = "Small Prismatic Shard" } },
     },
     ["Nexus Transformation"] = {
+        spellID = 42613,
         itemID = 22448,
         skillReq = 300,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
-        skillRange = {  300, 295, 300, 305 },
+        skillRange = {  295, 295, 300, 305},
         reagents = { { itemID = 20725, count = 1, name = "Nexus Crystal" } },
     },
     ["Prismatic Sphere"] = {
+        spellID = 28027,
         itemID = 22460,
         skillReq = 325,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = {  325, 325, 330, 335 },
         reagents = { { itemID = 22449, count = 4, name = "Large Prismatic Shard" } },
     },
     ["Small Prismatic Shard"] = {
+        spellID = 42615,
         itemID = 22448,
         skillReq = 335,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
-        skillRange = {  335, 315, 325, 335 },
+        skillRange = {  315, 315, 325, 335},
         reagents = { { itemID = 22449, count = 1, name = "Large Prismatic Shard" } },
     },
     ["Smoking Heart of the Mountain"] = {
+        spellID = 15596,
         itemID = 11811,
         skillReq = 265,
-        source = "drop",
+        sources = {
+            { method = "drop", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = {  265, 285, 305, 325 },
         reagents = {
@@ -2411,17 +3059,23 @@ local recipes = {
         },
     },
     ["Void Shatter"] = {
+        spellID = 45765,
         itemID = 22449,
         skillReq = 375,
-        source = "drop",
+        sources = {
+            { method = "reputation", faction = "Both", detail = "Shattered Sun Offensive @ Friendly" },
+        },
         category = "Trade Good",
-        skillRange = {  375, 360, 362, 365 },
+        skillRange = {  360, 360, 362, 365},
         reagents = { { itemID = 22450, count = 1, name = "Void Crystal" } },
     },
     ["Void Sphere"] = {
+        spellID = 28028,
         itemID = 22459,
         skillReq = 350,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Trade Good",
         skillRange = {  350, 360, 375, 390 },
         reagents = { { itemID = 22450, count = 2, name = "Void Crystal" } },
@@ -2431,9 +3085,12 @@ local recipes = {
     -- WAND
     -- ================================================================
     ["Greater Magic Wand"] = {
+        spellID = 14807,
         itemID = 11288,
         skillReq = 70,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Wand",
         skillRange = {  70, 110, 130, 150 },
         reagents = {
@@ -2442,9 +3099,12 @@ local recipes = {
         },
     },
     ["Greater Mystic Wand"] = {
+        spellID = 14810,
         itemID = 11290,
         skillReq = 175,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Wand",
         skillRange = {  175, 195, 215, 235 },
         reagents = {
@@ -2454,9 +3114,12 @@ local recipes = {
         },
     },
     ["Lesser Magic Wand"] = {
+        spellID = 14293,
         itemID = 11287,
         skillReq = 10,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Wand",
         skillRange = {  10, 75, 95, 115 },
         reagents = {
@@ -2465,9 +3128,12 @@ local recipes = {
         },
     },
     ["Lesser Mystic Wand"] = {
+        spellID = 14809,
         itemID = 11289,
         skillReq = 155,
-        source = "trainer",
+        sources = {
+            { method = "trainer", faction = "Both" },
+        },
         category = "Wand",
         skillRange = {  155, 175, 195, 215 },
         reagents = {
