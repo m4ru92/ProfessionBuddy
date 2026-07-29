@@ -19,6 +19,7 @@ local recipes = {
     -- ================================================================
     ["Enchant Boots - Agility"] = {
         spellID = 13935,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 235,
         sources = {
@@ -30,6 +31,7 @@ local recipes = {
     },
     ["Enchant Boots - Boar's Speed"] = {
         spellID = 34008,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -44,6 +46,7 @@ local recipes = {
     },
     ["Enchant Boots - Cat's Swiftness"] = {
         spellID = 34007,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -58,6 +61,7 @@ local recipes = {
     },
     ["Enchant Boots - Dexterity"] = {
         spellID = 27951,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 340,
         sources = {
@@ -72,6 +76,7 @@ local recipes = {
     },
     ["Enchant Boots - Fortitude"] = {
         spellID = 27950,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 320,
         sources = {
@@ -83,6 +88,7 @@ local recipes = {
     },
     ["Enchant Boots - Greater Agility"] = {
         spellID = 20023,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 295,
         sources = {
@@ -95,6 +101,7 @@ local recipes = {
     },
     ["Enchant Boots - Greater Stamina"] = {
         spellID = 20020,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 260,
         sources = {
@@ -106,6 +113,7 @@ local recipes = {
     },
     ["Enchant Boots - Lesser Agility"] = {
         spellID = 13637,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 160,
         sources = {
@@ -120,6 +128,7 @@ local recipes = {
     },
     ["Enchant Boots - Lesser Spirit"] = {
         spellID = 13687,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 190,
         sources = {
@@ -134,6 +143,7 @@ local recipes = {
     },
     ["Enchant Boots - Lesser Stamina"] = {
         spellID = 13644,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 170,
         sources = {
@@ -145,6 +155,7 @@ local recipes = {
     },
     ["Enchant Boots - Minor Agility"] = {
         spellID = 7867,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 125,
         sources = {
@@ -159,6 +170,7 @@ local recipes = {
     },
     ["Enchant Boots - Minor Speed"] = {
         spellID = 13890,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 225,
         sources = {
@@ -174,6 +186,7 @@ local recipes = {
     },
     ["Enchant Boots - Minor Stamina"] = {
         spellID = 7863,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 125,
         sources = {
@@ -185,6 +198,7 @@ local recipes = {
     },
     ["Enchant Boots - Spirit"] = {
         spellID = 20024,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 275,
         sources = {
@@ -199,6 +213,7 @@ local recipes = {
     },
     ["Enchant Boots - Stamina"] = {
         spellID = 13836,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 215,
         sources = {
@@ -210,6 +225,7 @@ local recipes = {
     },
     ["Enchant Boots - Surefooted"] = {
         spellID = 27954,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 370,
         sources = {
@@ -225,6 +241,7 @@ local recipes = {
     },
     ["Enchant Boots - Vitality"] = {
         spellID = 27948,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 305,
         sources = {
@@ -244,6 +261,7 @@ local recipes = {
     -- ================================================================
     ["Enchant Bracer - Assault"] = {
         spellID = 34002,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -255,6 +273,7 @@ local recipes = {
     },
     ["Enchant Bracer - Brawn"] = {
         spellID = 27899,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 305,
         sources = {
@@ -266,6 +285,7 @@ local recipes = {
     },
     ["Enchant Bracer - Deflection"] = {
         spellID = 13931,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 235,
         sources = {
@@ -280,6 +300,7 @@ local recipes = {
     },
     ["Enchant Bracer - Fortitude"] = {
         spellID = 27914,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -295,6 +316,7 @@ local recipes = {
     },
     ["Enchant Bracer - Greater Intellect"] = {
         spellID = 20008,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 255,
         sources = {
@@ -307,6 +329,7 @@ local recipes = {
     },
     ["Enchant Bracer - Greater Spirit"] = {
         spellID = 13846,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 220,
         sources = {
@@ -321,6 +344,7 @@ local recipes = {
     },
     ["Enchant Bracer - Greater Stamina"] = {
         spellID = 13945,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 245,
         sources = {
@@ -332,6 +356,7 @@ local recipes = {
     },
     ["Enchant Bracer - Greater Strength"] = {
         spellID = 13939,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 240,
         sources = {
@@ -346,6 +371,7 @@ local recipes = {
     },
     ["Enchant Bracer - Healing Power"] = {
         spellID = 23802,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -362,6 +388,7 @@ local recipes = {
     },
     ["Enchant Bracer - Intellect"] = {
         spellID = 13822,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 210,
         sources = {
@@ -373,6 +400,7 @@ local recipes = {
     },
     ["Enchant Bracer - Lesser Deflection"] = {
         spellID = 13646,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 170,
         sources = {
@@ -387,6 +415,7 @@ local recipes = {
     },
     ["Enchant Bracer - Lesser Intellect"] = {
         spellID = 13622,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 150,
         sources = {
@@ -398,6 +427,7 @@ local recipes = {
     },
     ["Enchant Bracer - Lesser Spirit"] = {
         spellID = 7859,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 120,
         sources = {
@@ -409,6 +439,7 @@ local recipes = {
     },
     ["Enchant Bracer - Lesser Stamina"] = {
         spellID = 13501,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 130,
         sources = {
@@ -420,6 +451,7 @@ local recipes = {
     },
     ["Enchant Bracer - Lesser Strength"] = {
         spellID = 13536,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 140,
         sources = {
@@ -431,6 +463,7 @@ local recipes = {
     },
     ["Enchant Bracer - Major Defense"] = {
         spellID = 27906,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 320,
         sources = {
@@ -445,6 +478,7 @@ local recipes = {
     },
     ["Enchant Bracer - Major Intellect"] = {
         spellID = 34001,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 305,
         sources = {
@@ -456,6 +490,7 @@ local recipes = {
     },
     ["Enchant Bracer - Mana Regeneration"] = {
         spellID = 23801,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 290,
         sources = {
@@ -471,6 +506,7 @@ local recipes = {
     },
     ["Enchant Bracer - Minor Agility"] = {
         spellID = 7779,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 80,
         sources = {
@@ -485,6 +521,7 @@ local recipes = {
     },
     ["Enchant Bracer - Minor Deflection"] = {
         spellID = 7428,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 75,
         sources = {
@@ -499,6 +536,7 @@ local recipes = {
     },
     ["Enchant Bracer - Minor Health"] = {
         spellID = 7418,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 1,
         sources = {
@@ -510,6 +548,7 @@ local recipes = {
     },
     ["Enchant Bracer - Minor Spirit"] = {
         spellID = 7766,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 60,
         sources = {
@@ -521,6 +560,7 @@ local recipes = {
     },
     ["Enchant Bracer - Minor Stamina"] = {
         spellID = 7457,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 50,
         sources = {
@@ -532,6 +572,7 @@ local recipes = {
     },
     ["Enchant Bracer - Minor Strength"] = {
         spellID = 7782,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 80,
         sources = {
@@ -543,6 +584,7 @@ local recipes = {
     },
     ["Enchant Bracer - Restore Mana Prime"] = {
         spellID = 27913,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 335,
         sources = {
@@ -554,6 +596,7 @@ local recipes = {
     },
     ["Enchant Bracer - Spellpower"] = {
         spellID = 27917,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -569,6 +612,7 @@ local recipes = {
     },
     ["Enchant Bracer - Spirit"] = {
         spellID = 13642,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 165,
         sources = {
@@ -580,6 +624,7 @@ local recipes = {
     },
     ["Enchant Bracer - Stamina"] = {
         spellID = 13648,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 170,
         sources = {
@@ -591,6 +636,7 @@ local recipes = {
     },
     ["Enchant Bracer - Stats"] = {
         spellID = 27905,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 315,
         sources = {
@@ -605,6 +651,7 @@ local recipes = {
     },
     ["Enchant Bracer - Strength"] = {
         spellID = 13661,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 180,
         sources = {
@@ -616,6 +663,7 @@ local recipes = {
     },
     ["Enchant Bracer - Superior Healing"] = {
         spellID = 27911,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 325,
         sources = {
@@ -631,6 +679,7 @@ local recipes = {
     },
     ["Enchant Bracer - Superior Spirit"] = {
         spellID = 20009,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 270,
         sources = {
@@ -645,6 +694,7 @@ local recipes = {
     },
     ["Enchant Bracer - Superior Stamina"] = {
         spellID = 20011,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -656,6 +706,7 @@ local recipes = {
     },
     ["Enchant Bracer - Superior Strength"] = {
         spellID = 20010,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 295,
         sources = {
@@ -674,6 +725,7 @@ local recipes = {
     -- ================================================================
     ["Enchant Chest - Defense"] = {
         spellID = 46594,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -689,6 +741,7 @@ local recipes = {
     },
     ["Enchant Chest - Exceptional Health"] = {
         spellID = 27957,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 315,
         sources = {
@@ -704,6 +757,7 @@ local recipes = {
     },
     ["Enchant Chest - Exceptional Stats"] = {
         spellID = 27960,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 345,
         sources = {
@@ -720,6 +774,7 @@ local recipes = {
     },
     ["Enchant Chest - Greater Health"] = {
         spellID = 13640,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 160,
         sources = {
@@ -731,6 +786,7 @@ local recipes = {
     },
     ["Enchant Chest - Greater Mana"] = {
         spellID = 13663,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 185,
         sources = {
@@ -742,6 +798,7 @@ local recipes = {
     },
     ["Enchant Chest - Greater Stats"] = {
         spellID = 20025,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -757,6 +814,7 @@ local recipes = {
     },
     ["Enchant Chest - Health"] = {
         spellID = 7857,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 120,
         sources = {
@@ -771,6 +829,7 @@ local recipes = {
     },
     ["Enchant Chest - Lesser Absorption"] = {
         spellID = 13538,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 140,
         sources = {
@@ -786,6 +845,7 @@ local recipes = {
     },
     ["Enchant Chest - Lesser Health"] = {
         spellID = 7748,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 60,
         sources = {
@@ -800,6 +860,7 @@ local recipes = {
     },
     ["Enchant Chest - Lesser Mana"] = {
         spellID = 7776,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 80,
         sources = {
@@ -814,6 +875,7 @@ local recipes = {
     },
     ["Enchant Chest - Lesser Stats"] = {
         spellID = 13700,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 200,
         sources = {
@@ -829,6 +891,7 @@ local recipes = {
     },
     ["Enchant Chest - Major Health"] = {
         spellID = 20026,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 275,
         sources = {
@@ -843,6 +906,7 @@ local recipes = {
     },
     ["Enchant Chest - Major Mana"] = {
         spellID = 20028,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 290,
         sources = {
@@ -858,6 +922,7 @@ local recipes = {
     },
     ["Enchant Chest - Major Resilience"] = {
         spellID = 33992,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 345,
         sources = {
@@ -872,6 +937,7 @@ local recipes = {
     },
     ["Enchant Chest - Major Spirit"] = {
         spellID = 33990,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 320,
         sources = {
@@ -883,6 +949,7 @@ local recipes = {
     },
     ["Enchant Chest - Mana"] = {
         spellID = 13607,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 145,
         sources = {
@@ -897,6 +964,7 @@ local recipes = {
     },
     ["Enchant Chest - Minor Absorption"] = {
         spellID = 7426,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 40,
         sources = {
@@ -911,6 +979,7 @@ local recipes = {
     },
     ["Enchant Chest - Minor Health"] = {
         spellID = 7420,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 15,
         sources = {
@@ -922,6 +991,7 @@ local recipes = {
     },
     ["Enchant Chest - Minor Mana"] = {
         spellID = 7443,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 20,
         sources = {
@@ -933,6 +1003,7 @@ local recipes = {
     },
     ["Enchant Chest - Minor Stats"] = {
         spellID = 13626,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 150,
         sources = {
@@ -948,6 +1019,7 @@ local recipes = {
     },
     ["Enchant Chest - Restore Mana Prime"] = {
         spellID = 33991,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -962,6 +1034,7 @@ local recipes = {
     },
     ["Enchant Chest - Stats"] = {
         spellID = 13941,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 245,
         sources = {
@@ -977,6 +1050,7 @@ local recipes = {
     },
     ["Enchant Chest - Superior Health"] = {
         spellID = 13858,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 220,
         sources = {
@@ -988,6 +1062,7 @@ local recipes = {
     },
     ["Enchant Chest - Superior Mana"] = {
         spellID = 13917,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 230,
         sources = {
@@ -1006,6 +1081,7 @@ local recipes = {
     -- ================================================================
     ["Enchant Cloak - Defense"] = {
         spellID = 13635,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 155,
         sources = {
@@ -1020,6 +1096,7 @@ local recipes = {
     },
     ["Enchant Cloak - Dodge"] = {
         spellID = 25086,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1036,6 +1113,7 @@ local recipes = {
     },
     ["Enchant Cloak - Fire Resistance"] = {
         spellID = 13657,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 175,
         sources = {
@@ -1050,6 +1128,7 @@ local recipes = {
     },
     ["Enchant Cloak - Greater Agility"] = {
         spellID = 34004,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 310,
         sources = {
@@ -1065,6 +1144,7 @@ local recipes = {
     },
     ["Enchant Cloak - Greater Arcane Resistance"] = {
         spellID = 34005,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -1079,6 +1159,7 @@ local recipes = {
     },
     ["Enchant Cloak - Greater Defense"] = {
         spellID = 13746,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 205,
         sources = {
@@ -1090,6 +1171,7 @@ local recipes = {
     },
     ["Enchant Cloak - Greater Fire Resistance"] = {
         spellID = 25081,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1105,6 +1187,7 @@ local recipes = {
     },
     ["Enchant Cloak - Greater Nature Resistance"] = {
         spellID = 25082,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1120,6 +1203,7 @@ local recipes = {
     },
     ["Enchant Cloak - Greater Resistance"] = {
         spellID = 20014,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 265,
         sources = {
@@ -1139,6 +1223,7 @@ local recipes = {
     },
     ["Enchant Cloak - Greater Shadow Resistance"] = {
         spellID = 34006,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -1153,6 +1238,7 @@ local recipes = {
     },
     ["Enchant Cloak - Lesser Agility"] = {
         spellID = 13882,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 225,
         sources = {
@@ -1164,6 +1250,7 @@ local recipes = {
     },
     ["Enchant Cloak - Lesser Fire Resistance"] = {
         spellID = 7861,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 125,
         sources = {
@@ -1178,6 +1265,7 @@ local recipes = {
     },
     ["Enchant Cloak - Lesser Protection"] = {
         spellID = 13421,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 115,
         sources = {
@@ -1192,6 +1280,7 @@ local recipes = {
     },
     ["Enchant Cloak - Lesser Shadow Resistance"] = {
         spellID = 13522,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 135,
         sources = {
@@ -1206,6 +1295,7 @@ local recipes = {
     },
     ["Enchant Cloak - Major Armor"] = {
         spellID = 27961,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 310,
         sources = {
@@ -1217,6 +1307,7 @@ local recipes = {
     },
     ["Enchant Cloak - Major Resistance"] = {
         spellID = 27962,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 330,
         sources = {
@@ -1234,6 +1325,7 @@ local recipes = {
     },
     ["Enchant Cloak - Minor Agility"] = {
         spellID = 13419,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 110,
         sources = {
@@ -1246,6 +1338,7 @@ local recipes = {
     },
     ["Enchant Cloak - Minor Protection"] = {
         spellID = 7771,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 70,
         sources = {
@@ -1260,6 +1353,7 @@ local recipes = {
     },
     ["Enchant Cloak - Minor Resistance"] = {
         spellID = 7454,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 45,
         sources = {
@@ -1274,6 +1368,7 @@ local recipes = {
     },
     ["Enchant Cloak - Resistance"] = {
         spellID = 13794,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 205,
         sources = {
@@ -1285,6 +1380,7 @@ local recipes = {
     },
     ["Enchant Cloak - Spell Penetration"] = {
         spellID = 34003,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 325,
         sources = {
@@ -1300,6 +1396,7 @@ local recipes = {
     },
     ["Enchant Cloak - Stealth"] = {
         spellID = 25083,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1316,6 +1413,7 @@ local recipes = {
     },
     ["Enchant Cloak - Steelweave"] = {
         spellID = 47051,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 375,
         sources = {
@@ -1330,6 +1428,7 @@ local recipes = {
     },
     ["Enchant Cloak - Subtlety"] = {
         spellID = 25084,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1346,6 +1445,7 @@ local recipes = {
     },
     ["Enchant Cloak - Superior Defense"] = {
         spellID = 20015,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 285,
         sources = {
@@ -1361,6 +1461,7 @@ local recipes = {
     -- ================================================================
     ["Enchant Gloves - Advanced Herbalism"] = {
         spellID = 13868,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 225,
         sources = {
@@ -1375,6 +1476,7 @@ local recipes = {
     },
     ["Enchant Gloves - Advanced Mining"] = {
         spellID = 13841,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 215,
         sources = {
@@ -1389,6 +1491,7 @@ local recipes = {
     },
     ["Enchant Gloves - Agility"] = {
         spellID = 13815,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 210,
         sources = {
@@ -1403,6 +1506,7 @@ local recipes = {
     },
     ["Enchant Gloves - Assault"] = {
         spellID = 33996,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 310,
         sources = {
@@ -1414,6 +1518,7 @@ local recipes = {
     },
     ["Enchant Gloves - Blasting"] = {
         spellID = 33993,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 305,
         sources = {
@@ -1428,6 +1533,7 @@ local recipes = {
     },
     ["Enchant Gloves - Fire Power"] = {
         spellID = 25078,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1443,6 +1549,7 @@ local recipes = {
     },
     ["Enchant Gloves - Fishing"] = {
         spellID = 13620,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 145,
         sources = {
@@ -1457,6 +1564,7 @@ local recipes = {
     },
     ["Enchant Gloves - Frost Power"] = {
         spellID = 25074,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1472,6 +1580,7 @@ local recipes = {
     },
     ["Enchant Gloves - Greater Agility"] = {
         spellID = 20012,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 270,
         sources = {
@@ -1487,6 +1596,7 @@ local recipes = {
     },
     ["Enchant Gloves - Greater Strength"] = {
         spellID = 20013,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 295,
         sources = {
@@ -1502,6 +1612,7 @@ local recipes = {
     },
     ["Enchant Gloves - Healing Power"] = {
         spellID = 25079,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1517,6 +1628,7 @@ local recipes = {
     },
     ["Enchant Gloves - Herbalism"] = {
         spellID = 13617,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 145,
         sources = {
@@ -1531,6 +1643,7 @@ local recipes = {
     },
     ["Enchant Gloves - Major Healing"] = {
         spellID = 33999,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -1546,6 +1659,7 @@ local recipes = {
     },
     ["Enchant Gloves - Major Spellpower"] = {
         spellID = 33997,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -1561,6 +1675,7 @@ local recipes = {
     },
     ["Enchant Gloves - Major Strength"] = {
         spellID = 33995,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 340,
         sources = {
@@ -1575,6 +1690,7 @@ local recipes = {
     },
     ["Enchant Gloves - Mining"] = {
         spellID = 13612,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 145,
         sources = {
@@ -1589,6 +1705,7 @@ local recipes = {
     },
     ["Enchant Gloves - Minor Haste"] = {
         spellID = 13948,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 250,
         sources = {
@@ -1603,6 +1720,7 @@ local recipes = {
     },
     ["Enchant Gloves - Riding Skill"] = {
         spellID = 13947,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 250,
         sources = {
@@ -1617,6 +1735,7 @@ local recipes = {
     },
     ["Enchant Gloves - Shadow Power"] = {
         spellID = 25073,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1632,6 +1751,7 @@ local recipes = {
     },
     ["Enchant Gloves - Skinning"] = {
         spellID = 13698,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 200,
         sources = {
@@ -1646,6 +1766,7 @@ local recipes = {
     },
     ["Enchant Gloves - Spell Strike"] = {
         spellID = 33994,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -1661,6 +1782,7 @@ local recipes = {
     },
     ["Enchant Gloves - Strength"] = {
         spellID = 13887,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 225,
         sources = {
@@ -1675,6 +1797,7 @@ local recipes = {
     },
     ["Enchant Gloves - Superior Agility"] = {
         spellID = 25080,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1691,6 +1814,7 @@ local recipes = {
     },
     ["Enchant Gloves - Threat"] = {
         spellID = 25072,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -1711,6 +1835,7 @@ local recipes = {
     -- ================================================================
     ["Enchant Ring - Healing Power"] = {
         spellID = 27926,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 370,
         sources = {
@@ -1726,6 +1851,7 @@ local recipes = {
     },
     ["Enchant Ring - Spellpower"] = {
         spellID = 27924,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -1740,6 +1866,7 @@ local recipes = {
     },
     ["Enchant Ring - Stats"] = {
         spellID = 27927,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 375,
         sources = {
@@ -1754,6 +1881,7 @@ local recipes = {
     },
     ["Enchant Ring - Striking"] = {
         spellID = 27920,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -1772,6 +1900,7 @@ local recipes = {
     -- ================================================================
     ["Enchant Shield - Frost Resistance"] = {
         spellID = 13933,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 235,
         sources = {
@@ -1786,6 +1915,7 @@ local recipes = {
     },
     ["Enchant Shield - Greater Spirit"] = {
         spellID = 13905,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 230,
         sources = {
@@ -1800,6 +1930,7 @@ local recipes = {
     },
     ["Enchant Shield - Greater Stamina"] = {
         spellID = 20017,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 265,
         sources = {
@@ -1811,6 +1942,7 @@ local recipes = {
     },
     ["Enchant Shield - Intellect"] = {
         spellID = 27945,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 325,
         sources = {
@@ -1822,6 +1954,7 @@ local recipes = {
     },
     ["Enchant Shield - Lesser Block"] = {
         spellID = 13689,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 195,
         sources = {
@@ -1837,6 +1970,7 @@ local recipes = {
     },
     ["Enchant Shield - Lesser Protection"] = {
         spellID = 13464,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 115,
         sources = {
@@ -1852,6 +1986,7 @@ local recipes = {
     },
     ["Enchant Shield - Lesser Spirit"] = {
         spellID = 13485,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 130,
         sources = {
@@ -1866,6 +2001,7 @@ local recipes = {
     },
     ["Enchant Shield - Lesser Stamina"] = {
         spellID = 13631,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 155,
         sources = {
@@ -1880,6 +2016,7 @@ local recipes = {
     },
     ["Enchant Shield - Major Stamina"] = {
         spellID = 34009,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 325,
         sources = {
@@ -1891,6 +2028,7 @@ local recipes = {
     },
     ["Enchant Shield - Minor Stamina"] = {
         spellID = 13378,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 105,
         sources = {
@@ -1905,6 +2043,7 @@ local recipes = {
     },
     ["Enchant Shield - Resilience"] = {
         spellID = 44383,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 330,
         sources = {
@@ -1919,6 +2058,7 @@ local recipes = {
     },
     ["Enchant Shield - Resistance"] = {
         spellID = 27947,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -1936,6 +2076,7 @@ local recipes = {
     },
     ["Enchant Shield - Shield Block"] = {
         spellID = 27946,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 340,
         sources = {
@@ -1951,6 +2092,7 @@ local recipes = {
     },
     ["Enchant Shield - Spirit"] = {
         spellID = 13659,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 180,
         sources = {
@@ -1965,6 +2107,7 @@ local recipes = {
     },
     ["Enchant Shield - Stamina"] = {
         spellID = 13817,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 210,
         sources = {
@@ -1976,6 +2119,7 @@ local recipes = {
     },
     ["Enchant Shield - Superior Spirit"] = {
         spellID = 20016,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 280,
         sources = {
@@ -1991,6 +2135,7 @@ local recipes = {
     },
     ["Enchant Shield - Tough Shield"] = {
         spellID = 27944,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 310,
         sources = {
@@ -2009,6 +2154,7 @@ local recipes = {
     -- ================================================================
     ["Enchant 2H Weapon - Agility"] = {
         spellID = 27837,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 290,
         sources = {
@@ -2025,6 +2171,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Greater Impact"] = {
         spellID = 13937,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 240,
         sources = {
@@ -2039,6 +2186,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Impact"] = {
         spellID = 13695,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 200,
         sources = {
@@ -2053,6 +2201,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Lesser Impact"] = {
         spellID = 13529,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 145,
         sources = {
@@ -2067,6 +2216,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Lesser Intellect"] = {
         spellID = 7793,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 100,
         sources = {
@@ -2078,6 +2228,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Lesser Spirit"] = {
         spellID = 13380,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 110,
         sources = {
@@ -2092,6 +2243,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Major Agility"] = {
         spellID = 27977,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -2107,6 +2259,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Major Intellect"] = {
         spellID = 20036,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -2121,6 +2274,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Major Spirit"] = {
         spellID = 20035,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -2135,6 +2289,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Minor Impact"] = {
         spellID = 7745,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 100,
         sources = {
@@ -2149,6 +2304,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Savagery"] = {
         spellID = 27971,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -2163,6 +2319,7 @@ local recipes = {
     },
     ["Enchant 2H Weapon - Superior Impact"] = {
         spellID = 20030,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 295,
         sources = {
@@ -2177,6 +2334,7 @@ local recipes = {
     },
     ["Enchant Weapon - Agility"] = {
         spellID = 23800,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 290,
         sources = {
@@ -2193,6 +2351,7 @@ local recipes = {
     },
     ["Enchant Weapon - Battlemaster"] = {
         spellID = 28004,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -2208,6 +2367,7 @@ local recipes = {
     },
     ["Enchant Weapon - Crusader"] = {
         spellID = 20034,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -2222,6 +2382,7 @@ local recipes = {
     },
     ["Enchant Weapon - Deathfrost"] = {
         spellID = 46578,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -2236,6 +2397,7 @@ local recipes = {
     },
     ["Enchant Weapon - Demonslaying"] = {
         spellID = 13915,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 230,
         sources = {
@@ -2251,6 +2413,7 @@ local recipes = {
     },
     ["Enchant Weapon - Executioner"] = {
         spellID = 42974,
+        rod = "Runed Eternium Rod",
         itemID = 0,
         skillReq = 375,
         sources = {
@@ -2268,6 +2431,7 @@ local recipes = {
     },
     ["Enchant Weapon - Fiery Weapon"] = {
         spellID = 13898,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 265,
         sources = {
@@ -2282,6 +2446,7 @@ local recipes = {
     },
     ["Enchant Weapon - Greater Agility"] = {
         spellID = 42620,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -2298,6 +2463,7 @@ local recipes = {
     },
     ["Enchant Weapon - Greater Striking"] = {
         spellID = 13943,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 245,
         sources = {
@@ -2312,6 +2478,7 @@ local recipes = {
     },
     ["Enchant Weapon - Healing Power"] = {
         spellID = 22750,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -2329,6 +2496,7 @@ local recipes = {
     },
     ["Enchant Weapon - Icy Chill"] = {
         spellID = 20029,
+        rod = "Runed Truesilver Rod",
         itemID = 0,
         skillReq = 285,
         sources = {
@@ -2345,6 +2513,7 @@ local recipes = {
     },
     ["Enchant Weapon - Lesser Beastslayer"] = {
         spellID = 13653,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 175,
         sources = {
@@ -2360,6 +2529,7 @@ local recipes = {
     },
     ["Enchant Weapon - Lesser Elemental Slayer"] = {
         spellID = 13655,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 175,
         sources = {
@@ -2375,6 +2545,7 @@ local recipes = {
     },
     ["Enchant Weapon - Lesser Striking"] = {
         spellID = 13503,
+        rod = "Runed Silver Rod",
         itemID = 0,
         skillReq = 140,
         sources = {
@@ -2389,6 +2560,7 @@ local recipes = {
     },
     ["Enchant Weapon - Lifestealing"] = {
         spellID = 20032,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -2404,6 +2576,7 @@ local recipes = {
     },
     ["Enchant Weapon - Major Healing"] = {
         spellID = 34010,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -2419,6 +2592,7 @@ local recipes = {
     },
     ["Enchant Weapon - Major Intellect"] = {
         spellID = 27968,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 340,
         sources = {
@@ -2433,6 +2607,7 @@ local recipes = {
     },
     ["Enchant Weapon - Major Spellpower"] = {
         spellID = 27975,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -2447,6 +2622,7 @@ local recipes = {
     },
     ["Enchant Weapon - Major Striking"] = {
         spellID = 27967,
+        rod = "Runed Fel Iron Rod",
         itemID = 0,
         skillReq = 340,
         sources = {
@@ -2462,6 +2638,7 @@ local recipes = {
     },
     ["Enchant Weapon - Mighty Intellect"] = {
         spellID = 23804,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -2477,6 +2654,7 @@ local recipes = {
     },
     ["Enchant Weapon - Mighty Spirit"] = {
         spellID = 23803,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -2492,6 +2670,7 @@ local recipes = {
     },
     ["Enchant Weapon - Minor Beastslayer"] = {
         spellID = 7786,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 90,
         sources = {
@@ -2506,6 +2685,7 @@ local recipes = {
     },
     ["Enchant Weapon - Minor Striking"] = {
         spellID = 7788,
+        rod = "Runed Copper Rod",
         itemID = 0,
         skillReq = 90,
         sources = {
@@ -2521,6 +2701,7 @@ local recipes = {
     },
     ["Enchant Weapon - Mongoose"] = {
         spellID = 27984,
+        rod = "Runed Eternium Rod",
         itemID = 0,
         skillReq = 375,
         sources = {
@@ -2537,6 +2718,7 @@ local recipes = {
     },
     ["Enchant Weapon - Potency"] = {
         spellID = 27972,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 350,
         sources = {
@@ -2552,6 +2734,7 @@ local recipes = {
     },
     ["Enchant Weapon - Soulfrost"] = {
         spellID = 27982,
+        rod = "Runed Eternium Rod",
         itemID = 0,
         skillReq = 375,
         sources = {
@@ -2569,6 +2752,7 @@ local recipes = {
     },
     ["Enchant Weapon - Spell Power"] = {
         spellID = 22749,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -2587,6 +2771,7 @@ local recipes = {
     },
     ["Enchant Weapon - Spellsurge"] = {
         spellID = 28003,
+        rod = "Runed Adamantite Rod",
         itemID = 0,
         skillReq = 360,
         sources = {
@@ -2602,6 +2787,7 @@ local recipes = {
     },
     ["Enchant Weapon - Strength"] = {
         spellID = 23799,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 290,
         sources = {
@@ -2618,6 +2804,7 @@ local recipes = {
     },
     ["Enchant Weapon - Striking"] = {
         spellID = 13693,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 195,
         sources = {
@@ -2632,6 +2819,7 @@ local recipes = {
     },
     ["Enchant Weapon - Sunfire"] = {
         spellID = 27981,
+        rod = "Runed Eternium Rod",
         itemID = 0,
         skillReq = 375,
         sources = {
@@ -2649,6 +2837,7 @@ local recipes = {
     },
     ["Enchant Weapon - Superior Striking"] = {
         spellID = 20031,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 300,
         sources = {
@@ -2663,6 +2852,7 @@ local recipes = {
     },
     ["Enchant Weapon - Unholy Weapon"] = {
         spellID = 20033,
+        rod = "Runed Arcanite Rod",
         itemID = 0,
         skillReq = 295,
         sources = {
@@ -2677,6 +2867,7 @@ local recipes = {
     },
     ["Enchant Weapon - Winter's Might"] = {
         spellID = 21931,
+        rod = "Runed Golden Rod",
         itemID = 0,
         skillReq = 190,
         sources = {
@@ -2697,6 +2888,7 @@ local recipes = {
     -- ================================================================
     ["Brilliant Mana Oil"] = {
         spellID = 25130,
+        rod = "Runed Arcanite Rod",
         itemID = 20748,
         skillReq = 300,
         sources = {
@@ -2712,6 +2904,7 @@ local recipes = {
     },
     ["Brilliant Wizard Oil"] = {
         spellID = 25129,
+        rod = "Runed Arcanite Rod",
         itemID = 20749,
         skillReq = 300,
         sources = {
@@ -2727,6 +2920,7 @@ local recipes = {
     },
     ["Lesser Mana Oil"] = {
         spellID = 25127,
+        rod = "Runed Truesilver Rod",
         itemID = 20747,
         skillReq = 250,
         sources = {
@@ -2742,6 +2936,7 @@ local recipes = {
     },
     ["Lesser Wizard Oil"] = {
         spellID = 25126,
+        rod = "Runed Golden Rod",
         itemID = 20746,
         skillReq = 200,
         sources = {
@@ -2757,6 +2952,7 @@ local recipes = {
     },
     ["Minor Mana Oil"] = {
         spellID = 25125,
+        rod = "Runed Silver Rod",
         itemID = 20745,
         skillReq = 150,
         sources = {
@@ -2772,6 +2968,7 @@ local recipes = {
     },
     ["Minor Wizard Oil"] = {
         spellID = 25124,
+        rod = "Runed Copper Rod",
         itemID = 20744,
         skillReq = 45,
         sources = {
@@ -2787,6 +2984,7 @@ local recipes = {
     },
     ["Superior Mana Oil"] = {
         spellID = 28016,
+        rod = "Runed Fel Iron Rod",
         itemID = 22521,
         skillReq = 310,
         sources = {
@@ -2802,6 +3000,7 @@ local recipes = {
     },
     ["Superior Wizard Oil"] = {
         spellID = 28019,
+        rod = "Runed Fel Iron Rod",
         itemID = 22522,
         skillReq = 340,
         sources = {
@@ -2817,6 +3016,7 @@ local recipes = {
     },
     ["Wizard Oil"] = {
         spellID = 25128,
+        rod = "Runed Truesilver Rod",
         itemID = 20750,
         skillReq = 275,
         sources = {
@@ -2973,6 +3173,7 @@ local recipes = {
     -- ================================================================
     ["Enchanted Leather"] = {
         spellID = 17181,
+        rod = "Runed Truesilver Rod",
         itemID = 12810,
         skillReq = 250,
         sources = {
@@ -2987,6 +3188,7 @@ local recipes = {
     },
     ["Enchanted Thorium"] = {
         spellID = 17180,
+        rod = "Runed Truesilver Rod",
         itemID = 12655,
         skillReq = 250,
         sources = {
@@ -3001,6 +3203,7 @@ local recipes = {
     },
     ["Large Prismatic Shard"] = {
         spellID = 28022,
+        rod = "Runed Fel Iron Rod",
         itemID = 22449,
         skillReq = 335,
         sources = {
@@ -3012,6 +3215,7 @@ local recipes = {
     },
     ["Nexus Transformation"] = {
         spellID = 42613,
+        rod = "Runed Adamantite Rod",
         itemID = 22448,
         skillReq = 300,
         sources = {
@@ -3023,6 +3227,7 @@ local recipes = {
     },
     ["Prismatic Sphere"] = {
         spellID = 28027,
+        rod = "Runed Fel Iron Rod",
         itemID = 22460,
         skillReq = 325,
         sources = {
@@ -3034,6 +3239,7 @@ local recipes = {
     },
     ["Small Prismatic Shard"] = {
         spellID = 42615,
+        rod = "Runed Fel Iron Rod",
         itemID = 22448,
         skillReq = 335,
         sources = {
@@ -3060,6 +3266,7 @@ local recipes = {
     },
     ["Void Shatter"] = {
         spellID = 45765,
+        rod = "Runed Eternium Rod",
         itemID = 22449,
         skillReq = 375,
         sources = {
@@ -3071,6 +3278,7 @@ local recipes = {
     },
     ["Void Sphere"] = {
         spellID = 28028,
+        rod = "Runed Adamantite Rod",
         itemID = 22459,
         skillReq = 350,
         sources = {
@@ -3086,6 +3294,7 @@ local recipes = {
     -- ================================================================
     ["Greater Magic Wand"] = {
         spellID = 14807,
+        rod = "Runed Copper Rod",
         itemID = 11288,
         skillReq = 70,
         sources = {
@@ -3100,6 +3309,7 @@ local recipes = {
     },
     ["Greater Mystic Wand"] = {
         spellID = 14810,
+        rod = "Runed Golden Rod",
         itemID = 11290,
         skillReq = 175,
         sources = {
@@ -3115,6 +3325,7 @@ local recipes = {
     },
     ["Lesser Magic Wand"] = {
         spellID = 14293,
+        rod = "Runed Copper Rod",
         itemID = 11287,
         skillReq = 10,
         sources = {
@@ -3129,6 +3340,7 @@ local recipes = {
     },
     ["Lesser Mystic Wand"] = {
         spellID = 14809,
+        rod = "Runed Golden Rod",
         itemID = 11289,
         skillReq = 155,
         sources = {
@@ -3144,5 +3356,25 @@ local recipes = {
     },
 
 }
+
+-- Enchanting rods (the required TOOL per recipe -> `rod` field above).
+-- mask = TotemCategoryMask (build 2.5.5.68101); CUMULATIVE, so a rod SATISFIES
+-- a requirement when rod.mask >= requiredMask (higher rod replaces lower in TBC).
+ProfBuddy.EnchantingRods = {
+    list = {
+        { name = "Runed Copper Rod",     itemID = 6218,  mask = 1   },
+        { name = "Runed Silver Rod",     itemID = 6339,  mask = 3   },
+        { name = "Runed Golden Rod",     itemID = 11130, mask = 7   },
+        { name = "Runed Truesilver Rod", itemID = 11145, mask = 15  },
+        { name = "Runed Arcanite Rod",   itemID = 16207, mask = 31  },
+        { name = "Runed Fel Iron Rod",   itemID = 22461, mask = 63  },
+        { name = "Runed Adamantite Rod", itemID = 22462, mask = 127 },
+        { name = "Runed Eternium Rod",   itemID = 22463, mask = 255 },
+    },
+    byName = {},
+}
+for _, r in ipairs(ProfBuddy.EnchantingRods.list) do
+    ProfBuddy.EnchantingRods.byName[r.name] = r
+end
 
 RDB:RegisterProfession("Enchanting", recipes)

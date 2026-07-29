@@ -30,6 +30,11 @@ RDB.itemToRecipe = {}
 -- Reverse lookup: locale-stable recipe spellID -> { recipeName, profName }
 RDB.spellToRecipe = {}
 
+-- Reverse lookup: recipe name -> { recipeName, profName }. Name-based fallback
+-- for when a display entry has no spellID (own-view live builders). Recipe
+-- names are unique across professions in practice.
+RDB.nameToRecipe = {}
+
 -- Reverse lookup: reagentItemID -> { { recipeName, profName, count }, ... }
 RDB.reagentUsedIn = {}
 
@@ -68,6 +73,12 @@ function RDB:RegisterProfession(profName, recipes)
                 profName   = profName,
             }
         end
+
+        -- Build reverse: recipe name -> recipe (name-based fallback)
+        self.nameToRecipe[recipeName] = {
+            recipeName = recipeName,
+            profName   = profName,
+        }
 
         -- Build reverse: reagent -> recipes that use it
         if info.reagents then
@@ -145,4 +156,25 @@ end
 
 function RDB:GetRecipeForItem(itemID)
     return self.itemToRecipe[itemID]
+end
+
+-- Resolve a recipe's static info entry from its locale-stable spellID.
+-- Returns the full info table (reagents, skillRange, itemID, skillReq, ...)
+-- or nil. Used to enrich viewed-character recipes (friends / non-enUS) whose
+-- names don't match the English static keys -- match on spellID instead.
+function RDB:GetRecipeBySpell(spellID)
+    local ref = self.spellToRecipe[spellID]
+    if not ref then return nil end
+    local prof = self.data[ref.profName]
+    return prof and prof[ref.recipeName] or nil
+end
+
+-- Resolve a recipe's static info entry from its (English) name. Used when the
+-- display entry carries no spellID (own-view live builders) or a spellID that
+-- doesn't resolve. Profession-agnostic, so it works regardless of state.profName.
+function RDB:GetRecipeByName(name)
+    local ref = name and self.nameToRecipe[name]
+    if not ref then return nil end
+    local prof = self.data[ref.profName]
+    return prof and prof[ref.recipeName] or nil
 end

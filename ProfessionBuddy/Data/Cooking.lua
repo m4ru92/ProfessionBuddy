@@ -596,7 +596,7 @@ local recipes = {
         itemID = 6888,
         skillReq = 1,
         sources = {
-            { method = "automatic", faction = "Both", detail = "default recipe (Alliance confirmed; Horde pending m4ru in-game check)" },
+            { method = "automatic", faction = "Both", detail = "auto-learned at Cooking skill (DB2 AcquireMethod=1; both factions)" },
         },
         category = "Stamina / Spirit",
         skillRange = { 1, 45, 65, 85 },

@@ -1711,13 +1711,39 @@ function TSF:BuildRecipeList(parent)
                 -- v6: tooltip for ALL recipes, not just known
                 if entry.itemLink then
                     GameTooltip:SetHyperlink(entry.itemLink)
+                    -- Own KNOWN enchants carry an itemLink (the enchant link), so
+                    -- they hit this branch, not the item-less one -- append the rod
+                    -- here too or it never shows on the player's own recipes.
+                    self:AppendRodLine(GameTooltip, entry)
                 elseif entry.itemID and entry.itemID ~= 0 then
                     GameTooltip:SetItemByID(entry.itemID)
                 else
-                    -- Item-less recipe (e.g. an enchant): itemID is 0 and
-                    -- there's no link, so SetItemByID(0) would render a
-                    -- broken tooltip. Show recipe info instead.
-                    self:BuildRecipeTooltip(GameTooltip, entry)
+                    -- Item-less recipe (e.g. an enchant): itemID is 0 and there's
+                    -- no link, so SetItemByID(0) would render a broken tooltip.
+                    -- Show the REAL spell tooltip (icon + effect) via the
+                    -- locale-stable spellID. TBC 2.5.5 has no
+                    -- GameTooltip:SetSpellByID, so use a "spell:" hyperlink
+                    -- (supported in Classic); keep SetSpellByID as a
+                    -- forward-compat first try. NumLines() confirms something
+                    -- actually rendered; if not, fall back to our recipe-info
+                    -- tooltip (which ClearLines first), so we never leave an
+                    -- empty tooltip.
+                    local shown = false
+                    if entry.spellID then
+                        if GameTooltip.SetSpellByID then
+                            GameTooltip:SetSpellByID(entry.spellID)
+                            shown = GameTooltip:NumLines() > 0
+                        end
+                        if not shown and GameTooltip.SetHyperlink then
+                            pcall(GameTooltip.SetHyperlink, GameTooltip, "spell:" .. entry.spellID)
+                            shown = GameTooltip:NumLines() > 0
+                        end
+                    end
+                    if shown then
+                        self:AppendRodLine(GameTooltip, entry)
+                    else
+                        self:BuildRecipeTooltip(GameTooltip, entry)
+                    end
                 end
                 GameTooltip:Show()
                 if IsShiftKeyDown() and GameTooltip_ShowCompareItem then
@@ -2462,11 +2488,11 @@ function TSF:ShowEmbeddedTooltip(recipe)
     self.itemTooltipDivider:Hide()
 
     local itemID = recipe.itemID
-    -- Skip only when there's truly nothing to embed: no usable link AND no
-    -- real item. An item-less recipe WITH a scanned link (alts) still shows
-    -- its real tooltip; a friend's enchant (no link, itemID 0) is skipped
-    -- since its reagents / skill / source already show elsewhere.
-    if not recipe.itemLink and (not itemID or itemID == 0) then return end
+    -- Decide what we can embed: a scanned link, a real crafted item, or (for
+    -- item-less recipes like enchants) the recipe's own spell tooltip via the
+    -- locale-stable spellID. If none of those exist, there's nothing to show.
+    local hasItem = recipe.itemLink or (itemID and itemID ~= 0)
+    if not hasItem and not recipe.spellID then return end
 
     -- Position below detCanMake
     self.itemTooltipDivider:SetPoint("TOPLEFT", self.detCanMake, "BOTTOMLEFT", 0, -6)
@@ -2478,11 +2504,41 @@ function TSF:ShowEmbeddedTooltip(recipe)
     tip:ClearAllPoints()
     tip:SetPoint("TOPLEFT", self.itemTooltipHeader, "BOTTOMLEFT", 0, -4)
 
+    -- Real item recipes: unchanged (item tooltips can populate async, so show
+    -- unconditionally as before).
     if recipe.itemLink then
         tip:SetHyperlink(recipe.itemLink)
-    else
+        self:AppendRodLine(tip, recipe)  -- own known enchants land here (itemLink set)
+        tip:Show()
+        return
+    elseif itemID and itemID ~= 0 then
         tip:SetItemByID(itemID)
+        tip:Show()
+        return
     end
+
+    -- Item-less recipe (enchant): show the REAL spell tooltip via the locale-
+    -- stable spellID. Prefer a "spell:" hyperlink (the reliable Classic path);
+    -- keep SetSpellByID as a forward-compat first try. NumLines() confirms it
+    -- rendered; if not, hide the embed + header/divider (no empty box).
+    local shown = false
+    if recipe.spellID then
+        if tip.SetSpellByID then
+            tip:SetSpellByID(recipe.spellID)
+            shown = tip:NumLines() > 0
+        end
+        if not shown and tip.SetHyperlink then
+            pcall(tip.SetHyperlink, tip, "spell:" .. recipe.spellID)
+            shown = tip:NumLines() > 0
+        end
+    end
+    if not shown then
+        tip:Hide()
+        self.itemTooltipHeader:Hide()
+        self.itemTooltipDivider:Hide()
+        return
+    end
+    self:AppendRodLine(tip, recipe)
     tip:Show()
 end
 
@@ -2508,6 +2564,53 @@ function TSF:BuildRecipeTooltip(tip, entry)
             local nm = r.name or (r.itemID and ("Item " .. r.itemID)) or "?"
             tip:AddLine("  " .. (r.count or 1) .. "x " .. nm, 0.9, 0.9, 0.9)
         end
+    end
+    self:AppendRodLine(tip, entry)
+end
+
+-- Does `charKey` own an enchanting rod good enough for `reqMask`? Rod masks are
+-- cumulative (Copper 1 < Silver 3 < ... < Eternium 255), so a rod satisfies the
+-- requirement iff rod.mask >= reqMask -- i.e. a higher rod replaces a lower one
+-- (TBC 2.5.5 behavior). Checks the character's bags + bank.
+function TSF:HasRod(reqMask, charKey)
+    local reg = addon.EnchantingRods
+    if not reg or not DS then return false end
+    local charData = DS:GetCharacter(charKey)
+    local bags = charData and charData.inventory and charData.inventory.bags or {}
+    local bank = charData and charData.inventory and charData.inventory.bank or {}
+    for _, rod in ipairs(reg.list) do
+        if rod.mask >= reqMask and ((bags[rod.itemID] or 0) + (bank[rod.itemID] or 0)) > 0 then
+            return true
+        end
+    end
+    return false
+end
+
+-- Append a "Tool: Runed X Rod" line to `tip` for enchants that require a rod
+-- (green if the viewed character owns a sufficient rod, red + "(missing)" if
+-- not). No-op for recipes with no rod requirement. The rod is a static property
+-- resolved from the recipe DB by spellID (locale-stable) with a name fallback.
+function TSF:AppendRodLine(tip, recipe)
+    if not (recipe and RDB) then return end
+    -- Resolve the static entry: by spellID first (locale-stable), then by name
+    -- (profession-agnostic -- own-view live entries may lack a resolvable
+    -- spellID and state.profName isn't always the canonical "Enchanting").
+    local info = recipe.spellID and RDB:GetRecipeBySpell(recipe.spellID)
+    if not (info and info.rod) then
+        local byName = RDB:GetRecipeByName(recipe.name)
+        if byName then info = byName end
+    end
+    local rodName = info and info.rod
+    if not rodName then return end
+    local reg = addon.EnchantingRods
+    local rod = reg and reg.byName and reg.byName[rodName]
+    if not rod then return end
+    local have = self:HasRod(rod.mask, state._viewCharKey or addon:PlayerKey())
+    tip:AddLine(" ")
+    if have then
+        tip:AddLine("Tool: " .. rodName, 0.4, 1, 0.4)
+    else
+        tip:AddLine("Tool: " .. rodName .. " (missing)", 1, 0.4, 0.4)
     end
 end
 
@@ -3712,7 +3815,11 @@ end
 -- Settings panel (full-window overlay, replaces main content)
 ----------------------------------------------------------------------
 function TSF:BuildSettingsPanel(parent)
-    local topOffset = -106
+    -- Sit just below the title bar. The settings view hides the toolbar
+    -- dropdowns behind its solid bg, so it doesn't need to clear them --
+    -- the old -106 left a big empty gap up top AND squeezed the panel so
+    -- tall left-column content overflowed past the bottom.
+    local topOffset = -32
 
     local panel = CreateFrame("Frame", "ProfBuddySettingsPanel", parent)
     panel:SetPoint("TOPLEFT", 10, topOffset)
@@ -3847,6 +3954,10 @@ function TSF:BuildSettingsPanel(parent)
     MakeCheckbox("Show in tooltips", "showRemoteInTooltips", yLeft)
     yLeft = yLeft - 26
     MakeCheckbox("Include in material calculator", "includeRemoteInCalc", yLeft)
+    yLeft = yLeft - 26
+    MakeCheckbox("Auto-add party members", "autoAddParty", yLeft)
+    yLeft = yLeft - 26
+    MakeCheckbox("Auto-add raid / battleground members", "autoAddRaid", yLeft)
     yLeft = yLeft - 14
 
     friendGroupBg:SetHeight(friendGroupTop - yLeft)
@@ -4288,6 +4399,7 @@ function TSF:LoadRecipes()
                     reagents    = data.reagents,
                     skillReq    = sReq or data.skillReq,
                     skillRange  = sr,
+                    spellID     = data.spellID,
                     category    = GetRecipeCategory(name, data.itemID, state.profName),
                     subcategory = GetRecipeSubcategory(name, state.profName),
                     gameOrder   = idx,
@@ -4316,6 +4428,7 @@ function TSF:LoadRecipes()
                 itemID       = info.itemID,
                 skillReq     = info.skillReq,
                 skillRange   = info.skillRange,
+                spellID      = info.spellID,
                 source       = info.source,
                 sourceDetail = info.sourceDetail,
                 sources      = info.sources,
@@ -4721,6 +4834,11 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
             if craftName and craftType ~= "header" then
                 local itemLink = GetCraftItemLink(i)
                 local icon = GetCraftIcon(i)
+                -- Locale-stable spellID from the recipe link (enchant:/spell:),
+                -- same as the Scanner. Needed so item-less recipes (enchants)
+                -- resolve their static entry -> real tooltip + rod requirement.
+                local recipeLink = GetCraftRecipeLink and GetCraftRecipeLink(i)
+                local spellID = recipeLink and tonumber(recipeLink:match("enchant:(%d+)") or recipeLink:match("spell:(%d+)") or "")
 
                 local reagents = {}
                 for j = 1, 12 do
@@ -4738,6 +4856,7 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
                 state.allRecipes[craftName] = {
                     index    = i,
                     itemID   = addon:ItemIDFromLink(itemLink),
+                    spellID  = spellID,
                     itemLink = itemLink,
                     icon     = icon,
                     difficulty = craftType,
@@ -4753,6 +4872,8 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
             if skillName and skillType ~= "header" and skillType ~= "subheader" then
                 local itemLink = GetTradeSkillItemLink(i)
                 local icon = GetTradeSkillIcon(i)
+                local recipeLink = GetTradeSkillRecipeLink and GetTradeSkillRecipeLink(i)
+                local spellID = recipeLink and tonumber(recipeLink:match("enchant:(%d+)") or recipeLink:match("spell:(%d+)") or "")
 
                 local reagents = {}
                 for j = 1, 12 do
@@ -4770,6 +4891,7 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
                 state.allRecipes[skillName] = {
                     index    = i,
                     itemID   = addon:ItemIDFromLink(itemLink),
+                    spellID  = spellID,
                     itemLink = itemLink,
                     icon     = icon,
                     difficulty = skillType,
@@ -4964,7 +5086,16 @@ function TSF:OpenWithCharacter(charKey, profName)
 
     if profData.recipes then
         for recipeName, recipeInfo in pairs(profData.recipes) do
+            -- Resolve the static recipe entry by locale-stable spellID first,
+            -- then by name. A friend's synced recipe names (and any non-enUS
+            -- client) won't match the English static keys; enchants are the
+            -- worst-hit since itemID 0 gives no item tooltip to fall back on.
+            -- Mirrors the spellID-first matching in RDB:GetUnknownRecipes.
+            local recipeSpellID = recipeInfo and recipeInfo.spellID
             local staticEntry = staticProf[recipeName]
+            if not staticEntry and recipeSpellID then
+                staticEntry = RDB:GetRecipeBySpell(recipeSpellID)
+            end
             local sr = staticEntry and staticEntry.skillRange or nil
             local diff = DiffFromSkillRange(sr, skill)
 
@@ -5009,6 +5140,7 @@ function TSF:OpenWithCharacter(charKey, profName)
                 reagents    = reagents,
                 skillReq    = staticEntry and staticEntry.skillReq or nil,
                 skillRange  = sr,
+                spellID     = recipeSpellID or (staticEntry and staticEntry.spellID),
                 index       = nil, -- no live game index
                 isKnown     = true,
             }
