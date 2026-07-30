@@ -1,4 +1,4 @@
-## Interface: 20505
+## Interface: 20506
 ## Title: ProfessionBuddy
 ## Notes: Cross-character profession management, recipe tracking, and material calculator for TBC Classic Anniversary
 ## Author: m4ru
