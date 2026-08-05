@@ -35,7 +35,7 @@ RDB.spellToRecipe = {}
 -- names are unique across professions in practice.
 RDB.nameToRecipe = {}
 
--- Reverse lookup: reagentItemID -> { { recipeName, profName, count }, ... }
+-- Reverse lookup: reagentItemID -> { { recipeName, profName, count, skillRange }, ... }
 RDB.reagentUsedIn = {}
 
 ----------------------------------------------------------------------
@@ -89,6 +89,7 @@ function RDB:RegisterProfession(profName, recipes)
                         recipeName = recipeName,
                         profName   = profName,
                         count      = reagent.count,
+                        skillRange = info.skillRange,  -- {orange,yellow,green,grey} for the "Used in" tooltip skill-up range
                     })
                 end
             end

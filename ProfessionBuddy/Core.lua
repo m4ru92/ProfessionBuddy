@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "1.0.0"
+addon.version = "1.0.1"
 addon.modules = {}
 
 -- Shorthand for the player's "Name-Realm" key used everywhere
@@ -50,6 +50,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.orderSeq == nil then ProfBuddyDB.orderSeq = 0 end
     ProfBuddyDB.settings = ProfBuddyDB.settings or {
         tooltipShowUsedIn   = true,
+        tooltipShowSkillRange = true,  -- colored skill-up range on each "Used in" line
         tooltipMaxOwn       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxOther     = 5,
@@ -84,6 +85,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.showAltInTooltips == nil then
         ProfBuddyDB.settings.showAltInTooltips = true
+    end
+    if ProfBuddyDB.settings.tooltipShowSkillRange == nil then
+        ProfBuddyDB.settings.tooltipShowSkillRange = true
     end
     if ProfBuddyDB.settings.tooltipMaxAlt == nil then
         ProfBuddyDB.settings.tooltipMaxAlt = 16
@@ -222,6 +226,9 @@ SlashCmdList["PROFBUDDY"] = function(msg)
             end
         end
 
+    elseif msg == "bug" or msg == "report" then
+        addon:ShowBugReport()
+
     else
         -- Default: open the /pb main window.
         -- Close profession window / settings if open first.
@@ -234,9 +241,142 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         if addon.CharacterPanel then
             addon.CharacterPanel:Toggle()
         else
-            print("|cff00ccffProfessionBuddy:|r Use /pb chars, /pb scan, /pb reset")
+            print("|cff00ccffProfessionBuddy:|r Use /pb chars, /pb scan, /pb reset, /pb bug")
         end
     end
+end
+
+----------------------------------------------------------------------
+-- /pb bug -- copy-paste bug report helper (no BugGrabber auto-pull, on
+-- purpose: users would fire off whatever unrelated error was last grabbed).
+-- Pre-fills SAFE, useful context + a fill-in template the user copies into a
+-- GitHub issue. WoW has no clipboard API, so we show a selectable editbox.
+----------------------------------------------------------------------
+local BUG_URL = "https://github.com/m4ru92/ProfessionBuddy/issues"
+
+local function BuildBugReport()
+    local wv, wb, _, wtoc = GetBuildInfo()
+
+    -- Known professions (name + skill) from THIS character's scanned data --
+    -- highly relevant for a profession addon, and it's the user's own char.
+    local profStr = "(none scanned yet -- open your professions, then re-run)"
+    local key = addon.PlayerKey and addon:PlayerKey()
+    local ds = addon.DataStore
+    local char = key and ds and ds.GetCharacter and ds:GetCharacter(key)
+    if char and char.professions then
+        local names = {}
+        for pname, pdata in pairs(char.professions) do
+            names[#names + 1] = pname .. " " .. (pdata.skillLevel or 0)
+        end
+        table.sort(names)
+        if #names > 0 then profStr = table.concat(names, ", ") end
+    end
+
+    local _, class = UnitClass("player")
+    return table.concat({
+        "== ProfessionBuddy Bug Report ==",
+        "PB version: " .. (addon.version or "?"),
+        "WoW: " .. (wv or "?") .. " (" .. (wb or "?") .. ") interface " .. (wtoc or "?"),
+        "Locale: " .. GetLocale(),
+        "Character: level " .. UnitLevel("player") .. " " .. (UnitRace("player") or "?")
+            .. " " .. (class or "?") .. " (" .. (UnitFactionGroup("player") or "?") .. ")",
+        "Professions: " .. profStr,
+        "",
+        "What happened:",
+        "",
+        "",
+        "What I expected:",
+        "",
+        "",
+        "Steps to reproduce:",
+        "1. ",
+        "2. ",
+        "3. ",
+        "",
+        "Other addons possibly involved (optional):",
+        "",
+        "ProfessionBuddy Lua errors (if applicable -- paste from BugSack / BugGrabber):",
+        "",
+    }, "\n")
+end
+
+function addon:ShowBugReport()
+    local f = addon.bugFrame
+    if not f then
+        f = CreateFrame("Frame", "PBBugReportFrame", UIParent, "BackdropTemplate")
+        addon.bugFrame = f
+        f:SetSize(480, 440)
+        f:SetPoint("CENTER")
+        f:SetFrameStrata("DIALOG")
+        f:SetBackdrop({
+            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 },
+        })
+        f:SetBackdropColor(0.06, 0.06, 0.08, 0.97)
+        f:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+        f:EnableMouse(true)
+        f:SetMovable(true)
+        f:RegisterForDrag("LeftButton")
+        f:SetScript("OnDragStart", f.StartMoving)
+        f:SetScript("OnDragStop", f.StopMovingOrSizing)
+
+        local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        title:SetPoint("TOP", 0, -14)
+        title:SetText("ProfessionBuddy  \226\128\148  Bug Report")
+
+        local instr = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        instr:SetPoint("TOPLEFT", 16, -40)
+        instr:SetPoint("TOPRIGHT", -16, -40)
+        instr:SetJustifyH("LEFT")
+        instr:SetText("Fill in the blanks, press |cffffd100Ctrl+C|r to copy, then paste into a new issue at:\n|cff33ccffgithub.com/m4ru92/ProfessionBuddy/issues|r")
+
+        local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
+        close:SetPoint("TOPRIGHT", -4, -4)
+
+        -- Bordered box holding a multiline editbox. No ScrollFrame: HighlightText
+        -- copies the whole buffer regardless of what's scrolled into view, and a
+        -- plain multiline editbox scrolls to the cursor while editing.
+        local box = CreateFrame("Frame", nil, f, "BackdropTemplate")
+        box:SetPoint("TOPLEFT", 14, -80)
+        box:SetPoint("BOTTOMRIGHT", -14, 46)
+        box:SetBackdrop({
+            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 },
+        })
+        box:SetBackdropColor(0, 0, 0, 0.5)
+        box:SetBackdropBorderColor(0.3, 0.3, 0.35, 0.9)
+
+        local eb = CreateFrame("EditBox", nil, box)
+        eb:SetMultiLine(true)
+        eb:SetFontObject(ChatFontNormal)
+        eb:SetAutoFocus(false)
+        eb:SetPoint("TOPLEFT", 8, -8)
+        eb:SetPoint("BOTTOMRIGHT", -8, 8)
+        eb:SetJustifyH("LEFT")
+        eb:SetScript("OnEscapePressed", function() f:Hide() end)
+        f.eb = eb
+
+        local selBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        selBtn:SetSize(120, 22)
+        selBtn:SetPoint("BOTTOMLEFT", 14, 14)
+        selBtn:SetText("Select All")
+        selBtn:SetScript("OnClick", function() eb:SetFocus(); eb:HighlightText() end)
+
+        local closeBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        closeBtn:SetSize(120, 22)
+        closeBtn:SetPoint("BOTTOMRIGHT", -14, 14)
+        closeBtn:SetText("Close")
+        closeBtn:SetScript("OnClick", function() f:Hide() end)
+
+        tinsert(UISpecialFrames, "PBBugReportFrame") -- Esc closes it
+    end
+
+    f.eb:SetText(BuildBugReport())
+    f:Show()
+    f.eb:SetFocus()
+    f.eb:HighlightText()
 end
 
 ----------------------------------------------------------------------

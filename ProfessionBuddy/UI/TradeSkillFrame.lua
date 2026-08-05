@@ -162,6 +162,13 @@ end
 -- Maps the game's difficulty tier to the skillRange index (1=orange .. 4=grey)
 local DIFF_TIER_INDEX = { optimal = 1, medium = 2, easy = 3, trivial = 4 }
 
+-- Combined Skill Up filter value: "everything that can still give a skill up"
+-- = orange + yellow + green (i.e. NOT grey/trivial). It's one extra entry in
+-- the existing single-select Skill Up dropdown -- see BuildToolbar (option
+-- lists) and RefreshRecipeList (the filter branch). Value string doubles as
+-- the dropdown label, shown after the "Skill Up: " prefix.
+local SKILLUP_NOGREY = "No Grey"
+
 -- Professions whose static skillRange NUMBERS are known-unreliable, so we
 -- suppress the threshold-number DISPLAY for them (difficulty COLOR/tier
 -- still comes from the live game). Empty now -- Smelting's ranges were
@@ -434,6 +441,29 @@ function TSF:HookItemTooltip()
         return table.concat(parts, ", ")
     end
 
+    -- Compact colored skill-up range appended after the recipe name in each
+    -- "Used in" line, e.g. "225/245/255/265" with the four thresholds in the
+    -- SAME orange/yellow/green/grey tier colors the detail panel uses (see
+    -- SkillRangeDetailed). Reusing that palette means the color reads as the
+    -- familiar skill-up curve, not a new meaning. A flat range (never greys
+    -- out) collapses to one orange number; empty when a recipe has no range.
+    -- Note: RANGE_NUMBERS_HIDDEN is empty, so every static range is trusted; if
+    -- a profession is ever re-added there, gate this on profName too.
+    local RANGE_COLORS = { "|cffff8000", "|cffffff00", "|cff00ff00", "|cff808080" }
+    local function skillTag(range)
+        if addon.db.settings.tooltipShowSkillRange == false then return "" end
+        if type(range) ~= "table" or not range[1] then return "" end
+        if range[4] and range[1] == range[4] then
+            return " " .. RANGE_COLORS[1] .. range[1] .. "|r"
+        end
+        local parts = {}
+        for i = 1, 4 do
+            if range[i] then parts[#parts + 1] = RANGE_COLORS[i] .. range[i] .. "|r" end
+        end
+        if #parts == 0 then return "" end
+        return " " .. table.concat(parts, "|cff5a5a5a/|r")
+    end
+
     GameTooltip:HookScript("OnTooltipSetItem", function(tip)
         if not addon.db.settings.tooltipShowUsedIn then return end
         if not RDB then return end
@@ -527,6 +557,7 @@ function TSF:HookItemTooltip()
                     recipeName    = info.recipeName,
                     profName      = info.profName,
                     count         = info.count,
+                    skillRange    = info.skillRange,
                     isCurrent     = currentProfs[info.profName] or false,
                     tier          = tier,
                     currentKnows  = currentKnows,
@@ -593,7 +624,7 @@ function TSF:HookItemTooltip()
         if shownOwn > 0 then
             for i = 1, shownOwn do
                 local e = ownEntries[i]
-                local line = "|cff00ff00" .. e.profName .. "|r - " .. e.recipeName
+                local line = "|cff00ff00" .. e.profName .. "|r - " .. e.recipeName .. skillTag(e.skillRange)
                 if e.count > 1 then
                     line = line .. " (x" .. e.count .. ")"
                 end
@@ -610,7 +641,7 @@ function TSF:HookItemTooltip()
             tip:AddLine("Alts:", 0.9, 0.82, 0.2)
             for i = 1, shownAlt do
                 local e = altEntries[i]
-                local line = "|cffffff00" .. e.profName .. "|r - " .. e.recipeName
+                local line = "|cffffff00" .. e.profName .. "|r - " .. e.recipeName .. skillTag(e.skillRange)
                     .. "  " .. knowerStr(e.altKnowers)
                 if e.count > 1 then
                     line = line .. " (x" .. e.count .. ")"
@@ -628,7 +659,7 @@ function TSF:HookItemTooltip()
             tip:AddLine("Friends:", 0.5, 0.75, 1)
             for i = 1, shownFriend do
                 local e = friendEntries[i]
-                local line = "|cff80c8ff" .. e.profName .. "|r - " .. e.recipeName
+                local line = "|cff80c8ff" .. e.profName .. "|r - " .. e.recipeName .. skillTag(e.skillRange)
                     .. "  " .. knowerStr(e.friendKnowers)
                 if e.count > 1 then
                     line = line .. " (x" .. e.count .. ")"
@@ -645,7 +676,7 @@ function TSF:HookItemTooltip()
             if shownOwn > 0 or shownAlt > 0 or shownFriend > 0 then tip:AddLine(" ") end
             for i = 1, shownOther do
                 local e = nobodyEntries[i]
-                local line = "|cff888888" .. e.profName .. "|r - " .. e.recipeName
+                local line = "|cff888888" .. e.profName .. "|r - " .. e.recipeName .. skillTag(e.skillRange)
                 if e.count > 1 then
                     line = line .. " (x" .. e.count .. ")"
                 end
@@ -1545,7 +1576,7 @@ function TSF:BuildToolbar(parent)
 
     -- Skill Up dropdown
     self.diffDropdown = CreateDropdown(parent, 130,
-        {"All", "Orange", "Yellow", "Green", "Grey"}, "All",
+        {"All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey"}, "All",
         function(val)
             state.filterDiff = val
             self:RefreshRecipeList()
@@ -3987,6 +4018,12 @@ function TSF:BuildSettingsPanel(parent)
     yRight = yRight - 6
 
     local usedInCB = MakeCheckbox("Show recipes used in", "tooltipShowUsedIn", yRight, COL_RIGHT)
+    yRight = yRight - 26
+
+    -- Sub-option: colored skill-up range on each "Used in" line. Great info but
+    -- busy for some, so it's toggleable (default on). Indented; greys out when
+    -- the parent "Show recipes used in" is off (handled in UpdateTooltipGroup).
+    local skillRangeCB = MakeCheckbox("Show skill-up range", "tooltipShowSkillRange", yRight, COL_RIGHT + 20)
     yRight = yRight - 30
 
     -- Slider width for right column
@@ -4062,6 +4099,8 @@ function TSF:BuildSettingsPanel(parent)
         otherLabel:SetText("Other professions: " .. otherText)
 
         if enabled then
+            skillRangeCB:Enable()
+            skillRangeCB:SetAlpha(1)
             ownSlider:Enable()
             altSlider:Enable()
             otherSlider:Enable()
@@ -4072,6 +4111,8 @@ function TSF:BuildSettingsPanel(parent)
             altSlider:SetAlpha(1)
             otherSlider:SetAlpha(1)
         else
+            skillRangeCB:Disable()
+            skillRangeCB:SetAlpha(0.4)
             ownSlider:Disable()
             altSlider:Disable()
             otherSlider:Disable()
@@ -4463,12 +4504,26 @@ function TSF:LoadRecipes()
     end
 
     if self.diffDropdown then
+        local diffOpts
         if state.showTab == "known" then
-            self.diffDropdown:SetOptions({"All", "Orange", "Yellow", "Green", "Grey"})
+            diffOpts = {"All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey"}
         elseif state.showTab == "missing" then
-            self.diffDropdown:SetOptions({"All", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic"})
+            diffOpts = {"All", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic"}
         else
-            self.diffDropdown:SetOptions({"All", "Orange", "Yellow", "Green", "Grey", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic"})
+            diffOpts = {"All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic"}
+        end
+        self.diffDropdown:SetOptions(diffOpts)
+        -- Reset a stale selection not offered on this tab (mirrors the
+        -- catDropdown guard above): e.g. a difficulty pick carried into the
+        -- Missing tab, or a source pick carried into Known. Without this the
+        -- filter silently hides every row and the label reads wrong.
+        if state.filterDiff ~= "All" then
+            local found = false
+            for _, o in ipairs(diffOpts) do if o == state.filterDiff then found = true; break end end
+            if not found then
+                state.filterDiff = "All"
+                self.diffDropdown:SetValue("All")
+            end
         end
     end
 
@@ -4492,7 +4547,10 @@ function TSF:LoadRecipes()
         -- source is the opposite faction; filter by visible sources.
         local passFaction = true
         if r.isKnown then
-            if state.filterDiff ~= "All" then
+            if state.filterDiff == SKILLUP_NOGREY then
+                -- "still gives a skill up" = anything but grey/trivial
+                passDiff = (r.difficulty ~= "trivial")
+            elseif state.filterDiff ~= "All" then
                 passDiff = (r.difficulty == diffMap[state.filterDiff])
             end
         else

@@ -16,6 +16,11 @@ function UI:Init()
     if self.frame then return end
 
     local f = CreateFrame("Frame", "ProfBuddyMainFrame", UIParent, "BasicFrameTemplateWithInset")
+    -- Layer above other addons' default-strata frames (e.g. a stray durability
+    -- or item bar) so they can't bleed over the Characters/Friends/Orders
+    -- panels. Matches the profession window (also HIGH) for consistent PB
+    -- layering. Child panels inherit this strata.
+    f:SetFrameStrata("HIGH")
     f:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
     f:SetPoint("CENTER")
     f:SetMovable(true)
