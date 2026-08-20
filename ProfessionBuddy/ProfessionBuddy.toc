@@ -2,7 +2,7 @@
 ## Title: ProfessionBuddy
 ## Notes: Cross-character profession management, recipe tracking, and material calculator for TBC Classic Anniversary
 ## Author: m4ru
-## Version: 1.0.1
+## Version: 1.0.2
 ## SavedVariables: ProfBuddyDB
 ## DefaultState: enabled
 
@@ -24,6 +24,8 @@ Data/Engineering.lua
 Data/Enchanting.lua
 Data/FirstAid.lua
 Data/Smelting.lua
+Data/GatherMobs.lua
+Data/RandomEnchant.lua
 MaterialCalc.lua
 UI/Main.lua
 UI/CharacterPanel.lua

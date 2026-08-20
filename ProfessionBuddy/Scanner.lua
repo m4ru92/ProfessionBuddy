@@ -296,6 +296,31 @@ end
 ----------------------------------------------------------------------
 -- Trainer scanning -- "What's Training?" for professions
 ----------------------------------------------------------------------
+-- Reconcile trainer-scanned learn levels against the static RecipeDB skillReq,
+-- recording corrections/gap-fills in ProfBuddyDB.skillReqOverrides (the display
+-- prefers these). Silent unless settings.skillReqNotify is set. See DESIGN-NOTES.
+function Scanner:ReconcileSkillReq(recipes)
+    local RDB = addon.RecipeDB
+    if not (RDB and addon.db and recipes) then return end
+    addon.db.skillReqOverrides = addon.db.skillReqOverrides or {}
+    local ov = addon.db.skillReqOverrides
+    local newCorrections = 0
+    for name, info in pairs(recipes) do
+        local tv = info.skillReq
+        if tv and tv > 0 and ov[name] ~= tv then
+            local static = RDB:StaticSkillReq(name)
+            if static ~= tv then
+                ov[name] = tv
+                if static then newCorrections = newCorrections + 1 end   -- correction, not gap-fill
+            end
+        end
+    end
+    if newCorrections > 0 and addon.db.settings and addon.db.settings.skillReqNotify then
+        print(string.format("|cff00ccffProfessionBuddy:|r reconciled %d trainer learn-level correction%s (/pb skillreq to view).",
+            newCorrections, newCorrections == 1 and "" or "s"))
+    end
+end
+
 function Scanner:ScanTrainer()
     -- Determine which profession this trainer teaches
     -- We check if a trade skill or craft window is also open
@@ -335,6 +360,7 @@ function Scanner:ScanTrainer()
 
     if profName ~= "Unknown" then
         DS:SetTrainerRecipes(profName, available)
+        self:ReconcileSkillReq(available)
     end
 end
 

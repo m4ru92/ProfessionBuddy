@@ -179,3 +179,10 @@ function RDB:GetRecipeByName(name)
     local prof = self.data[ref.profName]
     return prof and prof[ref.recipeName] or nil
 end
+
+-- Static (data-file) learn level for a recipe name, or nil. Compared against
+-- the authoritative GetTrainerServiceSkillReq in Scanner:ReconcileSkillReq.
+function RDB:StaticSkillReq(name)
+    local info = self:GetRecipeByName(name)
+    return info and info.skillReq or nil
+end

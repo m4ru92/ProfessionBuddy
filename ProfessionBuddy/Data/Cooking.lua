@@ -382,7 +382,7 @@ local recipes = {
     ["Stewed Trout"] = {
         spellID = 42296,
         itemID = 33048,
-        skillReq = 335,
+        skillReq = 325,
         sources = {
             { method = "trainer", faction = "Both" },
         },
@@ -397,7 +397,7 @@ local recipes = {
     ["Hot Buttered Trout"] = {
         spellID = 42305,
         itemID = 33053,
-        skillReq = 375,
+        skillReq = 350,
         sources = {
             { method = "trainer", faction = "Both" },
         },
@@ -1623,7 +1623,7 @@ local recipes = {
     ["Fisherman's Feast"] = {
         spellID = 42302,
         itemID = 33052,
-        skillReq = 375,
+        skillReq = 350,
         sources = {
             { method = "trainer", faction = "Both" },
         },

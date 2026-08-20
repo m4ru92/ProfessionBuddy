@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "1.0.1"
+addon.version = "1.0.2"
 addon.modules = {}
 
 -- Shorthand for the player's "Name-Realm" key used everywhere
@@ -47,10 +47,14 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     ProfBuddyDB.characters = ProfBuddyDB.characters or {}
     ProfBuddyDB.contacts = ProfBuddyDB.contacts or {}
     ProfBuddyDB.orders = ProfBuddyDB.orders or {}
+    ProfBuddyDB.skillReqOverrides = ProfBuddyDB.skillReqOverrides or {}
     if ProfBuddyDB.orderSeq == nil then ProfBuddyDB.orderSeq = 0 end
     ProfBuddyDB.settings = ProfBuddyDB.settings or {
         tooltipShowUsedIn   = true,
         tooltipShowSkillRange = true,  -- colored skill-up range on each "Used in" line
+        gatherSkillTooltip  = true,  -- required skin/mine/herb skill on mob + node tooltips
+        gatherShowUnlearned = true,  -- show gather info for professions you have not learned
+        skillReqNotify      = false, -- dev-only: chat alert when a trainer learn-level correction is found
         tooltipMaxOwn       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxOther     = 5,
@@ -88,6 +92,12 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.tooltipShowSkillRange == nil then
         ProfBuddyDB.settings.tooltipShowSkillRange = true
+    end
+    if ProfBuddyDB.settings.gatherSkillTooltip == nil then
+        ProfBuddyDB.settings.gatherSkillTooltip = true
+    end
+    if ProfBuddyDB.settings.gatherShowUnlearned == nil then
+        ProfBuddyDB.settings.gatherShowUnlearned = true
     end
     if ProfBuddyDB.settings.tooltipMaxAlt == nil then
         ProfBuddyDB.settings.tooltipMaxAlt = 16
@@ -229,6 +239,22 @@ SlashCmdList["PROFBUDDY"] = function(msg)
     elseif msg == "bug" or msg == "report" then
         addon:ShowBugReport()
 
+    elseif msg == "skillreq" then
+        local ov = ProfBuddyDB.skillReqOverrides or {}
+        local RDB = addon.RecipeDB
+        local n = 0
+        print("|cff00ccffProfessionBuddy:|r trainer-scanned learn-level reconciliations:")
+        for name, tv in pairs(ov) do
+            n = n + 1
+            local static = RDB and RDB:StaticSkillReq(name)
+            if static and static ~= tv then
+                print(string.format("  %s: static %d -> trainer %d  (correction)", name, static, tv))
+            else
+                print(string.format("  %s: trainer %d  (gap-fill; static had none)", name, tv))
+            end
+        end
+        if n == 0 then print("  (none yet -- visit profession trainers to build this up)") end
+
     else
         -- Default: open the /pb main window.
         -- Close profession window / settings if open first.
@@ -247,10 +273,9 @@ SlashCmdList["PROFBUDDY"] = function(msg)
 end
 
 ----------------------------------------------------------------------
--- /pb bug -- copy-paste bug report helper (no BugGrabber auto-pull, on
--- purpose: users would fire off whatever unrelated error was last grabbed).
--- Pre-fills SAFE, useful context + a fill-in template the user copies into a
--- GitHub issue. WoW has no clipboard API, so we show a selectable editbox.
+-- /pb bug -- pre-fills safe context + a template into a selectable editbox to
+-- copy into a GitHub issue (WoW has no clipboard API). Deliberately no
+-- BugGrabber auto-pull -- it'd grab whatever unrelated error was last caught.
 ----------------------------------------------------------------------
 local BUG_URL = "https://github.com/m4ru92/ProfessionBuddy/issues"
 

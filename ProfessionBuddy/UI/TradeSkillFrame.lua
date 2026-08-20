@@ -142,7 +142,20 @@ local function GetSkillRange(recipe)
     return nil
 end
 
+-- Authoritative learn level from a trainer scan (self-healing via
+-- Scanner:ReconcileSkillReq -> ProfBuddyDB.skillReqOverrides), else the given
+-- static value.
+local function LearnLevelFor(name, staticVal)
+    local ov = addon.db and addon.db.skillReqOverrides
+    if ov and name and ov[name] ~= nil then return ov[name] end
+    return staticVal
+end
+
 local function GetSkillReq(recipe)
+    if recipe.name then
+        local ov = addon.db and addon.db.skillReqOverrides
+        if ov and ov[recipe.name] ~= nil then return ov[recipe.name] end
+    end
     if recipe.skillReq then return recipe.skillReq end
     if RDB and RDB.data and recipe.name then
         for _, profRecipes in pairs(RDB.data) do
@@ -401,6 +414,8 @@ function TSF:Init()
 
     -- Hook GameTooltip to show "used in" recipe lines on item hover
     self:HookItemTooltip()
+    self:HookUnitTooltip()
+    self:HookNodeTooltip()
 
     -- Shift-compare: detect shift press/release while hovering a recipe row
     addon:RegisterEvent("MODIFIER_STATE_CHANGED", function(_, key, down)
@@ -423,8 +438,174 @@ function TSF:Init()
 end
 
 ----------------------------------------------------------------------
--- Tooltip "used in" hook
+-- Gatherable-mob tooltip: skinning/mining/herbalism skill on hover for a
+-- gatherable mob, live or corpse. Data: Data/GatherMobs.lua (npcID sets).
 ----------------------------------------------------------------------
+-- Required gather skill for a corpse of the given level (see DESIGN-NOTES.md).
+local function RequiredGatherSkill(level)
+    if not level or level <= 0 then return nil end
+    if level <= 10 then return 1 end
+    if level < 20  then return (level - 10) * 10 end
+    return level * 5
+end
+
+-- npcID from a "Creature-0-...-<npcID>-<spawnUID>" GUID (nil for players/objects).
+local function NpcIDFromGUID(guid)
+    if not guid then return nil end
+    local kind, _, _, _, _, npcID = strsplit("-", guid)
+    if kind ~= "Creature" and kind ~= "Vehicle" then return nil end
+    return tonumber(npcID)
+end
+
+local function GatherProfForNpc(npcID)
+    if not npcID then return nil end
+    if addon.SkinnableMobs and addon.SkinnableMobs[npcID] then return "Skinning" end
+    if addon.MineableMobs  and addon.MineableMobs[npcID]  then return "Mining" end
+    if addon.HerbableMobs  and addon.HerbableMobs[npcID]  then return "Herbalism" end
+    return nil
+end
+
+-- Current char's skill in a gathering prof (nil if untrained). Reads the live
+-- rank from the skill lines; DataStore's cache lags while you're gaining skill,
+-- so it's only the fallback when the live line isn't visible (see DESIGN-NOTES).
+local function PlayerGatherSkill(prof)
+    if GetNumSkillLines then
+        for i = 1, GetNumSkillLines() do
+            local name, isHeader, _, rank = GetSkillLineInfo(i)
+            if name and not isHeader and name == prof and rank and rank > 0 then
+                return rank
+            end
+        end
+    end
+    local c = DS and DS:GetCharacter(addon:PlayerKey())
+    local profs = c and c.professions
+    if not profs then return nil end
+    local pd = profs[prof]
+    if not pd and prof == "Mining" then pd = profs["Smelting"] end
+    return pd and pd.skillLevel or nil
+end
+
+-- Colour the "Requires" line by gather difficulty vs your skill: red below the
+-- required skill R, then orange/yellow/green/grey at R / R+25 / R+50 / R+100.
+-- Same bands for herb/mine/skin. Derivation and sources in DESIGN-NOTES.md.
+local function GatherBandColor(have, req)
+    if not have or not req or have < req then return "ffff2020" end  -- red: can't gather
+    local d = have - req
+    if d < 25  then return "ffff8040" end   -- orange
+    if d < 50  then return "ffffff00" end   -- yellow
+    if d < 100 then return "ff40c040" end   -- green
+    return "ff808080"                        -- grey
+end
+
+-- Band-coloured "Requires <Prof> (N)" + (if learned) a grey "Your <Prof>: X".
+-- nil = show nothing (unlearned prof and "show for unlearned" off). reqStr
+-- overrides the number, e.g. "??" for a boss-level mob.
+local function GatherLines(prof, req, reqStr)
+    local have = PlayerGatherSkill(prof)
+    if not have and addon.db.settings.gatherShowUnlearned == false then return nil end
+    reqStr = reqStr or tostring(req)
+    local requires = "|c" .. GatherBandColor(have, req)
+        .. "Requires " .. prof .. " (" .. reqStr .. ")|r"
+    local yours = have and ("|cff808080Your " .. prof .. ": " .. have .. "|r") or nil
+    return requires, yours
+end
+
+function TSF:HookUnitTooltip()
+    if self._hookedUnitTooltip then return end
+    self._hookedUnitTooltip = true
+
+    GameTooltip:HookScript("OnTooltipSetUnit", function(tip)
+        if not (addon.db and addon.db.settings) then return end
+        if addon.db.settings.gatherSkillTooltip == false then return end
+
+        local unit = select(2, tip:GetUnit()) or "mouseover"
+        if not UnitExists(unit) then return end
+        -- gatherable only: attackable OR a dead corpse (skips friendly/non-combat pets)
+        if not (UnitCanAttack("player", unit) or UnitIsDead(unit)) then return end
+
+        local npcID = NpcIDFromGUID(UnitGUID(unit))
+        local prof  = GatherProfForNpc(npcID)
+        if not prof then return end
+
+        local level = UnitLevel(unit)
+        local req, reqStr
+        if level and level < 0 then
+            reqStr = "??"
+        else
+            req = RequiredGatherSkill(level)
+            if not req then return end
+            reqStr = tostring(req)
+        end
+
+        local requires, yours = GatherLines(prof, req, reqStr)
+        if not requires then return end
+        tip:AddLine(requires)
+        if yours then tip:AddLine(yours) end
+        tip:Show()
+    end)
+end
+
+-- World nodes (ore veins / herbs) are GameObjects, not units, so
+-- OnTooltipSetUnit never fires. Match the node name against a static name->skill
+-- table (ProfBuddy.MiningNodes / HerbNodes). See DESIGN-NOTES.md for why this
+-- runs on a throttled OnUpdate and re-appends idempotently.
+function TSF:HookNodeTooltip()
+    if self._hookedNodeTooltip then return end
+    self._hookedNodeTooltip = true
+
+    -- Re-append our line if it's not currently in the tooltip (the client
+    -- rebuilds node tooltips across frames and wipes appended lines).
+    local function tryAppend(tip)
+        if not (addon.db and addon.db.settings) then return end
+        if addon.db.settings.gatherSkillTooltip == false then return end
+        if tip:GetUnit() then return end                 -- units handled elsewhere
+        if tip.GetItem and tip:GetItem() then return end -- item tooltips
+        local tname = tip:GetName()
+        if not tname then return end
+        local fs = _G[tname .. "TextLeft1"]
+        local nodeName = fs and fs:GetText()
+        if not nodeName or nodeName == "" then return end
+        local prof, req
+        if addon.MiningNodes and addon.MiningNodes[nodeName] then prof, req = "Mining", addon.MiningNodes[nodeName]
+        elseif addon.HerbNodes and addon.HerbNodes[nodeName] then prof, req = "Herbalism", addon.HerbNodes[nodeName] end
+        if not prof then return end
+        local requires, yours = GatherLines(prof, req)
+        if not requires then return end
+        -- Overwrite the game's "Requires <prof>" line in place; ensure "Your" exists.
+        local reqDone, yourDone = false, false
+        for i = 2, tip:NumLines() do
+            local fs = _G[tname .. "TextLeft" .. i]
+            local txt = fs and fs:GetText()
+            if txt then
+                if txt == requires then
+                    reqDone = true
+                elseif (not reqDone) and txt:find(prof, 1, true) and not txt:find("Your ", 1, true) then
+                    fs:SetText(requires); reqDone = true
+                end
+                if yours then
+                    if txt == yours then
+                        yourDone = true
+                    elseif txt:find("Your " .. prof, 1, true) then
+                        -- stale value from a live skill-up: update in place, no dupe
+                        fs:SetText(yours); yourDone = true
+                    end
+                end
+            end
+        end
+        if not reqDone then tip:AddLine(requires) end
+        if yours and not yourDone then tip:AddLine(yours) end
+        tip:Show()
+    end
+
+    local acc = 0
+    GameTooltip:HookScript("OnUpdate", function(tip, elapsed)
+        acc = acc + (elapsed or 0)
+        if acc < 0.05 then return end        -- ~20x/sec; re-adds fast if the client wipes it
+        acc = 0
+        tryAppend(tip)
+    end)
+end
+
 function TSF:HookItemTooltip()
     if self._hookedTooltip then return end
 
@@ -1746,8 +1927,10 @@ function TSF:BuildRecipeList(parent)
                     -- they hit this branch, not the item-less one -- append the rod
                     -- here too or it never shows on the player's own recipes.
                     self:AppendRodLine(GameTooltip, entry)
+                    self:AppendRandomEnchantLine(GameTooltip, entry.itemID)
                 elseif entry.itemID and entry.itemID ~= 0 then
                     GameTooltip:SetItemByID(entry.itemID)
+                    self:AppendRandomEnchantLine(GameTooltip, entry.itemID)
                 else
                     -- Item-less recipe (e.g. an enchant): itemID is 0 and there's
                     -- no link, so SetItemByID(0) would render a broken tooltip.
@@ -2172,6 +2355,16 @@ function TSF:BuildDetailPanel(parent)
             end
         end)
         rFrame:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        -- Shift-click a material -> chat link / AH search / socket, via the
+        -- client's own router (HandleModifiedItemClick no-ops on an unmodified
+        -- click). Rows carry itemID, not a link; GetItemInfo's link is nil until
+        -- the item is cached, so the first click on an uncached item no-ops.
+        rFrame:SetScript("OnMouseUp", function(self)
+            if self.itemID then
+                local link = select(2, GetItemInfo(self.itemID))
+                if link then HandleModifiedItemClick(link) end
+            end
+        end)
         rFrame:Hide()
         self.reagentRows[i] = rFrame
     end
@@ -2512,6 +2705,23 @@ function TSF:RefreshDetailPanel(preserveScroll)
     end)
 end
 
+-- Random-property crafted results (e.g. Aquamarine Signet) only show their
+-- "<Random enchantment>" line via the trade-skill result path, not from an item
+-- ID or link -- so append it for known random items. Idempotent: skips if a
+-- random line is already present. Data: ProfBuddy.RandomEnchantItems.
+function TSF:AppendRandomEnchantLine(tip, itemID)
+    if not (itemID and addon.RandomEnchantItems and addon.RandomEnchantItems[itemID]) then return end
+    local name = tip:GetName()
+    if name then
+        for i = 1, tip:NumLines() do
+            local fs = _G[name .. "TextLeft" .. i]
+            local t = fs and fs:GetText()
+            if t and t:lower():find("random enchant", 1, true) then return end
+        end
+    end
+    tip:AddLine("<Random enchantment>", 0, 1, 0)
+end
+
 function TSF:ShowEmbeddedTooltip(recipe)
     local tip = self.embeddedTip
     tip:Hide()
@@ -2540,10 +2750,12 @@ function TSF:ShowEmbeddedTooltip(recipe)
     if recipe.itemLink then
         tip:SetHyperlink(recipe.itemLink)
         self:AppendRodLine(tip, recipe)  -- own known enchants land here (itemLink set)
+        self:AppendRandomEnchantLine(tip, itemID)
         tip:Show()
         return
     elseif itemID and itemID ~= 0 then
         tip:SetItemByID(itemID)
+        self:AppendRandomEnchantLine(tip, itemID)
         tip:Show()
         return
     end
@@ -2929,6 +3141,14 @@ function TSF:BuildCalcPanel()
             end
         end)
         row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        -- Shift-click a material -> chat link / AH search / socket (same as the
+        -- detail-panel reagent rows).
+        row:SetScript("OnMouseUp", function(r)
+            if r.itemID then
+                local link = select(2, GetItemInfo(r.itemID))
+                if link then HandleModifiedItemClick(link) end
+            end
+        end)
 
         row:Hide()
         self.calcRows[i] = row
@@ -4080,7 +4300,32 @@ function TSF:BuildSettingsPanel(parent)
     otherSlider.Text:SetText("")
     yRight = yRight - 14
 
+    -- Gather skill on ore/herb NODES + skinnable/mineable/herbable MOBS.
+    -- The -52 clears the third slider's track + its min/max labels below it
+    -- (the same clearance the notif section used to need); a smaller gap made
+    -- the checkboxes overlap the slider. Verified via layout sim.
+    yRight = yRight - 52
+    local gatherCB = MakeCheckbox("Gather skill on tooltips", "gatherSkillTooltip", yRight, COL_RIGHT)
+    yRight = yRight - 26
+    local unlearnedCB = MakeCheckbox("Show for unlearned professions", "gatherShowUnlearned", yRight, COL_RIGHT + 20)
+    yRight = yRight - 24
     groupBg:SetHeight(groupTop - yRight)
+
+    -- "Show for unlearned professions" is a SUB-option of "Gather skill on
+    -- tooltips" -- disable/grey it when the parent is off (mirrors the skill-up
+    -- range checkbox under "Show recipes used in").
+    local function UpdateGatherSub()
+        if settings.gatherSkillTooltip then
+            unlearnedCB:Enable(); unlearnedCB:SetAlpha(1)
+        else
+            unlearnedCB:Disable(); unlearnedCB:SetAlpha(0.4)
+        end
+    end
+    gatherCB:SetScript("OnClick", function(self)
+        settings.gatherSkillTooltip = self:GetChecked()
+        UpdateGatherSub()
+    end)
+    UpdateGatherSub()
 
     -- Shared update function for sliders + checkbox
     local function UpdateTooltipGroup()
@@ -4148,8 +4393,9 @@ function TSF:BuildSettingsPanel(parent)
     end)
 
     -- ── Crafting Order Notifications section ──────────────────
-    -- Large gap to clear the third tooltip slider + its min/max labels
-    yRight = yRight - 52
+    -- Normal section gap (the slider is already cleared by the gather
+    -- checkboxes above), so the column doesn't run off the panel bottom.
+    yRight = yRight - 22
 
     local notifHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     notifHeader:SetPoint("TOPLEFT", COL_RIGHT, yRight)
@@ -4196,6 +4442,7 @@ function TSF:BuildSettingsPanel(parent)
         altSlider:SetValue(settings.tooltipMaxAlt or 16)
         otherSlider:SetValue(settings.tooltipMaxOther or 5)
         UpdateTooltipGroup()
+        UpdateGatherSub()
         -- Belt-and-suspenders: hide content that shouldn't be visible
         if TSF.craftBar then TSF.craftBar:Hide() end
         if TSF.listPanel then TSF.listPanel:Hide() end
@@ -4438,7 +4685,7 @@ function TSF:LoadRecipes()
                     itemLink    = data.itemLink,
                     numAvail    = data.numAvail or 0,
                     reagents    = data.reagents,
-                    skillReq    = sReq or data.skillReq,
+                    skillReq    = LearnLevelFor(name, sReq or data.skillReq),
                     skillRange  = sr,
                     spellID     = data.spellID,
                     category    = GetRecipeCategory(name, data.itemID, state.profName),
@@ -4467,7 +4714,7 @@ function TSF:LoadRecipes()
                 difficulty   = "medium",
                 icon         = missingIcon,
                 itemID       = info.itemID,
-                skillReq     = info.skillReq,
+                skillReq     = LearnLevelFor(name, info.skillReq),
                 skillRange   = info.skillRange,
                 spellID      = info.spellID,
                 source       = info.source,
@@ -5196,7 +5443,7 @@ function TSF:OpenWithCharacter(charKey, profName)
                 itemLink    = itemLink,
                 numAvail    = numAvail,
                 reagents    = reagents,
-                skillReq    = staticEntry and staticEntry.skillReq or nil,
+                skillReq    = LearnLevelFor(recipeName, staticEntry and staticEntry.skillReq or nil),
                 skillRange  = sr,
                 spellID     = recipeSpellID or (staticEntry and staticEntry.spellID),
                 index       = nil, -- no live game index
