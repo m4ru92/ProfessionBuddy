@@ -16,6 +16,15 @@
 local addon = ProfBuddy
 local Comm = addon:NewModule("Comm")
 
+-- Comm wire revision. Bump by 1 on ANY wire-format / payload-shape / trust-gate
+-- change (see Comm-Verification-Ledger.md). Reintroduced 2026-08-20: it was
+-- designed 2026-07-26 but that edit only ever lived in a Drive zip and was never
+-- committed, so it fell out of the shipped code. rev 2 = last verified wire
+-- (shipped 1.0.2); rev 3 = 1.0.3 order-comm changes (decline reasons + delivery
+-- indicators) -- UNVERIFIED until the 2-client bulk re-test.
+local COMM_REV = 3
+addon.COMM_REV = COMM_REV
+
 local AceComm
 local AceSerializer
 
@@ -86,6 +95,7 @@ function Comm:Send(msgType, data, channel, target)
     data = data or {}
     data._type = msgType
     data._ver = addon.version
+    data._commrev = COMM_REV
     data._from = addon:PlayerKey()
 
     local serialized = AceSerializer:Serialize(data)
@@ -257,6 +267,13 @@ function Comm:SendOrderMessage(msgType, data, target, label, isResend)
                 msgType = msgType, data = data, target = target,
                 label = label, warned = warned,
             }
+            -- Delivery indicator: no ack in time -> they're offline, mark queued.
+            local oid = data.id or (data.order and data.order.id)
+            local o = oid and addon.db.orders and addon.db.orders[oid]
+            if o and o.lastSentToken == token then
+                o.deliveryState = "queued"
+                if addon.OrdersPanel and addon.OrdersPanel.RefreshAll then addon.OrdersPanel:RefreshAll() end
+            end
         end),
     }
 end
@@ -274,6 +291,13 @@ function Comm:HandleOrderAck(sender, data)
     if p and p.timer then p.timer:Cancel() end
     pendingOrderAck[token] = nil
     if addon.db.orderOutbox then addon.db.orderOutbox[token] = nil end
+    -- Delivery indicator: the counterparty's client confirmed receipt.
+    local oid = token:match("^(.-):")
+    local o = oid and addon.db.orders and addon.db.orders[oid]
+    if o and o.lastSentToken == token then
+        o.deliveryState = "delivered"
+        if addon.OrdersPanel and addon.OrdersPanel.RefreshAll then addon.OrdersPanel:RefreshAll() end
+    end
 end
 
 -- Re-send any order messages queued for a player. Called when we next
@@ -315,6 +339,11 @@ function Comm:SendOrderNew(order)
     local token = order.id .. ":new"
     self:SendOrderMessage("ORDER_NEW", { order = order, token = token }, cp,
         "request")
+    -- Delivery indicator (set AFTER the send so these local-only fields don't
+    -- ride in the payload). "sent" -> "delivered" on ack, "queued" on timeout.
+    order.lastSentToken = token
+    order.deliveryState = "sent"
+    order.lastSentBy = addon:PlayerKey()  -- so the indicator only shows to the sender
 end
 
 -- Either side -> counterparty: a status change on an existing order.
@@ -324,12 +353,16 @@ function Comm:SendOrderUpdate(order)
     if not cp then return end
     local token = order.id .. ":" .. order.status .. ":" .. (order.updatedAt or 0)
     self:SendOrderMessage("ORDER_UPDATE", {
-        id          = order.id,
-        status      = order.status,
-        completedBy = order.completedBy,
-        updatedAt   = order.updatedAt,
-        token       = token,
+        id           = order.id,
+        status       = order.status,
+        completedBy  = order.completedBy,
+        updatedAt    = order.updatedAt,
+        declineReason = order.declineReason,  -- optional; only set on a decline
+        token        = token,
     }, cp, order.status .. " update")
+    order.lastSentToken = token
+    order.deliveryState = "sent"
+    order.lastSentBy = addon:PlayerKey()  -- so the indicator only shows to the sender
 end
 
 -- A received status maps to the NotifyOrderEvent "kind" shown to the
@@ -374,7 +407,7 @@ function Comm:HandleOrderUpdate(sender, data)
     local cp = self:OrderCounterparty(existing)
     if not cp or shortName(cp) ~= shortName(sender) then return end
     local order, applied = Orders:ApplyRemoteStatus(data.id, data.status,
-        data.completedBy, data.updatedAt)
+        data.completedBy, data.updatedAt, data.declineReason)
     if order then self:SendOrderAck(sender, data.token) end
     if applied then self:NotifyOrders(ORDER_STATUS_KIND[order.status], order) end
 end
@@ -608,10 +641,13 @@ function Comm:BuildFullPayload()
         -- is kept for backward compat with clients that lack spellID matching.
         local recipeNames = {}
         local recipeSpells = {}
+        local recipeCooldowns = {}   -- index-aligned; 0 = no active cooldown
         if profData.recipes then
             for recipeName, info in pairs(profData.recipes) do
                 table.insert(recipeNames, recipeName)
                 recipeSpells[#recipeNames] = info.spellID or 0
+                recipeCooldowns[#recipeNames] =
+                    (info.cooldownReadyAt and info.cooldownReadyAt > time()) and info.cooldownReadyAt or 0
             end
         end
         professions[profName] = {
@@ -619,6 +655,7 @@ function Comm:BuildFullPayload()
             maxSkill = profData.maxSkill or 375,
             recipeNames = recipeNames,
             recipeSpells = recipeSpells,
+            recipeCooldowns = recipeCooldowns,
         }
     end
 
@@ -682,13 +719,23 @@ function Comm:HandleSyncData(sender, data)
                 if type(profPayload.recipeNames) == "table" then
                     local spells = type(profPayload.recipeSpells) == "table"
                                    and profPayload.recipeSpells or nil
+                    local cds = type(profPayload.recipeCooldowns) == "table"
+                                   and profPayload.recipeCooldowns or nil
+                    local now = time()
                     for idx, recipeName in ipairs(profPayload.recipeNames) do
                         if type(recipeName) == "string" then
                             -- carry the locale-stable spellID when present so
                             -- remote recipes match the static DB across locales
                             local sid = spells and tonumber(spells[idx])
                             if sid == 0 then sid = nil end
-                            recipes[recipeName] = { isKnown = true, spellID = sid }
+                            local rec = { isKnown = true, spellID = sid }
+                            -- friend cooldown ready-time, clamped to a sane window
+                            -- so a forged value can't show an absurd countdown
+                            local cd = cds and tonumber(cds[idx])
+                            if cd and cd > now and cd <= now + 30 * 86400 then
+                                rec.cooldownReadyAt = cd
+                            end
+                            recipes[recipeName] = rec
                         end
                     end
                 end

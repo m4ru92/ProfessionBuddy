@@ -40,6 +40,7 @@ local STATUS = {
     COMPLETED = "completed",
     DECLINED  = "declined",
     CANCELLED = "cancelled",
+    EXPIRED   = "expired",
 }
 Orders.STATUS = STATUS
 
@@ -48,6 +49,7 @@ local TERMINAL = {
     [STATUS.COMPLETED] = true,
     [STATUS.DECLINED]  = true,
     [STATUS.CANCELLED] = true,
+    [STATUS.EXPIRED]   = true,
 }
 Orders.TERMINAL = TERMINAL
 
@@ -68,6 +70,8 @@ function Orders:Init()
     -- Persisted outbox for order messages not yet delivered to an
     -- offline counterparty (auto-resent when they next come online).
     addon.db.orderOutbox = addon.db.orderOutbox or {}
+    self:ExpireStale()
+    self:PruneHistory()
 end
 
 ----------------------------------------------------------------------
@@ -151,11 +155,17 @@ function Orders:Accept(id)
     return o
 end
 
-function Orders:Decline(id)
+function Orders:Decline(id, reason)
     local o = addon.db.orders[id]
     if not o then return nil, "no such order" end
     if o.status ~= STATUS.PENDING then return nil, "decline is only allowed while pending" end
     if not isActor(o, "crafter") then return nil, "only the crafter can decline" end
+    -- Optional reason (trusted local text; capped). Sanitized on the requester's
+    -- side when received (ApplyRemoteStatus). Blank/whitespace clears it.
+    if type(reason) == "string" then
+        reason = strtrim(reason)
+        o.declineReason = (#reason > 0) and reason:sub(1, 150) or nil
+    end
     setStatus(o, STATUS.DECLINED)
     return o
 end
@@ -233,6 +243,60 @@ function Orders:DismissHistorySide(side)
     return #ids
 end
 
+-- Retention: cap stored history so orders never grow unbounded. Keeps, per
+-- character key, the most recent `limit` TERMINAL orders that key is party to,
+-- and HARD-DELETES any terminal order beyond the cap for BOTH of its parties.
+-- Active (non-terminal) orders are never touched. Runs at login (Init). Unlike
+-- Dismiss (a hide flag), this permanently removes the record to bound the DB.
+function Orders:PruneHistory(limit)
+    limit = limit or (addon.db.settings and addon.db.settings.orderHistoryLimit) or 50
+    if limit <= 0 then return 0 end
+    local byKey = {}
+    for _, o in pairs(addon.db.orders or {}) do
+        if TERMINAL[o.status] then
+            byKey[o.requester] = byKey[o.requester] or {}; table.insert(byKey[o.requester], o)
+            -- Skip the duplicate insert for a self-order (own-alt order where
+            -- requester == crafter) so it isn't counted twice toward the cap.
+            if o.crafter ~= o.requester then
+                byKey[o.crafter] = byKey[o.crafter] or {}; table.insert(byKey[o.crafter], o)
+            end
+        end
+    end
+    local keep = {}
+    for _, list in pairs(byKey) do
+        table.sort(list, function(a, b) return a.updatedAt > b.updatedAt end)
+        for i = 1, math.min(#list, limit) do keep[list[i].id] = true end
+    end
+    local removed = 0
+    for id, o in pairs(addon.db.orders or {}) do
+        if TERMINAL[o.status] and not keep[id] then
+            addon.db.orders[id] = nil
+            removed = removed + 1
+        end
+    end
+    return removed
+end
+
+-- Auto-expire stale PENDING orders. Deterministic: computed purely from
+-- createdAt + the fixed threshold, so both parties expire the same order at the
+-- same wall-clock independently -- no message needed, no divergence (and the
+-- login sweep runs before any UI interaction, so a stale order can't be acted
+-- on after its deadline). Only pending (unanswered) orders expire; an accepted
+-- order (crafter committed) never does. Runs at login (Init). days <= 0 disables.
+function Orders:ExpireStale(days)
+    days = days or (addon.db.settings and addon.db.settings.orderExpiryDays) or 14
+    if days <= 0 then return 0 end
+    local cutoff = time() - days * 86400
+    local n = 0
+    for _, o in pairs(addon.db.orders or {}) do
+        if o.status == STATUS.PENDING and (o.createdAt or 0) <= cutoff then
+            setStatus(o, STATUS.EXPIRED)
+            n = n + 1
+        end
+    end
+    return n
+end
+
 ----------------------------------------------------------------------
 -- Legal actions for (current character role x order state).
 -- Drives which buttons a row shows. Returns a list of action keys.
@@ -296,7 +360,11 @@ function Orders:GetHistory()
     local out = collect(function(o, me)
         return (o.requester == me or o.crafter == me) and TERMINAL[o.status]
     end)
-    table.sort(out, function(a, b) return a.updatedAt > b.updatedAt end)
+    local oldestFirst = addon.db.settings and addon.db.settings.orderHistorySortOldest
+    table.sort(out, function(a, b)
+        if oldestFirst then return a.updatedAt < b.updatedAt end
+        return a.updatedAt > b.updatedAt
+    end)
     return out
 end
 
@@ -334,6 +402,7 @@ local STATUS_RANK = {
     completed = 3,
     declined  = 3,
     cancelled = 3,
+    expired   = 3,
 }
 
 local VALID_MATRESP = { requester = true, crafter = true, split = true }
@@ -388,7 +457,7 @@ end
 -- applied is false for a duplicate / stale / out-of-order message
 -- (the caller still acks it but skips re-notifying). Terminal orders
 -- never regress.
-function Orders:ApplyRemoteStatus(id, newStatus, completedBy, updatedAt)
+function Orders:ApplyRemoteStatus(id, newStatus, completedBy, updatedAt, declineReason)
     local o = addon.db.orders[id]
     if not o then return nil, "no such order" end
     if not STATUS_RANK[newStatus] then return nil, "bad status" end
@@ -411,6 +480,9 @@ function Orders:ApplyRemoteStatus(id, newStatus, completedBy, updatedAt)
     end
     o.status = newStatus
     if completedBy ~= nil then o.completedBy = completedBy end
+    if newStatus == STATUS.DECLINED and declineReason ~= nil then
+        o.declineReason = sanitize(declineReason, 150)
+    end
     o.updatedAt = newU
     return o, true
 end

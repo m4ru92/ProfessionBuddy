@@ -646,6 +646,14 @@ function TSF:HookItemTooltip()
     end
 
     GameTooltip:HookScript("OnTooltipSetItem", function(tip)
+        -- Random-enchant line for ANY item tooltip (chat link, bags, AH, etc.):
+        -- 2.5.x omits "<Random enchantment>" from a bare item link/ID, so append
+        -- it for known random-property crafted items. Idempotent, and independent
+        -- of the Used-in setting below.
+        local _, reLink = tip:GetItem()
+        local reID = reLink and addon:ItemIDFromLink(reLink)
+        if reID then self:AppendRandomEnchantLine(tip, reID) end
+
         if not addon.db.settings.tooltipShowUsedIn then return end
         if not RDB then return end
 
@@ -2042,8 +2050,12 @@ function TSF:UpdateListRows()
                 -- Indent recipes under subcategories (only in Category sort)
                 local recipeIndent = (state.sortBy == "Category" and entry.subcategory) and 14 or 0
 
-                if entry.icon then
-                    row.icon:SetTexture(entry.icon)
+                -- Real enchant icon for friends: enchants have no itemID, so fall
+                -- back to the synced spellID (GetSpellTexture) when there's no
+                -- scanned icon (own/alt enchants keep their scanned icon).
+                local rowIcon = entry.icon or (entry.spellID and GetSpellTexture and GetSpellTexture(entry.spellID))
+                if rowIcon then
+                    row.icon:SetTexture(rowIcon)
                     row.icon:SetPoint("LEFT", 2 + recipeIndent, 0)
                     row.icon:Show()
                     row.nameText:SetPoint("LEFT", row.icon, "RIGHT", 4, 0)
@@ -2194,6 +2206,34 @@ end
 ----------------------------------------------------------------------
 -- Detail panel (right side)
 ----------------------------------------------------------------------
+-- Format a cooldown remaining-time as "Xd Yh" / "Xh Ym" / "Ym" / "<1m".
+local function fmtCooldown(secs)
+    secs = math.max(0, math.floor(secs))
+    local d = math.floor(secs / 86400); secs = secs % 86400
+    local h = math.floor(secs / 3600);  secs = secs % 3600
+    local m = math.floor(secs / 60)
+    if d > 0 then return d .. "d " .. h .. "h" end
+    if h > 0 then return h .. "h " .. m .. "m" end
+    if m > 0 then return m .. "m" end
+    return "<1m"
+end
+
+-- Orange "\nOn cooldown: ready in ..." suffix for the viewed character's recipe
+-- (self or a scanned alt), or "" if none active. Uses the absolute readyAt from
+-- scan time so it stays correct across relog. Appended to the detail "Can make"
+-- line: the \n grows that FontString and its BOTTOMLEFT-anchored dependents shift
+-- down on their own, so no layout re-anchoring is needed.
+function TSF:CooldownSuffix(recipe)
+    local viewChar = state._viewCharKey or addon:PlayerKey()
+    local prof = DS and DS:GetProfession(viewChar, state.profName)
+    local rr = prof and prof.recipes and prof.recipes[recipe.name]
+    local readyAt = rr and rr.cooldownReadyAt
+    if readyAt and readyAt > time() then
+        return "\n|cffff8800On cooldown: ready in " .. fmtCooldown(readyAt - time()) .. "|r"
+    end
+    return ""
+end
+
 function TSF:BuildDetailPanel(parent)
     local topOffset = -106
 
@@ -2480,6 +2520,9 @@ function TSF:RefreshDetailPanel(preserveScroll)
     if not iconTex and recipe.itemID then
         iconTex = select(10, GetItemInfo(recipe.itemID))
     end
+    if not iconTex and recipe.spellID and GetSpellTexture then
+        iconTex = GetSpellTexture(recipe.spellID)  -- real enchant icon for friends
+    end
     if iconTex then
         self.detIcon:SetTexture(iconTex)
         self.detIcon:Show()
@@ -2574,10 +2617,11 @@ function TSF:RefreshDetailPanel(preserveScroll)
            and (not recipe.itemID or recipe.itemID == 0) then
             avail = self:ReagentCraftCount(recipe)
         end
+        local cdSuffix = self:CooldownSuffix(recipe)
         if avail > 0 then
-            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. "|r")
+            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. "|r" .. cdSuffix)
         else
-            self.detCanMake:SetText("|cffff4444Can make: 0 (missing reagents)|r")
+            self.detCanMake:SetText("|cffff4444Can make: 0 (missing reagents)|r" .. cdSuffix)
         end
     end
 

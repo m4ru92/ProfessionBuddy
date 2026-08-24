@@ -208,6 +208,9 @@ function Scanner:ScanCurrentTradeSkill()
             end
 
             local icon = GetTradeSkillIcon(i)
+            -- Active profession cooldown (transmutes, specialty cloths, etc.):
+            -- store an ABSOLUTE ready-time so remaining stays correct across relog.
+            local cd = GetTradeSkillCooldown and GetTradeSkillCooldown(i)
 
             recipes[skillName] = {
                 index    = i,
@@ -218,6 +221,7 @@ function Scanner:ScanCurrentTradeSkill()
                 difficulty = skillType,
                 numAvail = numAvail,
                 reagents = reagents,
+                cooldownReadyAt = (cd and cd > 0) and (time() + cd) or nil,
             }
         end
     end

@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "1.0.2"
+addon.version = "1.0.3"
 addon.modules = {}
 
 -- Shorthand for the player's "Name-Realm" key used everywhere
@@ -71,6 +71,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         orderChatMessages   = true,
         orderSoundOnRequest = false,
         shareData           = true,  -- master switch for AceComm data sharing
+        orderHistoryLimit   = 50,    -- keep the most recent N terminal orders per character (hard-pruned)
+        orderHistorySortOldest = false, -- History sort: false = newest-closed first
+        orderExpiryDays     = 14,    -- auto-expire pending orders older than N days (0 = off)
     }
     -- Migrate old single-slider setting
     if ProfBuddyDB.settings.tooltipMaxRecipes then
@@ -110,6 +113,15 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.showAllProfessions == nil then
         ProfBuddyDB.settings.showAllProfessions = false
+    end
+    if ProfBuddyDB.settings.orderHistoryLimit == nil then
+        ProfBuddyDB.settings.orderHistoryLimit = 50
+    end
+    if ProfBuddyDB.settings.orderHistorySortOldest == nil then
+        ProfBuddyDB.settings.orderHistorySortOldest = false
+    end
+    if ProfBuddyDB.settings.orderExpiryDays == nil then
+        ProfBuddyDB.settings.orderExpiryDays = 14
     end
     if ProfBuddyDB.settings.includeAltsInCalc == nil then
         ProfBuddyDB.settings.includeAltsInCalc = true

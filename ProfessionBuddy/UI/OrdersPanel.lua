@@ -38,6 +38,7 @@ local STATUS_DISPLAY = {
     completed = { text = "Completed", r = 0.5, g = 0.85, b = 0.5 },
     declined  = { text = "Declined",  r = 0.9, g = 0.4,  b = 0.4 },
     cancelled = { text = "Cancelled", r = 0.7, g = 0.5,  b = 0.4 },
+    expired   = { text = "Expired",   r = 0.6, g = 0.6,  b = 0.6 },
 }
 
 local MATRESP_LABEL = {
@@ -94,6 +95,39 @@ StaticPopupDialogs["PROFBUDDY_CLEAR_HISTORY"] = {
         end
         OP:RefreshAll()
     end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
+-- Decline with an optional reason (shown to the requester). Reason is trusted
+-- locally (crafter's own text); it is sanitized on the requester's side on receipt.
+local function doDecline(orderID, reason)
+    if addon.Orders then
+        local order = addon.Orders:Decline(orderID, reason)
+        if order and addon.Comm then addon.Comm:SendOrderUpdate(order) end
+    end
+    OP:RefreshAll()
+end
+
+StaticPopupDialogs["PROFBUDDY_DECLINE_REASON"] = {
+    text = "Decline this order?\nOptional reason (shown to the requester):",
+    button1 = "Decline",
+    button2 = CANCEL,
+    hasEditBox = true,
+    editBoxWidth = 260,
+    maxLetters = 150,
+    OnShow = function(self) if self.editBox then self.editBox:SetText("") end end,
+    OnAccept = function(self, orderID)
+        doDecline(orderID, self.editBox and self.editBox:GetText())
+    end,
+    EditBoxOnEnterPressed = function(self)
+        local p = self:GetParent()
+        doDecline(p.data, self:GetText())
+        p:Hide()
+    end,
+    EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
     timeout = 0,
     whileDead = true,
     hideOnEscape = true,
@@ -328,6 +362,10 @@ function OP:CreateRow(parent, index, ctx)
                 StaticPopup_Show("PROFBUDDY_MARK_DELIVERED", nil, nil, id)
                 return
             end
+            if akey == "decline" then
+                StaticPopup_Show("PROFBUDDY_DECLINE_REASON", nil, nil, id)
+                return
+            end
             local O = addon.Orders
             if not O then return end
             local order
@@ -364,6 +402,21 @@ function OP:CreateRow(parent, index, ctx)
         if addon.Orders and addon.Orders.TERMINAL[o.status] and o.updatedAt then
             GameTooltip:AddLine("Closed: " .. date("%b %d, %Y", o.updatedAt) ..
                 " (" .. relativeTime(o.updatedAt) .. ")", 0.7, 0.7, 0.7)
+        end
+        if o.status == "declined" and o.declineReason and o.declineReason ~= "" then
+            GameTooltip:AddLine("Reason: " .. o.declineReason, 0.9, 0.6, 0.6, true)
+        end
+        -- Only show the delivery state to the side that actually SENT the last
+        -- update (the order record is account-wide, so without this the other
+        -- alt would see "your last update" for an update it never sent).
+        if o.lastSentBy == addon:PlayerKey() then
+            if o.deliveryState == "delivered" then
+                GameTooltip:AddLine("Your last update: delivered", 0.4, 0.85, 0.4)
+            elseif o.deliveryState == "queued" then
+                GameTooltip:AddLine("Your last update: queued (they're offline)", 0.85, 0.7, 0.3)
+            elseif o.deliveryState == "sent" then
+                GameTooltip:AddLine("Your last update: sent (awaiting confirmation)", 0.6, 0.6, 0.6)
+            end
         end
         if o.note and o.note ~= "" then
             GameTooltip:AddLine(" ")
@@ -670,6 +723,32 @@ function OP:BuildHistoryPanel()
         applyScrollRange(ctx)
         self:PaintList(ctx)
     end
+
+    -- Sort toggle (title bar, left of the close button): flips History between
+    -- newest-closed-first and oldest-first. Global for both sections.
+    local sortBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    sortBtn:SetSize(92, 18)
+    -- Anchor to the LEFT of the frame's close button so it lines up with it
+    -- vertically and can't overlap it regardless of the template's geometry.
+    local closeB = f.CloseButton or (f:GetName() and _G[f:GetName() .. "CloseButton"])
+    if closeB then
+        sortBtn:SetPoint("RIGHT", closeB, "LEFT", 0, 0)
+    else
+        sortBtn:SetPoint("TOPRIGHT", -30, -4)
+    end
+    sortBtn:SetNormalFontObject(GameFontNormalSmall)
+    sortBtn:SetHighlightFontObject(GameFontHighlightSmall)
+    local function sortLabel()
+        return addon.db.settings.orderHistorySortOldest and "Oldest first" or "Newest first"
+    end
+    sortBtn:SetText(sortLabel())
+    sortBtn:SetScript("OnClick", function(btn)
+        local s = addon.db.settings
+        s.orderHistorySortOldest = not s.orderHistorySortOldest
+        btn:SetText(sortLabel())
+        if OP.histCtx and OP.histCtx.rebuild then OP.histCtx.rebuild() end
+    end)
+    f.sortBtn = sortBtn
 
     self.histFrame = f
 end
