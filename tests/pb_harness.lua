@@ -89,6 +89,7 @@ dofile(BASE .. "/Core.lua")
 dofile(BASE .. "/DataStore.lua")
 dofile(BASE .. "/Orders.lua")
 dofile(BASE .. "/Comm.lua")
+dofile(BASE .. "/RecipeDB.lua")
 
 local addon = ProfBuddy
 local eventFrame = frames[1]
@@ -327,5 +328,30 @@ assert(ap.recipes["Past CD"].cooldownReadyAt == nil, "T15: past cooldown not dro
 assert(ap.recipes["FarFuture CD"].cooldownReadyAt == nil, "T15: >30d cooldown not dropped")
 assert(ap.recipes["Junk CD"].cooldownReadyAt == nil, "T15: non-numeric cooldown not dropped")
 
-print("ALL 15 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline reason + T15 cooldown clamp)")
+-- ── T16: GetUnknownRecipes tolerates a profession with no recipes table ──
+-- Regression for RecipeDB.lua "bad argument #1 to 'pairs' (table expected,
+-- got nil)". A remote/lightweight/fixture profession record can carry
+-- skillLevel/maxSkill with NO .recipes subtable (e.g. /pbt fixture, or a
+-- friend seen via HELLO before a full SYNC_DATA).
+local RDB = addon.RecipeDB
+assert(RDB, "T16: RecipeDB module missing")
+RDB.data["Tailoring"] = {
+    ["Linen Bag"] = { spellID = 111 },
+    ["Silk Bag"]  = { spellID = 222 },
+}
+-- (a) no .recipes at all -> must not error; every static recipe is unknown
+addon.db.characters["NoRec-Test Realm"] = { isRemote = true,
+    professions = { Tailoring = { skillLevel = 375, maxSkill = 375 } } }
+local ok, res = pcall(function() return RDB:GetUnknownRecipes("NoRec-Test Realm", "Tailoring") end)
+assert(ok, "T16a: GetUnknownRecipes threw on nil recipes: " .. tostring(res))
+assert(res["Linen Bag"] and res["Silk Bag"], "T16a: unknowns not all returned")
+-- (b) sanity: a known recipe is still excluded (fix did not break the normal path)
+addon.db.characters["HasRec-Test Realm"] = { isRemote = true,
+    professions = { Tailoring = { skillLevel = 375, maxSkill = 375,
+        recipes = { ["Linen Bag"] = { spellID = 111 } } } } }
+local res2 = RDB:GetUnknownRecipes("HasRec-Test Realm", "Tailoring")
+assert(res2["Linen Bag"] == nil, "T16b: known recipe wrongly listed as unknown")
+assert(res2["Silk Bag"], "T16b: unknown recipe missing")
+
+print("ALL 16 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown + T16 no-recipes guard)")
 
