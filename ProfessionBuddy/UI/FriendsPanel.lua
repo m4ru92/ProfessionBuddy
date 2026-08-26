@@ -210,10 +210,10 @@ function FP:CreateContent(parent)
         local text = strtrim(addBox:GetText())
         if text == "" then return end
 
-        -- Append realm if not provided
-        if not text:find("-") then
-            text = text .. "-" .. GetRealmName()
-        end
+        -- Canonicalize (capitalize name, default/normalize realm) so the stored
+        -- key matches how this contact's messages arrive at the trust gate.
+        text = addon.Comm and addon.Comm:NormalizeContactKey(text) or text
+        if not text or text == "" then return end
 
         -- Don't add yourself
         if text == addon:PlayerKey() then
@@ -229,9 +229,11 @@ function FP:CreateContent(parent)
             return
         end
 
+        -- Adding a contact is a deliberate local action, so it is trusted.
         addon.db.contacts[text] = {
             autoSync = false,
             lastSync = 0,
+            trusted = true,
         }
 
         addBox:SetText("")
@@ -386,7 +388,10 @@ function FP:CreateRow(parent, index)
     autoCB:SetScript("OnClick", function(self)
         local key = row._contactKey
         if key and addon.db.contacts[key] then
-            addon.db.contacts[key].autoSync = self:GetChecked()
+            local checked = self:GetChecked()
+            addon.db.contacts[key].autoSync = checked
+            -- Enabling auto-sync is a deliberate local action: it trusts them.
+            if checked then addon.db.contacts[key].trusted = true end
         end
     end)
     row.autoCB = autoCB

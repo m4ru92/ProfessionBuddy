@@ -21,8 +21,10 @@ local Comm = addon:NewModule("Comm")
 -- designed 2026-07-26 but that edit only ever lived in a Drive zip and was never
 -- committed, so it fell out of the shipped code. rev 2 = last verified wire
 -- (shipped 1.0.2); rev 3 = 1.0.3 order-comm changes (decline reasons + delivery
--- indicators) -- UNVERIFIED until the 2-client bulk re-test.
-local COMM_REV = 3
+-- indicators); rev 4 = trust-gate hardening restored (realm-aware group match,
+-- two-tier seen/trusted contacts, realm-aware whisper + order anti-spoof) after
+-- the 1.0.1 security patch fell out of shipped code the same way COMM_REV did.
+local COMM_REV = 4
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -102,10 +104,35 @@ function Comm:Send(msgType, data, channel, target)
     AceComm:SendCommMessage(PREFIX, serialized, channel, target, "NORMAL")
 end
 
+-- Realm names as normalized in comm sender strings: spaces, hyphens and
+-- apostrophes removed ("Old Blanchy" -> "OldBlanchy").
+local function normRealm(realm)
+    return (realm or ""):gsub("[%s%-']", "")
+end
+
+-- Full "Name-Realm" for a trust comparison, realm normalized the way comm
+-- sender strings are and a missing realm defaulted to ours. This is NOT the
+-- same as normKey below (which lowercases for pending-sync bookkeeping); trust
+-- compares must keep case, so they use this helper.
+local function normFullKey(key)
+    if type(key) ~= "string" then return nil end
+    local name, realm = key:match("^([^-]+)%-?(.*)$")
+    if not name then return nil end
+    if realm == "" then realm = GetRealmName() end
+    return name .. "-" .. normRealm(realm)
+end
+
 function Comm:SendWhisper(msgType, data, target)
-    -- target must be a character name (no realm for same-realm)
-    local name = target:match("^([^-]+)")
-    self:Send(msgType, data, "WHISPER", name)
+    -- Same-realm targets are addressed by short name. A cross-realm target
+    -- keeps its full Name-Realm: stripping it would deliver the payload to a
+    -- same-named STRANGER on our own realm.
+    local name, realm = target:match("^([^-]+)%-?(.*)$")
+    if not name then return end
+    if realm ~= "" and normRealm(realm) ~= normRealm(GetRealmName()) then
+        self:Send(msgType, data, "WHISPER", name .. "-" .. realm)
+    else
+        self:Send(msgType, data, "WHISPER", name)
+    end
 end
 
 function Comm:SendGroup(msgType, data)
@@ -117,30 +144,104 @@ function Comm:SendGroup(msgType, data)
 end
 
 ----------------------------------------------------------------------
+-- Ingress sanitization. Trust decides WHO we listen to; these decide
+-- WHAT is allowed to reach SavedVariables and the UI: strings pipe-
+-- escaped and length-capped, numbers coerced and clamped, maps size-
+-- capped. A trusted peer running a hostile client is still a hostile
+-- client, so remote payloads are rebuilt field-by-field, never stored
+-- by reference.
+----------------------------------------------------------------------
+local MAX_PROFESSIONS      = 16    -- professions per remote character
+local MAX_RECIPES_PER_PROF = 2000  -- recipe names per profession
+local MAX_INV_ENTRIES      = 5000  -- itemID entries per bags/bank map
+
+local function sanStr(s, maxLen)
+    if type(s) ~= "string" or s == "" then return nil end
+    s = s:gsub("|", "||")
+    if #s > maxLen then s = s:sub(1, maxLen) end
+    return s
+end
+
+local function sanInt(v, minV, maxV, default)
+    v = tonumber(v)
+    if not v then return default end
+    v = math.floor(v)
+    if v < minV then return minV end
+    if v > maxV then return maxV end
+    return v
+end
+
+-- Positive integer ID within range, or nil (0 / junk means "absent").
+local function sanID(v, maxV)
+    v = tonumber(v)
+    if not v then return nil end
+    v = math.floor(v)
+    if v < 1 or v > maxV then return nil end
+    return v
+end
+
+-- itemID -> count map: numeric keys/values only, clamped, size-capped.
+local function sanCounts(t, maxEntries)
+    local out, n = {}, 0
+    if type(t) ~= "table" then return out end
+    for rawID, rawCount in pairs(t) do
+        local id = sanID(rawID, 10^7)
+        local count = tonumber(rawCount)
+        if id and count and count > 0 then
+            n = n + 1
+            if n > maxEntries then break end
+            if count > 10^6 then count = 10^6 end
+            out[id] = math.floor(count)
+        end
+    end
+    return out
+end
+
+local VALID_FACTION = { Alliance = true, Horde = true, Neutral = true }
+local function sanFaction(f)
+    return (type(f) == "string" and VALID_FACTION[f]) and f or "Unknown"
+end
+
+-- Class tokens are locale-independent uppercase English ("WARRIOR").
+local function sanClass(c)
+    if type(c) == "string" and #c <= 16 and c:match("^%u+$") then return c end
+    return "UNKNOWN"
+end
+
+----------------------------------------------------------------------
 -- Receiving
 ----------------------------------------------------------------------
--- Trust gate: we only act on messages from players we already know --
--- a saved contact, or a current party/raid member. Random players who
--- merely know your character name are ignored, which blocks data
--- pulls, fake orders, spoofed chat lines, and malformed-payload errors
--- right at the door. (Grouping bootstraps trust: a HELLO from a
--- group-mate is accepted and auto-creates the contact, so friends who
--- play together sync seamlessly thereafter.)
+-- Trust gate: we only act on messages from players we chose to engage with --
+-- a TRUSTED contact (created by a local action: Add contact, /pb sync, or
+-- enabling auto-sync) or a CURRENT party/raid member. Random players who merely
+-- know your character name are ignored, which blocks data pulls, fake orders,
+-- spoofed chat lines, and malformed-payload errors right at the door.
+--
+-- Group members running PB still get a contact entry so the Friends panel can
+-- list them, but that entry is created with trusted=false: once the group
+-- disbands they can no longer pull your data. (v1.0.0 kept every past group-mate
+-- trusted forever, so one battleground was enough to let strangers pull your
+-- full bags+bank for all time.)
 function Comm:IsGroupMember(senderKey)
     if not IsInGroup() then return false end
-    local short = senderKey:match("^([^-]+)") or senderKey
+    -- Exact Name-Realm compare: matching on the short name alone would let
+    -- "Bob-OtherRealm" ride on group-mate "Bob"'s trust (and vice versa) in any
+    -- cross-realm group.
+    local want = normFullKey(senderKey)
+    if not want then return false end
     local prefix, n
     if IsInRaid() then prefix, n = "raid", GetNumGroupMembers()
     else prefix, n = "party", GetNumSubgroupMembers() end
     for i = 1, n do
-        local name = UnitName(prefix .. i)
-        if name and name == short then return true end
+        local full = GetUnitName(prefix .. i, true)  -- "Name" or "Name-Realm"
+        if full and normFullKey(full) == want then return true end
     end
     return false
 end
 
 function Comm:IsTrusted(senderKey)
-    if addon.db.contacts and addon.db.contacts[senderKey] then return true end
+    local contact = addon.db.contacts and addon.db.contacts[senderKey]
+    if contact and contact.trusted then return true end
     return self:IsGroupMember(senderKey)
 end
 
@@ -252,6 +353,7 @@ function Comm:SendOrderMessage(msgType, data, target, label, isResend)
     local prev = pendingOrderAck[token]
     if prev and prev.timer then prev.timer:Cancel() end
     pendingOrderAck[token] = {
+        target = target,
         timer = C_Timer.NewTimer(ORDER_ACK_TIMEOUT, function()
             pendingOrderAck[token] = nil
             addon.db.orderOutbox = addon.db.orderOutbox or {}
@@ -286,11 +388,22 @@ end
 
 function Comm:HandleOrderAck(sender, data)
     local token = data.token
-    if not token then return end
+    if type(token) ~= "string" or token == "" then return end
+    -- Anti-spoof: only the player we actually sent this token to may ack it.
+    -- Otherwise any trusted peer could clear our outbox or flip the delivery
+    -- indicator for an order they are not part of.
+    local senderNorm = normFullKey(sender)
     local p = pendingOrderAck[token]
-    if p and p.timer then p.timer:Cancel() end
-    pendingOrderAck[token] = nil
-    if addon.db.orderOutbox then addon.db.orderOutbox[token] = nil end
+    if p then
+        if p.target and normFullKey(p.target) ~= senderNorm then return end
+        if p.timer then p.timer:Cancel() end
+        pendingOrderAck[token] = nil
+    end
+    local ob = addon.db.orderOutbox
+    if ob and ob[token] then
+        if ob[token].target and normFullKey(ob[token].target) ~= senderNorm then return end
+        ob[token] = nil
+    end
     -- Delivery indicator: the counterparty's client confirmed receipt.
     local oid = token:match("^(.-):")
     local o = oid and addon.db.orders and addon.db.orders[oid]
@@ -387,8 +500,14 @@ function Comm:HandleOrderNew(sender, data)
        or type(o.crafter) ~= "string" or type(o.item) ~= "table" then
         return
     end
-    if shortName(o.requester) ~= shortName(sender) then return end
-    if shortName(o.crafter) ~= shortName(addon:PlayerKey()) then return end
+    -- Realm-aware anti-spoof: the creator must BE the sender and the order must
+    -- be addressed to us. Ack even on refusal (an ack means "received", not
+    -- "applied") so a rejected peer stops re-queuing and retrying forever.
+    if normFullKey(o.requester) ~= normFullKey(sender)
+       or normFullKey(o.crafter) ~= normFullKey(addon:PlayerKey()) then
+        self:SendOrderAck(sender, data.token)
+        return
+    end
     local order, applied = Orders:UpsertFromRemote(o)
     -- Ack even duplicates (clears the sender's offline warning); only
     -- notify on a genuinely new order so dupes don't double-chat.
@@ -403,13 +522,22 @@ function Comm:HandleOrderUpdate(sender, data)
     -- counterparty. Reject updates to orders we don't have or that the
     -- sender isn't a party to (blocks strangers/others poking orders).
     local existing = addon.db.orders and addon.db.orders[data.id]
-    if not existing then return end
+    if not existing then
+        -- We don't have it (deleted, version skew). Ack so the peer stops
+        -- retrying, but there is nothing to apply.
+        self:SendOrderAck(sender, data.token)
+        return
+    end
     local cp = self:OrderCounterparty(existing)
-    if not cp or shortName(cp) ~= shortName(sender) then return end
+    if not cp or normFullKey(cp) ~= normFullKey(sender) then return end
+    -- Which side of the order is the sender? Passed down so the status change is
+    -- checked against that role's legal moves and completedBy can't be forged
+    -- (a crafter can't claim the requester confirmed receipt).
+    local senderRole = (cp == existing.requester) and "requester" or "crafter"
     local order, applied = Orders:ApplyRemoteStatus(data.id, data.status,
-        data.completedBy, data.updatedAt, data.declineReason)
+        data.completedBy, data.updatedAt, data.declineReason, senderRole)
     if order then self:SendOrderAck(sender, data.token) end
-    if applied then self:NotifyOrders(ORDER_STATUS_KIND[order.status], order) end
+    if order and applied then self:NotifyOrders(ORDER_STATUS_KIND[order.status], order) end
 end
 
 -- Route a counterparty event through the OrdersPanel notification
@@ -505,9 +633,9 @@ function Comm:StoreLightweight(sender, data)
 
     if not existing then
         addon.db.characters[sender] = {
-            class = data.class or "UNKNOWN",
-            level = data.level or 0,
-            faction = data.faction or "Unknown",
+            class = sanClass(data.class),
+            level = sanInt(data.level, 0, 100, 0),
+            faction = sanFaction(data.faction),
             professions = {},
             inventory = { bags = {}, bank = {} },
             isRemote = true,
@@ -516,34 +644,44 @@ function Comm:StoreLightweight(sender, data)
     end
 
     local char = addon.db.characters[sender]
-    char.class = data.class or char.class
-    char.level = data.level or char.level
-    char.faction = data.faction or char.faction
+    if data.class ~= nil then char.class = sanClass(data.class) end
+    if data.level ~= nil then char.level = sanInt(data.level, 0, 100, char.level or 0) end
+    if data.faction ~= nil then char.faction = sanFaction(data.faction) end
 
     -- Update profession summaries without wiping recipe data
     -- (a full SYNC_DATA will populate recipes later)
     if type(data.professions) == "table" then
-        for profName, summary in pairs(data.professions) do
-            if type(profName) == "string" and type(summary) == "table" then
+        local nProfs = 0
+        for rawProfName, summary in pairs(data.professions) do
+            local profName = sanStr(rawProfName, 40)
+            if profName and type(summary) == "table" then
+                nProfs = nProfs + 1
+                if nProfs > MAX_PROFESSIONS then break end
                 if not char.professions[profName] then
                     char.professions[profName] = {
-                        skillLevel = tonumber(summary.skillLevel) or 0,
-                        maxSkill = tonumber(summary.maxSkill) or 375,
+                        skillLevel = sanInt(summary.skillLevel, 0, 500, 0),
+                        maxSkill = sanInt(summary.maxSkill, 1, 500, 375),
                         recipes = {},
                     }
                 else
-                    char.professions[profName].skillLevel = tonumber(summary.skillLevel) or char.professions[profName].skillLevel
-                    char.professions[profName].maxSkill = tonumber(summary.maxSkill) or char.professions[profName].maxSkill
+                    char.professions[profName].skillLevel = sanInt(summary.skillLevel, 0, 500, char.professions[profName].skillLevel or 0)
+                    char.professions[profName].maxSkill = sanInt(summary.maxSkill, 1, 500, char.professions[profName].maxSkill or 375)
                 end
             end
         end
     end
 
-    -- Auto-create contact entry if they're in our group
-    if not addon.db.contacts[sender] then
+    -- Track group-mates as contacts (so the Friends panel lists them) only when
+    -- the user opted in via "Auto-add party members". The entry is trusted=false:
+    -- being seen in a group is not consent to serve data after it ends; trust is
+    -- only ever set by a local action (Add contact, /pb sync, auto-sync checkbox).
+    if addon.db.settings and addon.db.settings.autoAddParty
+       and not addon.db.contacts[sender] then
         addon.db.contacts[sender] = {
             autoSync = false,
             lastSync = 0,
+            trusted = false,
+            seenAt = time(),
         }
     end
 
@@ -579,6 +717,26 @@ end
 ----------------------------------------------------------------------
 -- SYNC_REQ / SYNC_DATA: full data exchange
 ----------------------------------------------------------------------
+-- Canonicalize a user-typed contact key: capitalize the name the way the
+-- server stores it and default a missing realm to ours. Without this, "/pb sync
+-- bob" saves the contact as "bob-Realm" while the reply arrives from
+-- "Bob-Realm", failing the trust gate, so the sync data would be silently dropped.
+function Comm:NormalizeContactKey(key)
+    if type(key) ~= "string" or key == "" then return nil end
+    local name, realm = key:match("^([^-]+)%-?(.*)$")
+    if not name then return nil end
+    local first = name:sub(1, 1)
+    if first:match("%l") then           -- ASCII only; leave UTF-8 names alone
+        name = first:upper() .. name:sub(2)
+    end
+    if realm == "" then
+        realm = GetRealmName()
+    elseif normRealm(realm):lower() == normRealm(GetRealmName()):lower() then
+        realm = GetRealmName()          -- same realm: adopt canonical spelling
+    end
+    return name .. "-" .. realm
+end
+
 function Comm:RequestSync(target, isManual)
     if not self._ready then
         if isManual then
@@ -587,13 +745,19 @@ function Comm:RequestSync(target, isManual)
         return
     end
 
-    -- Ensure contact entry exists
+    target = self:NormalizeContactKey(target)
+    if not target then return end
+
+    -- Ensure contact entry exists; requesting a sync is a deliberate local
+    -- action, so it marks the contact trusted (we are willing to serve their
+    -- SYNC_REQ in return -- sharing is mutual).
     if not addon.db.contacts[target] then
         addon.db.contacts[target] = {
             autoSync = false,
             lastSync = 0,
         }
     end
+    addon.db.contacts[target].trusted = true
 
     -- Only manual syncs announce themselves and watch for a reply; auto
     -- syncs stay silent so they don't spam chat.
@@ -693,17 +857,22 @@ function Comm:HandleSyncData(sender, data)
     local wasManual = self._pendingSync and self._pendingSync[pkey]
     if self._pendingSync then self._pendingSync[pkey] = nil end
 
-    -- Reconstruct the character record from the payload
+    -- Reconstruct the character record from the payload with a field-by-field
+    -- copy: never store remote tables by reference. The raw payload can hold
+    -- anything -- pipe escape codes in strings (rendered by the panels and
+    -- tooltips), non-numeric inventory counts (arithmetic errors in the
+    -- calculator and WhoHasItem), or unbounded junk that lands in
+    -- SavedVariables forever.
     local charRecord = {
-        class = data.class or "UNKNOWN",
-        level = data.level or 0,
-        faction = data.faction or "Unknown",
+        class = sanClass(data.class),
+        level = sanInt(data.level, 0, 100, 0),
+        faction = sanFaction(data.faction),
         professions = {},
         inventory = {
-            bags = (type(data.inventory) == "table" and type(data.inventory.bags) == "table")
-                   and data.inventory.bags or {},
-            bank = (type(data.inventory) == "table" and type(data.inventory.bank) == "table")
-                   and data.inventory.bank or {},
+            bags = sanCounts(type(data.inventory) == "table" and data.inventory.bags,
+                             MAX_INV_ENTRIES),
+            bank = sanCounts(type(data.inventory) == "table" and data.inventory.bank,
+                             MAX_INV_ENTRIES),
         },
         isRemote = true,
         lastSync = time(),
@@ -713,8 +882,12 @@ function Comm:HandleSyncData(sender, data)
     -- We store recipe names as keys pointing to minimal info
     -- (the UI will cross-reference RecipeDB for full details)
     if type(data.professions) == "table" then
-        for profName, profPayload in pairs(data.professions) do
-            if type(profName) == "string" and type(profPayload) == "table" then
+        local nProfs = 0
+        for rawProfName, profPayload in pairs(data.professions) do
+            local profName = sanStr(rawProfName, 40)
+            if profName and type(profPayload) == "table" then
+                nProfs = nProfs + 1
+                if nProfs > MAX_PROFESSIONS then break end
                 local recipes = {}
                 if type(profPayload.recipeNames) == "table" then
                     local spells = type(profPayload.recipeSpells) == "table"
@@ -722,12 +895,14 @@ function Comm:HandleSyncData(sender, data)
                     local cds = type(profPayload.recipeCooldowns) == "table"
                                    and profPayload.recipeCooldowns or nil
                     local now = time()
-                    for idx, recipeName in ipairs(profPayload.recipeNames) do
-                        if type(recipeName) == "string" then
+                    for idx, rawRecipeName in ipairs(profPayload.recipeNames) do
+                        if idx > MAX_RECIPES_PER_PROF then break end
+                        local recipeName = sanStr(rawRecipeName, 120)
+                        if recipeName then
                             -- carry the locale-stable spellID when present so
                             -- remote recipes match the static DB across locales
-                            local sid = spells and tonumber(spells[idx])
-                            if sid == 0 then sid = nil end
+                            -- (sanID maps 0 / junk back to nil = absent)
+                            local sid = spells and sanID(spells[idx], 10^7)
                             local rec = { isKnown = true, spellID = sid }
                             -- friend cooldown ready-time, clamped to a sane window
                             -- so a forged value can't show an absurd countdown
@@ -740,8 +915,8 @@ function Comm:HandleSyncData(sender, data)
                     end
                 end
                 charRecord.professions[profName] = {
-                    skillLevel = tonumber(profPayload.skillLevel) or 0,
-                    maxSkill = tonumber(profPayload.maxSkill) or 375,
+                    skillLevel = sanInt(profPayload.skillLevel, 0, 500, 0),
+                    maxSkill = sanInt(profPayload.maxSkill, 1, 500, 375),
                     recipes = recipes,
                 }
             end
@@ -790,16 +965,44 @@ function Comm:QueueIncrementalUpdate()
     end)
 end
 
+-- Cheap order-independent signature of what a full payload would carry.
+-- BAG_UPDATE fires for every bag interaction, including moving a stack between
+-- slots; without this, each shuffle re-whispered the identical full payload
+-- (all recipes + inventory) to every autoSync contact.
+local function payloadSignature()
+    local charData = DS and DS:GetCharacter(addon:PlayerKey())
+    if not charData then return 0 end
+    local sig = 0
+    local inv = charData.inventory or {}
+    for _, loc in ipairs({ "bags", "bank" }) do
+        for id, count in pairs(inv[loc] or {}) do
+            sig = (sig + id * 31 + count * 7) % 2^31
+        end
+    end
+    for _, prof in pairs(charData.professions or {}) do
+        sig = (sig + (prof.skillLevel or 0) * 131) % 2^31
+        local n = 0
+        for _ in pairs(prof.recipes or {}) do n = n + 1 end
+        sig = (sig + n * 17) % 2^31
+    end
+    return sig
+end
+
 function Comm:SendIncrementalUpdate()
     if not self._ready then return end
 
-    local payload = self:BuildFullPayload()
-    if not payload then return end
+    -- Skip contacts who already have this exact state (per-contact so a newly
+    -- enabled autoSync contact still gets a first push).
+    self._lastPushSig = self._lastPushSig or {}
+    local sig = payloadSignature()
 
-    -- Send to all online contacts with autoSync
-    -- We send as SYNC_DATA since the receiver handles it the same way
+    local payload
     for contactKey, contact in pairs(addon.db.contacts) do
-        if contact.autoSync then
+        if contact.autoSync and self._lastPushSig[contactKey] ~= sig then
+            -- Send as SYNC_DATA; the receiver handles it the same way
+            payload = payload or self:BuildFullPayload()
+            if not payload then return end   -- sharing off / no data
+            self._lastPushSig[contactKey] = sig
             self:SendWhisper("SYNC_DATA", payload, contactKey)
         end
     end

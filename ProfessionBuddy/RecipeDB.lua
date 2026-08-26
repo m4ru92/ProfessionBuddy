@@ -119,7 +119,13 @@ function RDB:GetUnknownRecipes(charKey, profName)
     -- Build the set of spellIDs the character actually knows, from the
     -- scanned recipes. spellID is locale-stable; the name key is not.
     local knownSpells = {}
-    for _, recipe in pairs(profData.recipes) do
+    -- A remote/lightweight profession record (a HELLO summary, the /pbt
+    -- fixture, or a friend seen before a full SYNC_DATA) can carry
+    -- skillLevel/maxSkill with NO recipes subtable. Treat a missing recipes
+    -- table as empty rather than crashing pairs() -- mirrors the guard the
+    -- CharacterPanel caller already has one row up.
+    local knownRecipes = profData.recipes or {}
+    for _, recipe in pairs(knownRecipes) do
         if recipe.spellID then
             knownSpells[recipe.spellID] = true
         end
@@ -133,7 +139,7 @@ function RDB:GetUnknownRecipes(charKey, profName)
         -- recipe name so enUS behaviour is identical and any recipe with a
         -- missing/unparsed spellID still resolves.
         local known = (info.spellID and knownSpells[info.spellID])
-                      or (profData.recipes[recipeName] ~= nil)
+                      or (knownRecipes[recipeName] ~= nil)
         if not known then
             unknown[recipeName] = info
         end

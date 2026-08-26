@@ -145,6 +145,17 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         ProfBuddyDB.settings.shareData = true
     end
 
+    -- Trust migration: `trusted` now gates serving full data (see Comm.lua).
+    -- Earlier builds auto-created a contact for every group-mate ever seen, so a
+    -- pre-existing entry proves nothing by itself; autoSync is the only reliable
+    -- signal of a deliberately chosen peer. Everyone else re-earns trust with one
+    -- Add/Sync action or by being grouped.
+    for _, contact in pairs(ProfBuddyDB.contacts) do
+        if contact.trusted == nil then
+            contact.trusted = contact.autoSync == true
+        end
+    end
+
     addon.db = ProfBuddyDB
 
     -- Init modules in declared order
@@ -182,7 +193,8 @@ SLASH_PROFBUDDY1 = "/pb"
 SLASH_PROFBUDDY2 = "/profbuddy"
 
 SlashCmdList["PROFBUDDY"] = function(msg)
-    msg = strtrim(msg):lower()
+    local rawMsg = strtrim(msg or "")   -- original case, for name args
+    msg = rawMsg:lower()
 
     if msg == "scan" then
         addon.Scanner:ScanProfessions()
@@ -221,7 +233,9 @@ SlashCmdList["PROFBUDDY"] = function(msg)
             .. (s.shareData and "ON." or "OFF (no profession/inventory data sent to others)."))
 
     elseif msg:sub(1, 4) == "sync" then
-        local target = strtrim(msg:sub(5))
+        -- Take the target from the raw message: lowercasing the name would save
+        -- the contact as "bob-Realm" while replies arrive from "Bob-Realm".
+        local target = strtrim(rawMsg:sub(5))
         if target == "" then
             print("|cff00ccffProfessionBuddy:|r Usage: /pb sync PlayerName-Realm")
         elseif addon.Comm then

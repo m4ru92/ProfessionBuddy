@@ -53,6 +53,16 @@ local TERMINAL = {
 }
 Orders.TERMINAL = TERMINAL
 
+-- Statuses each side may legally announce over the wire. NOT from-state-strict
+-- (rank monotonicity in ApplyRemoteStatus handles ordering, and a from-state
+-- check could wedge an order when queued messages arrive out of order). This
+-- only stops a peer acting the WRONG ROLE (a crafter "cancelling", which is
+-- requester-only).
+local ROLE_STATUS = {
+    requester = { cancelled = true, completed = true },
+    crafter   = { accepted = true, declined = true, crafted = true, completed = true },
+}
+
 local MAT_RESP = {
     REQUESTER = "requester",  -- order provided
     CRAFTER   = "crafter",    -- crafter provided
@@ -417,6 +427,17 @@ local function sanitize(s, maxlen)
     return s
 end
 
+-- Clamp a remote timestamp to a sane window. A forged huge value would make
+-- every future legit update look "stale" (freeze attack) and break date sorting
+-- in History.
+local function clampTime(v)
+    local now = time()
+    v = tonumber(v) or now
+    if v > now + 300 then v = now + 300 end
+    if v < 0 then v = 0 end
+    return v
+end
+
 -- Store a full order record received from the counterparty (ORDER_NEW).
 -- Builds a CLEAN copy field-by-field -- never stores the raw attacker-
 -- influenced table by reference -- validating + sanitizing every field.
@@ -445,8 +466,8 @@ function Orders:UpsertFromRemote(remote)
         status            = remote.status,
         completedBy       = (remote.completedBy == "requester" or remote.completedBy == "crafter") and remote.completedBy or nil,
         dismissed         = false,
-        createdAt         = tonumber(remote.createdAt) or time(),
-        updatedAt         = tonumber(remote.updatedAt) or time(),
+        createdAt         = clampTime(remote.createdAt),
+        updatedAt         = clampTime(remote.updatedAt),
     }
     addon.db.orders[id] = order
     return order, true
@@ -457,10 +478,18 @@ end
 -- applied is false for a duplicate / stale / out-of-order message
 -- (the caller still acks it but skips re-notifying). Terminal orders
 -- never regress.
-function Orders:ApplyRemoteStatus(id, newStatus, completedBy, updatedAt, declineReason)
+function Orders:ApplyRemoteStatus(id, newStatus, completedBy, updatedAt, declineReason, senderRole)
     local o = addon.db.orders[id]
     if not o then return nil, "no such order" end
     if not STATUS_RANK[newStatus] then return nil, "bad status" end
+    -- Role scoping: the sender may only announce statuses that belong to their
+    -- side, and completedBy is DERIVED from who sent the close, never read off
+    -- the wire (else a crafter could forge "requester confirmed receipt").
+    if senderRole then
+        local allowed = ROLE_STATUS[senderRole]
+        if not (allowed and allowed[newStatus]) then return o, false end
+        completedBy = (newStatus == STATUS.COMPLETED) and senderRole or nil
+    end
     if completedBy ~= nil and completedBy ~= "requester" and completedBy ~= "crafter" then
         completedBy = nil
     end
