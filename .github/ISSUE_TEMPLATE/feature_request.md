@@ -9,10 +9,10 @@ labels: enhancement
 A clear description of the feature or change.
 
 **The problem it solves**
-What's awkward or missing today that this would fix.
+What is awkward or missing that this would fix.
 
 **How you imagine it working**
-Optional: where it'd live in the UI, a command, etc.
+Optional: where it would live in the UI, a command, and so on.
 
 **Additional context**
 Anything else, mockups, or examples from other addons.
