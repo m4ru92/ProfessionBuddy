@@ -406,5 +406,48 @@ check(C.addon.db.contacts[A.key] == nil,
 check(S.addon.db.characters[A.key] == nil, "GP5: stranger gained access via the guild arm")
 ok("GP5 guild trust+sync -- co-guilded (not grouped) synced via RequestGuildSync, no persisted contact")
 
+-- ── GP6: incremental auto-push convergence + suppression ─────────────
+-- The current "delta" path: on an inventory/profession change (BAG_UPDATE),
+-- debounce, then auto-push a full SYNC_DATA to autoSync contacts, suppressed by
+-- a state signature so an unchanged state does not re-push. (The lightweight
+-- itemID-delta with sequence numbers and gap-triggered resync is a FUTURE item,
+-- not this wire, so GP6 covers what exists: convergence and suppression.)
+Router:ungroupAll()
+Router:group(A.key, B.key)                        -- mutual trust for the push
+A.addon.db.contacts[B.key] = { trusted = true, autoSync = true, lastSync = 0 }
+B.addon.db.contacts[A.key] = { trusted = true, autoSync = false, lastSync = 0 }
+
+-- Drive the REAL path: fire BAG_UPDATE, then run the debounce timer it armed.
+local function fireIncr(inst)
+    local n0 = #inst.timers
+    inst.fire("BAG_UPDATE")
+    for i = n0 + 1, #inst.timers do
+        local t = inst.timers[i]
+        if t and not t.cancelled then t.fn() end
+    end
+end
+
+-- Baseline: first push carries Ana's current inventory to Bob.
+fireIncr(A)
+Router:pump()
+local aOnB = B.addon.db.characters[A.key]
+check(aOnB and aOnB.inventory and aOnB.inventory.bags[14047] == 20,
+    "GP6: baseline auto-push did not reach Bob")
+
+-- Change Ana's inventory, push again -> Bob converges to the new counts.
+A.ds:SetInventory("bags", { [14047] = 99, [2589] = 5 })
+fireIncr(A)
+Router:pump()
+aOnB = B.addon.db.characters[A.key]
+check(aOnB.inventory.bags[14047] == 99 and aOnB.inventory.bags[2589] == 5,
+    "GP6: Bob did not converge to Ana's changed inventory")
+
+-- Suppression: with no state change, the signature matches, so nothing pushes.
+local before = #Router.queue
+fireIncr(A)
+check(#Router.queue == before,
+    "GP6: unchanged state still re-pushed (signature suppression failed)")
+ok("GP6 incremental auto-push -- converges on change, suppressed when unchanged")
+
 print("ALL GHOST HARNESS TESTS PASS (" .. pass ..
-    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP7 order loop)")
+    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 delta, GP7 order loop)")
