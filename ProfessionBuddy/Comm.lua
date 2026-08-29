@@ -77,10 +77,15 @@ function Comm:Init()
         self:OnGuildChanged()
     end)
 
-    -- Auto-sync contacts on login
+    -- Auto-sync contacts on login; also announce to the guild on login/reload.
+    -- Guild membership is persistent, so the not-guilded->guilded transition in
+    -- OnGuildChanged may never fire on a cold login or a /reload (you are already
+    -- guilded). Broadcasting here makes guild discovery reliable; BroadcastGuildHello
+    -- is throttled so this and the transition path can't double-send.
     addon:RegisterEvent("PLAYER_ENTERING_WORLD", function()
         C_Timer.After(5, function()
             self:SyncOnlineContacts()
+            self:BroadcastGuildHello()
         end)
     end)
 
@@ -620,9 +625,16 @@ function Comm:BroadcastGuildHello()
     if not self._ready then return end
     if not IsInGuild() then return end
 
+    -- Throttle: the join transition (OnGuildChanged) and login/reload
+    -- (PLAYER_ENTERING_WORLD) can both call this; don't broadcast twice in
+    -- quick succession. Only stamp the time when we actually send.
+    local now = time()
+    if self._lastGuildHelloAt and (now - self._lastGuildHelloAt) < 30 then return end
+
     local payload = self:BuildHelloPayload()
     if not payload then return end
 
+    self._lastGuildHelloAt = now
     self:Send("HELLO", payload, "GUILD")
 end
 
