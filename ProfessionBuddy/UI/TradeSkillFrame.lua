@@ -1381,6 +1381,9 @@ function TSF:BuildNavStrip(parent)
         { text = "Friends", toggle = function()
             if addon.FriendsPanel then addon.FriendsPanel:Toggle() end
         end },
+        { text = "Guild", toggle = function()
+            if addon.GuildPanel then addon.GuildPanel:Toggle() end
+        end },
         { text = "Orders", toggle = function()
             if addon.OrdersPanel then addon.OrdersPanel:Toggle() end
         end },

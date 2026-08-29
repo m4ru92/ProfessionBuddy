@@ -47,6 +47,11 @@ function IsInGroup() return state.inGroup end
 function IsInRaid() return state.inRaid end
 function GetNumGroupMembers() return #state.partyMembers end
 function GetNumSubgroupMembers() return #state.partyMembers end
+-- Guild-roster API (COMM_REV 5 guild arm). This harness runs guildless, so the
+-- guild trust arm returns false and the single-instance tests are unaffected.
+function IsInGuild() return false end
+function GetNumGuildMembers() return 0 end
+function GetGuildRosterInfo() return nil end
 
 C_Timer = {
     After = function(t, fn) table.insert(deferred, fn) end,

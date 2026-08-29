@@ -30,5 +30,6 @@ MaterialCalc.lua
 UI/Main.lua
 UI/CharacterPanel.lua
 UI/FriendsPanel.lua
+UI/GuildPanel.lua
 UI/OrdersPanel.lua
 UI/TradeSkillFrame.lua

@@ -24,7 +24,7 @@ local Comm = addon:NewModule("Comm")
 -- indicators); rev 4 = trust-gate hardening restored (realm-aware group match,
 -- two-tier seen/trusted contacts, realm-aware whisper + order anti-spoof) after
 -- the 1.0.1 security patch fell out of shipped code the same way COMM_REV did.
-local COMM_REV = 4
+local COMM_REV = 5
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -72,6 +72,11 @@ function Comm:Init()
         self:OnGroupChanged()
     end)
 
+    -- Auto-sync: broadcast HELLO to the guild when the roster first populates
+    addon:RegisterEvent("GUILD_ROSTER_UPDATE", function()
+        self:OnGuildChanged()
+    end)
+
     -- Auto-sync contacts on login
     addon:RegisterEvent("PLAYER_ENTERING_WORLD", function()
         C_Timer.After(5, function()
@@ -85,6 +90,7 @@ function Comm:Init()
     end)
 
     self._inGroup = IsInGroup()
+    self._inGuild = IsInGuild()
     self._ready = true
 end
 
@@ -239,10 +245,26 @@ function Comm:IsGroupMember(senderKey)
     return false
 end
 
+-- Realm-aware guild-roster membership. Mirrors IsGroupMember: guild trust is
+-- LIVE (checked against the current roster), never persisted -- leaving the
+-- guild ends the trust, exactly as leaving a group does.
+function Comm:IsGuildMember(senderKey)
+    if not IsInGuild() then return false end
+    local want = normFullKey(senderKey)
+    if not want then return false end
+    local n = GetNumGuildMembers() or 0
+    for i = 1, n do
+        local name = GetGuildRosterInfo(i)   -- "Name" or "Name-Realm"
+        if name and normFullKey(name) == want then return true end
+    end
+    return false
+end
+
 function Comm:IsTrusted(senderKey)
     local contact = addon.db.contacts and addon.db.contacts[senderKey]
     if contact and contact.trusted then return true end
-    return self:IsGroupMember(senderKey)
+    if self:IsGroupMember(senderKey) then return true end
+    return self:IsGuildMember(senderKey)
 end
 
 -- Privacy master switch: when off, we send NO profession/inventory data
@@ -590,6 +612,20 @@ function Comm:BroadcastHello()
     self:SendGroup("HELLO", payload)
 end
 
+-- Broadcast HELLO once to every online guildmate over the native GUILD channel
+-- (one message, not N whispers). Ships only the lightweight summary; full data
+-- stays on-demand, so this stays privacy-conservative. Gated by BuildHelloPayload,
+-- which honors the /pb comm off master switch.
+function Comm:BroadcastGuildHello()
+    if not self._ready then return end
+    if not IsInGuild() then return end
+
+    local payload = self:BuildHelloPayload()
+    if not payload then return end
+
+    self:Send("HELLO", payload, "GUILD")
+end
+
 function Comm:HandleHello(sender, data)
     -- Store lightweight summary so we know what they have
     self:StoreLightweight(sender, data)
@@ -776,6 +812,24 @@ function Comm:RequestSync(target, isManual)
     end
 
     self:SendWhisper("SYNC_REQ", {}, target)
+end
+
+-- Guild sync-on-demand (Guild tab -> pull a guildmate's full recipe data).
+-- Unlike RequestSync this creates NO persisted contact: guild trust is LIVE
+-- (roster-based), so the guildmate serves us because we're in their roster and
+-- we store their reply because they're in ours. Throttled per target so rapid
+-- clicks don't spam. Reuses the existing SYNC_REQ message, so COMM_REV is
+-- unchanged (no wire change).
+function Comm:RequestGuildSync(targetKey)
+    if not self._ready or not targetKey then return end
+    local key = normFullKey(targetKey)
+    if not key then return end
+    self._guildSyncAt = self._guildSyncAt or {}
+    local now = time()
+    local last = self._guildSyncAt[key]
+    if last and (now - last) < 15 then return end   -- 15s per guildmate
+    self._guildSyncAt[key] = now
+    self:SendWhisper("SYNC_REQ", {}, key)
 end
 
 function Comm:HandleSyncRequest(sender, data)
@@ -1025,6 +1079,23 @@ function Comm:OnGroupChanged()
     end
 
     self._inGroup = inGroup
+end
+
+-- Guild analog of OnGroupChanged: broadcast a guild HELLO once when the roster
+-- first populates (login / joining a guild), not on every GUILD_ROSTER_UPDATE
+-- tick. Guildmates who log in later announce themselves with their own HELLO.
+function Comm:OnGuildChanged()
+    local inGuild = IsInGuild()
+
+    if inGuild and not self._inGuild then
+        C_Timer.After(2, function()
+            if IsInGuild() then
+                self:BroadcastGuildHello()
+            end
+        end)
+    end
+
+    self._inGuild = inGuild
 end
 
 ----------------------------------------------------------------------
