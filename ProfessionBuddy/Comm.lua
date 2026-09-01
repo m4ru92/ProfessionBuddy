@@ -77,12 +77,12 @@ function Comm:Init()
         self:OnGuildChanged()
     end)
 
-    -- Auto-sync contacts on login; also announce to the guild on login/reload.
-    -- Guild membership is persistent, so the not-guilded->guilded transition in
-    -- OnGuildChanged may never fire on a cold login or a /reload (you are already
-    -- guilded). Broadcasting here makes guild discovery reliable; BroadcastGuildHello
-    -- is throttled so this and the transition path can't double-send.
+    -- Auto-sync contacts on login, and make sure the guild roster loads so
+    -- OnGuildChanged can announce us when it populates (the reliable, roster-timed
+    -- trigger on both a cold login and a /reload). The delayed BroadcastGuildHello
+    -- here is a fallback; BroadcastGuildHello's throttle dedups the two paths.
     addon:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+        if GuildRoster then GuildRoster() end
         C_Timer.After(5, function()
             self:SyncOnlineContacts()
             self:BroadcastGuildHello()
@@ -747,6 +747,11 @@ function Comm:NotifyUIRefresh()
     if addon.FriendsPanel and addon.FriendsPanel.Refresh then
         addon.FriendsPanel:Refresh()
     end
+    -- Guild panel: refresh so incoming guildmate data (professions from a HELLO
+    -- or a full sync) appears live, not only after a GUILD_ROSTER_UPDATE.
+    if addon.GuildPanel and addon.GuildPanel.Refresh then
+        addon.GuildPanel:Refresh()
+    end
     -- Character panel (if the main /pb window is visible)
     if addon.UI and addon.UI.frame and addon.UI.frame:IsShown()
        and addon.CharacterPanel and addon.CharacterPanel.Refresh then
@@ -1102,7 +1107,14 @@ end
 function Comm:OnGuildChanged()
     local inGuild = IsInGuild()
 
-    if inGuild and not self._inGuild then
+    -- Announce ourselves the first time the guild roster is populated this
+    -- session. GUILD_ROSTER_UPDATE fires when the roster actually loads, so this
+    -- is reliably timed on a cold login AND a /reload, unlike the old
+    -- not-guilded to guilded transition, which never happens on a /reload
+    -- because guild data is already warm at ADDON_LOADED. The throttle in
+    -- BroadcastGuildHello dedups against the login-timer fallback.
+    if inGuild and not self._guildHelloDone then
+        self._guildHelloDone = true
         C_Timer.After(2, function()
             if IsInGuild() then
                 self:BroadcastGuildHello()

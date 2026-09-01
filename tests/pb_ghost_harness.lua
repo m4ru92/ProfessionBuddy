@@ -385,20 +385,28 @@ Router:guild(A.key, C.key)
 -- in Friends as trusted=false, autoSync=false seen entries.)
 A.addon.db.settings = A.addon.db.settings or {}; A.addon.db.settings.autoAddParty = true
 C.addon.db.settings = C.addon.db.settings or {}; C.addon.db.settings.autoAddParty = true
--- Trigger discovery the way the game does: a login/reload (PLAYER_ENTERING_WORLD),
--- NOT a manual call and NOT a guild-join transition (you are already guilded, so
--- the transition path may never fire). This is the hardened login trigger.
-A.fire("PLAYER_ENTERING_WORLD")
-A.runDeferred()          -- runs the delayed SyncOnlineContacts + BroadcastGuildHello
+-- Spy on Carol's Guild-tab refresh: incoming guildmate data must refresh it live
+-- (NotifyUIRefresh had no GuildPanel hook, so the open tab went stale in-game).
+C.addon.GuildPanel = { n = 0, Refresh = function(self) self.n = self.n + 1 end }
+
+-- Simulate a /reload: already guilded at init, so there is NO not-guilded to
+-- guilded transition. The roster-load path (GUILD_ROSTER_UPDATE) must still
+-- announce us. This is exactly the case that failed in-game on /reload before
+-- the fix; the old transition-only broadcast would produce nothing here.
+A.comm._inGuild = true
+A.comm._guildHelloDone = nil
+A.fire("GUILD_ROSTER_UPDATE")
+A.runDeferred()          -- runs the 2s-delayed BroadcastGuildHello
 Router:pump()
-check(C.addon.db.characters[A.key], "GP5: Carol did not record Ana from guild HELLO (login trigger)")
+check(C.addon.db.characters[A.key], "GP5: guild HELLO did not fire on roster load (the /reload path)")
 check(A.addon.db.characters[C.key], "GP5: Ana did not record Carol from HELLO_ACK")
+check(C.addon.GuildPanel.n > 0, "GP5: incoming guild data did not refresh Carol's Guild tab")
 check(C.addon.db.contacts[A.key] == nil and A.addon.db.contacts[C.key] == nil,
     "GP5: guild HELLO auto-added a Friends contact despite the sender being guild-only")
--- Throttle: an immediate second login must NOT re-broadcast the guild HELLO.
-A.fire("PLAYER_ENTERING_WORLD")
+-- Announce-once: a second roster update this session must NOT re-broadcast.
+A.fire("GUILD_ROSTER_UPDATE")
 A.runDeferred()
-check(#Router.queue == 0, "GP5: guild HELLO not throttled on a rapid second login")
+check(#Router.queue == 0, "GP5: guild HELLO re-broadcast on a second roster update (announce-once failed)")
 -- Use the real Guild-tab trigger: RequestGuildSync pulls full data WITHOUT
 -- persisting a trusted contact (guild trust is live-only).
 C.comm:RequestGuildSync(A.key)
