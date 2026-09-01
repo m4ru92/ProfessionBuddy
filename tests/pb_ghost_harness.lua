@@ -379,6 +379,12 @@ Router:ungroupAll()
 local C = makeInstance("Carol", "GhostRealm")
 seedChar(C, "Enchanting", "Runed Arcanite Rod", 22757, 12800, 5)
 Router:guild(A.key, C.key)
+-- Turn ON "auto-add party members" on both sides. A guild HELLO must STILL NOT
+-- create a Friends contact: auto-add is for party members, and guild trust is
+-- live-only. (Regression guard for the in-game bug where guildmates showed up
+-- in Friends as trusted=false, autoSync=false seen entries.)
+A.addon.db.settings = A.addon.db.settings or {}; A.addon.db.settings.autoAddParty = true
+C.addon.db.settings = C.addon.db.settings or {}; C.addon.db.settings.autoAddParty = true
 -- Trigger discovery the way the game does: a login/reload (PLAYER_ENTERING_WORLD),
 -- NOT a manual call and NOT a guild-join transition (you are already guilded, so
 -- the transition path may never fire). This is the hardened login trigger.
@@ -387,6 +393,8 @@ A.runDeferred()          -- runs the delayed SyncOnlineContacts + BroadcastGuild
 Router:pump()
 check(C.addon.db.characters[A.key], "GP5: Carol did not record Ana from guild HELLO (login trigger)")
 check(A.addon.db.characters[C.key], "GP5: Ana did not record Carol from HELLO_ACK")
+check(C.addon.db.contacts[A.key] == nil and A.addon.db.contacts[C.key] == nil,
+    "GP5: guild HELLO auto-added a Friends contact despite the sender being guild-only")
 -- Throttle: an immediate second login must NOT re-broadcast the guild HELLO.
 A.fire("PLAYER_ENTERING_WORLD")
 A.runDeferred()

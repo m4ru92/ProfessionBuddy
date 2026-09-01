@@ -723,7 +723,10 @@ function Comm:StoreLightweight(sender, data)
     -- the user opted in via "Auto-add party members". The entry is trusted=false:
     -- being seen in a group is not consent to serve data after it ends; trust is
     -- only ever set by a local action (Add contact, /pb sync, auto-sync checkbox).
+    -- Gate on IsGroupMember: this is "auto-add PARTY members", so a HELLO from a
+    -- guildmate (guild trust is live, not persisted) must not create a contact.
     if addon.db.settings and addon.db.settings.autoAddParty
+       and self:IsGroupMember(sender)
        and not addon.db.contacts[sender] then
         addon.db.contacts[sender] = {
             autoSync = false,
