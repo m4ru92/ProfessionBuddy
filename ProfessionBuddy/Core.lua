@@ -7,7 +7,7 @@ ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
 addon.version = "1.0.3"
-addon.BUILD = "guild-dev-20260828h"  -- dev slice; /dump ProfBuddy.BUILD
+addon.BUILD = "guild-dev-20260828i"  -- dev slice; /dump ProfBuddy.BUILD
 addon.modules = {}
 
 -- Shorthand for the player's "Name-Realm" key used everywhere
@@ -222,6 +222,11 @@ SlashCmdList["PROFBUDDY"] = function(msg)
     elseif msg == "orders" then
         if addon.OrdersPanel then
             addon.OrdersPanel:Toggle()
+        end
+
+    elseif msg == "guild" then
+        if addon.GuildPanel then
+            addon.GuildPanel:Toggle()
         end
 
     elseif msg:sub(1, 4) == "comm" or msg:sub(1, 5) == "share" then

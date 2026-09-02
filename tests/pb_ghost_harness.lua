@@ -416,6 +416,10 @@ check(anaOnCarol and anaOnCarol.professions and anaOnCarol.professions["Tailorin
     "GP5: Ana's Tailoring did not sync to Carol over guild trust")
 check(anaOnCarol.professions["Tailoring"].recipes["Bolt of Runecloth"],
     "GP5: Ana's recipe did not sync to Carol")
+-- The locale-stable spellID must survive the sync (it is what resolves a
+-- recipe's icon for a remote character, e.g. enchants that have no itemID).
+check(anaOnCarol.professions["Tailoring"].recipes["Bolt of Runecloth"].spellID == 18401,
+    "GP5: synced recipe lost its spellID over the wire")
 check(C.addon.db.contacts[A.key] == nil,
     "GP5: guild sync wrongly persisted a trusted contact (trust must stay live-only)")
 -- And a guildless stranger is still refused even now.
