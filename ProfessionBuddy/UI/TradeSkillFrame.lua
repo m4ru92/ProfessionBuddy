@@ -5461,6 +5461,13 @@ function TSF:OpenWithCharacter(charKey, profName)
             if not icon and itemID and itemID ~= 0 then
                 icon = GetItemIcon(itemID)
             end
+            -- Item-less recipes (enchants) have no itemID, so resolve the real
+            -- icon from the locale-stable spellID a remote sync carries. Without
+            -- this, the generic scroll below is baked into entry.icon and defeats
+            -- the row render's own GetSpellTexture(spellID) fallback.
+            if not icon and recipeSpellID and GetSpellTexture then
+                icon = GetSpellTexture(recipeSpellID)
+            end
             if not icon then
                 icon = "Interface\\Icons\\INV_Scroll_03"
             end
