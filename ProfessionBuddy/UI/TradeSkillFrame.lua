@@ -1070,6 +1070,10 @@ local function CloseAllDropdowns()
     end
 end
 
+-- Exposed so the main window (which hosts the Guild tab dropdown) can close any
+-- open list on hide; the lists are UIParent children, not window children.
+addon.CloseAllDropdowns = CloseAllDropdowns
+
 local function CreateDropdown(parent, width, options, defaultVal, onChange, prefix)
     local container = CreateFrame("Frame", nil, parent)
     container:SetSize(width, 20)

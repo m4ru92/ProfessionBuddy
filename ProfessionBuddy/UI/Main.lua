@@ -31,6 +31,13 @@ function UI:Init()
     f:SetClampedToScreen(true)
     f:Hide()
 
+    -- Close any open dropdown list (e.g. the Guild tab profession filter) when
+    -- the window hides. Those lists are UIParent children, so they do not hide
+    -- with the window on their own.
+    f:HookScript("OnHide", function()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    end)
+
     -- Title
     f.TitleText:SetText("ProfessionBuddy")
 
@@ -148,6 +155,8 @@ function UI:AddTab(name, displayName, createFunc)
 end
 
 function UI:SelectTab(index)
+    -- Close any open dropdown list when switching tabs (same reason as OnHide).
+    if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
     -- Deselect all
     for _, tab in ipairs(self.frame.tabs) do
         tab.content:Hide()
