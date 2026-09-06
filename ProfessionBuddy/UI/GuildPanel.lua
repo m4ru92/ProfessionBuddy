@@ -240,12 +240,16 @@ function GP:CreateContent(parent)
     onlineLabel:SetPoint("LEFT", onlineCheck, "RIGHT", 2, 0)
     onlineLabel:SetText("Online only")
 
-    local profBtn = CreateFrame("Button", nil, filterBar, "UIPanelButtonTemplate")
-    profBtn:SetSize(160, 20)
-    profBtn:SetPoint("LEFT", onlineLabel, "RIGHT", 14, 0)
-    profBtn:SetText("Prof: All")
-    profBtn:SetScript("OnClick", function() self:ShowProfMenu() end)
-    self.profBtn = profBtn
+    -- Profession filter: reuse the profession-view dropdown control for a
+    -- consistent look and single-select behavior.
+    if addon.CreateDropdown then
+        local profDD = addon.CreateDropdown(filterBar, 150, { "All" }, "All", function(val)
+            self.filterProf = (val == "All") and nil or val
+            self:Refresh()
+        end, "Prof: ")
+        profDD:SetPoint("LEFT", onlineLabel, "RIGHT", 14, 0)
+        self.profDD = profDD
+    end
 
     -- Column headers (clickable Buttons -> sort)
     local headerBar = CreateFrame("Frame", nil, parent)
@@ -431,93 +435,18 @@ function GP:BuildFiltered()
     end
 end
 
-function GP:UpdateProfFilterLabel()
-    if self.profBtn then
-        self.profBtn:SetText("Prof: " .. (self.filterProf or "All"))
+-- Sync the profession dropdown's options + current selection with the roster.
+-- Rebuilds the option list only when the set of professions changes.
+function GP:SyncProfDropdown()
+    if not self.profDD then return end
+    local sig = "All|" .. table.concat(self.profsPresent or {}, "|")
+    if sig ~= self._profOptSig then
+        self._profOptSig = sig
+        local opts = { "All" }
+        for _, pn in ipairs(self.profsPresent or {}) do opts[#opts + 1] = pn end
+        self.profDD:SetOptions(opts)
     end
-end
-
--- Single-select profession filter via a self-contained popup. UIDropDownMenu /
--- EasyMenu are unreliable in TBCCA, so this mirrors FriendsPanel's popup pattern.
-function GP:EnsureProfMenu()
-    if self._profMenu then return self._profMenu end
-    local m = CreateFrame("Frame", "ProfBuddyGuildProfMenu", UIParent, "BackdropTemplate")
-    m:SetFrameStrata("FULLSCREEN_DIALOG")
-    m:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12,
-        insets   = { left = 3, right = 3, top = 3, bottom = 3 },
-    })
-    m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
-    m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
-    m:EnableMouse(true)
-    m:Hide()
-
-    m.title = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    m.title:SetPoint("TOPLEFT", 8, -7)
-    m.title:SetTextColor(1, 0.82, 0)
-    m.title:SetText("Filter by profession")
-    m.buttons = {}
-
-    local catcher = CreateFrame("Button", nil, UIParent)
-    catcher:SetAllPoints(UIParent)
-    catcher:SetFrameStrata("DIALOG")
-    catcher:Hide()
-    catcher:SetScript("OnClick", function() m:Hide() end)
-    m:SetScript("OnShow", function() catcher:Show() end)
-    m:SetScript("OnHide", function() catcher:Hide() end)
-    table.insert(UISpecialFrames, "ProfBuddyGuildProfMenu")   -- Escape closes it
-
-    self._profMenu = m
-    return m
-end
-
-function GP:ShowProfMenu()
-    local m = self:EnsureProfMenu()
-    -- "All" then each profession present; value is nil for All.
-    local opts = { { label = "All", value = nil } }
-    for _, pn in ipairs(self.profsPresent or {}) do
-        opts[#opts + 1] = { label = pn, value = pn }
-    end
-
-    local ROW_H = 18
-    local maxW = m.title:GetStringWidth() + 16
-    for i, opt in ipairs(opts) do
-        local b = m.buttons[i]
-        if not b then
-            b = CreateFrame("Button", nil, m)
-            b:SetHeight(ROW_H)
-            local hl = b:CreateTexture(nil, "HIGHLIGHT")
-            hl:SetAllPoints()
-            hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
-            b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            b.text:SetPoint("LEFT", 8, 0)
-            b.text:SetJustifyH("LEFT")
-            m.buttons[i] = b
-        end
-        local selected = (self.filterProf == opt.value)
-        b.text:SetText((selected and "|cffffd200" or "") .. opt.label .. (selected and "|r" or ""))
-        b:SetScript("OnClick", function()
-            m:Hide()
-            self.filterProf = opt.value   -- captured per option; nil for All
-            self:UpdateProfFilterLabel()
-            self:Refresh()
-        end)
-        b:ClearAllPoints()
-        b:SetPoint("TOPLEFT", m, "TOPLEFT", 4, -24 - (i - 1) * ROW_H)
-        b:SetPoint("RIGHT", m, "RIGHT", -4, 0)
-        b:Show()
-        local tw = b.text:GetStringWidth() + 28
-        if tw > maxW then maxW = tw end
-    end
-    for i = #opts + 1, #m.buttons do m.buttons[i]:Hide() end
-
-    m:SetWidth(math.max(120, maxW))
-    m:SetHeight(24 + #opts * ROW_H + 8)
-    m:ClearAllPoints()
-    m:SetPoint("TOPLEFT", self.profBtn, "BOTTOMLEFT", 0, -2)
-    m:Show()
+    self.profDD:SetValue(self.filterProf or "All", self.filterProf or "All")
 end
 
 function GP:UpdateHeaders()
@@ -542,8 +471,9 @@ function GP:Refresh()
     if self.filterProf then
         local ok = false
         for _, p in ipairs(self.profsPresent or {}) do if p == self.filterProf then ok = true; break end end
-        if not ok then self.filterProf = nil; self:UpdateProfFilterLabel() end
+        if not ok then self.filterProf = nil end
     end
+    self:SyncProfDropdown()
 
     self:BuildFiltered()
     table.sort(self.filtered, function(a, b) return self:Less(a, b) end)

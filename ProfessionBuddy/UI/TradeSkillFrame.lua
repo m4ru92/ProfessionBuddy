@@ -1212,6 +1212,10 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
     return container
 end
 
+-- Expose the dropdown factory so other panels (the Guild tab filter) reuse the
+-- same control instead of reinventing one.
+addon.CreateDropdown = CreateDropdown
+
 ----------------------------------------------------------------------
 -- Build the frame
 ----------------------------------------------------------------------
