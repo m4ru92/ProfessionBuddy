@@ -86,6 +86,9 @@ end
 function GP:Init()
     self.sortKey = "status"   -- default: online first, then name
     self.sortAsc = true
+    self.searchText = ""
+    self.filterOnlineOnly = false
+    self.filterProf = nil       -- nil = all professions
 
     if addon.UI and addon.UI.AddTab then
         addon.UI:AddTab("guild", "Guild", function(parent)
@@ -204,10 +207,50 @@ function GP:CreateContent(parent)
     self.empty:SetText("You are not in a guild.")
     self.empty:Hide()
 
+    -- Filter bar: name search + online-only toggle + profession filter
+    local filterBar = CreateFrame("Frame", nil, parent)
+    filterBar:SetPoint("TOPLEFT", 0, -26)
+    filterBar:SetPoint("TOPRIGHT", 0, -26)
+    filterBar:SetHeight(22)
+    self.filterBar = filterBar
+
+    local findLabel = filterBar:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    findLabel:SetPoint("LEFT", 6, 0)
+    findLabel:SetText("Find")
+
+    local searchBox = CreateFrame("EditBox", "ProfBuddyGuildSearch", filterBar, "InputBoxTemplate")
+    searchBox:SetSize(120, 18)
+    searchBox:SetPoint("LEFT", findLabel, "RIGHT", 10, 0)
+    searchBox:SetAutoFocus(false)
+    searchBox:SetScript("OnTextChanged", function(box)
+        self.searchText = box:GetText() or ""
+        self:Refresh()
+    end)
+    searchBox:SetScript("OnEscapePressed", function(box) box:ClearFocus() end)
+    self.searchBox = searchBox
+
+    local onlineCheck = CreateFrame("CheckButton", nil, filterBar, "UICheckButtonTemplate")
+    onlineCheck:SetSize(20, 20)
+    onlineCheck:SetPoint("LEFT", searchBox, "RIGHT", 14, 0)
+    onlineCheck:SetScript("OnClick", function(cb)
+        self.filterOnlineOnly = cb:GetChecked() and true or false
+        self:Refresh()
+    end)
+    local onlineLabel = filterBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    onlineLabel:SetPoint("LEFT", onlineCheck, "RIGHT", 2, 0)
+    onlineLabel:SetText("Online only")
+
+    local profBtn = CreateFrame("Button", nil, filterBar, "UIPanelButtonTemplate")
+    profBtn:SetSize(160, 20)
+    profBtn:SetPoint("LEFT", onlineLabel, "RIGHT", 14, 0)
+    profBtn:SetText("Prof: All")
+    profBtn:SetScript("OnClick", function() self:CycleProfFilter() end)
+    self.profBtn = profBtn
+
     -- Column headers (clickable Buttons -> sort)
     local headerBar = CreateFrame("Frame", nil, parent)
-    headerBar:SetPoint("TOPLEFT", 0, -26)
-    headerBar:SetPoint("TOPRIGHT", 0, -26)
+    headerBar:SetPoint("TOPLEFT", 0, -52)
+    headerBar:SetPoint("TOPRIGHT", 0, -52)
     headerBar:SetHeight(18)
     local headerBg = headerBar:CreateTexture(nil, "BACKGROUND")
     headerBg:SetAllPoints()
@@ -350,6 +393,62 @@ function GP:BuildList()
             })
         end
     end
+
+    -- Union of professions present across the roster (for the profession filter).
+    local seen, present = {}, {}
+    for _, m in ipairs(self.members) do
+        for _, pn in ipairs(m.profs) do
+            if not seen[pn] then seen[pn] = true; table.insert(present, pn) end
+        end
+    end
+    table.sort(present)
+    self.profsPresent = present
+end
+
+----------------------------------------------------------------------
+-- Filtering: name search + online-only + profession
+----------------------------------------------------------------------
+function GP:PassesFilter(m)
+    local q = self.searchText
+    if q and q ~= "" then
+        if not shortName(m.name):lower():find(q:lower(), 1, true) then return false end
+    end
+    if self.filterOnlineOnly and not m.online then return false end
+    if self.filterProf then
+        local has = false
+        for _, pn in ipairs(m.profs) do
+            if pn == self.filterProf then has = true; break end
+        end
+        if not has then return false end
+    end
+    return true
+end
+
+function GP:BuildFiltered()
+    self.filtered = {}
+    for _, m in ipairs(self.members) do
+        if self:PassesFilter(m) then table.insert(self.filtered, m) end
+    end
+end
+
+function GP:UpdateProfFilterLabel()
+    if self.profBtn then
+        self.profBtn:SetText("Prof: " .. (self.filterProf or "All"))
+    end
+end
+
+-- Cycle the profession filter: All -> each profession present -> All.
+function GP:CycleProfFilter()
+    local list = self.profsPresent or {}
+    if not self.filterProf then
+        self.filterProf = list[1]   -- first profession, or nil if the roster has none
+    else
+        local idx
+        for i, p in ipairs(list) do if p == self.filterProf then idx = i; break end end
+        if not idx or idx >= #list then self.filterProf = nil else self.filterProf = list[idx + 1] end
+    end
+    self:UpdateProfFilterLabel()
+    self:Refresh()
 end
 
 function GP:UpdateHeaders()
@@ -369,23 +468,35 @@ end
 function GP:Refresh()
     if not self.rows then return end
     self:BuildList()
-    table.sort(self.members, function(a, b) return self:Less(a, b) end)
+
+    -- Drop a profession filter that is no longer present in the roster.
+    if self.filterProf then
+        local ok = false
+        for _, p in ipairs(self.profsPresent or {}) do if p == self.filterProf then ok = true; break end end
+        if not ok then self.filterProf = nil; self:UpdateProfFilterLabel() end
+    end
+
+    self:BuildFiltered()
+    table.sort(self.filtered, function(a, b) return self:Less(a, b) end)
 
     local inGuild = IsInGuild()
     self.empty:SetShown(not inGuild)
     self.headerBar:SetShown(inGuild)
+    if self.filterBar then self.filterBar:SetShown(inGuild) end
 
     local online = 0
     for _, m in ipairs(self.members) do
         if m.online then online = online + 1 end
     end
-    if inGuild then
-        self.header:SetText("Guild  (" .. #self.members .. " members, " .. online .. " online)")
-    else
+    if not inGuild then
         self.header:SetText("Guild")
+    elseif #self.filtered ~= #self.members then
+        self.header:SetText("Guild  (showing " .. #self.filtered .. " of " .. #self.members .. ")")
+    else
+        self.header:SetText("Guild  (" .. #self.members .. " members, " .. online .. " online)")
     end
 
-    local maxScroll = math.max(0, #self.members - VISIBLE_ROWS)
+    local maxScroll = math.max(0, #self.filtered - VISIBLE_ROWS)
     self.scrollBar:SetMinMaxValues(0, maxScroll)
     if (self.scrollOffset or 0) > maxScroll then
         self.scrollOffset = maxScroll
@@ -400,7 +511,7 @@ end
 -- UpdateRows: paint the visible window from the sorted member list
 ----------------------------------------------------------------------
 function GP:UpdateRows()
-    local members = self.members or {}
+    local members = self.filtered or {}
     local offset = self.scrollOffset or 0
     for i, row in ipairs(self.rows) do
         local m = members[offset + i]
