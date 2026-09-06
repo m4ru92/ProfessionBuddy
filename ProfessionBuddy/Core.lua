@@ -7,7 +7,7 @@ ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
 addon.version = "1.0.3"
-addon.BUILD = "guild-dev-20260828k"  -- dev slice; /dump ProfBuddy.BUILD
+addon.BUILD = "guild-dev-20260828l"  -- dev slice; /dump ProfBuddy.BUILD
 addon.modules = {}
 
 -- Shorthand for the player's "Name-Realm" key used everywhere

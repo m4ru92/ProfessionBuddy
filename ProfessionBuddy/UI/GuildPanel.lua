@@ -244,7 +244,7 @@ function GP:CreateContent(parent)
     profBtn:SetSize(160, 20)
     profBtn:SetPoint("LEFT", onlineLabel, "RIGHT", 14, 0)
     profBtn:SetText("Prof: All")
-    profBtn:SetScript("OnClick", function() self:CycleProfFilter() end)
+    profBtn:SetScript("OnClick", function() self:ShowProfMenu() end)
     self.profBtn = profBtn
 
     -- Column headers (clickable Buttons -> sort)
@@ -437,18 +437,87 @@ function GP:UpdateProfFilterLabel()
     end
 end
 
--- Cycle the profession filter: All -> each profession present -> All.
-function GP:CycleProfFilter()
-    local list = self.profsPresent or {}
-    if not self.filterProf then
-        self.filterProf = list[1]   -- first profession, or nil if the roster has none
-    else
-        local idx
-        for i, p in ipairs(list) do if p == self.filterProf then idx = i; break end end
-        if not idx or idx >= #list then self.filterProf = nil else self.filterProf = list[idx + 1] end
+-- Single-select profession filter via a self-contained popup. UIDropDownMenu /
+-- EasyMenu are unreliable in TBCCA, so this mirrors FriendsPanel's popup pattern.
+function GP:EnsureProfMenu()
+    if self._profMenu then return self._profMenu end
+    local m = CreateFrame("Frame", "ProfBuddyGuildProfMenu", UIParent, "BackdropTemplate")
+    m:SetFrameStrata("FULLSCREEN_DIALOG")
+    m:SetBackdrop({
+        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 12,
+        insets   = { left = 3, right = 3, top = 3, bottom = 3 },
+    })
+    m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
+    m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+    m:EnableMouse(true)
+    m:Hide()
+
+    m.title = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    m.title:SetPoint("TOPLEFT", 8, -7)
+    m.title:SetTextColor(1, 0.82, 0)
+    m.title:SetText("Filter by profession")
+    m.buttons = {}
+
+    local catcher = CreateFrame("Button", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:SetFrameStrata("DIALOG")
+    catcher:Hide()
+    catcher:SetScript("OnClick", function() m:Hide() end)
+    m:SetScript("OnShow", function() catcher:Show() end)
+    m:SetScript("OnHide", function() catcher:Hide() end)
+    table.insert(UISpecialFrames, "ProfBuddyGuildProfMenu")   -- Escape closes it
+
+    self._profMenu = m
+    return m
+end
+
+function GP:ShowProfMenu()
+    local m = self:EnsureProfMenu()
+    -- "All" then each profession present; value is nil for All.
+    local opts = { { label = "All", value = nil } }
+    for _, pn in ipairs(self.profsPresent or {}) do
+        opts[#opts + 1] = { label = pn, value = pn }
     end
-    self:UpdateProfFilterLabel()
-    self:Refresh()
+
+    local ROW_H = 18
+    local maxW = m.title:GetStringWidth() + 16
+    for i, opt in ipairs(opts) do
+        local b = m.buttons[i]
+        if not b then
+            b = CreateFrame("Button", nil, m)
+            b:SetHeight(ROW_H)
+            local hl = b:CreateTexture(nil, "HIGHLIGHT")
+            hl:SetAllPoints()
+            hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+            b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            b.text:SetPoint("LEFT", 8, 0)
+            b.text:SetJustifyH("LEFT")
+            m.buttons[i] = b
+        end
+        local selected = (self.filterProf == opt.value)
+        b.text:SetText((selected and "|cffffd200" or "") .. opt.label .. (selected and "|r" or ""))
+        b:SetScript("OnClick", function()
+            m:Hide()
+            self.filterProf = opt.value   -- captured per option; nil for All
+            self:UpdateProfFilterLabel()
+            self:Refresh()
+        end)
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT", m, "TOPLEFT", 4, -24 - (i - 1) * ROW_H)
+        b:SetPoint("RIGHT", m, "RIGHT", -4, 0)
+        b:Show()
+        local tw = b.text:GetStringWidth() + 28
+        if tw > maxW then maxW = tw end
+    end
+    for i = #opts + 1, #m.buttons do m.buttons[i]:Hide() end
+
+    m:SetWidth(math.max(120, maxW))
+    m:SetHeight(24 + #opts * ROW_H + 8)
+    m:ClearAllPoints()
+    m:SetPoint("TOPLEFT", self.profBtn, "BOTTOMLEFT", 0, -2)
+    m:Show()
 end
 
 function GP:UpdateHeaders()
