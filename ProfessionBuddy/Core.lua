@@ -7,7 +7,7 @@ ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
 addon.version = "1.0.3"
-addon.BUILD = "guild-dev-20260828n"  -- dev slice; /dump ProfBuddy.BUILD
+addon.BUILD = "guild-dev-20260828o"  -- dev slice; /dump ProfBuddy.BUILD
 addon.modules = {}
 
 -- Shorthand for the player's "Name-Realm" key used everywhere
@@ -48,6 +48,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     ProfBuddyDB.characters = ProfBuddyDB.characters or {}
     ProfBuddyDB.contacts = ProfBuddyDB.contacts or {}
     ProfBuddyDB.orders = ProfBuddyDB.orders or {}
+    ProfBuddyDB.orderBoard = ProfBuddyDB.orderBoard or {}  -- open orders posted by guildmates
     ProfBuddyDB.skillReqOverrides = ProfBuddyDB.skillReqOverrides or {}
     if ProfBuddyDB.orderSeq == nil then ProfBuddyDB.orderSeq = 0 end
     ProfBuddyDB.settings = ProfBuddyDB.settings or {

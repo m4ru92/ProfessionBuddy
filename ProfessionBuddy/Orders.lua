@@ -34,6 +34,7 @@ local Orders = addon:NewModule("Orders")
 -- Constants
 ----------------------------------------------------------------------
 local STATUS = {
+    OPEN      = "open",       -- posted to the guild board, no crafter yet (pre-pending)
     PENDING   = "pending",
     ACCEPTED  = "accepted",
     CRAFTED   = "crafted",
@@ -145,6 +146,35 @@ function Orders:Create(params)
     return order
 end
 
+-- Post an open order to the guild board: same shape as Create but with no
+-- crafter yet. Status is OPEN until a guildmate's claim assigns it.
+function Orders:CreateOpen(params)
+    if not params or not params.item then
+        return nil, "missing required fields"
+    end
+    local id = self:_NewID()
+    local order = {
+        id        = id,
+        requester = addon:PlayerKey(),
+        crafter   = nil,
+        item = {
+            id         = params.item.id,
+            name       = params.item.name,
+            profession = params.item.profession,
+        },
+        quantity          = params.quantity or 1,
+        matResponsibility = params.matResponsibility or MAT_RESP.REQUESTER,
+        note              = params.note,
+        status            = STATUS.OPEN,
+        completedBy       = nil,
+        dismissed         = false,
+        createdAt         = time(),
+        updatedAt         = time(),
+    }
+    addon.db.orders[id] = order
+    return order
+end
+
 ----------------------------------------------------------------------
 -- Transitions
 -- Each enforces (a) the current status is legal for the move and
@@ -161,6 +191,20 @@ function Orders:Accept(id)
     if not o then return nil, "no such order" end
     if o.status ~= STATUS.PENDING then return nil, "order is not pending" end
     if not isActor(o, "crafter") then return nil, "only the crafter can accept" end
+    setStatus(o, STATUS.ACCEPTED)
+    return o
+end
+
+-- Requester side: a guildmate's claim on my open order wins. Assign them as the
+-- crafter and move the order into the normal directed flow at ACCEPTED (claiming
+-- == accepting). The requester then hands off via the existing ORDER_NEW path.
+function Orders:AssignFromClaim(id, crafterKey)
+    local o = addon.db.orders[id]
+    if not o then return nil, "no such order" end
+    if o.status ~= STATUS.OPEN then return nil, "order is not open" end
+    if o.requester ~= addon:PlayerKey() then return nil, "not my order to assign" end
+    if type(crafterKey) ~= "string" or crafterKey == "" then return nil, "no crafter" end
+    o.crafter = crafterKey
     setStatus(o, STATUS.ACCEPTED)
     return o
 end

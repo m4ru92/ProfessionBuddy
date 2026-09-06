@@ -469,5 +469,69 @@ check(#Router.queue == before,
     "GP6: unchanged state still re-pushed (signature suppression failed)")
 ok("GP6 incremental auto-push -- converges on change, suppressed when unchanged")
 
+-- ── GP8: guild order board -- claim race, exactly one winner [COMM_REV 6] ──
+-- Requester posts an open order to the guild; two co-guilded crafters both claim;
+-- the requester (single authority) assigns the FIRST claim and closes the board.
+local RQ = makeInstance("Requester", "GhostRealm")
+local X1 = makeInstance("Crafter1", "GhostRealm")
+local X2 = makeInstance("Crafter2", "GhostRealm")
+Router:ungroupAll()
+Router:guild(RQ.key, X1.key, X2.key)
+
+local open = RQ.orders:CreateOpen({
+    item = { id = 14048, name = "Bolt of Runecloth", profession = "Tailoring" }, quantity = 2 })
+RQ.comm:BroadcastOpenOrder(open)
+Router:pump()
+check(RQ.addon.db.orders[open.id] and RQ.addon.db.orders[open.id].status == "open",
+    "GP8: requester's own open order not stored as open")
+check(X1.addon.db.orderBoard[open.id] and X2.addon.db.orderBoard[open.id],
+    "GP8: crafters did not receive the open order on their board")
+
+X1.comm:ClaimOrder(X1.addon.db.orderBoard[open.id])   -- enqueued first -> wins
+X2.comm:ClaimOrder(X2.addon.db.orderBoard[open.id])
+Router:pump()
+
+local ro = RQ.addon.db.orders[open.id]
+check(ro.status == "accepted" and ro.crafter == X1.key,
+    "GP8: requester did not assign to the first claimer")
+check(X1.addon.db.orders[open.id] and X1.addon.db.orders[open.id].status == "accepted",
+    "GP8: winner did not receive the directed order at accepted")
+check(X2.addon.db.orders[open.id] == nil, "GP8: loser wrongly got a directed order")
+check(X1.addon.db.orderBoard[open.id] == nil and X2.addon.db.orderBoard[open.id] == nil,
+    "GP8: board entry not cleared for both crafters after assign")
+ok("GP8 order board claim race -- exactly one winner, board closed for the rest")
+
+-- ── GP9: the claimed order runs the full directed lifecycle ──────────
+X1.orders:MarkCrafted(open.id)
+X1.comm:SendOrderUpdate(X1.addon.db.orders[open.id])
+Router:pump()
+check(RQ.addon.db.orders[open.id].status == "crafted", "GP9: crafted did not reach the requester")
+RQ.orders:ConfirmReceived(open.id)
+RQ.comm:SendOrderUpdate(RQ.addon.db.orders[open.id])
+Router:pump()
+check(RQ.addon.db.orders[open.id].status == "completed"
+      and X1.addon.db.orders[open.id].status == "completed",
+    "GP9: claimed order did not complete on both sides")
+ok("GP9 claimed order -- crafted then completed across the directed flow")
+
+-- ── GP10: board trust + anti-spoof ──────────────────────────────────
+local open2 = RQ.orders:CreateOpen({
+    item = { id = 14048, name = "Bolt of Runecloth", profession = "Tailoring" }, quantity = 1 })
+RQ.comm:BroadcastOpenOrder(open2)
+Router:pump()
+-- (a) a non-guild stranger's claim is dropped at the trust gate
+S.comm:ClaimOrder({ id = open2.id, requester = RQ.key })
+Router:pump()
+check(RQ.addon.db.orders[open2.id].status == "open",
+    "GP10: a non-guild stranger's claim was honored")
+-- (b) only the poster may close: a guildmate who is not the requester cannot
+local before = X1.addon.db.orderBoard[open2.id]
+check(before ~= nil, "GP10: setup -- X1 should have open2 on its board")
+X2.comm:BroadcastOrderClosed(open2.id, "assigned")   -- X2 is not the poster
+Router:pump()
+check(X1.addon.db.orderBoard[open2.id] ~= nil,
+    "GP10: a non-requester's ORDER_CLOSED wrongly cleared the board")
+ok("GP10 board anti-spoof -- stranger claim ignored, non-poster close ignored")
+
 print("ALL GHOST HARNESS TESTS PASS (" .. pass ..
-    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 delta, GP7 order loop)")
+    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 delta, GP7 order loop, GP8 board race, GP9 board lifecycle, GP10 board anti-spoof)")

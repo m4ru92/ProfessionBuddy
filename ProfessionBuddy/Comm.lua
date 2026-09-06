@@ -24,7 +24,7 @@ local Comm = addon:NewModule("Comm")
 -- indicators); rev 4 = trust-gate hardening restored (realm-aware group match,
 -- two-tier seen/trusted contacts, realm-aware whisper + order anti-spoof) after
 -- the 1.0.1 security patch fell out of shipped code the same way COMM_REV did.
-local COMM_REV = 5
+local COMM_REV = 6
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -317,6 +317,12 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
             self:HandleOrderUpdate(sender, data)
         elseif msgType == "ORDER_ACK" then
             self:HandleOrderAck(sender, data)
+        elseif msgType == "ORDER_OPEN" then
+            self:HandleOrderOpen(sender, data)
+        elseif msgType == "ORDER_CLAIM" then
+            self:HandleOrderClaim(sender, data)
+        elseif msgType == "ORDER_CLOSED" then
+            self:HandleOrderClosed(sender, data)
         end
     end)
 
@@ -578,6 +584,95 @@ function Comm:NotifyOrders(kind, order)
     elseif OP.RefreshAll then
         OP:RefreshAll()
     end
+end
+
+----------------------------------------------------------------------
+-- Guild order board (COMM_REV 6): open orders any guildmate can claim.
+-- The requester is the authority for their own opens: post -> broadcast
+-- ORDER_OPEN; a crafter's ORDER_CLAIM is a request TO the requester, who
+-- accepts the FIRST valid claim, hands off via the existing ORDER_NEW path,
+-- and broadcasts ORDER_CLOSED so everyone else drops it. Guild-trust gated.
+----------------------------------------------------------------------
+
+-- Requester -> guild: announce an open order to the board.
+function Comm:BroadcastOpenOrder(order)
+    if not self._ready or type(order) ~= "table" then return end
+    if not IsInGuild() then return end
+    self:Send("ORDER_OPEN", { order = order }, "GUILD")
+end
+
+-- Requester -> guild (broadcast) or a single crafter (whisper): an open order is
+-- no longer available. reason = "assigned" | "cancelled" | "expired".
+function Comm:BroadcastOrderClosed(orderId, reason, targetKey)
+    if not self._ready or type(orderId) ~= "string" then return end
+    if targetKey then
+        self:SendWhisper("ORDER_CLOSED", { orderId = orderId, reason = reason }, targetKey)
+    elseif IsInGuild() then
+        self:Send("ORDER_CLOSED", { orderId = orderId, reason = reason }, "GUILD")
+    end
+end
+
+-- Receiver: store a guildmate's open order on our board. The sender IS the
+-- requester (you cannot post on someone else's behalf), and only guildmates
+-- can populate the board. Rebuilt field-by-field, sanitized.
+function Comm:HandleOrderOpen(sender, data)
+    if not self:IsGuildMember(sender) then return end
+    local o = data.order
+    if type(o) ~= "table" or type(o.id) ~= "string" or type(o.item) ~= "table" then return end
+    addon.db.orderBoard = addon.db.orderBoard or {}
+    addon.db.orderBoard[o.id] = {
+        id        = o.id,
+        requester = normFullKey(sender),
+        item = {
+            id         = sanID(o.item.id, 10^7),
+            name       = sanStr(o.item.name, 128) or "?",
+            profession = sanStr(o.item.profession, 40),
+        },
+        quantity          = sanInt(o.quantity, 1, 10^4, 1),
+        matResponsibility = sanStr(o.matResponsibility, 16),
+        note              = sanStr(o.note, 256),
+        status            = "open",
+        postedAt          = time(),
+    }
+    self:NotifyOrders()
+end
+
+-- Crafter -> requester: claim an open order off the board.
+function Comm:ClaimOrder(order)
+    if not self._ready or type(order) ~= "table" or type(order.requester) ~= "string" then return end
+    self:SendWhisper("ORDER_CLAIM", { orderId = order.id }, order.requester)
+end
+
+-- Requester side: adjudicate a claim. Single authority, so the FIRST valid claim
+-- wins deterministically. On assign it collapses into the directed ORDER_NEW flow.
+function Comm:HandleOrderClaim(sender, data)
+    if not self:IsGuildMember(sender) then return end
+    local Orders = addon.Orders
+    local id = data.orderId
+    if not Orders or type(id) ~= "string" then return end
+    local o = addon.db.orders[id]
+    if not o or o.requester ~= addon:PlayerKey() then return end     -- not my order
+    if o.status ~= Orders.STATUS.OPEN then
+        self:BroadcastOrderClosed(id, "assigned", sender)            -- already taken
+        return
+    end
+    local order = Orders:AssignFromClaim(id, normFullKey(sender))
+    if not order then return end
+    self:SendOrderNew(order)                                         -- directed handoff (ACCEPTED)
+    self:BroadcastOrderClosed(id, "assigned")                       -- everyone drops it
+    self:NotifyOrders("assigned", order)
+end
+
+-- Receiver: remove a closed open order from our board. Anti-spoof: only the
+-- order's own requester (the poster) may close it.
+function Comm:HandleOrderClosed(sender, data)
+    local id = data.orderId
+    if type(id) ~= "string" then return end
+    local board = addon.db.orderBoard
+    if not board or not board[id] then return end
+    if normFullKey(board[id].requester) ~= normFullKey(sender) then return end
+    board[id] = nil
+    self:NotifyOrders()
 end
 
 ----------------------------------------------------------------------
