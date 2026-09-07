@@ -1574,14 +1574,17 @@ function OP:Refresh()
 end
 
 ----------------------------------------------------------------------
--- Preserve History across a settings round-trip
--- The main window hides (and thus hides History) on the way into
--- settings, so capture History's open state BEFORE that, then reopen
--- it when settings returns to the main window. Mirrors how the
--- Material Calc is restored after settings on the profession window.
+-- Preserve History and Find a crafter across a settings round-trip
+-- The main window hides (and thus hides both attached panels) on the way
+-- into settings, so capture whichever was open BEFORE that, then reopen it
+-- when settings returns to the main window. Mirrors how the Material Calc is
+-- restored after settings on the profession window. The two panels are
+-- mutually exclusive (History is Direct-only, Find is board-only), so at most
+-- one flag is ever set.
 ----------------------------------------------------------------------
 function OP:CaptureHistoryState()
     self._histWasOpen = (self.histFrame and self.histFrame:IsShown()) or false
+    self._findWasOpen = (self.findFrame and self.findFrame:IsShown()) or false
 end
 
 function OP:RestoreHistoryState()
@@ -1590,6 +1593,12 @@ function OP:RestoreHistoryState()
         self:BuildHistoryPanel()
         self.histCtx.rebuild()
         self.histFrame:Show()
+    end
+    if self._findWasOpen then
+        self._findWasOpen = false
+        self:BuildFindPanel()
+        self:RefreshFind()
+        self.findFrame:Show()
     end
 end
 
