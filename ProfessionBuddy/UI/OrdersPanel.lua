@@ -1078,9 +1078,20 @@ function OP:BuildPostComposer(host)
     ph:SetText("Item to be crafted")
     local function updatePH() if item:GetText() ~= "" then ph:Hide() else ph:Show() end end
     item:SetScript("OnTextChanged", updatePH)
-    item:SetScript("OnEditFocusGained", function() ph:Hide() end)
+    item:SetScript("OnEditFocusGained", function()
+        ph:Hide()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    end)
     item:SetScript("OnEditFocusLost", updatePH)
     updatePH()
+
+    -- Tab moves item -> quantity and back; focusing either field closes an open
+    -- composer dropdown so it does not linger over the list.
+    item:SetScript("OnTabPressed", function() qty:SetFocus() end)
+    qty:SetScript("OnTabPressed", function() item:SetFocus() end)
+    qty:SetScript("OnEditFocusGained", function()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    end)
 
     -- Row 2: Post button (right), profession + mat-resp dropdowns (left)
     local postBtn = CreateFrame("Button", nil, composer, "UIPanelButtonTemplate")
@@ -1099,6 +1110,7 @@ function OP:BuildPostComposer(host)
     end
 
     postBtn:SetScript("OnClick", function()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
         if not addon.Orders then return end
         local name = strtrim(item:GetText() or "")
         if name == "" then
