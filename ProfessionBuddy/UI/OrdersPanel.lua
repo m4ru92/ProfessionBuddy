@@ -414,7 +414,8 @@ function OP:CreateRow(parent, index, ctx)
         GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
         GameTooltip:AddLine(o.item.name .. "  x" .. o.quantity, 1, 1, 1)
         local reqShort = o.requester:match("^([^-]+)") or o.requester
-        local crfShort = o.crafter:match("^([^-]+)") or o.crafter
+        -- A cancelled OPEN post has no crafter (it was pulled before any claim).
+        local crfShort = o.crafter and (o.crafter:match("^([^-]+)") or o.crafter) or "unclaimed"
         GameTooltip:AddLine("Requester: " .. reqShort, 0.8, 0.8, 0.8)
         GameTooltip:AddLine("Crafter: " .. crfShort, 0.8, 0.8, 0.8)
         GameTooltip:AddLine("Mats: " .. (MATRESP_LABEL[o.matResponsibility] or "?"), 0.8, 0.8, 0.8)
@@ -571,9 +572,11 @@ function OP:PaintOrderRow(row, o, role)
 
     row.nameText:SetText(string.format("%s  x%d", o.item.name or "?", o.quantity or 1))
 
+    -- otherKey is nil for a cancelled OPEN post (requester side, never claimed);
+    -- show it as headed "to the board" rather than a named counterparty.
     local otherKey = (role == "crafter") and o.requester or o.crafter
-    local short = otherKey:match("^([^-]+)") or otherKey
-    local cd = addon.db.characters[otherKey]
+    local short = otherKey and (otherKey:match("^([^-]+)") or otherKey) or "the board"
+    local cd = otherKey and addon.db.characters[otherKey]
     if cd and cd.class then
         short = addon:ClassColor(cd.class) .. short .. "|r"
     end

@@ -311,9 +311,10 @@ function Orders:PruneHistory(limit)
     for _, o in pairs(addon.db.orders or {}) do
         if TERMINAL[o.status] then
             byKey[o.requester] = byKey[o.requester] or {}; table.insert(byKey[o.requester], o)
-            -- Skip the duplicate insert for a self-order (own-alt order where
-            -- requester == crafter) so it isn't counted twice toward the cap.
-            if o.crafter ~= o.requester then
+            -- A cancelled OPEN post is terminal with NO crafter, so only group it
+            -- under the requester. Otherwise group under the crafter too, skipping
+            -- a self-order (requester == crafter) so it isn't counted twice.
+            if o.crafter and o.crafter ~= o.requester then
                 byKey[o.crafter] = byKey[o.crafter] or {}; table.insert(byKey[o.crafter], o)
             end
         end
