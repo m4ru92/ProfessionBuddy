@@ -187,9 +187,9 @@ function OP:Init()
             self._tabHookInstalled = true
             hooksecurefunc(addon.UI, "SelectTab", function(_, index)
                 local tab = addon.UI.frame.tabs[index]
-                if tab and tab.name ~= "orders"
-                   and OP.histFrame and OP.histFrame:IsShown() then
-                    OP.histFrame:Hide()
+                if tab and tab.name ~= "orders" then
+                    if OP.histFrame and OP.histFrame:IsShown() then OP.histFrame:Hide() end
+                    if OP.findFrame and OP.findFrame:IsShown() then OP.findFrame:Hide() end
                 end
             end)
         end
@@ -718,6 +718,18 @@ function OP:CreateContent(parent)
     histBtn:SetScript("OnClick", function() OP:ToggleHistory() end)
     self.histBtn = histBtn
 
+    -- Find a crafter: sits in the History slot but only on the Guild Board
+    -- sub-view (History is Direct-only, so the two never share the corner).
+    local findBtn = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
+    findBtn:SetSize(104, 20)
+    findBtn:SetPoint("RIGHT", -16, 0)
+    findBtn:SetText("Find a crafter")
+    findBtn:SetNormalFontObject(GameFontNormalSmall)
+    findBtn:SetHighlightFontObject(GameFontHighlightSmall)
+    findBtn:SetScript("OnClick", function() OP:ToggleFind() end)
+    findBtn:Hide()
+    self.findBtn = findBtn
+
     -- Direct list host (the incoming/outgoing active queue)
     local listHost = CreateFrame("Frame", nil, parent)
     listHost:SetPoint("TOPLEFT", topBar, "BOTTOMLEFT", 0, -2)
@@ -765,11 +777,15 @@ function OP:SelectSubview(name)
 
     if self.directHost then self.directHost:SetShown(not onBoard) end
     if self.boardHost then self.boardHost:SetShown(onBoard) end
-    -- History is a Direct-only affordance; hide the button (and any open panel)
-    -- while the board is showing.
+    -- History is Direct-only, Find a crafter is board-only; swap the two in the
+    -- top-right corner and close whichever panel does not belong to this view.
     if self.histBtn then self.histBtn:SetShown(not onBoard) end
+    if self.findBtn then self.findBtn:SetShown(onBoard) end
     if onBoard and self.histFrame and self.histFrame:IsShown() then
         self.histFrame:Hide()
+    end
+    if not onBoard and self.findFrame and self.findFrame:IsShown() then
+        self.findFrame:Hide()
     end
 
     -- Highlight the active segment (LockHighlight keeps the glow lit).
@@ -1196,6 +1212,248 @@ function OP:BuildBoard(host)
     end
 
     self.boardCtx.rebuild()
+end
+
+----------------------------------------------------------------------
+-- Find a crafter (recipe / item search)
+-- Reverse lookup across every synced character: you, your alts, friends,
+-- and guildmates whose recipes have synced. Type a recipe or item name and
+-- see who can make it, then click a result to open their professions and
+-- place a directed order. Read-only; no wire.
+----------------------------------------------------------------------
+local FIND_ROW_H = 32
+local REL_LABEL = {
+    you    = { text = "you",    r = 0.40, g = 1.00, b = 0.40 },
+    alt    = { text = "alt",    r = 0.70, g = 0.85, b = 1.00 },
+    friend = { text = "friend", r = 0.50, g = 0.75, b = 1.00 },
+    guild  = { text = "guild",  r = 0.35, g = 0.78, b = 0.35 },
+    synced = { text = "synced", r = 0.70, g = 0.70, b = 0.70 },
+}
+-- Closeness order for sorting results: your own characters first, then friends,
+-- then guildmates, then anyone else synced.
+local REL_ORDER = { you = 1, alt = 2, friend = 3, guild = 4, synced = 5 }
+local function relColor(rel)
+    local r = REL_LABEL[rel] or REL_LABEL.synced
+    return string.format("|cff%02x%02x%02x%s|r",
+        math.floor(r.r * 255 + 0.5), math.floor(r.g * 255 + 0.5),
+        math.floor(r.b * 255 + 0.5), r.text)
+end
+
+-- Which relationship is this synced character to me?
+local function relationOf(charKey)
+    if charKey == addon:PlayerKey() then return "you" end
+    local DS = addon.DataStore
+    if DS and DS.IsRemote and DS:IsRemote(charKey) then
+        if addon.db.contacts and addon.db.contacts[charKey] then return "friend" end
+        if addon.Comm and addon.Comm.IsGuildMember and addon.Comm:IsGuildMember(charKey) then
+            return "guild"
+        end
+        return "synced"
+    end
+    return "alt"
+end
+
+-- Every (character, recipe) whose recipe name contains the query, across all
+-- synced character data. Returns a list sorted by recipe then relationship.
+function OP:FindCrafters(query)
+    local out = {}
+    query = strtrim(query or ""):lower()
+    if #query < 2 then return out end
+    for charKey, char in pairs(addon.db.characters or {}) do
+        if char.professions then
+            for profName, profData in pairs(char.professions) do
+                local recipes = profData.recipes
+                if recipes then
+                    for rname in pairs(recipes) do
+                        if type(rname) == "string" and rname:lower():find(query, 1, true) then
+                            table.insert(out, {
+                                charKey   = charKey,
+                                short     = charKey:match("^([^-]+)") or charKey,
+                                classColor = addon:ClassColor(char.class or "WARRIOR"),
+                                profName  = profName,
+                                skill     = profData.skillLevel or profData.level or 0,
+                                recipe    = rname,
+                                rel       = relationOf(charKey),
+                            })
+                        end
+                    end
+                end
+            end
+        end
+    end
+    table.sort(out, function(a, b)
+        if a.recipe ~= b.recipe then return a.recipe < b.recipe end
+        local ra, rb = REL_ORDER[a.rel] or 9, REL_ORDER[b.rel] or 9
+        if ra ~= rb then return ra < rb end
+        return a.charKey < b.charKey
+    end)
+    return out
+end
+
+function OP:PaintFind()
+    local ctx = self.findCtx
+    if not ctx then return end
+    for i, row in ipairs(ctx.rows) do
+        local m = ctx.items[ctx.scrollOffset + i]
+        if m then
+            row._match = m
+            row.recText:SetText(m.recipe)
+            row.whoText:SetText(m.classColor .. m.short .. "|r  (" .. relColor(m.rel)
+                .. ")  |cffbbbbbb" .. m.profName .. " " .. m.skill .. "|r")
+            row:Show()
+        else
+            row._match = nil
+            row:Hide()
+        end
+    end
+end
+
+function OP:RefreshFind()
+    local ctx = self.findCtx
+    if not ctx then return end
+    local q = (self.findBox and self.findBox:GetText()) or ""
+    local results = self:FindCrafters(q)
+    ctx.items = results
+    ctx.scrollOffset = 0
+    local maxScroll = math.max(0, #results - #ctx.rows)
+    ctx.scrollBar:SetMinMaxValues(0, maxScroll)
+    ctx.scrollBar:SetValue(0)
+    if #results == 0 then
+        ctx.empty:SetText(#strtrim(q) < 2
+            and "Type at least two letters of a recipe or item name."
+            or "No synced crafter knows a recipe matching that.")
+        ctx.empty:Show()
+    else
+        ctx.empty:Hide()
+    end
+    self:PaintFind()
+end
+
+function OP:BuildFindPanel()
+    if self.findFrame then return end
+
+    local f = CreateFrame("Frame", "ProfBuddyFindCrafter", UIParent, "BasicFrameTemplateWithInset")
+    f:SetSize(470, 450)
+    local function anchorRight()
+        f:ClearAllPoints()
+        if addon.UI and addon.UI.frame then
+            f:SetPoint("TOPLEFT", addon.UI.frame, "TOPRIGHT", 4, 0)
+        else
+            f:SetPoint("CENTER")
+        end
+    end
+    anchorRight()
+    if addon.UI and addon.UI.frame then
+        addon.UI.frame:HookScript("OnHide", function() if f:IsShown() then f:Hide() end end)
+    end
+    f:EnableMouse(true)
+    f:SetClampedToScreen(true)
+    f:SetFrameStrata("HIGH")
+    f:SetScript("OnShow", anchorRight)
+    f.TitleText:SetText("Find a Crafter")
+    f:Hide()
+    table.insert(UISpecialFrames, "ProfBuddyFindCrafter")
+
+    local box = CreateFrame("EditBox", "ProfBuddyFindSearch", f, "InputBoxTemplate")
+    box:SetSize(280, 20)
+    box:SetPoint("TOPLEFT", 16, -30)
+    box:SetAutoFocus(false)
+    box:SetScript("OnEscapePressed", function(b) b:ClearFocus() end)
+    box:SetScript("OnTextChanged", function() OP:RefreshFind() end)
+    self.findBox = box
+
+    local hint = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    hint:SetPoint("LEFT", box, "RIGHT", 10, 0)
+    hint:SetText("Recipe or item name")
+
+    local content = CreateFrame("Frame", nil, f)
+    content:SetPoint("TOPLEFT", 12, -58)
+    content:SetPoint("BOTTOMRIGHT", -10, 12)
+
+    local ctx = { rows = {}, items = {}, scrollOffset = 0 }
+    self.findCtx = ctx
+
+    local listFrame = CreateFrame("Frame", nil, content)
+    listFrame:SetAllPoints()
+    ctx.listFrame = listFrame
+
+    local ROWS = 12
+    for i = 1, ROWS do
+        local row = CreateFrame("Button", nil, listFrame)
+        row:SetHeight(FIND_ROW_H)
+        row:SetPoint("TOPLEFT", 0, -(i - 1) * FIND_ROW_H)
+        row:SetPoint("RIGHT", -16, 0)
+        local bg = row:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints()
+        if i % 2 == 0 then bg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
+        else bg:SetColorTexture(0.08, 0.08, 0.08, 0.3) end
+        row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+        local rec = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        rec:SetPoint("TOPLEFT", 6, -4)
+        rec:SetJustifyH("LEFT"); rec:SetWidth(410); rec:SetWordWrap(false)
+        row.recText = rec
+        local who = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        who:SetPoint("TOPLEFT", 6, -18)
+        who:SetJustifyH("LEFT"); who:SetWidth(410); who:SetWordWrap(false)
+        row.whoText = who
+        row:SetScript("OnClick", function(self)
+            local m = self._match
+            if not m then return end
+            if addon.TradeSkillFrame and addon.TradeSkillFrame.OpenWithCharacter then
+                addon.TradeSkillFrame:OpenWithCharacter(m.charKey, m.profName)
+            end
+        end)
+        row:SetScript("OnEnter", function(self)
+            local m = self._match
+            if not m then return end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(m.recipe, 1, 1, 1)
+            GameTooltip:AddLine("Open " .. m.short .. "'s " .. m.profName
+                .. " to place an order", 0.8, 0.8, 0.8)
+            GameTooltip:Show()
+        end)
+        row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        row:Hide()
+        ctx.rows[i] = row
+    end
+
+    local sb = CreateFrame("Slider", nil, listFrame)
+    sb:SetPoint("TOPRIGHT", 0, 0)
+    sb:SetPoint("BOTTOMRIGHT", 0, 0)
+    sb:SetWidth(16)
+    sb:SetMinMaxValues(0, 0)
+    sb:SetValueStep(1)
+    sb:SetValue(0)
+    sb:SetObeyStepOnDrag(true)
+    local thumb = sb:CreateTexture(nil, "ARTWORK")
+    thumb:SetSize(16, 24)
+    thumb:SetTexture("Interface\\Buttons\\UI-ScrollBar-Knob")
+    sb:SetThumbTexture(thumb)
+    sb:SetScript("OnValueChanged", function(_, v)
+        ctx.scrollOffset = math.floor(v)
+        OP:PaintFind()
+    end)
+    ctx.scrollBar = sb
+    listFrame:EnableMouseWheel(true)
+    listFrame:SetScript("OnMouseWheel", function(_, d) sb:SetValue(sb:GetValue() - d) end)
+
+    local empty = content:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    empty:SetPoint("TOP", 0, -24)
+    empty:SetText("Type at least two letters of a recipe or item name.")
+    ctx.empty = empty
+
+    self.findFrame = f
+end
+
+function OP:ToggleFind()
+    self:BuildFindPanel()
+    if self.findFrame:IsShown() then
+        self.findFrame:Hide()
+    else
+        self:RefreshFind()
+        self.findFrame:Show()
+        if self.findBox then self.findBox:SetFocus() end
+    end
 end
 
 ----------------------------------------------------------------------
