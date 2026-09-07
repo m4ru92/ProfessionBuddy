@@ -360,6 +360,16 @@ function OP:CreateRow(parent, index, ctx)
     sec:SetWordWrap(false)
     row.secText = sec
 
+    -- "Guild" tag on the name line for an order whose counterparty is a
+    -- guildmate and not a friend. Sits in the gap between the name and the
+    -- right-anchored pill. Shown per-row in PaintOrderRow.
+    local guildTag = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    guildTag:SetPoint("TOPLEFT", 220, -6)
+    guildTag:SetTextColor(0.35, 0.78, 0.35)
+    guildTag:SetText("Guild")
+    guildTag:Hide()
+    row.guildTag = guildTag
+
     -- Pill is right-anchored in PaintOrderRow (left of the buttons) so
     -- the layout adapts to the panel width.
     local pillBg = row:CreateTexture(nil, "ARTWORK")
@@ -523,7 +533,18 @@ local function hideOrderWidgets(row)
     row.secText:SetText("")
     row.pill:SetText("")
     row.pillBg:Hide()
+    if row.guildTag then row.guildTag:Hide() end
     for _, b in ipairs(row.actionBtns) do b:Hide() end
+end
+
+-- "Guild" tag rule: the order's counterparty (the not-me party) is a guildmate
+-- and NOT also a friend. A friend, or a friend who is also a guildmate, shows no
+-- tag; only a guild-only relationship does.
+local function isGuildOnly(counterpartyKey)
+    if not counterpartyKey or counterpartyKey == addon:PlayerKey() then return false end
+    local isFriend = addon.db.contacts and addon.db.contacts[counterpartyKey] ~= nil
+    if isFriend then return false end
+    return addon.Comm and addon.Comm.IsGuildMember and addon.Comm:IsGuildMember(counterpartyKey) or false
 end
 
 function OP:PaintList(ctx)
@@ -595,6 +616,10 @@ function OP:PaintOrderRow(row, o, role)
     local cd = otherKey and addon.db.characters[otherKey]
     if cd and cd.class then
         short = addon:ClassColor(cd.class) .. short .. "|r"
+    end
+
+    if row.guildTag then
+        if isGuildOnly(otherKey) then row.guildTag:Show() else row.guildTag:Hide() end
     end
     local prefix = (role == "crafter") and "from " or "to "
     local matLbl = MATRESP_SHORT[o.matResponsibility] or "?"
@@ -1109,11 +1134,34 @@ function OP:BuildBoard(host)
     local listHost = CreateFrame("Frame", nil, host)
     listHost:SetPoint("TOPLEFT", host, "TOPLEFT", 0, -52)
     listHost:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", 0, 0)
+    self.boardListHost = listHost
+
+    -- Shown in place of the composer and list when you are not in a guild:
+    -- the board is a guild feature, so there is nothing to post to or claim.
+    local guildlessMsg = host:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    guildlessMsg:SetPoint("TOP", host, "TOP", 0, -60)
+    guildlessMsg:SetWidth(360)
+    guildlessMsg:SetTextColor(0.75, 0.75, 0.75)
+    guildlessMsg:SetText("You are not in a guild.\nThe order board is for posting to and claiming from guildmates.")
+    guildlessMsg:Hide()
+    self.boardGuildlessMsg = guildlessMsg
 
     self.boardCtx = { collapsed = { mine = false, avail = false } }
     self:BuildBoardList(listHost, self.boardCtx, 8)
 
     self.boardCtx.rebuild = function()
+        -- Guild gate: no guild means no board. Hide the composer and list, show
+        -- the note, and skip the data work.
+        if not IsInGuild() then
+            if self.postComposer then self.postComposer:Hide() end
+            listHost:Hide()
+            guildlessMsg:Show()
+            return
+        end
+        if self.postComposer then self.postComposer:Show() end
+        listHost:Show()
+        guildlessMsg:Hide()
+
         local ctx = self.boardCtx
         local O = addon.Orders
         local mine = O and O:GetMyOpen() or {}
@@ -1125,6 +1173,14 @@ function OP:BuildBoard(host)
         ctx.items = buildBoardItems(ctx, mine, avail)
         applyScrollRange(ctx)
         self:PaintBoardList(ctx)
+    end
+
+    -- Reflect joining or leaving a guild without needing a reload.
+    if not self._guildEventHooked then
+        self._guildEventHooked = true
+        addon:RegisterEvent("PLAYER_GUILD_UPDATE", function()
+            if OP.boardCtx and OP.boardCtx.rebuild then OP.boardCtx.rebuild() end
+        end)
     end
 
     self.boardCtx.rebuild()
