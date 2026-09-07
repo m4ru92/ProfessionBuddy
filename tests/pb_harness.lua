@@ -358,5 +358,41 @@ local res2 = RDB:GetUnknownRecipes("HasRec-Test Realm", "Tailoring")
 assert(res2["Linen Bag"] == nil, "T16b: known recipe wrongly listed as unknown")
 assert(res2["Silk Bag"], "T16b: unknown recipe missing")
 
-print("ALL 16 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown + T16 no-recipes guard)")
+-- ── T17: guild-board Orders model (CreateOpen / GetMyOpen / Cancel-open) ──
+-- The board UI (increment 2) reads these. An OPEN order has no crafter and must
+-- stay OUT of the Direct outgoing queue, show up under GetMyOpen, and be
+-- cancellable by its poster (which the board's Cancel button drives).
+local myOpen = Orders:CreateOpen({
+    item = { id = 21841, name = "Netherweave Bag", profession = "Tailoring" },
+    quantity = 3,
+})
+assert(myOpen, "T17: CreateOpen failed")
+assert(myOpen.status == Orders.STATUS.OPEN, "T17: open order not OPEN")
+assert(myOpen.crafter == nil, "T17: open order has a crafter")
+assert(myOpen.requester == ME, "T17: open order requester is not me")
+assert(myOpen.matResponsibility == "requester", "T17: mat default not requester")
+-- GetMyOpen returns it; GetOutgoing (the Direct queue) must not.
+local mine = Orders:GetMyOpen()
+local function listHas(list, id)
+    for _, o in ipairs(list) do if o.id == id then return true end end
+    return false
+end
+assert(listHas(mine, myOpen.id), "T17: GetMyOpen missing the open order")
+assert(not listHas(Orders:GetOutgoing(), myOpen.id), "T17: open order leaked into Direct outgoing")
+-- Cancel it (poster pulls the post): OPEN -> CANCELLED, then it drops off GetMyOpen.
+local cancelled = Orders:Cancel(myOpen.id)
+assert(cancelled and cancelled.status == Orders.STATUS.CANCELLED, "T17: cancel-open did not cancel")
+assert(not listHas(Orders:GetMyOpen(), myOpen.id), "T17: cancelled open still on the board list")
+
+-- ── T18: a cancelled OPEN order (crafter == nil) survives PruneHistory ──
+-- Regression: cancelling an unclaimed board post makes a TERMINAL record with no
+-- crafter, which byKey[o.crafter] used to index nil ("table index is nil" at
+-- login). PruneHistory (and the history display) must tolerate a nil crafter.
+assert(cancelled.crafter == nil, "T18: cancelled open unexpectedly has a crafter")
+local okPrune, errPrune = pcall(function() return Orders:PruneHistory() end)
+assert(okPrune, "T18: PruneHistory threw on a crafterless terminal order: " .. tostring(errPrune))
+-- It is grouped under the requester and kept (well within the cap).
+assert(addon.db.orders[cancelled.id] ~= nil, "T18: crafterless terminal order wrongly pruned")
+
+print("ALL 18 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune)")
 
