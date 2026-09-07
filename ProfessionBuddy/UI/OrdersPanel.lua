@@ -64,6 +64,22 @@ local ACTION_LABEL = {
     dismiss         = "Dismiss",
 }
 
+-- Guild Board open-post composer options. ANY_PROF posts without a profession,
+-- so anyone can claim it; a named profession gates the claim (PaintBoardRow).
+local ANY_PROF = "Any profession"
+local PROF_POST_LIST = {
+    ANY_PROF, "Alchemy", "Blacksmithing", "Cooking", "Enchanting", "Engineering",
+    "First Aid", "Jewelcrafting", "Leatherworking", "Tailoring",
+}
+local POST_MATRESP_OPTIONS = {
+    "Order provides mats", "Crafter provides mats", "Split / discuss",
+}
+local POST_MATRESP_VALUE = {
+    ["Order provides mats"]   = "requester",
+    ["Crafter provides mats"] = "crafter",
+    ["Split / discuss"]       = "split",
+}
+
 ----------------------------------------------------------------------
 -- Confirm dialog for the crafter escape hatch
 ----------------------------------------------------------------------
@@ -855,6 +871,16 @@ function OP:CreateBoardRow(parent, index, ctx)
             OP:RefreshAll()
         end
     end)
+    -- Keep hover scripts alive while disabled so a guarded Claim can explain why.
+    actionBtn:SetMotionScriptsWhileDisabled(true)
+    actionBtn:SetScript("OnEnter", function(b)
+        if b._disabledReason then
+            GameTooltip:SetOwner(b, "ANCHOR_LEFT")
+            GameTooltip:SetText(b._disabledReason, 1, 0.4, 0.4, nil, true)
+            GameTooltip:Show()
+        end
+    end)
+    actionBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     row.actionBtn = actionBtn
 
     -- Clicking a header toggles its section (per-list collapse state)
@@ -965,9 +991,11 @@ function OP:PaintBoardRow(row, entry, which)
         (entry.item and entry.item.name) or "?", entry.quantity or 1))
 
     local matLbl = MATRESP_SHORT[entry.matResponsibility] or "Mats: order"
+    row.actionBtn._disabledReason = nil
     if which == "mine" then
         row.secText:SetText("waiting for a claim  |cff555555.|r  " .. matLbl)
         row.actionBtn:SetText("Cancel")
+        row.actionBtn:Enable()
     else
         local short = entry.requester
             and (entry.requester:match("^([^-]+)") or entry.requester) or "?"
@@ -977,44 +1005,113 @@ function OP:PaintBoardRow(row, entry, which)
         end
         row.secText:SetText("from " .. short .. "  |cff555555.|r  " .. matLbl)
         row.actionBtn:SetText("Claim")
+        -- Profession guard: a named profession you do not have blocks the claim.
+        -- An unnamed profession (posted as "Any profession") is claimable by all.
+        local prof = entry.item and entry.item.profession
+        local blocked = prof and prof ~= ""
+            and not (addon.DataStore and addon.DataStore:GetProfession(addon:PlayerKey(), prof))
+        if blocked then
+            row.actionBtn._disabledReason = "You need " .. prof .. " to claim this order."
+            row.actionBtn:Disable()
+        else
+            row.actionBtn:Enable()
+        end
     end
     row.actionBtn._orderId = entry.id
     row.actionBtn._which = which
     row.actionBtn:Show()
 end
 
-function OP:BuildBoard(host)
-    -- Caption strip (one line) + an optional dev-only test-post button.
-    local caption = host:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    caption:SetPoint("TOPLEFT", 8, -4)
-    caption:SetText("Open orders posted to your guild. Claim one, or post your own.")
+-- Two-row open-post composer at the top of the Guild Board.
+--   Row 1: [ item name .......... ] [ qty ]
+--   Row 2: [ profession v ] [ mats v ]        [ Post ]
+-- A named profession gates the claim (see PaintBoardRow); "Any profession"
+-- posts an unguarded order. The richer recipe-picker post lands in increment 3.
+function OP:BuildPostComposer(host)
+    local composer = CreateFrame("Frame", nil, host)
+    composer:SetPoint("TOPLEFT", 0, 0)
+    composer:SetPoint("TOPRIGHT", 0, 0)
+    composer:SetHeight(50)
 
-    local isDev = type(addon.BUILD) == "string" and addon.BUILD:find("dev")
-    if isDev then
-        local testBtn = CreateFrame("Button", nil, host, "UIPanelButtonTemplate")
-        testBtn:SetSize(110, 18)
-        testBtn:SetPoint("TOPRIGHT", -18, -2)
-        testBtn:SetText("Post test order")
-        testBtn:SetNormalFontObject(GameFontNormalSmall)
-        testBtn:SetHighlightFontObject(GameFontHighlightSmall)
-        testBtn:SetScript("OnClick", function()
-            if not addon.Orders then return end
-            local order = addon.Orders:CreateOpen({
-                item = { id = 21841, name = "Netherweave Bag", profession = "Tailoring" },
-                quantity = 1,
-                matResponsibility = "requester",
-            })
-            if order and addon.Comm then addon.Comm:BroadcastOpenOrder(order) end
-            OP:RefreshAll()
-        end)
+    -- Row 1: quantity (narrow, right) then item name filling the rest
+    local qty = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
+    qty:SetSize(40, 20)
+    qty:SetPoint("TOPRIGHT", -18, -4)
+    qty:SetAutoFocus(false); qty:SetNumeric(true); qty:SetMaxLetters(4); qty:SetText("1")
+    qty:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
+
+    local item = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
+    item:SetHeight(20)
+    item:SetPoint("TOPLEFT", 12, -4)
+    item:SetPoint("RIGHT", qty, "LEFT", -10, 0)
+    item:SetAutoFocus(false); item:SetMaxLetters(120)
+    item:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
+
+    -- Placeholder (EditBoxes have no native one)
+    local ph = composer:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    ph:SetPoint("LEFT", item, "LEFT", 4, 0)
+    ph:SetText("Item to be crafted")
+    local function updatePH() if item:GetText() ~= "" then ph:Hide() else ph:Show() end end
+    item:SetScript("OnTextChanged", updatePH)
+    item:SetScript("OnEditFocusGained", function() ph:Hide() end)
+    item:SetScript("OnEditFocusLost", updatePH)
+    updatePH()
+
+    -- Row 2: Post button (right), profession + mat-resp dropdowns (left)
+    local postBtn = CreateFrame("Button", nil, composer, "UIPanelButtonTemplate")
+    postBtn:SetSize(64, 20)
+    postBtn:SetPoint("TOPRIGHT", -16, -28)
+    postBtn:SetText("Post")
+    postBtn:SetNormalFontObject(GameFontNormalSmall)
+    postBtn:SetHighlightFontObject(GameFontHighlightSmall)
+
+    local profDrop, matDrop
+    if addon.CreateDropdown then
+        profDrop = addon.CreateDropdown(composer, 148, PROF_POST_LIST, ANY_PROF, nil, "")
+        profDrop:SetPoint("TOPLEFT", 10, -28)
+        matDrop = addon.CreateDropdown(composer, 148, POST_MATRESP_OPTIONS, POST_MATRESP_OPTIONS[1], nil, "")
+        matDrop:SetPoint("LEFT", profDrop, "RIGHT", 6, 0)
     end
 
+    postBtn:SetScript("OnClick", function()
+        if not addon.Orders then return end
+        local name = strtrim(item:GetText() or "")
+        if name == "" then
+            print("|cff00ccffProfessionBuddy:|r Enter an item name to post an order.")
+            return
+        end
+        if not IsInGuild() then
+            print("|cff00ccffProfessionBuddy:|r You are not in a guild, so there is no board to post to.")
+            return
+        end
+        local q = tonumber(qty:GetText()) or 1
+        if q < 1 then q = 1 end
+        local prof = profDrop and profDrop.selectedValue
+        if prof == ANY_PROF then prof = nil end
+        local matVal = (matDrop and POST_MATRESP_VALUE[matDrop.selectedValue]) or "requester"
+        local order = addon.Orders:CreateOpen({
+            item = { name = name, profession = prof },
+            quantity = q,
+            matResponsibility = matVal,
+        })
+        if order and addon.Comm then addon.Comm:BroadcastOpenOrder(order) end
+        item:SetText(""); qty:SetText("1"); item:ClearFocus(); qty:ClearFocus()
+        print(string.format("|cff00ccffProfessionBuddy:|r Posted %dx %s to the guild board.", q, name))
+        OP:RefreshAll()
+    end)
+
+    self.postComposer = composer
+end
+
+function OP:BuildBoard(host)
+    self:BuildPostComposer(host)
+
     local listHost = CreateFrame("Frame", nil, host)
-    listHost:SetPoint("TOPLEFT", host, "TOPLEFT", 0, -22)
+    listHost:SetPoint("TOPLEFT", host, "TOPLEFT", 0, -52)
     listHost:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", 0, 0)
 
     self.boardCtx = { collapsed = { mine = false, avail = false } }
-    self:BuildBoardList(listHost, self.boardCtx, 9)
+    self:BuildBoardList(listHost, self.boardCtx, 8)
 
     self.boardCtx.rebuild = function()
         local ctx = self.boardCtx
