@@ -134,6 +134,27 @@ StaticPopupDialogs["PROFBUDDY_DECLINE_REASON"] = {
     preferredIndex = 3,
 }
 
+-- Confirm pulling your own open order off the guild board. Cancels the order
+-- locally, then tells every guildmate to drop it from their board.
+StaticPopupDialogs["PROFBUDDY_CANCEL_OPEN"] = {
+    text = "Pull this open order off the guild board?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(_, orderID)
+        if addon.Orders and orderID then
+            local order = addon.Orders:Cancel(orderID)
+            if order and addon.Comm then
+                addon.Comm:BroadcastOrderClosed(orderID, "cancelled")
+            end
+        end
+        OP:RefreshAll()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
 ----------------------------------------------------------------------
 -- Init: register as a tab
 ----------------------------------------------------------------------
@@ -619,11 +640,30 @@ end
 function OP:CreateContent(parent)
     self.parent = parent
 
-    -- Top bar with a History button
+    -- Top bar: a Direct / Guild Board segmented control on the left, and the
+    -- History button on the right (History belongs to the Direct sub-view only).
     local topBar = CreateFrame("Frame", nil, parent)
     topBar:SetPoint("TOPLEFT", 0, 0)
     topBar:SetPoint("TOPRIGHT", 0, 0)
     topBar:SetHeight(24)
+
+    local directSeg = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
+    directSeg:SetSize(84, 20)
+    directSeg:SetPoint("LEFT", 0, 0)
+    directSeg:SetText("Direct")
+    directSeg:SetNormalFontObject(GameFontNormalSmall)
+    directSeg:SetHighlightFontObject(GameFontHighlightSmall)
+    directSeg:SetScript("OnClick", function() OP:SelectSubview("direct") end)
+    self.directSeg = directSeg
+
+    local boardSeg = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
+    boardSeg:SetSize(100, 20)
+    boardSeg:SetPoint("LEFT", directSeg, "RIGHT", 4, 0)
+    boardSeg:SetText("Guild Board")
+    boardSeg:SetNormalFontObject(GameFontNormalSmall)
+    boardSeg:SetHighlightFontObject(GameFontHighlightSmall)
+    boardSeg:SetScript("OnClick", function() OP:SelectSubview("board") end)
+    self.boardSeg = boardSeg
 
     local histBtn = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
     histBtn:SetSize(80, 20)
@@ -632,11 +672,13 @@ function OP:CreateContent(parent)
     histBtn:SetNormalFontObject(GameFontNormalSmall)
     histBtn:SetHighlightFontObject(GameFontHighlightSmall)
     histBtn:SetScript("OnClick", function() OP:ToggleHistory() end)
+    self.histBtn = histBtn
 
-    -- List host below the top bar
+    -- Direct list host (the incoming/outgoing active queue)
     local listHost = CreateFrame("Frame", nil, parent)
     listHost:SetPoint("TOPLEFT", topBar, "BOTTOMLEFT", 0, -2)
     listHost:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
+    self.directHost = listHost
 
     self.activeCtx = { collapsed = { incoming = false, outgoing = false } }
     self:BuildList(listHost, self.activeCtx, 9)
@@ -655,10 +697,337 @@ function OP:CreateContent(parent)
         self:PaintList(ctx)
     end
 
+    -- Guild Board host (open orders you can post/claim)
+    local boardHost = CreateFrame("Frame", nil, parent)
+    boardHost:SetPoint("TOPLEFT", topBar, "BOTTOMLEFT", 0, -2)
+    boardHost:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
+    boardHost:Hide()
+    self.boardHost = boardHost
+    self:BuildBoard(boardHost)
+
     -- Let UI:Toggle refresh us when the window reopens
     parent.Refresh = function() OP:Refresh() end
 
-    self.activeCtx.rebuild()
+    self.subview = "direct"
+    self:SelectSubview("direct")
+end
+
+----------------------------------------------------------------------
+-- Segmented sub-view switch (Direct <-> Guild Board)
+----------------------------------------------------------------------
+function OP:SelectSubview(name)
+    self.subview = name
+    local onBoard = (name == "board")
+
+    if self.directHost then self.directHost:SetShown(not onBoard) end
+    if self.boardHost then self.boardHost:SetShown(onBoard) end
+    -- History is a Direct-only affordance; hide the button (and any open panel)
+    -- while the board is showing.
+    if self.histBtn then self.histBtn:SetShown(not onBoard) end
+    if onBoard and self.histFrame and self.histFrame:IsShown() then
+        self.histFrame:Hide()
+    end
+
+    -- Highlight the active segment (LockHighlight keeps the glow lit).
+    if self.directSeg then
+        if onBoard then self.directSeg:UnlockHighlight() else self.directSeg:LockHighlight() end
+    end
+    if self.boardSeg then
+        if onBoard then self.boardSeg:LockHighlight() else self.boardSeg:UnlockHighlight() end
+    end
+
+    if onBoard then
+        if self.boardCtx and self.boardCtx.rebuild then self.boardCtx.rebuild() end
+    else
+        if self.activeCtx and self.activeCtx.rebuild then self.activeCtx.rebuild() end
+    end
+end
+
+----------------------------------------------------------------------
+-- Guild Board sub-view
+-- Two sections: your own open posts (Cancel to pull them back) and open
+-- orders guildmates have posted (Claim to take one). Claiming whispers the
+-- poster, who assigns the first valid claim and hands the order into the
+-- normal directed flow -- so a claimed order then appears under Direct.
+--
+-- Self-contained list (its own row pool + scrollbar): board rows carry a
+-- single action button, unlike the two-button directed rows.
+----------------------------------------------------------------------
+local function buildBoardItems(ctx, mine, avail)
+    local items = {}
+    table.insert(items, { kind = "header", section = "mine", count = #mine })
+    if not ctx.collapsed.mine then
+        if #mine == 0 then
+            table.insert(items, { kind = "empty", text = "You have no open posts." })
+        else
+            for _, o in ipairs(mine) do
+                table.insert(items, { kind = "board", entry = o, which = "mine" })
+            end
+        end
+    end
+    table.insert(items, { kind = "header", section = "avail", count = #avail })
+    if not ctx.collapsed.avail then
+        if #avail == 0 then
+            table.insert(items, { kind = "empty", text = "Nothing to claim right now." })
+        else
+            for _, o in ipairs(avail) do
+                table.insert(items, { kind = "board", entry = o, which = "avail" })
+            end
+        end
+    end
+    return items
+end
+
+function OP:CreateBoardRow(parent, index, ctx)
+    local row = CreateFrame("Frame", nil, parent)
+    row:EnableMouse(true)
+
+    local bg = row:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    if index % 2 == 0 then
+        bg:SetColorTexture(0.12, 0.12, 0.12, 0.6)
+    else
+        bg:SetColorTexture(0.08, 0.08, 0.08, 0.3)
+    end
+    row.bg = bg
+
+    local hbg = row:CreateTexture(nil, "BACKGROUND")
+    hbg:SetAllPoints()
+    hbg:SetColorTexture(0.18, 0.18, 0.22, 0.95)
+    hbg:Hide()
+    row.headerBg = hbg
+
+    local headerLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    headerLabel:SetPoint("LEFT", 8, 0)
+    headerLabel:Hide()
+    row.headerLabel = headerLabel
+
+    local icon = row:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(20, 20)
+    icon:SetPoint("LEFT", 8, 0)
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    row.icon = icon
+
+    local name = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    name:SetPoint("TOPLEFT", 34, -4)
+    name:SetWidth(190)
+    name:SetJustifyH("LEFT")
+    name:SetWordWrap(false)
+    row.nameText = name
+
+    local sec = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    sec:SetPoint("TOPLEFT", 34, -19)
+    sec:SetWidth(190)
+    sec:SetJustifyH("LEFT")
+    sec:SetWordWrap(false)
+    row.secText = sec
+
+    local emptyTitle = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    emptyTitle:SetPoint("CENTER", row, "CENTER", 0, 0)
+    emptyTitle:SetTextColor(0.7, 0.7, 0.7)
+    emptyTitle:Hide()
+    row.emptyTitle = emptyTitle
+
+    local actionBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+    actionBtn:SetSize(62, 18)
+    actionBtn:SetPoint("RIGHT", -8, 0)
+    actionBtn:SetNormalFontObject(GameFontNormalSmall)
+    actionBtn:SetHighlightFontObject(GameFontHighlightSmall)
+    actionBtn:Hide()
+    actionBtn:SetScript("OnClick", function(b)
+        local id, which = b._orderId, b._which
+        if not id then return end
+        if which == "mine" then
+            StaticPopup_Show("PROFBUDDY_CANCEL_OPEN", nil, nil, id)
+        elseif which == "avail" then
+            local entry = addon.db.orderBoard and addon.db.orderBoard[id]
+            if entry and addon.Comm then
+                addon.Comm:ClaimOrder(entry)
+                local short = entry.requester
+                    and (entry.requester:match("^([^-]+)") or entry.requester) or "?"
+                print(string.format(
+                    "|cff00ccffProfessionBuddy:|r Claim sent to %s for %dx %s.",
+                    short, entry.quantity or 1, (entry.item and entry.item.name) or "?"))
+            end
+            OP:RefreshAll()
+        end
+    end)
+    row.actionBtn = actionBtn
+
+    -- Clicking a header toggles its section (per-list collapse state)
+    row:SetScript("OnMouseUp", function()
+        if row._isHeader and row._section then
+            ctx.collapsed[row._section] = not ctx.collapsed[row._section]
+            if ctx.rebuild then ctx.rebuild() end
+        end
+    end)
+
+    return row
+end
+
+function OP:BuildBoardList(parent, ctx, rowCount)
+    ctx.rows = {}
+    ctx.items = {}
+    ctx.scrollOffset = 0
+    ctx.collapsed = ctx.collapsed or { mine = false, avail = false }
+
+    local listFrame = CreateFrame("Frame", nil, parent)
+    listFrame:SetPoint("TOPLEFT", 0, 0)
+    listFrame:SetPoint("BOTTOMRIGHT", 0, 0)
+    ctx.listFrame = listFrame
+
+    for i = 1, rowCount do
+        local row = self:CreateBoardRow(listFrame, i, ctx)
+        row:SetPoint("TOPLEFT", 0, -(i - 1) * ROW_HEIGHT)
+        row:SetPoint("RIGHT", -16, 0)
+        row:SetHeight(ROW_HEIGHT)
+        ctx.rows[i] = row
+    end
+
+    local sb = CreateFrame("Slider", nil, listFrame)
+    sb:SetPoint("TOPRIGHT", 0, 0)
+    sb:SetPoint("BOTTOMRIGHT", 0, 0)
+    sb:SetWidth(16)
+    sb:SetMinMaxValues(0, 0)
+    sb:SetValueStep(1)
+    sb:SetValue(0)
+    sb:SetObeyStepOnDrag(true)
+    local thumb = sb:CreateTexture(nil, "ARTWORK")
+    thumb:SetSize(16, 24)
+    thumb:SetTexture("Interface\\Buttons\\UI-ScrollBar-Knob")
+    sb:SetThumbTexture(thumb)
+    local sbg = sb:CreateTexture(nil, "BACKGROUND")
+    sbg:SetAllPoints()
+    sbg:SetColorTexture(0.05, 0.05, 0.05, 0.5)
+    sb:SetScript("OnValueChanged", function(_, value)
+        ctx.scrollOffset = math.floor(value)
+        self:PaintBoardList(ctx)
+    end)
+    ctx.scrollBar = sb
+
+    listFrame:EnableMouseWheel(true)
+    listFrame:SetScript("OnMouseWheel", function(_, delta)
+        sb:SetValue(sb:GetValue() - delta)
+    end)
+end
+
+function OP:PaintBoardList(ctx)
+    for i, row in ipairs(ctx.rows) do
+        local item = ctx.items[ctx.scrollOffset + i]
+
+        row._isHeader = false
+        row._section = nil
+        row.headerBg:Hide()
+        row.headerLabel:Hide()
+        row.emptyTitle:Hide()
+        row.icon:Hide()
+        row.nameText:SetText("")
+        row.secText:SetText("")
+        row.actionBtn:Hide()
+        row.bg:Show()
+
+        if not item then
+            row:Hide()
+        elseif item.kind == "header" then
+            row:Show()
+            row.bg:Hide()
+            row.headerBg:Show()
+            row._isHeader = true
+            row._section = item.section
+            local arrow = ctx.collapsed[item.section] and "+" or "-"
+            local label = (item.section == "mine") and "My open posts" or "Available to claim"
+            row.headerLabel:SetText(string.format("%s  %s (%d)", arrow, label, item.count))
+            row.headerLabel:Show()
+        elseif item.kind == "empty" then
+            row:Show()
+            row.emptyTitle:SetText(item.text or "")
+            row.emptyTitle:Show()
+        elseif item.kind == "board" then
+            row:Show()
+            self:PaintBoardRow(row, item.entry, item.which)
+        end
+    end
+end
+
+function OP:PaintBoardRow(row, entry, which)
+    local tex = entry.item and PROF_ICONS[entry.item.profession]
+    if tex then
+        row.icon:SetTexture(tex)
+        row.icon:Show()
+    else
+        row.icon:Hide()
+    end
+
+    row.nameText:SetText(string.format("%s  x%d",
+        (entry.item and entry.item.name) or "?", entry.quantity or 1))
+
+    local matLbl = MATRESP_SHORT[entry.matResponsibility] or "Mats: order"
+    if which == "mine" then
+        row.secText:SetText("waiting for a claim  |cff555555.|r  " .. matLbl)
+        row.actionBtn:SetText("Cancel")
+    else
+        local short = entry.requester
+            and (entry.requester:match("^([^-]+)") or entry.requester) or "?"
+        local cd = addon.db.characters and addon.db.characters[entry.requester]
+        if cd and cd.class then
+            short = addon:ClassColor(cd.class) .. short .. "|r"
+        end
+        row.secText:SetText("from " .. short .. "  |cff555555.|r  " .. matLbl)
+        row.actionBtn:SetText("Claim")
+    end
+    row.actionBtn._orderId = entry.id
+    row.actionBtn._which = which
+    row.actionBtn:Show()
+end
+
+function OP:BuildBoard(host)
+    -- Caption strip (one line) + an optional dev-only test-post button.
+    local caption = host:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    caption:SetPoint("TOPLEFT", 8, -4)
+    caption:SetText("Open orders posted to your guild. Claim one, or post your own.")
+
+    local isDev = type(addon.BUILD) == "string" and addon.BUILD:find("dev")
+    if isDev then
+        local testBtn = CreateFrame("Button", nil, host, "UIPanelButtonTemplate")
+        testBtn:SetSize(110, 18)
+        testBtn:SetPoint("TOPRIGHT", -18, -2)
+        testBtn:SetText("Post test order")
+        testBtn:SetNormalFontObject(GameFontNormalSmall)
+        testBtn:SetHighlightFontObject(GameFontHighlightSmall)
+        testBtn:SetScript("OnClick", function()
+            if not addon.Orders then return end
+            local order = addon.Orders:CreateOpen({
+                item = { id = 21841, name = "Netherweave Bag", profession = "Tailoring" },
+                quantity = 1,
+                matResponsibility = "requester",
+            })
+            if order and addon.Comm then addon.Comm:BroadcastOpenOrder(order) end
+            OP:RefreshAll()
+        end)
+    end
+
+    local listHost = CreateFrame("Frame", nil, host)
+    listHost:SetPoint("TOPLEFT", host, "TOPLEFT", 0, -22)
+    listHost:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", 0, 0)
+
+    self.boardCtx = { collapsed = { mine = false, avail = false } }
+    self:BuildBoardList(listHost, self.boardCtx, 9)
+
+    self.boardCtx.rebuild = function()
+        local ctx = self.boardCtx
+        local O = addon.Orders
+        local mine = O and O:GetMyOpen() or {}
+        local avail = {}
+        for _, e in pairs(addon.db.orderBoard or {}) do
+            table.insert(avail, e)
+        end
+        table.sort(avail, function(a, b) return (a.postedAt or 0) < (b.postedAt or 0) end)
+        ctx.items = buildBoardItems(ctx, mine, avail)
+        applyScrollRange(ctx)
+        self:PaintBoardList(ctx)
+    end
+
+    self.boardCtx.rebuild()
 end
 
 ----------------------------------------------------------------------
@@ -769,6 +1138,7 @@ end
 function OP:RefreshAll()
     self:UpdateBadge()
     if self.activeCtx and self.activeCtx.rebuild then self.activeCtx.rebuild() end
+    if self.boardCtx and self.boardCtx.rebuild then self.boardCtx.rebuild() end
     if self.histCtx and self.histCtx.rebuild then self.histCtx.rebuild() end
 end
 

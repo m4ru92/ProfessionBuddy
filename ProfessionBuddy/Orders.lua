@@ -236,8 +236,10 @@ end
 function Orders:Cancel(id)
     local o = addon.db.orders[id]
     if not o then return nil, "no such order" end
-    if o.status ~= STATUS.PENDING and o.status ~= STATUS.ACCEPTED then
-        return nil, "cancel is only allowed while pending or accepted"
+    -- OPEN is cancellable too: pulling your own post off the guild board before
+    -- anyone claims it (the board UI broadcasts ORDER_CLOSED "cancelled" after).
+    if o.status ~= STATUS.OPEN and o.status ~= STATUS.PENDING and o.status ~= STATUS.ACCEPTED then
+        return nil, "cancel is only allowed while open, pending, or accepted"
     end
     if not isActor(o, "requester") then return nil, "only the requester can cancel" end
     setStatus(o, STATUS.CANCELLED)
@@ -400,10 +402,22 @@ function Orders:GetIncoming()
     return out
 end
 
--- Your active orders (you are the requester), oldest first.
+-- Your active orders (you are the requester), oldest first. OPEN orders are
+-- excluded here: they have no crafter yet and live on the Guild Board, not the
+-- Direct queue (they rejoin this list as ACCEPTED once a claim assigns a crafter).
 function Orders:GetOutgoing()
     local out = collect(function(o, me)
-        return o.requester == me and not TERMINAL[o.status]
+        return o.requester == me and o.status ~= STATUS.OPEN and not TERMINAL[o.status]
+    end)
+    table.sort(out, function(a, b) return a.createdAt < b.createdAt end)
+    return out
+end
+
+-- Your own open orders posted to the guild board (requester = you, no crafter
+-- yet), oldest first. Board-only; the Direct queue never shows these.
+function Orders:GetMyOpen()
+    local out = collect(function(o, me)
+        return o.requester == me and o.status == STATUS.OPEN
     end)
     table.sort(out, function(a, b) return a.createdAt < b.createdAt end)
     return out
