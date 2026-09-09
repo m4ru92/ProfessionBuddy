@@ -847,6 +847,12 @@ function Comm:NotifyUIRefresh()
     if addon.GuildPanel and addon.GuildPanel.Refresh then
         addon.GuildPanel:Refresh()
     end
+    -- Find a crafter search: refill results as guildmate recipe syncs land.
+    if addon.OrdersPanel and addon.OrdersPanel.findFrame
+       and addon.OrdersPanel.findFrame:IsShown()
+       and addon.OrdersPanel.RefreshFind then
+        addon.OrdersPanel:RefreshFind()
+    end
     -- Character panel (if the main /pb window is visible)
     if addon.UI and addon.UI.frame and addon.UI.frame:IsShown()
        and addon.CharacterPanel and addon.CharacterPanel.Refresh then

@@ -1445,11 +1445,33 @@ function OP:BuildFindPanel()
     self.findFrame = f
 end
 
+-- Pull full recipe data from online guildmates so the search can find them.
+-- A guildmate you have not browsed only has a lightweight profession summary
+-- (no recipes), so without this the search silently misses them. RequestGuildSync
+-- reuses SYNC_REQ (no wire change) and is throttled per target, and replies
+-- refresh the open panel through NotifyUIRefresh -> RefreshFind.
+function OP:SyncGuildForSearch()
+    if not (addon.Comm and addon.Comm.RequestGuildSync and IsInGuild()) then return end
+    local me = addon:PlayerKey()
+    local myRealm = GetRealmName()
+    local n = GetNumGuildMembers() or 0
+    for i = 1, n do
+        local name, _, _, _, _, _, _, _, online = GetGuildRosterInfo(i)
+        if name and online then
+            local key = name:find("-") and name or (name .. "-" .. myRealm)
+            if key ~= me then
+                addon.Comm:RequestGuildSync(key)
+            end
+        end
+    end
+end
+
 function OP:ToggleFind()
     self:BuildFindPanel()
     if self.findFrame:IsShown() then
         self.findFrame:Hide()
     else
+        self:SyncGuildForSearch()
         self:RefreshFind()
         self.findFrame:Show()
         if self.findBox then self.findBox:SetFocus() end
