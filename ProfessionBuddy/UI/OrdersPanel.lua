@@ -813,12 +813,13 @@ end
 -- Self-contained list (its own row pool + scrollbar): board rows carry a
 -- single action button, unlike the two-button directed rows.
 ----------------------------------------------------------------------
-local function buildBoardItems(ctx, mine, avail)
+local function buildBoardItems(ctx, mine, avail, filtering)
     local items = {}
     table.insert(items, { kind = "header", section = "mine", count = #mine })
     if not ctx.collapsed.mine then
         if #mine == 0 then
-            table.insert(items, { kind = "empty", text = "You have no open posts." })
+            table.insert(items, { kind = "empty",
+                text = filtering and "No posts of yours match that filter." or "You have no open posts." })
         else
             for _, o in ipairs(mine) do
                 table.insert(items, { kind = "board", entry = o, which = "mine" })
@@ -828,7 +829,8 @@ local function buildBoardItems(ctx, mine, avail)
     table.insert(items, { kind = "header", section = "avail", count = #avail })
     if not ctx.collapsed.avail then
         if #avail == 0 then
-            table.insert(items, { kind = "empty", text = "Nothing to claim right now." })
+            table.insert(items, { kind = "empty",
+                text = filtering and "No claimable posts match that filter." or "Nothing to claim right now." })
         else
             for _, o in ipairs(avail) do
                 table.insert(items, { kind = "board", entry = o, which = "avail" })
@@ -836,6 +838,20 @@ local function buildBoardItems(ctx, mine, avail)
         end
     end
     return items
+end
+
+-- Increment 4: does a board entry (an open post, or one of your own open
+-- orders) match the board filter text? Case-insensitive substring against the
+-- item name OR the profession. An empty query matches everything. Pure, so the
+-- tester can unit-check it without a frame.
+function OP:BoardMatches(entry, q)
+    if not q or q == "" then return true end
+    local it = entry and entry.item
+    if type(it) ~= "table" then return false end
+    q = q:lower()
+    local name = type(it.name) == "string" and it.name:lower() or ""
+    local prof = type(it.profession) == "string" and it.profession:lower() or ""
+    return name:find(q, 1, true) ~= nil or prof:find(q, 1, true) ~= nil
 end
 
 function OP:CreateBoardRow(parent, index, ctx)
@@ -1190,8 +1206,36 @@ end
 function OP:BuildBoard(host)
     self:BuildPostComposer(host)
 
+    -- Filter row (increment 4): narrows both board sections by item name or
+    -- profession as you type. Sits between the post composer and the list.
+    local filterBox = CreateFrame("EditBox", nil, host, "InputBoxTemplate")
+    filterBox:SetHeight(18)
+    filterBox:SetPoint("TOPLEFT", host, "TOPLEFT", 16, -56)
+    filterBox:SetPoint("TOPRIGHT", host, "TOPRIGHT", -20, -56)
+    filterBox:SetAutoFocus(false)
+    filterBox:SetMaxLetters(60)
+    filterBox:SetScript("OnEscapePressed", function(eb) eb:SetText(""); eb:ClearFocus() end)
+    local fph = filterBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    fph:SetPoint("LEFT", filterBox, "LEFT", 4, 0)
+    fph:SetText("Filter by item or profession")
+    local function updateFPH() if filterBox:GetText() ~= "" then fph:Hide() else fph:Show() end end
+    filterBox:SetScript("OnTextChanged", function(eb)
+        updateFPH()
+        if OP.boardCtx then
+            OP.boardCtx.filter = strtrim(eb:GetText() or "")
+            if OP.boardCtx.rebuild then OP.boardCtx.rebuild() end
+        end
+    end)
+    filterBox:SetScript("OnEditFocusGained", function()
+        fph:Hide()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    end)
+    filterBox:SetScript("OnEditFocusLost", updateFPH)
+    updateFPH()
+    self.boardFilterBox = filterBox
+
     local listHost = CreateFrame("Frame", nil, host)
-    listHost:SetPoint("TOPLEFT", host, "TOPLEFT", 0, -52)
+    listHost:SetPoint("TOPLEFT", host, "TOPLEFT", 0, -78)
     listHost:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", 0, 0)
     self.boardListHost = listHost
 
@@ -1213,11 +1257,13 @@ function OP:BuildBoard(host)
         -- the note, and skip the data work.
         if not IsInGuild() then
             if self.postComposer then self.postComposer:Hide() end
+            if self.boardFilterBox then self.boardFilterBox:Hide() end
             listHost:Hide()
             guildlessMsg:Show()
             return
         end
         if self.postComposer then self.postComposer:Show() end
+        if self.boardFilterBox then self.boardFilterBox:Show() end
         listHost:Show()
         guildlessMsg:Hide()
 
@@ -1229,7 +1275,17 @@ function OP:BuildBoard(host)
             table.insert(avail, e)
         end
         table.sort(avail, function(a, b) return (a.postedAt or 0) < (b.postedAt or 0) end)
-        ctx.items = buildBoardItems(ctx, mine, avail)
+        -- Increment 4: narrow both sections by the filter box text.
+        local q = ctx.filter
+        local filtering = q ~= nil and q ~= ""
+        if filtering then
+            local fm = {}
+            for _, e in ipairs(mine)  do if self:BoardMatches(e, q) then fm[#fm + 1] = e end end
+            local fa = {}
+            for _, e in ipairs(avail) do if self:BoardMatches(e, q) then fa[#fa + 1] = e end end
+            mine, avail = fm, fa
+        end
+        ctx.items = buildBoardItems(ctx, mine, avail, filtering)
         applyScrollRange(ctx)
         self:PaintBoardList(ctx)
     end
