@@ -1019,6 +1019,45 @@ function OP:PaintBoardList(ctx)
     end
 end
 
+-- Case-insensitive "does this name-keyed table contain `name`?" Recipe tables
+-- (both the static RecipeDB and a character's known recipes) are keyed by the
+-- exact recipe name, but a board post's item name is free text, so match loosely.
+local function tableHasName(tbl, name)
+    if not tbl or type(name) ~= "string" or name == "" then return false end
+    if tbl[name] ~= nil then return true end
+    local lower = name:lower()
+    for k in pairs(tbl) do
+        if type(k) == "string" and k:lower() == lower then return true end
+    end
+    return false
+end
+
+-- Whether the current character may claim an open board order, and if not, why.
+-- Returns nil when claimable, or a reason string. Profession first, then recipe
+-- knowledge. Pure (no frames), so the board UI and the tester share it.
+--   1. "Any profession" post (no named profession): open to all.
+--   2. A named profession you do not have: blocked.
+--   3. A posted item that is a real recipe in that profession you do not know:
+--      blocked. A free-text item that is not a known recipe name is NOT blocked,
+--      so vague posts stay open to anyone with the trade.
+function OP:ClaimBlockReason(entry)
+    local prof = entry and entry.item and entry.item.profession
+    if not (prof and prof ~= "") then return nil end
+    local name = entry.item and entry.item.name
+    local myProf = addon.DataStore and addon.DataStore:GetProfession(addon:PlayerKey(), prof)
+    if not myProf then
+        return "You need " .. prof .. " to claim this order."
+    end
+    if name and name ~= "" and not tableHasName(myProf.recipes, name) then
+        local isRealRecipe = addon.RecipeDB and addon.RecipeDB.data
+            and tableHasName(addon.RecipeDB.data[prof], name)
+        if isRealRecipe then
+            return "You do not know the recipe for " .. name .. "."
+        end
+    end
+    return nil
+end
+
 function OP:PaintBoardRow(row, entry, which)
     local tex = entry.item and PROF_ICONS[entry.item.profession]
     if tex then
@@ -1046,17 +1085,9 @@ function OP:PaintBoardRow(row, entry, which)
         end
         row.secText:SetText("from " .. short .. "  |cff555555.|r  " .. matLbl)
         row.actionBtn:SetText("Claim")
-        -- Profession guard: a named profession you do not have blocks the claim.
-        -- An unnamed profession (posted as "Any profession") is claimable by all.
-        local prof = entry.item and entry.item.profession
-        local blocked = prof and prof ~= ""
-            and not (addon.DataStore and addon.DataStore:GetProfession(addon:PlayerKey(), prof))
-        if blocked then
-            row.actionBtn._disabledReason = "You need " .. prof .. " to claim this order."
-            row.actionBtn:Disable()
-        else
-            row.actionBtn:Enable()
-        end
+        local reason = self:ClaimBlockReason(entry)
+        row.actionBtn._disabledReason = reason
+        if reason then row.actionBtn:Disable() else row.actionBtn:Enable() end
     end
     row.actionBtn._orderId = entry.id
     row.actionBtn._which = which
