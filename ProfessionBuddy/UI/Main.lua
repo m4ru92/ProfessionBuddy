@@ -126,9 +126,10 @@ function UI:AddTab(name, displayName, createFunc)
         btn:SetPoint("LEFT", self.frame.tabs[tabIndex - 1].button, "RIGHT", TAB_PAD, 0)
     end
 
-    -- Content frame (fills the inset area)
+    -- Content frame (fills the inset area). Top inset kept just below the title
+    -- bar; -60 left a visibly loose gap above every tab's content.
     local content = CreateFrame("Frame", nil, self.frame)
-    content:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 10, -60)
+    content:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 10, -42)
     content:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -10, 10)
     content:Hide()
 
