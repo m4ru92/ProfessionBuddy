@@ -24,7 +24,7 @@ local Comm = addon:NewModule("Comm")
 -- indicators); rev 4 = trust-gate hardening restored (realm-aware group match,
 -- two-tier seen/trusted contacts, realm-aware whisper + order anti-spoof) after
 -- the 1.0.1 security patch fell out of shipped code the same way COMM_REV did.
-local COMM_REV = 6
+local COMM_REV = 7  -- 7: INCR inventory delta sync (see DELTA-SYNC-scope.md)
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -208,6 +208,23 @@ local function sanCounts(t, maxEntries)
     return out
 end
 
+-- Like sanCounts but a count of 0 is KEPT: in an INCR delta, 0 means "removed".
+local function sanDelta(t, maxEntries)
+    local out, n = {}, 0
+    if type(t) ~= "table" then return out end
+    for rawID, rawCount in pairs(t) do
+        local id = sanID(rawID, 10^7)
+        local count = tonumber(rawCount)
+        if id and count and count >= 0 then
+            n = n + 1
+            if n > maxEntries then break end
+            if count > 10^6 then count = 10^6 end
+            out[id] = math.floor(count)
+        end
+    end
+    return out
+end
+
 local VALID_FACTION = { Alliance = true, Horde = true, Neutral = true }
 local function sanFaction(f)
     return (type(f) == "string" and VALID_FACTION[f]) and f or "Unknown"
@@ -300,6 +317,13 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
     local msgType = data._type
     if type(msgType) ~= "string" then return end
 
+    -- Remember the sender's protocol revision so we only send INCR deltas
+    -- (COMM_REV 7) to peers that understand them; older peers keep full syncs.
+    if addon.db.contacts[sender] then
+        local rev = tonumber(data._commrev)
+        if rev then addon.db.contacts[sender].lastCommRev = rev end
+    end
+
     -- Dispatch under pcall so a malformed payload (even from a trusted
     -- player) can never throw a visible Lua error in our client.
     pcall(function()
@@ -311,6 +335,8 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
             self:HandleSyncRequest(sender, data)
         elseif msgType == "SYNC_DATA" then
             self:HandleSyncData(sender, data)
+        elseif msgType == "INCR" then
+            self:HandleIncr(sender, data)
         elseif msgType == "ORDER_NEW" then
             self:HandleOrderNew(sender, data)
         elseif msgType == "ORDER_UPDATE" then
@@ -958,10 +984,11 @@ function Comm:HandleSyncRequest(sender, data)
     -- whisper our full payload. (Sharing-off is enforced in the builder.)
     local now = time()
     if lastServed[sender] and (now - lastServed[sender]) < SERVE_COOLDOWN then return end
-    local payload = self:BuildFullPayload()
-    if payload then
+    -- Route through SendFullSync so this serve (re)starts the delta epoch for
+    -- this contact and stamps it on the payload, keeping full syncs and INCRs
+    -- on one baseline.
+    if self:SendFullSync(sender) then
         lastServed[sender] = now
-        self:SendWhisper("SYNC_DATA", payload, sender)
     end
 end
 
@@ -1100,6 +1127,11 @@ function Comm:HandleSyncData(sender, data)
 
     DS:SetRemoteCharacter(sender, charRecord)
 
+    -- Adopt the delta baseline this full payload establishes: later INCRs from
+    -- this sender apply on top of this epoch, starting at seq 1.
+    self._recvState = self._recvState or {}
+    self._recvState[sender] = { epoch = sanInt(data.epoch, 0, 2^31 - 1, 0), seq = 0 }
+
     -- Update contact metadata (always, so the Friends panel timestamp
     -- stays current even for silent background syncs)
     if addon.db.contacts[sender] then
@@ -1144,43 +1176,155 @@ end
 -- BAG_UPDATE fires for every bag interaction, including moving a stack between
 -- slots; without this, each shuffle re-whispered the identical full payload
 -- (all recipes + inventory) to every autoSync contact.
-local function payloadSignature()
+-- Snapshot copy of an inventory's bags/bank itemID:count maps. We diff against
+-- these snapshots to build deltas, so they must be independent of the live data.
+local function copyInv(inv)
+    local out = { bags = {}, bank = {} }
+    if type(inv) == "table" then
+        for id, c in pairs(inv.bags or {}) do out.bags[id] = c end
+        for id, c in pairs(inv.bank or {}) do out.bank[id] = c end
+    end
+    return out
+end
+
+-- Changed itemID:count entries between two inventory snapshots. A count of 0
+-- marks a removal (the item left that location).
+local function invDiff(old, new)
+    local d = { bags = {}, bank = {} }
+    for _, loc in ipairs({ "bags", "bank" }) do
+        local o, nw = old[loc] or {}, new[loc] or {}
+        for id, c in pairs(nw) do
+            if o[id] ~= c then d[loc][id] = c end
+        end
+        for id in pairs(o) do
+            if nw[id] == nil then d[loc][id] = 0 end
+        end
+    end
+    return d
+end
+
+local function diffEmpty(d)
+    return not (next(d.bags) or next(d.bank))
+end
+
+-- Signature of the NON-inventory state (skill levels, recipe set, cooldowns).
+-- A change here forces a full SYNC_DATA rather than a delta, since deltas carry
+-- only inventory. Catches skill-ups, learned recipes and cooldown starts.
+local function professionSignature()
     local charData = DS and DS:GetCharacter(addon:PlayerKey())
     if not charData then return 0 end
     local sig = 0
-    local inv = charData.inventory or {}
-    for _, loc in ipairs({ "bags", "bank" }) do
-        for id, count in pairs(inv[loc] or {}) do
-            sig = (sig + id * 31 + count * 7) % 2^31
-        end
-    end
     for _, prof in pairs(charData.professions or {}) do
         sig = (sig + (prof.skillLevel or 0) * 131) % 2^31
-        local n = 0
-        for _ in pairs(prof.recipes or {}) do n = n + 1 end
-        sig = (sig + n * 17) % 2^31
+        for _, info in pairs(prof.recipes or {}) do
+            sig = (sig + 13) % 2^31
+            if type(info) == "table" and info.cooldownReadyAt then
+                sig = (sig + math.floor(info.cooldownReadyAt / 60)) % 2^31
+            end
+        end
     end
     return sig
 end
 
+-- Send a FULL baseline to one contact and (re)start their delta epoch. Every
+-- full sync we emit, a manual serve or an auto baseline, goes through here so
+-- the epoch the receiver adopts always matches the one our later INCRs carry.
+-- Returns true if a payload was sent.
+function Comm:SendFullSync(targetKey)
+    local payload = self:BuildFullPayload()
+    if not payload then return false end
+    self._pushState = self._pushState or {}
+    local st = self._pushState[targetKey] or {}
+    st.epoch = (st.epoch or 0) + 1
+    st.seq = 0
+    local charData = DS:GetCharacter(addon:PlayerKey())
+    st.inv = copyInv(charData and charData.inventory)
+    st.profSig = professionSignature()
+    self._pushState[targetKey] = st
+    payload.epoch = st.epoch
+    self:SendWhisper("SYNC_DATA", payload, targetKey)
+    return true
+end
+
+-- Auto-push on a debounced BAG_UPDATE. For each autoSync contact we send the
+-- smallest correct thing: a full baseline when they are pre-COMM_REV-7, have no
+-- baseline yet, or their non-inventory state changed; otherwise just the changed
+-- inventory entries as an INCR delta. An unchanged contact gets nothing.
 function Comm:SendIncrementalUpdate()
     if not self._ready then return end
+    if not self:SharingEnabled() then return end
+    self._pushState = self._pushState or {}
+    local charData = DS:GetCharacter(addon:PlayerKey())
+    local curInv = copyInv(charData and charData.inventory)
+    local curProfSig = professionSignature()
 
-    -- Skip contacts who already have this exact state (per-contact so a newly
-    -- enabled autoSync contact still gets a first push).
-    self._lastPushSig = self._lastPushSig or {}
-    local sig = payloadSignature()
-
-    local payload
     for contactKey, contact in pairs(addon.db.contacts) do
-        if contact.autoSync and self._lastPushSig[contactKey] ~= sig then
-            -- Send as SYNC_DATA; the receiver handles it the same way
-            payload = payload or self:BuildFullPayload()
-            if not payload then return end   -- sharing off / no data
-            self._lastPushSig[contactKey] = sig
-            self:SendWhisper("SYNC_DATA", payload, contactKey)
+        if contact.autoSync then
+            local rev = tonumber(contact.lastCommRev) or 0
+            local st = self._pushState[contactKey]
+            if not st or not st.epoch then
+                self:SendFullSync(contactKey)                    -- first baseline
+            else
+                local d = invDiff(st.inv, curInv)
+                local invChanged = not diffEmpty(d)
+                local profChanged = st.profSig ~= curProfSig
+                if rev < 7 or profChanged then
+                    -- Old client, or a non-inventory change: full sync, but only
+                    -- if something actually changed (suppress identical pushes).
+                    if invChanged or profChanged then
+                        self:SendFullSync(contactKey)
+                    end
+                elseif invChanged then
+                    st.seq = st.seq + 1
+                    self:SendWhisper("INCR",
+                        { epoch = st.epoch, seq = st.seq, changes = d }, contactKey)
+                    st.inv = copyInv(curInv)
+                end
+            end
         end
     end
+end
+
+-- Apply an inventory delta from a contact. Ordered + epoch-checked: a delta that
+-- is not the exact next one on the baseline we hold is DROPPED, and we pull a
+-- fresh full sync so we recover instead of drifting (the required auto-resync).
+function Comm:HandleIncr(sender, data)
+    if not data then return end
+    self._recvState = self._recvState or {}
+    local rs = self._recvState[sender]
+    local epoch = sanInt(data.epoch, 0, 2^31 - 1, -1)
+    local seq   = sanInt(data.seq, 0, 2^31 - 1, -1)
+    local char  = DS:GetCharacter(sender)
+
+    -- No baseline, wrong epoch, or a sequence gap: drop and auto-resync.
+    if not char or not char.isRemote or not rs
+       or epoch ~= rs.epoch or seq ~= rs.seq + 1 then
+        self:SendWhisper("SYNC_REQ", {}, sender)
+        return
+    end
+
+    local changes = data.changes
+    if type(changes) ~= "table" then return end
+    char.inventory = char.inventory or { bags = {}, bank = {} }
+    for _, loc in ipairs({ "bags", "bank" }) do
+        local dst = char.inventory[loc] or {}
+        char.inventory[loc] = dst
+        local n = 0
+        for _ in pairs(dst) do n = n + 1 end
+        for id, count in pairs(sanDelta(changes[loc], MAX_INV_ENTRIES)) do
+            if count == 0 then
+                if dst[id] ~= nil then dst[id] = nil; n = n - 1 end
+            elseif dst[id] ~= nil then
+                dst[id] = count
+            elseif n < MAX_INV_ENTRIES then
+                dst[id] = count; n = n + 1
+            end
+        end
+    end
+    char.lastSync = time()
+    rs.seq = seq
+    if addon.db.contacts[sender] then addon.db.contacts[sender].lastSync = time() end
+    self:NotifyUIRefresh()
 end
 
 ----------------------------------------------------------------------
