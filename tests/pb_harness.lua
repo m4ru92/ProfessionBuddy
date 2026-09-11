@@ -265,11 +265,16 @@ local fin = addon.db.orders[order.id]
 assert(fin.status == "completed", "T10: completed not applied")
 assert(fin.completedBy == "crafter", "T10: completedBy forged as " .. tostring(fin.completedBy))
 
--- ── T11: auto-push signature suppresses duplicate pushes ─────────
+-- ── T11: auto-push -- full for an old client, suppressed when unchanged ──
+-- Buddy has no COMM_REV on record (an old client), so every push is a full
+-- SYNC_DATA, never a delta. Reset the delta baseline so the first push here is
+-- a clean baseline (T5's serve seeded one earlier).
 clearSent()
+Comm._pushState = nil
 addon.db.contacts["Buddy-Test Realm"].autoSync = true
+addon.db.contacts["Buddy-Test Realm"].lastCommRev = nil
 Comm:SendIncrementalUpdate()
-assert(#sentOfType("SYNC_DATA") == 1, "T11: first push missing")
+assert(#sentOfType("SYNC_DATA") == 1 and #sentOfType("INCR") == 0, "T11: first push (full baseline) missing")
 clearSent()
 Comm:SendIncrementalUpdate()               -- nothing changed
 assert(#sentOfType("SYNC_DATA") == 0, "T11: duplicate push not suppressed")
@@ -394,5 +399,63 @@ assert(okPrune, "T18: PruneHistory threw on a crafterless terminal order: " .. t
 -- It is grouped under the requester and kept (well within the cap).
 assert(addon.db.orders[cancelled.id] ~= nil, "T18: crafterless terminal order wrongly pruned")
 
-print("ALL 18 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune)")
+-- ── T19: rev-7 contact gets an INCR delta on an inventory change ─────
+-- Isolate the auto-push to one rev-7 contact so the send counts are exact.
+for _, c in pairs(addon.db.contacts) do c.autoSync = false end
+Comm._pushState = nil
+addon.db.contacts["Deltapal-Test Realm"] = { trusted = true, autoSync = true, lastSync = 0, lastCommRev = 7 }
+clearSent()
+DS:SetInventory("bags", { [111] = 5 })
+Comm:SendIncrementalUpdate()                       -- first push = full baseline
+assert(#sentOfType("SYNC_DATA") == 1 and #sentOfType("INCR") == 0, "T19: baseline should be a full sync")
+assert(sentOfType("SYNC_DATA")[1].payload.epoch ~= nil, "T19: baseline SYNC_DATA missing epoch stamp")
+clearSent()
+DS:SetInventory("bags", { [111] = 5, [222] = 9 })  -- inventory-only change
+Comm:SendIncrementalUpdate()
+assert(#sentOfType("INCR") == 1 and #sentOfType("SYNC_DATA") == 0, "T19: rev-7 inventory change should be an INCR delta")
+local d19 = sentOfType("INCR")[1].payload
+assert(d19.changes and d19.changes.bags and d19.changes.bags[222] == 9, "T19: delta missing the changed item")
+assert(d19.changes.bags[111] == nil, "T19: delta re-sent an unchanged item")
+
+-- ── T20: a profession change forces a full sync, not a delta ─────────
+clearSent()
+DS:SetProfessionData("Tailoring", { skillLevel = 301, maxSkill = 375, recipes = {} })
+Comm:SendIncrementalUpdate()
+assert(#sentOfType("SYNC_DATA") == 1 and #sentOfType("INCR") == 0, "T20: profession change should force a full sync")
+
+-- ── T21: receiver applies an INCR (add / change / remove) ────────────
+addon.db.contacts["Deltamate-Test Realm"] = { trusted = true, lastSync = 0 }
+recv("Deltamate", { _type = "SYNC_DATA", epoch = 4, professions = {},
+    inventory = { bags = { [100] = 10, [200] = 5 }, bank = {} } })      -- baseline
+recv("Deltamate", { _type = "INCR", epoch = 4, seq = 1,
+    changes = { bags = { [100] = 12, [300] = 7, [200] = 0 } } })        -- change / add / remove
+local dm = DS:GetCharacter("Deltamate-Test Realm").inventory.bags
+assert(dm[100] == 12 and dm[300] == 7 and dm[200] == nil, "T21: INCR add/change/remove not applied correctly")
+
+-- ── T22: a sequence gap or wrong epoch drops the delta and resyncs ───
+clearSent()
+recv("Deltamate", { _type = "INCR", epoch = 4, seq = 3,               -- gap: expected seq 2
+    changes = { bags = { [100] = 999 } } })
+assert(DS:GetCharacter("Deltamate-Test Realm").inventory.bags[100] == 12, "T22: gapped delta was wrongly applied")
+assert(#sentOfType("SYNC_REQ") == 1, "T22: gap did not trigger an auto-resync SYNC_REQ")
+clearSent()
+recv("Deltamate", { _type = "INCR", epoch = 9, seq = 2, changes = { bags = { [100] = 1 } } })  -- wrong epoch
+assert(DS:GetCharacter("Deltamate-Test Realm").inventory.bags[100] == 12, "T22: wrong-epoch delta was wrongly applied")
+assert(#sentOfType("SYNC_REQ") == 1, "T22: wrong epoch did not trigger a resync")
+
+-- ── T23: malformed INCR is rejected / sanitized ──────────────────────
+recv("Deltamate", { _type = "SYNC_DATA", epoch = 5, professions = {},
+    inventory = { bags = { [100] = 1 }, bank = {} } })                  -- rebaseline epoch5 seq0
+recv("Deltamate", { _type = "INCR", epoch = 5, seq = 1, changes = "garbage" })   -- non-table changes
+assert(DS:GetCharacter("Deltamate-Test Realm").inventory.bags[100] == 1, "T23: garbage changes altered inventory")
+recv("Deltamate", { _type = "SYNC_DATA", epoch = 6, professions = {},
+    inventory = { bags = { [100] = 1 }, bank = {} } })                  -- rebaseline epoch6 seq0
+recv("Deltamate", { _type = "INCR", epoch = 6, seq = 1,
+    changes = { bags = { ["notanid"] = 5, [100] = -3, [400] = 1e9 } } })  -- junk id, neg, oversize
+local dj = DS:GetCharacter("Deltamate-Test Realm").inventory.bags
+assert(dj["notanid"] == nil, "T23: non-numeric id accepted")
+assert(dj[100] == 1, "T23: negative count applied (should be dropped)")
+assert(dj[400] == 10^6, "T23: oversized count not clamped")
+
+print("ALL 23 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune + T19-T23 INCR delta sync: send/suppress, prof-forces-full, apply add/change/remove, gap+epoch resync, malformed rejection)")
 

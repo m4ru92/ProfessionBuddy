@@ -469,6 +469,52 @@ check(#Router.queue == before,
     "GP6: unchanged state still re-pushed (signature suppression failed)")
 ok("GP6 incremental auto-push -- converges on change, suppressed when unchanged")
 
+-- ── GP11: INCR delta path + gap-triggered auto-resync [COMM_REV 7] ────
+-- With both sides known to be rev-7, an inventory change auto-pushes a small
+-- INCR delta (not a full payload) and the receiver applies it. A DROPPED delta
+-- opens a sequence gap; the receiver drops the stale delta and pulls a fresh
+-- full sync, so it recovers instead of drifting. Fresh instances so no prior
+-- baseline, contact or serve-cooldown state leaks in.
+local D1 = makeInstance("Deltaone", "GhostRealm")
+local D2 = makeInstance("Deltatwo", "GhostRealm")
+seedChar(D1, "Tailoring", "Bolt of Runecloth", 18401, 100, 10)
+seedChar(D2, "Alchemy",   "Elixir of Fortitude", 3188, 13446, 12)
+Router:ungroupAll()
+Router:group(D1.key, D2.key)
+D1.addon.db.contacts[D2.key] = { trusted = true, autoSync = true,  lastSync = 0, lastCommRev = 7 }
+D2.addon.db.contacts[D1.key] = { trusted = true, autoSync = false, lastSync = 0, lastCommRev = 7 }
+
+-- Baseline: first push is a full SYNC_DATA (establishes the epoch both sides).
+D1.ds:SetInventory("bags", { [100] = 10 })
+fireIncr(D1); Router:pump()
+check(D2.addon.db.characters[D1.key] and D2.addon.db.characters[D1.key].inventory.bags[100] == 10,
+    "GP11: baseline full sync did not reach Deltatwo")
+
+-- An inventory change to a rev-7 contact goes as an INCR delta, and applies.
+D1.ds:SetInventory("bags", { [100] = 10, [200] = 3 })
+fireIncr(D1)
+local sawIncr = false
+for _, m in ipairs(Router.queue) do if m.payload and m.payload._type == "INCR" then sawIncr = true end end
+check(sawIncr, "GP11: a change to a rev-7 contact should be an INCR delta, not a full sync")
+Router:pump()
+check(D2.addon.db.characters[D1.key].inventory.bags[200] == 3, "GP11: INCR delta was not applied")
+
+-- Gap recovery: drop one delta, then change again. Deltatwo sees a seq gap,
+-- drops the stale delta, and SYNC_REQs a fresh baseline -> converges anyway.
+D1.ds:SetInventory("bags", { [100] = 10, [200] = 3, [300] = 7 })          -- change #1
+fireIncr(D1)
+for i = #Router.queue, 1, -1 do
+    if Router.queue[i].payload and Router.queue[i].payload._type == "INCR" then
+        table.remove(Router.queue, i)                                     -- DROP the delta
+    end
+end
+D1.ds:SetInventory("bags", { [100] = 10, [200] = 3, [300] = 7, [400] = 1 })  -- change #2
+fireIncr(D1); Router:pump()
+local binv = D2.addon.db.characters[D1.key].inventory.bags
+check(binv[300] == 7 and binv[400] == 1 and binv[200] == 3,
+    "GP11: Deltatwo did not recover to Deltaone's inventory after a dropped delta")
+ok("GP11 INCR delta path + gap recovery -- delta applied; dropped delta auto-resynced to a full")
+
 -- ── GP8: guild order board -- claim race, exactly one winner [COMM_REV 6] ──
 -- Requester posts an open order to the guild; two co-guilded crafters both claim;
 -- the requester (single authority) assigns the FIRST claim and closes the board.
@@ -534,4 +580,4 @@ check(X1.addon.db.orderBoard[open2.id] ~= nil,
 ok("GP10 board anti-spoof -- stranger claim ignored, non-poster close ignored")
 
 print("ALL GHOST HARNESS TESTS PASS (" .. pass ..
-    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 delta, GP7 order loop, GP8 board race, GP9 board lifecycle, GP10 board anti-spoof)")
+    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 auto-push, GP7 order loop, GP8 board race, GP9 board lifecycle, GP10 board anti-spoof, GP11 delta+recovery)")
