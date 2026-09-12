@@ -65,11 +65,34 @@ local ROLE_STATUS = {
 }
 
 local MAT_RESP = {
-    REQUESTER = "requester",  -- order provided
+    REQUESTER = "requester",  -- requester provided
     CRAFTER   = "crafter",    -- crafter provided
     SPLIT     = "split",      -- informal social contract
 }
 Orders.MAT_RESP = MAT_RESP
+
+-- ONE quantity cap for every path that mints or admits an order: Create,
+-- CreateOpen, the board composer (which reads Orders.MAX_QTY), and the two
+-- remote-ingress clamps (UpsertFromRemote below, HandleOrderOpen in Comm.lua).
+-- Three different caps used to let a claimed order disagree with its own post.
+Orders.MAX_QTY = 999
+local MAX_QTY = Orders.MAX_QTY
+
+local function clampQty(v)
+    v = tonumber(v) or 1
+    if v ~= v then return 1 end                 -- NaN
+    v = math.floor(v)
+    if v < 1 then return 1 end
+    if v > MAX_QTY then return MAX_QTY end
+    return v
+end
+
+-- Canonical storage form of a character key. Anything NormKey cannot parse is
+-- kept verbatim so a field is never lost to normalization.
+local function canonKey(key)
+    if key == nil then return nil end
+    return addon:NormKey(key) or key
+end
 
 ----------------------------------------------------------------------
 -- Init
@@ -81,7 +104,14 @@ function Orders:Init()
     -- Persisted outbox for order messages not yet delivered to an
     -- offline counterparty (auto-resent when they next come online).
     addon.db.orderOutbox = addon.db.orderOutbox or {}
-    self:ExpireStale()
+    addon.db.orderBoard = addon.db.orderBoard or {}
+    -- Comm is not ready at ADDON_LOADED (and the guild roster has not loaded),
+    -- so opens expired here are parked; the login sweep's ExpireStale hands them
+    -- back and broadcasts ORDER_CLOSED{expired} for each.
+    local _, expiredOpen = self:ExpireStale()
+    self._pendingExpiredOpens = (#expiredOpen > 0) and expiredOpen or nil
+    self:SweepBoard()
+    self:SweepOutbox()
     self:PruneHistory()
 end
 
@@ -104,8 +134,11 @@ end
 -- viewed while logged into a third character).
 function Orders:RoleFor(order)
     local me = addon:PlayerKey()
-    if order.crafter == me then return "crafter" end
-    if order.requester == me then return "requester" end
+    -- SameKey, not ==: a record written before schema 2 (or handed to us by a
+    -- peer) can spell the realm differently, and a raw compare would make the
+    -- order invisible to the very character it belongs to.
+    if addon:SameKey(order.crafter, me) then return "crafter" end
+    if addon:SameKey(order.requester, me) then return "requester" end
     return nil
 end
 
@@ -127,13 +160,13 @@ function Orders:Create(params)
     local order = {
         id        = id,
         requester = addon:PlayerKey(),
-        crafter   = params.crafter,
+        crafter   = canonKey(params.crafter),
         item = {
             id         = params.item.id,
             name       = params.item.name,
             profession = params.item.profession,
         },
-        quantity          = params.quantity or 1,
+        quantity          = clampQty(params.quantity),
         matResponsibility = params.matResponsibility or MAT_RESP.REQUESTER,
         note              = params.note,
         status            = STATUS.PENDING,
@@ -162,7 +195,7 @@ function Orders:CreateOpen(params)
             name       = params.item.name,
             profession = params.item.profession,
         },
-        quantity          = params.quantity or 1,
+        quantity          = clampQty(params.quantity),
         matResponsibility = params.matResponsibility or MAT_RESP.REQUESTER,
         note              = params.note,
         status            = STATUS.OPEN,
@@ -202,9 +235,11 @@ function Orders:AssignFromClaim(id, crafterKey)
     local o = addon.db.orders[id]
     if not o then return nil, "no such order" end
     if o.status ~= STATUS.OPEN then return nil, "order is not open" end
-    if o.requester ~= addon:PlayerKey() then return nil, "not my order to assign" end
+    if not addon:SameKey(o.requester, addon:PlayerKey()) then return nil, "not my order to assign" end
     if type(crafterKey) ~= "string" or crafterKey == "" then return nil, "no crafter" end
-    o.crafter = crafterKey
+    -- Canonical key, so the claimer's own client recognizes itself as the
+    -- crafter when the handoff ORDER_NEW lands (a realm-spelled key does not).
+    o.crafter = canonKey(crafterKey)
     setStatus(o, STATUS.ACCEPTED)
     return o
 end
@@ -299,24 +334,48 @@ function Orders:DismissHistorySide(side)
     return #ids
 end
 
+-- Is this key one of MY characters? The retention cap is "per character of
+-- mine"; grouping under remote counterparties too would multiply the stored set
+-- by the number of crafting partners instead of capping it.
+local function isLocalCharacter(key)
+    if type(key) ~= "string" or key == "" then return false end
+    if addon:SameKey(key, addon:PlayerKey()) then return true end
+    local rec = addon.db.characters and addon.db.characters[canonKey(key)]
+    return rec ~= nil and not rec.isRemote
+end
+
+-- Statuses PruneHistory must never delete even though it walks every order.
+-- OPEN is live on the guild board and is ended by ExpireStale, not by history
+-- retention; it is named here so it can never be swept in as "old enough".
+local PRUNE_IMMUNE = { [STATUS.OPEN] = true }
+
 -- Retention: cap stored history so orders never grow unbounded. Keeps, per
--- character key, the most recent `limit` TERMINAL orders that key is party to,
--- and HARD-DELETES any terminal order beyond the cap for BOTH of its parties.
--- Active (non-terminal) orders are never touched. Runs at login (Init). Unlike
--- Dismiss (a hide flag), this permanently removes the record to bound the DB.
+-- character OF MINE, the most recent `limit` TERMINAL orders that character is
+-- party to, and HARD-DELETES any terminal order beyond the cap. Active
+-- (non-terminal) orders are never touched. Runs at login (Init). Unlike Dismiss
+-- (a hide flag), this permanently removes the record to bound the DB.
 function Orders:PruneHistory(limit)
     limit = limit or (addon.db.settings and addon.db.settings.orderHistoryLimit) or 50
     if limit <= 0 then return 0 end
     local byKey = {}
+    local function group(key, o)
+        local k = canonKey(key)
+        byKey[k] = byKey[k] or {}
+        table.insert(byKey[k], o)
+    end
     for _, o in pairs(addon.db.orders or {}) do
-        if TERMINAL[o.status] then
-            byKey[o.requester] = byKey[o.requester] or {}; table.insert(byKey[o.requester], o)
+        if TERMINAL[o.status] and not PRUNE_IMMUNE[o.status] then
             -- A cancelled OPEN post is terminal with NO crafter, so only group it
             -- under the requester. Otherwise group under the crafter too, skipping
             -- a self-order (requester == crafter) so it isn't counted twice.
-            if o.crafter and o.crafter ~= o.requester then
-                byKey[o.crafter] = byKey[o.crafter] or {}; table.insert(byKey[o.crafter], o)
-            end
+            local grouped = false
+            if isLocalCharacter(o.requester) then group(o.requester, o); grouped = true end
+            if o.crafter and not addon:SameKey(o.crafter, o.requester)
+               and isLocalCharacter(o.crafter) then group(o.crafter, o); grouped = true end
+            -- Neither side resolves to one of my characters (an alt deleted from
+            -- db.characters, say). Group it under this character rather than let
+            -- it fall out of every group and be deleted unseen.
+            if not grouped then group(addon:PlayerKey(), o) end
         end
     end
     local keep = {}
@@ -326,7 +385,7 @@ function Orders:PruneHistory(limit)
     end
     local removed = 0
     for id, o in pairs(addon.db.orders or {}) do
-        if TERMINAL[o.status] and not keep[id] then
+        if TERMINAL[o.status] and not PRUNE_IMMUNE[o.status] and not keep[id] then
             addon.db.orders[id] = nil
             removed = removed + 1
         end
@@ -334,20 +393,84 @@ function Orders:PruneHistory(limit)
     return removed
 end
 
--- Auto-expire stale PENDING orders. Deterministic: computed purely from
+-- The shared expiry window, in days. 0 (or less) means expiry is off.
+local function expiryDays(days)
+    return days or (addon.db.settings and addon.db.settings.orderExpiryDays) or 14
+end
+
+-- Auto-expire stale PENDING and OPEN orders. Deterministic: computed purely from
 -- createdAt + the fixed threshold, so both parties expire the same order at the
 -- same wall-clock independently -- no message needed, no divergence (and the
 -- login sweep runs before any UI interaction, so a stale order can't be acted
--- on after its deadline). Only pending (unanswered) orders expire; an accepted
--- order (crafter committed) never does. Runs at login (Init). days <= 0 disables.
+-- on after its deadline). An ACCEPTED order (crafter committed) never expires.
+-- Runs at login (Init) and hourly. days <= 0 disables.
+--
+-- Returns (n, expiredOpenIds): how many orders expired, and the ids of the OPEN
+-- board posts among them, which the caller broadcasts as ORDER_CLOSED{expired}
+-- so every guildmate's board drops them. Any ids parked by the Init sweep (Comm
+-- is not ready that early) are handed back on the next call.
 function Orders:ExpireStale(days)
-    days = days or (addon.db.settings and addon.db.settings.orderExpiryDays) or 14
-    if days <= 0 then return 0 end
+    days = expiryDays(days)
+    local expiredOpen = self._pendingExpiredOpens or {}
+    self._pendingExpiredOpens = nil
+    if days <= 0 then return 0, expiredOpen end
     local cutoff = time() - days * 86400
     local n = 0
     for _, o in pairs(addon.db.orders or {}) do
-        if o.status == STATUS.PENDING and (o.createdAt or 0) <= cutoff then
+        -- OPEN expires too: an abandoned board post is not terminal, so history
+        -- retention never reclaims it and it would render forever.
+        if (o.status == STATUS.PENDING or o.status == STATUS.OPEN)
+           and (o.createdAt or 0) <= cutoff then
+            local wasOpen = (o.status == STATUS.OPEN)
             setStatus(o, STATUS.EXPIRED)
+            if wasOpen then table.insert(expiredOpen, o.id) end
+            n = n + 1
+        end
+    end
+    return n, expiredOpen
+end
+
+-- Drop guildmates' board posts older than the expiry window. The board is
+-- written by any guildmate and its only other remover is a live ORDER_CLOSED,
+-- which a poster who logs off (or a guildmate who was offline at the time)
+-- never sends, so without this sweep db.orderBoard only grows. Returns the
+-- count removed. days <= 0 disables expiry, exactly like ExpireStale.
+function Orders:SweepBoard(days)
+    days = expiryDays(days)
+    if days <= 0 then return 0 end
+    local board = addon.db.orderBoard
+    if type(board) ~= "table" then return 0 end
+    local cutoff = time() - days * 86400
+    local n = 0
+    for id, e in pairs(board) do
+        if type(e) ~= "table" or (tonumber(e.postedAt) or 0) <= cutoff then
+            board[id] = nil
+            n = n + 1
+        end
+    end
+    return n
+end
+
+-- Drop undeliverable order messages older than the expiry window. An entry for
+-- a player who has quit the game is otherwise retried forever. Entries queued
+-- by an older build carry no stamp, so stamp them on first sight and let them
+-- age from there rather than deleting messages that may still be wanted.
+function Orders:SweepOutbox(days)
+    days = expiryDays(days)
+    if days <= 0 then return 0 end
+    local ob = addon.db.orderOutbox
+    if type(ob) ~= "table" then return 0 end
+    local now = time()
+    local cutoff = now - days * 86400
+    local n = 0
+    for token, entry in pairs(ob) do
+        if type(entry) ~= "table" then
+            ob[token] = nil
+            n = n + 1
+        elseif tonumber(entry.queuedAt) == nil then
+            entry.queuedAt = now
+        elseif entry.queuedAt <= cutoff then
+            ob[token] = nil
             n = n + 1
         end
     end
@@ -397,7 +520,7 @@ end
 -- Active requests TO you (you are the crafter), oldest first.
 function Orders:GetIncoming()
     local out = collect(function(o, me)
-        return o.crafter == me and not TERMINAL[o.status]
+        return addon:SameKey(o.crafter, me) and not TERMINAL[o.status]
     end)
     table.sort(out, function(a, b) return a.createdAt < b.createdAt end)
     return out
@@ -408,7 +531,7 @@ end
 -- Direct queue (they rejoin this list as ACCEPTED once a claim assigns a crafter).
 function Orders:GetOutgoing()
     local out = collect(function(o, me)
-        return o.requester == me and o.status ~= STATUS.OPEN and not TERMINAL[o.status]
+        return addon:SameKey(o.requester, me) and o.status ~= STATUS.OPEN and not TERMINAL[o.status]
     end)
     table.sort(out, function(a, b) return a.createdAt < b.createdAt end)
     return out
@@ -418,7 +541,7 @@ end
 -- yet), oldest first. Board-only; the Direct queue never shows these.
 function Orders:GetMyOpen()
     local out = collect(function(o, me)
-        return o.requester == me and o.status == STATUS.OPEN
+        return addon:SameKey(o.requester, me) and o.status == STATUS.OPEN
     end)
     table.sort(out, function(a, b) return a.createdAt < b.createdAt end)
     return out
@@ -427,7 +550,7 @@ end
 -- Terminal orders you are party to (either side), most recent first.
 function Orders:GetHistory()
     local out = collect(function(o, me)
-        return (o.requester == me or o.crafter == me) and TERMINAL[o.status]
+        return (addon:SameKey(o.requester, me) or addon:SameKey(o.crafter, me)) and TERMINAL[o.status]
     end)
     local oldestFirst = addon.db.settings and addon.db.settings.orderHistorySortOldest
     table.sort(out, function(a, b)
@@ -444,9 +567,9 @@ function Orders:GetActionableCount()
     local n = 0
     for _, o in pairs(addon.db.orders or {}) do
         if not o.dismissed then
-            if o.crafter == me and o.status == STATUS.PENDING then
+            if addon:SameKey(o.crafter, me) and o.status == STATUS.PENDING then
                 n = n + 1
-            elseif o.requester == me and o.status == STATUS.CRAFTED then
+            elseif addon:SameKey(o.requester, me) and o.status == STATUS.CRAFTED then
                 n = n + 1
             end
         end
@@ -479,11 +602,16 @@ local VALID_MATRESP = { requester = true, crafter = true, split = true }
 -- Neutralize WoW escape codes (|H hyperlink, |T texture, |c color) in a
 -- remote string and cap its length, so a peer can't inject clickable
 -- links / textures / colored text into our chat or tooltips.
+-- Control characters first (a remote name carrying \n splits the chat line the
+-- panel prints into what looks like a second system message), then TRUNCATE,
+-- then escape pipes: truncating after the escape can cut a "||" in half and
+-- leave a dangling "|" that swallows whatever follows it. Same order as Comm's
+-- sanStr, so the two ingress paths cannot drift apart again.
 local function sanitize(s, maxlen)
     if type(s) ~= "string" then return nil end
-    s = s:gsub("|", "||")
+    s = s:gsub("%c", " ")
     if maxlen and #s > maxlen then s = s:sub(1, maxlen) end
-    return s
+    return (s:gsub("|", "||"))
 end
 
 -- Clamp a remote timestamp to a sane window. A forged huge value would make
@@ -491,9 +619,23 @@ end
 -- in History.
 local function clampTime(v)
     local now = time()
-    v = tonumber(v) or now
+    v = tonumber(v)
+    -- NaN is reachable over the wire and every comparison against it is false,
+    -- so it slips past both clamps below; a NaN createdAt makes the record
+    -- unexpirable (ExpireStale's `<= cutoff` is false) and permanent.
+    if not v or v ~= v then return now end
     if v > now + 300 then v = now + 300 end
     if v < 0 then v = 0 end
+    return v
+end
+
+-- A remote item id: positive integer in range, or nil (0 / NaN / junk means
+-- "absent"). Same shape as Comm's sanID, which the board ingress path uses.
+local function clampItemID(v)
+    v = tonumber(v)
+    if not v or v ~= v then return nil end
+    v = math.floor(v)
+    if v < 1 or v > 10 ^ 7 then return nil end
     return v
 end
 
@@ -512,16 +654,21 @@ function Orders:UpsertFromRemote(remote)
     end
     local order = {
         id          = id,
-        requester   = sanitize(remote.requester, 64) or "?",
-        crafter     = sanitize(remote.crafter, 64) or "?",
+        -- Sanitize first (a remote string can carry escape codes), THEN
+        -- canonicalize, so the stored keys match the ones RoleFor compares.
+        requester   = canonKey(sanitize(remote.requester, 64)) or "?",
+        crafter     = canonKey(sanitize(remote.crafter, 64)) or "?",
         item = {
-            id         = tonumber(remote.item.id) or 0,
+            id         = clampItemID(remote.item.id),
             name       = sanitize(remote.item.name, 80) or "?",
             profession = sanitize(remote.item.profession, 40) or "?",
         },
-        quantity          = math.max(1, math.min(999, tonumber(remote.quantity) or 1)),
+        quantity          = clampQty(remote.quantity),
         matResponsibility = VALID_MATRESP[remote.matResponsibility] and remote.matResponsibility or "requester",
         note              = remote.note and sanitize(remote.note, 200) or nil,
+        -- A handoff for a claim WE made, not an unsolicited request. Strict
+        -- boolean, never a remote string; the panel picks its chat line by it.
+        fromClaim         = (remote.fromClaim == true) or nil,
         status            = remote.status,
         completedBy       = (remote.completedBy == "requester" or remote.completedBy == "crafter") and remote.completedBy or nil,
         dismissed         = false,
@@ -553,17 +700,20 @@ function Orders:ApplyRemoteStatus(id, newStatus, completedBy, updatedAt, decline
         completedBy = nil
     end
     -- Clamp the remote timestamp to a sane window so a forged huge value
-    -- can't make every future legit update look "stale" (freeze attack).
-    local now = time()
-    local newU = tonumber(updatedAt) or now
-    if newU > now + 300 then newU = now + 300 end
-    if newU < 0 then newU = 0 end
+    -- can't make every future legit update look "stale" (freeze attack), and
+    -- so a NaN can't slip past every comparison below into the record.
+    local newU = clampTime(updatedAt)
     local curRank = STATUS_RANK[o.status] or 0
     local newRank = STATUS_RANK[newStatus] or 0
     local curU    = o.updatedAt or 0
     if curRank >= 3 then return o, false end          -- already terminal
     if newU < curU then return o, false end           -- stale
-    if newU == curU and newRank <= curRank then       -- duplicate
+    -- Rank is checked unconditionally, not only on a timestamp tie: a
+    -- counterparty sending "accepted" after "crafted" with a later updatedAt
+    -- would otherwise walk the order backwards and strip the requester's
+    -- Received button, wedging it.
+    if newRank < curRank then return o, false end     -- never regress
+    if newU == curU and newRank == curRank then       -- duplicate
         return o, false
     end
     o.status = newStatus

@@ -50,6 +50,107 @@ local COLORS = {
 }
 
 ----------------------------------------------------------------------
+-- Row pools
+-- Frames and regions are never garbage collected, so the list is repainted
+-- from per-shape pools instead of being rebuilt: ReleaseAll hides every
+-- pooled object at the start of a refresh, each Acquire reuses the next
+-- object of that shape and only creates one past the high-water mark. The
+-- rows here are heterogeneous (buttons, frames, bare FontStrings, textures),
+-- so each shape gets its own pool and they never mix. Nothing is ever
+-- reparented to nil: that orphans the object instead of freeing it.
+----------------------------------------------------------------------
+CP._pools = {}
+
+function CP:Acquire(kind, factory)
+    local pool = self._pools[kind]
+    if not pool then
+        pool = { n = 0, objs = {} }
+        self._pools[kind] = pool
+    end
+    pool.n = pool.n + 1
+    local obj = pool.objs[pool.n]
+    if not obj then
+        obj = factory()
+        pool.objs[pool.n] = obj
+    end
+    obj:Show()
+    return obj
+end
+
+function CP:ReleaseAll()
+    for _, pool in pairs(self._pools) do
+        for i = 1, #pool.objs do
+            pool.objs[i]:Hide()
+        end
+        pool.n = 0
+    end
+end
+
+-- Bare text line (empty states, overflow and result counts).
+function CP:AcquireLabel(text)
+    local label = self:Acquire("label", function()
+        local fs = self.scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        fs:SetTextColor(0.7, 0.7, 0.7)
+        return fs
+    end)
+    label:ClearAllPoints()
+    label:SetText(text)
+    return label
+end
+
+----------------------------------------------------------------------
+-- Item name cache. GetItemInfo is a C call that also queues a server item
+-- query when the item is not cached client-side, and the search used to make
+-- one call per stored item and one per static recipe on every keystroke.
+-- Names never change, so a hit is kept for the session; a miss is not stored,
+-- so the item is asked for again next search once the client has it.
+----------------------------------------------------------------------
+CP._itemNames = {}        -- itemID -> display name
+CP._itemNamesLower = {}   -- itemID -> lowercased name
+
+function CP:ItemName(itemID)
+    local name = self._itemNames[itemID]
+    if name then return name, self._itemNamesLower[itemID] end
+    name = GetItemInfo(itemID)
+    if not name then return nil, nil end
+    self._itemNames[itemID] = name
+    self._itemNamesLower[itemID] = name:lower()
+    return name, self._itemNamesLower[itemID]
+end
+
+-- Section title inside the search results.
+function CP:AcquireSectionHeader(text)
+    local fs = self:Acquire("sectionHeader", function()
+        local f = self.scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        f:SetTextColor(COLORS.header.r, COLORS.header.g, COLORS.header.b)
+        return f
+    end)
+    fs:ClearAllPoints()
+    fs:SetText(text)
+    return fs
+end
+
+-- Hairline under a section title.
+function CP:AcquireDivider()
+    local tex = self:Acquire("divider", function()
+        local t = self.scrollChild:CreateTexture(nil, "ARTWORK")
+        t:SetColorTexture(0.4, 0.35, 0.1, 0.6)
+        return t
+    end)
+    tex:ClearAllPoints()
+    tex:SetSize(self.scrollChild:GetWidth() - 10, 1)
+    return tex
+end
+
+-- Remote peers pick the profession names in their own payload, so a modified
+-- client can file junk under db.characters. Only professions PB knows about
+-- are rendered.
+local function isKnownProf(profName)
+    if PROF_ICONS[profName] then return true end
+    return (addon.CRAFTABLE_PROFS and addon.CRAFTABLE_PROFS[profName]) and true or false
+end
+
+----------------------------------------------------------------------
 -- Init: register as a tab on the main UI
 ----------------------------------------------------------------------
 function CP:Init()
@@ -143,15 +244,19 @@ function CP:CreateContent(parent)
                 self._searchPlaceholder:Hide()
             end
             self._searchText = text:lower()
-            self:Refresh()
+            -- Debounce: a search walks every stored inventory and the whole
+            -- static recipe DB, so it runs once the typing stops, not once
+            -- per keystroke.
+            self:QueueSearch()
         end
     end)
     searchBox:SetScript("OnEscapePressed", function(eb)
-        eb:SetText("")
+        -- Keep the typed term (the other panels do) and close the window, so
+        -- one Escape closes it from here as it does from anywhere else.
         eb:ClearFocus()
-        self._searchText = ""
-        self._searchPlaceholder:Show()
-        self:Refresh()
+        if addon.UI and addon.UI.frame and addon.UI.frame:IsShown() then
+            addon.UI:Hide()
+        end
     end)
     searchBox:SetScript("OnEnterPressed", function(eb)
         eb:ClearFocus()
@@ -170,12 +275,11 @@ function CP:CreateContent(parent)
     end)
     self._searchBox = searchBox
 
-    -- Clear search focus when clicking the parent background or mouse leaves
+    -- Clear search focus when clicking the panel background. No OnLeave
+    -- clear: OnLeave fires whenever the cursor moves onto any mouse-enabled
+    -- child, so it dropped focus mid-word as soon as the mouse crossed a row.
     parent:EnableMouse(true)
     parent:SetScript("OnMouseDown", function()
-        if searchBox:HasFocus() then searchBox:ClearFocus() end
-    end)
-    parent:SetScript("OnLeave", function()
         if searchBox:HasFocus() then searchBox:ClearFocus() end
     end)
 
@@ -203,13 +307,10 @@ function CP:CreateContent(parent)
     scrollFrame:SetScrollChild(scrollChild)
 
     self.scrollChild = scrollChild
-    self.rows = {}
 
-    -- Attach refresh method to parent so the tab system can call it
+    -- Attach refresh method to parent so the tab system can call it. The
+    -- content frame's OnShow hook drives every repaint, first paint included.
     parent.Refresh = function() self:Refresh() end
-
-    -- Initial population
-    C_Timer.After(0.1, function() self:Refresh() end)
 end
 
 ----------------------------------------------------------------------
@@ -219,15 +320,24 @@ CP._factionCollapsed = {}
 CP._searchFactionCollapsed = {}  -- separate state for search results
 CP._profExpanded = {}  -- keyed by "charKey:profName"
 
+-- Coalesce keystrokes into one search. Each new character cancels the
+-- pending run, so the walk happens 0.3 s after the last key, not per key.
+function CP:QueueSearch()
+    if self._searchTimer then
+        self._searchTimer:Cancel()
+        self._searchTimer = nil
+    end
+    self._searchTimer = C_Timer.NewTimer(0.3, function()
+        self._searchTimer = nil
+        self:Refresh()
+    end)
+end
+
 function CP:Refresh()
     if not self.scrollChild then return end
 
-    -- Clear existing rows
-    for _, row in ipairs(self.rows) do
-        row:Hide()
-        row:SetParent(nil)
-    end
-    wipe(self.rows)
+    -- Hide every pooled row; the passes below re-acquire what they need.
+    self:ReleaseAll()
 
     local characters = DS:GetAllCharacters()
 
@@ -238,9 +348,9 @@ function CP:Refresh()
     end
 
     if not characters or not next(characters) then
-        local empty = self:CreateLabel(self.scrollChild, "No character data yet. Log in on each alt to scan.")
+        local empty = self:AcquireLabel("No character data yet. Open your professions on each character to scan them.")
         empty:SetPoint("TOPLEFT", 10, -10)
-        table.insert(self.rows, empty)
+        self.scrollChild:SetHeight(30)
         return
     end
 
@@ -264,6 +374,10 @@ function CP:Refresh()
     -- Sort within each faction: current character first, then alphabetical
     for _, chars in pairs(factions) do
         table.sort(chars, function(a, b)
+            -- The equality case first: without it comp(x, x) is true for the
+            -- current character, which breaks the strict weak ordering
+            -- table.sort requires.
+            if a.key == b.key then return false end
             if a.key == currentKey then return true end
             if b.key == currentKey then return false end
             return a.key < b.key
@@ -318,7 +432,9 @@ function CP:Refresh()
                 if charData.professions then
                     local profsSorted = {}
                     for profName, profData in pairs(charData.professions) do
-                        table.insert(profsSorted, { name = profName, data = profData })
+                        if isKnownProf(profName) then
+                            table.insert(profsSorted, { name = profName, data = profData })
+                        end
                     end
                     table.sort(profsSorted, function(a, b) return a.name < b.name end)
 
@@ -357,37 +473,45 @@ local FACTION_COLORS = {
 }
 
 function CP:CreateFactionHeader(faction, charCount, isCollapsed, yOffset)
-    local row = CreateFrame("Button", nil, self.scrollChild)
-    row:SetSize(self.scrollChild:GetWidth() - 10, ROW_HEIGHT)
-    row:SetPoint("TOPLEFT", 0, yOffset)
-    table.insert(self.rows, row)
+    -- Pooled: the scripts read the row's own state so one button serves any
+    -- faction it is reused for.
+    local row = self:Acquire("factionHeader", function()
+        local f = CreateFrame("Button", nil, self.scrollChild)
 
-    -- Background
-    local bg = row:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
+        f.bg = f:CreateTexture(nil, "BACKGROUND")
+        f.bg:SetAllPoints()
+
+        f.nameText = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        f.nameText:SetPoint("LEFT", 5, 0)
+
+        f:SetScript("OnClick", function(b)
+            self._factionCollapsed[b._faction] = not self._factionCollapsed[b._faction]
+            self:Refresh()
+        end)
+        f:SetScript("OnEnter", function(b)
+            local c = b._fc
+            b.bg:SetColorTexture(c.r * 0.4, c.g * 0.4, c.b * 0.4, 0.9)
+        end)
+        f:SetScript("OnLeave", function(b)
+            local c = b._fc
+            b.bg:SetColorTexture(c.r * 0.3, c.g * 0.3, c.b * 0.3, 0.9)
+        end)
+        return f
+    end)
+
+    row:SetSize(self.scrollChild:GetWidth() - 10, ROW_HEIGHT)
+    row:ClearAllPoints()
+    row:SetPoint("TOPLEFT", 0, yOffset)
+
     local fc = FACTION_COLORS[faction] or FACTION_COLORS.Unknown
-    bg:SetColorTexture(fc.r * 0.3, fc.g * 0.3, fc.b * 0.3, 0.9)
+    row._faction = faction
+    row._fc = fc
+    row.bg:SetColorTexture(fc.r * 0.3, fc.g * 0.3, fc.b * 0.3, 0.9)
 
     -- Collapse arrow + faction name + count
     local arrow = isCollapsed and "+ " or "- "
-    local nameText = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    nameText:SetPoint("LEFT", 5, 0)
-    nameText:SetText(arrow .. faction .. "  " .. COLORS.grey .. "(" .. charCount .. ")|r")
-    nameText:SetTextColor(fc.r, fc.g, fc.b)
-
-    -- Click to toggle
-    row:SetScript("OnClick", function()
-        self._factionCollapsed[faction] = not self._factionCollapsed[faction]
-        self:Refresh()
-    end)
-
-    -- Hover highlight
-    row:SetScript("OnEnter", function()
-        bg:SetColorTexture(fc.r * 0.4, fc.g * 0.4, fc.b * 0.4, 0.9)
-    end)
-    row:SetScript("OnLeave", function()
-        bg:SetColorTexture(fc.r * 0.3, fc.g * 0.3, fc.b * 0.3, 0.9)
-    end)
+    row.nameText:SetText(arrow .. faction .. "  " .. COLORS.grey .. "(" .. charCount .. ")|r")
+    row.nameText:SetTextColor(fc.r, fc.g, fc.b)
 
     return row
 end
@@ -396,40 +520,47 @@ end
 -- Create a character header row
 ----------------------------------------------------------------------
 function CP:CreateCharacterRow(charKey, charData, isCurrent, yOffset)
-    local row = CreateFrame("Frame", nil, self.scrollChild)
-    row:SetSize(self.scrollChild:GetWidth() - 10, ROW_HEIGHT)
-    row:SetPoint("TOPLEFT", 0, yOffset)
-    table.insert(self.rows, row)
+    local row = self:Acquire("charRow", function()
+        local f = CreateFrame("Frame", nil, self.scrollChild)
 
-    -- Background
-    local bg = row:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.15, 0.15, 0.15, 0.8)
+        local bg = f:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints()
+        bg:SetColorTexture(0.15, 0.15, 0.15, 0.8)
+
+        f.nameText = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        f.nameText:SetPoint("LEFT", 5, 0)
+
+        f.levelText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        f.levelText:SetPoint("RIGHT", -5, 0)
+
+        f.scanText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        f.scanText:SetPoint("RIGHT", -50, 0)
+        return f
+    end)
+
+    row:SetSize(self.scrollChild:GetWidth() - 10, ROW_HEIGHT)
+    row:ClearAllPoints()
+    row:SetPoint("TOPLEFT", 0, yOffset)
 
     -- Character name with class color
     local classColor = addon:ClassColor(charData.class or "WARRIOR")
-    local name = charKey
+    local name = addon:ShortName(charKey)
     if isCurrent then
         name = name .. " " .. COLORS.green .. "(you)|r"
     elseif charData.isRemote then
         name = name .. " " .. COLORS.grey .. "(friend)|r"
     end
-
-    local nameText = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    nameText:SetPoint("LEFT", 5, 0)
-    nameText:SetText(classColor .. name .. "|r")
+    row.nameText:SetText(classColor .. name .. "|r")
 
     -- Level
-    local levelText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    levelText:SetPoint("RIGHT", -5, 0)
-    levelText:SetText(COLORS.grey .. "Lv " .. (charData.level or "?") .. "|r")
+    row.levelText:SetText(COLORS.grey .. "Lv " .. (charData.level or "?") .. "|r")
 
     -- Last scan time
     if charData.lastScan and charData.lastScan > 0 then
-        local ago = self:TimeAgo(charData.lastScan)
-        local scanText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        scanText:SetPoint("RIGHT", -50, 0)
-        scanText:SetText(COLORS.grey .. ago .. "|r")
+        row.scanText:SetText(COLORS.grey .. self:TimeAgo(charData.lastScan) .. "|r")
+        row.scanText:Show()
+    else
+        row.scanText:Hide()
     end
 
     return row
@@ -439,58 +570,91 @@ end
 -- Create a profession sub-row
 ----------------------------------------------------------------------
 function CP:CreateProfessionRow(charKey, profName, profData, yOffset, isExpanded)
-    local row = CreateFrame("Button", nil, self.scrollChild)
+    local row = self:Acquire("profRow", function()
+        local f = CreateFrame("Button", nil, self.scrollChild)
+
+        f.highlight = f:CreateTexture(nil, "BACKGROUND")
+        f.highlight:SetAllPoints()
+
+        f.icon = f:CreateTexture(nil, "ARTWORK")
+        f.icon:SetSize(14, 14)
+        f.icon:SetPoint("LEFT", 5, 0)
+        f.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+        f.nameText   = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        f.skillText  = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        f.skillText:SetPoint("LEFT", 175, 0)
+        f.recipeText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        f.recipeText:SetPoint("LEFT", 260, 0)
+
+        f:SetScript("OnEnter", function(b)
+            b.highlight:SetColorTexture(COLORS.highlight.r, COLORS.highlight.g, COLORS.highlight.b, COLORS.highlight.a)
+            self:ShowProfessionTooltip(b, b._charKey, b._profName, b._profData)
+        end)
+        f:SetScript("OnLeave", function(b)
+            b.highlight:SetColorTexture(COLORS.highlight.r, COLORS.highlight.g, COLORS.highlight.b, 0)
+            GameTooltip:Hide()
+        end)
+        f:SetScript("OnClick", function(b)
+            local expandKey = b._charKey .. ":" .. b._profName
+            self._profExpanded[expandKey] = not self._profExpanded[expandKey]
+            self:Refresh()
+        end)
+
+        -- "View" button -- opens the PB profession window for this character.
+        -- Only shown for professions with a recipe list to open.
+        local viewBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        viewBtn:SetSize(36, 16)
+        viewBtn:SetPoint("RIGHT", -2, 0)
+        viewBtn:SetText("View")
+        viewBtn:SetNormalFontObject(GameFontNormalSmall)
+        viewBtn:SetHighlightFontObject(GameFontHighlightSmall)
+        viewBtn:SetScript("OnClick", function()
+            if addon.TradeSkillFrame then
+                addon.TradeSkillFrame:OpenWithCharacter(f._charKey, f._profName)
+            end
+        end)
+        viewBtn:SetScript("OnEnter", function(b)
+            GameTooltip:SetOwner(b, "ANCHOR_RIGHT")
+            GameTooltip:SetText("View " .. addon:ShortName(f._charKey) .. "'s " .. f._profName)
+            GameTooltip:Show()
+        end)
+        viewBtn:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+        f.viewBtn = viewBtn
+        return f
+    end)
+
     row:SetSize(self.scrollChild:GetWidth() - 10, PROF_ROW_HEIGHT)
+    row:ClearAllPoints()
     row:SetPoint("TOPLEFT", 15, yOffset)
-    table.insert(self.rows, row)
-
-    -- Hover highlight
-    local highlight = row:CreateTexture(nil, "BACKGROUND")
-    highlight:SetAllPoints()
-    highlight:SetColorTexture(COLORS.highlight.r, COLORS.highlight.g, COLORS.highlight.b, 0)
-
-    row:SetScript("OnEnter", function()
-        highlight:SetColorTexture(COLORS.highlight.r, COLORS.highlight.g, COLORS.highlight.b, COLORS.highlight.a)
-        self:ShowProfessionTooltip(row, charKey, profName, profData)
-    end)
-    row:SetScript("OnLeave", function()
-        highlight:SetColorTexture(COLORS.highlight.r, COLORS.highlight.g, COLORS.highlight.b, 0)
-        GameTooltip:Hide()
-    end)
-
-    -- Click to expand/collapse
-    local expandKey = charKey .. ":" .. profName
-    row:SetScript("OnClick", function()
-        self._profExpanded[expandKey] = not self._profExpanded[expandKey]
-        self:Refresh()
-    end)
+    row._charKey  = charKey
+    row._profName = profName
+    row._profData = profData
+    row.highlight:SetColorTexture(COLORS.highlight.r, COLORS.highlight.g, COLORS.highlight.b, 0)
 
     -- Profession icon
     local xCursor = 5
     local iconPath = PROF_ICONS[profName]
     if iconPath then
-        local icon = row:CreateTexture(nil, "ARTWORK")
-        icon:SetSize(14, 14)
-        icon:SetPoint("LEFT", xCursor, 0)
-        icon:SetTexture(iconPath)
-        icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        row.icon:SetTexture(iconPath)
+        row.icon:Show()
         xCursor = xCursor + 17
+    else
+        row.icon:Hide()
     end
 
     -- Expand/collapse arrow + profession name
     local arrow = isExpanded and "- " or "+ "
-    local nameText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    nameText:SetPoint("LEFT", xCursor, 0)
-    nameText:SetText(COLORS.grey .. arrow .. "|r" .. profName)
+    row.nameText:ClearAllPoints()
+    row.nameText:SetPoint("LEFT", xCursor, 0)
+    row.nameText:SetText(COLORS.grey .. arrow .. "|r" .. profName)
 
     -- Skill level with color coding
     local skill = profData.skillLevel or 0
     local maxSkill = profData.maxSkill or 375
-    local skillColor = self:SkillColor(skill, maxSkill)
-
-    local skillText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    skillText:SetPoint("LEFT", 175, 0)
-    skillText:SetText(skillColor .. skill .. "/" .. maxSkill .. "|r")
+    row.skillText:SetText(self:SkillColor(skill, maxSkill) .. skill .. "/" .. maxSkill .. "|r")
 
     -- Recipe count
     local recipeCount = 0
@@ -501,49 +665,29 @@ function CP:CreateProfessionRow(charKey, profName, profData, yOffset, isExpanded
     end
 
     -- Unknown recipe count (if we have static data)
+    local hasStatic = (RDB and RDB.data[profName]) and true or false
     local unknownCount = 0
-    if RDB and RDB.data[profName] then
+    if hasStatic then
         local unknown = RDB:GetUnknownRecipes(charKey, profName)
         for _ in pairs(unknown) do
             unknownCount = unknownCount + 1
         end
     end
 
-    local recipeText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    recipeText:SetPoint("LEFT", 260, 0)
     if recipeCount > 0 then
         local str = COLORS.white .. recipeCount .. " recipes|r"
         if unknownCount > 0 then
             str = str .. "  " .. COLORS.orange .. unknownCount .. " missing|r"
         end
-        recipeText:SetText(str)
+        row.recipeText:SetText(str)
     else
-        recipeText:SetText(COLORS.grey .. "not scanned|r")
+        -- Covers both an unscanned profession and a guildmate whose summary
+        -- arrived before their recipes did.
+        row.recipeText:SetText(COLORS.grey .. "no recipes yet|r")
     end
 
-    -- "View" button -- opens PB profession window for this character
-    local viewBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-    viewBtn:SetSize(36, 16)
-    viewBtn:SetPoint("RIGHT", -2, 0)
-    viewBtn:SetText("View")
-    viewBtn:SetNormalFontObject(GameFontNormalSmall)
-    viewBtn:SetHighlightFontObject(GameFontHighlightSmall)
-    viewBtn:SetScript("OnClick", function()
-        if addon.TradeSkillFrame then
-            addon.TradeSkillFrame:OpenWithCharacter(charKey, profName)
-        end
-    end)
-    local viewCharKey = charKey
-    local viewProfName = profName
-    viewBtn:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        local shortName = viewCharKey:match("^([^-]+)") or viewCharKey
-        GameTooltip:SetText("View " .. shortName .. "'s " .. viewProfName)
-        GameTooltip:Show()
-    end)
-    viewBtn:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
+    -- Gathering professions have no recipe list, so no dead View button.
+    row.viewBtn:SetShown(hasStatic)
 
     return row
 end
@@ -652,62 +796,63 @@ function CP:RenderExpandedRecipes(charKey, profName, profData, yOffset)
 
     for i = 1, displayCount do
         local recipe = recipeList[i]
-        local recipeRow = CreateFrame("Frame", nil, self.scrollChild)
+        local recipeRow = self:Acquire("recipeRow", function()
+            local f = CreateFrame("Frame", nil, self.scrollChild)
+
+            f.icon = f:CreateTexture(nil, "ARTWORK")
+            f.icon:SetSize(14, 14)
+            f.icon:SetPoint("LEFT", 5, 0)
+            f.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+            f.nameText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+
+            f:EnableMouse(true)
+            f:SetScript("OnEnter", function(r)
+                if not r._itemID then return end
+                GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
+                GameTooltip:SetHyperlink("item:" .. r._itemID)
+                GameTooltip:Show()
+            end)
+            f:SetScript("OnLeave", function()
+                GameTooltip:Hide()
+            end)
+            return f
+        end)
+
         recipeRow:SetSize(self.scrollChild:GetWidth() - 40, RECIPE_ROW_HEIGHT)
+        recipeRow:ClearAllPoints()
         recipeRow:SetPoint("TOPLEFT", 30, yOffset)
-        table.insert(self.rows, recipeRow)
 
         local dc = DIFF_ROW_COLORS[recipe.difficulty] or DIFF_ROW_COLORS.trivial
         local xCursor = 5
 
-        -- Item icon
+        -- Item icon. GetItemIcon may need the item to be cached; fall back to
+        -- a question mark if it is not available yet.
         if recipe.itemID and recipe.itemID > 0 then
-            local icon = recipeRow:CreateTexture(nil, "ARTWORK")
-            icon:SetSize(14, 14)
-            icon:SetPoint("LEFT", xCursor, 0)
-            icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-
-            -- GetItemIcon may need the item to be cached; fall back to
-            -- a question mark if not available yet
-            local iconTex = GetItemIcon(recipe.itemID)
-            if iconTex then
-                icon:SetTexture(iconTex)
-            else
-                icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-            end
-
+            recipeRow._itemID = recipe.itemID
+            recipeRow.icon:SetTexture(GetItemIcon(recipe.itemID)
+                or "Interface\\Icons\\INV_Misc_QuestionMark")
+            recipeRow.icon:Show()
             xCursor = xCursor + 17
+        else
+            recipeRow._itemID = nil
+            recipeRow.icon:Hide()
         end
 
         -- Recipe name
-        local nameText = recipeRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        nameText:SetPoint("LEFT", xCursor, 0)
-        nameText:SetText(recipe.name)
-        nameText:SetTextColor(dc.r, dc.g, dc.b)
-
-        -- Hoverable tooltip for the item
-        if recipe.itemID and recipe.itemID > 0 then
-            recipeRow:EnableMouse(true)
-            local itemID = recipe.itemID
-            recipeRow:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetHyperlink("item:" .. itemID)
-                GameTooltip:Show()
-            end)
-            recipeRow:SetScript("OnLeave", function()
-                GameTooltip:Hide()
-            end)
-        end
+        recipeRow.nameText:ClearAllPoints()
+        recipeRow.nameText:SetPoint("LEFT", xCursor, 0)
+        recipeRow.nameText:SetText(recipe.name)
+        recipeRow.nameText:SetTextColor(dc.r, dc.g, dc.b)
 
         yOffset = yOffset - RECIPE_ROW_HEIGHT - 1
     end
 
     -- Overflow indicator
     if capped then
-        local moreLabel = self:CreateLabel(self.scrollChild,
+        local moreLabel = self:AcquireLabel(
             COLORS.grey .. "... and " .. (total - MAX_EXPANDED_RECIPES) .. " more|r")
         moreLabel:SetPoint("TOPLEFT", 35, yOffset)
-        table.insert(self.rows, moreLabel)
         yOffset = yOffset - RECIPE_ROW_HEIGHT - 1
     end
 
@@ -736,8 +881,8 @@ function CP:RefreshSearchResults(characters)
 
             -- Search bags
             for itemID, count in pairs(bags) do
-                local itemName = GetItemInfo(itemID)
-                if itemName and itemName:lower():find(query, 1, true) and count > 0 then
+                local itemName, itemLower = self:ItemName(itemID)
+                if itemName and itemLower:find(query, 1, true) and count > 0 then
                     table.insert(invResults, {
                         charKey = charKey,
                         charData = charData,
@@ -751,8 +896,8 @@ function CP:RefreshSearchResults(characters)
 
             -- Search bank
             for itemID, count in pairs(bank) do
-                local itemName = GetItemInfo(itemID)
-                if itemName and itemName:lower():find(query, 1, true) and count > 0 then
+                local itemName, itemLower = self:ItemName(itemID)
+                if itemName and itemLower:find(query, 1, true) and count > 0 then
                     -- Check if already found in bags (combine)
                     local found = false
                     for _, existing in ipairs(invResults) do
@@ -794,7 +939,7 @@ function CP:RefreshSearchResults(characters)
             -- skip
         elseif charData.professions then
             for profName, profData in pairs(charData.professions) do
-                if profData.recipes then
+                if isKnownProf(profName) and profData.recipes then
                     for recipeName, _ in pairs(profData.recipes) do
                         if recipeName:lower():find(query, 1, true) then
                             table.insert(craftResults, {
@@ -817,8 +962,8 @@ function CP:RefreshSearchResults(characters)
         for profName, recipes in pairs(RDB.data) do
             for recipeName, info in pairs(recipes) do
                 if info.itemID then
-                    local itemName = GetItemInfo(info.itemID)
-                    if itemName and itemName:lower():find(query, 1, true)
+                    local itemName, itemLower = self:ItemName(info.itemID)
+                    if itemName and itemLower:find(query, 1, true)
                        and not recipeName:lower():find(query, 1, true) then
                         for charKey, charData in pairs(characters) do
                             if (showCrossFaction or charData.faction == currentFaction) and charData.professions then
@@ -873,15 +1018,14 @@ function CP:RefreshSearchResults(characters)
     local totalResults = #invResults + #craftResults
 
     if totalResults == 0 then
-        local noResults = self:CreateLabel(self.scrollChild, "No results found.")
+        local noResults = self:AcquireLabel("No results found.")
         noResults:SetPoint("TOPLEFT", 10, yOffset)
-        table.insert(self.rows, noResults)
         self.scrollChild:SetHeight(30)
         return
     end
 
     -- Helper: group results by faction, then by character
-    local function groupByFaction(results, factionField)
+    local function groupByFaction(results)
         local groups = {}
         for _, r in ipairs(results) do
             local faction = r.charData.faction or "Unknown"
@@ -913,50 +1057,73 @@ function CP:RefreshSearchResults(characters)
             self._searchFactionCollapsed[collapseKey] = isCollapsed
         end
 
-        local fRow = CreateFrame("Button", nil, self.scrollChild)
+        local fRow = self:Acquire("searchFactionHeader", function()
+            local f = CreateFrame("Button", nil, self.scrollChild)
+
+            f.bg = f:CreateTexture(nil, "BACKGROUND")
+            f.bg:SetAllPoints()
+
+            f.nameText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            f.nameText:SetPoint("LEFT", 5, 0)
+
+            f:SetScript("OnClick", function(b)
+                self._searchFactionCollapsed[b._collapseKey] = not self._searchFactionCollapsed[b._collapseKey]
+                self:Refresh()
+            end)
+            f:SetScript("OnEnter", function(b)
+                local c = b._fc
+                b.bg:SetColorTexture(c.r * 0.4, c.g * 0.4, c.b * 0.4, 0.9)
+            end)
+            f:SetScript("OnLeave", function(b)
+                local c = b._fc
+                b.bg:SetColorTexture(c.r * 0.3, c.g * 0.3, c.b * 0.3, 0.9)
+            end)
+            return f
+        end)
+
         fRow:SetSize(self.scrollChild:GetWidth() - 20, ROW_HEIGHT)
+        fRow:ClearAllPoints()
         fRow:SetPoint("TOPLEFT", 10, yOff)
-        table.insert(self.rows, fRow)
 
         local fc = FACTION_COLORS[faction] or FACTION_COLORS.Unknown
-        local bg = fRow:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        bg:SetColorTexture(fc.r * 0.3, fc.g * 0.3, fc.b * 0.3, 0.9)
+        fRow._fc = fc
+        fRow._collapseKey = collapseKey
+        fRow.bg:SetColorTexture(fc.r * 0.3, fc.g * 0.3, fc.b * 0.3, 0.9)
 
         local arrow = isCollapsed and "+ " or "- "
-        local nameText = fRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        nameText:SetPoint("LEFT", 5, 0)
-        nameText:SetText(arrow .. faction .. "  " .. COLORS.grey .. "(" .. count .. ")|r")
-        nameText:SetTextColor(fc.r, fc.g, fc.b)
-
-        fRow:SetScript("OnClick", function()
-            self._searchFactionCollapsed[collapseKey] = not self._searchFactionCollapsed[collapseKey]
-            self:Refresh()
-        end)
-        fRow:SetScript("OnEnter", function()
-            bg:SetColorTexture(fc.r * 0.4, fc.g * 0.4, fc.b * 0.4, 0.9)
-        end)
-        fRow:SetScript("OnLeave", function()
-            bg:SetColorTexture(fc.r * 0.3, fc.g * 0.3, fc.b * 0.3, 0.9)
-        end)
+        fRow.nameText:SetText(arrow .. faction .. "  " .. COLORS.grey .. "(" .. count .. ")|r")
+        fRow.nameText:SetTextColor(fc.r, fc.g, fc.b)
 
         return isCollapsed
     end
 
+    -- Helper: the "Character" band that heads each character's results
+    local function renderResultCharRow(r, yOff)
+        local charRow = self:Acquire("searchCharRow", function()
+            local f = CreateFrame("Frame", nil, self.scrollChild)
+            local bg = f:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints()
+            bg:SetColorTexture(0.15, 0.15, 0.15, 0.8)
+            f.nameText = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            f.nameText:SetPoint("LEFT", 5, 0)
+            return f
+        end)
+        charRow:SetSize(self.scrollChild:GetWidth() - 30, ROW_HEIGHT)
+        charRow:ClearAllPoints()
+        charRow:SetPoint("TOPLEFT", 20, yOff)
+
+        local classColor = addon:ClassColor(r.charData.class or "WARRIOR")
+        local suffix = r.isCurrent and " " .. COLORS.green .. "(you)|r" or ""
+        charRow.nameText:SetText(classColor .. addon:ShortName(r.charKey) .. "|r" .. suffix)
+        return charRow
+    end
+
     -- Inventory section
     if #invResults > 0 then
-        local sectionHeader = self.scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        sectionHeader:SetPoint("TOPLEFT", 5, yOffset)
-        sectionHeader:SetText("Has in inventory")
-        sectionHeader:SetTextColor(COLORS.header.r, COLORS.header.g, COLORS.header.b)
-        table.insert(self.rows, sectionHeader)
+        self:AcquireSectionHeader("Has in inventory"):SetPoint("TOPLEFT", 5, yOffset)
         yOffset = yOffset - 18
 
-        local divider = self.scrollChild:CreateTexture(nil, "ARTWORK")
-        divider:SetSize(self.scrollChild:GetWidth() - 10, 1)
-        divider:SetPoint("TOPLEFT", 5, yOffset)
-        divider:SetColorTexture(0.4, 0.35, 0.1, 0.6)
-        table.insert(self.rows, divider)
+        self:AcquireDivider():SetPoint("TOPLEFT", 5, yOffset)
         yOffset = yOffset - 6
 
         local factionGroups = groupByFaction(invResults)
@@ -980,33 +1147,23 @@ function CP:RefreshSearchResults(characters)
                 for _, r in ipairs(factionResults) do
                     if r.charKey ~= lastChar then
                         lastChar = r.charKey
-                        local charRow = CreateFrame("Frame", nil, self.scrollChild)
-                        charRow:SetSize(self.scrollChild:GetWidth() - 30, ROW_HEIGHT)
-                        charRow:SetPoint("TOPLEFT", 20, yOffset)
-                        table.insert(self.rows, charRow)
-
-                        local bg = charRow:CreateTexture(nil, "BACKGROUND")
-                        bg:SetAllPoints()
-                        bg:SetColorTexture(0.15, 0.15, 0.15, 0.8)
-
-                        local classColor = addon:ClassColor(r.charData.class or "WARRIOR")
-                        local suffix = r.isCurrent and " " .. COLORS.green .. "(you)|r" or ""
-                        local nameText = charRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                        nameText:SetPoint("LEFT", 5, 0)
-                        nameText:SetText(classColor .. r.charKey .. "|r" .. suffix)
-
+                        renderResultCharRow(r, yOffset)
                         yOffset = yOffset - ROW_HEIGHT - 2
                     end
 
                     -- Item row
-                    local itemRow = CreateFrame("Frame", nil, self.scrollChild)
+                    local itemRow = self:Acquire("itemRow", function()
+                        local f = CreateFrame("Frame", nil, self.scrollChild)
+                        f.itemText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                        f.itemText:SetPoint("LEFT", 5, 0)
+                        f.countText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                        f.countText:SetPoint("RIGHT", -5, 0)
+                        return f
+                    end)
                     itemRow:SetSize(self.scrollChild:GetWidth() - 40, PROF_ROW_HEIGHT)
+                    itemRow:ClearAllPoints()
                     itemRow:SetPoint("TOPLEFT", 30, yOffset)
-                    table.insert(self.rows, itemRow)
-
-                    local itemText = itemRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                    itemText:SetPoint("LEFT", 5, 0)
-                    itemText:SetText(r.itemName)
+                    itemRow.itemText:SetText(r.itemName)
 
                     -- Count display
                     local countStr = ""
@@ -1020,9 +1177,7 @@ function CP:RefreshSearchResults(characters)
                         countStr = COLORS.yellow .. "x" .. bankCount .. "|r " .. COLORS.grey .. "(bank)|r"
                     end
 
-                    local countText = itemRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                    countText:SetPoint("RIGHT", -5, 0)
-                    countText:SetText(countStr)
+                    itemRow.countText:SetText(countStr)
 
                     yOffset = yOffset - PROF_ROW_HEIGHT - 1
                 end
@@ -1036,18 +1191,10 @@ function CP:RefreshSearchResults(characters)
 
     -- Craft section
     if #craftResults > 0 then
-        local sectionHeader = self.scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        sectionHeader:SetPoint("TOPLEFT", 5, yOffset)
-        sectionHeader:SetText("Can craft")
-        sectionHeader:SetTextColor(COLORS.header.r, COLORS.header.g, COLORS.header.b)
-        table.insert(self.rows, sectionHeader)
+        self:AcquireSectionHeader("Can craft"):SetPoint("TOPLEFT", 5, yOffset)
         yOffset = yOffset - 18
 
-        local divider = self.scrollChild:CreateTexture(nil, "ARTWORK")
-        divider:SetSize(self.scrollChild:GetWidth() - 10, 1)
-        divider:SetPoint("TOPLEFT", 5, yOffset)
-        divider:SetColorTexture(0.4, 0.35, 0.1, 0.6)
-        table.insert(self.rows, divider)
+        self:AcquireDivider():SetPoint("TOPLEFT", 5, yOffset)
         yOffset = yOffset - 6
 
         local factionGroups = groupByFaction(craftResults)
@@ -1070,41 +1217,29 @@ function CP:RefreshSearchResults(characters)
                 for _, r in ipairs(factionResults) do
                     if r.charKey ~= lastChar then
                         lastChar = r.charKey
-                        local charRow = CreateFrame("Frame", nil, self.scrollChild)
-                        charRow:SetSize(self.scrollChild:GetWidth() - 30, ROW_HEIGHT)
-                        charRow:SetPoint("TOPLEFT", 20, yOffset)
-                        table.insert(self.rows, charRow)
-
-                        local bg = charRow:CreateTexture(nil, "BACKGROUND")
-                        bg:SetAllPoints()
-                        bg:SetColorTexture(0.15, 0.15, 0.15, 0.8)
-
-                        local classColor = addon:ClassColor(r.charData.class or "WARRIOR")
-                        local suffix = r.isCurrent and " " .. COLORS.green .. "(you)|r" or ""
-                        local nameText = charRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                        nameText:SetPoint("LEFT", 5, 0)
-                        nameText:SetText(classColor .. r.charKey .. "|r" .. suffix)
-
+                        renderResultCharRow(r, yOffset)
                         yOffset = yOffset - ROW_HEIGHT - 2
                     end
 
                     -- Recipe row
-                    local recipeRow = CreateFrame("Frame", nil, self.scrollChild)
+                    local recipeRow = self:Acquire("searchRecipeRow", function()
+                        local f = CreateFrame("Frame", nil, self.scrollChild)
+                        f.recipeText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                        f.recipeText:SetPoint("LEFT", 5, 0)
+                        f.profText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                        f.profText:SetPoint("RIGHT", -5, 0)
+                        return f
+                    end)
                     recipeRow:SetSize(self.scrollChild:GetWidth() - 40, PROF_ROW_HEIGHT)
+                    recipeRow:ClearAllPoints()
                     recipeRow:SetPoint("TOPLEFT", 30, yOffset)
-                    table.insert(self.rows, recipeRow)
 
-                    local recipeText = recipeRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                    recipeText:SetPoint("LEFT", 5, 0)
                     local display = r.recipeName
                     if r.itemName and r.itemName ~= r.recipeName then
                         display = r.recipeName .. " (" .. r.itemName .. ")"
                     end
-                    recipeText:SetText(display)
-
-                    local profText = recipeRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                    profText:SetPoint("RIGHT", -5, 0)
-                    profText:SetText(COLORS.grey .. r.profName .. "|r")
+                    recipeRow.recipeText:SetText(display)
+                    recipeRow.profText:SetText(COLORS.grey .. r.profName .. "|r")
 
                     yOffset = yOffset - PROF_ROW_HEIGHT - 1
                 end
@@ -1116,9 +1251,8 @@ function CP:RefreshSearchResults(characters)
 
     -- Total result count
     yOffset = yOffset - 8
-    local countLabel = self:CreateLabel(self.scrollChild, COLORS.grey .. totalResults .. " results|r")
+    local countLabel = self:AcquireLabel(COLORS.grey .. totalResults .. " results|r")
     countLabel:SetPoint("TOPLEFT", 5, yOffset)
-    table.insert(self.rows, countLabel)
 
     self.scrollChild:SetHeight(math.abs(yOffset) + 30)
 end
@@ -1140,11 +1274,4 @@ function CP:TimeAgo(timestamp)
     if diff < 3600 then return math.floor(diff / 60) .. "m ago" end
     if diff < 86400 then return math.floor(diff / 3600) .. "h ago" end
     return math.floor(diff / 86400) .. "d ago"
-end
-
-function CP:CreateLabel(parent, text)
-    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    label:SetText(text)
-    label:SetTextColor(0.7, 0.7, 0.7)
-    return label
 end

@@ -6,6 +6,26 @@
 local addon = ProfBuddy
 local DS = addon:NewModule("DataStore")
 
+-- Remote records we have not heard from in this many days are dropped at
+-- login (contacts are exempt; they are deliberately chosen peers).
+local REMOTE_STALE_DAYS = 30
+
+----------------------------------------------------------------------
+-- Login housekeeping
+----------------------------------------------------------------------
+function DS:Init()
+    local chars = addon.db and addon.db.characters
+    if not chars then return end
+
+    -- trainerCache was written on every trainer visit and never read by
+    -- anything. Scanner no longer fills it; drop the persisted copies.
+    for _, char in pairs(chars) do
+        if type(char) == "table" then char.trainerCache = nil end
+    end
+
+    self:PruneRemoteCharacters()
+end
+
 ----------------------------------------------------------------------
 -- Ensure the current character has a record
 ----------------------------------------------------------------------
@@ -20,7 +40,6 @@ function DS:EnsureCharacter()
             faction     = UnitFactionGroup("player"),
             professions = {},
             inventory   = { bags = {}, bank = {}, bankScanned = false },
-            trainerCache = {},
             lastScan    = 0,
         }
     end
@@ -33,9 +52,17 @@ end
 ----------------------------------------------------------------------
 -- Getters
 ----------------------------------------------------------------------
+-- Look a character up by key. The canonical spelling is the normalized one
+-- (addon:NormKey), so "Bob-Old Blanchy" and "Bob-OldBlanchy" find the same
+-- record. The raw key is tried first so a record written before the schema 2
+-- migration, or by a peer still on the old spelling, is still reachable.
 function DS:GetCharacter(key)
-    key = key or addon:PlayerKey()
-    return addon.db.characters[key]
+    if key == nil then key = addon:PlayerKey() end
+    local chars = addon.db.characters
+    local char = chars[key]
+    if char then return char end
+    local norm = addon:NormKey(key)
+    return norm and chars[norm] or nil
 end
 
 function DS:GetAllCharacters()
@@ -65,21 +92,19 @@ function DS:SetInventory(location, items)
     char.lastScan = time()
 end
 
-function DS:SetTrainerRecipes(profName, recipes)
-    local char = self:EnsureCharacter()
-    char.trainerCache[profName] = {
-        recipes = recipes,
-        scannedAt = time(),
-    }
-end
-
 ----------------------------------------------------------------------
 -- Remote character management (friend/contact data from Comm)
 ----------------------------------------------------------------------
 
 function DS:SetRemoteCharacter(key, data)
+    -- Remote data may never clobber a local alt's record.
+    local existing = addon.db.characters[key]
+    if existing and not existing.isRemote then return end
+
+    local now = time()
     data.isRemote = true
-    data.lastSync = time()
+    data.lastSync = now
+    data.lastSeen = now      -- drives PruneRemoteCharacters
     addon.db.characters[key] = data
 end
 
@@ -95,40 +120,62 @@ function DS:RemoveRemoteCharacter(key)
     end
 end
 
-----------------------------------------------------------------------
--- Cross-character queries
-----------------------------------------------------------------------
+-- Drop remote records we have not heard from in `days` days (default 30).
+-- Contacts are never pruned and a local character is never touched. A record
+-- carrying no timestamp at all is stamped now so it ages out from this login
+-- instead of vanishing on the spot. Returns the number removed.
+function DS:PruneRemoteCharacters(days)
+    days = tonumber(days) or REMOTE_STALE_DAYS
+    if days <= 0 then return 0 end
 
--- Returns { [itemID] = totalCount } across all LOCAL characters (bags + bank)
--- Remote characters are excluded; use GetCalcItemCounts for setting-aware queries.
-function DS:GetGlobalItemCounts()
-    local totals = {}
-    for _, char in pairs(addon.db.characters) do
-        if not char.isRemote then
-            for id, count in pairs(char.inventory.bags or {}) do
-                totals[id] = (totals[id] or 0) + count
-            end
-            for id, count in pairs(char.inventory.bank or {}) do
-                totals[id] = (totals[id] or 0) + count
+    local db = addon.db
+    local chars = db and db.characters
+    if not chars then return 0 end
+    local contacts = db.contacts or {}
+
+    local now = time()
+    local cutoff = now - days * 86400
+    local removed = 0
+    for key, char in pairs(chars) do
+        if type(char) == "table" and char.isRemote and not contacts[key] then
+            -- A non-positive stamp is ABSENT, not ancient: 1.0.3 wrote every
+            -- HELLO-only guildmate as lastSync = 0 with no lastSeen, and
+            -- tonumber(0) is truthy, so those records were all deleted on the
+            -- first 1.1.0 login instead of being stamped.
+            local seen = tonumber(char.lastSeen) or tonumber(char.lastSync)
+            if not seen or seen <= 0 then
+                char.lastSeen = now
+            elseif seen < cutoff then
+                chars[key] = nil
+                removed = removed + 1
             end
         end
     end
-    return totals
+    return removed
 end
 
--- Returns { [itemID] = totalCount } for a single character
-function DS:GetCharItemCounts(charKey)
-    local char = addon.db.characters[charKey]
-    if not char then return {} end
-    local totals = {}
-    for id, count in pairs(char.inventory.bags or {}) do
-        totals[id] = (totals[id] or 0) + count
+-- /pb forget <Name-Realm>: drop one stored character, local or remote.
+-- The character we are logged in as is refused: EnsureCharacter rebuilds it
+-- on the next scan, so a delete would only lose the scan history.
+function addon:ForgetCharacter(key)
+    local chars = addon.db.characters
+    local norm = addon:NormKey(key)
+    -- Prefer the canonical spelling, fall back to the key exactly as given
+    -- (a record written before the schema 2 migration).
+    local target
+    if norm and chars[norm] then
+        target = norm
+    elseif type(key) == "string" and chars[key] then
+        target = key
     end
-    for id, count in pairs(char.inventory.bank or {}) do
-        totals[id] = (totals[id] or 0) + count
-    end
-    return totals
+    if not target or addon:SameKey(target, addon:PlayerKey()) then return false end
+    chars[target] = nil
+    return true
 end
+
+----------------------------------------------------------------------
+-- Cross-character queries
+----------------------------------------------------------------------
 
 -- Returns { [itemID] = totalCount } respecting includeAltsInCalc,
 -- showCrossFactionAlts, and includeRemoteInCalc settings.
@@ -165,41 +212,12 @@ end
 function DS:WhoHasItem(itemID)
     local result = {}
     for key, char in pairs(addon.db.characters) do
-        local count = 0
-        count = count + (char.inventory.bags[itemID] or 0)
-        count = count + (char.inventory.bank[itemID] or 0)
+        local inv = char.inventory
+        local count = (inv and inv.bags and inv.bags[itemID] or 0)
+                    + (inv and inv.bank and inv.bank[itemID] or 0)
         if count > 0 then
             result[key] = count
         end
     end
     return result
-end
-
--- Returns { profName = { charKey1, charKey2, ... }, ... }
-function DS:GetProfessionMap()
-    local map = {}
-    for key, char in pairs(addon.db.characters) do
-        for profName, _ in pairs(char.professions) do
-            map[profName] = map[profName] or {}
-            table.insert(map[profName], key)
-        end
-    end
-    return map
-end
-
--- Can any character craft itemID? Returns { charKey = profName }
-function DS:WhoCrafts(itemID)
-    local crafters = {}
-    for key, char in pairs(addon.db.characters) do
-        for profName, profData in pairs(char.professions) do
-            if profData.recipes then
-                for _, recipe in pairs(profData.recipes) do
-                    if recipe.itemID == itemID then
-                        crafters[key] = profName
-                    end
-                end
-            end
-        end
-    end
-    return crafters
 end

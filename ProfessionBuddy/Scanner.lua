@@ -7,10 +7,40 @@ local addon = ProfBuddy
 local Scanner = addon:NewModule("Scanner")
 local DS -- set in Init (DataStore reference)
 
--- TBCCA uses the modern client; container APIs live under C_Container
-local GetContainerNumSlots  = C_Container and C_Container.GetContainerNumSlots  or GetContainerNumSlots
-local GetContainerItemLink  = C_Container and C_Container.GetContainerItemLink  or GetContainerItemLink
-local GetContainerItemInfo  = C_Container and C_Container.GetContainerItemInfo  or GetContainerItemInfo
+-- TBCCA uses the modern client; container APIs live under C_Container and
+-- GetContainerItemInfo returns a table. If a build ever drops C_Container,
+-- wrap the legacy multi-return global in the same table shape so the scan
+-- loops below stay single-form.
+local GetContainerNumSlots, GetContainerItemLink, GetContainerItemInfo
+if C_Container then
+    GetContainerNumSlots = C_Container.GetContainerNumSlots
+    GetContainerItemLink = C_Container.GetContainerItemLink
+    GetContainerItemInfo = C_Container.GetContainerItemInfo
+else
+    local legacySlots = _G.GetContainerNumSlots
+    local legacyLink  = _G.GetContainerItemLink
+    local legacyInfo  = _G.GetContainerItemInfo
+    GetContainerNumSlots = legacySlots or function() return 0 end
+    GetContainerItemLink = legacyLink or function() return nil end
+    GetContainerItemInfo = legacyInfo and function(bag, slot)
+        local texture, count = legacyInfo(bag, slot)
+        if texture == nil and count == nil then return nil end
+        return { stackCount = count }
+    end or function() return nil end
+end
+
+-- BAG_UPDATE bursts (looting, mail, vendoring). Leading edge plus one
+-- trailing scan: TRADE_SKILL_UPDATE consumers still see fresh counts, and a
+-- repeat-craft burst cannot starve the scan by resetting the timer forever.
+local BAG_THROTTLE = 0.25
+-- SKILL_LINES_CHANGED fires several times for one skill-up, and ScanProfessions
+-- raises it itself (see the mute window there), so the rescan is coalesced onto
+-- one trailing timer the same way BAG_UPDATE is.
+local SKILL_THROTTLE = 0.5
+local SKILL_MUTE     = 1
+local function Now()
+    return (GetTime and GetTime()) or time()
+end
 
 -- GetSpellInfo is a global on the Classic/Anniversary client; shim the
 -- modern C_Spell form just in case a future build moves it.
@@ -60,6 +90,18 @@ local PROF_SPELLS = {
     ["Jewelcrafting"]  = 25229, ["Leatherworking"] = 2108,
     ["Mining"]         = 2575,  ["Skinning"]      = 8613,
     ["Tailoring"]      = 3908,  ["Smelting"]      = 2656,
+}
+
+-- Hoisted out of IsCraftingProfession/IsGatheringProfession: ScanProfessions
+-- calls both once per skill line, 20 to 40 times per character.
+local CRAFTING_PROFS = {
+    ["Alchemy"] = true, ["Blacksmithing"] = true, ["Cooking"] = true,
+    ["Enchanting"] = true, ["Engineering"] = true, ["Jewelcrafting"] = true,
+    ["Leatherworking"] = true, ["Tailoring"] = true, ["First Aid"] = true,
+}
+
+local GATHERING_PROFS = {
+    ["Herbalism"] = true, ["Mining"] = true, ["Skinning"] = true, ["Fishing"] = true,
 }
 
 local profLocaleMap  -- localizedName -> canonicalEnglish (built once, lazily)
@@ -115,9 +157,22 @@ function Scanner:Init()
     addon:RegisterEvent("CRAFT_UPDATE",      function() self:ScanCurrentCraft() end)
 
     -- Inventory events
-    addon:RegisterEvent("BAG_UPDATE",         function() self:ScanInventory() end)
-    addon:RegisterEvent("BANKFRAME_OPENED",   function() self:ScanBank() end)
+    addon:RegisterEvent("BAG_UPDATE",         function() self:QueueInventoryScan() end)
+    -- PLAYERBANKSLOTS_CHANGED also fires when the bank is not queryable (bank
+    -- bag purchase, login). ScanBank replaces the stored bank wholesale, so it
+    -- runs only between BANKFRAME_OPENED and BANKFRAME_CLOSED.
+    addon:RegisterEvent("BANKFRAME_OPENED",   function()
+        self._bankOpen = true
+        self:ScanBank()
+    end)
+    addon:RegisterEvent("BANKFRAME_CLOSED",   function() self._bankOpen = false end)
     addon:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function() self:ScanBank() end)
+
+    -- Skill lines. A gathering skill-up, or a recipe or profession learned at a
+    -- trainer, moves nothing in a tradeskill window, so ScanProfessions is the
+    -- only path that records it -- and Comm's own SKILL_LINES_CHANGED push reads
+    -- what we stored, so without this it pushed stale professions forever.
+    addon:RegisterEvent("SKILL_LINES_CHANGED", function() self:QueueProfessionScan() end)
 
     -- Trainer events
     addon:RegisterEvent("TRAINER_SHOW",      function() self:ScanTrainer() end)
@@ -130,8 +185,48 @@ end
 ----------------------------------------------------------------------
 -- Profession scanning
 ----------------------------------------------------------------------
+
+-- SKILL_LINES_CHANGED handler: ONE trailing scan per burst. An armed timer is
+-- never re-armed while it is pending, and an event raised by our own header
+-- expand/collapse (which is delivered a frame or two later, after the scan has
+-- returned) is dropped by the mute window ScanProfessions sets. The window
+-- expires on the clock, so a scan that errors costs one second of events, never
+-- the session.
+function Scanner:QueueProfessionScan()
+    if self._skillTimer then return end
+    if self._skillEventMuteUntil and Now() < self._skillEventMuteUntil then return end
+    self._skillTimer = C_Timer.NewTimer(SKILL_THROTTLE, function()
+        self._skillTimer = nil
+        self:ScanProfessions()
+    end)
+end
+
 function Scanner:ScanProfessions()
     DS:EnsureCharacter()
+
+    -- ExpandSkillHeader / CollapseSkillHeader below raise SKILL_LINES_CHANGED
+    -- themselves, so mute the handler around the scan (set again after the
+    -- restore pass, which raises its own). Set unconditionally so both paths
+    -- behave the same.
+    self._skillEventMuteUntil = Now() + SKILL_MUTE
+
+    -- GetSkillLineInfo only enumerates the rows the skill list is currently
+    -- showing, so a collapsed "Professions" header hides the professions
+    -- underneath it. Expand everything, scan, then put the user's headers back
+    -- the way they were. Indices shift on every expand and collapse, so the
+    -- restore matches on NAME and walks backwards.
+    local canExpand = ExpandSkillHeader and CollapseSkillHeader
+    local wasCollapsed
+    if canExpand then
+        wasCollapsed = {}
+        for i = 1, GetNumSkillLines() do
+            local name, isHeader, isExpanded = GetSkillLineInfo(i)
+            if isHeader and name and not isExpanded then
+                wasCollapsed[name] = true
+            end
+        end
+        ExpandSkillHeader(0)
+    end
 
     -- In TBC Classic, GetProfessions() doesn't exist.
     -- We scan professions when their windows open (TRADE_SKILL_SHOW).
@@ -152,38 +247,58 @@ function Scanner:ScanProfessions()
             end
         end
     end
+
+    if canExpand and next(wasCollapsed) then
+        for i = GetNumSkillLines(), 1, -1 do
+            local name, isHeader = GetSkillLineInfo(i)
+            if isHeader and name and wasCollapsed[name] then
+                CollapseSkillHeader(i)
+            end
+        end
+    end
+
+    self._skillEventMuteUntil = Now() + SKILL_MUTE
 end
 
 function Scanner:IsCraftingProfession(name)
-    name = self:Canonicalize(name)
-    local crafting = {
-        ["Alchemy"] = true, ["Blacksmithing"] = true, ["Cooking"] = true,
-        ["Enchanting"] = true, ["Engineering"] = true, ["Jewelcrafting"] = true,
-        ["Leatherworking"] = true, ["Tailoring"] = true, ["First Aid"] = true,
-    }
-    return crafting[name]
+    return CRAFTING_PROFS[self:Canonicalize(name)]
 end
 
 function Scanner:IsGatheringProfession(name)
-    name = self:Canonicalize(name)
-    local gathering = {
-        ["Herbalism"] = true, ["Mining"] = true, ["Skinning"] = true, ["Fishing"] = true,
-    }
-    return gathering[name]
+    return GATHERING_PROFS[self:Canonicalize(name)]
 end
 
 ----------------------------------------------------------------------
 -- TradeSkill window scanning (Alchemy, BS, Cooking, Engi, JC, LW, Tailoring)
 ----------------------------------------------------------------------
 function Scanner:ScanCurrentTradeSkill()
+    -- A tradeskill link from another player drives the same window and the
+    -- same APIs. Writing that to our own record would replace our recipe list,
+    -- our cooldowns and our rank with theirs, and push it to the guild.
+    if IsTradeSkillLinked and IsTradeSkillLinked() then return end
+
     local rawName, rank, maxRank = GetTradeSkillLine()
     if not rawName or rawName == "UNKNOWN" then return end
+
+    -- GetNumTradeSkills/GetTradeSkillInfo enumerate only the rows the list is
+    -- currently DISPLAYING, and SetProfessionData replaces the recipe table
+    -- wholesale, so a filtered or collapsed list would delete everything it
+    -- hides. We cannot clear the filters ourselves: the stored `index` feeds
+    -- DoTradeSkill later and changing the list desyncs it. So detect a partial
+    -- view and skip the persist instead.
+    local partial = false
+    local nameFilter = GetTradeSkillItemNameFilter and GetTradeSkillItemNameFilter()
+    if nameFilter and nameFilter ~= "" then partial = true end
 
     local recipes = {}
     local numRecipes = GetNumTradeSkills()
 
     for i = 1, numRecipes do
         local skillName, skillType, numAvail, isExpanded = GetTradeSkillInfo(i)
+
+        if (skillType == "header" or skillType == "subheader") and isExpanded == false then
+            partial = true   -- recipes under this header are not in the list
+        end
 
         -- skillType: "header", "subheader", "optimal", "medium", "easy", "trivial"
         if skillName and skillType ~= "header" and skillType ~= "subheader" then
@@ -195,7 +310,7 @@ function Scanner:ScanCurrentTradeSkill()
             -- Gather reagents (iterate until nil -- GetNumTradeSkillReagents removed in modern client)
             local reagents = {}
             for j = 1, 12 do
-                local rName, rTexture, rCount, rPlayerCount = GetTradeSkillReagentInfo(i, j)
+                local rName, rTexture, rCount = GetTradeSkillReagentInfo(i, j)
                 if not rName then break end
                 local rLink = GetTradeSkillReagentItemLink(i, j)
                 local rID   = addon:ItemIDFromLink(rLink)
@@ -226,6 +341,9 @@ function Scanner:ScanCurrentTradeSkill()
         end
     end
 
+    -- A partial list would delete every recipe it hid. Keep what we have.
+    if partial then return end
+
     -- Locale-stable profession identity: derive from the scanned recipe
     -- spellIDs (smelting recipes resolve straight to "Smelting", so the
     -- old Mining->Smelting string hack is only a last-resort fallback).
@@ -243,13 +361,19 @@ end
 -- Craft window scanning (Enchanting uses the Craft API, not TradeSkill)
 ----------------------------------------------------------------------
 function Scanner:ScanCurrentCraft()
+    -- The Craft API backs hunter pet training as well as Enchanting, and
+    -- CRAFT_SHOW fires for both. Without this a hunter opening a pet trainer
+    -- stores "Beast Training" as a profession, with every pet ability as a
+    -- recipe, and there is no UI to delete it again.
+    if CraftIsPetTraining and CraftIsPetTraining() then return end
+
     local rawName, rank, maxRank = GetCraftDisplaySkillLine()
 
     local recipes = {}
     local numCrafts = GetNumCrafts()
 
     for i = 1, numCrafts do
-        local craftName, _, craftType = GetCraftInfo(i)
+        local craftName, _, craftType, numAvail = GetCraftInfo(i)
         if craftName and craftType ~= "header" then
             local itemLink = GetCraftItemLink(i)
             local itemID   = addon:ItemIDFromLink(itemLink)
@@ -259,7 +383,7 @@ function Scanner:ScanCurrentCraft()
 
             local reagents = {}
             for j = 1, 12 do
-                local rName, rTexture, rCount, rPlayerCount = GetCraftReagentInfo(i, j)
+                local rName, rTexture, rCount = GetCraftReagentInfo(i, j)
                 if not rName then break end
                 local rLink = GetCraftReagentItemLink(i, j)
                 local rID   = addon:ItemIDFromLink(rLink)
@@ -278,6 +402,7 @@ function Scanner:ScanCurrentCraft()
                 itemLink = itemLink,
                 icon     = icon,
                 difficulty = craftType,
+                numAvail = numAvail,
                 reagents = reagents,
             }
         end
@@ -326,44 +451,34 @@ function Scanner:ReconcileSkillReq(recipes)
 end
 
 function Scanner:ScanTrainer()
-    -- Determine which profession this trainer teaches
-    -- We check if a trade skill or craft window is also open
-    local profName = GetTradeSkillLine()
-    if not profName or profName == "UNKNOWN" then
-        -- Try the Craft API (Enchanting trainers)
-        profName = GetCraftDisplaySkillLine()
-        if not profName or profName == "" then
-            profName = "Unknown"
-        end
-    end
-    -- Canonicalize the localized skill-line name to the English key
-    profName = self:Canonicalize(profName)
-    -- TBCCA returns "Mining" for the Smelting window
-    if profName == "Mining" then profName = "Smelting" end
-
     local available = {}
     local numServices = GetNumTrainerServices()
+    local isRecipeTrainer = false
+    local RDB = addon.RecipeDB
 
     for i = 1, numServices do
         local name, _, category = GetTrainerServiceInfo(i)
         -- category: "available", "unavailable", "used" (already known)
         if name and category ~= "used" then
-            local skillReq = GetTrainerServiceSkillReq(i)
-            local cost = GetTrainerServiceCost(i)
-            local link = GetTrainerServiceItemLink(i)
-
             available[name] = {
                 category  = category,       -- "available" or "unavailable"
-                skillReq  = skillReq or 0,
-                cost      = cost or 0,
-                itemLink  = link,
-                itemID    = addon:ItemIDFromLink(link),
+                skillReq  = GetTrainerServiceSkillReq(i) or 0,
             }
+
+            -- Is this a PROFESSION trainer? skillReqOverrides is keyed by bare
+            -- recipe name, so a class, riding or weapon trainer whose service
+            -- names happen to carry a skill requirement must not write into
+            -- it. One service matching the static recipe DB is proof enough.
+            if not isRecipeTrainer and RDB and RDB:GetRecipeByName(name) then
+                isRecipeTrainer = true
+            end
         end
     end
 
-    if profName ~= "Unknown" then
-        DS:SetTrainerRecipes(profName, available)
+    -- ReconcileSkillReq is profession-agnostic, so it runs whether or not a
+    -- tradeskill window happens to be open (opening a trainer does not open
+    -- one, which is why this path used to be dead).
+    if isRecipeTrainer then
         self:ReconcileSkillReq(available)
     end
 end
@@ -371,6 +486,27 @@ end
 ----------------------------------------------------------------------
 -- Inventory scanning
 ----------------------------------------------------------------------
+
+-- BAG_UPDATE handler: scan now if the last scan is old enough, otherwise arm
+-- ONE trailing scan. An armed timer is never cancelled or restarted, so a
+-- long burst still lands a scan 0.25 s after it starts.
+function Scanner:QueueInventoryScan()
+    if self._bagTimer then return end
+
+    local now = Now()
+    if not self._lastBagScan or (now - self._lastBagScan) >= BAG_THROTTLE then
+        self._lastBagScan = now
+        self:ScanInventory()
+        return
+    end
+
+    self._bagTimer = C_Timer.NewTimer(BAG_THROTTLE, function()
+        self._bagTimer = nil
+        self._lastBagScan = Now()
+        self:ScanInventory()
+    end)
+end
+
 function Scanner:ScanInventory()
     DS:EnsureCharacter()
 
@@ -384,7 +520,7 @@ function Scanner:ScanInventory()
             if link then
                 local id = addon:ItemIDFromLink(link)
                 local info = GetContainerItemInfo(bag, slot)
-                local count = info and (info.stackCount or info.count) or nil
+                local count = info and info.stackCount or nil
                 if id and count then
                     items[id] = (items[id] or 0) + count
                 end
@@ -396,6 +532,10 @@ function Scanner:ScanInventory()
 end
 
 function Scanner:ScanBank()
+    -- Every bank slot reads as empty when the bank frame is shut, and
+    -- SetInventory replaces the stored table, so a scan then would wipe it.
+    if not self._bankOpen then return end
+
     local items = {}
 
     -- Bank container (bag -1) + bank bags (5-11)
@@ -407,7 +547,7 @@ function Scanner:ScanBank()
             if link then
                 local id = addon:ItemIDFromLink(link)
                 local info = GetContainerItemInfo(bag, slot)
-                local count = info and (info.stackCount or info.count) or nil
+                local count = info and info.stackCount or nil
                 if id and count then
                     items[id] = (items[id] or 0) + count
                 end

@@ -32,6 +32,14 @@ local SKILL_BAR_H   = 22
 local VISIBLE_ROWS  = 20
 local CRAFT_BAR_H   = 52
 
+-- Seconds the search box waits after the last keystroke before rebuilding.
+local SEARCH_DEBOUNCE = 0.3
+-- Seconds before an unanswered craft is assumed dead and tracking is dropped.
+-- The client fires no UNIT_SPELLCAST_* event for a refused craft (a transmute
+-- on cooldown, an enchant cancelled with Escape), so without this the
+-- crafting flag would wedge every later refresh for the session.
+local CRAFT_WATCHDOG = 10
+
 ----------------------------------------------------------------------
 -- Colors
 ----------------------------------------------------------------------
@@ -116,9 +124,10 @@ local function DiffColor(diff)
 end
 
 -- Compute difficulty tier from a skillRange array + character skill level
+-- sr[1] <= sr[2] holds for every skillRange in Data/*.lua, so a separate
+-- "below sr[1]" test could never be the one that fires; sr[2] covers it.
 local function DiffFromSkillRange(sr, skill)
     if not sr or not skill then return "trivial" end
-    if skill < (sr[1] or 0) then return "optimal" end
     if skill < (sr[2] or 0) then return "optimal" end
     if skill < (sr[3] or 0) then return "medium" end
     if skill < (sr[4] or 0) then return "easy" end
@@ -236,7 +245,9 @@ end
 -- State
 ----------------------------------------------------------------------
 local state = {
-    profName     = nil,
+    profName     = nil,   -- canonical English key; everything looks up by this
+    profDisplayName = nil, -- localized skill-line name, title only
+    _isLinkedView = false, -- chat-linked view of someone else's profession
     skillLevel   = 0,
     maxSkill     = 375,
     recipes      = {},
@@ -297,6 +308,7 @@ function TSF:Init()
                 C_Timer.After(0.01, function() self:OnTradeSkillShow() end)
             else
                 self._pendingOpen = "trade"
+                self._pendingClose = false
             end
         else
             C_Timer.After(0.01, function() self:OnTradeSkillShow() end)
@@ -304,18 +316,27 @@ function TSF:Init()
     end)
     addon:RegisterEvent("TRADE_SKILL_CLOSE", function()
         if self._isMouseOverTab then return end
+        -- The backend session is gone, so any tracked craft is over.
+        self:StopCraftTracking()
         -- Resume bag tracker if it was paused
         if self._bagTracker and self._bagTrackerUpdate then
             self._bagTracker:SetScript("OnUpdate", self._bagTrackerUpdate)
         end
-        if not InCombatLockdown() then
+        if InCombatLockdown() then
+            -- Entering combat closes the trade skill server-side. Replay the
+            -- close when combat ends instead of leaving PB up on a dead
+            -- backend, where Craft would silently do nothing.
+            self._pendingClose = true
+            self._pendingOpen = nil
+        else
             self:Hide(true)  -- from the game's close event; backend already closed
         end
     end)
     addon:RegisterEvent("TRADE_SKILL_UPDATE", function()
         if self.frame and self.frame:IsShown()
            and not (self.settingsPanel and self.settingsPanel:IsShown())
-           and not state._viewCharKey then
+           and not state._viewCharKey
+           and not state._isStaticView then
             if self._craftingActive then
                 -- During active crafting, update craftable counts and skill bar
                 -- (the game has refreshed its data, safe to re-query now)
@@ -351,6 +372,7 @@ function TSF:Init()
                 C_Timer.After(0.01, function() self:OnCraftShow() end)
             else
                 self._pendingOpen = "craft"
+                self._pendingClose = false
             end
         else
             C_Timer.After(0.01, function() self:OnCraftShow() end)
@@ -358,10 +380,15 @@ function TSF:Init()
     end)
     addon:RegisterEvent("CRAFT_CLOSE", function()
         if self._isMouseOverTab then return end
+        -- Stops a DoCraft batch chain dead: the window it ran against is gone.
+        self:StopCraftTracking()
         if self._bagTracker and self._bagTrackerUpdate then
             self._bagTracker:SetScript("OnUpdate", self._bagTrackerUpdate)
         end
-        if not InCombatLockdown() then
+        if InCombatLockdown() then
+            self._pendingClose = true
+            self._pendingOpen = nil
+        else
             self:Hide(true)  -- from the game's close event; backend already closed
         end
     end)
@@ -375,7 +402,8 @@ function TSF:Init()
         if self.frame and self.frame:IsShown()
            and state.isCraftWindow
            and not (self.settingsPanel and self.settingsPanel:IsShown())
-           and not state._viewCharKey then
+           and not state._viewCharKey
+           and not state._isStaticView then
             if self._craftingActive then
                 C_Timer.After(0.05, function()
                     self:UpdateCraftableCounts()
@@ -393,16 +421,24 @@ function TSF:Init()
         end
     end)
 
-    -- When combat ends, open PB if a profession event fired mid-combat
+    -- When combat ends, replay whatever the lockdown blocked: an open, a
+    -- close, or just the craft bar (the enchant button's secure attribute
+    -- can only be written out of combat, so it sits disabled until now).
     addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if self._pendingOpen then
             local kind = self._pendingOpen
             self._pendingOpen = nil
+            self._pendingClose = false
             if kind == "craft" then
                 self:OnCraftShow()
             else
                 self:OnTradeSkillShow()
             end
+        elseif self._pendingClose then
+            self._pendingClose = false
+            self:Hide(true)
+        elseif self.craftBar and self.frame and self.frame:IsShown() then
+            self:UpdateCraftBar()
         end
     end)
 
@@ -679,8 +715,6 @@ function TSF:HookItemTooltip()
             end
         end
 
-        -- Smelting/Mining alias for DataStore lookup
-        local profAliases = { Smelting = "Mining" }
         local showAltInTooltips = addon.db.settings.showAltInTooltips
 
         -- Deduplicate by recipeName+profName and determine who knows each
@@ -693,18 +727,14 @@ function TSF:HookItemTooltip()
                 local tier = PROF_TIER[info.profName] or 99
 
                 -- Check: does the current character know this recipe?
+                -- No Smelting -> Mining alias: Scanner remaps "Mining" to
+                -- "Smelting" before storing, so smelting recipes only ever
+                -- live under "Smelting".
                 local currentKnows = false
-                local profsToCheck = { info.profName }
-                if profAliases[info.profName] then
-                    table.insert(profsToCheck, profAliases[info.profName])
-                end
                 if currentChar and currentChar.professions then
-                    for _, pName in ipairs(profsToCheck) do
-                        local pd = currentChar.professions[pName]
-                        if pd and pd.recipes and pd.recipes[info.recipeName] then
-                            currentKnows = true
-                            break
-                        end
+                    local pd = currentChar.professions[info.profName]
+                    if pd and pd.recipes and pd.recipes[info.recipeName] then
+                        currentKnows = true
                     end
                 end
 
@@ -716,19 +746,13 @@ function TSF:HookItemTooltip()
                 local showRemoteInTips = addon.db.settings.showRemoteInTooltips
                 if not currentKnows and (showAltInTooltips or showRemoteInTips) then
                     for charKey, charData in pairs(allChars) do
-                        if charKey ~= currentKey
+                        if not addon:SameKey(charKey, currentKey)
                            and (showCrossFaction or charData.faction == currentFaction)
                            and charData.professions then
-                            local knows = false
-                            for _, pName in ipairs(profsToCheck) do
-                                local pd = charData.professions[pName]
-                                if pd and pd.recipes and pd.recipes[info.recipeName] then
-                                    knows = true
-                                    break
-                                end
-                            end
+                            local pd = charData.professions[info.profName]
+                            local knows = (pd and pd.recipes and pd.recipes[info.recipeName]) and true or false
                             if knows then
-                                local short = charKey:match("^([^-]+)") or charKey
+                                local short = addon:ShortName(charKey)
                                 local cc = addon:ClassColor(charData.class or "WARRIOR")
                                 if charData.isRemote then
                                     if showRemoteInTips then
@@ -904,19 +928,14 @@ function TSF:HookItemTooltip()
         local showCrossFaction = addon.db.settings.showCrossFactionAlts
         local allChars = DS:GetAllCharacters()
 
-        -- Smelting recipes may be stored under "Mining" in DataStore
-        local profAliases = { Smelting = "Mining" }
-        local profsToCheck = { profName }
-        if profAliases[profName] then
-            table.insert(profsToCheck, profAliases[profName])
-        end
-
         local showRemote = addon.db.settings.showRemoteInTooltips
         local showAlts = addon.db.settings.showAltInTooltips
 
+        -- Smelting recipes are stored under "Smelting" (Scanner remaps the
+        -- game's "Mining" before storing), so one profession key is enough.
         local crafters = {}
         for charKey, charData in pairs(allChars) do
-            local isCurrent = (charKey == currentKey)
+            local isCurrent = addon:SameKey(charKey, currentKey)
             -- Alt and friend visibility are independent; you always count.
             local typeOK = isCurrent
                 or (charData.isRemote and showRemote)
@@ -924,19 +943,16 @@ function TSF:HookItemTooltip()
             if typeOK
                and (isCurrent or showCrossFaction or charData.faction == currentFaction)
                and charData.professions then
-                for _, pName in ipairs(profsToCheck) do
-                    local profData = charData.professions[pName]
-                    if profData and profData.recipes and profData.recipes[recipeName] then
-                        local classColor = addon:ClassColor(charData.class or "WARRIOR")
-                        table.insert(crafters, {
-                            key = charKey,
-                            classColor = classColor,
-                            skill = profData.skillLevel or 0,
-                            profDisplay = profName,
-                            isCurrent = isCurrent,
-                        })
-                        break
-                    end
+                local profData = charData.professions[profName]
+                if profData and profData.recipes and profData.recipes[recipeName] then
+                    local classColor = addon:ClassColor(charData.class or "WARRIOR")
+                    table.insert(crafters, {
+                        key = charKey,
+                        classColor = classColor,
+                        skill = profData.skillLevel or 0,
+                        profDisplay = profName,
+                        isCurrent = isCurrent,
+                    })
                 end
             end
         end
@@ -961,14 +977,14 @@ function TSF:HookItemTooltip()
         tip:AddLine(" ")
         tip:AddLine("Craftable by (ProfessionBuddy):", 1, 0.82, 0)
         for _, c in ipairs(localCrafters) do
-            local short = c.key:match("^([^-]+)") or c.key
+            local short = addon:ShortName(c.key)
             local suffix = c.isCurrent and " |cff00ff00(you)|r" or ""
             tip:AddLine("  " .. c.classColor .. short .. "|r - " .. profName .. " " .. c.skill .. suffix, 1, 1, 1)
         end
         if #friendCrafters > 0 then
             tip:AddLine("Friends:", 0.5, 0.75, 1)
             for _, c in ipairs(friendCrafters) do
-                local short = c.key:match("^([^-]+)") or c.key
+                local short = addon:ShortName(c.key)
                 tip:AddLine("  " .. c.classColor .. short .. "|r - " .. profName .. " " .. c.skill, 1, 1, 1)
             end
         end
@@ -982,7 +998,12 @@ end
 function TSF:SuppressDefaultFrames()
     if not addon.db.settings.replaceTradeSkill then return end
 
-    local killed = {}  -- track what we've already killed
+    -- Called from Init AND from the settings checkbox, so the kill sweep has
+    -- to be repeatable while the permanent installs (one ShowUIPanel hook,
+    -- one ADDON_LOADED handler per target) happen exactly once: neither can
+    -- ever be removed, so a second copy would live for the session.
+    self._killedFrames = self._killedFrames or {}
+    local killed = self._killedFrames
 
     local function DoKill(frame, frameName)
         if not frame or killed[frameName] then return end
@@ -1014,13 +1035,16 @@ function TSF:SuppressDefaultFrames()
         local frame = _G[frameName]
         if frame then
             DoKill(frame, frameName)
-        else
+        elseif not self._suppressed then
             addon:RegisterEvent("ADDON_LOADED", function(_, name)
                 if name ~= addonName then return end
                 DoKill(_G[frameName], frameName)
             end)
         end
     end
+
+    if self._suppressed then return end
+    self._suppressed = true
 
     -- Safety net: if WoW dispatches TRADE_SKILL_SHOW to the default
     -- frame BEFORE our ADDON_LOADED handler fires, ShowUIPanel will
@@ -1037,32 +1061,13 @@ function TSF:SuppressDefaultFrames()
     end)
 end
 
-function TSF:NukeFrame(frame)
-    if not frame then return end
-    frame:SetAlpha(0)
-    frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -5000, 5000)
-    frame:EnableMouse(false)
-    frame:EnableKeyboard(false)
-end
-
-function TSF:RestoreFrame(frame)
-    if not frame then return end
-    frame:SetAlpha(1)
-    frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 16, -116)
-    frame:EnableMouse(true)
-    frame:EnableKeyboard(true)
-    -- Force it visible at the restored position so the user
-    -- can see the change took effect immediately
-    frame:Show()
-    frame:Raise()
-end
-
 ----------------------------------------------------------------------
 -- Custom dropdown widget (v6: supports prefix labels)
 ----------------------------------------------------------------------
 local allDropdowns = {}
+
+-- Most option buttons a dropdown list will show at once.
+local MAX_DROPDOWN_OPTIONS = 16
 
 local function CloseAllDropdowns()
     for _, dd in ipairs(allDropdowns) do
@@ -1131,43 +1136,60 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
 
     btnText:SetText(DisplayText(defaultVal))
 
+    -- Option buttons are POOLED. WoW frames are never garbage collected, so
+    -- creating a fresh set per call (this runs three times per recipe-list
+    -- refresh, and a refresh used to run per keystroke) leaked buttons,
+    -- textures and font strings for the whole session. Reuse by index, hide
+    -- the surplus, and skip the whole rebuild when the list has not changed.
     function container:SetOptions(opts)
-        for _, ob in ipairs(self.optionBtns) do
-            ob:Hide()
-            ob:SetParent(nil)
-        end
-        wipe(self.optionBtns)
+        local shown = math.min(#opts, MAX_DROPDOWN_OPTIONS)
+        local sig = table.concat(opts, "\1", 1, shown)
+        if sig == self._optionSig then return end
+        self._optionSig = sig
 
-        local maxVisible = math.min(#opts, 16)
-        self.listFrame:SetHeight(maxVisible * 18 + 8)
+        self.listFrame:SetHeight(shown * 18 + 8)
 
-        for i, opt in ipairs(opts) do
-            if i > 16 then break end
-            local optBtn = CreateFrame("Button", nil, self.listFrame)
-            optBtn:SetSize(width - 8, 18)
-            optBtn:SetPoint("TOPLEFT", 4, -((i - 1) * 18) - 4)
+        for i = 1, shown do
+            local optBtn = self.optionBtns[i]
+            if not optBtn then
+                optBtn = CreateFrame("Button", nil, self.listFrame)
+                optBtn:SetSize(width - 8, 18)
+                optBtn:SetPoint("TOPLEFT", 4, -((i - 1) * 18) - 4)
 
-            local optHighlight = optBtn:CreateTexture(nil, "HIGHLIGHT")
-            optHighlight:SetAllPoints()
-            optHighlight:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+                local optHighlight = optBtn:CreateTexture(nil, "HIGHLIGHT")
+                optHighlight:SetAllPoints()
+                optHighlight:SetColorTexture(0.3, 0.3, 0.5, 0.5)
 
-            local optText = optBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            optText:SetPoint("LEFT", 4, 0)
-            optText:SetText(opt)
-            if opt == self.selectedValue then
-                optText:SetTextColor(0.3, 0.8, 1)
-            else
-                optText:SetTextColor(0.9, 0.9, 0.9)
+                local optText = optBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                optText:SetPoint("LEFT", 4, 0)
+                optBtn.text = optText
+
+                -- Reads the CURRENT value off the button, not an upvalue, so a
+                -- recycled button never fires the option it used to hold.
+                optBtn:SetScript("OnClick", function(b)
+                    local val = b.value
+                    self.selectedValue = val
+                    self.btnText:SetText(DisplayText(val))
+                    self.listFrame:Hide()
+                    if onChange then onChange(val) end
+                end)
+
+                self.optionBtns[i] = optBtn
             end
 
-            optBtn:SetScript("OnClick", function()
-                self.selectedValue = opt
-                self.btnText:SetText(DisplayText(opt))
-                self.listFrame:Hide()
-                if onChange then onChange(opt) end
-            end)
+            local opt = opts[i]
+            optBtn.value = opt
+            optBtn.text:SetText(opt)
+            if opt == self.selectedValue then
+                optBtn.text:SetTextColor(0.3, 0.8, 1)
+            else
+                optBtn.text:SetTextColor(0.9, 0.9, 0.9)
+            end
+            optBtn:Show()
+        end
 
-            table.insert(self.optionBtns, optBtn)
+        for i = shown + 1, #self.optionBtns do
+            self.optionBtns[i]:Hide()
         end
     end
 
@@ -1177,7 +1199,7 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
     end
 
     local function PositionList()
-        local x, y = btn:GetCenter()
+        local x = btn:GetCenter()
         local bw = btn:GetWidth()
         local left = x - bw / 2
         local bottom = select(2, btn:GetRect())
@@ -1192,17 +1214,11 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
             CloseAllDropdowns()
             -- Refresh option text colors to highlight current selection
             for _, ob in ipairs(container.optionBtns) do
-                local fs = select(1, ob:GetRegions())
-                -- Walk regions to find the FontString
-                for ri = 1, ob:GetNumRegions() do
-                    local region = select(ri, ob:GetRegions())
-                    if region.GetText then
-                        if region:GetText() == container.selectedValue then
-                            region:SetTextColor(0.3, 0.8, 1)
-                        else
-                            region:SetTextColor(0.9, 0.9, 0.9)
-                        end
-                        break
+                if ob.text then
+                    if ob.value == container.selectedValue then
+                        ob.text:SetTextColor(0.3, 0.8, 1)
+                    else
+                        ob.text:SetTextColor(0.9, 0.9, 0.9)
                     end
                 end
             end
@@ -1342,11 +1358,22 @@ function TSF:BuildHeader(parent)
     searchPlaceholder:SetTextColor(0.4, 0.4, 0.4)
     self.searchPlaceholder = searchPlaceholder
 
-    search:SetScript("OnTextChanged", function(self)
-        local text = self:GetText()
+    -- Debounced: a full list rebuild is the most expensive thing this window
+    -- does, and refreshing inline ran one per keystroke. The generation
+    -- counter (bumped by every RefreshRecipeList, wherever it comes from)
+    -- means only the last keystroke in a burst does the work.
+    search:SetScript("OnTextChanged", function(box)
+        local text = box:GetText()
         state.searchText = text:lower()
         searchPlaceholder:SetShown(text == "")
-        TSF:RefreshRecipeList()
+        TSF._searchGen = (TSF._searchGen or 0) + 1
+        local gen = TSF._searchGen
+        C_Timer.After(SEARCH_DEBOUNCE, function()
+            if TSF._searchGen ~= gen then return end
+            if TSF.frame and TSF.frame:IsShown() then
+                TSF:RefreshRecipeList()
+            end
+        end)
     end)
     search:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
     search:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
@@ -1438,7 +1465,10 @@ end
 function TSF:UpdateSkillBar()
     local skill = state.skillLevel or 0
     local maxSkill = state.maxSkill or 375
-    local profName = state.profName or "Unknown"
+    -- state.profName is the canonical English key everything is looked up
+    -- by; the title shows the skill-line name the client gave us, so a
+    -- non-enUS window still reads in the player's own language.
+    local profName = state.profDisplayName or state.profName or "Unknown"
     self.titleText:SetText(profName)
     self.skillBar:SetMinMaxValues(0, maxSkill)
     self.skillBar:SetValue(skill)
@@ -1489,13 +1519,11 @@ local ALL_TAB_PROFS = {
 
 -- Professions that have a browsable recipe window in the static DB.
 -- Only these appear as unknown tabs (gathering/utility profs have no
--- recipe list to browse).
-local CRAFTABLE_PROFS = {
-    ["Alchemy"] = true, ["Blacksmithing"] = true, ["Cooking"] = true,
-    ["Enchanting"] = true, ["Engineering"] = true, ["First Aid"] = true,
-    ["Jewelcrafting"] = true, ["Leatherworking"] = true,
-    ["Smelting"] = true, ["Tailoring"] = true,
-}
+-- recipe list to browse). Core.lua owns the one table; the guard below only
+-- covers a load order that reaches here without it.
+local function CraftableProfs()
+    return addon.CRAFTABLE_PROFS or {}
+end
 
 function TSF:BuildProfessionTabs(parent)
     self.profTabsByName = {}
@@ -1512,8 +1540,13 @@ function TSF:BuildProfessionTabs(parent)
         local tab = CreateFrame("Button", "ProfBuddyProfTab" .. idx, self.profTabContainer, "SecureActionButtonTemplate")
         tab:SetSize(TAB_SIZE, TAB_SIZE)
 
-        -- Register for clicks (modern client requires explicit registration)
-        tab:RegisterForClicks("AnyUp", "AnyDown")
+        -- Register for clicks (modern client requires explicit registration).
+        -- DOWN only, matching the enchant craft button: registering both
+        -- edges runs the secure /cast twice per click, and casting a
+        -- profession spell while its window is open toggles it shut, so the
+        -- up edge could close what the down edge opened. PostClick (which
+        -- opens the static view for an unknown profession) also ran twice.
+        tab:RegisterForClicks("AnyDown")
 
         -- Set secure attributes at creation time -- never touched again
         -- Use macro type for reliable profession opening
@@ -1625,7 +1658,7 @@ function TSF:UpdateProfessionTabs()
     -- Build unknown craftable profession list (only if setting is on)
     local unknownList = {}
     if addon.db.settings.showAllProfessions then
-        for profName in pairs(CRAFTABLE_PROFS) do
+        for profName in pairs(CraftableProfs()) do
             if not knownSet[profName] and self.profTabsByName[profName] then
                 table.insert(unknownList, profName)
             end
@@ -1800,16 +1833,28 @@ function TSF:BuildToolbar(parent)
     self.viewDropdown:SetPoint("TOPRIGHT", -12, toolbarY)
 end
 
-function TSF:UpdateViewDropdown()
+-- The unknown-recipe table for whoever is being viewed, or nil when the
+-- profession has no static data. GetUnknownRecipes allocates a fresh table
+-- holding every unknown recipe for the profession (hundreds of entries for
+-- Leatherworking), so a refresh builds it ONCE here and hands it down.
+function TSF:GetUnknownForView()
+    if not (RDB and RDB.data and RDB.data[state.profName]) then return nil end
+    local viewChar = state._viewCharKey or addon:PlayerKey()
+    return RDB:GetUnknownRecipes(viewChar, state.profName)
+end
+
+-- unknown (optional): the GetUnknownRecipes table RefreshRecipeList already
+-- built for this pass. Passing it avoids a third full allocation per refresh;
+-- the lookup stays here as a fallback for any other caller.
+function TSF:UpdateViewDropdown(unknown)
     local knownCount = 0
     for _ in pairs(state.allRecipes) do
         knownCount = knownCount + 1
     end
 
     local missingCount = 0
-    if RDB and RDB.data[state.profName] then
-        local viewChar = state._viewCharKey or addon:PlayerKey()
-        local unknown = RDB:GetUnknownRecipes(viewChar, state.profName)
+    unknown = unknown or self:GetUnknownForView()
+    if unknown then
         for _ in pairs(unknown) do
             missingCount = missingCount + 1
         end
@@ -1913,19 +1958,24 @@ function TSF:BuildRecipeList(parent)
             end
             if entry.isHeader then return end
 
-            -- v6: Shift-click to link into chat
-            if IsModifiedClick("CHATLINK") then
-                local link = entry.itemLink
-                if not link and entry.itemID then
-                    local itemName = GetItemInfo(entry.itemID)
-                    if itemName then
-                        link = select(2, GetItemInfo(entry.itemID))
-                    end
+            -- Modified click: route through the client's own handler, the
+            -- same way reagent and calculator rows do, so shift (chat link),
+            -- alt (AH search) and ctrl (dressing room) all work here too. It
+            -- no-ops on an unmodified click, so selection below still runs.
+            -- An item-less enchant has itemID 0 -- truthy in Lua, and
+            -- GetItemInfo(0) returns nothing -- so link its spell instead.
+            local link = entry.itemLink
+            if not link and entry.itemID and entry.itemID ~= 0 then
+                link = select(2, GetItemInfo(entry.itemID))
+            end
+            if link then
+                if HandleModifiedItemClick(link) then return end
+            elseif entry.spellID and IsModifiedClick("CHATLINK") then
+                local spellLink = GetSpellLink and GetSpellLink(entry.spellID)
+                if spellLink then
+                    ChatEdit_InsertLink(spellLink)
+                    return
                 end
-                if link then
-                    ChatEdit_InsertLink(link)
-                end
-                return
             end
 
             state.selected = entry.name
@@ -2061,10 +2111,14 @@ function TSF:UpdateListRows()
                 -- Indent recipes under subcategories (only in Category sort)
                 local recipeIndent = (state.sortBy == "Category" and entry.subcategory) and 14 or 0
 
-                -- Real enchant icon for friends: enchants have no itemID, so fall
-                -- back to the synced spellID (GetSpellTexture) when there's no
-                -- scanned icon (own/alt enchants keep their scanned icon).
-                local rowIcon = entry.icon or (entry.spellID and GetSpellTexture and GetSpellTexture(entry.spellID))
+                -- Icons resolve lazily, HERE, for the ~20 rows actually on
+                -- screen: the item icon for a missing recipe (LoadRecipes used
+                -- to prefetch one GetItemInfo per missing recipe on every
+                -- rebuild), then the synced spellID for enchants, which have
+                -- no itemID at all. A scanned icon always wins.
+                local rowIcon = entry.icon
+                    or (entry.itemID and entry.itemID ~= 0 and GetItemIcon and GetItemIcon(entry.itemID))
+                    or (entry.spellID and GetSpellTexture and GetSpellTexture(entry.spellID))
                 if rowIcon then
                     row.icon:SetTexture(rowIcon)
                     row.icon:SetPoint("LEFT", 2 + recipeIndent, 0)
@@ -2173,16 +2227,19 @@ end
 function TSF:UpdateCraftableCounts()
     if not state.recipes then return end
 
-    -- GetCraftInfo (Enchanting) doesn't return numAvail, so only
-    -- update for tradeskill professions where the API provides it
-    if state.isCraftWindow then
-        self:UpdateListRows()
-        return
-    end
-
+    -- Both APIs report a count and a tier: GetTradeSkillInfo returns them
+    -- 2nd and 3rd, GetCraftInfo 3rd and 4th (the old comment here claimed
+    -- the Craft API had no count, which is why enchanting counts never
+    -- refreshed mid-batch).
+    local isCraft = state.isCraftWindow
     for _, entry in ipairs(state.recipes) do
         if entry.isKnown and entry.gameIndex then
-            local _, skillType, numAvail = GetTradeSkillInfo(entry.gameIndex)
+            local skillType, numAvail
+            if isCraft then
+                skillType, numAvail = select(3, GetCraftInfo(entry.gameIndex))
+            else
+                skillType, numAvail = select(2, GetTradeSkillInfo(entry.gameIndex))
+            end
             entry.numAvail = numAvail or 0
             if skillType and skillType ~= "header" and skillType ~= "subheader" then
                 entry.difficulty = skillType
@@ -2631,8 +2688,13 @@ function TSF:RefreshDetailPanel(preserveScroll)
         local cdSuffix = self:CooldownSuffix(recipe)
         if avail > 0 then
             self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. "|r" .. cdSuffix)
+        elseif cdSuffix ~= "" then
+            -- A recipe on cooldown reports 0 whatever is in the bags, so
+            -- naming reagents as the reason would contradict the very next
+            -- line ("On cooldown: ready in ...").
+            self.detCanMake:SetText("|cffff4444Can make: 0|r" .. cdSuffix)
         else
-            self.detCanMake:SetText("|cffff4444Can make: 0 (missing reagents)|r" .. cdSuffix)
+            self.detCanMake:SetText("|cffff4444Can make: 0 (missing reagents)|r")
         end
     end
 
@@ -2932,7 +2994,7 @@ function TSF:ShowAltMaterials(recipe)
     for charKey, charData in pairs(allChars) do
         local typeEnabled = (charData.isRemote and showRemoteInDetail)
                          or (not charData.isRemote and showAltInDetail)
-        if charKey ~= currentKey
+        if not addon:SameKey(charKey, currentKey)
            and typeEnabled
            and (showCrossFaction or charData.faction == currentFaction) then
             local bags = charData.inventory and charData.inventory.bags or {}
@@ -2950,7 +3012,7 @@ function TSF:ShowAltMaterials(recipe)
 
             if #parts > 0 then
                 local entry = {
-                    short    = charKey:match("^([^-]+)") or charKey,
+                    short    = addon:ShortName(charKey),
                     class    = charData.class,
                     faction  = charData.faction,
                     opposing = (charData.faction ~= currentFaction),
@@ -3175,7 +3237,7 @@ function TSF:BuildCalcPanel()
                         GameTooltip:AddLine("Held by:", 1, 0.82, 0)
                         for charKey, count in pairs(owners) do
                             local charData = DS:GetCharacter(charKey)
-                            local isCurrent = (charKey == ck)
+                            local isCurrent = addon:SameKey(charKey, ck)
                             -- Alt and friend inclusion are independent; you always count.
                             local typeOK = isCurrent
                                 or (charData and charData.isRemote and showRemote)
@@ -3183,9 +3245,8 @@ function TSF:BuildCalcPanel()
                             if charData and typeOK
                                and (isCurrent or showCross or charData.faction == currentFaction) then
                                 local cc = addon:ClassColor(charData.class or "WARRIOR")
-                                local charName = charKey:match("^(.+)-")
                                 GameTooltip:AddDoubleLine(
-                                    cc .. (charName or charKey) .. "|r",
+                                    cc .. addon:ShortName(charKey) .. "|r",
                                     tostring(count),
                                     nil, nil, nil, 1, 1, 1)
                             end
@@ -3584,12 +3645,14 @@ function TSF:BuildCraftBar(parent)
     enchantBtn:EnableMouse(false)
     enchantBtn:SetScript("PostClick", function()
         -- The secure macro performed the cast; set up craft tracking so the
-        -- skill bar / craftable counts update like a normal craft.
+        -- skill bar / craftable counts update like a normal craft. No craft
+        -- index: an enchant is cast at a target item, never batched. This
+        -- also fires for a click that only puts the enchant on the cursor,
+        -- so the watchdog is what clears the flag if the player then
+        -- cancels with Escape (no UNIT_SPELLCAST_* event ever arrives).
         local recipe = self:GetSelectedRecipe()
         if recipe then
-            self._craftingActive = true
-            self._craftRemaining = 1
-            self._craftSpellName = recipe.name
+            self:BeginCraftTracking(recipe.name, 1, nil)
         end
     end)
     self.enchantCraftBtn = enchantBtn
@@ -3602,6 +3665,44 @@ function TSF:BuildCraftBar(parent)
 
     -- Register craft-completion tracking for qty countdown
     self:RegisterCraftEvents()
+end
+
+----------------------------------------------------------------------
+-- Craft tracking
+-- One flag (_craftingActive) suppresses full list rebuilds mid-batch, so
+-- anything that can leave it set is a wedge: every later refresh, including
+-- the one after learning a recipe at a trainer, would be skipped for the
+-- rest of the session. Everything that starts tracking goes through
+-- BeginCraftTracking, everything that ends it through StopCraftTracking,
+-- and the watchdog catches the cases the client reports no event for.
+----------------------------------------------------------------------
+function TSF:ArmCraftWatchdog()
+    self._craftToken = (self._craftToken or 0) + 1
+    local token = self._craftToken
+    C_Timer.After(CRAFT_WATCHDOG, function()
+        -- A newer craft (or any stop) has bumped the token: nothing to do.
+        if self._craftToken ~= token then return end
+        self:StopCraftTracking()
+    end)
+end
+
+-- craftIndex: the Craft-API index to chain the next unit of a batch from,
+-- or nil for anything that is not a batchable craft-window recipe.
+function TSF:BeginCraftTracking(spellName, qty, craftIndex)
+    self._craftingActive = true
+    self._craftRemaining = qty or 1
+    self._craftSpellName = spellName
+    self._craftIndex     = craftIndex
+    self:ArmCraftWatchdog()
+end
+
+function TSF:StopCraftTracking()
+    self._craftingActive = false
+    self._craftRemaining = 0
+    self._craftSpellName = nil
+    self._craftIndex     = nil
+    -- Invalidates any watchdog still pending for the craft we just ended.
+    self._craftToken     = (self._craftToken or 0) + 1
 end
 
 function TSF:RegisterCraftEvents()
@@ -3621,10 +3722,18 @@ function TSF:RegisterCraftEvents()
         self._craftRemaining = (self._craftRemaining or 0) - 1
         if self._craftRemaining >= 1 then
             self.qtyBox:SetText(tostring(self._craftRemaining))
+            -- The Craft API takes no quantity, so a batch is a chain: one
+            -- DoCraft per completed cast. DoCraft is not protected on
+            -- 2.5.6, so driving it from this event is legal.
+            if self._craftIndex and state.isCraftWindow
+               and self.frame and self.frame:IsShown()
+               and GetNumCrafts and GetNumCrafts() > 0 then
+                DoCraft(self._craftIndex)
+            end
+            -- Fresh deadline for the next unit of the batch.
+            self:ArmCraftWatchdog()
         else
-            self._craftingActive = false
-            self._craftRemaining = 0
-            self._craftSpellName = nil
+            self:StopCraftTracking()
             self.qtyBox:SetText("1")
         end
 
@@ -3632,15 +3741,16 @@ function TSF:RegisterCraftEvents()
         -- which fires after the game refreshes its internal data
     end)
 
-    -- If the craft is interrupted (movement, esc, etc.), stop tracking
+    -- If the craft is interrupted (movement, esc, etc.), stop tracking.
+    -- This also breaks a DoCraft chain: the remaining units are abandoned.
     addon:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED", function(_, unit, _, spellID)
         if unit ~= "player" then return end
         if not self._craftingActive then return end
         local spellName = GetSpellInfo(spellID)
         if spellName ~= self._craftSpellName then return end
-        self._craftingActive = false
-        self._craftSpellName = nil
-        -- Leave qty at current remaining so user can see how many were left
+        self:StopCraftTracking()
+        -- Leave the qty box at its current text so the user can see how
+        -- many were left.
     end)
 
     addon:RegisterEvent("UNIT_SPELLCAST_FAILED", function(_, unit, _, spellID)
@@ -3648,8 +3758,7 @@ function TSF:RegisterCraftEvents()
         if not self._craftingActive then return end
         local spellName = GetSpellInfo(spellID)
         if spellName ~= self._craftSpellName then return end
-        self._craftingActive = false
-        self._craftSpellName = nil
+        self:StopCraftTracking()
     end)
 end
 
@@ -3696,6 +3805,18 @@ function TSF:UpdateCraftBar()
         return
     end
 
+    -- A linked window is somebody else's profession, opened read-only from
+    -- a chat link. Nothing here is craftable, so show no craft controls.
+    if state._isLinkedView then
+        self.craftBar:Hide()
+        if self.composerBar then self.composerBar:Hide() end
+        if self.enchantCraftBtn then
+            self.enchantCraftBtn:SetAlpha(0)
+            self.enchantCraftBtn:EnableMouse(false)
+        end
+        return
+    end
+
     -- Own active profession: ensure the composer is hidden
     if self.composerBar then self.composerBar:Hide() end
 
@@ -3724,16 +3845,22 @@ function TSF:UpdateCraftBar()
         -- and qty box don't apply (enchants are one cast per target item).
         for _, btn in ipairs(self.craftBtns) do btn:Hide() end
         if self.qtyBox then self.qtyBox:Hide() end
-        -- Set the cast target (out of combat only -- secure attribute)
-        if not InCombatLockdown() then
-            eb:SetAttribute("macrotext", "/cast " .. recipe.name)
-        end
-        if canCraft then
-            eb:SetAlpha(1)
-            eb:EnableMouse(true)
-        else
+        if InCombatLockdown() then
+            -- The macrotext is a secure attribute and cannot be rewritten in
+            -- combat, so leaving the button live would cast whatever enchant
+            -- was selected BEFORE combat onto the next item clicked. Disable
+            -- it instead; PLAYER_REGEN_ENABLED re-runs this function.
             eb:SetAlpha(0.4)
             eb:EnableMouse(false)
+        else
+            eb:SetAttribute("macrotext", "/cast " .. recipe.name)
+            if canCraft then
+                eb:SetAlpha(1)
+                eb:EnableMouse(true)
+            else
+                eb:SetAlpha(0.4)
+                eb:EnableMouse(false)
+            end
         end
     else
         if eb then
@@ -3960,7 +4087,7 @@ function TSF:SubmitOrder()
     -- Phase 1: tell the crafter about the new order.
     if addon.Comm then addon.Comm:SendOrderNew(order) end
 
-    local crafterShort = state._viewCharKey:match("^([^-]+)") or state._viewCharKey
+    local crafterShort = addon:ShortName(state._viewCharKey)
     print(string.format("|cff00ccffProfessionBuddy:|r Order requested: %dx %s from %s.",
         qty, state.selected, crafterShort))
 
@@ -4024,18 +4151,15 @@ function TSF:StartCraft(recipe, qty)
     -- so a batch quantity doesn't apply.
     if not recipe.itemID or recipe.itemID == 0 then qty = 1 end
 
-    -- Set up countdown tracking
-    self._craftingActive = true
-    self._craftRemaining = qty
-    self._craftSpellName = recipe.name
-
     if state.isCraftWindow then
-        -- Craft API (Enchanting) doesn't support qty param,
-        -- each DoCraft() call queues one cast
-        for i = 1, qty do
-            DoCraft(recipe.gameIndex)
-        end
+        -- The Craft API has no queue and no quantity parameter: DoCraft
+        -- starts ONE cast, and calling it again in the same frame is
+        -- refused ("You are already casting"). So fire one now and chain
+        -- the rest off UNIT_SPELLCAST_SUCCEEDED as each cast completes.
+        self:BeginCraftTracking(recipe.name, qty, recipe.gameIndex)
+        DoCraft(recipe.gameIndex)
     else
+        self:BeginCraftTracking(recipe.name, qty, nil)
         DoTradeSkill(recipe.gameIndex, qty)
     end
 end
@@ -4261,9 +4385,10 @@ function TSF:BuildSettingsPanel(parent)
     yLeft = yLeft - 26
     MakeCheckbox("Include in material calculator", "includeRemoteInCalc", yLeft)
     yLeft = yLeft - 26
+    -- No raid / battleground auto-add: nothing ever read that setting, and
+    -- auto-trusting strangers from a battleground contradicts the contact
+    -- model the sync trust tiers are built on.
     MakeCheckbox("Auto-add party members", "autoAddParty", yLeft)
-    yLeft = yLeft - 26
-    MakeCheckbox("Auto-add raid / battleground members", "autoAddRaid", yLeft)
     yLeft = yLeft - 14
 
     friendGroupBg:SetHeight(friendGroupTop - yLeft)
@@ -4485,7 +4610,9 @@ function TSF:BuildSettingsPanel(parent)
     -- Hint at the bottom
     local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     hint:SetPoint("BOTTOMLEFT", 16, 16)
-    hint:SetText("|cff888888Click the gear icon or press Escape to return.|r")
+    -- Escape is handled by UISpecialFrames against the whole profession
+    -- window, so it closes rather than returns. Say what it actually does.
+    hint:SetText("|cff888888Click the gear icon to return, or press Escape to close.|r")
 
     -- Refresh checkbox states on show + hide any panels that
     -- might have bled through from background events
@@ -4618,7 +4745,8 @@ end
 ----------------------------------------------------------------------
 -- Bottom bar stats
 ----------------------------------------------------------------------
-function TSF:UpdateBottomBar()
+-- unknown (optional): see UpdateViewDropdown.
+function TSF:UpdateBottomBar(unknown)
     local knownCount = 0
     for _ in pairs(state.allRecipes) do
         knownCount = knownCount + 1
@@ -4627,13 +4755,24 @@ function TSF:UpdateBottomBar()
     local missingCount = 0
     local trainableCount = 0
     local learnableNow = 0
-    if RDB and RDB.data[state.profName] then
-        local viewChar = state._viewCharKey or addon:PlayerKey()
-        local unknown = RDB:GetUnknownRecipes(viewChar, state.profName)
+    unknown = unknown or self:GetUnknownForView()
+    if unknown then
         for _, info in pairs(unknown) do
             missingCount = missingCount + 1
-            if info.source == "trainer" then
-                trainableCount = trainableCount + 1
+            -- Count every recipe this faction can buy from a trainer, not
+            -- just the ones whose FIRST listed source happens to be the
+            -- trainer. Same VisibleSources the Source line displays, so the
+            -- count and the recipe rows can never disagree.
+            -- VisibleSources already folds the legacy single-source field in,
+            -- so it is the only thing to consult.
+            local vis = VisibleSources(info)
+            if vis then
+                for _, s in ipairs(vis) do
+                    if s.method == "trainer" then
+                        trainableCount = trainableCount + 1
+                        break
+                    end
+                end
             end
             if info.skillReq and info.skillReq <= (state.skillLevel or 0) then
                 learnableNow = learnableNow + 1
@@ -4674,24 +4813,27 @@ local function GetItemCategory(itemID)
     return "Other"
 end
 
--- v6: Get category preferring static DB over GetItemInfo
+-- v6: Get category preferring static DB over GetItemInfo.
+-- Second return is true only when the static DB answered: a category derived
+-- from GetItemInfo is a cache MISS, because GetItemInfo returns nothing for
+-- an item the client has not cached yet and would bake "Other" in forever.
 local function GetRecipeCategory(name, itemID, profName)
     -- Check static DB first for a more descriptive category
     if RDB and RDB.data then
         -- Check the specific profession first
         if profName and RDB.data[profName] and RDB.data[profName][name] then
             local cat = RDB.data[profName][name].category
-            if cat then return cat end
+            if cat then return cat, true end
         end
         -- Fall back to any profession
         for _, profRecipes in pairs(RDB.data) do
             if profRecipes[name] and profRecipes[name].category then
-                return profRecipes[name].category
+                return profRecipes[name].category, true
             end
         end
     end
     -- Fall back to game API category
-    return GetItemCategory(itemID)
+    return GetItemCategory(itemID), false
 end
 
 -- Get subcategory from static DB (may be nil)
@@ -4712,7 +4854,29 @@ end
 ----------------------------------------------------------------------
 -- Data pipeline
 ----------------------------------------------------------------------
-function TSF:LoadRecipes()
+-- Category and subcategory never change for a given recipe, so resolve them
+-- once per window session and cache on the live entry. Only a static-DB hit
+-- is cached: a GetItemInfo-derived category may resolve differently once the
+-- client caches the item, so that one is re-asked every time.
+local function CachedCategory(data, name, itemID, profName)
+    if data._cat ~= nil then return data._cat end
+    local cat, fromDB = GetRecipeCategory(name, itemID, profName)
+    if fromDB then data._cat = cat end
+    return cat
+end
+
+local function CachedSubcategory(data, name, profName)
+    -- Subcategory only ever comes from the static DB, so a nil answer is
+    -- final and gets cached behind the sentinel.
+    if not data._subcatDone then
+        data._subcat = GetRecipeSubcategory(name, profName)
+        data._subcatDone = true
+    end
+    return data._subcat
+end
+
+-- unknown (optional): see UpdateViewDropdown.
+function TSF:LoadRecipes(unknown)
     local rawList = {}
     local showKnown  = (state.showTab == "known" or state.showTab == "all")
     local showMissing = (state.showTab == "missing" or state.showTab == "all")
@@ -4743,8 +4907,8 @@ function TSF:LoadRecipes()
                     skillReq    = LearnLevelFor(name, sReq or data.skillReq),
                     skillRange  = sr,
                     spellID     = data.spellID,
-                    category    = GetRecipeCategory(name, data.itemID, state.profName),
-                    subcategory = GetRecipeSubcategory(name, state.profName),
+                    category    = CachedCategory(data, name, data.itemID, state.profName),
+                    subcategory = CachedSubcategory(data, name, state.profName),
                     gameOrder   = idx,
                     gameIndex   = data.index,
                     isKnown     = true,
@@ -4753,21 +4917,19 @@ function TSF:LoadRecipes()
         end
     end
 
-    -- Missing recipes (from static DB)
-    if showMissing and RDB and RDB.data[state.profName] then
-        local viewChar = state._viewCharKey or addon:PlayerKey()
-        local unknown = RDB:GetUnknownRecipes(viewChar, state.profName)
+    -- Missing recipes (from static DB). No icon prefetch here: UpdateListRows
+    -- resolves an icon for the rows actually on screen, so this no longer
+    -- calls GetItemInfo once per unknown recipe on every rebuild.
+    if showMissing then
+        unknown = unknown or self:GetUnknownForView()
+    end
+    if showMissing and unknown then
         local idx = 1000
         for name, info in pairs(unknown) do
             idx = idx + 1
-            local missingIcon = nil
-            if info.itemID then
-                missingIcon = select(10, GetItemInfo(info.itemID))
-            end
             table.insert(rawList, {
                 name         = name,
                 difficulty   = "medium",
-                icon         = missingIcon,
                 itemID       = info.itemID,
                 skillReq     = LearnLevelFor(name, info.skillReq),
                 skillRange   = info.skillRange,
@@ -4810,9 +4972,9 @@ function TSF:LoadRecipes()
         if state.showTab == "known" then
             diffOpts = {"All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey"}
         elseif state.showTab == "missing" then
-            diffOpts = {"All", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic"}
+            diffOpts = {"All", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic", "Undetermined"}
         else
-            diffOpts = {"All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic"}
+            diffOpts = {"All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic", "Undetermined"}
         end
         self.diffDropdown:SetOptions(diffOpts)
         -- Reset a stale selection not offered on this tab (mirrors the
@@ -4832,7 +4994,10 @@ function TSF:LoadRecipes()
     -- Filter
     local filtered = {}
     local diffMap = { Orange = "optimal", Yellow = "medium", Green = "easy", Grey = "trivial" }
-    local srcMap  = { Trainer = "trainer", Vendor = "vendor", Drop = "drop", Quest = "quest", Reputation = "reputation", Discovery = "discovery", Automatic = "automatic" }
+    -- Every method in SOURCE_COLORS gets an entry, "undetermined" included:
+    -- without one the Source filter could not isolate those recipes, and the
+    -- option list above would silently match nothing.
+    local srcMap  = { Trainer = "trainer", Vendor = "vendor", Drop = "drop", Quest = "quest", Reputation = "reputation", Discovery = "discovery", Automatic = "automatic", Undetermined = "undetermined" }
 
     for _, r in ipairs(rawList) do
         local passSearch = true
@@ -4976,16 +5141,26 @@ function TSF:LoadRecipes()
         local lastCat = nil
         local lastSubCat = "__NONE__"
 
+        -- Header counts in ONE pass. Counting inside the header-building
+        -- loop meant a full re-scan of the filtered list per header, which
+        -- is quadratic on a profession with many categories.
+        local catCounts, subCounts = {}, {}
+        for _, r in ipairs(filtered) do
+            local c = r.category or "Other"
+            catCounts[c] = (catCounts[c] or 0) + 1
+            if r.subcategory then
+                local k = c .. "|" .. r.subcategory
+                subCounts[k] = (subCounts[k] or 0) + 1
+            end
+        end
+
         for _, r in ipairs(filtered) do
             local cat = r.category or "Other"
             local subcat = r.subcategory
 
             -- Category header
             if cat ~= lastCat then
-                local catCount = 0
-                for _, r2 in ipairs(filtered) do
-                    if (r2.category or "Other") == cat then catCount = catCount + 1 end
-                end
+                local catCount = catCounts[cat] or 0
                 local catKey = cat
                 local isCollapsed = state.collapsed[catKey] or false
                 table.insert(displayList, {
@@ -5006,13 +5181,8 @@ function TSF:LoadRecipes()
             else
                 -- Subcategory header
                 if subcat and subcat ~= lastSubCat then
-                    local subCount = 0
-                    for _, r2 in ipairs(filtered) do
-                        if (r2.category or "Other") == cat and r2.subcategory == subcat then
-                            subCount = subCount + 1
-                        end
-                    end
                     local subKey = cat .. "|" .. subcat
+                    local subCount = subCounts[subKey] or 0
                     local isSubCollapsed = state.collapsed[subKey] or false
                     table.insert(displayList, {
                         isHeader = true,
@@ -5047,7 +5217,15 @@ function TSF:LoadRecipes()
 end
 
 function TSF:RefreshRecipeList()
-    self:LoadRecipes()
+    -- Any refresh, from wherever, retires a pending debounced search refresh.
+    self._searchGen = (self._searchGen or 0) + 1
+
+    -- Built once and handed to all three consumers; each used to build its
+    -- own copy, so a refresh allocated the whole unknown-recipe table three
+    -- times over.
+    local unknown = self:GetUnknownForView()
+
+    self:LoadRecipes(unknown)
 
     local maxScroll = math.max(0, #state.recipes - VISIBLE_ROWS)
     self.scrollBar:SetMinMaxValues(0, maxScroll)
@@ -5057,8 +5235,8 @@ function TSF:RefreshRecipeList()
     self.scrollBar:SetValue(state.scrollOffset)
 
     self:UpdateListRows()
-    self:UpdateBottomBar()
-    self:UpdateViewDropdown()
+    self:UpdateBottomBar(unknown)
+    self:UpdateViewDropdown(unknown)
 
     if state.selected then
         local found = false
@@ -5109,12 +5287,27 @@ end
 ----------------------------------------------------------------------
 TSF._savedStates = {}
 
+-- Saved state is per profession AND per view. Keyed on the profession alone,
+-- closing a guildmate's Tailoring wrote their selection and scroll offset
+-- over your own, and the next time you opened your Tailoring you got theirs.
+local function WindowStateKey(profName)
+    -- A chat-linked window leaves _viewCharKey nil and _isStaticView false, so
+    -- without its own slot it read and wrote YOUR "self" state: closing a
+    -- guildmate's linked Tailoring overwrote your selection, filters and
+    -- collapsed set, and opening theirs restored yours into their read-only list.
+    local view = state._viewCharKey
+        or (state._isStaticView and "static")
+        or (state._isLinkedView and "linked")
+        or "self"
+    return profName .. "|" .. view
+end
+
 function TSF:SaveWindowState()
     if not addon.db.settings.rememberWindowState then return end
     local prof = state.profName
     if not prof then return end
 
-    self._savedStates[prof] = {
+    self._savedStates[WindowStateKey(prof)] = {
         selected     = state.selected,
         scrollOffset = state.scrollOffset,
         showTab      = state.showTab,
@@ -5128,9 +5321,11 @@ function TSF:SaveWindowState()
     }
 end
 
+-- Call AFTER state._viewCharKey / state._isStaticView are set for the view
+-- being opened, so the key matches the one SaveWindowState wrote.
 function TSF:RestoreWindowState(profName)
     if not addon.db.settings.rememberWindowState then return false end
-    local saved = self._savedStates[profName]
+    local saved = self._savedStates[WindowStateKey(profName)]
     if not saved then return false end
 
     state.selected     = saved.selected
@@ -5151,46 +5346,29 @@ function TSF:RestoreWindowState(profName)
 end
 
 ----------------------------------------------------------------------
--- Open profession window
+-- Live recipe scrape: rebuilds state.allRecipes / state.recipeOrder from
+-- the game's own trade-skill or craft list.
+--
+-- ONE function for both the first open and every later refresh, because two
+-- copies drifted: the refresh copy dropped spellID (killing enchant
+-- tooltips and rod lines from the first CRAFT_UPDATE onward) and both
+-- dropped the craft window's numAvail, which left every item-producing
+-- enchant reading "0 (missing reagents)" with a full bag of shards and its
+-- Craft buttons disabled.
+--
+-- Counts: GetTradeSkillInfo returns numAvailable 3rd, GetCraftInfo 4th.
+-- Item-less recipes (enchants) legitimately report 0 from both, and the
+-- ReagentCraftCount fallback in UpdateCraftBar / RefreshDetailPanel /
+-- UpdateListRows still covers those.
 ----------------------------------------------------------------------
-function TSF:OpenWith(profName, rank, maxRank, isCraft)
-    -- Close the /pb main window if open (mutual exclusion)
-    if addon.UI and addon.UI.frame and addon.UI.frame:IsShown() then
-        addon.UI:Hide()
-    end
-
-    -- Ensure all content panels are visible (may have been hidden
-    -- by settings view in a previous session)
-    self:EnsureFrame()
-    self:RestoreContentPanels()
-
-    state.profName      = profName
-    state.skillLevel    = rank or 0
-    state.maxSkill      = maxRank or 375
-    state.isCraftWindow = isCraft or false
-    state.allRecipes    = {}
-    state.recipeOrder   = {}
-    state._isStaticView = false
-    state._viewCharKey  = nil
-
-    -- Try to restore saved UI state for this profession
-    local restored = self:RestoreWindowState(profName)
-    if not restored then
-        state.selected     = nil
-        state.scrollOffset = 0
-        state.showTab      = "known"
-        state.filterCat    = "All"
-        state.filterDiff   = "All"
-        state.sortBy       = "Category"
-        state.sortAsc      = true
-        state.searchText   = ""
-        state.collapsed    = {}
-    end
+local function scrapeRecipes(isCraft)
+    state.allRecipes  = {}
+    state.recipeOrder = {}
 
     if isCraft then
         local numCrafts = GetNumCrafts()
         for i = 1, numCrafts do
-            local craftName, _, craftType = GetCraftInfo(i)
+            local craftName, _, craftType, craftAvail = GetCraftInfo(i)
             if craftName and craftType ~= "header" then
                 local itemLink = GetCraftItemLink(i)
                 local icon = GetCraftIcon(i)
@@ -5220,6 +5398,7 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
                     itemLink = itemLink,
                     icon     = icon,
                     difficulty = craftType,
+                    numAvail = craftAvail or 0,
                     reagents = reagents,
                 }
                 table.insert(state.recipeOrder, craftName)
@@ -5255,13 +5434,56 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
                     itemLink = itemLink,
                     icon     = icon,
                     difficulty = skillType,
-                    numAvail = numAvail,
+                    numAvail = numAvail or 0,
                     reagents = reagents,
                 }
                 table.insert(state.recipeOrder, skillName)
             end
         end
     end
+end
+
+----------------------------------------------------------------------
+-- Open profession window
+----------------------------------------------------------------------
+function TSF:OpenWith(profName, rank, maxRank, isCraft)
+    -- Close the /pb main window if open (mutual exclusion)
+    if addon.UI and addon.UI.frame and addon.UI.frame:IsShown() then
+        addon.UI:Hide()
+    end
+
+    -- Ensure all content panels are visible (may have been hidden
+    -- by settings view in a previous session)
+    self:EnsureFrame()
+    self:RestoreContentPanels()
+
+    -- A fresh window means any craft we were tracking is over.
+    self:StopCraftTracking()
+
+    state.profName      = profName
+    state.skillLevel    = rank or 0
+    state.maxSkill      = maxRank or 375
+    state.isCraftWindow = isCraft or false
+    state.allRecipes    = {}
+    state.recipeOrder   = {}
+    state._isStaticView = false
+    state._viewCharKey  = nil
+
+    -- Try to restore saved UI state for this profession
+    local restored = self:RestoreWindowState(profName)
+    if not restored then
+        state.selected     = nil
+        state.scrollOffset = 0
+        state.showTab      = "known"
+        state.filterCat    = "All"
+        state.filterDiff   = "All"
+        state.sortBy       = "Category"
+        state.sortAsc      = true
+        state.searchText   = ""
+        state.collapsed    = {}
+    end
+
+    scrapeRecipes(isCraft)
 
     self:UpdateSkillBar()
 
@@ -5352,8 +5574,13 @@ function TSF:OpenWithStatic(profName)
 
     self:EnsureFrame()
     self:RestoreContentPanels()
+    self:StopCraftTracking()
 
     state.profName      = profName
+    -- A static browse has no client skill line, so the canonical name IS
+    -- the display name.
+    state.profDisplayName = nil
+    state._isLinkedView = false
     state.skillLevel    = 0
     state.maxSkill      = 0
     state.isCraftWindow = false
@@ -5417,11 +5644,15 @@ function TSF:OpenWithCharacter(charKey, profName)
 
     self:EnsureFrame()
     self:RestoreContentPanels()
+    self:StopCraftTracking()
 
     local skill = profData.level or profData.skillLevel or 0
     local maxSkill = profData.maxLevel or profData.maxSkill or 375
 
     state.profName      = profName
+    -- Stored professions are keyed by the canonical English name.
+    state.profDisplayName = nil
+    state._isLinkedView = false
     state.skillLevel    = skill
     state.maxSkill      = maxSkill
     state.isCraftWindow = false
@@ -5518,7 +5749,7 @@ function TSF:OpenWithCharacter(charKey, profName)
     end
 
     -- Skill bar: show character name + profession + skill
-    local shortName = charKey:match("^([^-]+)") or charKey
+    local shortName = addon:ShortName(charKey)
     local classColor = addon:ClassColor(charData.class or "WARRIOR")
     if self.skillBar then
         self.skillBar:SetMinMaxValues(0, maxSkill)
@@ -5543,12 +5774,38 @@ function TSF:OpenWithCharacter(charKey, profName)
     end
 end
 
+-- Translate a skill-line name to the English key PB stores everything under.
+-- GetTradeSkillLine / GetCraftDisplaySkillLine return the LOCALIZED name, so
+-- without this the whole static-DB half of the window (missing list, static
+-- categories, skill ranges, cooldowns, the active tab highlight) is dead on
+-- a non-enUS client, and the "Mining" -> "Smelting" remap below never fires.
+local function CanonicalProf(name)
+    local Sc = addon.Scanner
+    if Sc and Sc.Canonicalize then
+        return Sc:Canonicalize(name) or name
+    end
+    return name
+end
+
+-- Is this window a chat-linked view of somebody else's profession? Nothing
+-- in it is craftable, and Scanner must not write it to the local character.
+local function LinkedView(isCraft)
+    if isCraft then
+        return (IsCraftLinked and IsCraftLinked()) and true or false
+    end
+    return (IsTradeSkillLinked and IsTradeSkillLinked()) and true or false
+end
+
 function TSF:OnTradeSkillShow()
-    local profName, rank, maxRank = GetTradeSkillLine()
-    if not profName or profName == "UNKNOWN" then return end
+    local rawName, rank, maxRank = GetTradeSkillLine()
+    if not rawName or rawName == "UNKNOWN" then return end
+    local profName = CanonicalProf(rawName)
     -- TBCCA returns "Mining" from GetTradeSkillLine() when the Smelting
     -- window is open. PB's static DB is registered under "Smelting".
     if profName == "Mining" then profName = "Smelting" end
+
+    state.profDisplayName = rawName
+    state._isLinkedView = LinkedView(false)
 
     -- If already showing this profession, just refresh data in place
     -- without resetting filters/sort/scroll (TRADE_SKILL_UPDATE fires often)
@@ -5562,8 +5819,17 @@ function TSF:OnTradeSkillShow()
 end
 
 function TSF:OnCraftShow()
-    local profName, rank, maxRank = GetCraftDisplaySkillLine()
-    if not profName or profName == "" then profName = "Enchanting" end
+    -- No crafts means no session: a _pendingOpen replayed after combat can
+    -- land here once the craft window has already closed, and without this
+    -- it would open an empty window with a 0/375 skill bar.
+    if GetNumCrafts and GetNumCrafts() == 0 then return end
+
+    local rawName, rank, maxRank = GetCraftDisplaySkillLine()
+    if not rawName or rawName == "" then rawName = "Enchanting" end
+    local profName = CanonicalProf(rawName)
+
+    state.profDisplayName = rawName
+    state._isLinkedView = LinkedView(true)
 
     -- If already showing this profession, just refresh data in place
     if self.frame and self.frame:IsShown() and state.profName == profName
@@ -5585,71 +5851,8 @@ function TSF:RefreshTradeData(profName, rank, maxRank, isCraft)
 
     state.skillLevel = rank or 0
     state.maxSkill   = maxRank or 375
-    state.allRecipes = {}
-    state.recipeOrder = {}
 
-    if isCraft then
-        local numCrafts = GetNumCrafts()
-        for i = 1, numCrafts do
-            local craftName, _, craftType = GetCraftInfo(i)
-            if craftName and craftType ~= "header" then
-                local itemLink = GetCraftItemLink(i)
-                local icon = GetCraftIcon(i)
-                local reagents = {}
-                for j = 1, 12 do
-                    local rName, rTexture, rCount = GetCraftReagentInfo(i, j)
-                    if not rName then break end
-                    local rLink = GetCraftReagentItemLink(i, j)
-                    table.insert(reagents, {
-                        itemID = addon:ItemIDFromLink(rLink),
-                        name   = rName,
-                        count  = rCount,
-                        icon   = rTexture,
-                    })
-                end
-                state.allRecipes[craftName] = {
-                    index    = i,
-                    itemID   = addon:ItemIDFromLink(itemLink),
-                    itemLink = itemLink,
-                    icon     = icon,
-                    difficulty = craftType,
-                    reagents = reagents,
-                }
-                table.insert(state.recipeOrder, craftName)
-            end
-        end
-    else
-        local numRecipes = GetNumTradeSkills()
-        for i = 1, numRecipes do
-            local skillName, skillType, numAvail = GetTradeSkillInfo(i)
-            if skillName and skillType ~= "header" and skillType ~= "subheader" then
-                local itemLink = GetTradeSkillItemLink(i)
-                local icon = GetTradeSkillIcon(i)
-                local reagents = {}
-                for j = 1, 12 do
-                    local rName, rTexture, rCount = GetTradeSkillReagentInfo(i, j)
-                    if not rName then break end
-                    local rLink = GetTradeSkillReagentItemLink(i, j)
-                    table.insert(reagents, {
-                        itemID = addon:ItemIDFromLink(rLink),
-                        name   = rName,
-                        count  = rCount,
-                        icon   = rTexture,
-                    })
-                end
-                state.allRecipes[skillName] = {
-                    index    = i,
-                    itemID   = addon:ItemIDFromLink(itemLink),
-                    itemLink = itemLink,
-                    icon     = icon,
-                    difficulty = skillType,
-                    numAvail = numAvail,
-                    reagents = reagents,
-                }
-                table.insert(state.recipeOrder, skillName)
-            end
-        end
-    end
+    scrapeRecipes(isCraft)
 
     self:UpdateSkillBar()
     self:RefreshRecipeList()

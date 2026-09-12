@@ -2,9 +2,13 @@
 ## Title: ProfessionBuddy
 ## Notes: Cross-character profession management, recipe tracking, and material calculator for TBC Classic Anniversary
 ## Author: m4ru
-## Version: 1.0.3
+## Version: 1.1.0
 ## SavedVariables: ProfBuddyDB
 ## DefaultState: enabled
+## X-Curse-Project-ID: 1631296
+## X-Website: https://github.com/m4ru92/ProfessionBuddy
+## X-License: MIT
+## X-Category: Professions
 
 Libs/libs.xml
 

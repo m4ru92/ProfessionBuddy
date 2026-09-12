@@ -152,7 +152,7 @@ local recipes = {
         itemID = 11371,
         skillReq = 230,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Classic Bar",
         skillRange = {  230, 300, 305, 310 },
@@ -165,7 +165,7 @@ local recipes = {
         itemID = 17771,
         skillReq = 350,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Classic Bar",
         skillRange = { 350, 350, 362, 375 },

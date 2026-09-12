@@ -10,6 +10,19 @@ local FRAME_WIDTH  = 600
 local FRAME_HEIGHT = 450
 
 ----------------------------------------------------------------------
+-- Every floating list this window opens lives on UIParent, not on the
+-- window: the dropdown lists (TradeSkillFrame owns them) and the Friends
+-- tab's order menu with its full-screen click catcher. Hiding the window
+-- or switching tabs has to close them by hand or they float over the game
+-- world and swallow the next click.
+----------------------------------------------------------------------
+function addon.CloseAllPopups()
+    if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    local fp = addon.FriendsPanel
+    if fp and fp._orderMenu then fp._orderMenu:Hide() end
+end
+
+----------------------------------------------------------------------
 -- Create the main frame
 ----------------------------------------------------------------------
 function UI:Init()
@@ -31,11 +44,12 @@ function UI:Init()
     f:SetClampedToScreen(true)
     f:Hide()
 
-    -- Close any open dropdown list (e.g. the Guild tab profession filter) when
-    -- the window hides. Those lists are UIParent children, so they do not hide
-    -- with the window on their own.
+    -- Close any open dropdown list (e.g. the Guild tab profession filter) and
+    -- the Friends tab order menu when the window hides. Those lists are
+    -- UIParent children, so they do not hide with the window on their own, and
+    -- the order menu leaves a full-screen click catcher behind if it survives.
     f:HookScript("OnHide", function()
-        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+        addon.CloseAllPopups()
     end)
 
     -- Title
@@ -133,6 +147,15 @@ function UI:AddTab(name, displayName, createFunc)
     content:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -10, 10)
     content:Hide()
 
+    -- The ONE refresh hook. A tab's content becomes visible when the window
+    -- opens on it and when it is selected, and OnShow covers both, so no other
+    -- path (UI:Show, UI:SelectTab, UI:Toggle) refreshes as well: they would
+    -- each double-fire on every open. Panels publish their repaint as
+    -- content.Refresh.
+    content:SetScript("OnShow", function(c)
+        if c.Refresh then c:Refresh() end
+    end)
+
     local tabData = {
         name       = name,
         button     = btn,
@@ -156,8 +179,22 @@ function UI:AddTab(name, displayName, createFunc)
 end
 
 function UI:SelectTab(index)
-    -- Close any open dropdown list when switching tabs (same reason as OnHide).
-    if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    -- Close any open dropdown list or popup menu when switching tabs (same
+    -- reason as OnHide).
+    addon.CloseAllPopups()
+    -- Re-selecting the tab we are already on must not hide and re-show its
+    -- content. The content frame's OnShow IS the refresh hook, so the churn ran
+    -- the panel's whole Refresh a SECOND time for one /pb (UI:Show fires OnShow
+    -- first) or one click on the active tab.
+    local active = self.frame.tabs[index]
+    if self.activeTab == index and active and active.created
+       and active.content:IsShown() then
+        active.button.bgNormal:Hide()
+        active.button.bgSelected:Show()
+        active.button.border:Hide()
+        return
+    end
+
     -- Deselect all
     for _, tab in ipairs(self.frame.tabs) do
         tab.content:Hide()
@@ -185,18 +222,13 @@ end
 ----------------------------------------------------------------------
 -- Toggle visibility
 ----------------------------------------------------------------------
+-- Show/hide only. Repainting is the content frame's OnShow hook (UI:AddTab),
+-- which fires for this path and for every panel Toggle as well.
 function UI:Toggle()
     if self.frame:IsShown() then
         self.frame:Hide()
     else
         self.frame:Show()
-        -- Refresh active tab
-        if self.activeTab and self.frame.tabs[self.activeTab] then
-            local tab = self.frame.tabs[self.activeTab]
-            if tab.content.Refresh then
-                tab.content:Refresh()
-            end
-        end
     end
 end
 
