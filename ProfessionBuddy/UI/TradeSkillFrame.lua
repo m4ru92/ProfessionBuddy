@@ -4147,16 +4147,14 @@ end
 -- Start the actual craft operation
 ----------------------------------------------------------------------
 function TSF:StartCraft(recipe, qty)
-    -- Enchants (no item produced) are cast onto one target item at a time,
-    -- so a batch quantity doesn't apply.
-    if not recipe.itemID or recipe.itemID == 0 then qty = 1 end
+    -- The Craft API (Enchanting, and pet training) has no batch: DoCraft casts
+    -- once and cannot be chained on this client, whether the craft produces an
+    -- item (rod, prismatic shard) or applies an enchant. So every craft-window
+    -- recipe is a single craft; only DoTradeSkill professions batch a quantity.
+    if state.isCraftWindow or not recipe.itemID or recipe.itemID == 0 then qty = 1 end
 
     if state.isCraftWindow then
-        -- The Craft API has no queue and no quantity parameter: DoCraft
-        -- starts ONE cast, and calling it again in the same frame is
-        -- refused ("You are already casting"). So fire one now and chain
-        -- the rest off UNIT_SPELLCAST_SUCCEEDED as each cast completes.
-        self:BeginCraftTracking(recipe.name, qty, recipe.gameIndex)
+        self:BeginCraftTracking(recipe.name, 1, recipe.gameIndex)
         DoCraft(recipe.gameIndex)
     else
         self:BeginCraftTracking(recipe.name, qty, nil)

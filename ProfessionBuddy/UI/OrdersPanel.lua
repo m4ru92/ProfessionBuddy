@@ -1603,9 +1603,15 @@ function OP:FindCrafters(query)
     query = strtrim(query or ""):lower()
     if #query < 2 then return out, false end
     local guildSet = guildRosterSet()            -- one roster pass for the search
+    -- Honor showCrossFactionAlts like the calculator and character views do: an
+    -- opposite-faction character cannot craft or trade to you, so it is hidden
+    -- unless the setting is on. Your current character is always eligible.
+    local myFaction = UnitFactionGroup("player")
+    local crossFaction = addon.db.settings and addon.db.settings.showCrossFactionAlts
     local relCache, colorCache = {}, {}
     for charKey, char in pairs(addon.db.characters or {}) do
-        if type(char) == "table" and char.professions then
+        if type(char) == "table" and char.professions
+           and (crossFaction or char.faction == myFaction or addon:SameKey(charKey, addon:PlayerKey())) then
             local rel = relCache[charKey]
             if rel == nil then
                 rel = relationOf(charKey, guildSet)
@@ -1728,7 +1734,7 @@ function OP:BuildFindPanel()
     if self.findFrame then return end
 
     local f = CreateFrame("Frame", "ProfBuddyFindCrafter", UIParent, "BasicFrameTemplateWithInset")
-    f:SetSize(470, 496)
+    f:SetSize(470, 450)   -- match the History panel and the main window height
     local function anchorRight()
         f:ClearAllPoints()
         if addon.UI and addon.UI.frame then
@@ -1804,7 +1810,7 @@ function OP:BuildFindPanel()
     listFrame:SetAllPoints()
     ctx.listFrame = listFrame
 
-    local ROWS = 12
+    local ROWS = 10   -- fits the 450-tall panel; overflow scrolls
     for i = 1, ROWS do
         local row = CreateFrame("Button", nil, listFrame)
         row:SetHeight(FIND_ROW_H)
