@@ -35,16 +35,38 @@ def default_addon_dir():
     here = os.path.dirname(os.path.abspath(__file__))
     return os.path.normpath(os.path.join(here, "..", "ProfessionBuddy"))
 
+def pick_latest(entries):
+    """Return (version, download_url) for the NEWEST TBCDB archive in a GitHub
+    contents listing.
+
+    Split out from the network call so it can be tested with a fixed payload.
+    The contents API sorts by filename and filename sort is not version sort
+    (TBCDB_1.10.0 sorts before TBCDB_1.9.0), so compare parsed version tuples
+    rather than taking the first match. A name that does not carry a version is
+    not a candidate at all: returning the raw filename as the "version" made
+    --check exit 10 forever with no way to tell that from a real update.
+    """
+    cands = []
+    for f in entries:
+        n = f.get("name", "")
+        if not n.endswith(".sql.gz"):
+            continue
+        m = re.search(r"TBCDB[_-](\d+)\.(\d+)\.(\d+)", n)
+        if m:
+            cands.append((tuple(int(x) for x in m.groups()),
+                          "%s.%s.%s" % m.groups(), f.get("download_url")))
+    if not cands:
+        die("no versioned TBCDB *.sql.gz found in the cmangos Full_DB listing "
+            "(archive naming may have changed); nothing to compare against")
+    best = max(cands)
+    return best[1], best[2]
+
+
 def latest_cmangos():
-    """Return (version, download_url) of the current Full_DB .sql.gz."""
+    """Return (version, download_url) of the newest Full_DB .sql.gz."""
     req = urllib.request.Request(CMANGOS_API, headers={"User-Agent": "pb-gather-db"})
     data = json.loads(urllib.request.urlopen(req, timeout=30).read().decode())
-    for f in data:
-        n = f.get("name", "")
-        if n.endswith(".sql.gz"):
-            m = re.search(r"TBCDB[_-](\d+\.\d+\.\d+)", n)
-            return (m.group(1) if m else n), f.get("download_url")
-    die("no .sql.gz found in cmangos Full_DB")
+    return pick_latest(data)
 
 def current_version(addon_dir):
     p = os.path.join(addon_dir, "Data", "GatherMobs.lua")

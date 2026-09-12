@@ -59,10 +59,12 @@ function Router:register(inst)
 end
 
 -- How instance `from` appears to instance `to` as a chat sender / unit name:
--- bare name on the same realm, name-realm across realms (mirrors WoW).
+-- bare name on the same realm, name-realm across realms (mirrors WoW). The
+-- realm half is the NORMALIZED spelling, which is what Ambiguate hands an
+-- addon: "Old Blanchy" reaches the receiver as "Name-OldBlanchy".
 function Router:senderAs(from, to)
     if from.realm == to.realm then return from.name end
-    return from.name .. "-" .. from.realm
+    return from.name .. "-" .. from.realmKey
 end
 
 function Router:enqueue(fromName, prefix, payload, channel, target)
@@ -157,8 +159,19 @@ end
 ----------------------------------------------------------------------
 -- Build one isolated instance: its own env, WoW-API stubs, and addon copy.
 ----------------------------------------------------------------------
+-- Realm every instance lives on unless the caller names another one. A realm
+-- whose name carries a space, hyphen or apostrophe normalizes away in the
+-- canonical key ("Old Blanchy" -> "OldBlanchy"), so the realm is a parameter:
+-- the same flows are run on a multi-word realm to prove the keys still line up.
+local DEFAULT_REALM = "GhostRealm"
+local function normRealm(realm)
+    return ((realm or ""):gsub("[%s%-']", ""))
+end
+
 local function makeInstance(name, realm)
-    local inst = { name = name, realm = realm, key = name .. "-" .. realm }
+    realm = realm or DEFAULT_REALM
+    local inst = { name = name, realm = realm, realmKey = normRealm(realm),
+                   key = name .. "-" .. normRealm(realm) }
     local state = { inGroup = false, inRaid = false, partyMembers = {}, guildMembers = {} }
     local frames, timers, deferred = {}, {}, {}
     inst.state, inst.frames, inst.timers, inst.deferred = state, frames, timers, deferred
@@ -266,6 +279,15 @@ local function makeInstance(name, realm)
         for i, fn in ipairs(deferred) do q[i] = fn end
         for i = #deferred, 1, -1 do deferred[i] = nil end
         for _, fn in ipairs(q) do fn() end
+    end
+    -- Same for C_Timer.NewTimer handles. The panel repaint that follows inbound
+    -- data is coalesced onto one of these (Comm:QueueUIRefresh), so a test that
+    -- asserts a refresh has to let the timer fire.
+    inst.runTimers = function()
+        local q = {}
+        for i, t in ipairs(timers) do q[i] = t end
+        for i = #timers, 1, -1 do timers[i] = nil end
+        for _, t in ipairs(q) do if not t.cancelled then t.fn() end end
     end
     inst.fire("ADDON_LOADED", "ProfessionBuddy")
     inst.fire("PLAYER_LOGIN")
@@ -398,8 +420,16 @@ A.comm._guildHelloDone = nil
 A.fire("GUILD_ROSTER_UPDATE")
 A.runDeferred()          -- runs the 2s-delayed BroadcastGuildHello
 Router:pump()
+-- A HELLO that arrived on GUILD is still acked, but the ack is delayed a few
+-- seconds: one broadcast reaches every PB guildmate at once, so the replies are
+-- spread instead of arriving as one N-whisper burst. Run Carol's timer.
+C.runDeferred()
+Router:pump()
 check(C.addon.db.characters[A.key], "GP5: guild HELLO did not fire on roster load (the /reload path)")
 check(A.addon.db.characters[C.key], "GP5: Ana did not record Carol from HELLO_ACK")
+-- One guild HELLO reaches every PB client at once, so the repaint it triggers is
+-- coalesced onto a one-second timer rather than run per message. Fire it.
+C.runTimers()
 check(C.addon.GuildPanel.n > 0, "GP5: incoming guild data did not refresh Carol's Guild tab")
 check(C.addon.db.contacts[A.key] == nil and A.addon.db.contacts[C.key] == nil,
     "GP5: guild HELLO auto-added a Friends contact despite the sender being guild-only")
@@ -563,6 +593,13 @@ ok("GP9 claimed order -- crafted then completed across the directed flow")
 -- ── GP10: board trust + anti-spoof ──────────────────────────────────
 local open2 = RQ.orders:CreateOpen({
     item = { id = 14048, name = "Bolt of Runecloth", profession = "Tailoring" }, quantity = 1 })
+-- A receiver accepts one NEW board post per sender per 5s, and the harness posts
+-- GP8's and this one inside the same wall-clock second. Clear the stamp so GP10
+-- exercises the anti-spoof path it is about rather than the rate limit.
+-- The poster now spaces its OWN sends past that same cooldown, so clear its
+-- send stamp too or this post would sit in a deferred timer instead of going out.
+X1.comm._lastOpenAt, X2.comm._lastOpenAt = nil, nil
+RQ.comm._lastOpenSendAt = nil
 RQ.comm:BroadcastOpenOrder(open2)
 Router:pump()
 -- (a) a non-guild stranger's claim is dropped at the trust gate
@@ -579,5 +616,65 @@ check(X1.addon.db.orderBoard[open2.id] ~= nil,
     "GP10: a non-requester's ORDER_CLOSED wrongly cleared the board")
 ok("GP10 board anti-spoof -- stranger claim ignored, non-poster close ignored")
 
+-- ── GP12: the whole board flow on a MULTI-WORD realm ────────────────
+-- Same claim race as GP8 and the same handoff as GP9, but on "Old Blanchy",
+-- where every key crosses the normalization boundary: the instance calls itself
+-- Name-OldBlanchy, the order id contains the realm, and the claim arrives from
+-- a sender AceComm spelled without the space. If any of those compare raw, the
+-- winner never recognizes itself as the crafter and the order is invisible to
+-- the one character it belongs to.
+local MW = "Old Blanchy"
+local RQ2 = makeInstance("Bossman", MW)
+local Y1  = makeInstance("Hammerhand", MW)
+local Y2  = makeInstance("Threadbare", MW)
+check(RQ2.key == "Bossman-OldBlanchy", "GP12: realm not normalized in the instance key")
+Router:ungroupAll()
+Router:guild(RQ2.key, Y1.key, Y2.key)
+
+local open3 = RQ2.orders:CreateOpen({
+    item = { id = 14048, name = "Bolt of Runecloth", profession = "Tailoring" }, quantity = 2 })
+check(open3.id:find("OldBlanchy", 1, true), "GP12: the order id is not minted from the canonical key")
+RQ2.comm:BroadcastOpenOrder(open3)
+Router:pump()
+check(Y1.addon.db.orderBoard[open3.id] and Y2.addon.db.orderBoard[open3.id],
+    "GP12: the open order did not reach the boards on a multi-word realm")
+
+Y1.comm:ClaimOrder(Y1.addon.db.orderBoard[open3.id])   -- enqueued first -> wins
+Y2.comm:ClaimOrder(Y2.addon.db.orderBoard[open3.id])
+Router:pump()
+
+local ro3 = RQ2.addon.db.orders[open3.id]
+check(ro3.status == "accepted" and ro3.crafter == Y1.key,
+    "GP12: the requester did not assign to the first claimer")
+check(Y2.addon.db.orders[open3.id] == nil, "GP12: the loser wrongly got a directed order")
+check(Y1.addon.db.orderBoard[open3.id] == nil and Y2.addon.db.orderBoard[open3.id] == nil,
+    "GP12: the board entry was not cleared after the assign")
+
+-- The winner's own client has to see itself as the crafter, or the order is
+-- there in SavedVariables and nowhere in the UI.
+local won = Y1.addon.db.orders[open3.id]
+check(won and won.status == "accepted", "GP12: the winner did not receive the directed order")
+check(Y1.orders:RoleFor(won) == "crafter",
+    "GP12: RoleFor on the winner returned " .. tostring(Y1.orders:RoleFor(won)) .. ", want crafter")
+local inc = Y1.orders:GetIncoming()
+check(#inc == 1 and inc[1].id == open3.id,
+    "GP12: GetIncoming holds " .. #inc .. " orders on the winner, want 1")
+local acts = {}
+for _, a in ipairs(Y1.orders:LegalActions(won)) do acts[a] = true end
+check(acts.markCrafted, "GP12: the winner has no crafted action on the claimed order")
+
+-- and the rest of the directed lifecycle still crosses the wire.
+Y1.orders:MarkCrafted(open3.id)
+Y1.comm:SendOrderUpdate(Y1.addon.db.orders[open3.id])
+Router:pump()
+check(RQ2.addon.db.orders[open3.id].status == "crafted", "GP12: crafted did not reach the requester")
+RQ2.orders:ConfirmReceived(open3.id)
+RQ2.comm:SendOrderUpdate(RQ2.addon.db.orders[open3.id])
+Router:pump()
+check(RQ2.addon.db.orders[open3.id].status == "completed"
+      and Y1.addon.db.orders[open3.id].status == "completed",
+    "GP12: the claimed order did not complete on both sides")
+ok("GP12 multi-word realm -- claim race, winner sees itself as crafter, full lifecycle")
+
 print("ALL GHOST HARNESS TESTS PASS (" .. pass ..
-    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 auto-push, GP7 order loop, GP8 board race, GP9 board lifecycle, GP10 board anti-spoof, GP11 delta+recovery)")
+    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 auto-push, GP7 order loop, GP8 board race, GP9 board lifecycle, GP10 board anti-spoof, GP11 delta+recovery, GP12 multi-word realm board run)")
