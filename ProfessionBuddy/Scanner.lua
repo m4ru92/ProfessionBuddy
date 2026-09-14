@@ -436,7 +436,7 @@ function Scanner:ReconcileSkillReq(recipes)
     local newCorrections = 0
     for name, info in pairs(recipes) do
         local tv = info.skillReq
-        if tv and tv > 0 and ov[name] ~= tv then
+        if type(tv) == "number" and tv > 0 and ov[name] ~= tv then
             local static = RDB:StaticSkillReq(name)
             if static ~= tv then
                 ov[name] = tv
@@ -462,7 +462,11 @@ function Scanner:ScanTrainer()
         if name and category ~= "used" then
             available[name] = {
                 category  = category,       -- "available" or "unavailable"
-                skillReq  = GetTrainerServiceSkillReq(i) or 0,
+                -- Coerce: on specialization trainers (Armorsmith, Weaponsmith)
+                -- this API can return a non-numeric requirement (e.g. the
+                -- profession name) instead of a skill level. Anything that is
+                -- not a number becomes 0 = no numeric requirement to reconcile.
+                skillReq  = tonumber(GetTrainerServiceSkillReq(i)) or 0,
             }
 
             -- Is this a PROFESSION trainer? skillReqOverrides is keyed by bare

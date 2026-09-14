@@ -2798,6 +2798,13 @@ function TSF:RefreshDetailPanel(preserveScroll)
             end
         end
 
+        -- Record the bottom of the reagent block; the reagent grid owns the
+        -- column split, so ShowAltMaterials anchors the full-width Held-by
+        -- divider below this with no column math of its own. In two columns the
+        -- LEFT column is the taller one (ceil), so its last row is the lowest.
+        local bottomIdx = useTwoCol and math.min(perCol, 14) or math.min(numReagents, 14)
+        self._reagentBottomRow = self.reagentRows[math.max(1, bottomIdx)]
+
         self:ShowAltMaterials(recipe)
     end
 
@@ -3040,12 +3047,9 @@ function TSF:ShowAltMaterials(recipe)
     sortGroup(friends)
 
     -- Anchor the divider/header below the last visible reagent row
-    local numReagents = recipe.reagents and #recipe.reagents or 0
-    local perCol = (numReagents >= 5) and math.ceil(numReagents / 2) or numReagents
-    local lastReagent = self.reagentRows[1]
-    for i = 1, math.min(perCol, 14) do
-        if self.reagentRows[i]:IsShown() then lastReagent = self.reagentRows[i] end
-    end
+    -- The reagent grid records its own bottom row (it owns the column split),
+    -- so the full-width divider just sits below it. No reagent-column math here.
+    local lastReagent = self._reagentBottomRow or self.reagentRows[1]
 
     self.altDivider:ClearAllPoints()
     self.altDivider:SetPoint("TOPLEFT", lastReagent, "BOTTOMLEFT", -4, -8)
