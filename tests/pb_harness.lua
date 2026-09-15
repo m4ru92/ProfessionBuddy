@@ -1695,14 +1695,39 @@ do
 end
 passed("T66 reflex floor -- one refusal reply per sender per 5 s across claim, update and new")
 
+-- ── T67: trainer scan tolerates non-numeric and multi-return skill reqs ──
+-- Regression guard for two real ScanTrainer crashes. A specialization trainer
+-- returns a profession NAME where a skill level is expected; a header row
+-- returns nil PLUS an extra value. Neither may reach the numeric compare, and
+-- the raw multi-return must never be forwarded whole into tonumber (the extra
+-- would be taken as a base and error). ScanTrainer must simply not throw.
+do
+    local sNum, sInfo, sReq = GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq
+    GetNumTrainerServices    = function() return 3 end
+    GetTrainerServiceInfo    = function(i)
+        if i == 1 then return "Development Skills", "", "header" end
+        if i == 2 then return "Truesilver Breastplate", "", "unavailable" end
+        return "Smelt Thorium", "", "available"
+    end
+    GetTrainerServiceSkillReq = function(i)
+        if i == 1 then return nil, 3 end            -- header: multi-return, nil first
+        if i == 2 then return "Blacksmithing" end   -- spec trainer: a profession name
+        return 285                                  -- a normal numeric requirement
+    end
+    local ok, err = pcall(function() ProfBuddy.Scanner:ScanTrainer() end)
+    GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq = sNum, sInfo, sReq
+    assert(ok, "T67: ScanTrainer threw on a non-numeric/multi-return skillReq: " .. tostring(err))
+end
+passed("T67 trainer scan -- spec-name and multi-return header skillReq coerce to 0 without throwing")
+
 leaveGuild()
-print("ALL 66 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 67 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
     .. " + T45-T50 Scanner + T51-T54 RecipeDB and MaterialCalc"
     .. " + T55-T66 post-review hardening: remote prune, order id binding and caps,"
     .. " token and timestamp validation, guild serve budget, board send spacing,"
-    .. " payload caps, skill-line rescan and the reflex-reply floor; "
+    .. " payload caps, skill-line rescan, the reflex-reply floor and T67 trainer-scan skillReq coercion; "
     .. pass .. " of them print a PASS line above)")
 

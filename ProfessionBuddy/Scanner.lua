@@ -460,13 +460,15 @@ function Scanner:ScanTrainer()
         local name, _, category = GetTrainerServiceInfo(i)
         -- category: "available", "unavailable", "used" (already known)
         if name and category ~= "used" then
+            -- GetTrainerServiceSkillReq can return a non-numeric requirement
+            -- (a profession name on spec trainers) AND can return multiple
+            -- values (nil plus an extra on header rows). Read ONE value into a
+            -- local first: tonumber() on the raw multi-return would take the
+            -- extra as a base and error. Anything non-numeric then becomes 0.
+            local reqRaw = GetTrainerServiceSkillReq(i)
             available[name] = {
                 category  = category,       -- "available" or "unavailable"
-                -- Coerce: on specialization trainers (Armorsmith, Weaponsmith)
-                -- this API can return a non-numeric requirement (e.g. the
-                -- profession name) instead of a skill level. Anything that is
-                -- not a number becomes 0 = no numeric requirement to reconcile.
-                skillReq  = tonumber(GetTrainerServiceSkillReq(i)) or 0,
+                skillReq  = tonumber(reqRaw) or 0,
             }
 
             -- Is this a PROFESSION trainer? skillReqOverrides is keyed by bare
