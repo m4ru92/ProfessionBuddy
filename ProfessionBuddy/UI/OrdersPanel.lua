@@ -16,6 +16,30 @@ local OP = addon:NewModule("OrdersPanel")
 local ROW_HEIGHT = 36
 
 ----------------------------------------------------------------------
+-- Shared helpers
+----------------------------------------------------------------------
+-- Run fn once, `delay` seconds after the LAST call under this key. C_Timer.After
+-- has no cancel handle, so a generation counter does the cancelling: a stale
+-- callback sees a newer generation and does nothing. Keeps a typed word to one
+-- search / one rebuild instead of one per keystroke.
+local function debounce(key, delay, fn)
+    OP._debounce = OP._debounce or {}
+    local gen = (OP._debounce[key] or 0) + 1
+    OP._debounce[key] = gen
+    C_Timer.After(delay, function()
+        if OP._debounce[key] == gen then fn() end
+    end)
+end
+
+-- Is this host actually on screen? A rebuild for a hidden list is wasted work,
+-- and Comm calls RefreshAll for every order message that arrives.
+local function isLive(frame)
+    if not frame then return false end
+    if frame.IsVisible then return frame:IsVisible() end
+    return frame:IsShown()
+end
+
+----------------------------------------------------------------------
 -- Display tables
 ----------------------------------------------------------------------
 local PROF_ICONS = {
@@ -42,14 +66,14 @@ local STATUS_DISPLAY = {
 }
 
 local MATRESP_LABEL = {
-    requester = "Order provides mats",
+    requester = "Requester provides mats",
     crafter   = "Crafter provides mats",
     split     = "Split",
 }
 
 -- Compact form for the row's secondary line (full form is in the tooltip)
 local MATRESP_SHORT = {
-    requester = "Mats: order",
+    requester = "Mats: requester",
     crafter   = "Mats: crafter",
     split     = "Mats: split",
 }
@@ -62,6 +86,36 @@ local ACTION_LABEL = {
     cancel          = "Cancel",
     confirmReceived = "Received",
     dismiss         = "Dismiss",
+}
+
+-- Guild Board open-post composer options. ANY_PROF posts without a profession,
+-- so anyone can claim it; a named profession gates the claim (PaintBoardRow).
+local ANY_PROF = "Any profession"
+
+-- Craftable professions live in Core.lua so the addon has ONE such table.
+-- The guard only covers a partial load: with Core missing there is nothing
+-- to post against, so an empty set is the right answer.
+local function craftableProfs()
+    return addon.CRAFTABLE_PROFS or {}
+end
+
+-- Composer dropdown options: "Any profession" first, then every craftable
+-- profession alphabetically. Built on demand so it follows the canonical table.
+local function profPostList()
+    local names = {}
+    for p in pairs(craftableProfs()) do table.insert(names, p) end
+    table.sort(names)
+    table.insert(names, 1, ANY_PROF)
+    return names
+end
+
+local POST_MATRESP_OPTIONS = {
+    "Requester provides mats", "Crafter provides mats", "Split / discuss",
+}
+local POST_MATRESP_VALUE = {
+    ["Requester provides mats"] = "requester",
+    ["Crafter provides mats"]   = "crafter",
+    ["Split / discuss"]         = "split",
 }
 
 ----------------------------------------------------------------------
@@ -84,9 +138,10 @@ StaticPopupDialogs["PROFBUDDY_MARK_DELIVERED"] = {
     preferredIndex = 3,
 }
 
--- Confirm clearing one History section (Incoming / Outgoing)
+-- Confirm clearing one History section (Incoming / Outgoing). "Closed", not
+-- "completed": this clears every terminal order, declined and cancelled too.
 StaticPopupDialogs["PROFBUDDY_CLEAR_HISTORY"] = {
-    text = "Clear all completed %s orders from history?",
+    text = "Clear all closed %s orders from history?",
     button1 = YES,
     button2 = NO,
     OnAccept = function(_, side)
@@ -134,6 +189,38 @@ StaticPopupDialogs["PROFBUDDY_DECLINE_REASON"] = {
     preferredIndex = 3,
 }
 
+-- Confirm pulling your own open order off the guild board. Cancels the order
+-- locally, then tells every guildmate to drop it from their board.
+StaticPopupDialogs["PROFBUDDY_CANCEL_OPEN"] = {
+    text = "Pull this open order off the guild board?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(_, orderID)
+        if addon.Orders and orderID then
+            -- A claim can land while this dialog sits open (timeout = 0), which
+            -- assigns a crafter and moves the order to ACCEPTED. Read the status
+            -- BEFORE cancelling: a board close would not reach that crafter (they
+            -- already dropped the board entry on assign), so they would craft an
+            -- order we cancelled. Once it has a crafter this is a directed update.
+            local before = addon.db.orders and addon.db.orders[orderID]
+            local wasOpen = (before ~= nil and before.status == addon.Orders.STATUS.OPEN)
+            local order = addon.Orders:Cancel(orderID)
+            if order and addon.Comm then
+                if wasOpen then
+                    addon.Comm:BroadcastOrderClosed(orderID, "cancelled")
+                else
+                    addon.Comm:SendOrderUpdate(order)
+                end
+            end
+        end
+        OP:RefreshAll()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
 ----------------------------------------------------------------------
 -- Init: register as a tab
 ----------------------------------------------------------------------
@@ -150,9 +237,9 @@ function OP:Init()
             self._tabHookInstalled = true
             hooksecurefunc(addon.UI, "SelectTab", function(_, index)
                 local tab = addon.UI.frame.tabs[index]
-                if tab and tab.name ~= "orders"
-                   and OP.histFrame and OP.histFrame:IsShown() then
-                    OP.histFrame:Hide()
+                if tab and tab.name ~= "orders" then
+                    if OP.histFrame and OP.histFrame:IsShown() then OP.histFrame:Hide() end
+                    if OP.findFrame and OP.findFrame:IsShown() then OP.findFrame:Hide() end
                 end
             end)
         end
@@ -323,6 +410,16 @@ function OP:CreateRow(parent, index, ctx)
     sec:SetWordWrap(false)
     row.secText = sec
 
+    -- "Guild" tag on the name line for an order whose counterparty is a
+    -- guildmate and not a friend. Sits in the gap between the name and the
+    -- right-anchored pill. Shown per-row in PaintOrderRow.
+    local guildTag = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    guildTag:SetPoint("TOPLEFT", 220, -6)
+    guildTag:SetTextColor(0.35, 0.78, 0.35)
+    guildTag:SetText("Guild")
+    guildTag:Hide()
+    row.guildTag = guildTag
+
     -- Pill is right-anchored in PaintOrderRow (left of the buttons) so
     -- the layout adapts to the panel width.
     local pillBg = row:CreateTexture(nil, "ARTWORK")
@@ -392,8 +489,9 @@ function OP:CreateRow(parent, index, ctx)
         if not o then return end
         GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
         GameTooltip:AddLine(o.item.name .. "  x" .. o.quantity, 1, 1, 1)
-        local reqShort = o.requester:match("^([^-]+)") or o.requester
-        local crfShort = o.crafter:match("^([^-]+)") or o.crafter
+        local reqShort = addon:ShortName(o.requester)
+        -- A cancelled OPEN post has no crafter (it was pulled before any claim).
+        local crfShort = o.crafter and addon:ShortName(o.crafter) or "unclaimed"
         GameTooltip:AddLine("Requester: " .. reqShort, 0.8, 0.8, 0.8)
         GameTooltip:AddLine("Crafter: " .. crfShort, 0.8, 0.8, 0.8)
         GameTooltip:AddLine("Mats: " .. (MATRESP_LABEL[o.matResponsibility] or "?"), 0.8, 0.8, 0.8)
@@ -409,9 +507,15 @@ function OP:CreateRow(parent, index, ctx)
         -- Only show the delivery state to the side that actually SENT the last
         -- update (the order record is account-wide, so without this the other
         -- alt would see "your last update" for an update it never sent).
-        if o.lastSentBy == addon:PlayerKey() then
+        if addon:SameKey(o.lastSentBy, addon:PlayerKey()) then
             if o.deliveryState == "delivered" then
                 GameTooltip:AddLine("Your last update: delivered", 0.4, 0.85, 0.4)
+            elseif o.deliveryState == "rejected" then
+                -- Their client acked it (which drains our outbox) but refused to
+                -- apply it, so "delivered" would assert something untrue.
+                local cp = addon:SameKey(o.requester, addon:PlayerKey()) and o.crafter or o.requester
+                GameTooltip:AddLine("Your last update: not accepted by "
+                    .. addon:ShortName(cp or "?"), 0.9, 0.5, 0.4)
             elseif o.deliveryState == "queued" then
                 GameTooltip:AddLine("Your last update: queued (they're offline)", 0.85, 0.7, 0.3)
             elseif o.deliveryState == "sent" then
@@ -430,7 +534,7 @@ function OP:CreateRow(parent, index, ctx)
     row:SetScript("OnMouseUp", function()
         if row._isHeader and row._section then
             ctx.collapsed[row._section] = not ctx.collapsed[row._section]
-            if ctx.rebuild then ctx.rebuild() end
+            if ctx.rebuild then ctx.rebuild(true) end
         end
     end)
 
@@ -485,7 +589,19 @@ local function hideOrderWidgets(row)
     row.secText:SetText("")
     row.pill:SetText("")
     row.pillBg:Hide()
+    if row.guildTag then row.guildTag:Hide() end
     for _, b in ipairs(row.actionBtns) do b:Hide() end
+end
+
+-- "Guild" tag rule: the order's counterparty (the not-me party) is a guildmate
+-- and NOT also a friend. A friend, or a friend who is also a guildmate, shows no
+-- tag; only a guild-only relationship does.
+local function isGuildOnly(counterpartyKey)
+    if not counterpartyKey or addon:SameKey(counterpartyKey, addon:PlayerKey()) then return false end
+    local ckey = addon:NormKey(counterpartyKey) or counterpartyKey
+    local isFriend = addon.db.contacts and addon.db.contacts[ckey] ~= nil
+    if isFriend then return false end
+    return addon.Comm and addon.Comm.IsGuildMember and addon.Comm:IsGuildMember(counterpartyKey) or false
 end
 
 function OP:PaintList(ctx)
@@ -550,11 +666,17 @@ function OP:PaintOrderRow(row, o, role)
 
     row.nameText:SetText(string.format("%s  x%d", o.item.name or "?", o.quantity or 1))
 
+    -- otherKey is nil for a cancelled OPEN post (requester side, never claimed);
+    -- show it as headed "to the board" rather than a named counterparty.
     local otherKey = (role == "crafter") and o.requester or o.crafter
-    local short = otherKey:match("^([^-]+)") or otherKey
-    local cd = addon.db.characters[otherKey]
+    local short = otherKey and addon:ShortName(otherKey) or "the board"
+    local cd = otherKey and addon.db.characters[addon:NormKey(otherKey) or otherKey]
     if cd and cd.class then
         short = addon:ClassColor(cd.class) .. short .. "|r"
+    end
+
+    if row.guildTag then
+        if isGuildOnly(otherKey) then row.guildTag:Show() else row.guildTag:Hide() end
     end
     local prefix = (role == "crafter") and "from " or "to "
     local matLbl = MATRESP_SHORT[o.matResponsibility] or "?"
@@ -619,11 +741,30 @@ end
 function OP:CreateContent(parent)
     self.parent = parent
 
-    -- Top bar with a History button
+    -- Top bar: a Direct / Guild Board segmented control on the left, and the
+    -- History button on the right (History belongs to the Direct sub-view only).
     local topBar = CreateFrame("Frame", nil, parent)
     topBar:SetPoint("TOPLEFT", 0, 0)
     topBar:SetPoint("TOPRIGHT", 0, 0)
     topBar:SetHeight(24)
+
+    local directSeg = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
+    directSeg:SetSize(84, 20)
+    directSeg:SetPoint("LEFT", 0, 0)
+    directSeg:SetText("Direct")
+    directSeg:SetNormalFontObject(GameFontNormalSmall)
+    directSeg:SetHighlightFontObject(GameFontHighlightSmall)
+    directSeg:SetScript("OnClick", function() OP:SelectSubview("direct") end)
+    self.directSeg = directSeg
+
+    local boardSeg = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
+    boardSeg:SetSize(100, 20)
+    boardSeg:SetPoint("LEFT", directSeg, "RIGHT", 4, 0)
+    boardSeg:SetText("Guild Board")
+    boardSeg:SetNormalFontObject(GameFontNormalSmall)
+    boardSeg:SetHighlightFontObject(GameFontHighlightSmall)
+    boardSeg:SetScript("OnClick", function() OP:SelectSubview("board") end)
+    self.boardSeg = boardSeg
 
     local histBtn = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
     histBtn:SetSize(80, 20)
@@ -632,33 +773,1181 @@ function OP:CreateContent(parent)
     histBtn:SetNormalFontObject(GameFontNormalSmall)
     histBtn:SetHighlightFontObject(GameFontHighlightSmall)
     histBtn:SetScript("OnClick", function() OP:ToggleHistory() end)
+    self.histBtn = histBtn
 
-    -- List host below the top bar
+    -- Find a crafter: sits in the History slot but only on the Guild Board
+    -- sub-view (History is Direct-only, so the two never share the corner).
+    local findBtn = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
+    findBtn:SetSize(104, 20)
+    findBtn:SetPoint("RIGHT", -16, 0)
+    findBtn:SetText("Find a crafter")
+    findBtn:SetNormalFontObject(GameFontNormalSmall)
+    findBtn:SetHighlightFontObject(GameFontHighlightSmall)
+    findBtn:SetScript("OnClick", function() OP:ToggleFind() end)
+    findBtn:Hide()
+    self.findBtn = findBtn
+
+    -- Direct list host (the incoming/outgoing active queue)
     local listHost = CreateFrame("Frame", nil, parent)
     listHost:SetPoint("TOPLEFT", topBar, "BOTTOMLEFT", 0, -2)
     listHost:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
+    self.directHost = listHost
 
     self.activeCtx = { collapsed = { incoming = false, outgoing = false } }
     self:BuildList(listHost, self.activeCtx, 9)
 
-    self.activeCtx.rebuild = function()
+    self.activeCtx.rebuild = function(force)
         local ctx = self.activeCtx
+        -- Comm calls RefreshAll for every order message that arrives. Rebuilding
+        -- a list nobody is looking at is four passes over db.orders plus two
+        -- sorts for nothing, so mark it dirty and do the work on next show.
+        if not force and not isLive(self.directHost) then ctx.dirty = true; return end
+        ctx.dirty = false
         local O = addon.Orders
         local incoming = O and O:GetIncoming() or {}
         local outgoing = O and O:GetOutgoing() or {}
         ctx.items = buildItems(ctx, incoming, outgoing,
             { text = "No incoming requests.",
-              hint = "When a friend requests a craft from you, it shows up here." },
+              hint = "When a friend or guildmate requests a craft from you, it shows up here." },
             { text = "No outgoing orders.",
-              hint = "Open a friend's professions and hit Request Craft to place one." })
+              hint = "Open a friend's or guildmate's professions and hit Request Craft, or claim a post on the Guild Board." })
         applyScrollRange(ctx)
         self:PaintList(ctx)
     end
 
+    -- Guild Board host (open orders you can post/claim)
+    local boardHost = CreateFrame("Frame", nil, parent)
+    boardHost:SetPoint("TOPLEFT", topBar, "BOTTOMLEFT", 0, -2)
+    boardHost:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
+    boardHost:Hide()
+    self.boardHost = boardHost
+    self:BuildBoard(boardHost)
+
     -- Let UI:Toggle refresh us when the window reopens
     parent.Refresh = function() OP:Refresh() end
 
-    self.activeCtx.rebuild()
+    self.subview = "direct"
+    self:SelectSubview("direct")
+end
+
+----------------------------------------------------------------------
+-- Segmented sub-view switch (Direct <-> Guild Board)
+----------------------------------------------------------------------
+function OP:SelectSubview(name)
+    -- The composer dropdown's list frame is a UIParent child at strata TOOLTIP,
+    -- so hiding the board host does not hide it: close it before the switch or
+    -- it floats over the Direct list.
+    if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    self.subview = name
+    local onBoard = (name == "board")
+
+    if self.directHost then self.directHost:SetShown(not onBoard) end
+    if self.boardHost then self.boardHost:SetShown(onBoard) end
+    -- History is Direct-only, Find a crafter is board-only; swap the two in the
+    -- top-right corner and close whichever panel does not belong to this view.
+    if self.histBtn then self.histBtn:SetShown(not onBoard) end
+    if self.findBtn then self.findBtn:SetShown(onBoard) end
+    if onBoard and self.histFrame and self.histFrame:IsShown() then
+        self.histFrame:Hide()
+    end
+    if not onBoard and self.findFrame and self.findFrame:IsShown() then
+        self.findFrame:Hide()
+    end
+
+    -- Highlight the active segment (LockHighlight keeps the glow lit).
+    if self.directSeg then
+        if onBoard then self.directSeg:UnlockHighlight() else self.directSeg:LockHighlight() end
+    end
+    if self.boardSeg then
+        if onBoard then self.boardSeg:LockHighlight() else self.boardSeg:UnlockHighlight() end
+    end
+
+    -- Forced: this view just became the visible one, so it repaints even if the
+    -- data work was skipped while it was hidden.
+    if onBoard then
+        if self.boardCtx and self.boardCtx.rebuild then self.boardCtx.rebuild(true) end
+    else
+        if self.activeCtx and self.activeCtx.rebuild then self.activeCtx.rebuild(true) end
+    end
+end
+
+----------------------------------------------------------------------
+-- Guild Board sub-view
+-- Two sections: your own open posts (Cancel to pull them back) and open
+-- orders guildmates have posted (Claim to take one). Claiming whispers the
+-- poster, who assigns the first valid claim and hands the order into the
+-- normal directed flow -- so a claimed order then appears under Direct.
+--
+-- Self-contained list (its own row pool + scrollbar): board rows carry a
+-- single action button, unlike the two-button directed rows.
+----------------------------------------------------------------------
+-- ONE guild-roster pass per board rebuild or per search, keyed canonically.
+-- Comm owns the cached roster set; this falls back to a local pass when that
+-- helper is missing, which still replaces the per-row and per-match roster scans
+-- the board and the crafter search used to run. Returns (set, loading), where
+-- loading is true when we are in a guild whose roster has not arrived yet.
+local function guildRosterSet()
+    local C = addon.Comm
+    if C and type(C._guildSet) == "table" then return C._guildSet, false end
+    local set = {}
+    if not IsInGuild() then return set, false end
+    local n = GetNumGuildMembers() or 0
+    if n == 0 then return set, true end
+    for i = 1, n do
+        local name, _, _, _, _, _, _, _, online = GetGuildRosterInfo(i)
+        local key = name and addon:NormKey(name)
+        if key then set[key] = { online = (online and true) or false } end
+    end
+    return set, false
+end
+
+-- Online lookup for one board rebuild: function(key) -> true / false / nil,
+-- where nil means the roster has not loaded so we cannot tell yet.
+local function guildOnlineLookup()
+    local C = addon.Comm
+    if C and C.GuildOnline then
+        return function(key) return C:GuildOnline(key) end
+    end
+    if not IsInGuild() then return function() return false end end
+    local set, loading = guildRosterSet()
+    if loading then return function() return nil end end
+    return function(key)
+        local k = key and addon:NormKey(key)
+        local e = k and set[k]
+        return e ~= nil and e.online == true
+    end
+end
+
+local function buildBoardItems(ctx, mine, avail, filtering)
+    local items = {}
+    table.insert(items, { kind = "header", section = "mine", count = #mine })
+    if not ctx.collapsed.mine then
+        if #mine == 0 then
+            table.insert(items, { kind = "empty",
+                text = filtering and "No posts of yours match that filter." or "You have no open posts." })
+        else
+            for _, o in ipairs(mine) do
+                table.insert(items, { kind = "board", entry = o, which = "mine" })
+            end
+        end
+    end
+    table.insert(items, { kind = "header", section = "avail", count = #avail })
+    if not ctx.collapsed.avail then
+        if #avail == 0 then
+            table.insert(items, { kind = "empty",
+                text = filtering and "No claimable posts match that filter." or "Nothing to claim right now." })
+        else
+            for _, o in ipairs(avail) do
+                table.insert(items, { kind = "board", entry = o, which = "avail" })
+            end
+        end
+    end
+    return items
+end
+
+-- Increment 4: does a board entry (an open post, or one of your own open
+-- orders) match the board filter text? Case-insensitive substring against the
+-- item name OR the profession. An empty query matches everything. Pure, so the
+-- tester can unit-check it without a frame.
+function OP:BoardMatches(entry, q)
+    if not q or q == "" then return true end
+    local it = entry and entry.item
+    if type(it) ~= "table" then return false end
+    q = q:lower()
+    local name = type(it.name) == "string" and it.name:lower() or ""
+    local prof = type(it.profession) == "string" and it.profession:lower() or ""
+    return name:find(q, 1, true) ~= nil or prof:find(q, 1, true) ~= nil
+end
+
+function OP:CreateBoardRow(parent, index, ctx)
+    local row = CreateFrame("Frame", nil, parent)
+    row:EnableMouse(true)
+
+    local bg = row:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    if index % 2 == 0 then
+        bg:SetColorTexture(0.12, 0.12, 0.12, 0.6)
+    else
+        bg:SetColorTexture(0.08, 0.08, 0.08, 0.3)
+    end
+    row.bg = bg
+
+    local hbg = row:CreateTexture(nil, "BACKGROUND")
+    hbg:SetAllPoints()
+    hbg:SetColorTexture(0.18, 0.18, 0.22, 0.95)
+    hbg:Hide()
+    row.headerBg = hbg
+
+    local headerLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    headerLabel:SetPoint("LEFT", 8, 0)
+    headerLabel:Hide()
+    row.headerLabel = headerLabel
+
+    local icon = row:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(20, 20)
+    icon:SetPoint("LEFT", 8, 0)
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    row.icon = icon
+
+    local name = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    name:SetPoint("TOPLEFT", 34, -4)
+    name:SetWidth(190)
+    name:SetJustifyH("LEFT")
+    name:SetWordWrap(false)
+    row.nameText = name
+
+    local sec = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    sec:SetPoint("TOPLEFT", 34, -19)
+    sec:SetWidth(190)
+    sec:SetJustifyH("LEFT")
+    sec:SetWordWrap(false)
+    row.secText = sec
+
+    local emptyTitle = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    emptyTitle:SetPoint("CENTER", row, "CENTER", 0, 0)
+    emptyTitle:SetTextColor(0.7, 0.7, 0.7)
+    emptyTitle:Hide()
+    row.emptyTitle = emptyTitle
+
+    local actionBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+    actionBtn:SetSize(62, 18)
+    actionBtn:SetPoint("RIGHT", -8, 0)
+    actionBtn:SetNormalFontObject(GameFontNormalSmall)
+    actionBtn:SetHighlightFontObject(GameFontHighlightSmall)
+    actionBtn:Hide()
+    actionBtn:SetScript("OnClick", function(b)
+        local id, which = b._orderId, b._which
+        if not id then return end
+        if which == "mine" then
+            StaticPopup_Show("PROFBUDDY_CANCEL_OPEN", nil, nil, id)
+        elseif which == "avail" then
+            local entry = addon.db.orderBoard and addon.db.orderBoard[id]
+            if entry and addon.Comm then
+                addon.Comm:ClaimOrder(entry)
+                local short = addon:ShortName(entry.requester or "?")
+                print(string.format(
+                    "|cff00ccffProfessionBuddy:|r Claim sent to %s for %dx %s.",
+                    short, entry.quantity or 1, (entry.item and entry.item.name) or "?"))
+            end
+            OP:RefreshAll()
+        end
+    end)
+    -- Keep hover scripts alive while disabled so a guarded Claim can explain why.
+    actionBtn:SetMotionScriptsWhileDisabled(true)
+    actionBtn:SetScript("OnEnter", function(b)
+        if b._disabledReason then
+            GameTooltip:SetOwner(b, "ANCHOR_LEFT")
+            GameTooltip:SetText(b._disabledReason, 1, 0.4, 0.4, nil, true)
+            GameTooltip:Show()
+        end
+    end)
+    actionBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    row.actionBtn = actionBtn
+
+    -- Board rows get the directed rows' tooltip: the name is cut at 190px with
+    -- no wrap, and the note has nowhere else to show at all.
+    row:SetScript("OnEnter", function()
+        local e = row._entry
+        if not e then return end
+        GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(((e.item and e.item.name) or "?") .. "  x" .. (e.quantity or 1), 1, 1, 1)
+        local prof = e.item and e.item.profession
+        if prof and prof ~= "" then
+            GameTooltip:AddLine("Profession: " .. prof, 0.8, 0.8, 0.8)
+        end
+        GameTooltip:AddLine("Requester: " .. addon:ShortName(e.requester or "?"), 0.8, 0.8, 0.8)
+        GameTooltip:AddLine("Mats: " .. (MATRESP_LABEL[e.matResponsibility] or "?"), 0.8, 0.8, 0.8)
+        local posted = e.postedAt or e.createdAt
+        if posted then
+            GameTooltip:AddLine("Posted: " .. relativeTime(posted), 0.7, 0.7, 0.7)
+        end
+        if e.note and e.note ~= "" then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine("Note: " .. e.note, 0.9, 0.85, 0.6, true)
+        end
+        GameTooltip:Show()
+    end)
+    row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    -- Clicking a header toggles its section (per-list collapse state)
+    row:SetScript("OnMouseUp", function()
+        if row._isHeader and row._section then
+            ctx.collapsed[row._section] = not ctx.collapsed[row._section]
+            if ctx.rebuild then ctx.rebuild(true) end
+        end
+    end)
+
+    return row
+end
+
+function OP:BuildBoardList(parent, ctx, rowCount)
+    ctx.rows = {}
+    ctx.items = {}
+    ctx.scrollOffset = 0
+    ctx.collapsed = ctx.collapsed or { mine = false, avail = false }
+
+    local listFrame = CreateFrame("Frame", nil, parent)
+    listFrame:SetPoint("TOPLEFT", 0, 0)
+    listFrame:SetPoint("BOTTOMRIGHT", 0, 0)
+    ctx.listFrame = listFrame
+
+    for i = 1, rowCount do
+        local row = self:CreateBoardRow(listFrame, i, ctx)
+        row:SetPoint("TOPLEFT", 0, -(i - 1) * ROW_HEIGHT)
+        row:SetPoint("RIGHT", -16, 0)
+        row:SetHeight(ROW_HEIGHT)
+        ctx.rows[i] = row
+    end
+
+    local sb = CreateFrame("Slider", nil, listFrame)
+    sb:SetPoint("TOPRIGHT", 0, 0)
+    sb:SetPoint("BOTTOMRIGHT", 0, 0)
+    sb:SetWidth(16)
+    sb:SetMinMaxValues(0, 0)
+    sb:SetValueStep(1)
+    sb:SetValue(0)
+    sb:SetObeyStepOnDrag(true)
+    local thumb = sb:CreateTexture(nil, "ARTWORK")
+    thumb:SetSize(16, 24)
+    thumb:SetTexture("Interface\\Buttons\\UI-ScrollBar-Knob")
+    sb:SetThumbTexture(thumb)
+    local sbg = sb:CreateTexture(nil, "BACKGROUND")
+    sbg:SetAllPoints()
+    sbg:SetColorTexture(0.05, 0.05, 0.05, 0.5)
+    sb:SetScript("OnValueChanged", function(_, value)
+        ctx.scrollOffset = math.floor(value)
+        self:PaintBoardList(ctx)
+    end)
+    ctx.scrollBar = sb
+
+    listFrame:EnableMouseWheel(true)
+    listFrame:SetScript("OnMouseWheel", function(_, delta)
+        sb:SetValue(sb:GetValue() - delta)
+    end)
+end
+
+function OP:PaintBoardList(ctx)
+    for i, row in ipairs(ctx.rows) do
+        local item = ctx.items[ctx.scrollOffset + i]
+
+        row._isHeader = false
+        row._section = nil
+        row._entry = nil
+        row.headerBg:Hide()
+        row.headerLabel:Hide()
+        row.emptyTitle:Hide()
+        row.icon:Hide()
+        row.nameText:SetText("")
+        row.secText:SetText("")
+        row.actionBtn:Hide()
+        row.bg:Show()
+
+        if not item then
+            row:Hide()
+        elseif item.kind == "header" then
+            row:Show()
+            row.bg:Hide()
+            row.headerBg:Show()
+            row._isHeader = true
+            row._section = item.section
+            local arrow = ctx.collapsed[item.section] and "+" or "-"
+            local label = (item.section == "mine") and "My open posts" or "Available to claim"
+            row.headerLabel:SetText(string.format("%s  %s (%d)", arrow, label, item.count))
+            row.headerLabel:Show()
+        elseif item.kind == "empty" then
+            row:Show()
+            row.emptyTitle:SetText(item.text or "")
+            row.emptyTitle:Show()
+        elseif item.kind == "board" then
+            row:Show()
+            self:PaintBoardRow(row, item.entry, item.which, ctx)
+        end
+    end
+end
+
+-- Case-insensitive "does this name-keyed table contain `name`?" Recipe tables
+-- (both the static RecipeDB and a character's known recipes) are keyed by the
+-- exact recipe name, but a board post's item name is free text, so match loosely.
+local function tableHasName(tbl, name)
+    if not tbl or type(name) ~= "string" or name == "" then return false end
+    if tbl[name] ~= nil then return true end
+    local lower = name:lower()
+    for k in pairs(tbl) do
+        if type(k) == "string" and k:lower() == lower then return true end
+    end
+    return false
+end
+
+-- Whether the current character may claim an open board order, and if not, why.
+-- Returns nil when claimable, or a reason string. Profession first, then recipe
+-- knowledge. Pure (no frames), so the board UI and the tester share it.
+--   1. "Any profession" post (no named profession): open to all.
+--   2. A named profession you do not have: blocked.
+--   3. A posted item that is a real recipe in that profession you do not know:
+--      blocked. A free-text item that is not a known recipe name is NOT blocked,
+--      so vague posts stay open to anyone with the trade.
+function OP:ClaimBlockReason(entry)
+    local prof = entry and entry.item and entry.item.profession
+    if not (prof and prof ~= "") then return nil end
+    local name = entry.item and entry.item.name
+    local myProf = addon.DataStore and addon.DataStore:GetProfession(addon:PlayerKey(), prof)
+    if not myProf then
+        return "You need " .. prof .. " to claim this order."
+    end
+    if name and name ~= "" and not tableHasName(myProf.recipes, name) then
+        local isRealRecipe = addon.RecipeDB and addon.RecipeDB.data
+            and tableHasName(addon.RecipeDB.data[prof], name)
+        if isRealRecipe then
+            return "You do not know the recipe for " .. name .. "."
+        end
+    end
+    return nil
+end
+
+-- ClaimBlockReason walks the character's recipe table and the whole static
+-- profession table whenever the posted name is not an exact recipe key, which is
+-- the normal case for free-text posts. Cache the answer per board entry for the
+-- life of one rebuild so scrolling does not redo thousands of iterations a row.
+function OP:CachedClaimReason(entry, ctx)
+    local cache = ctx and ctx.claimReason
+    if not (cache and entry and entry.id) then return self:ClaimBlockReason(entry) end
+    local hit = cache[entry.id]
+    if hit ~= nil then
+        if hit == false then return nil end
+        return hit
+    end
+    local reason = self:ClaimBlockReason(entry)
+    cache[entry.id] = reason or false
+    return reason
+end
+
+function OP:PaintBoardRow(row, entry, which, ctx)
+    ctx = ctx or self.boardCtx
+    row._entry = entry
+    local tex = entry.item and PROF_ICONS[entry.item.profession]
+    if tex then
+        row.icon:SetTexture(tex)
+        row.icon:Show()
+    else
+        row.icon:Hide()
+    end
+
+    row.nameText:SetText(string.format("%s  x%d",
+        (entry.item and entry.item.name) or "?", entry.quantity or 1))
+
+    local matLbl = MATRESP_SHORT[entry.matResponsibility] or "Mats: requester"
+    row.actionBtn._disabledReason = nil
+    if which == "mine" then
+        row.secText:SetText("waiting for a claim  |cff555555.|r  " .. matLbl)
+        row.actionBtn:SetText("Cancel")
+        row.actionBtn:Enable()
+    else
+        local short = addon:ShortName(entry.requester or "?")
+        local cd = entry.requester and addon.db.characters
+            and addon.db.characters[addon:NormKey(entry.requester) or entry.requester]
+        if cd and cd.class then
+            short = addon:ClassColor(cd.class) .. short .. "|r"
+        end
+        row.secText:SetText("from " .. short .. "  |cff555555.|r  " .. matLbl)
+        row.actionBtn:SetText("Claim")
+        -- While the roster is still loading we cannot tell who is online, so the
+        -- board shows everything with Claim held back rather than sending a claim
+        -- that may go nowhere.
+        local reason
+        if ctx and ctx.rosterLoading then
+            reason = "Guild roster is still loading."
+        else
+            reason = self:CachedClaimReason(entry, ctx)
+        end
+        row.actionBtn._disabledReason = reason
+        if reason then row.actionBtn:Disable() else row.actionBtn:Enable() end
+    end
+    row.actionBtn._orderId = entry.id
+    row.actionBtn._which = which
+    row.actionBtn:Show()
+end
+
+-- Three-row open-post composer at the top of the Guild Board.
+--   Row 1: [ item name .......... ] [ qty ]
+--   Row 2: [ profession v ] [ mats v ]        [ Post ]
+--   Row 3: [ note ............................................. ]
+-- A named profession gates the claim (see PaintBoardRow); "Any profession"
+-- posts an unguarded order. The richer recipe-picker post lands in increment 3.
+function OP:BuildPostComposer(host)
+    local composer = CreateFrame("Frame", nil, host)
+    composer:SetPoint("TOPLEFT", 0, 0)
+    composer:SetPoint("TOPRIGHT", 0, 0)
+    composer:SetHeight(76)
+
+    -- Row 1: quantity (narrow, right) then item name filling the rest
+    local qty = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
+    qty:SetSize(40, 20)
+    qty:SetPoint("TOPRIGHT", -18, -4)
+    qty:SetAutoFocus(false); qty:SetNumeric(true); qty:SetMaxLetters(4); qty:SetText("1")
+    qty:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
+
+    local item = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
+    item:SetHeight(20)
+    item:SetPoint("TOPLEFT", 12, -4)
+    item:SetPoint("RIGHT", qty, "LEFT", -10, 0)
+    item:SetAutoFocus(false); item:SetMaxLetters(120)
+    item:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
+
+    -- Placeholder (EditBoxes have no native one)
+    local ph = composer:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    ph:SetPoint("LEFT", item, "LEFT", 4, 0)
+    ph:SetText("Item to be crafted")
+    local function updatePH() if item:GetText() ~= "" then ph:Hide() else ph:Show() end end
+    item:SetScript("OnTextChanged", updatePH)
+    item:SetScript("OnEditFocusGained", function()
+        ph:Hide()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    end)
+    item:SetScript("OnEditFocusLost", updatePH)
+    updatePH()
+
+    -- Row 3: an optional note the claimer sees on the board tooltip and keeps on
+    -- the order once it is claimed (the note plumbing already runs the whole
+    -- directed path; without this field nothing could ever set it).
+    local note = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
+    note:SetHeight(20)
+    note:SetPoint("TOPLEFT", 12, -52)
+    note:SetPoint("TOPRIGHT", -18, -52)
+    note:SetAutoFocus(false); note:SetMaxLetters(256)
+    note:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
+
+    local nph = composer:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    nph:SetPoint("LEFT", note, "LEFT", 4, 0)
+    nph:SetText("Note (optional): mats, timing, where to meet")
+    local function updateNPH() if note:GetText() ~= "" then nph:Hide() else nph:Show() end end
+    note:SetScript("OnTextChanged", updateNPH)
+    note:SetScript("OnEditFocusGained", function()
+        nph:Hide()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    end)
+    note:SetScript("OnEditFocusLost", updateNPH)
+    updateNPH()
+
+    -- Tab cycles item -> quantity -> note; focusing any field closes an open
+    -- composer dropdown so it does not linger over the list.
+    item:SetScript("OnTabPressed", function() qty:SetFocus() end)
+    qty:SetScript("OnTabPressed", function() note:SetFocus() end)
+    note:SetScript("OnTabPressed", function() item:SetFocus() end)
+    qty:SetScript("OnEditFocusGained", function()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    end)
+
+    -- Row 2: Post button (right), profession + mat-resp dropdowns (left)
+    local postBtn = CreateFrame("Button", nil, composer, "UIPanelButtonTemplate")
+    postBtn:SetSize(64, 20)
+    postBtn:SetPoint("TOPRIGHT", -16, -28)
+    postBtn:SetText("Post")
+    postBtn:SetNormalFontObject(GameFontNormalSmall)
+    postBtn:SetHighlightFontObject(GameFontHighlightSmall)
+
+    local profDrop, matDrop
+    if addon.CreateDropdown then
+        profDrop = addon.CreateDropdown(composer, 148, profPostList(), ANY_PROF, nil, "")
+        profDrop:SetPoint("TOPLEFT", 10, -28)
+        matDrop = addon.CreateDropdown(composer, 148, POST_MATRESP_OPTIONS, POST_MATRESP_OPTIONS[1], nil, "")
+        matDrop:SetPoint("LEFT", profDrop, "RIGHT", 6, 0)
+    end
+
+    postBtn:SetScript("OnClick", function()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+        if not addon.Orders then return end
+        local name = strtrim(item:GetText() or "")
+        if name == "" then
+            print("|cff00ccffProfessionBuddy:|r Enter an item name to post an order.")
+            return
+        end
+        if not IsInGuild() then
+            print("|cff00ccffProfessionBuddy:|r You are not in a guild, so there is no board to post to.")
+            return
+        end
+        -- One cap for every path: the model clamps to the same Orders.MAX_QTY the
+        -- wire enforces, so a posted quantity can never disagree with the copy
+        -- the claimer ends up holding.
+        local maxQty = addon.Orders.MAX_QTY or 999
+        local q = tonumber(qty:GetText()) or 1
+        if q < 1 then q = 1 end
+        if q > maxQty then
+            q = maxQty
+            print(string.format("|cff00ccffProfessionBuddy:|r Quantity capped at %d.", maxQty))
+        end
+        local prof = profDrop and profDrop.selectedValue
+        if prof == ANY_PROF then prof = nil end
+        local matVal = (matDrop and POST_MATRESP_VALUE[matDrop.selectedValue]) or "requester"
+        local noteText = strtrim(note:GetText() or "")
+        local order = addon.Orders:CreateOpen({
+            item = { name = name, profession = prof },
+            quantity = q,
+            matResponsibility = matVal,
+            note = (noteText ~= "") and noteText or nil,
+        })
+        if order and addon.Comm then addon.Comm:BroadcastOpenOrder(order) end
+        item:SetText(""); qty:SetText("1"); note:SetText("")
+        item:ClearFocus(); qty:ClearFocus(); note:ClearFocus()
+        -- Clear the filter too: posting under an active filter used to print
+        -- "Posted 1x Silk Bag" over a list that could not show the new row.
+        if OP.boardFilterBox then
+            OP.boardFilterBox:SetText("")
+            OP.boardFilterBox:ClearFocus()
+            if OP.boardCtx then OP.boardCtx.filter = "" end
+        end
+        print(string.format("|cff00ccffProfessionBuddy:|r Posted %dx %s to the guild board.", q, name))
+        OP:RefreshAll()
+    end)
+
+    self.postComposer = composer
+end
+
+function OP:BuildBoard(host)
+    self:BuildPostComposer(host)
+
+    -- Filter row (increment 4): narrows both board sections by item name or
+    -- profession as you type. Sits between the post composer and the list.
+    local filterBox = CreateFrame("EditBox", nil, host, "InputBoxTemplate")
+    filterBox:SetHeight(18)
+    filterBox:SetPoint("TOPLEFT", host, "TOPLEFT", 16, -82)
+    filterBox:SetPoint("TOPRIGHT", host, "TOPRIGHT", -20, -82)
+    filterBox:SetAutoFocus(false)
+    filterBox:SetMaxLetters(60)
+    filterBox:SetScript("OnEscapePressed", function(eb) eb:SetText(""); eb:ClearFocus() end)
+    local fph = filterBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    fph:SetPoint("LEFT", filterBox, "LEFT", 4, 0)
+    fph:SetText("Filter by item or profession")
+    local function updateFPH() if filterBox:GetText() ~= "" then fph:Hide() else fph:Show() end end
+    filterBox:SetScript("OnTextChanged", function(eb)
+        updateFPH()
+        if OP.boardCtx then
+            OP.boardCtx.filter = strtrim(eb:GetText() or "")
+            -- Debounced: a rebuild is GetMyOpen plus a full board sort, and this
+            -- used to run once per keystroke.
+            debounce("boardFilter", 0.25, function()
+                if OP.boardCtx and OP.boardCtx.rebuild then OP.boardCtx.rebuild(true) end
+            end)
+        end
+    end)
+    filterBox:SetScript("OnEditFocusGained", function()
+        fph:Hide()
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+    end)
+    filterBox:SetScript("OnEditFocusLost", updateFPH)
+    updateFPH()
+    self.boardFilterBox = filterBox
+
+    local listHost = CreateFrame("Frame", nil, host)
+    listHost:SetPoint("TOPLEFT", host, "TOPLEFT", 0, -104)
+    listHost:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", 0, 0)
+    self.boardListHost = listHost
+
+    -- Shown in place of the composer and list when you are not in a guild:
+    -- the board is a guild feature, so there is nothing to post to or claim.
+    local guildlessMsg = host:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    guildlessMsg:SetPoint("TOP", host, "TOP", 0, -60)
+    guildlessMsg:SetWidth(360)
+    guildlessMsg:SetTextColor(0.75, 0.75, 0.75)
+    guildlessMsg:SetText("You are not in a guild.\nThe order board is for posting to and claiming from guildmates.")
+    guildlessMsg:Hide()
+    self.boardGuildlessMsg = guildlessMsg
+
+    self.boardCtx = { collapsed = { mine = false, avail = false } }
+    self:BuildBoardList(listHost, self.boardCtx, 8)
+
+    self.boardCtx.rebuild = function(force)
+        local ctx = self.boardCtx
+        if not force and not isLive(host) then ctx.dirty = true; return end
+        ctx.dirty = false
+        -- Guild gate: no guild means no board. Hide the composer and list, show
+        -- the note, and skip the data work.
+        if not IsInGuild() then
+            if self.postComposer then self.postComposer:Hide() end
+            if self.boardFilterBox then self.boardFilterBox:Hide() end
+            listHost:Hide()
+            guildlessMsg:Show()
+            return
+        end
+        if self.postComposer then self.postComposer:Show() end
+        if self.boardFilterBox then self.boardFilterBox:Show() end
+        listHost:Show()
+        guildlessMsg:Hide()
+
+        local O = addon.Orders
+        local mine = O and O:GetMyOpen() or {}
+        -- v1 board rule: a post is claimable only while its requester is online
+        -- in the guild, so hide every other one instead of sending claims that
+        -- can never land. While the roster has not loaded GuildOnline answers
+        -- nil for everyone: show the whole board with Claim held back, which
+        -- reads better than an empty board that looks broken.
+        local onlineOf = guildOnlineLookup()
+        local loading = false
+        local avail = {}
+        for _, e in pairs(addon.db.orderBoard or {}) do
+            if type(e) == "table" and e.id then
+                local on = onlineOf(e.requester)
+                if on == nil then
+                    loading = true
+                    table.insert(avail, e)
+                elseif on then
+                    table.insert(avail, e)
+                end
+            end
+        end
+        ctx.rosterLoading = loading
+        ctx.claimReason = {}     -- one claim-eligibility answer per entry per rebuild
+        table.sort(avail, function(a, b) return (a.postedAt or 0) < (b.postedAt or 0) end)
+        -- Increment 4: narrow both sections by the filter box text.
+        local q = ctx.filter
+        local filtering = q ~= nil and q ~= ""
+        if filtering then
+            local fm = {}
+            for _, e in ipairs(mine)  do if self:BoardMatches(e, q) then fm[#fm + 1] = e end end
+            local fa = {}
+            for _, e in ipairs(avail) do if self:BoardMatches(e, q) then fa[#fa + 1] = e end end
+            mine, avail = fm, fa
+        end
+        ctx.items = buildBoardItems(ctx, mine, avail, filtering)
+        applyScrollRange(ctx)
+        self:PaintBoardList(ctx)
+    end
+
+    -- Reflect joining or leaving a guild without needing a reload.
+    if not self._guildEventHooked then
+        self._guildEventHooked = true
+        addon:RegisterEvent("PLAYER_GUILD_UPDATE", function()
+            if OP.boardCtx and OP.boardCtx.rebuild then OP.boardCtx.rebuild() end
+        end)
+        -- The roster arriving is what turns "still loading" into a real online
+        -- filter, so repaint the board when it lands. Debounced because the
+        -- event fires in bursts.
+        addon:RegisterEvent("GUILD_ROSTER_UPDATE", function()
+            debounce("boardRoster", 0.25, function()
+                if OP.boardCtx and OP.boardCtx.rebuild then OP.boardCtx.rebuild() end
+            end)
+        end)
+    end
+
+    self.boardCtx.rebuild()
+end
+
+----------------------------------------------------------------------
+-- Find a crafter (recipe / item search)
+-- Reverse lookup across every synced character: you, your alts, friends,
+-- and guildmates whose recipes have synced. Type a recipe or item name and
+-- see who can make it, then click a result to open their professions and
+-- place a directed order. Read-only; no wire.
+----------------------------------------------------------------------
+local FIND_ROW_H = 32
+local REL_LABEL = {
+    you    = { text = "you",    r = 0.40, g = 1.00, b = 0.40 },
+    alt    = { text = "alt",    r = 0.70, g = 0.85, b = 1.00 },
+    friend = { text = "friend", r = 0.50, g = 0.75, b = 1.00 },
+    guild  = { text = "guild",  r = 0.35, g = 0.78, b = 0.35 },
+    synced = { text = "synced", r = 0.70, g = 0.70, b = 0.70 },
+}
+-- Closeness order for sorting results: your own characters first, then friends,
+-- then guildmates, then anyone else synced.
+local REL_ORDER = { you = 1, alt = 2, friend = 3, guild = 4, synced = 5 }
+local function relColor(rel)
+    local r = REL_LABEL[rel] or REL_LABEL.synced
+    return string.format("|cff%02x%02x%02x%s|r",
+        math.floor(r.r * 255 + 0.5), math.floor(r.g * 255 + 0.5),
+        math.floor(r.b * 255 + 0.5), r.text)
+end
+
+-- Which relationship is this synced character to me? guildSet is the roster set
+-- built ONCE per search, so this never scans the roster itself (it used to run a
+-- full IsGuildMember roster walk per matching recipe, per keystroke).
+local function relationOf(charKey, guildSet)
+    if addon:SameKey(charKey, addon:PlayerKey()) then return "you" end
+    local key = addon:NormKey(charKey) or charKey
+    local DS = addon.DataStore
+    if DS and DS.IsRemote and DS:IsRemote(key) then
+        if addon.db.contacts and addon.db.contacts[key] then return "friend" end
+        if guildSet and guildSet[key] then return "guild" end
+        return "synced"
+    end
+    return "alt"
+end
+
+-- Has this character's recipe data actually synced? A lightweight HELLO summary
+-- carries profession names with no recipes, and those can never match a search.
+local function hasSyncedRecipes(char)
+    if type(char) ~= "table" or type(char.professions) ~= "table" then return false end
+    for _, pdata in pairs(char.professions) do
+        if type(pdata) == "table" and pdata.recipes and next(pdata.recipes) then return true end
+    end
+    return false
+end
+
+-- Does this character's summary list a profession worth pulling recipes for?
+local function hasCraftableProf(char)
+    if type(char) ~= "table" or type(char.professions) ~= "table" then return false end
+    local craft = craftableProfs()
+    for pn in pairs(char.professions) do
+        if craft[pn] then return true end
+    end
+    return false
+end
+
+-- Result cap. A two-letter query across a well-synced guild can otherwise build
+-- and sort tens of thousands of rows nobody will scroll through.
+local MAX_FIND_RESULTS = 200
+
+-- Every (character, recipe) whose recipe name contains the query, across all
+-- synced character data. Returns (list, truncated): sorted by recipe then
+-- relationship, capped at MAX_FIND_RESULTS.
+function OP:FindCrafters(query)
+    local out = {}
+    query = strtrim(query or ""):lower()
+    if #query < 2 then return out, false end
+    local guildSet = guildRosterSet()            -- one roster pass for the search
+    -- Honor showCrossFactionAlts like the calculator and character views do: an
+    -- opposite-faction character cannot craft or trade to you, so it is hidden
+    -- unless the setting is on. Your current character is always eligible.
+    local myFaction = UnitFactionGroup("player")
+    local crossFaction = addon.db.settings and addon.db.settings.showCrossFactionAlts
+    local relCache, colorCache = {}, {}
+    for charKey, char in pairs(addon.db.characters or {}) do
+        if type(char) == "table" and char.professions
+           and (crossFaction or char.faction == myFaction or addon:SameKey(charKey, addon:PlayerKey())) then
+            local rel = relCache[charKey]
+            if rel == nil then
+                rel = relationOf(charKey, guildSet)
+                relCache[charKey] = rel
+            end
+            local color = colorCache[charKey]
+            if color == nil then
+                -- Unknown class stays white; it used to be coloured as a Warrior.
+                color = addon:ClassColor(char.class)
+                colorCache[charKey] = color
+            end
+            local short = addon:ShortName(charKey)
+            for profName, profData in pairs(char.professions) do
+                local recipes = profData.recipes
+                if recipes then
+                    for rname in pairs(recipes) do
+                        if type(rname) == "string" and rname:lower():find(query, 1, true) then
+                            table.insert(out, {
+                                charKey    = charKey,
+                                short      = short,
+                                classColor = color,
+                                profName   = profName,
+                                skill      = profData.skillLevel or profData.level or 0,
+                                recipe     = rname,
+                                rel        = rel,
+                            })
+                        end
+                    end
+                end
+            end
+        end
+    end
+    table.sort(out, function(a, b)
+        if a.recipe ~= b.recipe then return a.recipe < b.recipe end
+        local ra, rb = REL_ORDER[a.rel] or 9, REL_ORDER[b.rel] or 9
+        if ra ~= rb then return ra < rb end
+        return a.charKey < b.charKey
+    end)
+    -- Cap AFTER the sort, so what survives is the best 200 and not an arbitrary
+    -- 200 in table order.
+    local truncated = false
+    if #out > MAX_FIND_RESULTS then
+        truncated = true
+        for i = #out, MAX_FIND_RESULTS + 1, -1 do out[i] = nil end
+    end
+    return out, truncated
+end
+
+-- The search only sees characters whose recipes have synced, so the header says
+-- how many guildmates that is and where the rest come from.
+function OP:FindHeaderText(truncated, shown)
+    if truncated then
+        return string.format(
+            "Showing the first %d matches. Narrow your search to see the rest.", shown)
+    end
+    if not IsInGuild() then
+        return "Searching your characters and your contacts."
+    end
+    local set, loading = guildRosterSet()
+    if loading then return "Guild roster is still loading." end
+    local me = addon:PlayerKey()
+    local synced, total = 0, 0
+    for key in pairs(set) do
+        if not addon:SameKey(key, me) then
+            total = total + 1
+            if hasSyncedRecipes(addon.db.characters and addon.db.characters[key]) then
+                synced = synced + 1
+            end
+        end
+    end
+    if total == 0 then
+        return "Searching your characters and your contacts."
+    end
+    return string.format(
+        "%d of %d guildmates have synced recipe data. The others have no recipes here and cannot match, so pull them with Sync guild recipes.",
+        synced, total)
+end
+
+function OP:PaintFind()
+    local ctx = self.findCtx
+    if not ctx then return end
+    for i, row in ipairs(ctx.rows) do
+        local m = ctx.items[ctx.scrollOffset + i]
+        if m then
+            row._match = m
+            row.recText:SetText(m.recipe)
+            row.whoText:SetText(m.classColor .. m.short .. "|r  (" .. relColor(m.rel)
+                .. ")  |cffbbbbbb" .. m.profName .. " " .. m.skill .. "|r")
+            row:Show()
+        else
+            row._match = nil
+            row:Hide()
+        end
+    end
+end
+
+function OP:RefreshFind()
+    local ctx = self.findCtx
+    if not ctx then return end
+    local q = (self.findBox and self.findBox:GetText()) or ""
+    local results, truncated = self:FindCrafters(q)
+    ctx.items = results
+    ctx.scrollOffset = 0
+    local maxScroll = math.max(0, #results - #ctx.rows)
+    ctx.scrollBar:SetMinMaxValues(0, maxScroll)
+    ctx.scrollBar:SetValue(0)
+    if #results == 0 then
+        ctx.empty:SetText(#strtrim(q) < 2
+            and "Type at least two letters of a recipe or item name."
+            or "No synced crafter knows a recipe matching that.")
+        ctx.empty:Show()
+    else
+        ctx.empty:Hide()
+    end
+    if ctx.header then ctx.header:SetText(self:FindHeaderText(truncated, #results)) end
+    self:PaintFind()
+end
+
+function OP:BuildFindPanel()
+    if self.findFrame then return end
+
+    local f = CreateFrame("Frame", "ProfBuddyFindCrafter", UIParent, "BasicFrameTemplateWithInset")
+    f:SetSize(470, 450)   -- match the History panel and the main window height
+    local function anchorRight()
+        f:ClearAllPoints()
+        if addon.UI and addon.UI.frame then
+            f:SetPoint("TOPLEFT", addon.UI.frame, "TOPRIGHT", 4, 0)
+        else
+            f:SetPoint("CENTER")
+        end
+    end
+    anchorRight()
+    if addon.UI and addon.UI.frame then
+        addon.UI.frame:HookScript("OnHide", function() if f:IsShown() then f:Hide() end end)
+    end
+    f:EnableMouse(true)
+    f:SetClampedToScreen(true)
+    f:SetFrameStrata("HIGH")
+    f:SetScript("OnShow", anchorRight)
+    f.TitleText:SetText("Find a Crafter")
+    f:Hide()
+    table.insert(UISpecialFrames, "ProfBuddyFindCrafter")
+
+    local box = CreateFrame("EditBox", "ProfBuddyFindSearch", f, "InputBoxTemplate")
+    box:SetSize(260, 20)
+    box:SetPoint("TOPLEFT", 16, -30)
+    box:SetAutoFocus(false)
+    box:SetScript("OnEscapePressed", function(b) b:ClearFocus() end)
+    -- Debounced: a typed word runs one search, not one per letter.
+    box:SetScript("OnTextChanged", function()
+        debounce("findSearch", 0.25, function() OP:RefreshFind() end)
+    end)
+    self.findBox = box
+
+    local hint = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    hint:SetPoint("LEFT", box, "RIGHT", 8, 0)
+    hint:SetText("Recipe or item name")
+
+    -- The discovery path: pull recipe lists from guildmates who have none here
+    -- yet. Deliberately a button, because it costs both sides a payload each.
+    local syncBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    syncBtn:SetSize(128, 20)
+    syncBtn:SetPoint("TOPRIGHT", -14, -30)
+    syncBtn:SetText("Sync guild recipes")
+    syncBtn:SetNormalFontObject(GameFontNormalSmall)
+    syncBtn:SetHighlightFontObject(GameFontHighlightSmall)
+    syncBtn:SetScript("OnClick", function()
+        OP:SyncGuildForSearch()
+        OP:RefreshFind()
+    end)
+    syncBtn:SetScript("OnEnter", function(b)
+        GameTooltip:SetOwner(b, "ANCHOR_LEFT")
+        GameTooltip:SetText("Ask online guildmates with a crafting profession for their recipe list. Recipes only, no bags or bank.", 1, 1, 1, nil, true)
+        GameTooltip:Show()
+    end)
+    syncBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.findSyncBtn = syncBtn
+
+    local content = CreateFrame("Frame", nil, f)
+    content:SetPoint("TOPLEFT", 12, -88)
+    content:SetPoint("BOTTOMRIGHT", -10, 12)
+
+    local ctx = { rows = {}, items = {}, scrollOffset = 0 }
+    self.findCtx = ctx
+
+    local header = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    header:SetPoint("TOPLEFT", 16, -56)
+    header:SetPoint("TOPRIGHT", -14, -56)
+    header:SetHeight(28)
+    header:SetJustifyH("LEFT")
+    header:SetJustifyV("TOP")
+    header:SetText("")
+    ctx.header = header
+
+    local listFrame = CreateFrame("Frame", nil, content)
+    listFrame:SetAllPoints()
+    ctx.listFrame = listFrame
+
+    local ROWS = 10   -- fits the 450-tall panel; overflow scrolls
+    for i = 1, ROWS do
+        local row = CreateFrame("Button", nil, listFrame)
+        row:SetHeight(FIND_ROW_H)
+        row:SetPoint("TOPLEFT", 0, -(i - 1) * FIND_ROW_H)
+        row:SetPoint("RIGHT", -16, 0)
+        local bg = row:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints()
+        if i % 2 == 0 then bg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
+        else bg:SetColorTexture(0.08, 0.08, 0.08, 0.3) end
+        row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+        local rec = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        rec:SetPoint("TOPLEFT", 6, -4)
+        rec:SetJustifyH("LEFT"); rec:SetWidth(410); rec:SetWordWrap(false)
+        row.recText = rec
+        local who = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        who:SetPoint("TOPLEFT", 6, -18)
+        who:SetJustifyH("LEFT"); who:SetWidth(410); who:SetWordWrap(false)
+        row.whoText = who
+        row:SetScript("OnClick", function(self)
+            local m = self._match
+            if not m then return end
+            if addon.TradeSkillFrame and addon.TradeSkillFrame.OpenWithCharacter then
+                addon.TradeSkillFrame:OpenWithCharacter(m.charKey, m.profName)
+            end
+        end)
+        row:SetScript("OnEnter", function(self)
+            local m = self._match
+            if not m then return end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(m.recipe, 1, 1, 1)
+            GameTooltip:AddLine("Open " .. m.short .. "'s " .. m.profName
+                .. " to place an order", 0.8, 0.8, 0.8)
+            GameTooltip:Show()
+        end)
+        row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        row:Hide()
+        ctx.rows[i] = row
+    end
+
+    local sb = CreateFrame("Slider", nil, listFrame)
+    sb:SetPoint("TOPRIGHT", 0, 0)
+    sb:SetPoint("BOTTOMRIGHT", 0, 0)
+    sb:SetWidth(16)
+    sb:SetMinMaxValues(0, 0)
+    sb:SetValueStep(1)
+    sb:SetValue(0)
+    sb:SetObeyStepOnDrag(true)
+    local thumb = sb:CreateTexture(nil, "ARTWORK")
+    thumb:SetSize(16, 24)
+    thumb:SetTexture("Interface\\Buttons\\UI-ScrollBar-Knob")
+    sb:SetThumbTexture(thumb)
+    sb:SetScript("OnValueChanged", function(_, v)
+        ctx.scrollOffset = math.floor(v)
+        OP:PaintFind()
+    end)
+    ctx.scrollBar = sb
+    listFrame:EnableMouseWheel(true)
+    listFrame:SetScript("OnMouseWheel", function(_, d) sb:SetValue(sb:GetValue() - d) end)
+
+    local empty = content:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    empty:SetPoint("TOP", 0, -24)
+    empty:SetText("Type at least two letters of a recipe or item name.")
+    ctx.empty = empty
+
+    self.findFrame = f
+end
+
+-- "Sync guild recipes". A guildmate you have not browsed only has a lightweight
+-- profession summary (no recipes), so the search silently misses them until
+-- someone pulls their list. This is that pull, and it is bounded on every axis:
+-- online guildmates only, only those whose summary names a crafting profession,
+-- most recently seen first, at most GUILD_SYNC_MAX per press, staggered so the
+-- whispers do not land in one frame, and throttled between presses. It is NOT
+-- run on panel open any more: that fanned a full-payload request at the entire
+-- guild every single time the panel was shown.
+local GUILD_SYNC_THROTTLE = 60   -- seconds between presses
+local GUILD_SYNC_MAX      = 40   -- targets per press
+local GUILD_SYNC_STAGGER  = 0.5  -- seconds between whispers
+
+function OP:SyncGuildForSearch()
+    if not (addon.Comm and addon.Comm.RequestGuildSync and IsInGuild()) then
+        print("|cff00ccffProfessionBuddy:|r Guild recipe sync needs a guild.")
+        return 0
+    end
+    local now = time()
+    if self._guildSyncAt and (now - self._guildSyncAt) < GUILD_SYNC_THROTTLE then
+        print(string.format(
+            "|cff00ccffProfessionBuddy:|r Guild recipe sync is throttled; try again in %ds.",
+            GUILD_SYNC_THROTTLE - (now - self._guildSyncAt)))
+        return 0
+    end
+    local set = guildRosterSet()
+    local me = addon:PlayerKey()
+    local targets = {}
+    for key, info in pairs(set) do
+        if info and info.online and not addon:SameKey(key, me) then
+            local char = addon.db.characters and addon.db.characters[key]
+            if hasCraftableProf(char) then
+                table.insert(targets, {
+                    key  = key,
+                    seen = tonumber(char.lastSeen) or tonumber(char.lastSync) or 0,
+                })
+            end
+        end
+    end
+    if #targets == 0 then
+        print("|cff00ccffProfessionBuddy:|r No online guildmate has announced a crafting profession yet.")
+        return 0
+    end
+    table.sort(targets, function(a, b)
+        if a.seen ~= b.seen then return a.seen > b.seen end
+        return a.key < b.key
+    end)
+    for i = #targets, GUILD_SYNC_MAX + 1, -1 do targets[i] = nil end
+    self._guildSyncAt = now
+    for i, t in ipairs(targets) do
+        C_Timer.After((i - 1) * GUILD_SYNC_STAGGER, function()
+            if addon.Comm and addon.Comm.RequestGuildSync then
+                -- scope "recipes": the server decides by trust tier, this is a hint.
+                addon.Comm:RequestGuildSync(t.key, "recipes")
+            end
+        end)
+    end
+    print(string.format("|cff00ccffProfessionBuddy:|r Asking %d guildmate%s for their recipe list.",
+        #targets, (#targets == 1) and "" or "s"))
+    return #targets
+end
+
+function OP:ToggleFind()
+    self:BuildFindPanel()
+    if self.findFrame:IsShown() then
+        self.findFrame:Hide()
+    else
+        self:RefreshFind()
+        self.findFrame:Show()
+        if self.findBox then self.findBox:SetFocus() end
+    end
 end
 
 ----------------------------------------------------------------------
@@ -704,8 +1993,10 @@ function OP:BuildHistoryPanel()
     self.histCtx = { collapsed = { incoming = false, outgoing = false } }
     self:BuildList(content, self.histCtx, 10)
 
-    self.histCtx.rebuild = function()
+    self.histCtx.rebuild = function(force)
         local ctx = self.histCtx
+        if not force and not isLive(self.histFrame) then ctx.dirty = true; return end
+        ctx.dirty = false
         local O = addon.Orders
         local all = O and O:GetHistory() or {}
         local incoming, outgoing = {}, {}
@@ -746,7 +2037,7 @@ function OP:BuildHistoryPanel()
         local s = addon.db.settings
         s.orderHistorySortOldest = not s.orderHistorySortOldest
         btn:SetText(sortLabel())
-        if OP.histCtx and OP.histCtx.rebuild then OP.histCtx.rebuild() end
+        if OP.histCtx and OP.histCtx.rebuild then OP.histCtx.rebuild(true) end
     end)
     f.sortBtn = sortBtn
 
@@ -758,42 +2049,63 @@ function OP:ToggleHistory()
     if self.histFrame:IsShown() then
         self.histFrame:Hide()
     else
-        self.histCtx.rebuild()
         self.histFrame:Show()
+        self.histCtx.rebuild(true)
     end
 end
 
 ----------------------------------------------------------------------
 -- Refresh entry points
 ----------------------------------------------------------------------
+-- Each rebuild skips its own work and marks itself dirty when its host is not on
+-- screen, so this stays cheap even though Comm calls it for every order message.
 function OP:RefreshAll()
     self:UpdateBadge()
     if self.activeCtx and self.activeCtx.rebuild then self.activeCtx.rebuild() end
+    if self.boardCtx and self.boardCtx.rebuild then self.boardCtx.rebuild() end
     if self.histCtx and self.histCtx.rebuild then self.histCtx.rebuild() end
 end
 
--- Public alias kept for external callers (composer, UI:Toggle)
+-- The tab's OnShow hook. The sub-view that is about to be visible repaints even
+-- if its data work was skipped while it was hidden.
 function OP:Refresh()
-    self:RefreshAll()
+    self:UpdateBadge()
+    if self.subview == "board" then
+        if self.boardCtx and self.boardCtx.rebuild then self.boardCtx.rebuild(true) end
+    else
+        if self.activeCtx and self.activeCtx.rebuild then self.activeCtx.rebuild(true) end
+    end
+    if self.histCtx and self.histCtx.rebuild and isLive(self.histFrame) then
+        self.histCtx.rebuild(true)
+    end
 end
 
 ----------------------------------------------------------------------
--- Preserve History across a settings round-trip
--- The main window hides (and thus hides History) on the way into
--- settings, so capture History's open state BEFORE that, then reopen
--- it when settings returns to the main window. Mirrors how the
--- Material Calc is restored after settings on the profession window.
+-- Preserve History and Find a crafter across a settings round-trip
+-- The main window hides (and thus hides both attached panels) on the way
+-- into settings, so capture whichever was open BEFORE that, then reopen it
+-- when settings returns to the main window. Mirrors how the Material Calc is
+-- restored after settings on the profession window. The two panels are
+-- mutually exclusive (History is Direct-only, Find is board-only), so at most
+-- one flag is ever set.
 ----------------------------------------------------------------------
 function OP:CaptureHistoryState()
     self._histWasOpen = (self.histFrame and self.histFrame:IsShown()) or false
+    self._findWasOpen = (self.findFrame and self.findFrame:IsShown()) or false
 end
 
 function OP:RestoreHistoryState()
     if self._histWasOpen then
         self._histWasOpen = false
         self:BuildHistoryPanel()
-        self.histCtx.rebuild()
         self.histFrame:Show()
+        self.histCtx.rebuild(true)
+    end
+    if self._findWasOpen then
+        self._findWasOpen = false
+        self:BuildFindPanel()
+        self:RefreshFind()
+        self.findFrame:Show()
     end
 end
 
@@ -841,9 +2153,9 @@ function OP:LoginSummary()
     local pending, crafted = 0, 0
     for _, o in pairs(addon.db.orders or {}) do
         if not o.dismissed then
-            if o.crafter == me and o.status == O.STATUS.PENDING then
+            if addon:SameKey(o.crafter, me) and o.status == O.STATUS.PENDING then
                 pending = pending + 1
-            elseif o.requester == me and o.status == O.STATUS.CRAFTED then
+            elseif addon:SameKey(o.requester, me) and o.status == O.STATUS.CRAFTED then
                 crafted = crafted + 1
             end
         end
@@ -860,19 +2172,31 @@ function OP:LoginSummary()
     print("|cff00ccffProfessionBuddy:|r " .. table.concat(parts, ", ") .. ".")
 end
 
--- Backend integration point. kind: "newRequest" | "accepted" |
--- "declined" | "crafted" | "cancelled" | "completed". order is the
+-- Backend integration point. kind: "newRequest" | "claimAccepted" | "assigned" |
+-- "accepted" | "declined" | "crafted" | "cancelled" | "completed". order is the
 -- record the counterparty just acted on.
 local NOTIFY_TEXT = {
-    newRequest = function(o) return o.requester .. " requested " .. o.quantity .. "x " .. o.item.name end,
-    accepted   = function(o) return o.crafter .. " accepted your order: " .. o.quantity .. "x " .. o.item.name end,
-    declined   = function(o) return o.crafter .. " declined your order: " .. o.quantity .. "x " .. o.item.name end,
-    crafted    = function(o) return o.crafter .. " crafted your order: " .. o.quantity .. "x " .. o.item.name .. " (ready to pick up)" end,
-    cancelled  = function(o) return o.requester .. " cancelled their order: " .. o.quantity .. "x " .. o.item.name end,
+    newRequest = function(o) return addon:ShortName(o.requester) .. " requested " .. o.quantity .. "x " .. o.item.name end,
+    -- The handoff for a claim WE made. "requested" reads backwards there.
+    claimAccepted = function(o) return "Your claim on " .. o.quantity .. "x " .. o.item.name
+        .. " was accepted by " .. addon:ShortName(o.requester) end,
+    -- Our own board post was claimed by a guildmate.
+    assigned   = function(o) return addon:ShortName(o.crafter or "?") .. " claimed your board post: " .. o.quantity .. "x " .. o.item.name end,
+    accepted   = function(o) return addon:ShortName(o.crafter) .. " accepted your order: " .. o.quantity .. "x " .. o.item.name end,
+    declined   = function(o) return addon:ShortName(o.crafter) .. " declined your order: " .. o.quantity .. "x " .. o.item.name end,
+    crafted    = function(o) return addon:ShortName(o.crafter) .. " crafted your order: " .. o.quantity .. "x " .. o.item.name .. " (ready to pick up)" end,
+    cancelled  = function(o) return addon:ShortName(o.requester) .. " cancelled their order: " .. o.quantity .. "x " .. o.item.name end,
     completed  = function(o) return "Order completed: " .. o.quantity .. "x " .. o.item.name end,
 }
 
-function OP:NotifyOrderEvent(kind, order)
+-- info is optional and carries wire flags the record itself does not: Comm
+-- passes { fromClaim = true } (or sets it on the order) for the ORDER_NEW that
+-- hands a claim back to the claimer, which is not an unsolicited request.
+function OP:NotifyOrderEvent(kind, order, info)
+    if kind == "newRequest" and order
+       and ((info and info.fromClaim) or order.fromClaim) then
+        kind = "claimAccepted"
+    end
     local s = addon.db and addon.db.settings or {}
     if s.orderChatMessages then
         local fn = NOTIFY_TEXT[kind]
@@ -880,6 +2204,8 @@ function OP:NotifyOrderEvent(kind, order)
             print("|cff00ccffProfessionBuddy:|r " .. fn(order))
         end
     end
+    -- No sound for claimAccepted: the user clicked Claim a moment ago, so this
+    -- is a confirmation, not an interruption.
     if kind == "newRequest" and s.orderSoundOnRequest then
         PlaySound(SOUNDKIT.TELL_MESSAGE)
     end

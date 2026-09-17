@@ -43,12 +43,15 @@ end
 -- globalItems = { [itemID] = totalCount } across all characters
 -- claimed     = { [itemID] = alreadyReserved } tracks inventory consumed
 --               by earlier branches so we don't double-count
-function MC:ResolveTree(recipeName, profName, qty, depth, seen, globalItems, claimed)
+-- surplus     = { [itemID] = leftOver } yield left over from an earlier
+--               branch's rounding, spent before inventory is touched
+function MC:ResolveTree(recipeName, profName, qty, depth, seen, globalItems, claimed, surplus)
     depth = depth or 0
     seen = seen or {}
     qty = qty or 1
     globalItems = globalItems or (DS and DS:GetCalcItemCounts()) or {}
     claimed = claimed or {}
+    surplus = surplus or {}
 
     local tree = {}
 
@@ -82,27 +85,37 @@ function MC:ResolveTree(recipeName, profName, qty, depth, seen, globalItems, cla
     if not reagents then return tree end
 
     for _, reagent in ipairs(reagents) do
-        local totalNeed = (reagent.count or 1) * qty
+        -- A data typo of count = 0 must not produce a "0 / have" shopping row:
+        -- 0 is truthy in Lua, so the old `reagent.count or 1` kept it.
+        local cnt = tonumber(reagent.count) or 1
+        if cnt < 1 then cnt = 1 end
+        local totalNeed = cnt * qty
         local rItemID = reagent.itemID
         local rName = reagent.name or "???"
 
-        -- Check if this reagent is itself craftable (and not a cycle)
+        -- Expand this reagent as an intermediate only when it is not on a
+        -- cycle in the recipe graph (the primal transmute ring, the essence
+        -- transmutes, Prismatic Shard <-> Nexus Transformation) AND one of my
+        -- characters actually knows a recipe that produces it. Anything else
+        -- is something the user buys or farms, not something they make.
         local craftable = false
         local subRecipeName = nil
         local subProfName = nil
         local subYield = 1
 
-        if rItemID and not seen[rItemID] then
+        if rItemID and rItemID > 0 and not seen[rItemID]
+           and RDB and not RDB:IsCyclicItem(rItemID) then
             local recipeInfo = RDB:GetRecipeForItem(rItemID)
-            if recipeInfo then
+            if recipeInfo and RDB:AnyoneKnows(recipeInfo.recipeName, recipeInfo.profName) then
                 craftable = true
                 subRecipeName = recipeInfo.recipeName
                 subProfName = recipeInfo.profName
-                -- Look up yield for the sub-recipe (e.g. Smelt Bronze = 2)
+                -- Look up yield for the sub-recipe (e.g. Smelt Bronze = 2).
+                -- Clamp it: yield = 0 would make math.ceil(n / 0) infinite and
+                -- a string yield would error on the division in Lua 5.1.
                 local subData = RDB.data[subProfName] and RDB.data[subProfName][subRecipeName]
-                if subData and subData.yield then
-                    subYield = subData.yield
-                end
+                local y = subData and tonumber(subData.yield)
+                if y and y > 0 then subYield = math.floor(y) end
             end
         end
 
@@ -122,16 +135,24 @@ function MC:ResolveTree(recipeName, profName, qty, depth, seen, globalItems, cla
         -- A "claimed" table tracks how much inventory has been
         -- reserved by earlier tree branches to prevent double-dipping.
         if craftable and subRecipeName then
+            -- Spend the leftovers an earlier branch's rounding produced before
+            -- touching inventory: two branches each needing 3 of a yield-2
+            -- intermediate cost 3 crafts, not 2 + 2.
+            local fromSurplus = math.min(totalNeed, surplus[rItemID] or 0)
+            surplus[rItemID] = (surplus[rItemID] or 0) - fromSurplus
+
             local available = math.max(0, (globalItems[rItemID] or 0) - (claimed[rItemID] or 0))
-            local shortfall = math.max(0, totalNeed - available)
+            local stillNeed = totalNeed - fromSurplus
             -- Claim what we're pulling from inventory
-            local consuming = math.min(totalNeed, available)
+            local consuming = math.min(stillNeed, available)
             claimed[rItemID] = (claimed[rItemID] or 0) + consuming
+            local shortfall = stillNeed - consuming
 
             if shortfall > 0 then
                 seen[rItemID] = true
                 local craftsNeeded = math.ceil(shortfall / subYield)
-                local subTree = self:ResolveTree(subRecipeName, subProfName, craftsNeeded, depth + 1, seen, globalItems, claimed)
+                surplus[rItemID] = (surplus[rItemID] or 0) + (craftsNeeded * subYield - shortfall)
+                local subTree = self:ResolveTree(subRecipeName, subProfName, craftsNeeded, depth + 1, seen, globalItems, claimed, surplus)
                 for _, subEntry in ipairs(subTree) do
                     table.insert(tree, subEntry)
                 end
@@ -191,44 +212,4 @@ function MC:GetShoppingList(recipeName, profName, qty)
     end)
 
     return list, tree
-end
-
-----------------------------------------------------------------------
--- Convenience: can we craft N of this right now?
-----------------------------------------------------------------------
-function MC:CanCraft(recipeName, profName, qty)
-    local list = self:GetShoppingList(recipeName, profName, qty)
-    for _, item in ipairs(list) do
-        if item.shortfall > 0 then return false end
-    end
-    return true
-end
-
-----------------------------------------------------------------------
--- Convenience: max craftable from current inventory
-----------------------------------------------------------------------
-function MC:MaxCraftable(recipeName, profName)
-    local globalItems = DS and DS:GetCalcItemCounts() or {}
-    local tree = self:ResolveTree(recipeName, profName, 1, nil, nil, globalItems, {})
-    if #tree == 0 then return 0 end
-
-    local maxQty = 999999
-
-    -- Only look at raw (non-craftable) materials
-    local rawNeeds = {}
-    for _, entry in ipairs(tree) do
-        if not entry.isCraftable and entry.itemID then
-            rawNeeds[entry.itemID] = (rawNeeds[entry.itemID] or 0) + entry.need
-        end
-    end
-
-    for itemID, needPer in pairs(rawNeeds) do
-        local have = globalItems[itemID] or 0
-        local canMake = math.floor(have / needPer)
-        if canMake < maxQty then
-            maxQty = canMake
-        end
-    end
-
-    return maxQty == 999999 and 0 or maxQty
 end

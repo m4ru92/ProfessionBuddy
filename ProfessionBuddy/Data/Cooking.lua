@@ -417,7 +417,7 @@ local recipes = {
         itemID = 20452,
         skillReq = 285,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Strength",
         skillRange = { 285, 310, 322, 335 },
@@ -535,7 +535,7 @@ local recipes = {
         itemID = 10841,
         skillReq = 175,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Utility",
         skillRange = { 175, 175, 190, 205 },
@@ -596,7 +596,7 @@ local recipes = {
         itemID = 6888,
         skillReq = 1,
         sources = {
-            { method = "automatic", faction = "Both", detail = "auto-learned at Cooking skill (DB2 AcquireMethod=1; both factions)" },
+            { method = "automatic", faction = "Both" },
         },
         category = "Stamina / Spirit",
         skillRange = { 1, 45, 65, 85 },

@@ -95,7 +95,7 @@ local recipes = {
     ["Mageweave Bandage"] = {
         spellID = 10840,
         itemID = 8544,
-        skillReq = 225,
+        skillReq = 210,
         sources = {
             { method = "vendor", faction = "Both", detail = "Sold by Balai Lok\'Wein, Deneb Walker" },
         },

@@ -32,22 +32,15 @@ local PROF_ICONS = {
     ["Fishing"]         = "Interface\\Icons\\Trade_Fishing",
 }
 
--- Professions you can place a craft order against (have a browsable
--- recipe list). Mirrors CRAFTABLE_PROFS in TradeSkillFrame/OrdersPanel.
-local CRAFTABLE_PROFS = {
-    ["Alchemy"] = true, ["Blacksmithing"] = true, ["Cooking"] = true,
-    ["Enchanting"] = true, ["Engineering"] = true, ["First Aid"] = true,
-    ["Jewelcrafting"] = true, ["Leatherworking"] = true,
-    ["Smelting"] = true, ["Tailoring"] = true,
-}
-
 -- Craftable professions this character has actually synced recipes for,
--- sorted alphabetically. Empty = nothing to request from them.
+-- sorted alphabetically. Empty = nothing to request from them. The
+-- craftable set is addon.CRAFTABLE_PROFS (Core.lua), shared with the Guild
+-- tab, the order board and the profession window.
 local function craftableProfs(charData)
     local list = {}
     if not charData or not charData.professions then return list end
     for pn, pdata in pairs(charData.professions) do
-        if CRAFTABLE_PROFS[pn] and pdata.recipes and next(pdata.recipes) then
+        if addon.CRAFTABLE_PROFS[pn] and pdata.recipes and next(pdata.recipes) then
             table.insert(list, pn)
         end
     end
@@ -56,9 +49,59 @@ local function craftableProfs(charData)
 end
 
 ----------------------------------------------------------------------
+-- Removing a contact deletes every recipe, bag and bank entry we hold for
+-- them, so it asks first. Registered on first use, the way Core.lua
+-- registers the /pb reset popup.
+----------------------------------------------------------------------
+local function ensureRemovePopup()
+    if StaticPopupDialogs["PROFBUDDY_REMOVE_CONTACT"] then return end
+    StaticPopupDialogs["PROFBUDDY_REMOVE_CONTACT"] = {
+        text = "Remove %s as a contact?\nTheir synced professions, recipes and inventory are deleted with them, and they can no longer pull yours.",
+        button1 = YES,
+        button2 = NO,
+        OnAccept = function(self, key)
+            FP:RemoveContact(key or self.data)
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+end
+
+-- A contact key we will store: "Name" or "Name-Realm", letters only, 2 to 12
+-- CHARACTERS, canonicalized to Name-Realm. Without this, anything the user
+-- types (colour codes included) becomes a key in SavedVariables and a string
+-- painted into a row. The realm half is checked too: it reaches the same key
+-- and the same chat lines, and a realm holding junk addresses a whisper no
+-- server can deliver, so that contact would silently never sync.
+-- UTF-8 note: a name is up to 12 characters, which is up to 24 BYTES, so the
+-- length is counted in characters (every byte that is not a continuation byte
+-- \128-\191 starts one) or a Cyrillic / Hangul name is refused out of hand.
+local function contactKeyFromInput(text)
+    local name, realm = text:match("^([^-]+)%-?(.*)$")
+    if not name then return nil end
+    local chars = select(2, name:gsub("[^\128-\191]", ""))
+    if chars < 2 or chars > 12 then return nil end
+    if name:find("[^%a\128-\255]") then return nil end
+    local first = name:sub(1, 1)
+    if first:match("%l") then                       -- ASCII only; leave UTF-8 alone
+        name = first:upper() .. name:sub(2)
+    end
+    if realm ~= "" then
+        -- Letters, spaces, apostrophes and hyphens only (Kel'Thuzad, Mirage
+        -- Raceway, Drak'thul), high bytes passed through for localized realms.
+        local rchars = select(2, realm:gsub("[^\128-\191]", ""))
+        if rchars > 32 or realm:find("[^%a '%-\128-\255]") then return nil end
+        name = name .. "-" .. realm
+    end
+    return addon:NormKey(name)
+end
+
+----------------------------------------------------------------------
 -- Lightweight popup menu for picking a profession to order from.
--- (EasyMenu / UIDropDownMenu aren't available in TBCCA's menu system,
--- so this is a small self-contained popup.)
+-- (UIDropDownMenu and EasyMenu do exist in 2.5.6, but a hand-rolled popup
+-- keeps the addon clear of the dropdown taint class entirely.)
 ----------------------------------------------------------------------
 local function ensureOrderMenu()
     if FP._orderMenu then return FP._orderMenu end
@@ -74,6 +117,9 @@ local function ensureOrderMenu()
     m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
     m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
     m:EnableMouse(true)
+    -- Anchored under its row button, so the bottom rows would otherwise run
+    -- off the screen.
+    m:SetClampedToScreen(true)
     m:Hide()
 
     m.title = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -82,10 +128,13 @@ local function ensureOrderMenu()
 
     m.buttons = {}
 
-    -- Click-outside-to-close catcher (one strata below the menu)
+    -- Click-outside-to-close catcher (one strata below the menu). It swallows
+    -- the click that dismisses the menu, so it takes any button: a right
+    -- click outside has to close the menu too, not go through to the world.
     local catcher = CreateFrame("Button", nil, UIParent)
     catcher:SetAllPoints(UIParent)
     catcher:SetFrameStrata("DIALOG")
+    catcher:RegisterForClicks("AnyUp")
     catcher:Hide()
     catcher:SetScript("OnClick", function() m:Hide() end)
     m:SetScript("OnShow", function() catcher:Show() end)
@@ -99,8 +148,7 @@ end
 
 local function showOrderMenu(anchorBtn, key, profs)
     local m = ensureOrderMenu()
-    local short = key:match("^([^-]+)") or key
-    m.title:SetText("Order from " .. short)
+    m.title:SetText("Order from " .. addon:ShortName(key))
 
     local ROW_H = 18
     local maxW = m.title:GetStringWidth() + 16
@@ -207,41 +255,54 @@ function FP:CreateContent(parent)
     addBtn:SetPoint("LEFT", addBox, "RIGHT", 6, 0)
     addBtn:SetText("Add")
     addBtn:SetScript("OnClick", function()
-        local text = strtrim(addBox:GetText())
-        if text == "" then return end
+        local typed = strtrim(addBox:GetText())
+        if typed == "" then return end
 
-        -- Canonicalize (capitalize name, default/normalize realm) so the stored
-        -- key matches how this contact's messages arrive at the trust gate.
-        text = addon.Comm and addon.Comm:NormalizeContactKey(text) or text
-        if not text or text == "" then return end
+        -- Validate and canonicalize (letters only, capitalized name,
+        -- normalized realm) so the stored key matches how this contact's
+        -- messages arrive at the trust gate.
+        local key = contactKeyFromInput(typed)
+        if not key then
+            -- There is no key to print on this path, so the RAW input is echoed
+            -- back: capped first so one bad paste cannot flood the chat frame,
+            -- then pipe-escaped so a typed colour code prints as text.
+            print("|cff00ccffProfessionBuddy:|r " .. (typed:sub(1, 40):gsub("|", "||"))
+                .. " is not a character name. Use Name or Name-Realm.")
+            return
+        end
 
         -- Don't add yourself
-        if text == addon:PlayerKey() then
+        if addon:SameKey(key, addon:PlayerKey()) then
             print("|cff00ccffProfessionBuddy:|r Cannot add yourself as a contact.")
             addBox:SetText("")
+            addBox:ClearFocus()
             return
         end
 
         -- Don't add duplicates
-        if addon.db.contacts[text] then
-            print("|cff00ccffProfessionBuddy:|r " .. text .. " is already a contact.")
+        if addon.db.contacts[key] then
+            print("|cff00ccffProfessionBuddy:|r " .. key .. " is already a contact.")
             addBox:SetText("")
+            addBox:ClearFocus()
             return
         end
 
         -- Adding a contact is a deliberate local action, so it is trusted.
-        addon.db.contacts[text] = {
+        addon.db.contacts[key] = {
             autoSync = false,
             lastSync = 0,
             trusted = true,
         }
 
         addBox:SetText("")
-        print("|cff00ccffProfessionBuddy:|r Added " .. text .. " as a contact.")
+        -- Leave the box: keystrokes after an add belong to the game, not to
+        -- an edit box the user is done with.
+        addBox:ClearFocus()
+        print("|cff00ccffProfessionBuddy:|r Added " .. key .. " as a contact.")
 
         -- Attempt an immediate sync
         if Comm and Comm._ready then
-            Comm:RequestSync(text, true)
+            Comm:RequestSync(key, true)
         end
 
         self:Refresh()
@@ -252,6 +313,9 @@ function FP:CreateContent(parent)
     end)
     addBox:SetScript("OnEscapePressed", function()
         addBox:ClearFocus()
+        if addon.UI and addon.UI.frame and addon.UI.frame:IsShown() then
+            addon.UI:Hide()
+        end
     end)
 
     -- ── Column headers ───────────────────────────────────────────
@@ -276,7 +340,7 @@ function FP:CreateContent(parent)
     MakeHeader("Name", 6, 140)
     MakeHeader("Professions", 150, 140)
     MakeHeader("Last Sync", 294, 80)
-    MakeHeader("Auto", 378, 40)
+    MakeHeader("Auto-sync", 378, 60)
     -- Actions column implied at the right
 
     -- ── Scrollable contact list ──────────────────────────────────
@@ -323,20 +387,30 @@ function FP:CreateContent(parent)
         scrollBar:SetValue(cur - delta)
     end)
 
+    -- Empty state. It belongs to the list frame: a string on the parent lands
+    -- behind the header bar, where nothing can see it.
+    self.empty = listFrame:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+    self.empty:SetPoint("TOPLEFT", 6, -8)
+    self.empty:SetText("No contacts yet. Type a name above and click Add.")
+    self.empty:Hide()
+
     self.scrollOffset = 0
     self.contactKeys = {}
 
-    -- Ticker: refresh timestamps every 30s while visible
-    local ticker = CreateFrame("Frame", nil, parent)
-    ticker._elapsed = 0
-    ticker:SetScript("OnUpdate", function(_, dt)
-        ticker._elapsed = ticker._elapsed + dt
-        if ticker._elapsed < 30 then return end
-        ticker._elapsed = 0
-        if parent:IsShown() and self.rows then
-            self:UpdateRows()
-        end
-    end)
+    -- The "Last Sync" column ages in place, so repaint it every 30 seconds
+    -- while the tab is up. A ticker costs one call every 30 s where the old
+    -- OnUpdate cost one per frame drawn.
+    if not self._timeTicker and C_Timer and C_Timer.NewTicker then
+        self._timeTicker = C_Timer.NewTicker(30, function()
+            if self.rows and self.parent and self.parent:IsVisible() then
+                self:UpdateRows()
+            end
+        end)
+    end
+
+    -- The tab system repaints us through this on every show (UI:AddTab's
+    -- OnShow hook).
+    parent.Refresh = function() self:Refresh() end
 
     self:Refresh()
 end
@@ -393,7 +467,18 @@ function FP:CreateRow(parent, index)
             -- Enabling auto-sync is a deliberate local action: it trusts them.
             if checked then addon.db.contacts[key].trusted = true end
         end
+        -- The list is sorted auto-sync first, so it has to re-sort here or the
+        -- rows only move on some later unrelated refresh.
+        FP:Refresh()
     end)
+    autoCB:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Auto-sync")
+        GameTooltip:AddLine("Lets this contact pull your recipes and inventory automatically, "
+            .. "and pushes your inventory changes to them.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    autoCB:SetScript("OnLeave", function() GameTooltip:Hide() end)
     row.autoCB = autoCB
 
     -- Sync Now button
@@ -436,12 +521,10 @@ function FP:CreateRow(parent, index)
     removeBtn:SetScript("OnClick", function()
         local key = row._contactKey
         if not key then return end
-        -- Remove contact and their remote data
-        addon.db.contacts[key] = nil
-        if DS then
-            DS:RemoveRemoteCharacter(key)
-        end
-        FP:Refresh()
+        -- Confirm first: this is a 16x16 button 22 pixels from Order, and the
+        -- removal takes their recipes, bags and bank with it.
+        ensureRemovePopup()
+        StaticPopup_Show("PROFBUDDY_REMOVE_CONTACT", addon:ShortName(key), nil, key)
     end)
     row.removeBtn = removeBtn
 
@@ -484,10 +567,36 @@ function FP:CreateRow(parent, index)
 end
 
 ----------------------------------------------------------------------
+-- Remove a contact: the contact entry, their synced character record and
+-- the delta-sync bookkeeping Comm keeps for them. Called from the
+-- confirmation popup, never straight from the button.
+----------------------------------------------------------------------
+function FP:RemoveContact(key)
+    key = addon:NormKey(key)
+    if not key or not addon.db.contacts[key] then return end
+
+    addon.db.contacts[key] = nil
+    if DS then
+        DS:RemoveRemoteCharacter(key)
+    end
+    -- Drop their push/receive epoch state so a later re-add starts clean.
+    if addon.Comm and addon.Comm.ForgetPeer then
+        addon.Comm:ForgetPeer(key)
+    end
+    self:Refresh()
+end
+
+----------------------------------------------------------------------
 -- Refresh: rebuild the sorted contact list
 ----------------------------------------------------------------------
 function FP:Refresh()
     if not self.rows then return end
+    -- Nothing to paint behind a hidden tab; the OnShow hook rebuilds.
+    if not (self.parent and self.parent:IsVisible()) then
+        self._dirty = true
+        return
+    end
+    self._dirty = false
 
     -- Build sorted list of contact keys
     self.contactKeys = {}
@@ -511,6 +620,11 @@ function FP:Refresh()
         self.scrollBar:SetValue(maxScroll)
     end
 
+    -- Empty list: say so, and take the lone scroll bar off the blank area.
+    local hasContacts = #self.contactKeys > 0
+    self.empty:SetShown(not hasContacts)
+    self.scrollBar:SetShown(hasContacts)
+
     self:UpdateRows()
 end
 
@@ -529,13 +643,11 @@ function FP:UpdateRows()
             local contact = addon.db.contacts[key]
             local charData = addon.db.characters[key]
 
-            -- Name (class-colored if we have data)
-            local displayName = key
+            -- Name (class-colored if we have data). The realm is not shown:
+            -- it is part of the key, not of what the user reads.
+            local displayName = addon:ShortName(key)
             if charData and charData.class then
-                local cc = addon:ClassColor(charData.class)
-                -- Show just the name portion, not the realm
-                local shortName = key:match("^([^-]+)")
-                displayName = cc .. shortName .. "|r"
+                displayName = addon:ClassColor(charData.class) .. displayName .. "|r"
             end
             row.nameText:SetText(displayName)
 

@@ -2140,7 +2140,7 @@ local recipes = {
         itemID = 15802,
         skillReq = 290,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Cloth Armor",
         subcategory = "Feet",
@@ -4962,7 +4962,7 @@ local recipes = {
             { method = "reputation", faction = "Both", detail = "Cenarion Expedition @ Neutral" },
         },
         category = "Trade Good",
-        skillRange = { 1, 325, 330, 335 },
+        skillRange = { 325, 325, 330, 335 },
         reagents = { { itemID = 21877, count = 6, name = "Netherweave Cloth" } },
     },
     ["Mooncloth"] = {

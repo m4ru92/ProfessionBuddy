@@ -469,7 +469,7 @@ local recipes = {
         itemID = 2460,
         skillReq = 70,
         sources = {
-            { method = "undetermined", faction = "Both", detail = "Beta only" },
+            { method = "undetermined", faction = "Both" },
         },
         category = "Elixir",
         subcategory = "Utility",
@@ -1462,7 +1462,7 @@ local recipes = {
         itemID = 32839,
         skillReq = 360,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Potion",
         subcategory = "Resistance",
@@ -1478,7 +1478,7 @@ local recipes = {
         itemID = 32849,
         skillReq = 360,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Potion",
         subcategory = "Resistance",
@@ -1494,7 +1494,7 @@ local recipes = {
         itemID = 32850,
         skillReq = 360,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Potion",
         subcategory = "Resistance",
@@ -1510,7 +1510,7 @@ local recipes = {
         itemID = 32851,
         skillReq = 360,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Potion",
         subcategory = "Resistance",
@@ -1526,7 +1526,7 @@ local recipes = {
         itemID = 32852,
         skillReq = 360,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Potion",
         subcategory = "Resistance",
@@ -1814,7 +1814,7 @@ local recipes = {
         itemID = 9030,
         skillReq = 215,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Potion",
         subcategory = "Resistance",
@@ -1992,7 +1992,7 @@ local recipes = {
         itemID = 19931,
         skillReq = 315,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Potion",
         subcategory = "Utility",
@@ -2712,7 +2712,7 @@ local recipes = {
         itemID = 21884,
         skillReq = 385,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Transmute",
         subcategory = "Primal",
@@ -2742,7 +2742,7 @@ local recipes = {
         itemID = 21885,
         skillReq = 385,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Transmute",
         subcategory = "Primal",
@@ -2766,7 +2766,7 @@ local recipes = {
         itemID = 22456,
         skillReq = 385,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Transmute",
         subcategory = "Primal",

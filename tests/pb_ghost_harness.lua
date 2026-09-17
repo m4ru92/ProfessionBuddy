@@ -1,0 +1,680 @@
+----------------------------------------------------------------------
+-- Ghost-partner two-instance comm harness for ProfessionBuddy.
+--
+-- Loads TWO (or more) fully ISOLATED ProfessionBuddy instances in one Lua
+-- state, each with its own ProfBuddy / ProfBuddyDB and its own WoW-API stubs,
+-- and wires a ROUTER between their AceComm send and receive. That turns a real
+-- cross-client conversation (HELLO handshake, SYNC request/serve, order
+-- lifecycle, and later the guild trust/sync arm) into something you can drive
+-- and assert end to end with NO second game client.
+--
+-- Companion to pb_harness.lua (single instance, hand-fed payloads). This one
+-- exists for the multi-round conversations pb_harness cannot express, and is
+-- the substrate the guild comm arm (COMM_REV 5) will be verified against.
+--
+-- Run it like pb_harness (set PB_BASE to the addon folder, execute via lupa):
+--     lua.globals().PB_BASE = "ProfessionBuddy"   -- a REV-4 tree
+--     lua.execute(open("pb_ghost_harness.lua").read())
+-- Ends with "ALL GHOST HARNESS TESTS PASS" or error()s on the first failure.
+----------------------------------------------------------------------
+
+local BASE = assert(PB_BASE, "PB_BASE not set")
+
+-- Load a file so its chunk runs under a custom global env `env`. Portable
+-- across Lua 5.1 (setfenv) and 5.2+ (loadfile with an env arg).
+local function loadFileInEnv(path, env)
+    if setfenv then
+        local chunk = assert(loadfile(path))
+        setfenv(chunk, env)
+        return chunk
+    end
+    return assert(loadfile(path, "t", env))
+end
+
+-- Deep copy a payload on delivery. The identity AceSerializer stub passes tables
+-- by reference; across two instances that would let the receiver mutate the
+-- sender's table and manufacture false passes. A copy simulates the real
+-- serialize/deserialize wire boundary.
+local function deepcopy(v, seen)
+    if type(v) ~= "table" then return v end
+    seen = seen or {}
+    if seen[v] then return seen[v] end
+    local out = {}
+    seen[v] = out
+    for k, val in pairs(v) do out[deepcopy(k, seen)] = deepcopy(val, seen) end
+    return out
+end
+
+----------------------------------------------------------------------
+-- Router: the wire between instances.
+----------------------------------------------------------------------
+local Router = { queue = {}, instances = {}, order = {},
+                 groups = {}, guilds = {}, MAX_ROUNDS = 500 }
+
+-- Keyed by full identity (name-realm), NOT name: same-name-different-realm
+-- instances (the spoof case) must coexist as distinct wire endpoints.
+function Router:register(inst)
+    self.instances[inst.key] = inst
+    table.insert(self.order, inst.key)
+end
+
+-- How instance `from` appears to instance `to` as a chat sender / unit name:
+-- bare name on the same realm, name-realm across realms (mirrors WoW). The
+-- realm half is the NORMALIZED spelling, which is what Ambiguate hands an
+-- addon: "Old Blanchy" reaches the receiver as "Name-OldBlanchy".
+function Router:senderAs(from, to)
+    if from.realm == to.realm then return from.name end
+    return from.name .. "-" .. from.realmKey
+end
+
+function Router:enqueue(fromName, prefix, payload, channel, target)
+    table.insert(self.queue, { from = fromName, prefix = prefix,
+        payload = payload, channel = channel, target = target })
+end
+
+function Router:deliverTo(inst, msg, from)
+    if inst.key == from.key then return end
+    local sender = self:senderAs(from, inst)
+    inst.comm:OnMessageReceived(msg.prefix, deepcopy(msg.payload), msg.channel, sender)
+end
+
+function Router:deliverOne(msg)
+    local from = self.instances[msg.from]
+    local ch = msg.channel
+    if ch == "WHISPER" then
+        -- Realm-aware match ONLY: a bare "Bob" target from a GhostRealm sender
+        -- reaches Bob-GhostRealm, never Bob-EvilRealm.
+        for _, key in ipairs(self.order) do
+            local inst = self.instances[key]
+            if inst.key ~= from.key and self:senderAs(inst, from) == msg.target then
+                self:deliverTo(inst, msg, from)
+            end
+        end
+    elseif ch == "PARTY" or ch == "RAID" then
+        for _, other in ipairs(self.groups[from.key] or {}) do
+            local inst = self.instances[other]
+            if inst then self:deliverTo(inst, msg, from) end
+        end
+    elseif ch == "GUILD" then
+        for _, other in ipairs(self.guilds[from.key] or {}) do
+            local inst = self.instances[other]
+            if inst then self:deliverTo(inst, msg, from) end
+        end
+    end
+end
+
+-- Drain the queue until quiescent. New messages queued during delivery (acks,
+-- responses) are processed in turn. MAX_ROUNDS backstops a resend loop.
+function Router:pump()
+    local rounds = 0
+    while #self.queue > 0 do
+        rounds = rounds + 1
+        if rounds > self.MAX_ROUNDS then
+            error("Router:pump exceeded MAX_ROUNDS -- comm loop?")
+        end
+        self:deliverOne(table.remove(self.queue, 1))
+    end
+end
+
+-- Model a party: sets each member's group stubs to see the others.
+function Router:group(...)
+    local names = { ... }
+    for _, n in ipairs(names) do
+        local peers = {}
+        for _, m in ipairs(names) do if m ~= n then table.insert(peers, m) end end
+        self.groups[n] = peers
+        local inst = self.instances[n]
+        inst.state.inGroup = (#peers > 0)
+        inst.state.partyMembers = {}
+        for _, m in ipairs(peers) do
+            table.insert(inst.state.partyMembers, self:senderAs(self.instances[m], inst))
+        end
+    end
+end
+
+function Router:ungroupAll()
+    for name, inst in pairs(self.instances) do
+        self.groups[name] = {}
+        inst.state.inGroup = false
+        inst.state.partyMembers = {}
+    end
+end
+
+-- Model a guild: records co-guild membership AND drives each member's guild
+-- roster stubs so IsGuildMember sees the others. Args are full keys.
+function Router:guild(...)
+    local keys = { ... }
+    for _, n in ipairs(keys) do
+        local peers = {}
+        for _, m in ipairs(keys) do if m ~= n then table.insert(peers, m) end end
+        self.guilds[n] = peers
+        local inst = self.instances[n]
+        inst.state.guildMembers = {}
+        for _, m in ipairs(peers) do
+            table.insert(inst.state.guildMembers, self:senderAs(self.instances[m], inst))
+        end
+    end
+end
+
+----------------------------------------------------------------------
+-- Build one isolated instance: its own env, WoW-API stubs, and addon copy.
+----------------------------------------------------------------------
+-- Realm every instance lives on unless the caller names another one. A realm
+-- whose name carries a space, hyphen or apostrophe normalizes away in the
+-- canonical key ("Old Blanchy" -> "OldBlanchy"), so the realm is a parameter:
+-- the same flows are run on a multi-word realm to prove the keys still line up.
+local DEFAULT_REALM = "GhostRealm"
+local function normRealm(realm)
+    return ((realm or ""):gsub("[%s%-']", ""))
+end
+
+local function makeInstance(name, realm)
+    realm = realm or DEFAULT_REALM
+    local inst = { name = name, realm = realm, realmKey = normRealm(realm),
+                   key = name .. "-" .. normRealm(realm) }
+    local state = { inGroup = false, inRaid = false, partyMembers = {}, guildMembers = {} }
+    local frames, timers, deferred = {}, {}, {}
+    inst.state, inst.frames, inst.timers, inst.deferred = state, frames, timers, deferred
+
+    local env = setmetatable({}, { __index = _G })   -- Lua stdlib falls through
+
+    function env.CreateFrame(_, _)
+        local f = { scripts = {}, events = {} }
+        function f:RegisterEvent(e) self.events[e] = true end
+        function f:UnregisterEvent(e) self.events[e] = nil end
+        function f:UnregisterAllEvents() self.events = {} end
+        function f:SetScript(k, fn) self.scripts[k] = fn end
+        function f:GetScript(k) return self.scripts[k] end
+        function f:RegisterAllEvents() end
+        function f:Show() end
+        function f:Hide() end
+        function f:SetSize() end
+        function f:SetPoint() end
+        table.insert(frames, f)
+        return f
+    end
+
+    function env.UnitName(unit)
+        if unit == "player" then return name end
+        local i = tonumber(unit:match("^party(%d+)$") or unit:match("^raid(%d+)$"))
+        local full = i and state.partyMembers[i]
+        if not full then return nil end
+        return full:match("^([^-]+)")
+    end
+    function env.GetUnitName(unit, withRealm)
+        if unit == "player" then return withRealm and inst.key or name end
+        local i = tonumber(unit:match("^party(%d+)$") or unit:match("^raid(%d+)$"))
+        local full = i and state.partyMembers[i]
+        if not full then return nil end
+        if withRealm then return full end
+        return full:match("^([^-]+)")
+    end
+    function env.GetRealmName() return realm end
+    function env.UnitClass() return "Warrior", "WARRIOR" end
+    function env.UnitLevel() return 70 end
+    function env.UnitFactionGroup() return "Alliance" end
+    function env.IsInGroup() return state.inGroup end
+    function env.IsInRaid() return state.inRaid end
+    function env.GetNumGroupMembers() return #state.partyMembers end
+    function env.GetNumSubgroupMembers() return #state.partyMembers end
+    -- Guild roster stubs (for the COMM_REV 5 guild arm). IsGuildMember reads
+    -- only field 1 (name) from GetGuildRosterInfo, so that is all we return.
+    function env.IsInGuild() return #state.guildMembers > 0 end
+    function env.GetNumGuildMembers() return #state.guildMembers end
+    function env.GetGuildRosterInfo(i) return state.guildMembers[i] end
+    function env.GuildRoster() end
+
+    env.C_Timer = {
+        After = function(_, fn) table.insert(deferred, fn) end,
+        NewTimer = function(_, fn)
+            local h = { fn = fn, cancelled = false }
+            function h:Cancel() self.cancelled = true end
+            table.insert(timers, h)
+            return h
+        end,
+    }
+    env.time = os.time
+    env.strtrim = function(s) return (s:gsub("^%s+", ""):gsub("%s+$", "")) end
+    env.format = string.format
+    env.wipe = function(t) for k in pairs(t) do t[k] = nil end return t end
+    env.RAID_CLASS_COLORS = { WARRIOR = { r = 1, g = 0.8, b = 0.6 } }
+    env.SlashCmdList = {}
+    env.UISpecialFrames = {}
+    env.print = function() end   -- silence the addon's load banner
+
+    -- AceComm: SendCommMessage routes onto the shared wire, tagged with sender.
+    local AceComm = {
+        RegisterComm = function() end,
+        SendCommMessage = function(_, prefix, text, channel, target)
+            Router:enqueue(inst.key, prefix, text, channel, target)
+        end,
+    }
+    local AceSerializer = {
+        Serialize = function(_, d) return d end,
+        Deserialize = function(_, m) return true, m end,
+    }
+    env.LibStub = function(libname)
+        if libname == "AceComm-3.0" then return AceComm end
+        if libname == "AceSerializer-3.0" then return AceSerializer end
+        error("unexpected LibStub: " .. tostring(libname))
+    end
+
+    inst.env = env
+
+    -- Load the addon (same files pb_harness loads) into this env, in order.
+    for _, file in ipairs({ "Core", "DataStore", "Orders", "Comm", "RecipeDB" }) do
+        loadFileInEnv(BASE .. "/" .. file .. ".lua", env)()
+    end
+
+    -- Fire load events on every frame that registered them.
+    inst.fire = function(event, ...)
+        for _, f in ipairs(frames) do
+            if f.events[event] and f.scripts.OnEvent then f.scripts.OnEvent(f, event, ...) end
+        end
+    end
+    -- Run (and clear) any C_Timer.After callbacks queued so far. Lets a test
+    -- drive the addon's delayed login work (SyncOnlineContacts, guild HELLO).
+    inst.runDeferred = function()
+        local q = {}
+        for i, fn in ipairs(deferred) do q[i] = fn end
+        for i = #deferred, 1, -1 do deferred[i] = nil end
+        for _, fn in ipairs(q) do fn() end
+    end
+    -- Same for C_Timer.NewTimer handles. The panel repaint that follows inbound
+    -- data is coalesced onto one of these (Comm:QueueUIRefresh), so a test that
+    -- asserts a refresh has to let the timer fire.
+    inst.runTimers = function()
+        local q = {}
+        for i, t in ipairs(timers) do q[i] = t end
+        for i = #timers, 1, -1 do timers[i] = nil end
+        for _, t in ipairs(q) do if not t.cancelled then t.fn() end end
+    end
+    inst.fire("ADDON_LOADED", "ProfessionBuddy")
+    inst.fire("PLAYER_LOGIN")
+    inst.fire("PLAYER_ENTERING_WORLD")
+    -- Drop the deferred callbacks queued during setup so tests trigger them
+    -- deliberately (the setup PLAYER_ENTERING_WORLD ran before any guild/group).
+    for i = #deferred, 1, -1 do deferred[i] = nil end
+
+    inst.addon = env.ProfBuddy
+    inst.comm  = env.ProfBuddy.Comm
+    inst.ds    = env.ProfBuddy.DataStore
+    inst.orders = env.ProfBuddy.Orders
+    assert(inst.comm and inst.comm._ready, name .. ": Comm did not init")
+    assert(inst.addon:PlayerKey() == inst.key,
+        name .. ": PlayerKey " .. tostring(inst.addon:PlayerKey()) .. " != " .. inst.key)
+
+    Router:register(inst)
+    return inst
+end
+
+-- Seed an instance's own character with a profession + inventory so it has
+-- something real to serve on a sync.
+local function seedChar(inst, prof, recipeName, spellID, itemID, count)
+    local DS = inst.ds
+    DS:EnsureCharacter()
+    DS:SetProfessionData(prof, { skillLevel = 300, maxSkill = 375,
+        recipes = { [recipeName] = { spellID = spellID } } })
+    DS:SetInventory("bags", { [itemID] = count })
+end
+
+----------------------------------------------------------------------
+-- Build the cast and run the ghost tests.
+----------------------------------------------------------------------
+local A = makeInstance("Ana", "GhostRealm")
+local B = makeInstance("Bob", "GhostRealm")
+local S = makeInstance("Sneaky", "GhostRealm")      -- ungrouped stranger
+
+seedChar(A, "Tailoring",   "Bolt of Runecloth", 18401, 14047, 20)
+seedChar(B, "Alchemy",     "Elixir of Fortitude", 3188, 13446, 12)
+
+local pass = 0
+local function ok(msg) pass = pass + 1; print("  PASS " .. msg) end
+local function check(cond, msg) if not cond then error("GHOST FAIL: " .. msg) end end
+
+-- ── GP1: HELLO handshake while grouped -> both see each other ────────
+-- HELLO stores a lightweight CHARACTER summary (via StoreLightweight); the
+-- trusted-contact entry is a separate, user-driven step (Add / sync / auto).
+Router:group(A.key, B.key)
+A.comm:BroadcastHello()
+Router:pump()
+check(B.addon.db.characters[A.key], "GP1: Bob did not record Ana from HELLO")
+check(A.addon.db.characters[B.key], "GP1: Ana did not record Bob from HELLO_ACK")
+ok("GP1 HELLO handshake -- both instances recorded each other (lightweight)")
+
+-- ── GP2: SYNC round trip -> Ana ends up holding Bob's real profession ─
+A.comm:RequestSync("Bob", true)     -- trusts Bob on Ana's side, sends SYNC_REQ
+Router:pump()
+local bobOnAna = A.addon.db.characters[B.key]
+check(bobOnAna and bobOnAna.isRemote, "GP2: Ana has no remote record for Bob")
+check(bobOnAna.professions and bobOnAna.professions["Alchemy"],
+    "GP2: Bob's Alchemy did not sync to Ana")
+check(bobOnAna.professions["Alchemy"].recipes["Elixir of Fortitude"],
+    "GP2: Bob's recipe did not sync to Ana")
+ok("GP2 SYNC round trip -- Bob's Alchemy synced to Ana over the wire")
+
+-- ── GP3: an ungrouped, untrusted stranger is served nothing ──────────
+S.comm:RequestSync("Ana", true)     -- Sneaky asks Ana for a sync
+Router:pump()
+check(S.addon.db.characters[A.key] == nil,
+    "GP3: Ana served her data to an untrusted stranger")
+ok("GP3 stranger refused -- Ana served nothing to an untrusted requester")
+
+-- ── GP4: cross-realm same-name spoof is refused ──────────────────────
+-- A ghost on another realm sharing Bob's NAME must not inherit Bob's trust.
+local Bspoof = makeInstance("Bob", "EvilRealm")
+seedChar(Bspoof, "Alchemy", "Fake Elixir", 1, 13446, 1)
+Bspoof.comm:RequestSync("Ana", true)   -- spoofed Bob (other realm) asks Ana
+Router:pump()
+-- Ana trusts Bob-GhostRealm (from GP2), NOT Bob-EvilRealm.
+check(Bspoof.addon.db.characters[A.key] == nil,
+    "GP4: cross-realm same-name spoof pulled Ana's data")
+ok("GP4 cross-realm spoof refused -- Bob-EvilRealm did not inherit Bob-GhostRealm's trust")
+
+-- ── GP7: order lifecycle round trip (new -> ack -> complete) ─────────
+-- Ana asks Bob to craft. Bob receives ORDER_NEW, acks it (clearing Ana's
+-- retry outbox), then completes it and the terminal status propagates back.
+local order = A.orders:Create({ crafter = B.key,
+    item = { id = 14048, name = "Bolt of Runecloth", profession = "Tailoring" },
+    quantity = 2 })
+check(order, "GP7: order create failed")
+A.comm:SendOrderNew(order)
+Router:pump()
+check(B.addon.db.orders[order.id], "GP7: Bob never received the order")
+check(A.addon.db.orderOutbox[order.id .. ":new"] == nil,
+    "GP7: Bob's ACK did not clear Ana's retry outbox")
+
+local bOrder = B.addon.db.orders[order.id]
+bOrder.status = "completed"
+bOrder.completedBy = "crafter"
+B.comm:SendOrderUpdate(bOrder)
+Router:pump()
+check(A.addon.db.orders[order.id].status == "completed",
+    "GP7: completion did not propagate back to Ana")
+ok("GP7 order lifecycle -- new/ack/complete crossed the wire both directions")
+
+-- ── GP5: guild trust + sync (co-guilded, NOT grouped) [COMM_REV 5] ───
+-- Ungroup first so trust can ONLY come from the guild arm, never a lingering
+-- party. Carol and Ana share a guild but no group; guild HELLO establishes
+-- mutual awareness and Carol then pulls Ana's full data over guild trust.
+Router:ungroupAll()
+local C = makeInstance("Carol", "GhostRealm")
+seedChar(C, "Enchanting", "Runed Arcanite Rod", 22757, 12800, 5)
+Router:guild(A.key, C.key)
+-- Turn ON "auto-add party members" on both sides. A guild HELLO must STILL NOT
+-- create a Friends contact: auto-add is for party members, and guild trust is
+-- live-only. (Regression guard for the in-game bug where guildmates showed up
+-- in Friends as trusted=false, autoSync=false seen entries.)
+A.addon.db.settings = A.addon.db.settings or {}; A.addon.db.settings.autoAddParty = true
+C.addon.db.settings = C.addon.db.settings or {}; C.addon.db.settings.autoAddParty = true
+-- Spy on Carol's Guild-tab refresh: incoming guildmate data must refresh it live
+-- (NotifyUIRefresh had no GuildPanel hook, so the open tab went stale in-game).
+C.addon.GuildPanel = { n = 0, Refresh = function(self) self.n = self.n + 1 end }
+
+-- Simulate a /reload: already guilded at init, so there is NO not-guilded to
+-- guilded transition. The roster-load path (GUILD_ROSTER_UPDATE) must still
+-- announce us. This is exactly the case that failed in-game on /reload before
+-- the fix; the old transition-only broadcast would produce nothing here.
+A.comm._inGuild = true
+A.comm._guildHelloDone = nil
+A.fire("GUILD_ROSTER_UPDATE")
+A.runDeferred()          -- runs the 2s-delayed BroadcastGuildHello
+Router:pump()
+-- A HELLO that arrived on GUILD is still acked, but the ack is delayed a few
+-- seconds: one broadcast reaches every PB guildmate at once, so the replies are
+-- spread instead of arriving as one N-whisper burst. Run Carol's timer.
+C.runDeferred()
+Router:pump()
+check(C.addon.db.characters[A.key], "GP5: guild HELLO did not fire on roster load (the /reload path)")
+check(A.addon.db.characters[C.key], "GP5: Ana did not record Carol from HELLO_ACK")
+-- One guild HELLO reaches every PB client at once, so the repaint it triggers is
+-- coalesced onto a one-second timer rather than run per message. Fire it.
+C.runTimers()
+check(C.addon.GuildPanel.n > 0, "GP5: incoming guild data did not refresh Carol's Guild tab")
+check(C.addon.db.contacts[A.key] == nil and A.addon.db.contacts[C.key] == nil,
+    "GP5: guild HELLO auto-added a Friends contact despite the sender being guild-only")
+-- Announce-once: a second roster update this session must NOT re-broadcast.
+A.fire("GUILD_ROSTER_UPDATE")
+A.runDeferred()
+check(#Router.queue == 0, "GP5: guild HELLO re-broadcast on a second roster update (announce-once failed)")
+-- Use the real Guild-tab trigger: RequestGuildSync pulls full data WITHOUT
+-- persisting a trusted contact (guild trust is live-only).
+C.comm:RequestGuildSync(A.key)
+Router:pump()
+local anaOnCarol = C.addon.db.characters[A.key]
+check(anaOnCarol and anaOnCarol.professions and anaOnCarol.professions["Tailoring"],
+    "GP5: Ana's Tailoring did not sync to Carol over guild trust")
+check(anaOnCarol.professions["Tailoring"].recipes["Bolt of Runecloth"],
+    "GP5: Ana's recipe did not sync to Carol")
+-- The locale-stable spellID must survive the sync (it is what resolves a
+-- recipe's icon for a remote character, e.g. enchants that have no itemID).
+check(anaOnCarol.professions["Tailoring"].recipes["Bolt of Runecloth"].spellID == 18401,
+    "GP5: synced recipe lost its spellID over the wire")
+check(C.addon.db.contacts[A.key] == nil,
+    "GP5: guild sync wrongly persisted a trusted contact (trust must stay live-only)")
+-- And a guildless stranger is still refused even now.
+check(S.addon.db.characters[A.key] == nil, "GP5: stranger gained access via the guild arm")
+ok("GP5 guild trust+sync -- co-guilded (not grouped) synced via RequestGuildSync, no persisted contact")
+
+-- ── GP6: incremental auto-push convergence + suppression ─────────────
+-- The current "delta" path: on an inventory/profession change (BAG_UPDATE),
+-- debounce, then auto-push a full SYNC_DATA to autoSync contacts, suppressed by
+-- a state signature so an unchanged state does not re-push. (The lightweight
+-- itemID-delta with sequence numbers and gap-triggered resync is a FUTURE item,
+-- not this wire, so GP6 covers what exists: convergence and suppression.)
+Router:ungroupAll()
+Router:group(A.key, B.key)                        -- mutual trust for the push
+A.addon.db.contacts[B.key] = { trusted = true, autoSync = true, lastSync = 0 }
+B.addon.db.contacts[A.key] = { trusted = true, autoSync = false, lastSync = 0 }
+
+-- Drive the REAL path: fire BAG_UPDATE, then run the debounce timer it armed.
+local function fireIncr(inst)
+    local n0 = #inst.timers
+    inst.fire("BAG_UPDATE")
+    for i = n0 + 1, #inst.timers do
+        local t = inst.timers[i]
+        if t and not t.cancelled then t.fn() end
+    end
+end
+
+-- Baseline: first push carries Ana's current inventory to Bob.
+fireIncr(A)
+Router:pump()
+local aOnB = B.addon.db.characters[A.key]
+check(aOnB and aOnB.inventory and aOnB.inventory.bags[14047] == 20,
+    "GP6: baseline auto-push did not reach Bob")
+
+-- Change Ana's inventory, push again -> Bob converges to the new counts.
+A.ds:SetInventory("bags", { [14047] = 99, [2589] = 5 })
+fireIncr(A)
+Router:pump()
+aOnB = B.addon.db.characters[A.key]
+check(aOnB.inventory.bags[14047] == 99 and aOnB.inventory.bags[2589] == 5,
+    "GP6: Bob did not converge to Ana's changed inventory")
+
+-- Suppression: with no state change, the signature matches, so nothing pushes.
+local before = #Router.queue
+fireIncr(A)
+check(#Router.queue == before,
+    "GP6: unchanged state still re-pushed (signature suppression failed)")
+ok("GP6 incremental auto-push -- converges on change, suppressed when unchanged")
+
+-- ── GP11: INCR delta path + gap-triggered auto-resync [COMM_REV 7] ────
+-- With both sides known to be rev-7, an inventory change auto-pushes a small
+-- INCR delta (not a full payload) and the receiver applies it. A DROPPED delta
+-- opens a sequence gap; the receiver drops the stale delta and pulls a fresh
+-- full sync, so it recovers instead of drifting. Fresh instances so no prior
+-- baseline, contact or serve-cooldown state leaks in.
+local D1 = makeInstance("Deltaone", "GhostRealm")
+local D2 = makeInstance("Deltatwo", "GhostRealm")
+seedChar(D1, "Tailoring", "Bolt of Runecloth", 18401, 100, 10)
+seedChar(D2, "Alchemy",   "Elixir of Fortitude", 3188, 13446, 12)
+Router:ungroupAll()
+Router:group(D1.key, D2.key)
+D1.addon.db.contacts[D2.key] = { trusted = true, autoSync = true,  lastSync = 0, lastCommRev = 7 }
+D2.addon.db.contacts[D1.key] = { trusted = true, autoSync = false, lastSync = 0, lastCommRev = 7 }
+
+-- Baseline: first push is a full SYNC_DATA (establishes the epoch both sides).
+D1.ds:SetInventory("bags", { [100] = 10 })
+fireIncr(D1); Router:pump()
+check(D2.addon.db.characters[D1.key] and D2.addon.db.characters[D1.key].inventory.bags[100] == 10,
+    "GP11: baseline full sync did not reach Deltatwo")
+
+-- An inventory change to a rev-7 contact goes as an INCR delta, and applies.
+D1.ds:SetInventory("bags", { [100] = 10, [200] = 3 })
+fireIncr(D1)
+local sawIncr = false
+for _, m in ipairs(Router.queue) do if m.payload and m.payload._type == "INCR" then sawIncr = true end end
+check(sawIncr, "GP11: a change to a rev-7 contact should be an INCR delta, not a full sync")
+Router:pump()
+check(D2.addon.db.characters[D1.key].inventory.bags[200] == 3, "GP11: INCR delta was not applied")
+
+-- Gap recovery: drop one delta, then change again. Deltatwo sees a seq gap,
+-- drops the stale delta, and SYNC_REQs a fresh baseline -> converges anyway.
+D1.ds:SetInventory("bags", { [100] = 10, [200] = 3, [300] = 7 })          -- change #1
+fireIncr(D1)
+for i = #Router.queue, 1, -1 do
+    if Router.queue[i].payload and Router.queue[i].payload._type == "INCR" then
+        table.remove(Router.queue, i)                                     -- DROP the delta
+    end
+end
+D1.ds:SetInventory("bags", { [100] = 10, [200] = 3, [300] = 7, [400] = 1 })  -- change #2
+fireIncr(D1); Router:pump()
+local binv = D2.addon.db.characters[D1.key].inventory.bags
+check(binv[300] == 7 and binv[400] == 1 and binv[200] == 3,
+    "GP11: Deltatwo did not recover to Deltaone's inventory after a dropped delta")
+ok("GP11 INCR delta path + gap recovery -- delta applied; dropped delta auto-resynced to a full")
+
+-- ── GP8: guild order board -- claim race, exactly one winner [COMM_REV 6] ──
+-- Requester posts an open order to the guild; two co-guilded crafters both claim;
+-- the requester (single authority) assigns the FIRST claim and closes the board.
+local RQ = makeInstance("Requester", "GhostRealm")
+local X1 = makeInstance("Crafter1", "GhostRealm")
+local X2 = makeInstance("Crafter2", "GhostRealm")
+Router:ungroupAll()
+Router:guild(RQ.key, X1.key, X2.key)
+
+local open = RQ.orders:CreateOpen({
+    item = { id = 14048, name = "Bolt of Runecloth", profession = "Tailoring" }, quantity = 2 })
+RQ.comm:BroadcastOpenOrder(open)
+Router:pump()
+check(RQ.addon.db.orders[open.id] and RQ.addon.db.orders[open.id].status == "open",
+    "GP8: requester's own open order not stored as open")
+check(X1.addon.db.orderBoard[open.id] and X2.addon.db.orderBoard[open.id],
+    "GP8: crafters did not receive the open order on their board")
+
+X1.comm:ClaimOrder(X1.addon.db.orderBoard[open.id])   -- enqueued first -> wins
+X2.comm:ClaimOrder(X2.addon.db.orderBoard[open.id])
+Router:pump()
+
+local ro = RQ.addon.db.orders[open.id]
+check(ro.status == "accepted" and ro.crafter == X1.key,
+    "GP8: requester did not assign to the first claimer")
+check(X1.addon.db.orders[open.id] and X1.addon.db.orders[open.id].status == "accepted",
+    "GP8: winner did not receive the directed order at accepted")
+check(X2.addon.db.orders[open.id] == nil, "GP8: loser wrongly got a directed order")
+check(X1.addon.db.orderBoard[open.id] == nil and X2.addon.db.orderBoard[open.id] == nil,
+    "GP8: board entry not cleared for both crafters after assign")
+ok("GP8 order board claim race -- exactly one winner, board closed for the rest")
+
+-- ── GP9: the claimed order runs the full directed lifecycle ──────────
+X1.orders:MarkCrafted(open.id)
+X1.comm:SendOrderUpdate(X1.addon.db.orders[open.id])
+Router:pump()
+check(RQ.addon.db.orders[open.id].status == "crafted", "GP9: crafted did not reach the requester")
+RQ.orders:ConfirmReceived(open.id)
+RQ.comm:SendOrderUpdate(RQ.addon.db.orders[open.id])
+Router:pump()
+check(RQ.addon.db.orders[open.id].status == "completed"
+      and X1.addon.db.orders[open.id].status == "completed",
+    "GP9: claimed order did not complete on both sides")
+ok("GP9 claimed order -- crafted then completed across the directed flow")
+
+-- ── GP10: board trust + anti-spoof ──────────────────────────────────
+local open2 = RQ.orders:CreateOpen({
+    item = { id = 14048, name = "Bolt of Runecloth", profession = "Tailoring" }, quantity = 1 })
+-- A receiver accepts one NEW board post per sender per 5s, and the harness posts
+-- GP8's and this one inside the same wall-clock second. Clear the stamp so GP10
+-- exercises the anti-spoof path it is about rather than the rate limit.
+-- The poster now spaces its OWN sends past that same cooldown, so clear its
+-- send stamp too or this post would sit in a deferred timer instead of going out.
+X1.comm._lastOpenAt, X2.comm._lastOpenAt = nil, nil
+RQ.comm._lastOpenSendAt = nil
+RQ.comm:BroadcastOpenOrder(open2)
+Router:pump()
+-- (a) a non-guild stranger's claim is dropped at the trust gate
+S.comm:ClaimOrder({ id = open2.id, requester = RQ.key })
+Router:pump()
+check(RQ.addon.db.orders[open2.id].status == "open",
+    "GP10: a non-guild stranger's claim was honored")
+-- (b) only the poster may close: a guildmate who is not the requester cannot
+local before = X1.addon.db.orderBoard[open2.id]
+check(before ~= nil, "GP10: setup -- X1 should have open2 on its board")
+X2.comm:BroadcastOrderClosed(open2.id, "assigned")   -- X2 is not the poster
+Router:pump()
+check(X1.addon.db.orderBoard[open2.id] ~= nil,
+    "GP10: a non-requester's ORDER_CLOSED wrongly cleared the board")
+ok("GP10 board anti-spoof -- stranger claim ignored, non-poster close ignored")
+
+-- ── GP12: the whole board flow on a MULTI-WORD realm ────────────────
+-- Same claim race as GP8 and the same handoff as GP9, but on "Old Blanchy",
+-- where every key crosses the normalization boundary: the instance calls itself
+-- Name-OldBlanchy, the order id contains the realm, and the claim arrives from
+-- a sender AceComm spelled without the space. If any of those compare raw, the
+-- winner never recognizes itself as the crafter and the order is invisible to
+-- the one character it belongs to.
+local MW = "Old Blanchy"
+local RQ2 = makeInstance("Bossman", MW)
+local Y1  = makeInstance("Hammerhand", MW)
+local Y2  = makeInstance("Threadbare", MW)
+check(RQ2.key == "Bossman-OldBlanchy", "GP12: realm not normalized in the instance key")
+Router:ungroupAll()
+Router:guild(RQ2.key, Y1.key, Y2.key)
+
+local open3 = RQ2.orders:CreateOpen({
+    item = { id = 14048, name = "Bolt of Runecloth", profession = "Tailoring" }, quantity = 2 })
+check(open3.id:find("OldBlanchy", 1, true), "GP12: the order id is not minted from the canonical key")
+RQ2.comm:BroadcastOpenOrder(open3)
+Router:pump()
+check(Y1.addon.db.orderBoard[open3.id] and Y2.addon.db.orderBoard[open3.id],
+    "GP12: the open order did not reach the boards on a multi-word realm")
+
+Y1.comm:ClaimOrder(Y1.addon.db.orderBoard[open3.id])   -- enqueued first -> wins
+Y2.comm:ClaimOrder(Y2.addon.db.orderBoard[open3.id])
+Router:pump()
+
+local ro3 = RQ2.addon.db.orders[open3.id]
+check(ro3.status == "accepted" and ro3.crafter == Y1.key,
+    "GP12: the requester did not assign to the first claimer")
+check(Y2.addon.db.orders[open3.id] == nil, "GP12: the loser wrongly got a directed order")
+check(Y1.addon.db.orderBoard[open3.id] == nil and Y2.addon.db.orderBoard[open3.id] == nil,
+    "GP12: the board entry was not cleared after the assign")
+
+-- The winner's own client has to see itself as the crafter, or the order is
+-- there in SavedVariables and nowhere in the UI.
+local won = Y1.addon.db.orders[open3.id]
+check(won and won.status == "accepted", "GP12: the winner did not receive the directed order")
+check(Y1.orders:RoleFor(won) == "crafter",
+    "GP12: RoleFor on the winner returned " .. tostring(Y1.orders:RoleFor(won)) .. ", want crafter")
+local inc = Y1.orders:GetIncoming()
+check(#inc == 1 and inc[1].id == open3.id,
+    "GP12: GetIncoming holds " .. #inc .. " orders on the winner, want 1")
+local acts = {}
+for _, a in ipairs(Y1.orders:LegalActions(won)) do acts[a] = true end
+check(acts.markCrafted, "GP12: the winner has no crafted action on the claimed order")
+
+-- and the rest of the directed lifecycle still crosses the wire.
+Y1.orders:MarkCrafted(open3.id)
+Y1.comm:SendOrderUpdate(Y1.addon.db.orders[open3.id])
+Router:pump()
+check(RQ2.addon.db.orders[open3.id].status == "crafted", "GP12: crafted did not reach the requester")
+RQ2.orders:ConfirmReceived(open3.id)
+RQ2.comm:SendOrderUpdate(RQ2.addon.db.orders[open3.id])
+Router:pump()
+check(RQ2.addon.db.orders[open3.id].status == "completed"
+      and Y1.addon.db.orders[open3.id].status == "completed",
+    "GP12: the claimed order did not complete on both sides")
+ok("GP12 multi-word realm -- claim race, winner sees itself as crafter, full lifecycle")
+
+print("ALL GHOST HARNESS TESTS PASS (" .. pass ..
+    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 auto-push, GP7 order loop, GP8 board race, GP9 board lifecycle, GP10 board anti-spoof, GP11 delta+recovery, GP12 multi-word realm board run)")

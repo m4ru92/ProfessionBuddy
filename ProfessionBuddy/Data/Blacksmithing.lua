@@ -3945,7 +3945,7 @@ local recipes = {
         itemID = 9060,
         skillReq = 200,
         sources = {
-            { method = "vendor", faction = "Both", detail = "vendor-sold BS plan (specific vendor unconfirmed)" },
+            { method = "vendor", faction = "Both" },
         },
         category = "Trade Good",
         skillRange = { 200, 225, 237, 250 },

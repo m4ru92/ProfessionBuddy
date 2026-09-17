@@ -124,7 +124,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32494, count = 1, name = "Destruction Holo-gogs" },
             { itemID = 22456, count = 4, name = "Primal Shadow" },
@@ -233,7 +233,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -268,7 +268,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -346,7 +346,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -364,7 +364,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -581,7 +581,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32473, count = 1, name = "Tankatronic Goggles" },
             { itemID = 35128, count = 2, name = "Hardened Khorium" },
@@ -597,7 +597,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32480, count = 1, name = "Magnified Moon Specs" },
             { itemID = 21885, count = 6, name = "Primal Water" },
@@ -629,7 +629,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -647,7 +647,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32472, count = 1, name = "Justicebringer 2000 Specs" },
             { itemID = 21886, count = 8, name = "Primal Life" },
@@ -664,7 +664,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32476, count = 1, name = "Gadgetstorm Goggles" },
             { itemID = 23571, count = 2, name = "Primal Might" },
@@ -680,7 +680,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -698,7 +698,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -732,7 +732,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32461, count = 1, name = "Furious Gizmatic Goggles" },
             { itemID = 21884, count = 10, name = "Primal Fire" },
@@ -779,7 +779,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -797,7 +797,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32495, count = 1, name = "Powerheal 4000 Lens" },
             { itemID = 21886, count = 8, name = "Primal Life" },
@@ -813,7 +813,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32475, count = 1, name = "Living Replicator Specs" },
             { itemID = 21886, count = 5, name = "Primal Life" },
@@ -830,7 +830,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32478, count = 1, name = "Deathblow X11 Goggles" },
             { itemID = 22456, count = 12, name = "Primal Shadow" },
@@ -937,7 +937,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -955,7 +955,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32474, count = 1, name = "Surestrike Goggles v2.0" },
             { itemID = 22451, count = 12, name = "Primal Air" },
@@ -970,7 +970,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -1004,7 +1004,7 @@ local recipes = {
             { method = "trainer", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 370, 380, 390 },
+        skillRange = { 350, 370, 380, 390 },
         reagents = {
             { itemID = 23793, count = 6, name = "Heavy Knothide Leather" },
             { itemID = 23786, count = 1, name = "Khorium Power Core" },
@@ -1022,7 +1022,7 @@ local recipes = {
             { method = "drop", faction = "Both" },
         },
         category = "Armor",
-        skillRange = { 1, 390, 410, 430 },
+        skillRange = { 375, 390, 410, 430 },
         reagents = {
             { itemID = 32479, count = 1, name = "Wonderheal XT40 Shades" },
             { itemID = 21885, count = 4, name = "Primal Water" },
@@ -1136,7 +1136,7 @@ local recipes = {
         itemID = 21277,
         skillReq = 250,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Companion",
         skillRange = { 250, 320, 330, 340 },
@@ -1226,26 +1226,6 @@ local recipes = {
             { itemID = 6530, count = 1, name = "Nightcrawlers" },
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
         },
-    },
-    ["Arcanite Dragonling"] = {
-        spellID = 19830,
-        itemID = 0,
-        skillReq = 300,
-        sources = {
-            { method = "drop", faction = "Both" },
-        },
-        category = "Device",
-        skillRange = { 300, 300, 300, 300},
-    },
-    ["Battle Chicken"] = {
-        spellID = 13166,
-        itemID = 0,
-        skillReq = 230,
-        sources = {
-            { method = "automatic", faction = "Both" },
-        },
-        category = "Device",
-        skillRange = { 0, 0, 0, 0},
     },
     ["Blue Firework"] = {
         spellID = 23067,
@@ -1827,16 +1807,6 @@ local recipes = {
             { itemID = 14047, count = 4, name = "Runecloth" },
         },
     },
-    ["Mechanical Dragonling"] = {
-        spellID = 3969,
-        itemID = 0,
-        skillReq = 200,
-        sources = {
-            { method = "vendor", faction = "Both", detail = "Sold by Gnaz Blunderflame" },
-        },
-        category = "Device",
-        skillRange = { 200, 200, 200, 200},
-    },
     ["Mithril Casing"] = {
         spellID = 12599,
         itemID = 10561,
@@ -1847,16 +1817,6 @@ local recipes = {
         category = "Device",
         skillRange = { 215, 215, 235, 255 },
         reagents = { { itemID = 3860, count = 3, name = "Mithril Bar" } },
-    },
-    ["Mithril Mechanical Dragonling"] = {
-        spellID = 12624,
-        itemID = 0,
-        skillReq = 250,
-        sources = {
-            { method = "vendor", faction = "Both", detail = "Sold by Ruppo Zipcoil" },
-        },
-        category = "Device",
-        skillRange = { 250, 250, 250, 250},
     },
     ["Mithril Tube"] = {
         spellID = 12589,
@@ -2768,16 +2728,6 @@ local recipes = {
             { itemID = 4306, count = 1, name = "Silk Cloth" },
         },
     },
-    ["Summon Goblin Bomb"] = {
-        spellID = 13258,
-        itemID = 0,
-        skillReq = 230,
-        sources = {
-            { method = "automatic", faction = "Both" },
-        },
-        category = "Explosive",
-        skillRange = { 0, 0, 0, 0},
-    },
     ["Super Sapper Charge"] = {
         spellID = 30560,
         itemID = 23827,
@@ -3087,7 +3037,7 @@ local recipes = {
         itemID = 30542,
         skillReq = 350,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Trinket",
         skillRange = { 350, 350, 360, 370 },
@@ -3104,7 +3054,7 @@ local recipes = {
         itemID = 18984,
         skillReq = 285,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Trinket",
         skillRange = { 285, 285, 295, 305 },
@@ -3377,12 +3327,11 @@ local recipes = {
         itemID = 10577,
         skillReq = 205,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Trinket",
         skillRange = { 205, 205, 205, 205},
         reagents = {
-            { itemID = 10577, count = 1, name = "Goblin Mortar" },
             { itemID = 3860, count = 1, name = "Mithril Bar" },
             { itemID = 10505, count = 3, name = "Solid Blasting Powder" },
         },
@@ -3410,7 +3359,7 @@ local recipes = {
         itemID = 18986,
         skillReq = 285,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Trinket",
         skillRange = { 285, 285, 295, 305 },
@@ -3428,7 +3377,7 @@ local recipes = {
         itemID = 30544,
         skillReq = 350,
         sources = {
-            { method = "trainer", faction = "Both", detail = "trainer (cmangos list gap; auto-confirmed via DB2)" },
+            { method = "trainer", faction = "Both" },
         },
         category = "Trinket",
         skillRange = { 350, 350, 360, 370 },
