@@ -1756,8 +1756,28 @@ do
 end
 passed("T68 trust-timing race -- a not-yet-trusted message is held and replayed once trust resolves, bounded")
 
+-- ── T69: Favorites data layer (account-wide, local, NormKey-keyed) ────────────
+-- Pins live under db.favorites.contacts, keyed by the canonical NormKey so a
+-- bare name and its Name-Realm form are the same pin, and unfavoriting removes
+-- the entry rather than storing false. UI (star, sort-to-top, filter) is m4ru's
+-- in-game eyeball; this covers the load-bearing data.
+do
+    assert(not addon:IsFavorite("Pinme"), "T69: a fresh contact should not be a favorite")
+    addon:SetFavorite("Pinme", true)
+    assert(addon:IsFavorite("Pinme"), "T69: SetFavorite(true) did not stick")
+    assert(addon:IsFavorite("Pinme-TestRealm"), "T69: favorite not keyed by canonical NormKey")
+    assert(addon.db.favorites.contacts["Pinme-TestRealm"] == true,
+        "T69: not stored account-wide under the canonical key")
+    assert(addon:ToggleFavorite("Pinme") == false, "T69: toggle did not report the new (off) state")
+    assert(not addon:IsFavorite("Pinme"), "T69: toggle-off did not clear the favorite")
+    assert(addon.db.favorites.contacts["Pinme-TestRealm"] == nil, "T69: an unfavorite left a stale entry")
+    addon:SetFavorite(nil, true)
+    assert(not addon:IsFavorite(nil), "T69: a nil key must never be a favorite")
+end
+passed("T69 favorites data -- account-wide, NormKey-keyed pin/unpin, nil-safe")
+
 leaveGuild()
-print("ALL 68 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 69 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -1765,6 +1785,7 @@ print("ALL 68 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " + T55-T66 post-review hardening: remote prune, order id binding and caps,"
     .. " token and timestamp validation, guild serve budget, board send spacing,"
     .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
-    .. " coercion and T68 the trust-timing hold-and-replay race; "
+    .. " coercion, T68 the trust-timing hold-and-replay race and T69 the favorites"
+    .. " data layer; "
     .. pass .. " of them print a PASS line above)")
 

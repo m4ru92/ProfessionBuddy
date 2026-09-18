@@ -62,6 +62,33 @@ function addon:SameKey(a, b)
     return ka ~= nil and ka == addon:NormKey(b)
 end
 
+-- Favorites: a personal, account-wide, LOCAL-ONLY pin on a contact or guildmate
+-- (never synced, so no comm). Keyed by the canonical NormKey, so one pin covers a
+-- friend and the guildmate who are the same character and it survives a realm
+-- respelling. The table is created lazily, so it needs no db-defaults change.
+function addon:FavoriteContacts()
+    self.db = self.db or {}
+    self.db.favorites = self.db.favorites or {}
+    self.db.favorites.contacts = self.db.favorites.contacts or {}
+    return self.db.favorites.contacts
+end
+
+function addon:IsFavorite(key)
+    key = self:NormKey(key)
+    return key ~= nil and self:FavoriteContacts()[key] == true
+end
+
+function addon:SetFavorite(key, on)
+    key = self:NormKey(key)
+    if not key then return end
+    self:FavoriteContacts()[key] = on and true or nil
+end
+
+function addon:ToggleFavorite(key)
+    self:SetFavorite(key, not self:IsFavorite(key))
+    return self:IsFavorite(key)
+end
+
 ----------------------------------------------------------------------
 -- Schema 2 migration: canonical character keys
 -- Keys used to be stored with the realm spelled exactly as GetRealmName()

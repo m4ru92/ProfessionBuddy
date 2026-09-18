@@ -337,7 +337,7 @@ function FP:CreateContent(parent)
         return fs
     end
 
-    MakeHeader("Name", 6, 140)
+    MakeHeader("Name", 22, 124)
     MakeHeader("Professions", 150, 140)
     MakeHeader("Last Sync", 294, 80)
     MakeHeader("Auto-sync", 378, 60)
@@ -430,10 +430,35 @@ function FP:CreateRow(parent, index)
         bg:SetColorTexture(0.08, 0.08, 0.08, 0.3)
     end
 
+    -- Favorite star: its own hit-area so it toggles the pin without triggering
+    -- the row's Sync/Order actions. Filled gold = favorited, which sorts the row
+    -- to the top; dim = not favorited.
+    local favBtn = CreateFrame("Button", nil, row)
+    favBtn:SetSize(16, 16)
+    favBtn:SetPoint("LEFT", 4, 0)
+    local favTex = favBtn:CreateTexture(nil, "ARTWORK")
+    favTex:SetAllPoints()
+    favTex:SetTexture("Interface\\Common\\FavoritesIcon")
+    favBtn.icon = favTex
+    favBtn:SetScript("OnClick", function()
+        local key = row._contactKey
+        if not key then return end
+        addon:ToggleFavorite(key)
+        FP:Refresh()
+    end)
+    favBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Favorite")
+        GameTooltip:AddLine("Pin this contact to the top of the list.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    favBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    row.favBtn = favBtn
+
     -- Name
     local name = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    name:SetPoint("LEFT", 6, 0)
-    name:SetWidth(140)
+    name:SetPoint("LEFT", 22, 0)
+    name:SetWidth(124)
     name:SetJustifyH("LEFT")
     row.nameText = name
 
@@ -604,8 +629,11 @@ function FP:Refresh()
         table.insert(self.contactKeys, key)
     end
 
-    -- Sort: auto-sync first, then alphabetical
+    -- Sort: favorites first, then auto-sync, then alphabetical
     table.sort(self.contactKeys, function(a, b)
+        local aFav = addon:IsFavorite(a) and 1 or 0
+        local bFav = addon:IsFavorite(b) and 1 or 0
+        if aFav ~= bFav then return aFav > bFav end
         local aAuto = addon.db.contacts[a].autoSync and 1 or 0
         local bAuto = addon.db.contacts[b].autoSync and 1 or 0
         if aAuto ~= bAuto then return aAuto > bAuto end
@@ -639,6 +667,11 @@ function FP:UpdateRows()
         if key then
             row:Show()
             row._contactKey = key
+
+            -- Favorite star: bright gold when pinned, dim otherwise.
+            local fav = addon:IsFavorite(key)
+            row.favBtn.icon:SetDesaturated(not fav)
+            row.favBtn.icon:SetAlpha(fav and 1 or 0.28)
 
             local contact = addon.db.contacts[key]
             local charData = addon.db.characters[key]
