@@ -1267,8 +1267,106 @@ function OP:PaintBoardRow(row, entry, which, ctx)
     row.actionBtn:Show()
 end
 
+-- Item-favorites popup for the composer: pin/unpin the typed item and quick-fill
+-- from the pinned list. Hand-rolled (like the FriendsPanel order menu) to stay
+-- clear of the dropdown taint class.
+local function ensureItemFavMenu()
+    if OP._itemFavMenu then return OP._itemFavMenu end
+    local m = CreateFrame("Frame", "ProfBuddyItemFavMenu", UIParent, "BackdropTemplate")
+    m:SetFrameStrata("FULLSCREEN_DIALOG")
+    m:SetBackdrop({
+        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 12,
+        insets   = { left = 3, right = 3, top = 3, bottom = 3 },
+    })
+    m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
+    m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+    m:EnableMouse(true)
+    m:SetClampedToScreen(true)
+    m:Hide()
+    m.title = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    m.title:SetPoint("TOPLEFT", 8, -7)
+    m.title:SetTextColor(1, 0.82, 0)
+    m.title:SetText("Favorite items")
+    m.buttons = {}
+    local catcher = CreateFrame("Button", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:SetFrameStrata("DIALOG")
+    catcher:RegisterForClicks("AnyUp")
+    catcher:Hide()
+    catcher:SetScript("OnClick", function() m:Hide() end)
+    m:SetScript("OnShow", function() catcher:Show() end)
+    m:SetScript("OnHide", function() catcher:Hide() end)
+    table.insert(UISpecialFrames, "ProfBuddyItemFavMenu")
+    OP._itemFavMenu = m
+    return m
+end
+
+local function showItemFavMenu(anchorBtn, itemBox, qtyBox, refreshStar)
+    local m = ensureItemFavMenu()
+    local ROW_H = 18
+    local entries = {}
+    local current = strtrim(itemBox:GetText() or "")
+    if current ~= "" then
+        local pinned = addon:IsFavoriteItem(current)
+        entries[#entries + 1] = {
+            text = (pinned and "|cffff5555Unpin|r " or "|cffffd200Pin|r ") .. current,
+            onClick = function()
+                addon:ToggleFavoriteItem(current)
+                if refreshStar then refreshStar() end
+            end,
+        }
+    end
+    for _, fav in ipairs(addon:FavoriteItemList()) do
+        entries[#entries + 1] = {
+            text = "|TInterface\\Common\\FavoritesIcon:12:12|t " .. fav,
+            onClick = function()
+                itemBox:SetText(fav)
+                if qtyBox then qtyBox:SetFocus(); qtyBox:HighlightText() end
+                if refreshStar then refreshStar() end
+            end,
+        }
+    end
+    if #entries == 0 then
+        entries[1] = { text = "|cff888888No favorite items yet|r", disabled = true }
+    end
+
+    local maxW = m.title:GetStringWidth() + 16
+    for i, e in ipairs(entries) do
+        local b = m.buttons[i]
+        if not b then
+            b = CreateFrame("Button", nil, m)
+            b:SetHeight(ROW_H)
+            local hl = b:CreateTexture(nil, "HIGHLIGHT")
+            hl:SetAllPoints(); hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+            b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            b.text:SetPoint("LEFT", 8, 0); b.text:SetJustifyH("LEFT")
+            m.buttons[i] = b
+        end
+        b.text:SetText(e.text)
+        b:EnableMouse(not e.disabled)
+        b:SetScript("OnClick", function()
+            m:Hide()
+            if e.onClick then e.onClick() end
+        end)
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT", m, "TOPLEFT", 4, -24 - (i - 1) * ROW_H)
+        b:SetPoint("RIGHT", m, "RIGHT", -4, 0)
+        b:Show()
+        local tw = b.text:GetStringWidth() + 28
+        if tw > maxW then maxW = tw end
+    end
+    for i = #entries + 1, #m.buttons do m.buttons[i]:Hide() end
+    m:SetWidth(math.max(150, maxW))
+    m:SetHeight(24 + #entries * ROW_H + 8)
+    m:ClearAllPoints()
+    m:SetPoint("TOPLEFT", anchorBtn, "BOTTOMLEFT", 0, -2)
+    m:Show()
+end
+
 -- Three-row open-post composer at the top of the Guild Board.
---   Row 1: [ item name .......... ] [ qty ]
+--   Row 1: [*] [ item name ........ ] [ qty ]   ([*] pins / picks favorite items)
 --   Row 2: [ profession v ] [ mats v ]        [ Post ]
 --   Row 3: [ note ............................................. ]
 -- A named profession gates the claim (see PaintBoardRow); "Any profession"
@@ -1288,7 +1386,7 @@ function OP:BuildPostComposer(host)
 
     local item = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
     item:SetHeight(20)
-    item:SetPoint("TOPLEFT", 12, -4)
+    item:SetPoint("TOPLEFT", 34, -4)
     item:SetPoint("RIGHT", qty, "LEFT", -10, 0)
     item:SetAutoFocus(false); item:SetMaxLetters(120)
     item:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
@@ -1305,6 +1403,31 @@ function OP:BuildPostComposer(host)
     end)
     item:SetScript("OnEditFocusLost", updatePH)
     updatePH()
+
+    -- Favorite-items star: opens a small popup to pin the typed item or fill the
+    -- field from a pinned one. Gold when the current text is already pinned.
+    local favBtn = CreateFrame("Button", nil, composer)
+    favBtn:SetSize(16, 16)
+    favBtn:SetPoint("TOPLEFT", 12, -6)
+    local favTex = favBtn:CreateTexture(nil, "ARTWORK")
+    favTex:SetAllPoints()
+    favTex:SetTexture("Interface\\Common\\FavoritesIcon")
+    favBtn.icon = favTex
+    local function refreshFavStar()
+        local fav = addon:IsFavoriteItem(strtrim(item:GetText() or ""))
+        favBtn.icon:SetDesaturated(not fav)
+        favBtn.icon:SetAlpha(fav and 1 or 0.35)
+    end
+    favBtn:SetScript("OnClick", function() showItemFavMenu(favBtn, item, qty, refreshFavStar) end)
+    favBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Favorite items")
+        GameTooltip:AddLine("Pin the item you typed, or pick a pinned item to fill the field.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    favBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    item:HookScript("OnTextChanged", refreshFavStar)
+    refreshFavStar()
 
     -- Row 3: an optional note the claimer sees on the board tooltip and keeps on
     -- the order once it is claimed (the note plumbing already runs the whole

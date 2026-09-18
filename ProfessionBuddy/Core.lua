@@ -89,6 +89,47 @@ function addon:ToggleFavorite(key)
     return self:IsFavorite(key)
 end
 
+-- Item favorites: pinned crafting-order item NAMES. The order composer is a free
+-- text field, so these key by a normalized (trimmed, lower-cased) name and store
+-- the display spelling as the value. Account-wide and LOCAL only, like contacts.
+local function normFavItem(name)
+    if type(name) ~= "string" then return nil end
+    name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    if name == "" then return nil end
+    return name:lower(), name
+end
+
+function addon:FavoriteItems()
+    self.db = self.db or {}
+    self.db.favorites = self.db.favorites or {}
+    self.db.favorites.items = self.db.favorites.items or {}
+    return self.db.favorites.items
+end
+
+function addon:IsFavoriteItem(name)
+    local k = normFavItem(name)
+    return k ~= nil and self:FavoriteItems()[k] ~= nil
+end
+
+function addon:SetFavoriteItem(name, on)
+    local k, display = normFavItem(name)
+    if not k then return end
+    self:FavoriteItems()[k] = on and display or nil
+end
+
+function addon:ToggleFavoriteItem(name)
+    self:SetFavoriteItem(name, not self:IsFavoriteItem(name))
+    return self:IsFavoriteItem(name)
+end
+
+-- Pinned item display names, sorted case-insensitively (for the composer picker).
+function addon:FavoriteItemList()
+    local out = {}
+    for _, display in pairs(self:FavoriteItems()) do out[#out + 1] = display end
+    table.sort(out, function(a, b) return a:lower() < b:lower() end)
+    return out
+end
+
 ----------------------------------------------------------------------
 -- Schema 2 migration: canonical character keys
 -- Keys used to be stored with the realm spelled exactly as GetRealmName()

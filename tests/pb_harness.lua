@@ -1776,8 +1776,27 @@ do
 end
 passed("T69 favorites data -- account-wide, NormKey-keyed pin/unpin, nil-safe")
 
+-- ── T70: item-favorites data layer (name-normalized, account-wide, local) ─────
+-- The order composer is free text, so item favorites key by a trimmed/lowered
+-- name and keep the display spelling. The star, pin/unpin and quick-fill are UI
+-- (m4ru eyeballs); this covers the data.
+do
+    assert(not addon:IsFavoriteItem("Flask of Fortification"), "T70: fresh item should not be a favorite")
+    addon:SetFavoriteItem("Flask of Fortification", true)
+    assert(addon:IsFavoriteItem("Flask of Fortification"), "T70: SetFavoriteItem(true) did not stick")
+    assert(addon:IsFavoriteItem("  flask of fortification "), "T70: item pin not normalized (trim/case)")
+    local list = addon:FavoriteItemList()
+    assert(#list == 1 and list[1] == "Flask of Fortification", "T70: display spelling not kept in the list")
+    assert(addon:ToggleFavoriteItem("FLASK OF FORTIFICATION") == false, "T70: toggle-off did not report off")
+    assert(not addon:IsFavoriteItem("Flask of Fortification"), "T70: toggle-off left it pinned")
+    assert(next(addon.db.favorites.items) == nil, "T70: an unpinned item left a stale entry")
+    addon:SetFavoriteItem("   ", true); addon:SetFavoriteItem(nil, true)
+    assert(next(addon.db.favorites.items) == nil, "T70: a blank/nil item name must not be stored")
+end
+passed("T70 item favorites data -- name-normalized pin/unpin, display kept, blank/nil-safe")
+
 leaveGuild()
-print("ALL 69 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 70 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -1785,7 +1804,7 @@ print("ALL 69 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " + T55-T66 post-review hardening: remote prune, order id binding and caps,"
     .. " token and timestamp validation, guild serve budget, board send spacing,"
     .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
-    .. " coercion, T68 the trust-timing hold-and-replay race and T69 the favorites"
-    .. " data layer; "
+    .. " coercion, T68 the trust-timing hold-and-replay race, T69 the contact"
+    .. " favorites data layer and T70 the item favorites data layer; "
     .. pass .. " of them print a PASS line above)")
 
