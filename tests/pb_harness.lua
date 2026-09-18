@@ -1720,14 +1720,51 @@ do
 end
 passed("T67 trainer scan -- spec-name and multi-return header skillReq coerce to 0 without throwing")
 
+-- ── T68: a not-yet-trusted sender's message is HELD and replayed on trust ──────
+-- Trust is live (guild roster / group membership), so a real guildmate's message
+-- can beat our roster load. It must be held, not dropped, then replayed once
+-- trust resolves (the roster hooks call FlushTrustPending); a sender who never
+-- becomes trusted must expire unprocessed, and the buffer must stay bounded.
+do
+    local win = "Racewin-TestRealm"
+    assert(not Comm:IsTrusted(win), "T68: sender should start untrusted")
+    recv("Racewin", { _type = "SYNC_DATA", class = "MAGE", level = 70,
+        professions = { ["Cooking"] = { skillLevel = 300, maxSkill = 375,
+            recipeNames = { "Spice Bread" }, recipeSpells = { 2540 } } } })
+    assert(addon.db.characters[win] == nil, "T68: a not-yet-trusted SYNC_DATA was processed early")
+    assert(Comm._trustPending and Comm._trustPending[win], "T68: the message was not held for replay")
+
+    addon.db.contacts[win] = { trusted = true, autoSync = false, lastSync = 0 }
+    Comm:FlushTrustPending()
+    assert(addon.db.characters[win] and addon.db.characters[win].isRemote,
+        "T68: the held SYNC_DATA was not replayed once trust resolved")
+    assert(Comm._trustPending[win] == nil, "T68: the hold buffer was not cleared after replay")
+
+    local lose = "Racelose-TestRealm"
+    recv("Racelose", { _type = "SYNC_DATA", class = "ROGUE", level = 70 })
+    assert(Comm._trustPending[lose], "T68: an untrusted message was not held")
+    Comm:FlushTrustPending()   -- sender still untrusted
+    assert(addon.db.characters[lose] == nil, "T68: an untrusted sender's message was processed")
+    assert(Comm._trustPending[lose] == nil, "T68: the untrusted hold was not dropped on flush")
+
+    local cap = "Racecap-TestRealm"
+    for _ = 1, 5 do recv("Racecap", { _type = "HELLO" }) end
+    local held = Comm._trustPending[cap]
+    assert(held and #held == 2, "T68: per-sender hold cap not enforced (got "
+        .. tostring(held and #held) .. ", want 2)")
+    Comm._trustPending[cap] = nil
+end
+passed("T68 trust-timing race -- a not-yet-trusted message is held and replayed once trust resolves, bounded")
+
 leaveGuild()
-print("ALL 67 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 68 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
     .. " + T45-T50 Scanner + T51-T54 RecipeDB and MaterialCalc"
     .. " + T55-T66 post-review hardening: remote prune, order id binding and caps,"
     .. " token and timestamp validation, guild serve budget, board send spacing,"
-    .. " payload caps, skill-line rescan, the reflex-reply floor and T67 trainer-scan skillReq coercion; "
+    .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
+    .. " coercion and T68 the trust-timing hold-and-replay race; "
     .. pass .. " of them print a PASS line above)")
 
