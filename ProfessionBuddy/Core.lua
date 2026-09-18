@@ -130,6 +130,18 @@ function addon:FavoriteItemList()
     return out
 end
 
+-- Relationship of an order's counterparty, derived live (no storage) so a mixed
+-- orders list reads at a glance: a saved contact is "friend"; a guildmate who is
+-- not a contact is "guild" (a contact who is also a guildmate reads as friend);
+-- self, the open board, or a past/unknown character is nil.
+function addon:OrderRelation(counterpartyKey)
+    if not counterpartyKey or self:SameKey(counterpartyKey, self:PlayerKey()) then return nil end
+    local ckey = self:NormKey(counterpartyKey) or counterpartyKey
+    if self.db and self.db.contacts and self.db.contacts[ckey] ~= nil then return "friend" end
+    if self.Comm and self.Comm.IsGuildMember and self.Comm:IsGuildMember(counterpartyKey) then return "guild" end
+    return nil
+end
+
 ----------------------------------------------------------------------
 -- Schema 2 migration: canonical character keys
 -- Keys used to be stored with the realm spelled exactly as GetRealmName()

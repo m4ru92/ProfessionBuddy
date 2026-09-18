@@ -1795,8 +1795,27 @@ do
 end
 passed("T70 item favorites data -- name-normalized pin/unpin, display kept, blank/nil-safe")
 
+-- ── T71: order source relation (Friend vs Guild, derived live) ────────────────
+-- The Orders tab labels each row by the counterparty relationship: a saved
+-- contact is a friend, a guildmate who is not a contact is guild, self/unknown is
+-- nothing, and a contact who is also a guildmate reads as friend. Derived live,
+-- no storage. (The badge rendering is m4ru's eyeball.)
+do
+    assert(addon:OrderRelation(addon:PlayerKey()) == nil, "T71: self must have no source badge")
+    assert(addon:OrderRelation("Nobody-TestRealm") == nil, "T71: an unknown counterparty must have no badge")
+    addon.db.contacts["Palfriend-TestRealm"] = { trusted = true, lastSync = 0 }
+    assert(addon:OrderRelation("Palfriend") == "friend", "T71: a saved contact should read as friend")
+    joinGuild("Guildpal")
+    assert(addon:OrderRelation("Guildpal") == "guild", "T71: a guildmate (non-contact) should read as guild")
+    addon.db.contacts["Guildpal-TestRealm"] = { trusted = true, lastSync = 0 }
+    assert(addon:OrderRelation("Guildpal") == "friend", "T71: a contact who is also a guildmate should read as friend")
+    addon.db.contacts["Palfriend-TestRealm"] = nil
+    addon.db.contacts["Guildpal-TestRealm"] = nil
+end
+passed("T71 order source relation -- contact=friend, guildmate=guild, self/unknown=none, contact wins")
+
 leaveGuild()
-print("ALL 70 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 71 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -1805,6 +1824,7 @@ print("ALL 70 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " token and timestamp validation, guild serve budget, board send spacing,"
     .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
     .. " coercion, T68 the trust-timing hold-and-replay race, T69 the contact"
-    .. " favorites data layer and T70 the item favorites data layer; "
+    .. " favorites data layer, T70 the item favorites data layer and T71 the order"
+    .. " source relation; "
     .. pass .. " of them print a PASS line above)")
 

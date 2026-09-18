@@ -593,15 +593,18 @@ local function hideOrderWidgets(row)
     for _, b in ipairs(row.actionBtns) do b:Hide() end
 end
 
--- "Guild" tag rule: the order's counterparty (the not-me party) is a guildmate
--- and NOT also a friend. A friend, or a friend who is also a guildmate, shows no
--- tag; only a guild-only relationship does.
-local function isGuildOnly(counterpartyKey)
-    if not counterpartyKey or addon:SameKey(counterpartyKey, addon:PlayerKey()) then return false end
-    local ckey = addon:NormKey(counterpartyKey) or counterpartyKey
-    local isFriend = addon.db.contacts and addon.db.contacts[ckey] ~= nil
-    if isFriend then return false end
-    return addon.Comm and addon.Comm.IsGuildMember and addon.Comm:IsGuildMember(counterpartyKey) or false
+-- Source badge for an order's counterparty (the not-me party), so a mixed
+-- friend/guild list reads at a glance. Derived live via addon:OrderRelation: a
+-- saved contact is Friend, a guildmate who is not a contact is Guild, anyone else
+-- (a past/unknown counterparty, or the open board) gets no badge.
+local RELATION_BADGE = {
+    friend = { "Friend", 0.45, 0.62, 0.95 },
+    guild  = { "Guild",  0.35, 0.78, 0.35 },
+}
+local function relationBadge(counterpartyKey)
+    local b = RELATION_BADGE[addon:OrderRelation(counterpartyKey) or ""]
+    if b then return b[1], b[2], b[3], b[4] end
+    return nil
 end
 
 function OP:PaintList(ctx)
@@ -676,7 +679,14 @@ function OP:PaintOrderRow(row, o, role)
     end
 
     if row.guildTag then
-        if isGuildOnly(otherKey) then row.guildTag:Show() else row.guildTag:Hide() end
+        local label, r, g, b = relationBadge(otherKey)
+        if label then
+            row.guildTag:SetText(label)
+            row.guildTag:SetTextColor(r, g, b)
+            row.guildTag:Show()
+        else
+            row.guildTag:Hide()
+        end
     end
     local prefix = (role == "crafter") and "from " or "to "
     local matLbl = MATRESP_SHORT[o.matResponsibility] or "?"
