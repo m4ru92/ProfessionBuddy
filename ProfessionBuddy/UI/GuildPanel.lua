@@ -42,7 +42,7 @@ local PROF_ICONS = {
 -- Ordered column definitions. x = left offset within the row, w = text width.
 -- Professions is last so its variable-width icon strip absorbs the right side.
 local COLS = {
-    { key = "name",        label = "Name",        x = 6,   w = 120 },
+    { key = "name",        label = "Name",        x = 22,  w = 104 },
     { key = "level",       label = "Lvl",         x = 132, w = 34  },
     { key = "rank",        label = "Rank",        x = 172, w = 110 },
     { key = "status",      label = "Status",      x = 288, w = 64  },
@@ -113,6 +113,7 @@ function GP:Init()
     self.sortAsc = true
     self.searchText = ""
     self.filterOnlineOnly = false
+    self.filterFavOnly = false   -- show only pinned guildmates
     self.filterProf = nil       -- nil = all professions
 
     if addon.UI and addon.UI.AddTab then
@@ -164,6 +165,29 @@ function GP:CreateRow(parent)
         fs:SetWordWrap(false)
         return fs
     end
+
+    -- Favorite star (leading, own hit-area): toggles the pin without opening the
+    -- guildmate's professions. Filled gold = favorited, which sorts to the top.
+    local favBtn = CreateFrame("Button", nil, row)
+    favBtn:SetSize(16, 16)
+    favBtn:SetPoint("LEFT", 4, 0)
+    local favTex = favBtn:CreateTexture(nil, "ARTWORK")
+    favTex:SetAllPoints()
+    favTex:SetTexture("Interface\\Common\\FavoritesIcon")
+    favBtn.icon = favTex
+    favBtn:SetScript("OnClick", function()
+        if not favBtn._key then return end
+        addon:ToggleFavorite(favBtn._key)
+        GP:Repaint()
+    end)
+    favBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Favorite")
+        GameTooltip:AddLine("Pin this guildmate to the top of the list.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    favBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    row.favBtn = favBtn
 
     row.nameText   = cell(COL.name)
     row.levelText  = cell(COL.level)
@@ -302,6 +326,19 @@ function GP:CreateContent(parent)
         self.profDD = profDD
     end
 
+    -- Favorites-only toggle: show just the pinned guildmates.
+    local favCheck = CreateFrame("CheckButton", nil, filterBar, "UICheckButtonTemplate")
+    favCheck:SetSize(20, 20)
+    favCheck:SetPoint("LEFT", self.profDD or onlineLabel, "RIGHT", 14, 0)
+    favCheck:SetScript("OnClick", function(cb)
+        self.filterFavOnly = cb:GetChecked() and true or false
+        self:Repaint()
+    end)
+    local favLabel = filterBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    favLabel:SetPoint("LEFT", favCheck, "RIGHT", 2, 0)
+    favLabel:SetText("|TInterface\\Common\\FavoritesIcon:14:14|t only")
+    self.favCheck = favCheck
+
     -- Column headers (clickable Buttons -> sort)
     local headerBar = CreateFrame("Frame", nil, parent)
     headerBar:SetPoint("TOPLEFT", 0, -52)
@@ -396,6 +433,10 @@ function GP:SetSort(key)
 end
 
 function GP:Less(a, b)
+    -- Favorites always float to the top, regardless of the active sort column.
+    local af = addon:IsFavorite(a.charKey) and 1 or 0
+    local bf = addon:IsFavorite(b.charKey) and 1 or 0
+    if af ~= bf then return af > bf end
     local key, asc = self.sortKey, self.sortAsc
     local an, bn = shortName(a.name):lower(), shortName(b.name):lower()
     if key == "status" then
@@ -488,6 +529,7 @@ function GP:PassesFilter(m)
         if not shortName(m.name):lower():find(q:lower(), 1, true) then return false end
     end
     if self.filterOnlineOnly and not m.online then return false end
+    if self.filterFavOnly and not addon:IsFavorite(m.charKey) then return false end
     if self.filterProf then
         local has = false
         for _, pn in ipairs(m.profs) do
@@ -659,6 +701,11 @@ function GP:UpdateRows()
                     ic:Show()
                 end
             end
+
+            row.favBtn._key = m.charKey
+            local fav = addon:IsFavorite(m.charKey)
+            row.favBtn.icon:SetDesaturated(not fav)
+            row.favBtn.icon:SetAlpha(fav and 1 or 0.28)
 
             row:Show()
         else

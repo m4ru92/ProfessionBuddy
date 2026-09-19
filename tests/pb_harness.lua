@@ -1720,14 +1720,111 @@ do
 end
 passed("T67 trainer scan -- spec-name and multi-return header skillReq coerce to 0 without throwing")
 
+-- ── T68: a not-yet-trusted sender's message is HELD and replayed on trust ──────
+-- Trust is live (guild roster / group membership), so a real guildmate's message
+-- can beat our roster load. It must be held, not dropped, then replayed once
+-- trust resolves (the roster hooks call FlushTrustPending); a sender who never
+-- becomes trusted must expire unprocessed, and the buffer must stay bounded.
+do
+    local win = "Racewin-TestRealm"
+    assert(not Comm:IsTrusted(win), "T68: sender should start untrusted")
+    recv("Racewin", { _type = "SYNC_DATA", class = "MAGE", level = 70,
+        professions = { ["Cooking"] = { skillLevel = 300, maxSkill = 375,
+            recipeNames = { "Spice Bread" }, recipeSpells = { 2540 } } } })
+    assert(addon.db.characters[win] == nil, "T68: a not-yet-trusted SYNC_DATA was processed early")
+    assert(Comm._trustPending and Comm._trustPending[win], "T68: the message was not held for replay")
+
+    addon.db.contacts[win] = { trusted = true, autoSync = false, lastSync = 0 }
+    Comm:FlushTrustPending()
+    assert(addon.db.characters[win] and addon.db.characters[win].isRemote,
+        "T68: the held SYNC_DATA was not replayed once trust resolved")
+    assert(Comm._trustPending[win] == nil, "T68: the hold buffer was not cleared after replay")
+
+    local lose = "Racelose-TestRealm"
+    recv("Racelose", { _type = "SYNC_DATA", class = "ROGUE", level = 70 })
+    assert(Comm._trustPending[lose], "T68: an untrusted message was not held")
+    Comm:FlushTrustPending()   -- sender still untrusted
+    assert(addon.db.characters[lose] == nil, "T68: an untrusted sender's message was processed")
+    assert(Comm._trustPending[lose] == nil, "T68: the untrusted hold was not dropped on flush")
+
+    local cap = "Racecap-TestRealm"
+    for _ = 1, 5 do recv("Racecap", { _type = "HELLO" }) end
+    local held = Comm._trustPending[cap]
+    assert(held and #held == 2, "T68: per-sender hold cap not enforced (got "
+        .. tostring(held and #held) .. ", want 2)")
+    Comm._trustPending[cap] = nil
+end
+passed("T68 trust-timing race -- a not-yet-trusted message is held and replayed once trust resolves, bounded")
+
+-- ── T69: Favorites data layer (account-wide, local, NormKey-keyed) ────────────
+-- Pins live under db.favorites.contacts, keyed by the canonical NormKey so a
+-- bare name and its Name-Realm form are the same pin, and unfavoriting removes
+-- the entry rather than storing false. UI (star, sort-to-top, filter) is m4ru's
+-- in-game eyeball; this covers the load-bearing data.
+do
+    assert(not addon:IsFavorite("Pinme"), "T69: a fresh contact should not be a favorite")
+    addon:SetFavorite("Pinme", true)
+    assert(addon:IsFavorite("Pinme"), "T69: SetFavorite(true) did not stick")
+    assert(addon:IsFavorite("Pinme-TestRealm"), "T69: favorite not keyed by canonical NormKey")
+    assert(addon.db.favorites.contacts["Pinme-TestRealm"] == true,
+        "T69: not stored account-wide under the canonical key")
+    assert(addon:ToggleFavorite("Pinme") == false, "T69: toggle did not report the new (off) state")
+    assert(not addon:IsFavorite("Pinme"), "T69: toggle-off did not clear the favorite")
+    assert(addon.db.favorites.contacts["Pinme-TestRealm"] == nil, "T69: an unfavorite left a stale entry")
+    addon:SetFavorite(nil, true)
+    assert(not addon:IsFavorite(nil), "T69: a nil key must never be a favorite")
+end
+passed("T69 favorites data -- account-wide, NormKey-keyed pin/unpin, nil-safe")
+
+-- ── T70: item-favorites data layer (name-normalized, account-wide, local) ─────
+-- The order composer is free text, so item favorites key by a trimmed/lowered
+-- name and keep the display spelling. The star, pin/unpin and quick-fill are UI
+-- (m4ru eyeballs); this covers the data.
+do
+    assert(not addon:IsFavoriteItem("Flask of Fortification"), "T70: fresh item should not be a favorite")
+    addon:SetFavoriteItem("Flask of Fortification", true)
+    assert(addon:IsFavoriteItem("Flask of Fortification"), "T70: SetFavoriteItem(true) did not stick")
+    assert(addon:IsFavoriteItem("  flask of fortification "), "T70: item pin not normalized (trim/case)")
+    local list = addon:FavoriteItemList()
+    assert(#list == 1 and list[1] == "Flask of Fortification", "T70: display spelling not kept in the list")
+    assert(addon:ToggleFavoriteItem("FLASK OF FORTIFICATION") == false, "T70: toggle-off did not report off")
+    assert(not addon:IsFavoriteItem("Flask of Fortification"), "T70: toggle-off left it pinned")
+    assert(next(addon.db.favorites.items) == nil, "T70: an unpinned item left a stale entry")
+    addon:SetFavoriteItem("   ", true); addon:SetFavoriteItem(nil, true)
+    assert(next(addon.db.favorites.items) == nil, "T70: a blank/nil item name must not be stored")
+end
+passed("T70 item favorites data -- name-normalized pin/unpin, display kept, blank/nil-safe")
+
+-- ── T71: order source relation (Friend vs Guild, derived live) ────────────────
+-- The Orders tab labels each row by the counterparty relationship: a saved
+-- contact is a friend, a guildmate who is not a contact is guild, self/unknown is
+-- nothing, and a contact who is also a guildmate reads as friend. Derived live,
+-- no storage. (The badge rendering is m4ru's eyeball.)
+do
+    assert(addon:OrderRelation(addon:PlayerKey()) == nil, "T71: self must have no source badge")
+    assert(addon:OrderRelation("Nobody-TestRealm") == nil, "T71: an unknown counterparty must have no badge")
+    addon.db.contacts["Palfriend-TestRealm"] = { trusted = true, lastSync = 0 }
+    assert(addon:OrderRelation("Palfriend") == "friend", "T71: a saved contact should read as friend")
+    joinGuild("Guildpal")
+    assert(addon:OrderRelation("Guildpal") == "guild", "T71: a guildmate (non-contact) should read as guild")
+    addon.db.contacts["Guildpal-TestRealm"] = { trusted = true, lastSync = 0 }
+    assert(addon:OrderRelation("Guildpal") == "friend", "T71: a contact who is also a guildmate should read as friend")
+    addon.db.contacts["Palfriend-TestRealm"] = nil
+    addon.db.contacts["Guildpal-TestRealm"] = nil
+end
+passed("T71 order source relation -- contact=friend, guildmate=guild, self/unknown=none, contact wins")
+
 leaveGuild()
-print("ALL 67 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 71 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
     .. " + T45-T50 Scanner + T51-T54 RecipeDB and MaterialCalc"
     .. " + T55-T66 post-review hardening: remote prune, order id binding and caps,"
     .. " token and timestamp validation, guild serve budget, board send spacing,"
-    .. " payload caps, skill-line rescan, the reflex-reply floor and T67 trainer-scan skillReq coercion; "
+    .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
+    .. " coercion, T68 the trust-timing hold-and-replay race, T69 the contact"
+    .. " favorites data layer, T70 the item favorites data layer and T71 the order"
+    .. " source relation; "
     .. pass .. " of them print a PASS line above)")
 

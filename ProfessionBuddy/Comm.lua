@@ -73,6 +73,14 @@ local REFLEX_FLOOR      = 5       -- min seconds between reflex refusal replies 
 local GUILD_SYNC_COOLDOWN = 15    -- min seconds between guild pulls from one guildmate
 local OFFLINE_BACKOFF   = 300     -- skip a contact this long after "no player named"
 local WHISPER_MEMORY    = 10      -- a system line must follow our whisper this closely
+-- Trust-timing race: trust is LIVE (guild roster / group membership), so a real
+-- guildmate's message can arrive a beat before our roster has populated. Hold it
+-- briefly and replay it once trust resolves, tightly bounded so a not-yet-trusted
+-- sender can never make us buffer more than a trace and is never processed until
+-- they are genuinely trusted.
+local TRUST_PENDING_TTL     = 60  -- seconds a held message stays replayable
+local TRUST_PENDING_SENDERS = 16  -- max distinct not-yet-trusted senders held at once
+local TRUST_PENDING_PER     = 2   -- max messages held per such sender (newest kept)
 
 ----------------------------------------------------------------------
 -- Init
@@ -103,6 +111,7 @@ function Comm:Init()
     -- Auto-sync: broadcast HELLO when joining a group
     addon:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         self:OnGroupChanged()
+        self:FlushTrustPending()
     end)
 
     -- Auto-sync: broadcast HELLO to the guild when the roster first populates.
@@ -111,6 +120,7 @@ function Comm:Init()
     addon:RegisterEvent("GUILD_ROSTER_UPDATE", function()
         self._guildSet = nil
         self:OnGuildChanged()
+        self:FlushTrustPending()
     end)
 
     -- Auto-sync contacts on login, and make sure the guild roster loads so
@@ -446,6 +456,53 @@ function Comm:AcceptsPush(senderKey)
     return (due ~= nil) and (time() - due) <= PENDING_REQ_TTL
 end
 
+-- Hold a raw message from a not-yet-trusted sender for a bounded window so a
+-- guildmate whose roster we have not loaded yet is not lost. Caps the number of
+-- distinct senders and the messages per sender, dropping the oldest first, so a
+-- stranger cannot grow this past a trace. The message is only ever PROCESSED
+-- later if the sender turns out to be trusted (FlushTrustPending re-checks).
+function Comm:HoldUntilTrusted(sender, message, distribution)
+    self._trustPending = self._trustPending or {}
+    local tp = self._trustPending
+    local q = tp[sender]
+    if not q then
+        local n = 0
+        for _ in pairs(tp) do n = n + 1 end
+        if n >= TRUST_PENDING_SENDERS then return end
+        q = {}
+        tp[sender] = q
+    end
+    if #q >= TRUST_PENDING_PER then table.remove(q, 1) end
+    q[#q + 1] = { message = message, distribution = distribution, at = time() }
+end
+
+-- Replay held messages from any sender that is now trusted, and drop the rest
+-- (expired, or still untrusted). Wired to GUILD_ROSTER_UPDATE and
+-- GROUP_ROSTER_UPDATE, the moments the live trust set can grow. Senders are
+-- snapshotted and each queue is cleared before replay so a replayed message can
+-- never re-enter the buffer, and the full OnMessageReceived path (dist rules,
+-- deserialize, dispatch) still runs on every replayed message.
+function Comm:FlushTrustPending()
+    local tp = self._trustPending
+    if not tp then return end
+    local now = time()
+    local senders = {}
+    for s in pairs(tp) do senders[#senders + 1] = s end
+    for _, sender in ipairs(senders) do
+        local q = tp[sender]
+        if q then
+            tp[sender] = nil
+            if self:IsTrusted(sender) then
+                for _, held in ipairs(q) do
+                    if (now - (held.at or 0)) <= TRUST_PENDING_TTL then
+                        self:OnMessageReceived(PREFIX, held.message, held.distribution, sender)
+                    end
+                end
+            end
+        end
+    end
+end
+
 -- Privacy master switch: when off, we send NO profession/inventory data
 -- to anyone (gated at the two payload builders, which covers every
 -- outbound path). Toggle with /pb comm on|off. Default on.
@@ -484,9 +541,16 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
     -- Ignore our own messages (a GUILD broadcast comes back to us)
     if addon:SameKey(sender, addon:PlayerKey()) then return end
 
-    -- SECURITY: only process messages from known players (a saved
-    -- contact, a current group member, or a current guildmate).
-    if not self:IsTrusted(sender) then return end
+    -- SECURITY: only process messages from known players (a saved contact, a
+    -- current group member, or a current guildmate). Trust is LIVE (roster-
+    -- derived), so a genuine guildmate's message can beat our roster load; hold
+    -- it for a bounded window and replay it if they become trusted, rather than
+    -- dropping it with no retry. A sender who never becomes trusted simply
+    -- expires unprocessed, so this DEFERS the check, it never weakens it.
+    if not self:IsTrusted(sender) then
+        self:HoldUntilTrusted(sender, message, distribution)
+        return
+    end
 
     local ok, data = AceSerializer:Deserialize(message)
     if not ok or type(data) ~= "table" then return end

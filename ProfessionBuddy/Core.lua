@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "1.1.0"
+addon.version = "1.1.1"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -60,6 +60,86 @@ end
 function addon:SameKey(a, b)
     local ka = addon:NormKey(a)
     return ka ~= nil and ka == addon:NormKey(b)
+end
+
+-- Favorites: a personal, account-wide, LOCAL-ONLY pin on a contact or guildmate
+-- (never synced, so no comm). Keyed by the canonical NormKey, so one pin covers a
+-- friend and the guildmate who are the same character and it survives a realm
+-- respelling. The table is created lazily, so it needs no db-defaults change.
+function addon:FavoriteContacts()
+    self.db = self.db or {}
+    self.db.favorites = self.db.favorites or {}
+    self.db.favorites.contacts = self.db.favorites.contacts or {}
+    return self.db.favorites.contacts
+end
+
+function addon:IsFavorite(key)
+    key = self:NormKey(key)
+    return key ~= nil and self:FavoriteContacts()[key] == true
+end
+
+function addon:SetFavorite(key, on)
+    key = self:NormKey(key)
+    if not key then return end
+    self:FavoriteContacts()[key] = on and true or nil
+end
+
+function addon:ToggleFavorite(key)
+    self:SetFavorite(key, not self:IsFavorite(key))
+    return self:IsFavorite(key)
+end
+
+-- Item favorites: pinned crafting-order item NAMES. The order composer is a free
+-- text field, so these key by a normalized (trimmed, lower-cased) name and store
+-- the display spelling as the value. Account-wide and LOCAL only, like contacts.
+local function normFavItem(name)
+    if type(name) ~= "string" then return nil end
+    name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    if name == "" then return nil end
+    return name:lower(), name
+end
+
+function addon:FavoriteItems()
+    self.db = self.db or {}
+    self.db.favorites = self.db.favorites or {}
+    self.db.favorites.items = self.db.favorites.items or {}
+    return self.db.favorites.items
+end
+
+function addon:IsFavoriteItem(name)
+    local k = normFavItem(name)
+    return k ~= nil and self:FavoriteItems()[k] ~= nil
+end
+
+function addon:SetFavoriteItem(name, on)
+    local k, display = normFavItem(name)
+    if not k then return end
+    self:FavoriteItems()[k] = on and display or nil
+end
+
+function addon:ToggleFavoriteItem(name)
+    self:SetFavoriteItem(name, not self:IsFavoriteItem(name))
+    return self:IsFavoriteItem(name)
+end
+
+-- Pinned item display names, sorted case-insensitively (for the composer picker).
+function addon:FavoriteItemList()
+    local out = {}
+    for _, display in pairs(self:FavoriteItems()) do out[#out + 1] = display end
+    table.sort(out, function(a, b) return a:lower() < b:lower() end)
+    return out
+end
+
+-- Relationship of an order's counterparty, derived live (no storage) so a mixed
+-- orders list reads at a glance: a saved contact is "friend"; a guildmate who is
+-- not a contact is "guild" (a contact who is also a guildmate reads as friend);
+-- self, the open board, or a past/unknown character is nil.
+function addon:OrderRelation(counterpartyKey)
+    if not counterpartyKey or self:SameKey(counterpartyKey, self:PlayerKey()) then return nil end
+    local ckey = self:NormKey(counterpartyKey) or counterpartyKey
+    if self.db and self.db.contacts and self.db.contacts[ckey] ~= nil then return "friend" end
+    if self.Comm and self.Comm.IsGuildMember and self.Comm:IsGuildMember(counterpartyKey) then return "guild" end
+    return nil
 end
 
 ----------------------------------------------------------------------
