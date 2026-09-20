@@ -124,7 +124,11 @@ end
 local function positionMailButton()
     local btn = MH._btn
     if not (btn and SendMailNameEditBox) then return end
-    local y = (IsAddOnLoaded and IsAddOnLoaded("ElvUI")) and 0 or 3
+    -- Detect ElvUI by its global table (set whenever ElvUI is loaded). This does
+    -- NOT use IsAddOnLoaded, which is gone from the 2.5.6 Anniversary client
+    -- (moved to C_AddOns) and silently returned nil, leaving the button on the
+    -- base-UI offset in ElvUI.
+    local y = _G.ElvUI and 0 or 3
     btn:ClearAllPoints()
     btn:SetPoint("LEFT", SendMailNameEditBox, "RIGHT", 4, y)
 end
