@@ -36,4 +36,5 @@ UI/CharacterPanel.lua
 UI/FriendsPanel.lua
 UI/GuildPanel.lua
 UI/OrdersPanel.lua
+UI/MailHelper.lua
 UI/TradeSkillFrame.lua
