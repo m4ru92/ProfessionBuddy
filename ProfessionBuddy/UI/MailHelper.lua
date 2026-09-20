@@ -126,7 +126,9 @@ function MH:Init()
     btn:SetText("PB")
     btn:SetNormalFontObject(GameFontNormalSmall)
     btn:SetHighlightFontObject(GameFontHighlightSmall)
-    btn:SetPoint("LEFT", SendMailNameEditBox, "RIGHT", 4, 0)
+    -- +3 y: the InputBoxTemplate frame extends a little below its visible text,
+    -- so a plain center-align sits slightly low against the To field. Nudge up.
+    btn:SetPoint("LEFT", SendMailNameEditBox, "RIGHT", 4, 3)
     btn:SetScript("OnClick", function(self) showMenu(self) end)
     btn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
