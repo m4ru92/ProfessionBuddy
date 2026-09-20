@@ -286,6 +286,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         tooltipShowSkillRange = true,  -- colored skill-up range on each "Used in" line
         gatherSkillTooltip  = true,  -- required skin/mine/herb skill on mob + node tooltips
         gatherShowUnlearned = true,  -- show gather info for professions you have not learned
+        gatherYieldTooltip  = true,  -- "Yields: Leather/Scale" line on skinnable mob tooltips
         skillReqNotify      = false, -- dev-only: chat alert when a trainer learn-level correction is found
         tooltipMaxOwn       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)
@@ -334,6 +335,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.gatherShowUnlearned == nil then
         ProfBuddyDB.settings.gatherShowUnlearned = true
+    end
+    if ProfBuddyDB.settings.gatherYieldTooltip == nil then
+        ProfBuddyDB.settings.gatherYieldTooltip = true
     end
     if ProfBuddyDB.settings.tooltipMaxAlt == nil then
         ProfBuddyDB.settings.tooltipMaxAlt = 16

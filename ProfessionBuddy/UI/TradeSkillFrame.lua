@@ -501,6 +501,15 @@ local function GatherProfForNpc(npcID)
     return nil
 end
 
+-- Skinning yield family for a skinnable npc. SkinYield (Data/GatherMobs.lua)
+-- stores only scale-involved mobs; any skinnable mob absent from it yields plain
+-- leather, so the default carries the ~1100 leather-only mobs without a table row.
+local SKIN_YIELD_TEXT = { S = "Scale", SL = "Scale, Leather", LS = "Leather, Scale" }
+local function SkinYieldText(npcID)
+    local code = npcID and addon.SkinYield and addon.SkinYield[npcID]
+    return SKIN_YIELD_TEXT[code] or "Leather"
+end
+
 -- Current char's skill in a gathering prof (nil if untrained). Reads the live
 -- rank from the skill lines; DataStore's cache lags while you're gaining skill,
 -- so it's only the fallback when the live line isn't visible (see DESIGN-NOTES).
@@ -577,6 +586,11 @@ function TSF:HookUnitTooltip()
         if not requires then return end
         tip:AddLine(requires)
         if yours then tip:AddLine(yours) end
+        -- Skinning only: mining yields ore and herbalism yields herb, which the
+        -- "Requires" line already implies, so a yield line there is just noise.
+        if prof == "Skinning" and addon.db.settings.gatherYieldTooltip ~= false then
+            tip:AddLine("|cffc8b088Yields: " .. SkinYieldText(npcID) .. "|r")
+        end
         tip:Show()
     end)
 end
@@ -4490,17 +4504,21 @@ function TSF:BuildSettingsPanel(parent)
     local gatherCB = MakeCheckbox("Gather skill on tooltips", "gatherSkillTooltip", yRight, COL_RIGHT)
     yRight = yRight - 26
     local unlearnedCB = MakeCheckbox("Show for unlearned professions", "gatherShowUnlearned", yRight, COL_RIGHT + 20)
+    yRight = yRight - 26
+    local yieldCB = MakeCheckbox("Skinning yield (Leather / Scale)", "gatherYieldTooltip", yRight, COL_RIGHT + 20)
     yRight = yRight - 24
     groupBg:SetHeight(groupTop - yRight)
 
-    -- "Show for unlearned professions" is a SUB-option of "Gather skill on
-    -- tooltips" -- disable/grey it when the parent is off (mirrors the skill-up
-    -- range checkbox under "Show recipes used in").
+    -- "Show for unlearned professions" and "Skinning yield" are SUB-options of
+    -- "Gather skill on tooltips" -- disable/grey them when the parent is off
+    -- (mirrors the skill-up range checkbox under "Show recipes used in").
     local function UpdateGatherSub()
         if settings.gatherSkillTooltip then
             unlearnedCB:Enable(); unlearnedCB:SetAlpha(1)
+            yieldCB:Enable(); yieldCB:SetAlpha(1)
         else
             unlearnedCB:Disable(); unlearnedCB:SetAlpha(0.4)
+            yieldCB:Disable(); yieldCB:SetAlpha(0.4)
         end
     end
     gatherCB:SetScript("OnClick", function(self)

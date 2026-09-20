@@ -1836,8 +1836,34 @@ do
 end
 passed("T72 order origin -- Create=direct, CreateOpen=board, fromClaim=board, default direct")
 
+-- ── T73: skinning yield data + text mapping (the gather-tooltip "Yields" line) ──
+-- SkinYield (Data/GatherMobs.lua) stores only scale-involved skinnable mobs;
+-- every skinnable mob absent from it defaults to plain Leather. Invariants: only
+-- known codes, and a yield never names a mob that is not skinnable.
+do
+    dofile(BASE .. "/Data/GatherMobs.lua")
+    assert(type(addon.SkinYield) == "table", "T73: SkinYield table should load")
+    assert(type(addon.SkinnableMobs) == "table", "T73: SkinnableMobs table should load")
+    local n, ok = 0, { S = true, SL = true, LS = true }
+    for npc, code in pairs(addon.SkinYield) do
+        n = n + 1
+        assert(type(npc) == "number", "T73: SkinYield keys are npc ids")
+        assert(ok[code], "T73: SkinYield code must be S/SL/LS, got " .. tostring(code))
+        assert(addon.SkinnableMobs[npc], "T73: SkinYield npc " .. npc .. " must be skinnable")
+    end
+    assert(n > 0, "T73: SkinYield should not be empty")
+    -- the tooltip's code -> text mapping, replicated so it can't drift silently
+    local TEXT = { S = "Scale", SL = "Scale, Leather", LS = "Leather, Scale" }
+    local function yieldText(npc) return TEXT[addon.SkinYield[npc]] or "Leather" end
+    assert(yieldText(905) == "Scale", "T73: 905 (fish scales) yields Scale")
+    assert(yieldText(1749) == "Scale, Leather", "T73: 1749 (dragonscale primary) yields Scale, Leather")
+    assert(yieldText(1548) == "Leather", "T73: 1548 (leather-only, absent) defaults to Leather")
+    assert(yieldText(999999999) == "Leather", "T73: an unlisted mob defaults to Leather")
+end
+passed("T73 skinning yield -- codes valid, yields imply skinnable, text maps S/SL/LS with Leather default")
+
 leaveGuild()
-print("ALL 72 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 73 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -1847,6 +1873,6 @@ print("ALL 72 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
     .. " coercion, T68 the trust-timing hold-and-replay race, T69 the contact"
     .. " favorites data layer, T70 the item favorites data layer and T71 the order"
-    .. " source relation and T72 the order origin stamp; "
+    .. " source relation, T72 the order origin stamp and T73 the skinning yield data; "
     .. pass .. " of them print a PASS line above)")
 
