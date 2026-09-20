@@ -1836,31 +1836,51 @@ do
 end
 passed("T72 order origin -- Create=direct, CreateOpen=board, fromClaim=board, default direct")
 
--- ── T73: skinning yield data + text mapping (the gather-tooltip "Yields" line) ──
--- SkinYield (Data/GatherMobs.lua) stores only scale-involved skinnable mobs;
--- every skinnable mob absent from it defaults to plain Leather. Invariants: only
--- known codes, and a yield never names a mob that is not skinnable.
+-- ── T73: skinning loot data (the gather-tooltip "Skins into:" block) ───────────
+-- Three baked tables: SkinLoot npcID -> table index, SkinLootTables index ->
+-- {itemID,pct,min,max[,quest]}, SkinItems itemID -> {name,quality}. Invariants:
+-- every mapped mob is skinnable and points at a real non-empty table; every item
+-- referenced exists; every percent is in 1..100. Then the exact-loot anchors.
 do
     dofile(BASE .. "/Data/GatherMobs.lua")
-    assert(type(addon.SkinYield) == "table", "T73: SkinYield table should load")
-    assert(type(addon.SkinnableMobs) == "table", "T73: SkinnableMobs table should load")
-    local n, ok = 0, { S = true, SL = true, LS = true }
-    for npc, code in pairs(addon.SkinYield) do
+    assert(type(addon.SkinLoot) == "table", "T73: SkinLoot table should load")
+    assert(type(addon.SkinLootTables) == "table", "T73: SkinLootTables should load")
+    assert(type(addon.SkinItems) == "table", "T73: SkinItems should load")
+    assert(type(addon.SkinnableMobs) == "table", "T73: SkinnableMobs should load")
+    local n = 0
+    for npc, idx in pairs(addon.SkinLoot) do
         n = n + 1
-        assert(type(npc) == "number", "T73: SkinYield keys are npc ids")
-        assert(ok[code], "T73: SkinYield code must be S/SL/LS, got " .. tostring(code))
-        assert(addon.SkinnableMobs[npc], "T73: SkinYield npc " .. npc .. " must be skinnable")
+        assert(addon.SkinnableMobs[npc], "T73: SkinLoot npc " .. npc .. " must be skinnable")
+        assert(type(addon.SkinLootTables[idx]) == "table", "T73: npc " .. npc .. " -> real table")
     end
-    assert(n > 0, "T73: SkinYield should not be empty")
-    -- the tooltip's code -> text mapping, replicated so it can't drift silently
-    local TEXT = { S = "Scale", SL = "Scale, Leather", LS = "Leather, Scale" }
-    local function yieldText(npc) return TEXT[addon.SkinYield[npc]] or "Leather" end
-    assert(yieldText(905) == "Scale", "T73: 905 (fish scales) yields Scale")
-    assert(yieldText(1749) == "Scale, Leather", "T73: 1749 (dragonscale primary) yields Scale, Leather")
-    assert(yieldText(1548) == "Leather", "T73: 1548 (leather-only, absent) defaults to Leather")
-    assert(yieldText(999999999) == "Leather", "T73: an unlisted mob defaults to Leather")
+    assert(n > 0, "T73: SkinLoot should not be empty")
+    for idx, loot in pairs(addon.SkinLootTables) do
+        assert(#loot > 0, "T73: loot table " .. idx .. " non-empty")
+        for _, e in ipairs(loot) do
+            local itemID, pct = e[1], e[2]
+            assert(addon.SkinItems[itemID], "T73: item " .. tostring(itemID) .. " has a SkinItems entry")
+            assert(pct >= 1 and pct <= 100, "T73: pct in 1..100, got " .. tostring(pct))
+            assert(e[3] >= 1 and e[4] >= e[3], "T73: stack min>=1 and max>=min")
+        end
+    end
+    -- exact-loot anchors (Fable review): itemID, pct, quest-flag as baked
+    local NAME = {}
+    for id, meta in pairs(addon.SkinItems) do NAME[meta[1]] = id end
+    local function pctOf(npc, itemName)
+        local loot = addon.SkinLootTables[addon.SkinLoot[npc]]
+        for _, e in ipairs(loot) do if e[1] == NAME[itemName] then return e[2], e[5] end end
+    end
+    assert(pctOf(721, "Ruined Leather Scraps") == 90, "T73: Rabbit 721 scraps 90")
+    assert(pctOf(721, "Light Leather") == 10, "T73: Rabbit 721 light leather 10")
+    assert(pctOf(1933, "Wool Cloth") ~= nil, "T73: Sheep 1933 includes Wool Cloth")
+    assert(pctOf(18205, "Thick Clefthoof Leather") == 10, "T73: Clefthoof 18205 clefthoof leather 10")
+    local nr = select(2, pctOf(18205, "Nether Residue"))
+    assert(nr == true, "T73: Clefthoof Nether Residue is quest-flagged")
+    assert(pctOf(11722, "Silithid Chitin") == 37, "T73: Hive'Ashi 11722 silithid chitin 37")
+    assert(pctOf(11722, "Broken Silithid Chitin") == 63, "T73: Hive'Ashi 11722 broken chitin 63")
+    assert(pctOf(6109, "Blue Dragonscale") == 100, "T73: Azuregos 6109 blue dragonscale 100")
 end
-passed("T73 skinning yield -- codes valid, yields imply skinnable, text maps S/SL/LS with Leather default")
+passed("T73 skinning loot -- tables well-formed, items/percents valid, exact-loot anchors hold")
 
 leaveGuild()
 print("ALL 73 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
@@ -1873,6 +1893,6 @@ print("ALL 73 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
     .. " coercion, T68 the trust-timing hold-and-replay race, T69 the contact"
     .. " favorites data layer, T70 the item favorites data layer and T71 the order"
-    .. " source relation, T72 the order origin stamp and T73 the skinning yield data; "
+    .. " source relation, T72 the order origin stamp and T73 the skinning loot data; "
     .. pass .. " of them print a PASS line above)")
 

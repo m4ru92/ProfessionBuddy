@@ -501,13 +501,38 @@ local function GatherProfForNpc(npcID)
     return nil
 end
 
--- Skinning yield family for a skinnable npc. SkinYield (Data/GatherMobs.lua)
--- stores only scale-involved mobs; any skinnable mob absent from it yields plain
--- leather, so the default carries the ~1100 leather-only mobs without a table row.
-local SKIN_YIELD_TEXT = { S = "Scale", SL = "Scale, Leather", LS = "Leather, Scale" }
-local function SkinYieldText(npcID)
-    local code = npcID and addon.SkinYield and addon.SkinYield[npcID]
-    return SKIN_YIELD_TEXT[code] or "Leather"
+-- Render a mob's full skinning loot as a "Skins into:" block: one line per item,
+-- highest drop chance first, quality-coloured name (+ stack range) on the left and
+-- the drop percent on the right, quest-only rows greyed. Data (Data/GatherMobs.lua):
+-- SkinLoot npcID -> table index, SkinLootTables index -> {itemID,pct,min,max[,quest]},
+-- SkinItems itemID -> {name, quality}. GetItemInfo gives live name/quality once the
+-- client has cached the item; the baked English name/quality is the first-hover
+-- fallback so a line never shows blank.
+local YIELD_HEAD = { 0.78, 0.69, 0.53 }
+local function AddSkinLoot(tip, npcID)
+    local idx  = npcID and addon.SkinLoot and addon.SkinLoot[npcID]
+    local loot = idx and addon.SkinLootTables and addon.SkinLootTables[idx]
+    if not loot then return end
+    tip:AddLine("Skins into:", YIELD_HEAD[1], YIELD_HEAD[2], YIELD_HEAD[3])
+    for _, e in ipairs(loot) do
+        local itemID, pct, minc, maxc, quest = e[1], e[2], e[3], e[4], e[5]
+        local meta = addon.SkinItems and addon.SkinItems[itemID]
+        local liveName, _, liveQ = GetItemInfo(itemID)
+        local name = liveName or (meta and meta[1]) or ("item:" .. itemID)
+        local q    = liveQ or (meta and meta[2])
+        local stack = ""
+        if maxc and maxc > 1 then
+            stack = (minc == maxc) and ("  x" .. maxc) or ("  x" .. minc .. "-" .. maxc)
+        end
+        if quest then
+            tip:AddDoubleLine("  |cff808080" .. name .. stack .. " (quest)|r",
+                              "|cff808080" .. pct .. "%|r")
+        else
+            local qc = q and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[q]
+            local hex = (qc and qc.hex) or "|cffffffff"
+            tip:AddDoubleLine("  " .. hex .. name .. "|r" .. stack, "|cffc8b088" .. pct .. "%|r")
+        end
+    end
 end
 
 -- Current char's skill in a gathering prof (nil if untrained). Reads the live
@@ -588,8 +613,12 @@ function TSF:HookUnitTooltip()
         if yours then tip:AddLine(yours) end
         -- Skinning only: mining yields ore and herbalism yields herb, which the
         -- "Requires" line already implies, so a yield line there is just noise.
-        if prof == "Skinning" and addon.db.settings.gatherYieldTooltip ~= false then
-            tip:AddLine("|cffc8b088Yields: " .. SkinYieldText(npcID) .. "|r")
+        -- Gated to actual skinners: what a mob yields is only useful if you can
+        -- skin it, so a non-skinner never sees the line even with "show for
+        -- unlearned" on (that governs the Requires line, not this).
+        if prof == "Skinning" and addon.db.settings.gatherYieldTooltip ~= false
+           and PlayerGatherSkill("Skinning") then
+            AddSkinLoot(tip, npcID)
         end
         tip:Show()
     end)
@@ -4505,7 +4534,7 @@ function TSF:BuildSettingsPanel(parent)
     yRight = yRight - 26
     local unlearnedCB = MakeCheckbox("Show for unlearned professions", "gatherShowUnlearned", yRight, COL_RIGHT + 20)
     yRight = yRight - 26
-    local yieldCB = MakeCheckbox("Skinning yield (Leather / Scale)", "gatherYieldTooltip", yRight, COL_RIGHT + 20)
+    local yieldCB = MakeCheckbox("Skinning loot", "gatherYieldTooltip", yRight, COL_RIGHT + 20)
     yRight = yRight - 24
     groupBg:SetHeight(groupTop - yRight)
 
