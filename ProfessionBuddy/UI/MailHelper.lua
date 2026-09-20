@@ -116,6 +116,19 @@ local function showMenu(anchor)
     m:Show()
 end
 
+-- The PB button aligns with the To field, but the field's box geometry differs by
+-- skin: the default InputBoxTemplate frame runs a little below its text (so it
+-- wants a few px up), while ElvUI reskins it to a tighter box (so a plain center
+-- is right). Pick per environment and re-apply on show, so it lands correctly
+-- whether or not a skin loaded or reskinned the field after us.
+local function positionMailButton()
+    local btn = MH._btn
+    if not (btn and SendMailNameEditBox) then return end
+    local y = (IsAddOnLoaded and IsAddOnLoaded("ElvUI")) and 0 or 3
+    btn:ClearAllPoints()
+    btn:SetPoint("LEFT", SendMailNameEditBox, "RIGHT", 4, y)
+end
+
 function MH:Init()
     -- The Send Mail frame is default UI (FrameXML), present before addons load.
     -- Guard anyway so a client that renames it just leaves the feature absent.
@@ -126,9 +139,6 @@ function MH:Init()
     btn:SetText("PB")
     btn:SetNormalFontObject(GameFontNormalSmall)
     btn:SetHighlightFontObject(GameFontHighlightSmall)
-    -- +3 y: the InputBoxTemplate frame extends a little below its visible text,
-    -- so a plain center-align sits slightly low against the To field. Nudge up.
-    btn:SetPoint("LEFT", SendMailNameEditBox, "RIGHT", 4, 3)
     btn:SetScript("OnClick", function(self) showMenu(self) end)
     btn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -138,4 +148,8 @@ function MH:Init()
     end)
     btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     self._btn = btn
+    positionMailButton()
+    -- Re-apply on each open: ElvUI (or another skin) may have loaded or reskinned
+    -- the To field after our Init ran.
+    if SendMailFrame.HookScript then SendMailFrame:HookScript("OnShow", positionMailButton) end
 end
