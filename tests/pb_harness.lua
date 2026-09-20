@@ -1814,8 +1814,30 @@ do
 end
 passed("T71 order source relation -- contact=friend, guildmate=guild, self/unknown=none, contact wins")
 
+-- ── T72: order origin (direct vs board), for the source badge ─────────────────
+-- A board-posted order carries origin="board" on the requester's copy; the
+-- crafter's copy carries the fromClaim flag the ORDER_NEW handoff already sends.
+-- Everything else is "direct". (The "board" marker render is m4ru's eyeball.)
+do
+    local direct = Orders:Create({ crafter = "Crafterpal",
+        item = { name = "Bolt of Runecloth", profession = "Tailoring" }, quantity = 1 })
+    assert(direct and direct.origin == "direct", "T72: a directed order should be origin direct")
+    assert(addon:OrderOrigin(direct) == "direct", "T72: OrderOrigin reads a directed order as direct")
+    local board = Orders:CreateOpen({
+        item = { name = "Silk Bag", profession = "Tailoring" }, quantity = 1 })
+    assert(board and board.origin == "board", "T72: a board post should be origin board")
+    assert(addon:OrderOrigin(board) == "board", "T72: OrderOrigin reads a board post as board")
+    -- the crafter's rebuilt copy has no origin field but carries fromClaim
+    assert(addon:OrderOrigin({ fromClaim = true }) == "board", "T72: fromClaim (crafter side) reads as board")
+    assert(addon:OrderOrigin({}) == "direct", "T72: an order with neither reads as direct")
+    assert(addon:OrderOrigin(nil) == nil, "T72: a non-order is nil")
+    addon.db.orders[direct.id] = nil
+    addon.db.orders[board.id] = nil
+end
+passed("T72 order origin -- Create=direct, CreateOpen=board, fromClaim=board, default direct")
+
 leaveGuild()
-print("ALL 71 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 72 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -1825,6 +1847,6 @@ print("ALL 71 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
     .. " coercion, T68 the trust-timing hold-and-replay race, T69 the contact"
     .. " favorites data layer, T70 the item favorites data layer and T71 the order"
-    .. " source relation; "
+    .. " source relation and T72 the order origin stamp; "
     .. pass .. " of them print a PASS line above)")
 

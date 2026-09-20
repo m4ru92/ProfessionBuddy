@@ -142,6 +142,16 @@ function addon:OrderRelation(counterpartyKey)
     return nil
 end
 
+-- Origin of an order, for the source badge: "board" if it was posted to the
+-- guild board (the requester's copy carries origin; the crafter's copy carries
+-- the fromClaim flag the ORDER_NEW handoff already sends), else "direct". nil
+-- only for a non-order.
+function addon:OrderOrigin(order)
+    if type(order) ~= "table" then return nil end
+    if order.origin == "board" or order.fromClaim then return "board" end
+    return "direct"
+end
+
 ----------------------------------------------------------------------
 -- Schema 2 migration: canonical character keys
 -- Keys used to be stored with the realm spelled exactly as GetRealmName()
