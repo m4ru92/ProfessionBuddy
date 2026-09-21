@@ -109,18 +109,91 @@ def col_index(sql_text, table, colnames):
     if missing: die("columns not found in %s: %s" % (table, missing))
     return idx
 
+# ---- skinning loot (exact items + drop chance) ----
+# The gather tooltip's "Skins into:" block lists every item a skinnable mob's
+# skinning loot yields, with a drop percentage, from the real cmangos loot table.
+# Baked into three tables in Data/GatherMobs.lua:
+#   SkinItems       itemID -> {"English name", quality}          (~90 rows)
+#   SkinLootTables  index  -> { {itemID, pct, min, max, quest}, ...}  (dedup, ~670)
+#   SkinLoot        npcID  -> table index, for every skinnable mob   (~1350)
+# Percentage semantics (cmangos loot_template):
+#   groupid 0  -> the row rolls independently at its own chance.
+#   groupid >0 -> the group yields exactly ONE item; explicit positive chances are
+#                 the odds, and zero-chance rows split whatever those leave to 100.
+#   chance < 0 -> quest-only; abs() is the chance, flagged quest.
+#   a conditional row (condition_id != 0) is flagged quest too (niche gated drops).
+#   min/max (mincountOrRef/maxcount) give the stack range; mincountOrRef < 0 is a
+#   reference to reference_loot_template (only a couple of rows use it).
+def parse_loot(sql, table):
+    """entry -> list of dict(item, ch, gid, mc, mx, cond)."""
+    d = {}
+    for mm in re.finditer(r"INSERT INTO `%s`[^;]*;" % table, sql, re.S):
+        for t in re.finditer(r"\(((?:[^()']|'(?:[^'\\]|\\.|'')*')*)\)", t_body(mm.group(0))):
+            f = split_tuple(t.group(1))
+            try: d.setdefault(int(f[0]), []).append(
+                dict(item=int(f[1]), ch=float(f[2]), gid=int(f[3]), mc=int(f[4]), mx=int(f[5]), cond=int(f[6])))
+            except: pass
+    return d
+
+def parse_item_meta(sql):
+    """itemID -> (name, quality). Quality is the item_template rarity 0..7."""
+    meta = {}
+    for mm in re.finditer(r"INSERT INTO `item_template`[^;]*;", sql, re.S):
+        for t in re.finditer(r"\(((?:[^()']|'(?:[^'\\]|\\.|'')*')*)\)", t_body(mm.group(0))):
+            f = split_tuple(t.group(1))
+            try: meta[int(f[0])] = (unq(f[4]), int(f[6]))
+            except: pass
+    return meta
+
+def skin_loot_of(entry, skinloot, refloot):
+    """Resolve one template's rows (expanding the rare reference row) into
+    (itemID, pct, min, max, quest) tuples, sorted non-quest first then pct desc."""
+    rows = []
+    for r in skinloot.get(entry, []):
+        if r["mc"] < 0: rows.extend(refloot.get(r["item"], []))   # reference row
+        else: rows.append(r)
+    groups = {}
+    for r in rows: groups.setdefault(r["gid"], []).append(r)
+    out = []
+    for gid, grp in groups.items():
+        if gid == 0:                                     # independent rolls
+            for r in grp:
+                out.append((r["item"], abs(r["ch"]), r["mc"], r["mx"], r["ch"] < 0 or r["cond"] != 0))
+        else:                                            # one-of-group; zeros split the remainder
+            expl = [r for r in grp if r["ch"] > 0]
+            zero = [r for r in grp if r["ch"] == 0]
+            neg  = [r for r in grp if r["ch"] < 0]
+            each = max(0.0, 100.0 - sum(r["ch"] for r in expl)) / len(zero) if zero else 0.0
+            for r in expl: out.append((r["item"], r["ch"],  r["mc"], r["mx"], r["cond"] != 0))
+            for r in zero: out.append((r["item"], each,     r["mc"], r["mx"], r["cond"] != 0))
+            for r in neg:  out.append((r["item"], abs(r["ch"]), r["mc"], r["mx"], True))
+    out.sort(key=lambda t: (t[4], -t[1]))
+    return tuple((it, round(pct), mn, mx, q) for it, pct, mn, mx, q in out)
+
+def skin_loot_tables(skin, cre, skinloot, refloot, meta):
+    """Return (items, tables, mob_tbl): items = {itemID:(name,quality)} used;
+    tables = list of loot-lists (deduped); mob_tbl = npcID -> 1-based table index."""
+    tables, index, mob_tbl, used = [], {}, {}, set()
+    for e in skin:
+        loot = skin_loot_of(cre[e][1], skinloot, refloot)
+        if not loot: continue
+        idx = index.get(loot)
+        if idx is None:
+            tables.append(loot); idx = len(tables); index[loot] = idx
+        mob_tbl[e] = idx
+        for it, *_ in loot: used.add(it)
+    items = {it: meta.get(it, ("item:" + str(it), 1)) for it in used}
+    return items, tables, mob_tbl
+
+
 def regen(addon_dir, url, version, write):
     log("downloading cmangos %s ..." % version)
     raw = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent":"pb"}), timeout=120).read()
     sql = gzip.decompress(raw).decode("utf-8", "replace")
     ci = col_index(sql, "creature_template", ["Entry","CreatureTypeFlags","SkinningLootId"])
     log("  creature_template cols: %s" % ci)
-    # skinning_loot_template: which loot ids actually have rows
-    skinloot = set()
-    for mm in re.finditer(r"INSERT INTO `skinning_loot_template`[^;]*;", sql, re.S):
-        for t in re.finditer(r"\(((?:[^()']|'(?:[^'\\]|\\.|'')*')*)\)", t_body(mm.group(0))):
-            try: skinloot.add(int(split_tuple(t.group(1))[0]))
-            except: pass
+    # skinning_loot_template: entry -> loot rows (also serves as the "has rows" set)
+    skinloot = parse_loot(sql, "skinning_loot_template")
     cre={}
     for mm in re.finditer(r"INSERT INTO `creature_template`[^;]*;", sql, re.S):
         for t in re.finditer(r"\(((?:[^()']|'(?:[^'\\]|\\.|'')*')*)\)", t_body(mm.group(0))):
@@ -137,6 +210,11 @@ def regen(addon_dir, url, version, write):
     bad=[(n,exp) for n,exp in ANCHORS.items() if (n in skinset)!=exp]
     if bad: die("anchor validation FAILED: %s" % bad)
     log("  anchors OK  |  skinnable=%d mineable=%d herbable=%d" % (len(skin),len(mine),len(herb)))
+    # skinning loot: exact items + drop chance (needs reference loot + item meta)
+    refloot  = parse_loot(sql, "reference_loot_template")
+    itemmeta = parse_item_meta(sql)
+    skinitems, skintables, mob_tbl = skin_loot_tables(skin, cre, skinloot, refloot, itemmeta)
+    log("  skin-loot: %d mobs over %d loot tables, %d items" % (len(mob_tbl), len(skintables), len(skinitems)))
     # diff vs current
     cur = current_ids(addon_dir)
     if cur is not None:
@@ -146,7 +224,7 @@ def regen(addon_dir, url, version, write):
         log("  (dry run -- pass --write to regenerate Data/GatherMobs.lua; nodes are preserved)")
         return
     # preserve node tables from the current file, rewrite mob sets, restamp
-    write_gathermobs(addon_dir, version, skin, mine, herb)
+    write_gathermobs(addon_dir, version, skin, mine, herb, skinitems, skintables, mob_tbl)
     log("  WROTE Data/GatherMobs.lua @ cmangos %s" % version)
 
 def t_body(insert):
@@ -159,7 +237,7 @@ def current_ids(addon_dir):
     m=re.search(r"ProfBuddy\.SkinnableMobs = \{(.*?)\n\}", txt, re.S)
     return set(int(x) for x in re.findall(r"\[(\d+)\]=true", m.group(1))) if m else None
 
-def write_gathermobs(addon_dir, version, skin, mine, herb):
+def write_gathermobs(addon_dir, version, skin, mine, herb, skinitems, skintables, mob_tbl):
     p=os.path.join(addon_dir,"Data","GatherMobs.lua"); txt=open(p,encoding="utf-8").read()
     def ids(name,arr):
         L=[f"ProfBuddy.{name} = {{"]; row=[]
@@ -169,7 +247,36 @@ def write_gathermobs(addon_dir, version, skin, mine, herb):
         if row: L.append("    "+"".join(row))
         L.append("}"); return "\n".join(L)
     for name,arr in (("SkinnableMobs",skin),("MineableMobs",mine),("HerbableMobs",herb)):
-        txt=re.sub(r"ProfBuddy\.%s = \{.*?\n\}" % name, ids(name,arr), txt, count=1, flags=re.S)
+        txt=re.sub(r"ProfBuddy\.%s = \{.*?\n\}" % name, lambda m, r=ids(name,arr): r, txt, count=1, flags=re.S)
+    def qesc(s): return s.replace("\\", "\\\\").replace('"', '\\"')
+    # SkinItems: itemID -> {"name", quality}
+    ib=["ProfBuddy.SkinItems = {"]
+    for it in sorted(skinitems):
+        nm, q = skinitems[it]
+        ib.append('    [%d]={"%s",%d},' % (it, qesc(nm), q))
+    ib.append("}")
+    # SkinLootTables: index -> { {itemID,pct,min,max[,true]}, ... } (already sorted)
+    tb=["ProfBuddy.SkinLootTables = {"]
+    for i, loot in enumerate(skintables, 1):
+        entries = []
+        for it, pct, mn, mx, quest in loot:
+            entries.append("{%d,%d,%d,%d%s}" % (it, pct, mn, mx, ",true" if quest else ""))
+        tb.append("    [%d]={%s}," % (i, ",".join(entries)))
+    tb.append("}")
+    # SkinLoot: npcID -> table index
+    lb=["ProfBuddy.SkinLoot = {"]; row=[]
+    for e in sorted(mob_tbl):
+        row.append("[%d]=%d," % (e, mob_tbl[e]))
+        if len(row)==12: lb.append("    "+"".join(row)); row=[]
+    if row: lb.append("    "+"".join(row))
+    lb.append("}")
+    block="\n".join(ib) + "\n\n" + "\n".join(tb) + "\n\n" + "\n".join(lb)
+    # drop any prior skinning tables (this format or the retired SkinYield ones)
+    for name in ("SkinItems","SkinLootTables","SkinLoot","SkinYieldProfiles","SkinYield"):
+        txt=re.sub(r"\nProfBuddy\.%s = \{.*?\n\}\n" % name, "\n", txt, count=1, flags=re.S)
+    # insert the fresh block after the HerbableMobs table
+    txt=re.sub(r"(ProfBuddy\.HerbableMobs = \{.*?\n\})",
+               lambda m: m.group(1)+"\n\n"+block, txt, count=1, flags=re.S)
     txt=re.sub(r"TBCDB\s+\d+\.\d+\.\d+", "TBCDB %s" % version, txt)
     open(p,"w",encoding="utf-8").write(txt)
 

@@ -231,7 +231,12 @@ function Scanner:ScanProfessions()
     -- In TBC Classic, GetProfessions() doesn't exist.
     -- We scan professions when their windows open (TRADE_SKILL_SHOW).
     -- On login we can get the names + skill from the spellbook via GetSkillLineInfo.
-    local numSkills = GetNumSkillLines()
+    -- The skill-line API is classic-only: a retail-API client (WoW: Forever) has
+    -- no GetNumSkillLines at all, and calling it there took the whole addon down
+    -- during Init. Guard it the way the other three call sites already are, so an
+    -- unsupported client degrades to "found no professions here" instead of a
+    -- hard error. Real support for those clients is the 2.0.0 port item.
+    local numSkills = GetNumSkillLines and GetNumSkillLines() or 0
     for i = 1, numSkills do
         local name, isHeader, _, rank, _, _, maxRank = GetSkillLineInfo(i)
         if not isHeader and name then

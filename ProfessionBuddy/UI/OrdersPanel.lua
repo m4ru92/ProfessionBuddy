@@ -680,9 +680,16 @@ function OP:PaintOrderRow(row, o, role)
 
     if row.guildTag then
         local label, r, g, b = relationBadge(otherKey)
-        if label then
+        -- Mark a board-claimed order distinctly, next to the friend/guild badge.
+        -- The grey "board" tag rides on the badge line even when there is no
+        -- relationship badge (e.g. a claimer who is neither a contact nor a
+        -- current guildmate).
+        if addon:OrderOrigin(o) == "board" then
+            label = (label and (label .. "  ") or "") .. "|cff888888board|r"
+        end
+        if label and label ~= "" then
             row.guildTag:SetText(label)
-            row.guildTag:SetTextColor(r, g, b)
+            row.guildTag:SetTextColor(r or 0.6, g or 0.6, b or 0.6)
             row.guildTag:Show()
         else
             row.guildTag:Hide()

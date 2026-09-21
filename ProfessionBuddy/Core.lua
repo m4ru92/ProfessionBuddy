@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "1.1.1"
+addon.version = "1.1.2"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -140,6 +140,58 @@ function addon:OrderRelation(counterpartyKey)
     if self.db and self.db.contacts and self.db.contacts[ckey] ~= nil then return "friend" end
     if self.Comm and self.Comm.IsGuildMember and self.Comm:IsGuildMember(counterpartyKey) then return "guild" end
     return nil
+end
+
+-- Origin of an order, for the source badge: "board" if it was posted to the
+-- guild board (the requester's copy carries origin; the crafter's copy carries
+-- the fromClaim flag the ORDER_NEW handoff already sends), else "direct". nil
+-- only for a non-order.
+function addon:OrderOrigin(order)
+    if type(order) ~= "table" then return nil end
+    if order.origin == "board" or order.fromClaim then return "board" end
+    return "direct"
+end
+
+----------------------------------------------------------------------
+-- Recipe source faction visibility (Increment 3 rules, data layer).
+-- A recipe carries sources[] of { method, faction, detail }, each tagged
+-- Alliance / Horde / Both. These live here rather than in the UI file so the
+-- recipe browser, the "Used in" tooltip and the harness all read one rule.
+----------------------------------------------------------------------
+
+-- Normalize a recipe to a sources[] array, folding in the legacy single
+-- source/sourceDetail fields for any un-migrated data. nil = no source data.
+function addon:RecipeSources(recipe)
+    if type(recipe) ~= "table" then return nil end
+    if type(recipe.sources) == "table" and #recipe.sources > 0 then
+        return recipe.sources
+    elseif recipe.source then
+        return { { method = recipe.source, faction = "Both", detail = recipe.sourceDetail } }
+    end
+    return nil
+end
+
+-- The subset of a recipe's sources usable by `faction`. nil means the recipe
+-- has no source data at all; an EMPTY table means it has sources but every one
+-- of them belongs to the other faction. An untagged source counts as Both.
+function addon:VisibleSources(recipe, faction)
+    local all = self:RecipeSources(recipe)
+    if not all then return nil end
+    local out = {}
+    for _, s in ipairs(all) do
+        if s.faction == nil or s.faction == "Both" or s.faction == faction then
+            out[#out + 1] = s
+        end
+    end
+    return out
+end
+
+-- Can only the OTHER faction obtain this recipe? False when the recipe has no
+-- source data: an unknown source is not an opposite-faction source, and hiding
+-- on missing data would silently drop recipes.
+function addon:IsOppositeFactionOnly(recipe, faction)
+    local vis = self:VisibleSources(recipe, faction)
+    return vis ~= nil and #vis == 0
 end
 
 ----------------------------------------------------------------------
@@ -276,6 +328,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         tooltipShowSkillRange = true,  -- colored skill-up range on each "Used in" line
         gatherSkillTooltip  = true,  -- required skin/mine/herb skill on mob + node tooltips
         gatherShowUnlearned = true,  -- show gather info for professions you have not learned
+        gatherYieldTooltip  = true,  -- "Yields: Leather/Scale" line on skinnable mob tooltips
         skillReqNotify      = false, -- dev-only: chat alert when a trainer learn-level correction is found
         tooltipMaxOwn       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)
@@ -283,6 +336,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
+        hideOppositeFactionRecipes = true, -- hide recipes only the other faction can obtain
         replaceTradeSkill   = true,
         rememberWindowState = true,
         showAllProfessions  = false,
@@ -324,6 +378,12 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.gatherShowUnlearned == nil then
         ProfBuddyDB.settings.gatherShowUnlearned = true
+    end
+    if ProfBuddyDB.settings.gatherYieldTooltip == nil then
+        ProfBuddyDB.settings.gatherYieldTooltip = true
+    end
+    if ProfBuddyDB.settings.hideOppositeFactionRecipes == nil then
+        ProfBuddyDB.settings.hideOppositeFactionRecipes = true
     end
     if ProfBuddyDB.settings.tooltipMaxAlt == nil then
         ProfBuddyDB.settings.tooltipMaxAlt = 16

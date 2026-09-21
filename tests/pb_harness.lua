@@ -1814,8 +1814,117 @@ do
 end
 passed("T71 order source relation -- contact=friend, guildmate=guild, self/unknown=none, contact wins")
 
+-- ── T72: order origin (direct vs board), for the source badge ─────────────────
+-- A board-posted order carries origin="board" on the requester's copy; the
+-- crafter's copy carries the fromClaim flag the ORDER_NEW handoff already sends.
+-- Everything else is "direct". (The "board" marker render is m4ru's eyeball.)
+do
+    local direct = Orders:Create({ crafter = "Crafterpal",
+        item = { name = "Bolt of Runecloth", profession = "Tailoring" }, quantity = 1 })
+    assert(direct and direct.origin == "direct", "T72: a directed order should be origin direct")
+    assert(addon:OrderOrigin(direct) == "direct", "T72: OrderOrigin reads a directed order as direct")
+    local board = Orders:CreateOpen({
+        item = { name = "Silk Bag", profession = "Tailoring" }, quantity = 1 })
+    assert(board and board.origin == "board", "T72: a board post should be origin board")
+    assert(addon:OrderOrigin(board) == "board", "T72: OrderOrigin reads a board post as board")
+    -- the crafter's rebuilt copy has no origin field but carries fromClaim
+    assert(addon:OrderOrigin({ fromClaim = true }) == "board", "T72: fromClaim (crafter side) reads as board")
+    assert(addon:OrderOrigin({}) == "direct", "T72: an order with neither reads as direct")
+    assert(addon:OrderOrigin(nil) == nil, "T72: a non-order is nil")
+    addon.db.orders[direct.id] = nil
+    addon.db.orders[board.id] = nil
+end
+passed("T72 order origin -- Create=direct, CreateOpen=board, fromClaim=board, default direct")
+
+-- ── T73: skinning loot data (the gather-tooltip "Skins into:" block) ───────────
+-- Three baked tables: SkinLoot npcID -> table index, SkinLootTables index ->
+-- {itemID,pct,min,max[,quest]}, SkinItems itemID -> {name,quality}. Invariants:
+-- every mapped mob is skinnable and points at a real non-empty table; every item
+-- referenced exists; every percent is in 1..100. Then the exact-loot anchors.
+do
+    dofile(BASE .. "/Data/GatherMobs.lua")
+    assert(type(addon.SkinLoot) == "table", "T73: SkinLoot table should load")
+    assert(type(addon.SkinLootTables) == "table", "T73: SkinLootTables should load")
+    assert(type(addon.SkinItems) == "table", "T73: SkinItems should load")
+    assert(type(addon.SkinnableMobs) == "table", "T73: SkinnableMobs should load")
+    local n = 0
+    for npc, idx in pairs(addon.SkinLoot) do
+        n = n + 1
+        assert(addon.SkinnableMobs[npc], "T73: SkinLoot npc " .. npc .. " must be skinnable")
+        assert(type(addon.SkinLootTables[idx]) == "table", "T73: npc " .. npc .. " -> real table")
+    end
+    assert(n > 0, "T73: SkinLoot should not be empty")
+    for idx, loot in pairs(addon.SkinLootTables) do
+        assert(#loot > 0, "T73: loot table " .. idx .. " non-empty")
+        for _, e in ipairs(loot) do
+            local itemID, pct = e[1], e[2]
+            assert(addon.SkinItems[itemID], "T73: item " .. tostring(itemID) .. " has a SkinItems entry")
+            assert(pct >= 1 and pct <= 100, "T73: pct in 1..100, got " .. tostring(pct))
+            assert(e[3] >= 1 and e[4] >= e[3], "T73: stack min>=1 and max>=min")
+        end
+    end
+    -- exact-loot anchors (Fable review): itemID, pct, quest-flag as baked
+    local NAME = {}
+    for id, meta in pairs(addon.SkinItems) do NAME[meta[1]] = id end
+    local function pctOf(npc, itemName)
+        local loot = addon.SkinLootTables[addon.SkinLoot[npc]]
+        for _, e in ipairs(loot) do if e[1] == NAME[itemName] then return e[2], e[5] end end
+    end
+    assert(pctOf(721, "Ruined Leather Scraps") == 90, "T73: Rabbit 721 scraps 90")
+    assert(pctOf(721, "Light Leather") == 10, "T73: Rabbit 721 light leather 10")
+    assert(pctOf(1933, "Wool Cloth") ~= nil, "T73: Sheep 1933 includes Wool Cloth")
+    assert(pctOf(18205, "Thick Clefthoof Leather") == 10, "T73: Clefthoof 18205 clefthoof leather 10")
+    local nr = select(2, pctOf(18205, "Nether Residue"))
+    assert(nr == true, "T73: Clefthoof Nether Residue is quest-flagged")
+    assert(pctOf(11722, "Silithid Chitin") == 37, "T73: Hive'Ashi 11722 silithid chitin 37")
+    assert(pctOf(11722, "Broken Silithid Chitin") == 63, "T73: Hive'Ashi 11722 broken chitin 63")
+    assert(pctOf(6109, "Blue Dragonscale") == 100, "T73: Azuregos 6109 blue dragonscale 100")
+end
+passed("T73 skinning loot -- tables well-formed, items/percents valid, exact-loot anchors hold")
+
+-- ── T74: recipe source faction visibility (the "Used in" faction filter) ──────
+-- One data-layer rule shared by the recipe browser and the reagent tooltip.
+-- The load-bearing distinction: nil (no source data at all) must NEVER hide a
+-- recipe, while an EMPTY list (has sources, all opposite-faction) must.
+do
+    local A, H = "Alliance", "Horde"
+    local allianceOnly = { sources = { { method = "trainer", faction = A } } }
+    local hordeOnly    = { sources = { { method = "vendor",  faction = H } } }
+    local both         = { sources = { { method = "trainer", faction = "Both" } } }
+    local untagged     = { sources = { { method = "drop" } } }
+    local mixed        = { sources = { { method = "quest", faction = A },
+                                       { method = "drop",  faction = H } } }
+    local legacy       = { source = "trainer", sourceDetail = "Some Trainer" }
+    local sourceless   = { name = "Mystery Recipe" }
+
+    -- normalization
+    assert(addon:RecipeSources(sourceless) == nil, "T74: no source data normalizes to nil")
+    assert(#addon:RecipeSources(legacy) == 1, "T74: legacy single source folds into a list")
+    assert(addon:RecipeSources(legacy)[1].faction == "Both", "T74: legacy source counts as Both")
+
+    -- visibility per faction
+    assert(#addon:VisibleSources(allianceOnly, A) == 1, "T74: Alliance sees an Alliance source")
+    assert(#addon:VisibleSources(allianceOnly, H) == 0, "T74: Horde sees none of it")
+    assert(#addon:VisibleSources(both, H) == 1, "T74: Both is visible to either side")
+    assert(#addon:VisibleSources(untagged, H) == 1, "T74: an untagged source counts as Both")
+    assert(#addon:VisibleSources(mixed, A) == 1, "T74: a mixed recipe shows only your side's source")
+    assert(addon:VisibleSources(sourceless, A) == nil, "T74: sourceless stays nil, not empty")
+
+    -- the hide predicate
+    assert(addon:IsOppositeFactionOnly(allianceOnly, H) == true, "T74: Alliance-only is hidden from Horde")
+    assert(addon:IsOppositeFactionOnly(allianceOnly, A) == false, "T74: Alliance-only shows for Alliance")
+    assert(addon:IsOppositeFactionOnly(hordeOnly, A) == true, "T74: Horde-only is hidden from Alliance")
+    assert(addon:IsOppositeFactionOnly(mixed, A) == false, "T74: a mixed recipe is never hidden")
+    assert(addon:IsOppositeFactionOnly(both, H) == false, "T74: Both is never hidden")
+    -- the regression that started this: unknown source must not be treated as
+    -- opposite-faction, or recipes silently vanish from the browser and tooltip
+    assert(addon:IsOppositeFactionOnly(sourceless, A) == false, "T74: no source data never hides")
+    assert(addon:IsOppositeFactionOnly(legacy, H) == false, "T74: legacy source never hides")
+end
+passed("T74 recipe faction visibility -- opposite-faction-only hides, Both/untagged/mixed/sourceless never do")
+
 leaveGuild()
-print("ALL 71 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 74 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -1825,6 +1934,7 @@ print("ALL 71 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
     .. " coercion, T68 the trust-timing hold-and-replay race, T69 the contact"
     .. " favorites data layer, T70 the item favorites data layer and T71 the order"
-    .. " source relation; "
+    .. " source relation, T72 the order origin stamp, T73 the skinning loot data"
+    .. " and T74 the recipe faction visibility rule; "
     .. pass .. " of them print a PASS line above)")
 
