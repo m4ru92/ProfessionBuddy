@@ -525,8 +525,12 @@ local function AddSkinLoot(tip, npcID)
             stack = (minc == maxc) and ("  x" .. maxc) or ("  x" .. minc .. "-" .. maxc)
         end
         if quest then
-            tip:AddDoubleLine("  |cff808080" .. name .. stack .. " (quest)|r",
-                              "|cff808080" .. pct .. "%|r")
+            -- No percent on a quest row. cmangos stores the chance you get the
+            -- item WHILE ON the quest, which is not the observed drop rate
+            -- (Nether Residue is -25 in the DB against roughly 1% in practice),
+            -- so printing that number would state something false. The row still
+            -- earns its place: it tells you the drop exists and is quest-gated.
+            tip:AddLine("  |cff808080" .. name .. stack .. " (quest)|r")
         else
             local qc = q and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[q]
             local hex = (qc and qc.hex) or "|cffffffff"
