@@ -153,6 +153,48 @@ function addon:OrderOrigin(order)
 end
 
 ----------------------------------------------------------------------
+-- Recipe source faction visibility (Increment 3 rules, data layer).
+-- A recipe carries sources[] of { method, faction, detail }, each tagged
+-- Alliance / Horde / Both. These live here rather than in the UI file so the
+-- recipe browser, the "Used in" tooltip and the harness all read one rule.
+----------------------------------------------------------------------
+
+-- Normalize a recipe to a sources[] array, folding in the legacy single
+-- source/sourceDetail fields for any un-migrated data. nil = no source data.
+function addon:RecipeSources(recipe)
+    if type(recipe) ~= "table" then return nil end
+    if type(recipe.sources) == "table" and #recipe.sources > 0 then
+        return recipe.sources
+    elseif recipe.source then
+        return { { method = recipe.source, faction = "Both", detail = recipe.sourceDetail } }
+    end
+    return nil
+end
+
+-- The subset of a recipe's sources usable by `faction`. nil means the recipe
+-- has no source data at all; an EMPTY table means it has sources but every one
+-- of them belongs to the other faction. An untagged source counts as Both.
+function addon:VisibleSources(recipe, faction)
+    local all = self:RecipeSources(recipe)
+    if not all then return nil end
+    local out = {}
+    for _, s in ipairs(all) do
+        if s.faction == nil or s.faction == "Both" or s.faction == faction then
+            out[#out + 1] = s
+        end
+    end
+    return out
+end
+
+-- Can only the OTHER faction obtain this recipe? False when the recipe has no
+-- source data: an unknown source is not an opposite-faction source, and hiding
+-- on missing data would silently drop recipes.
+function addon:IsOppositeFactionOnly(recipe, faction)
+    local vis = self:VisibleSources(recipe, faction)
+    return vis ~= nil and #vis == 0
+end
+
+----------------------------------------------------------------------
 -- Schema 2 migration: canonical character keys
 -- Keys used to be stored with the realm spelled exactly as GetRealmName()
 -- returns it, while trust comparisons normalized it, so on a multi-word
@@ -294,6 +336,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
+        hideOppositeFactionRecipes = true, -- hide recipes only the other faction can obtain
         replaceTradeSkill   = true,
         rememberWindowState = true,
         showAllProfessions  = false,
@@ -338,6 +381,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.gatherYieldTooltip == nil then
         ProfBuddyDB.settings.gatherYieldTooltip = true
+    end
+    if ProfBuddyDB.settings.hideOppositeFactionRecipes == nil then
+        ProfBuddyDB.settings.hideOppositeFactionRecipes = true
     end
     if ProfBuddyDB.settings.tooltipMaxAlt == nil then
         ProfBuddyDB.settings.tooltipMaxAlt = 16

@@ -73,31 +73,41 @@ local function PlayerFaction()
     return UnitFactionGroup("player")  -- "Alliance" or "Horde"
 end
 
--- Normalize a recipe to a sources[] array (falls back to the legacy
--- single source/sourceDetail fields for any un-migrated data).
+-- Thin wrappers over the data-layer rule in Core.lua, bound to the current
+-- character's faction. The logic lives there so the browser, the "Used in"
+-- tooltip and the harness cannot drift apart.
 local function RecipeSources(recipe)
-    if type(recipe.sources) == "table" and #recipe.sources > 0 then
-        return recipe.sources
-    elseif recipe.source then
-        return { { method = recipe.source, faction = "Both", detail = recipe.sourceDetail } }
-    end
-    return nil
+    return addon:RecipeSources(recipe)
 end
 
--- The subset of a recipe's sources usable by the current character. Returns
--- nil if the recipe has no source data at all; an empty table means it has
--- sources but all are for the opposite faction.
 local function VisibleSources(recipe)
-    local all = RecipeSources(recipe)
-    if not all then return nil end
-    local mine = PlayerFaction()
-    local out = {}
-    for _, s in ipairs(all) do
-        if s.faction == nil or s.faction == "Both" or s.faction == mine then
-            out[#out + 1] = s
-        end
-    end
-    return out
+    return addon:VisibleSources(recipe, PlayerFaction())
+end
+
+-- Is the "hide opposite-faction recipes" filter on? Default ON, so an absent
+-- key behaves exactly as the hard-coded always-on filter did before this setting.
+local function FactionHideOn()
+    local st = addon.db and addon.db.settings
+    return not (st and st.hideOppositeFactionRecipes == false)
+end
+
+-- Sources to FILTER and DISPLAY by. With the hide on, only the ones this
+-- faction can actually use (the old behaviour). With it off the user has asked
+-- to see the other side's recipes, so show every source they have, otherwise a
+-- shown recipe would render with a blank Source line and match no source filter.
+-- Capability counts (what you can train right now) deliberately keep using
+-- VisibleSources: you cannot learn the other faction's recipe either way.
+local function EffectiveSources(recipe)
+    if FactionHideOn() then return VisibleSources(recipe) end
+    return RecipeSources(recipe)
+end
+
+-- True when a recipe is obtainable ONLY by the opposite faction and the hide is
+-- on. VisibleSources returns nil when a recipe carries no source data at all,
+-- which must never hide it (unknown source is not an opposite-faction source).
+local function FactionHiddenRecipe(recipe)
+    if not FactionHideOn() then return false end
+    return addon:IsOppositeFactionOnly(recipe, PlayerFaction())
 end
 
 local DIFF_ORDER = { optimal = 1, medium = 2, easy = 3, trivial = 4 }
@@ -769,7 +779,15 @@ function TSF:HookItemTooltip()
         local entries = {}
         for _, info in ipairs(usedIn) do
             local key = info.profName .. ":" .. info.recipeName
-            if not seen[key] then
+            -- Skip recipes only the other faction can obtain. The reverse index
+            -- stores no source data, so resolve the full recipe to check it --
+            -- the same VisibleSources rule the recipe browser already applies,
+            -- which is why the browser hid these and this tooltip did not.
+            local rdbInfo = RDB.data and RDB.data[info.profName]
+                            and RDB.data[info.profName][info.recipeName]
+            if rdbInfo and FactionHiddenRecipe(rdbInfo) then
+                seen[key] = true
+            elseif not seen[key] then
                 seen[key] = true
                 local tier = PROF_TIER[info.profName] or 99
 
@@ -2227,7 +2245,7 @@ function TSF:UpdateListRows()
                         row.rightText:SetText(rangeStr)
                     end
                 else
-                    local vis = VisibleSources(entry)
+                    local vis = EffectiveSources(entry)
                     local src = (vis and vis[1] and vis[1].method) or entry.source or ""
                     local c = SOURCE_COLORS[src] or "|cff888888"
                     local displaySrc = src:sub(1,1):upper() .. src:sub(2)
@@ -2698,7 +2716,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
         self.detCat:SetText("")
     end
 
-    local vis = VisibleSources(recipe)
+    local vis = EffectiveSources(recipe)
     if vis and #vis > 0 then
         local lines = {}
         for _, s in ipairs(vis) do
@@ -4375,6 +4393,21 @@ function TSF:BuildSettingsPanel(parent)
         settings.showAllProfessions = self:GetChecked()
         TSF:UpdateProfessionTabs()
     end)
+    yLeft = yLeft - 30
+
+    -- Recipe-level faction filter. Sits in the general group, not under the
+    -- tooltip or alt headings, because it governs BOTH the recipe browser and
+    -- the "Used in" tooltip. Distinct from "Show opposite faction alts", which
+    -- is about characters, not about which recipes exist for your side.
+    local factionCB = MakeCheckbox("Hide opposite-faction recipes", "hideOppositeFactionRecipes", yLeft)
+    factionCB:SetScript("OnClick", function(self)
+        settings.hideOppositeFactionRecipes = self:GetChecked()
+        -- Re-filter an open browser immediately. Guarded: RefreshRecipeList
+        -- touches self.scrollBar, and the settings panel can be shown before
+        -- the recipe list has ever been built. The tooltip needs no refresh,
+        -- it reads the setting on the next hover.
+        if TSF.scrollBar then TSF:RefreshRecipeList() end
+    end)
     yLeft = yLeft - 40
 
     -- ── Alt Information section ────────────────────────────────
@@ -5074,7 +5107,7 @@ function TSF:LoadRecipes(unknown)
                 passDiff = (r.difficulty == diffMap[state.filterDiff])
             end
         else
-            local vis = VisibleSources(r)
+            local vis = EffectiveSources(r)
             if vis ~= nil and #vis == 0 then
                 passFaction = false
             elseif state.filterDiff ~= "All" then

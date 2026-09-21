@@ -1882,8 +1882,49 @@ do
 end
 passed("T73 skinning loot -- tables well-formed, items/percents valid, exact-loot anchors hold")
 
+-- ── T74: recipe source faction visibility (the "Used in" faction filter) ──────
+-- One data-layer rule shared by the recipe browser and the reagent tooltip.
+-- The load-bearing distinction: nil (no source data at all) must NEVER hide a
+-- recipe, while an EMPTY list (has sources, all opposite-faction) must.
+do
+    local A, H = "Alliance", "Horde"
+    local allianceOnly = { sources = { { method = "trainer", faction = A } } }
+    local hordeOnly    = { sources = { { method = "vendor",  faction = H } } }
+    local both         = { sources = { { method = "trainer", faction = "Both" } } }
+    local untagged     = { sources = { { method = "drop" } } }
+    local mixed        = { sources = { { method = "quest", faction = A },
+                                       { method = "drop",  faction = H } } }
+    local legacy       = { source = "trainer", sourceDetail = "Some Trainer" }
+    local sourceless   = { name = "Mystery Recipe" }
+
+    -- normalization
+    assert(addon:RecipeSources(sourceless) == nil, "T74: no source data normalizes to nil")
+    assert(#addon:RecipeSources(legacy) == 1, "T74: legacy single source folds into a list")
+    assert(addon:RecipeSources(legacy)[1].faction == "Both", "T74: legacy source counts as Both")
+
+    -- visibility per faction
+    assert(#addon:VisibleSources(allianceOnly, A) == 1, "T74: Alliance sees an Alliance source")
+    assert(#addon:VisibleSources(allianceOnly, H) == 0, "T74: Horde sees none of it")
+    assert(#addon:VisibleSources(both, H) == 1, "T74: Both is visible to either side")
+    assert(#addon:VisibleSources(untagged, H) == 1, "T74: an untagged source counts as Both")
+    assert(#addon:VisibleSources(mixed, A) == 1, "T74: a mixed recipe shows only your side's source")
+    assert(addon:VisibleSources(sourceless, A) == nil, "T74: sourceless stays nil, not empty")
+
+    -- the hide predicate
+    assert(addon:IsOppositeFactionOnly(allianceOnly, H) == true, "T74: Alliance-only is hidden from Horde")
+    assert(addon:IsOppositeFactionOnly(allianceOnly, A) == false, "T74: Alliance-only shows for Alliance")
+    assert(addon:IsOppositeFactionOnly(hordeOnly, A) == true, "T74: Horde-only is hidden from Alliance")
+    assert(addon:IsOppositeFactionOnly(mixed, A) == false, "T74: a mixed recipe is never hidden")
+    assert(addon:IsOppositeFactionOnly(both, H) == false, "T74: Both is never hidden")
+    -- the regression that started this: unknown source must not be treated as
+    -- opposite-faction, or recipes silently vanish from the browser and tooltip
+    assert(addon:IsOppositeFactionOnly(sourceless, A) == false, "T74: no source data never hides")
+    assert(addon:IsOppositeFactionOnly(legacy, H) == false, "T74: legacy source never hides")
+end
+passed("T74 recipe faction visibility -- opposite-faction-only hides, Both/untagged/mixed/sourceless never do")
+
 leaveGuild()
-print("ALL 73 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 74 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -1893,6 +1934,7 @@ print("ALL 73 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " payload caps, skill-line rescan, the reflex-reply floor, T67 trainer-scan skillReq"
     .. " coercion, T68 the trust-timing hold-and-replay race, T69 the contact"
     .. " favorites data layer, T70 the item favorites data layer and T71 the order"
-    .. " source relation, T72 the order origin stamp and T73 the skinning loot data; "
+    .. " source relation, T72 the order origin stamp, T73 the skinning loot data"
+    .. " and T74 the recipe faction visibility rule; "
     .. pass .. " of them print a PASS line above)")
 
