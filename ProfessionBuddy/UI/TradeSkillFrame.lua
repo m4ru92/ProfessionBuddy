@@ -383,6 +383,10 @@ function TSF:Init()
         end
     end)
     On(E.CRAFT_SHOW, function()
+        -- The hunter's Beast Training runs through the Craft API too. PB has
+        -- no pet-training UI (training points, pet level requirements), so
+        -- it leaves that window to Blizzard entirely.
+        if addon.Source:IsPetTraining() then return end
         -- Same previous-frame snapshot as TRADE_SKILL_SHOW
         self._savedBagState = {}
         local src = self._bagTracker._prev
@@ -424,6 +428,7 @@ function TSF:Init()
     -- (_craftingActive) or casting a single enchant via the secure button
     -- (the else branch refreshes through OnCraftShow -> UpdateSkillBar).
     On(E.CRAFT_UPDATE, function()
+        if addon.Source:IsPetTraining() then return end
         if self.frame and self.frame:IsShown()
            and state.isCraftWindow
            and not (self.settingsPanel and self.settingsPanel:IsShown())
@@ -1104,16 +1109,64 @@ function TSF:SuppressDefaultFrames()
         frame:Hide()
     end
 
+    -- Hide a live Blizzard frame WITHOUT running its OnHide. CraftFrame's
+    -- OnHide calls CloseCraft(), which would close the very session PB is
+    -- about to show.
+    local function QuietHide(frame)
+        local onHide = frame:GetScript("OnHide")
+        frame:SetScript("OnHide", nil)
+        HideUIPanel(frame)
+        if frame:IsShown() then frame:Hide() end
+        frame:SetScript("OnHide", onHide)
+    end
+
+    -- A default frame SHARED with something PB does not replace is GATED,
+    -- not killed. Blizzard's Craft window also runs the hunter's Beast
+    -- Training, and killing it left hunters with no pet-training window at
+    -- all. Its scripts and events stay intact because they run the
+    -- pet-training UI; only Show() is intercepted, and it goes through for
+    -- pet training alone. It leaves UIPanelWindows so ShowUIPanel shows it as
+    -- a plain frame (at its own XML anchor, the top-left panel spot) instead
+    -- of routing through Blizzard's secure panel manager, which would
+    -- otherwise run this Lua override from secure code. UISpecialFrames keeps
+    -- Escape closing it.
+    local function DoGate(frame, frameName)
+        if not frame or killed[frameName] then return end
+        killed[frameName] = true
+        if frame:IsShown() and not addon.Source:IsPetTraining() then
+            QuietHide(frame)
+        end
+        if UIPanelWindows then
+            UIPanelWindows[frameName] = nil
+        end
+        local realShow = frame.Show
+        frame.Show = function(f, ...)
+            if addon.Source:IsPetTraining() then
+                return realShow(f, ...)
+            end
+        end
+        table.insert(UISpecialFrames, frameName)
+    end
+
+    local shared = addon.Source.SHARED_FRAMES or {}
+    local function Suppress(frame, frameName)
+        if shared[frameName] then
+            DoGate(frame, frameName)
+        else
+            DoKill(frame, frameName)
+        end
+    end
+
     -- Primary kill path: ADDON_LOADED fires when on-demand addon loads.
     local killTargets = addon.Source.DEFAULT_FRAMES
     for addonName, frameName in pairs(killTargets) do
         local frame = _G[frameName]
         if frame then
-            DoKill(frame, frameName)
+            Suppress(frame, frameName)
         elseif not self._suppressed then
             addon:RegisterEvent("ADDON_LOADED", function(_, name)
                 if name ~= addonName then return end
-                DoKill(_G[frameName], frameName)
+                Suppress(_G[frameName], frameName)
             end)
         end
     end
@@ -1131,7 +1184,7 @@ function TSF:SuppressDefaultFrames()
         if not frame then return end
         local name = frame:GetName()
         if addon.Source:IsDefaultFrame(name) then
-            DoKill(frame, name)
+            Suppress(frame, name)
         end
     end)
 end
@@ -5875,6 +5928,10 @@ function TSF:OnCraftShow()
     -- land here once the craft window has already closed, and without this
     -- it would open an empty window with a 0/375 skill bar.
     if addon.Source:CraftCount() == 0 then return end
+    -- Beast Training is Blizzard's window, not PB's. Without this, its empty
+    -- skill-line name fell through to the "Enchanting" default below and PB
+    -- opened a fake Enchanting window full of pet abilities.
+    if addon.Source:IsPetTraining() then return end
 
     local rawName, rank, maxRank = addon.Source:GetOpenSkillLine(true)
     if not rawName or rawName == "" then rawName = "Enchanting" end

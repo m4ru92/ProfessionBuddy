@@ -32,6 +32,13 @@ Source.DEFAULT_FRAMES = {
     Blizzard_CraftUI      = "CraftFrame",
 }
 
+-- Default frames that are ALSO used for something PB does not replace, so
+-- they are gated rather than killed. Blizzard's Craft window runs the
+-- hunter's Beast Training as well as Enchanting.
+Source.SHARED_FRAMES = {
+    CraftFrame = true,
+}
+
 -- Moved from Scanner:ScanProfessions. GetSkillLineInfo only enumerates the
 -- rows the skill list is currently showing, so a collapsed "Professions"
 -- header hides the professions underneath it. Expand everything, read,
@@ -108,10 +115,21 @@ function Source:IsLinked(isCraft)
     return (IsTradeSkillLinked and IsTradeSkillLinked()) and true or false
 end
 
--- The Craft API backs hunter pet training as well as Enchanting, and
--- CRAFT_SHOW fires for both.
+-- The Craft API backs exactly two windows in TBC: Enchanting and the
+-- hunter's Beast Training, and CRAFT_SHOW fires for both. CraftIsPetTraining
+-- is the direct test, but Blizzard's own TBC Anniversary Craft UI never calls
+-- it, so nothing here may depend on it existing. CraftIsEnchanting and
+-- GetCraftName ARE called unguarded by Blizzard's CraftFrame_Update on this
+-- client, so they exist: a craft window that is open and is not Enchanting
+-- is pet training.
 function Source:IsPetTraining()
-    return (CraftIsPetTraining and CraftIsPetTraining()) and true or false
+    if CraftIsPetTraining and CraftIsPetTraining() then return true end
+    if not CraftIsEnchanting then return false end
+    local name = GetCraftName and GetCraftName()
+    local open = (name ~= nil and name ~= "")
+              or (((GetNumCrafts and GetNumCrafts()) or 0) > 0)
+    if not open then return false end
+    return not CraftIsEnchanting()
 end
 
 -- nil (not 0) when the client has no Craft API, so callers that guarded
@@ -236,7 +254,9 @@ end
 -- treats GetNumCrafts() == 0 as "no session" (OnCraftShow).
 function Source:IsSessionOpen(isCraft)
     if isCraft then
-        return ((GetNumCrafts and GetNumCrafts()) or 0) > 0
+        -- Beast Training is not a profession session: PB never opens it, so
+        -- it must never close it either.
+        return (((GetNumCrafts and GetNumCrafts()) or 0) > 0) and not self:IsPetTraining()
     end
     local name = GetTradeSkillLine and GetTradeSkillLine()
     return name ~= nil and name ~= "" and name ~= "UNKNOWN"
