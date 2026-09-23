@@ -282,6 +282,14 @@ function TSF:Init()
     DS  = addon.DataStore
     RDB = addon.RecipeDB
 
+    -- Window events are named by role through the Source. A flavor with no
+    -- such event (no Craft API on WoW: Forever) leaves it nil, and On()
+    -- skips it: registering an unknown event is a hard error.
+    local E = addon.Source.EVENT
+    local function On(event, fn)
+        if event then addon:RegisterEvent(event, fn) end
+    end
+
     -- Lightweight per-frame bag-state tracker.  The game closes bags at
     -- the C level before any Lua event fires, so by the time we see
     -- TRADE_SKILL_SHOW the bags are already gone.  By keeping the
@@ -304,7 +312,7 @@ function TSF:Init()
     -- PB always opens on profession events regardless of setting.
     -- The setting only controls whether the default Blizzard frame
     -- is suppressed (on) or shown alongside PB (off).
-    addon:RegisterEvent("TRADE_SKILL_SHOW", function()
+    On(E.TRADE_SHOW, function()
         -- Grab the previous frame's bag state (before C-level close)
         self._savedBagState = {}
         local src = self._bagTracker._prev
@@ -324,8 +332,11 @@ function TSF:Init()
             C_Timer.After(0.01, function() self:OnTradeSkillShow() end)
         end
     end)
-    addon:RegisterEvent("TRADE_SKILL_CLOSE", function()
+    On(E.TRADE_CLOSE, function()
         if self._isMouseOverTab then return end
+        -- A background trade-skill session closing (PB is showing Enchanting,
+        -- or PB closed it itself on a switch) must not hide PB.
+        if state.isCraftWindow then return end
         -- The backend session is gone, so any tracked craft is over.
         self:StopCraftTracking()
         -- Resume bag tracker if it was paused
@@ -342,8 +353,13 @@ function TSF:Init()
             self:Hide(true)  -- from the game's close event; backend already closed
         end
     end)
-    addon:RegisterEvent("TRADE_SKILL_UPDATE", function()
+    On(E.TRADE_UPDATE, function()
+        -- `not state.isCraftWindow` mirrors the CRAFT_UPDATE guard below.
+        -- Without it, a trade-skill session left open behind an Enchanting
+        -- view re-opened itself on any bag change (TRADE_SKILL_UPDATE fires
+        -- on those) and silently replaced the Enchanting window.
         if self.frame and self.frame:IsShown()
+           and not state.isCraftWindow
            and not (self.settingsPanel and self.settingsPanel:IsShown())
            and not state._viewCharKey
            and not state._isStaticView then
@@ -354,11 +370,7 @@ function TSF:Init()
                     self:UpdateCraftableCounts()
                     -- Refresh skill bar in case we leveled up
                     local rank, maxRank
-                    if state.isCraftWindow then
-                        _, rank, maxRank = GetCraftDisplaySkillLine()
-                    else
-                        _, rank, maxRank = GetTradeSkillLine()
-                    end
+                    _, rank, maxRank = addon.Source:GetOpenSkillLine(state.isCraftWindow)
                     if rank and rank ~= state.skillLevel then
                         state.skillLevel = rank
                         state.maxSkill = maxRank or state.maxSkill
@@ -370,7 +382,7 @@ function TSF:Init()
             end
         end
     end)
-    addon:RegisterEvent("CRAFT_SHOW", function()
+    On(E.CRAFT_SHOW, function()
         -- Same previous-frame snapshot as TRADE_SKILL_SHOW
         self._savedBagState = {}
         local src = self._bagTracker._prev
@@ -388,8 +400,11 @@ function TSF:Init()
             C_Timer.After(0.01, function() self:OnCraftShow() end)
         end
     end)
-    addon:RegisterEvent("CRAFT_CLOSE", function()
+    On(E.CRAFT_CLOSE, function()
         if self._isMouseOverTab then return end
+        -- Same, the other way round: a background Craft session closing while
+        -- PB shows a trade skill must not hide PB.
+        if not state.isCraftWindow then return end
         -- Stops a DoCraft batch chain dead: the window it ran against is gone.
         self:StopCraftTracking()
         if self._bagTracker and self._bagTrackerUpdate then
@@ -408,7 +423,7 @@ function TSF:Init()
     -- counts stay live for enchants, whether crafting a DoCraft batch
     -- (_craftingActive) or casting a single enchant via the secure button
     -- (the else branch refreshes through OnCraftShow -> UpdateSkillBar).
-    addon:RegisterEvent("CRAFT_UPDATE", function()
+    On(E.CRAFT_UPDATE, function()
         if self.frame and self.frame:IsShown()
            and state.isCraftWindow
            and not (self.settingsPanel and self.settingsPanel:IsShown())
@@ -418,7 +433,7 @@ function TSF:Init()
                 C_Timer.After(0.05, function()
                     self:UpdateCraftableCounts()
                     -- Refresh skill bar in case we leveled up mid-batch
-                    local _, rank, maxRank = GetCraftDisplaySkillLine()
+                    local _, rank, maxRank = addon.Source:GetOpenSkillLine(true)
                     if rank and rank ~= state.skillLevel then
                         state.skillLevel = rank
                         state.maxSkill = maxRank or state.maxSkill
@@ -553,12 +568,10 @@ end
 -- rank from the skill lines; DataStore's cache lags while you're gaining skill,
 -- so it's only the fallback when the live line isn't visible (see DESIGN-NOTES).
 local function PlayerGatherSkill(prof)
-    if GetNumSkillLines then
-        for i = 1, GetNumSkillLines() do
-            local name, isHeader, _, rank = GetSkillLineInfo(i)
-            if name and not isHeader and name == prof and rank and rank > 0 then
-                return rank
-            end
+    for _, line in ipairs(addon.Source:ReadVisibleSkillLines()) do
+        local name, isHeader, rank = line.name, line.isHeader, line.rank
+        if name and not isHeader and name == prof and rank and rank > 0 then
+            return rank
         end
     end
     local c = DS and DS:GetCharacter(addon:PlayerKey())
@@ -1092,10 +1105,7 @@ function TSF:SuppressDefaultFrames()
     end
 
     -- Primary kill path: ADDON_LOADED fires when on-demand addon loads.
-    local killTargets = {
-        Blizzard_TradeSkillUI = "TradeSkillFrame",
-        Blizzard_CraftUI      = "CraftFrame",
-    }
+    local killTargets = addon.Source.DEFAULT_FRAMES
     for addonName, frameName in pairs(killTargets) do
         local frame = _G[frameName]
         if frame then
@@ -1120,7 +1130,7 @@ function TSF:SuppressDefaultFrames()
     hooksecurefunc("ShowUIPanel", function(frame)
         if not frame then return end
         local name = frame:GetName()
-        if name == "TradeSkillFrame" or name == "CraftFrame" then
+        if addon.Source:IsDefaultFrame(name) then
             DoKill(frame, name)
         end
     end)
@@ -1341,11 +1351,13 @@ function TSF:EnsureFrame()
         -- Close the backend trade skill so the profession icon doesn't
         -- need a double-click to reopen after closing via the X button.
         if not self._closingFromEvent then
-            if state.isCraftWindow then
-                CloseCraft()
-            else
-                CloseTradeSkill()
-            end
+            addon.Source:CloseWindow(state.isCraftWindow)
+        end
+        -- And never leave the OTHER channel's session open behind a closed PB:
+        -- nothing shows it, but its action-bar icon stays lit and its next
+        -- cast toggles it shut instead of opening it.
+        if addon.Source:IsSessionOpen(not state.isCraftWindow) then
+            addon.Source:CloseWindow(not state.isCraftWindow)
         end
     end)
 
@@ -2299,12 +2311,7 @@ function TSF:UpdateCraftableCounts()
     local isCraft = state.isCraftWindow
     for _, entry in ipairs(state.recipes) do
         if entry.isKnown and entry.gameIndex then
-            local skillType, numAvail
-            if isCraft then
-                skillType, numAvail = select(3, GetCraftInfo(entry.gameIndex))
-            else
-                skillType, numAvail = select(2, GetTradeSkillInfo(entry.gameIndex))
-            end
+            local skillType, numAvail = addon.Source:GetRowState(entry.gameIndex, isCraft)
             entry.numAvail = numAvail or 0
             if skillType and skillType ~= "header" and skillType ~= "subheader" then
                 entry.difficulty = skillType
@@ -3796,8 +3803,8 @@ function TSF:RegisterCraftEvents()
             -- 2.5.6, so driving it from this event is legal.
             if self._craftIndex and state.isCraftWindow
                and self.frame and self.frame:IsShown()
-               and GetNumCrafts and GetNumCrafts() > 0 then
-                DoCraft(self._craftIndex)
+               and (addon.Source:CraftCount() or 0) > 0 then
+                addon.Source:Craft(self._craftIndex, 1, true)
             end
             -- Fresh deadline for the next unit of the batch.
             self:ArmCraftWatchdog()
@@ -4224,10 +4231,10 @@ function TSF:StartCraft(recipe, qty)
 
     if state.isCraftWindow then
         self:BeginCraftTracking(recipe.name, 1, recipe.gameIndex)
-        DoCraft(recipe.gameIndex)
+        addon.Source:Craft(recipe.gameIndex, 1, true)
     else
         self:BeginCraftTracking(recipe.name, qty, nil)
-        DoTradeSkill(recipe.gameIndex, qty)
+        addon.Source:Craft(recipe.gameIndex, qty, false)
     end
 end
 
@@ -5451,81 +5458,36 @@ local function scrapeRecipes(isCraft)
     state.allRecipes  = {}
     state.recipeOrder = {}
 
-    if isCraft then
-        local numCrafts = GetNumCrafts()
-        for i = 1, numCrafts do
-            local craftName, _, craftType, craftAvail = GetCraftInfo(i)
-            if craftName and craftType ~= "header" then
-                local itemLink = GetCraftItemLink(i)
-                local icon = GetCraftIcon(i)
-                -- Locale-stable spellID from the recipe link (enchant:/spell:),
-                -- same as the Scanner. Needed so item-less recipes (enchants)
-                -- resolve their static entry -> real tooltip + rod requirement.
-                local recipeLink = GetCraftRecipeLink and GetCraftRecipeLink(i)
-                local spellID = recipeLink and tonumber(recipeLink:match("enchant:(%d+)") or recipeLink:match("spell:(%d+)") or "")
+    -- One enumeration for both windows, shared with the Scanner (see
+    -- Source/Classic.lua). Header rows are already excluded.
+    for _, row in ipairs(addon.Source:ReadOpenWindow(isCraft).rows) do
+        -- Locale-stable spellID from the recipe link (enchant:/spell:),
+        -- same as the Scanner. Needed so item-less recipes (enchants)
+        -- resolve their static entry -> real tooltip + rod requirement.
+        local recipeLink = row.recipeLink
+        local spellID = recipeLink and tonumber(recipeLink:match("enchant:(%d+)") or recipeLink:match("spell:(%d+)") or "")
 
-                local reagents = {}
-                for j = 1, 12 do
-                    local rName, rTexture, rCount = GetCraftReagentInfo(i, j)
-                    if not rName then break end
-                    local rLink = GetCraftReagentItemLink(i, j)
-                    table.insert(reagents, {
-                        itemID = addon:ItemIDFromLink(rLink),
-                        name   = rName,
-                        count  = rCount,
-                        icon   = rTexture,
-                    })
-                end
-
-                state.allRecipes[craftName] = {
-                    index    = i,
-                    itemID   = addon:ItemIDFromLink(itemLink),
-                    spellID  = spellID,
-                    itemLink = itemLink,
-                    icon     = icon,
-                    difficulty = craftType,
-                    numAvail = craftAvail or 0,
-                    reagents = reagents,
-                }
-                table.insert(state.recipeOrder, craftName)
-            end
+        local reagents = {}
+        for _, rg in ipairs(row.reagents) do
+            table.insert(reagents, {
+                itemID = addon:ItemIDFromLink(rg.link),
+                name   = rg.name,
+                count  = rg.count,
+                icon   = rg.icon,
+            })
         end
-    else
-        local numRecipes = GetNumTradeSkills()
-        for i = 1, numRecipes do
-            local skillName, skillType, numAvail = GetTradeSkillInfo(i)
-            if skillName and skillType ~= "header" and skillType ~= "subheader" then
-                local itemLink = GetTradeSkillItemLink(i)
-                local icon = GetTradeSkillIcon(i)
-                local recipeLink = GetTradeSkillRecipeLink and GetTradeSkillRecipeLink(i)
-                local spellID = recipeLink and tonumber(recipeLink:match("enchant:(%d+)") or recipeLink:match("spell:(%d+)") or "")
 
-                local reagents = {}
-                for j = 1, 12 do
-                    local rName, rTexture, rCount = GetTradeSkillReagentInfo(i, j)
-                    if not rName then break end
-                    local rLink = GetTradeSkillReagentItemLink(i, j)
-                    table.insert(reagents, {
-                        itemID = addon:ItemIDFromLink(rLink),
-                        name   = rName,
-                        count  = rCount,
-                        icon   = rTexture,
-                    })
-                end
-
-                state.allRecipes[skillName] = {
-                    index    = i,
-                    itemID   = addon:ItemIDFromLink(itemLink),
-                    spellID  = spellID,
-                    itemLink = itemLink,
-                    icon     = icon,
-                    difficulty = skillType,
-                    numAvail = numAvail or 0,
-                    reagents = reagents,
-                }
-                table.insert(state.recipeOrder, skillName)
-            end
-        end
+        state.allRecipes[row.name] = {
+            index    = row.index,
+            itemID   = addon:ItemIDFromLink(row.itemLink),
+            spellID  = spellID,
+            itemLink = row.itemLink,
+            icon     = row.icon,
+            difficulty = row.difficulty,
+            numAvail = row.numAvail or 0,
+            reagents = reagents,
+        }
+        table.insert(state.recipeOrder, row.name)
     end
 end
 
@@ -5550,6 +5512,13 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
     state.skillLevel    = rank or 0
     state.maxSkill      = maxRank or 375
     state.isCraftWindow = isCraft or false
+    -- One backend session at a time. Opening Enchanting leaves a Tailoring
+    -- session live (and vice versa); PB only ever shows one, so close the
+    -- other. Done AFTER isCraftWindow is set, so the close event it raises
+    -- is recognised as a background session and does not hide PB.
+    if addon.Source:IsSessionOpen(not state.isCraftWindow) then
+        addon.Source:CloseWindow(not state.isCraftWindow)
+    end
     state.allRecipes    = {}
     state.recipeOrder   = {}
     state._isStaticView = false
@@ -5876,14 +5845,11 @@ end
 -- Is this window a chat-linked view of somebody else's profession? Nothing
 -- in it is craftable, and Scanner must not write it to the local character.
 local function LinkedView(isCraft)
-    if isCraft then
-        return (IsCraftLinked and IsCraftLinked()) and true or false
-    end
-    return (IsTradeSkillLinked and IsTradeSkillLinked()) and true or false
+    return addon.Source:IsLinked(isCraft)
 end
 
 function TSF:OnTradeSkillShow()
-    local rawName, rank, maxRank = GetTradeSkillLine()
+    local rawName, rank, maxRank = addon.Source:GetOpenSkillLine(false)
     if not rawName or rawName == "UNKNOWN" then return end
     local profName = CanonicalProf(rawName)
     -- TBCCA returns "Mining" from GetTradeSkillLine() when the Smelting
@@ -5908,9 +5874,9 @@ function TSF:OnCraftShow()
     -- No crafts means no session: a _pendingOpen replayed after combat can
     -- land here once the craft window has already closed, and without this
     -- it would open an empty window with a 0/375 skill bar.
-    if GetNumCrafts and GetNumCrafts() == 0 then return end
+    if addon.Source:CraftCount() == 0 then return end
 
-    local rawName, rank, maxRank = GetCraftDisplaySkillLine()
+    local rawName, rank, maxRank = addon.Source:GetOpenSkillLine(true)
     if not rawName or rawName == "" then rawName = "Enchanting" end
     local profName = CanonicalProf(rawName)
 
