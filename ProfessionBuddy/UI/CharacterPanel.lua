@@ -961,7 +961,7 @@ function CP:RefreshSearchResults(characters)
     if RDB and RDB.data then
         for profName, recipes in pairs(RDB.data) do
             for recipeName, info in pairs(recipes) do
-                if info.itemID then
+                if info.itemID and not addon.CLASS_PROFS[profName] then
                     local itemName, itemLower = self:ItemName(info.itemID)
                     if itemName and itemLower:find(query, 1, true)
                        and not recipeName:lower():find(query, 1, true) then

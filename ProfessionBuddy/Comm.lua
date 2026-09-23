@@ -1269,6 +1269,17 @@ function Comm:RunOrderMaintenance(isLogin)
     end
 end
 
+-- The professions this client shares. A class-only profession (rogue Poisons)
+-- benefits nobody else, so it is left out of HELLO, SYNC_DATA and the change
+-- signature that decides when a full SYNC_DATA is pushed. No wire change.
+local function sharedProfessions(charData)
+    local out, profs = {}, charData.professions or {}
+    for profName, profData in pairs(profs) do
+        if not addon.CLASS_PROFS[profName] then out[profName] = profData end
+    end
+    return out
+end
+
 ----------------------------------------------------------------------
 -- HELLO: lightweight broadcast on group join
 ----------------------------------------------------------------------
@@ -1281,7 +1292,7 @@ function Comm:BuildHelloPayload()
     -- NOTE: the scanner stores skill as skillLevel/maxSkill, so read those
     -- (reading level/maxLevel here was the bug that sent friends 0/375).
     local profSummary = {}
-    for profName, profData in pairs(charData.professions or {}) do
+    for profName, profData in pairs(sharedProfessions(charData)) do
         profSummary[profName] = {
             skillLevel = profData.skillLevel or 0,
             maxSkill = profData.maxSkill or 375,
@@ -1682,7 +1693,7 @@ function Comm:BuildFullPayload(opts)
     -- (both sides have the static RecipeDB, so we don't need to send
     -- reagents, itemIDs, etc. -- just which recipes are known)
     local professions = {}
-    for profName, profData in pairs(charData.professions or {}) do
+    for profName, profData in pairs(sharedProfessions(charData)) do
         -- Build recipeNames and recipeSpells in lockstep (same loop, so the
         -- two arrays stay index-aligned). spellID is locale-stable; the name
         -- is kept for backward compat with clients that lack spellID matching.
@@ -1974,7 +1985,7 @@ local function professionSignature()
     local charData = DS and DS:GetCharacter(addon:PlayerKey())
     if not charData then return 0 end
     local sig = 0
-    for profName, prof in pairs(charData.professions or {}) do
+    for profName, prof in pairs(sharedProfessions(charData)) do
         sig = (sig + (prof.skillLevel or 0) * 131) % 2^31
         if type(profName) == "string" and #profName > 0 then
             sig = (sig + #profName * 17 + profName:byte(1)) % 2^31

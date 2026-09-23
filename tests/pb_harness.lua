@@ -122,7 +122,9 @@ local sim = {
 local clock = 1000
 function GetTime() return clock end
 function GetLocale() return "enUS" end
-function GetSpellInfo() return nil end   -- profession names self-map (enUS)
+-- Profession names self-map (enUS) except spell 2842, named as a deDE client
+-- names it, so the localized Poisons path is exercised (T76).
+function GetSpellInfo(id) if id == 2842 then return "Gifte" end return nil end
 
 function IsTradeSkillLinked() return sim.linked end
 function CraftIsPetTraining() return sim.pet end
@@ -1925,8 +1927,129 @@ do
 end
 passed("T74 recipe faction visibility -- opposite-faction-only hides, Both/untagged/mixed/sourceless never do")
 
+-- ── T75: Poisons static data is registered and rogue-shaped ─────────────────
+do
+    dofile(BASE .. "/Data/Poisons.lua")
+    local P = RDB.data["Poisons"]
+    assert(P, "T75: Data/Poisons.lua did not register")
+    local n, fams = 0, {}
+    for name, r in pairs(P) do
+        n = n + 1
+        fams[r.category] = true
+        assert(type(r.spellID) == "number" and RDB.spellToRecipe[r.spellID].profName == "Poisons",
+            "T75: " .. name .. " is not reachable by spellID")
+        assert(r.skillReq == 1 and r.skillRange[1] == 1, "T75: " .. name .. " has a skill gate")
+        assert(type(r.reqLevel) == "number" and r.reqLevel >= 20 and r.reqLevel <= 70,
+            "T75: " .. name .. " has no character-level gate")
+    end
+    assert(n == 25, "T75: want 25 poisons, got " .. n)
+    for _, f in ipairs({ "Instant Poison", "Deadly Poison", "Wound Poison", "Crippling Poison",
+                         "Mind-numbing Poison", "Anesthetic Poison" }) do
+        assert(fams[f], "T75: family header missing: " .. f)
+    end
+    assert(P["Instant Poison"].sources[1].method == "automatic", "T75: Instant Poison is not automatic")
+    assert(#P["Deadly Poison V"].sources == 2, "T75: Deadly Poison V lost its handbook drop")
+    assert(RDB:GetRecipeForItem(22054).recipeName == "Deadly Poison VII", "T75: item -> recipe missing")
+end
+passed("T75 Poisons data -- 25 recipes in 6 family headers, spellID-reachable, level-gated, no skill gate")
+
+-- ── T76: a localized Poisons window and skill line store under "Poisons" ────
+-- The harness client names spell 2842 "Gifte" (deDE); every other profession
+-- self-maps. A 1.1.4-era "Gifte" record must be dropped, nothing else touched.
+do
+    local profs = DS:GetCharacter(ME).professions
+    profs["Gifte"] = { skillLevel = 90, maxSkill = 350, recipes = { ["Old"] = { spellID = 8681 } } }
+    local tailoringBefore = profs.Tailoring
+    sim.tradeLine = { "Gifte", 150, 350 }
+    sim.tradeRows = {
+        { "Sofort wirkendes Gift", "optimal", 2, true, "|Hitem:6947|h", "|Henchant:8681|h[x]|h" },
+        { "Toedliches Gift", "medium", 1, true, "|Hitem:2892|h", "|Henchant:2835|h[x]|h" },
+    }
+    sim.nameFilter = ""
+    fire("TRADE_SKILL_SHOW")
+    profs = DS:GetCharacter(ME).professions
+    assert(profs.Poisons and profs.Poisons.skillLevel == 150, "T76: not stored under Poisons")
+    assert(profs["Gifte"] == nil, "T76: the stale localized record survived")
+    assert(profs.Tailoring == tailoringBefore, "T76: an unrelated profession was touched")
+    sim.skillLines = { { "Class Skills", true }, { "Gifte", false, 155, 350 } }
+    sim.collapsedHeaders = {}
+    Scanner:ScanProfessions()
+    profs = DS:GetCharacter(ME).professions
+    assert(profs.Poisons.skillLevel == 155 and profs["Gifte"] == nil,
+        "T76: the login scan did not canonicalize the Poisons skill line")
+    assert(profs.Poisons.recipes["Sofort wirkendes Gift"], "T76: the login scan dropped the recipes")
+end
+passed("T76 localized Poisons -- window and skill line store under Poisons, stale Gifte dropped")
+
+-- ── T77: class-only professions ─────────────────────────────────────────────
+do
+    assert(addon.CRAFTABLE_PROFS.Poisons == nil, "T77: Poisons must not be in CRAFTABLE_PROFS")
+    assert(addon:ProfessionForClass("Poisons", "ROGUE") == true, "T77: a rogue was refused Poisons")
+    assert(addon:ProfessionForClass("Poisons", "WARRIOR") == false, "T77: a warrior was offered Poisons")
+    assert(addon:ProfessionForClass("Poisons") == false, "T77: the (warrior) player was offered Poisons")
+    assert(addon:ProfessionForClass("Tailoring", "WARRIOR") == true, "T77: an open profession was gated")
+end
+passed("T77 class professions -- Poisons is rogue-only and not craftable-for-others")
+
+-- ── T78: a class trainer teaching poisons never reconciles learn levels ─────
+do
+    local sNum, sInfo, sReq = GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq
+    local ov = addon.db.skillReqOverrides
+    ov["Sinister Strike"], ov["Smelt Bronze"] = nil, nil
+    GetNumTrainerServices = function() return 2 end
+    GetTrainerServiceInfo = function(i)
+        if i == 1 then return "Deadly Poison III", "", "available" end
+        return "Sinister Strike", "Rank 9", "available"
+    end
+    GetTrainerServiceSkillReq = function(i) return (i == 2) and 5 or 0 end
+    Scanner:ScanTrainer()
+    assert(ov["Sinister Strike"] == nil, "T78: a rogue class trainer wrote a class spell into skillReqOverrides")
+    GetNumTrainerServices = function() return 1 end
+    GetTrainerServiceInfo = function() return "Smelt Bronze", "", "available" end
+    GetTrainerServiceSkillReq = function() return 70 end
+    Scanner:ScanTrainer()
+    GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq = sNum, sInfo, sReq
+    assert(ov["Smelt Bronze"] == 70, "T78: a profession trainer stopped reconciling")
+    ov["Smelt Bronze"] = nil
+end
+passed("T78 class trainer -- poisons do not make it a recipe trainer; profession trainers still reconcile")
+
+-- ── T79: Poisons never leaves the client ────────────────────────────────────
+-- HELLO, SYNC_DATA (full and recipes-only) and the change signature that picks
+-- a full push all leave class-only professions out. The record itself keeps it.
+do
+    local profs = DS:GetCharacter(ME).professions
+    assert(profs.Poisons and profs.Tailoring, "T79: setup needs Poisons and Tailoring stored")
+    local hello = Comm:BuildHelloPayload()
+    assert(hello.professions.Tailoring and hello.professions.Poisons == nil, "T79: HELLO carries Poisons")
+    for _, opts in ipairs({ {}, { inventory = false } }) do
+        local full = Comm:BuildFullPayload(opts)
+        assert(full.professions.Tailoring and full.professions.Poisons == nil,
+            "T79: SYNC_DATA carries Poisons")
+    end
+    local sig
+    local n = 1
+    while true do
+        local name, v = debug.getupvalue(Comm.SendIncrementalUpdate, n)
+        if not name then break end
+        if name == "professionSignature" then sig = v end
+        n = n + 1
+    end
+    assert(sig, "T79: professionSignature not reachable")
+    local before = sig()
+    profs.Poisons.skillLevel = profs.Poisons.skillLevel + 5
+    profs.Poisons.recipes["Brand New Poison"] = { spellID = 1 }
+    assert(sig() == before, "T79: a Poisons change would force a full SYNC_DATA push")
+    profs.Tailoring.skillLevel = (profs.Tailoring.skillLevel or 0) + 1
+    assert(sig() ~= before, "T79: the signature stopped tracking shared professions")
+    profs.Tailoring.skillLevel = profs.Tailoring.skillLevel - 1
+    profs.Poisons.recipes["Brand New Poison"] = nil
+    assert(DS:GetCharacter(ME).professions.Poisons, "T79: the local record lost Poisons")
+end
+passed("T79 Poisons stays local -- not in HELLO, SYNC_DATA or the full-push signature")
+
 leaveGuild()
-print("ALL 74 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 79 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -1937,6 +2060,7 @@ print("ALL 74 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " coercion, T68 the trust-timing hold-and-replay race, T69 the contact"
     .. " favorites data layer, T70 the item favorites data layer and T71 the order"
     .. " source relation, T72 the order origin stamp, T73 the skinning loot data"
-    .. " and T74 the recipe faction visibility rule; "
+    .. " and T74 the recipe faction visibility rule, T75-T79 Poisons data, localized storage,"
+    .. " class gating, the class-trainer guard and Poisons never leaving the client; "
     .. pass .. " of them print a PASS line above)")
 

@@ -1715,8 +1715,9 @@ end
 -- carries profession names with no recipes, and those can never match a search.
 local function hasSyncedRecipes(char)
     if type(char) ~= "table" or type(char.professions) ~= "table" then return false end
-    for _, pdata in pairs(char.professions) do
-        if type(pdata) == "table" and pdata.recipes and next(pdata.recipes) then return true end
+    for pn, pdata in pairs(char.professions) do
+        if not addon.CLASS_PROFS[pn]
+           and type(pdata) == "table" and pdata.recipes and next(pdata.recipes) then return true end
     end
     return false
 end
@@ -1765,7 +1766,7 @@ function OP:FindCrafters(query)
             end
             local short = addon:ShortName(charKey)
             for profName, profData in pairs(char.professions) do
-                local recipes = profData.recipes
+                local recipes = not addon.CLASS_PROFS[profName] and profData.recipes
                 if recipes then
                     for rname in pairs(recipes) do
                         if type(rname) == "string" and rname:lower():find(query, 1, true) then

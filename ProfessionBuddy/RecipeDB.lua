@@ -14,6 +14,9 @@
 --                  (every enchant). Required, never nil. Only itemID > 0 is
 --                  registered in itemToRecipe.
 --   skillReq     = skill level a trainer requires to teach it.
+--   reqLevel     = optional CHARACTER level a trainer requires, for a recipe
+--                  taught by level with no skill requirement (rogue poisons).
+--                  Absent means no level gate.
 --   skillRange   = { orange, yellow, green, grey }, ascending. orange equals
 --                  skillReq unless the recipe is not trainer-taught.
 --   sources      = { { method = "trainer"|"vendor"|"drop"|"quest"|

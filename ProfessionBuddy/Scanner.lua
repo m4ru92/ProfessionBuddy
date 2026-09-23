@@ -90,6 +90,9 @@ local PROF_SPELLS = {
     ["Jewelcrafting"]  = 25229, ["Leatherworking"] = 2108,
     ["Mining"]         = 2575,  ["Skinning"]      = 8613,
     ["Tailoring"]      = 3908,  ["Smelting"]      = 2656,
+    -- Rogue class skill. Spell 2842 carries the skill line's own name in
+    -- enUS/deDE/frFR (DB2 2.5.6.69110: "Poisons" / "Gifte" / "Poisons").
+    ["Poisons"]        = 2842,
 }
 
 -- Hoisted out of IsCraftingProfession/IsGatheringProfession: ScanProfessions
@@ -98,6 +101,7 @@ local CRAFTING_PROFS = {
     ["Alchemy"] = true, ["Blacksmithing"] = true, ["Cooking"] = true,
     ["Enchanting"] = true, ["Engineering"] = true, ["Jewelcrafting"] = true,
     ["Leatherworking"] = true, ["Tailoring"] = true, ["First Aid"] = true,
+    ["Poisons"] = true,
 }
 
 local GATHERING_PROFS = {
@@ -310,6 +314,15 @@ function Scanner:ScanCurrentTradeSkill()
         maxSkill   = maxRank,
         recipes    = recipes,
     })
+
+    -- Before 1.1.5 a non-enUS rogue's Poisons was stored under the localized
+    -- skill-line name ("Gifte"). It is canonical now, so drop that copy
+    -- instead of keeping the profession twice. Only a name that canonicalizes
+    -- to the profession just written is touched.
+    if rawName ~= profName and self:Canonicalize(rawName) == profName then
+        local char = DS:GetCharacter()
+        if char and char.professions then char.professions[rawName] = nil end
+    end
 end
 
 ----------------------------------------------------------------------
@@ -416,8 +429,17 @@ function Scanner:ScanTrainer()
             -- recipe name, so a class, riding or weapon trainer whose service
             -- names happen to carry a skill requirement must not write into
             -- it. One service matching the static recipe DB is proof enough.
-            if not isRecipeTrainer and RDB and RDB:GetRecipeByName(name) then
-                isRecipeTrainer = true
+            -- A class-only profession does not count: rogue poisons are taught
+            -- by the CLASS trainer by character level, with no skill
+            -- requirement, so a match there would open every class-spell
+            -- service to the reconcile below.
+            if not isRecipeTrainer and RDB and RDB.nameToRecipe then
+                for _, ref in ipairs(RDB.nameToRecipe[name] or {}) do
+                    if not addon.CLASS_PROFS[ref.profName] then
+                        isRecipeTrainer = true
+                        break
+                    end
+                end
             end
         end
     end
