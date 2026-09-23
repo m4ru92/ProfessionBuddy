@@ -16,6 +16,9 @@
 --                                 TRADE_SHOW, TRADE_UPDATE, TRADE_CLOSE,
 --                                 CRAFT_SHOW, CRAFT_UPDATE, CRAFT_CLOSE
 --   Source.DEFAULT_FRAMES         Blizzard LoD addon -> frame name PB hides
+--   Source.SHARED_FRAMES          (optional) frame name -> true for a default
+--                                 frame that also serves something PB does
+--                                 NOT replace; it is gated, not killed
 --
 --   Source:ReadProfessionSkills() { {name, rank, maxRank}, ... }
 --       every non-header skill line, headers expanded first and the
