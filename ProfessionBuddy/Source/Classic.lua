@@ -226,3 +226,18 @@ function Source:CloseWindow(isCraft)
         CloseTradeSkill()
     end
 end
+
+-- The trade-skill session (Tailoring, Blacksmithing...) and the Craft
+-- session (Enchanting) are independent: opening one does NOT close the
+-- other, so both can be live at once with only one of them on screen.
+-- Measured with /pbt windows: after TRADE_SKILL_CLOSE, GetNumTradeSkills()
+-- still reports the old count and only the skill-line name flips to
+-- "UNKNOWN", so the NAME is the open test. For the Craft API, PB already
+-- treats GetNumCrafts() == 0 as "no session" (OnCraftShow).
+function Source:IsSessionOpen(isCraft)
+    if isCraft then
+        return ((GetNumCrafts and GetNumCrafts()) or 0) > 0
+    end
+    local name = GetTradeSkillLine and GetTradeSkillLine()
+    return name ~= nil and name ~= "" and name ~= "UNKNOWN"
+end

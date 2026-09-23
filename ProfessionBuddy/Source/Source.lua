@@ -35,6 +35,8 @@
 --   Source:GetRowState(index, isCraft) skillType, numAvail
 --   Source:Craft(index, qty, isCraft)
 --   Source:CloseWindow(isCraft)
+--   Source:IsSessionOpen(isCraft)      is that channel's backend session
+--       open right now (it can be open with no window showing)
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
@@ -46,7 +48,7 @@ addon.Source = Source
 Source.CONTRACT = {
     "ReadProfessionSkills", "ReadVisibleSkillLines", "GetOpenSkillLine",
     "IsLinked", "IsPetTraining", "CraftCount", "ReadOpenWindow",
-    "GetRowState", "Craft", "CloseWindow",
+    "GetRowState", "Craft", "CloseWindow", "IsSessionOpen",
 }
 
 function Source:Missing()

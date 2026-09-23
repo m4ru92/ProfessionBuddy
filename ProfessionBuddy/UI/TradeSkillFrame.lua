@@ -334,6 +334,9 @@ function TSF:Init()
     end)
     On(E.TRADE_CLOSE, function()
         if self._isMouseOverTab then return end
+        -- A background trade-skill session closing (PB is showing Enchanting,
+        -- or PB closed it itself on a switch) must not hide PB.
+        if state.isCraftWindow then return end
         -- The backend session is gone, so any tracked craft is over.
         self:StopCraftTracking()
         -- Resume bag tracker if it was paused
@@ -351,7 +354,12 @@ function TSF:Init()
         end
     end)
     On(E.TRADE_UPDATE, function()
+        -- `not state.isCraftWindow` mirrors the CRAFT_UPDATE guard below.
+        -- Without it, a trade-skill session left open behind an Enchanting
+        -- view re-opened itself on any bag change (TRADE_SKILL_UPDATE fires
+        -- on those) and silently replaced the Enchanting window.
         if self.frame and self.frame:IsShown()
+           and not state.isCraftWindow
            and not (self.settingsPanel and self.settingsPanel:IsShown())
            and not state._viewCharKey
            and not state._isStaticView then
@@ -394,6 +402,9 @@ function TSF:Init()
     end)
     On(E.CRAFT_CLOSE, function()
         if self._isMouseOverTab then return end
+        -- Same, the other way round: a background Craft session closing while
+        -- PB shows a trade skill must not hide PB.
+        if not state.isCraftWindow then return end
         -- Stops a DoCraft batch chain dead: the window it ran against is gone.
         self:StopCraftTracking()
         if self._bagTracker and self._bagTrackerUpdate then
@@ -1341,6 +1352,12 @@ function TSF:EnsureFrame()
         -- need a double-click to reopen after closing via the X button.
         if not self._closingFromEvent then
             addon.Source:CloseWindow(state.isCraftWindow)
+        end
+        -- And never leave the OTHER channel's session open behind a closed PB:
+        -- nothing shows it, but its action-bar icon stays lit and its next
+        -- cast toggles it shut instead of opening it.
+        if addon.Source:IsSessionOpen(not state.isCraftWindow) then
+            addon.Source:CloseWindow(not state.isCraftWindow)
         end
     end)
 
@@ -5495,6 +5512,13 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
     state.skillLevel    = rank or 0
     state.maxSkill      = maxRank or 375
     state.isCraftWindow = isCraft or false
+    -- One backend session at a time. Opening Enchanting leaves a Tailoring
+    -- session live (and vice versa); PB only ever shows one, so close the
+    -- other. Done AFTER isCraftWindow is set, so the close event it raises
+    -- is recognised as a background session and does not hide PB.
+    if addon.Source:IsSessionOpen(not state.isCraftWindow) then
+        addon.Source:CloseWindow(not state.isCraftWindow)
+    end
     state.allRecipes    = {}
     state.recipeOrder   = {}
     state._isStaticView = false
