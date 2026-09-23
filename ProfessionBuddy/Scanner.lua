@@ -150,11 +150,14 @@ end
 function Scanner:Init()
     DS = addon.DataStore
 
-    -- Profession window events
-    addon:RegisterEvent("TRADE_SKILL_SHOW",  function() self:ScanCurrentTradeSkill() end)
-    addon:RegisterEvent("TRADE_SKILL_UPDATE", function() self:ScanCurrentTradeSkill() end)
-    addon:RegisterEvent("CRAFT_SHOW",        function() self:ScanCurrentCraft() end)
-    addon:RegisterEvent("CRAFT_UPDATE",      function() self:ScanCurrentCraft() end)
+    -- Profession window events, by role through the Source. A flavor with
+    -- no such event (no Craft API on WoW: Forever) leaves it nil and it is
+    -- simply not registered; registering an unknown event is a hard error.
+    local E = addon.Source.EVENT
+    if E.TRADE_SHOW   then addon:RegisterEvent(E.TRADE_SHOW,   function() self:ScanCurrentTradeSkill() end) end
+    if E.TRADE_UPDATE then addon:RegisterEvent(E.TRADE_UPDATE, function() self:ScanCurrentTradeSkill() end) end
+    if E.CRAFT_SHOW   then addon:RegisterEvent(E.CRAFT_SHOW,   function() self:ScanCurrentCraft() end) end
+    if E.CRAFT_UPDATE then addon:RegisterEvent(E.CRAFT_UPDATE, function() self:ScanCurrentCraft() end) end
 
     -- Inventory events
     addon:RegisterEvent("BAG_UPDATE",         function() self:QueueInventoryScan() end)
@@ -210,55 +213,21 @@ function Scanner:ScanProfessions()
     -- behave the same.
     self._skillEventMuteUntil = Now() + SKILL_MUTE
 
-    -- GetSkillLineInfo only enumerates the rows the skill list is currently
-    -- showing, so a collapsed "Professions" header hides the professions
-    -- underneath it. Expand everything, scan, then put the user's headers back
-    -- the way they were. Indices shift on every expand and collapse, so the
-    -- restore matches on NAME and walks backwards.
-    local canExpand = ExpandSkillHeader and CollapseSkillHeader
-    local wasCollapsed
-    if canExpand then
-        wasCollapsed = {}
-        for i = 1, GetNumSkillLines() do
-            local name, isHeader, isExpanded = GetSkillLineInfo(i)
-            if isHeader and name and not isExpanded then
-                wasCollapsed[name] = true
-            end
-        end
-        ExpandSkillHeader(0)
-    end
-
-    -- In TBC Classic, GetProfessions() doesn't exist.
-    -- We scan professions when their windows open (TRADE_SKILL_SHOW).
-    -- On login we can get the names + skill from the spellbook via GetSkillLineInfo.
-    -- The skill-line API is classic-only: a retail-API client (WoW: Forever) has
-    -- no GetNumSkillLines at all, and calling it there took the whole addon down
-    -- during Init. Guard it the way the other three call sites already are, so an
-    -- unsupported client degrades to "found no professions here" instead of a
-    -- hard error. Real support for those clients is the 2.0.0 port item.
-    local numSkills = GetNumSkillLines and GetNumSkillLines() or 0
-    for i = 1, numSkills do
-        local name, isHeader, _, rank, _, _, maxRank = GetSkillLineInfo(i)
-        if not isHeader and name then
-            local isProfession = self:IsCraftingProfession(name) or self:IsGatheringProfession(name)
-            if isProfession then
-                -- Store under the English key, not the localized skill-line name
-                local canon = self:Canonicalize(name)
-                local existing = DS:GetProfession(nil, canon) or {}
-                existing.skillLevel = rank
-                existing.maxSkill   = maxRank
-                existing.recipes    = existing.recipes or {}
-                DS:SetProfessionData(canon, existing)
-            end
-        end
-    end
-
-    if canExpand and next(wasCollapsed) then
-        for i = GetNumSkillLines(), 1, -1 do
-            local name, isHeader = GetSkillLineInfo(i)
-            if isHeader and name and wasCollapsed[name] then
-                CollapseSkillHeader(i)
-            end
+    -- The Source reads every non-header skill line, expanding collapsed
+    -- headers first and re-collapsing the user's by name afterwards (see
+    -- Source/Classic.lua). Those expands and collapses raise
+    -- SKILL_LINES_CHANGED, which is why the mute brackets this call.
+    for _, line in ipairs(addon.Source:ReadProfessionSkills()) do
+        local name = line.name
+        local isProfession = self:IsCraftingProfession(name) or self:IsGatheringProfession(name)
+        if isProfession then
+            -- Store under the English key, not the localized skill-line name
+            local canon = self:Canonicalize(name)
+            local existing = DS:GetProfession(nil, canon) or {}
+            existing.skillLevel = line.rank
+            existing.maxSkill   = line.maxRank
+            existing.recipes    = existing.recipes or {}
+            DS:SetProfessionData(canon, existing)
         end
     end
 
@@ -280,70 +249,51 @@ function Scanner:ScanCurrentTradeSkill()
     -- A tradeskill link from another player drives the same window and the
     -- same APIs. Writing that to our own record would replace our recipe list,
     -- our cooldowns and our rank with theirs, and push it to the guild.
-    if IsTradeSkillLinked and IsTradeSkillLinked() then return end
+    local Source = addon.Source
+    if Source:IsLinked(false) then return end
 
-    local rawName, rank, maxRank = GetTradeSkillLine()
+    local rawName, rank, maxRank = Source:GetOpenSkillLine(false)
     if not rawName or rawName == "UNKNOWN" then return end
 
-    -- GetNumTradeSkills/GetTradeSkillInfo enumerate only the rows the list is
-    -- currently DISPLAYING, and SetProfessionData replaces the recipe table
-    -- wholesale, so a filtered or collapsed list would delete everything it
-    -- hides. We cannot clear the filters ourselves: the stored `index` feeds
-    -- DoTradeSkill later and changing the list desyncs it. So detect a partial
-    -- view and skip the persist instead.
+    -- The window enumerates only the rows the list is currently DISPLAYING,
+    -- and SetProfessionData replaces the recipe table wholesale, so a
+    -- filtered or collapsed list would delete everything it hides. We cannot
+    -- clear the filters ourselves: the stored `index` feeds DoTradeSkill
+    -- later and changing the list desyncs it. So detect a partial view and
+    -- skip the persist instead.
+    local win = Source:ReadOpenWindow(false)
     local partial = false
-    local nameFilter = GetTradeSkillItemNameFilter and GetTradeSkillItemNameFilter()
-    if nameFilter and nameFilter ~= "" then partial = true end
+    if win.nameFilter and win.nameFilter ~= "" then partial = true end
+    if win.collapsedHeader then partial = true end   -- rows under it are not in the list
 
     local recipes = {}
-    local numRecipes = GetNumTradeSkills()
-
-    for i = 1, numRecipes do
-        local skillName, skillType, numAvail, isExpanded = GetTradeSkillInfo(i)
-
-        if (skillType == "header" or skillType == "subheader") and isExpanded == false then
-            partial = true   -- recipes under this header are not in the list
+    -- difficulty: "optimal", "medium", "easy", "trivial" (headers already excluded)
+    for _, row in ipairs(win.rows) do
+        local reagents = {}
+        for _, rg in ipairs(row.reagents) do
+            table.insert(reagents, {
+                itemID = addon:ItemIDFromLink(rg.link),
+                name   = rg.name,
+                count  = rg.count,
+                icon   = rg.icon,
+            })
         end
 
-        -- skillType: "header", "subheader", "optimal", "medium", "easy", "trivial"
-        if skillName and skillType ~= "header" and skillType ~= "subheader" then
-            local itemLink = GetTradeSkillItemLink(i)
-            local itemID   = addon:ItemIDFromLink(itemLink)
-            local recipeLink = GetTradeSkillRecipeLink and GetTradeSkillRecipeLink(i)
-            local spellID  = RecipeSpellID(recipeLink)
+        -- Active profession cooldown (transmutes, specialty cloths, etc.):
+        -- store an ABSOLUTE ready-time so remaining stays correct across relog.
+        local cd = row.cooldown
 
-            -- Gather reagents (iterate until nil -- GetNumTradeSkillReagents removed in modern client)
-            local reagents = {}
-            for j = 1, 12 do
-                local rName, rTexture, rCount = GetTradeSkillReagentInfo(i, j)
-                if not rName then break end
-                local rLink = GetTradeSkillReagentItemLink(i, j)
-                local rID   = addon:ItemIDFromLink(rLink)
-                table.insert(reagents, {
-                    itemID = rID,
-                    name   = rName,
-                    count  = rCount,
-                    icon   = rTexture,
-                })
-            end
-
-            local icon = GetTradeSkillIcon(i)
-            -- Active profession cooldown (transmutes, specialty cloths, etc.):
-            -- store an ABSOLUTE ready-time so remaining stays correct across relog.
-            local cd = GetTradeSkillCooldown and GetTradeSkillCooldown(i)
-
-            recipes[skillName] = {
-                index    = i,
-                itemID   = itemID,
-                spellID  = spellID,
-                itemLink = itemLink,
-                icon     = icon,
-                difficulty = skillType,
-                numAvail = numAvail,
-                reagents = reagents,
-                cooldownReadyAt = (cd and cd > 0) and (time() + cd) or nil,
-            }
-        end
+        recipes[row.name] = {
+            index    = row.index,
+            itemID   = addon:ItemIDFromLink(row.itemLink),
+            spellID  = RecipeSpellID(row.recipeLink),
+            itemLink = row.itemLink,
+            icon     = row.icon,
+            difficulty = row.difficulty,
+            numAvail = row.numAvail,
+            reagents = reagents,
+            cooldownReadyAt = (cd and cd > 0) and (time() + cd) or nil,
+        }
     end
 
     -- A partial list would delete every recipe it hid. Keep what we have.
@@ -370,47 +320,33 @@ function Scanner:ScanCurrentCraft()
     -- CRAFT_SHOW fires for both. Without this a hunter opening a pet trainer
     -- stores "Beast Training" as a profession, with every pet ability as a
     -- recipe, and there is no UI to delete it again.
-    if CraftIsPetTraining and CraftIsPetTraining() then return end
+    local Source = addon.Source
+    if Source:IsPetTraining() then return end
 
-    local rawName, rank, maxRank = GetCraftDisplaySkillLine()
+    local rawName, rank, maxRank = Source:GetOpenSkillLine(true)
 
     local recipes = {}
-    local numCrafts = GetNumCrafts()
-
-    for i = 1, numCrafts do
-        local craftName, _, craftType, numAvail = GetCraftInfo(i)
-        if craftName and craftType ~= "header" then
-            local itemLink = GetCraftItemLink(i)
-            local itemID   = addon:ItemIDFromLink(itemLink)
-            local recipeLink = GetCraftRecipeLink and GetCraftRecipeLink(i)
-            local spellID  = RecipeSpellID(recipeLink)
-            local icon     = GetCraftIcon(i)
-
-            local reagents = {}
-            for j = 1, 12 do
-                local rName, rTexture, rCount = GetCraftReagentInfo(i, j)
-                if not rName then break end
-                local rLink = GetCraftReagentItemLink(i, j)
-                local rID   = addon:ItemIDFromLink(rLink)
-                table.insert(reagents, {
-                    itemID = rID,
-                    name   = rName,
-                    count  = rCount,
-                    icon   = rTexture,
-                })
-            end
-
-            recipes[craftName] = {
-                index    = i,
-                itemID   = itemID,
-                spellID  = spellID,
-                itemLink = itemLink,
-                icon     = icon,
-                difficulty = craftType,
-                numAvail = numAvail,
-                reagents = reagents,
-            }
+    for _, row in ipairs(Source:ReadOpenWindow(true).rows) do
+        local reagents = {}
+        for _, rg in ipairs(row.reagents) do
+            table.insert(reagents, {
+                itemID = addon:ItemIDFromLink(rg.link),
+                name   = rg.name,
+                count  = rg.count,
+                icon   = rg.icon,
+            })
         end
+
+        recipes[row.name] = {
+            index    = row.index,
+            itemID   = addon:ItemIDFromLink(row.itemLink),
+            spellID  = RecipeSpellID(row.recipeLink),
+            itemLink = row.itemLink,
+            icon     = row.icon,
+            difficulty = row.difficulty,
+            numAvail = row.numAvail,
+            reagents = reagents,
+        }
     end
 
     -- Derive from scanned recipe spellIDs; fall back to the (canonicalized)

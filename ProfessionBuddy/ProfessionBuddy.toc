@@ -13,6 +13,8 @@
 Libs/libs.xml
 
 Core.lua
+Source/Source.lua
+Source/Classic.lua
 DataStore.lua
 Scanner.lua
 Comm.lua
