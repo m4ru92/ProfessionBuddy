@@ -209,6 +209,8 @@ ERR_CHAT_PLAYER_NOT_FOUND_S = "No player named '%s' is currently playing."
 
 -- ── load the addon files ─────────────────────────────────────────
 dofile(BASE .. "/Core.lua")
+dofile(BASE .. "/Source/Source.lua")
+dofile(BASE .. "/Source/Classic.lua")
 dofile(BASE .. "/DataStore.lua")
 dofile(BASE .. "/Orders.lua")
 dofile(BASE .. "/Comm.lua")
