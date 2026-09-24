@@ -52,6 +52,7 @@ REQUIRED_FIELDS = ["spellID", "itemID", "skillReq", "sources",
                    "skillRange", "category", "reagents"]
 KNOWN_FIELDS = set(REQUIRED_FIELDS) | {
     "subcategory", "yield", "rod", "source", "sourceDetail", "name", "note",
+    "reqLevel",
 }
 
 # Files in Data/ that are not recipe registrations.
@@ -99,6 +100,8 @@ ANCHORS = {
     "Leatherworking": ["Drums of Battle", "Felscale Breastplate", "Knothide Armor Kit"],
     "Smelting":       ["Smelt Fel Iron", "Smelt Adamantite", "Smelt Hardened Adamantite",
                        "Smelt Khorium", "Smelt Eternium"],
+    "Poisons":        ["Instant Poison VII", "Deadly Poison VII", "Wound Poison V",
+                       "Anesthetic Poison"],
     "Tailoring":      ["Primal Mooncloth", "Bolt of Netherweave", "Spellcloth",
                        "Imbued Netherweave Bag"],
 }

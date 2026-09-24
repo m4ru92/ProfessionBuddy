@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "1.1.4"
+addon.version = "1.1.5"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -19,6 +19,23 @@ addon.CRAFTABLE_PROFS = {
     ["Jewelcrafting"] = true, ["Leatherworking"] = true,
     ["Smelting"] = true, ["Tailoring"] = true,
 }
+
+-- Professions only one class has (class file name). Poisons is the rogue's
+-- class skill and benefits nobody else, so it is shown only to the rogue
+-- using it: never synced, never listed for an alt, friend or guildmate, and
+-- never in CRAFTABLE_PROFS (which feeds the panels, orders and guild sync).
+addon.CLASS_PROFS = {
+    ["Poisons"] = "ROGUE",
+}
+
+-- Can a character of classFile have this profession? classFile nil means the
+-- logged-in character. Every profession not in CLASS_PROFS is open to all.
+function addon:ProfessionForClass(profName, classFile)
+    local need = self.CLASS_PROFS[profName]
+    if not need then return true end
+    classFile = classFile or select(2, UnitClass("player"))
+    return classFile == need
+end
 
 ----------------------------------------------------------------------
 -- Canonical character key

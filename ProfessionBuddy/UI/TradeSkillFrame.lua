@@ -275,6 +275,14 @@ local state = {
     isCraftWindow = false,
 }
 
+-- Character level of whoever the window shows: the viewed character, else
+-- you. Only a recipe with reqLevel (rogue poisons) asks.
+local function ViewLevel()
+    local key = state._viewCharKey
+    local c = key and DS and DS:GetCharacter(key)
+    return (c and c.level) or UnitLevel("player") or 0
+end
+
 ----------------------------------------------------------------------
 -- Init + default window suppression (v6: ShowUIPanel hook)
 ----------------------------------------------------------------------
@@ -805,6 +813,8 @@ function TSF:HookItemTooltip()
                             and RDB.data[info.profName][info.recipeName]
             if rdbInfo and FactionHiddenRecipe(rdbInfo) then
                 seen[key] = true
+            elseif not addon:ProfessionForClass(info.profName) then
+                seen[key] = true     -- another class's profession (rogue Poisons)
             elseif not seen[key] then
                 seen[key] = true
                 local tier = PROF_TIER[info.profName] or 99
@@ -827,7 +837,10 @@ function TSF:HookItemTooltip()
                 local altKnowers = {}
                 local friendKnowers = {}
                 local showRemoteInTips = addon.db.settings.showRemoteInTooltips
-                if not currentKnows and (showAltInTooltips or showRemoteInTips) then
+                -- A class-only profession is shown for you alone, never for an
+                -- alt or a friend who has it.
+                if not currentKnows and (showAltInTooltips or showRemoteInTips)
+                   and not addon.CLASS_PROFS[info.profName] then
                     for charKey, charData in pairs(allChars) do
                         if not addon:SameKey(charKey, currentKey)
                            and (showCrossFaction or charData.faction == currentFaction)
@@ -1025,6 +1038,7 @@ function TSF:HookItemTooltip()
                 or (not charData.isRemote and showAlts)
             if typeOK
                and (isCurrent or showCrossFaction or charData.faction == currentFaction)
+               and (isCurrent or not addon.CLASS_PROFS[profName])
                and charData.professions then
                 local profData = charData.professions[profName]
                 if profData and profData.recipes and profData.recipes[recipeName] then
@@ -1624,6 +1638,7 @@ local PROF_ICONS = {
     ["Herbalism"]       = "Interface\\Icons\\Trade_Herbalism",
     ["Skinning"]        = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01",
     ["Fishing"]         = "Interface\\Icons\\Trade_Fishing",
+    ["Poisons"]         = "Interface\\Icons\\Trade_BrewPoison",
 }
 
 -- Profession sort order: crafting primary first (alpha), gathering primary
@@ -1645,6 +1660,7 @@ local ALL_TAB_PROFS = {
     "Alchemy", "Blacksmithing", "Cooking", "Enchanting", "Engineering",
     "Find Minerals", "First Aid", "Fishing",
     "Jewelcrafting", "Leatherworking", "Mining", "Skinning", "Tailoring",
+    "Poisons",   -- appended last so every other tab keeps its ProfBuddyProfTab<n> name
 }
 
 -- Professions that have a browsable recipe window in the static DB.
@@ -1686,6 +1702,8 @@ function TSF:BuildProfessionTabs(parent)
             ["Mining"]        = "/cast Smelting",
             ["Find Minerals"] = "/cast Find Minerals",
             ["Herbalism"]     = "/cast Find Herbs",
+            -- /cast takes the client's own spell name; 2842 is Poisons.
+            ["Poisons"]       = "/cast " .. (GetSpellInfo(2842) or "Poisons"),
         }
         tab:SetAttribute("type", "macro")
         tab:SetAttribute("macrotext", MACRO_OVERRIDES[profName] or ("/cast " .. profName))
@@ -2759,7 +2777,16 @@ function TSF:RefreshDetailPanel(preserveScroll)
     end
 
     local sReq = GetSkillReq(recipe)
-    if sReq then
+    local lvlReq = recipe.reqLevel
+    if lvlReq then
+        -- Taught by character level (rogue poisons), not by skill.
+        local lvl = ViewLevel()
+        if lvl >= lvlReq then
+            self.detSkill:SetText("|cff00ff00Requires level " .. lvlReq .. " (learnable)|r")
+        else
+            self.detSkill:SetText("|cffff4444Requires level " .. lvlReq .. " (need " .. (lvlReq - lvl) .. " more)|r")
+        end
+    elseif sReq then
         local canLearn = (state.skillLevel or 0) >= sReq
         if canLearn then
             self.detSkill:SetText("|cff00ff00Requires: " .. sReq .. " (learnable)|r")
@@ -4920,7 +4947,8 @@ function TSF:UpdateBottomBar(unknown)
                     end
                 end
             end
-            if info.skillReq and info.skillReq <= (state.skillLevel or 0) then
+            if info.skillReq and info.skillReq <= (state.skillLevel or 0)
+               and (not info.reqLevel or info.reqLevel <= ViewLevel()) then
                 learnableNow = learnableNow + 1
             end
         end
@@ -5034,11 +5062,13 @@ function TSF:LoadRecipes(unknown)
             if data then
                 local sr = nil
                 local sReq = nil
+                local rLvl = nil
                 if RDB and RDB.data[state.profName] then
                     local dbEntry = RDB.data[state.profName][name]
                     if dbEntry then
                         if dbEntry.skillRange then sr = dbEntry.skillRange end
                         if dbEntry.skillReq then sReq = dbEntry.skillReq end
+                        rLvl = dbEntry.reqLevel
                     end
                 end
 
@@ -5051,6 +5081,7 @@ function TSF:LoadRecipes(unknown)
                     numAvail    = data.numAvail or 0,
                     reagents    = data.reagents,
                     skillReq    = LearnLevelFor(name, sReq or data.skillReq),
+                    reqLevel    = rLvl,
                     skillRange  = sr,
                     spellID     = data.spellID,
                     category    = CachedCategory(data, name, data.itemID, state.profName),
@@ -5078,6 +5109,7 @@ function TSF:LoadRecipes(unknown)
                 difficulty   = "medium",
                 itemID       = info.itemID,
                 skillReq     = LearnLevelFor(name, info.skillReq),
+                reqLevel     = info.reqLevel,
                 skillRange   = info.skillRange,
                 spellID      = info.spellID,
                 source       = info.source,

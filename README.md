@@ -41,7 +41,7 @@
 - **Batch crafting.** Craft 1, 5, 10, 20, or all, with a live countdown and skill-bar updates.
 - **State preservation.** Window position, filters, sort, search, and selection persist between sessions.
 
-ProfessionBuddy supports Blacksmithing, Leatherworking, Tailoring, Engineering, Alchemy, Jewelcrafting, Enchanting, Cooking, First Aid, and Mining and Smelting.
+ProfessionBuddy supports Blacksmithing, Leatherworking, Tailoring, Engineering, Alchemy, Jewelcrafting, Enchanting, Cooking, First Aid, Mining and Smelting, and Poisons for rogues.
 
 ## Installation
 
