@@ -16,6 +16,9 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+
+-- WoW: Forever moved GuildRoster to C_GuildInfo; TBC Anniversary keeps the global.
+local GuildRoster = GuildRoster or (C_GuildInfo and C_GuildInfo.GuildRoster)
 local GP = addon:NewModule("GuildPanel")
 
 local ROW_HEIGHT   = 20

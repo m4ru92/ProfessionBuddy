@@ -17,6 +17,28 @@
 local addon = ProfBuddy
 local TSF = addon:NewModule("TradeSkillFrame")
 
+-- WoW: Forever (modern API) moved these off the global table; TBC
+-- Anniversary still has the globals, so on TBCCA each line is a no-op.
+local GetItemInfo     = GetItemInfo     or (C_Item and C_Item.GetItemInfo)
+local GetItemCount    = GetItemCount    or (C_Item and C_Item.GetItemCount)
+local GetItemIcon     = GetItemIcon     or (C_Item and C_Item.GetItemIconByID)
+local GetSpellLink    = GetSpellLink    or (C_Spell and C_Spell.GetSpellLink)
+local GetSpellTexture = GetSpellTexture or (C_Spell and C_Spell.GetSpellTexture)
+local GetSpellInfo    = GetSpellInfo or function(id)
+    local info = C_Spell and C_Spell.GetSpellInfo and C_Spell.GetSpellInfo(id)
+    if info then
+        return info.name, nil, info.iconID, info.castTime, info.minRange, info.maxRange, info.spellID
+    end
+end
+local ChatEdit_InsertLink = ChatEdit_InsertLink or (ChatFrameUtil and ChatFrameUtil.InsertLink)
+
+-- Hook a tooltip script only where this client's tooltip has it. Modern
+-- clients (WoW: Forever) have no OnTooltipSetItem / OnTooltipSetUnit, and
+-- hooking a missing script is a Lua error. Forever tooltips come later.
+local function HookTooltipScript(tip, script, fn)
+    if tip.HasScript and tip:HasScript(script) then tip:HookScript(script, fn) end
+end
+
 local DS   -- DataStore, set in Init
 local RDB  -- RecipeDB, set in Init
 
@@ -624,7 +646,7 @@ function TSF:HookUnitTooltip()
     if self._hookedUnitTooltip then return end
     self._hookedUnitTooltip = true
 
-    GameTooltip:HookScript("OnTooltipSetUnit", function(tip)
+    HookTooltipScript(GameTooltip, "OnTooltipSetUnit", function(tip)
         if not (addon.db and addon.db.settings) then return end
         if addon.db.settings.gatherSkillTooltip == false then return end
 
@@ -764,7 +786,7 @@ function TSF:HookItemTooltip()
         return " " .. table.concat(parts, "|cff5a5a5a/|r")
     end
 
-    GameTooltip:HookScript("OnTooltipSetItem", function(tip)
+    HookTooltipScript(GameTooltip, "OnTooltipSetItem", function(tip)
         -- Random-enchant line for ANY item tooltip (chat link, bags, AH, etc.):
         -- 2.5.x omits "<Random enchantment>" from a bare item link/ID, so append
         -- it for known random-property crafted items. Idempotent, and independent
@@ -1002,7 +1024,7 @@ function TSF:HookItemTooltip()
     end)
 
     -- "Craftable by" tooltip: shows which alts can craft the hovered item
-    GameTooltip:HookScript("OnTooltipSetItem", function(tip)
+    HookTooltipScript(GameTooltip, "OnTooltipSetItem", function(tip)
         if not (addon.db.settings.showAltInTooltips
                 or addon.db.settings.showRemoteInTooltips) then return end
         if not DS then return end

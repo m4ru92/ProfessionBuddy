@@ -1,0 +1,43 @@
+## Interface: 20506
+## Title: ProfessionBuddy
+## Notes: Cross-character profession management, recipe tracking, and material calculator for TBC Classic Anniversary
+## Author: m4ru
+## Version: 1.1.5
+## SavedVariables: ProfBuddyDB
+## DefaultState: enabled
+## X-Curse-Project-ID: 1631296
+## X-Website: https://github.com/m4ru92/ProfessionBuddy
+## X-License: MIT
+## X-Category: Professions
+
+Libs/libs.xml
+
+Core.lua
+Source/Source.lua
+Source/Classic.lua
+DataStore.lua
+Scanner.lua
+Comm.lua
+Orders.lua
+RecipeDB.lua
+Data/Tailoring.lua
+Data/Blacksmithing.lua
+Data/Cooking.lua
+Data/Leatherworking.lua
+Data/Alchemy.lua
+Data/Jewelcrafting.lua
+Data/Engineering.lua
+Data/Enchanting.lua
+Data/FirstAid.lua
+Data/Smelting.lua
+Data/Poisons.lua
+Data/GatherMobs.lua
+Data/RandomEnchant.lua
+MaterialCalc.lua
+UI/Main.lua
+UI/CharacterPanel.lua
+UI/FriendsPanel.lua
+UI/GuildPanel.lua
+UI/OrdersPanel.lua
+UI/MailHelper.lua
+UI/TradeSkillFrame.lua

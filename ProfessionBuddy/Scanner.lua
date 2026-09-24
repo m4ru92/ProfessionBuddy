@@ -181,9 +181,13 @@ function Scanner:Init()
     -- what we stored, so without this it pushed stale professions forever.
     addon:RegisterEvent("SKILL_LINES_CHANGED", function() self:QueueProfessionScan() end)
 
-    -- Trainer events
-    addon:RegisterEvent("TRAINER_SHOW",      function() self:ScanTrainer() end)
-    addon:RegisterEvent("TRAINER_UPDATE",    function() self:ScanTrainer() end)
+    -- Trainer events. The scan reads GetTrainerServiceInfo in the Classic
+    -- return order; WoW: Forever returns a different order, so it runs only
+    -- with the Classic source loaded.
+    if addon.Source.flavor == "classic" then
+        addon:RegisterEvent("TRAINER_SHOW",      function() self:ScanTrainer() end)
+        addon:RegisterEvent("TRAINER_UPDATE",    function() self:ScanTrainer() end)
+    end
 
     -- Level-up
     addon:RegisterEvent("PLAYER_LEVEL_UP",   function() DS:EnsureCharacter() end)

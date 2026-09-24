@@ -5,6 +5,11 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+
+-- WoW: Forever (modern API) has no global item functions; TBC Anniversary
+-- does, so on TBCCA each line is a no-op.
+local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
+local GetItemIcon = GetItemIcon or (C_Item and C_Item.GetItemIconByID)
 local CP = addon:NewModule("CharacterPanel")
 
 local DS   -- DataStore ref, set in Init

@@ -331,6 +331,17 @@ end)
 addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if loadedName ~= "ProfessionBuddy" then return end
 
+    -- ProfessionBuddy_Mainline.toc is for WoW: Forever (interface 16xxx).
+    -- Retail reads the same toc family but is not supported: say so once,
+    -- then stop before any module starts.
+    local tocVersion = GetBuildInfo and select(4, GetBuildInfo())
+    if WOW_PROJECT_ID and WOW_PROJECT_MAINLINE and WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+       and tocVersion and (tocVersion < 16000 or tocVersion >= 17000) then
+        frame:UnregisterAllEvents()
+        print("|cff00ccffProfessionBuddy|r does not support this game client.")
+        return
+    end
+
     -- Init saved variables
     ProfBuddyDB = ProfBuddyDB or {}
     ProfBuddyDB.characters = ProfBuddyDB.characters or {}
@@ -481,6 +492,10 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
 
     print("|cff00ccffProfessionBuddy|r v" .. addon.version .. " loaded.  /pb  or  /profbuddy")
+    if addon.Source and addon.Source.flavor == "unsupported" then
+        print("|cff00ccffProfessionBuddy:|r profession windows are not supported on WoW Forever yet. "
+            .. "Character, friends, guild and orders views load.")
+    end
 end)
 
 -- Full scan on login / reload only. Zoning, instance entry and every other

@@ -70,14 +70,36 @@ def default_addon_dir():
 
 
 # ---------------------------------------------------------------- version check
-def read_toc_version(addon_dir):
-    toc = os.path.join(addon_dir, ADDON_NAME + ".toc")
-    if not os.path.isfile(toc):
-        die("no .toc at " + toc)
-    for line in open(toc, encoding="utf-8", errors="replace"):
+# One zip serves several clients, each reading the toc named for it:
+# _TBC for TBC Classic Anniversary, _Mainline for WoW: Forever, and the
+# plain toc (a "not supported" stub) for every other client.
+TOC_TBC = ADDON_NAME + "_TBC.toc"
+TOC_MAINLINE = ADDON_NAME + "_Mainline.toc"
+TOC_STUB = ADDON_NAME + ".toc"
+TOCS = (TOC_TBC, TOC_MAINLINE, TOC_STUB)
+
+
+def toc_version(path):
+    for line in open(path, encoding="utf-8", errors="replace"):
         if line.strip().lower().startswith("## version:"):
             return line.split(":", 1)[1].strip()
-    die("no '## Version:' line in the .toc")
+    return None
+
+
+def read_toc_version(addon_dir):
+    """Every toc must exist and carry the same ## Version."""
+    versions = {}
+    for name in TOCS:
+        path = os.path.join(addon_dir, name)
+        if not os.path.isfile(path):
+            die("no .toc at " + path)
+        v = toc_version(path)
+        if not v:
+            die("no '## Version:' line in " + name)
+        versions[name] = v
+    if len(set(versions.values())) != 1:
+        die("toc versions disagree: " + ", ".join("%s=%s" % kv for kv in sorted(versions.items())))
+    return versions[TOC_TBC]
 
 
 def read_core_version(addon_dir):
@@ -210,17 +232,25 @@ def lua_checker():
     return chk, "%s, %s" % (lua.eval("_VERSION"), flavor)
 
 
-def toc_listed_files(addon_dir):
-    """The set of files the .toc loads, as forward-slash relative paths."""
-    toc = os.path.join(addon_dir, ADDON_NAME + ".toc")
-    out = set()
+def toc_files(addon_dir, name):
+    """The files one toc loads, in order, as forward-slash relative paths."""
+    toc = os.path.join(addon_dir, name)
+    out = []
     if not os.path.isfile(toc):
         return out
     with open(toc, encoding="utf-8", errors="replace") as fh:
         for line in fh:
             line = line.strip()
             if line and not line.startswith("#"):
-                out.add(line.replace("\\", "/"))
+                out.append(line.replace("\\", "/"))
+    return out
+
+
+def toc_listed_files(addon_dir):
+    """Every file any toc loads."""
+    out = set()
+    for name in TOCS:
+        out.update(toc_files(addon_dir, name))
     return out
 
 
@@ -235,10 +265,20 @@ def verify_zip(out_zip, addon_dir):
         tops = {n.split("/")[0] for n in names}
         if tops != {ADDON_NAME}:
             problems.append("zip top-level is %s, expected just '%s'" % (sorted(tops), ADDON_NAME))
-        # 2) .toc present
-        tocname = "%s/%s.toc" % (ADDON_NAME, ADDON_NAME)
-        if tocname not in names:
-            problems.append("missing " + tocname)
+        # 2) every toc present, and every file each toc loads is in the zip
+        for toc in TOCS:
+            tocname = "%s/%s" % (ADDON_NAME, toc)
+            if tocname not in names:
+                problems.append("missing " + tocname)
+            for rel in toc_files(addon_dir, toc):
+                if "%s/%s" % (ADDON_NAME, rel) not in names:
+                    problems.append("%s lists %s, which is not in the zip" % (toc, rel))
+        # 2b) Forever never loads TBC data or the Classic profession source
+        for rel in toc_files(addon_dir, TOC_MAINLINE):
+            if rel.startswith("Data/") or rel == "Source/Classic.lua":
+                problems.append("%s must not load %s" % (TOC_MAINLINE, rel))
+        if "Source/Classic.lua" not in toc_files(addon_dir, TOC_TBC):
+            problems.append("%s does not load Source/Classic.lua" % TOC_TBC)
         # 3) every shipped .lua/.xml is either loaded by the .toc or a library.
         #    Catches junk AND a file added to the folder but never to the .toc.
         prefix = ADDON_NAME + "/"
@@ -248,7 +288,7 @@ def verify_zip(out_zip, addon_dir):
             rel = n[len(prefix):] if n.startswith(prefix) else n
             if rel in listed or rel.startswith("Libs/"):
                 continue
-            problems.append("%s is in the zip but not listed in the .toc "
+            problems.append("%s is in the zip but not listed in any toc "
                             "(and not under Libs/)" % n)
         # 4) the shipped LICENSE matches the repo root copy (P-4)
         lic = prefix + "LICENSE"
@@ -379,8 +419,9 @@ def main():
     if problems:
         for p in problems: log("  VERIFY FAIL: " + p)
         die("zip verification failed -- not releasing")
-    log("Verify: OK (top-level folder, .toc present, every .lua/.xml listed in "
-        "the .toc or under Libs/, LICENSE matches the root copy, lua syntax via %s)"
+    log("Verify: OK (top-level folder, all 3 tocs present with their files, the Forever "
+        "toc loads no TBC data, every .lua/.xml listed in a toc or under Libs/, LICENSE "
+        "matches the root copy, lua syntax via %s)"
         % (lua_label or "no VM"))
 
     if args.dry_run:

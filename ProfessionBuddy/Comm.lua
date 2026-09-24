@@ -14,6 +14,12 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+
+-- WoW: Forever (modern API) moved these off the global table; TBC
+-- Anniversary still has the globals, so on TBCCA each line is a no-op.
+local ChatFrame_AddMessageEventFilter = ChatFrame_AddMessageEventFilter
+    or (ChatFrameUtil and ChatFrameUtil.AddMessageEventFilter)
+local GuildRoster = GuildRoster or (C_GuildInfo and C_GuildInfo.GuildRoster)
 local Comm = addon:NewModule("Comm")
 
 -- Comm wire revision. Bump by 1 on ANY wire-format / payload-shape / trust-gate
@@ -147,7 +153,9 @@ function Comm:Init()
     -- Debounced incremental updates on inventory/profession changes. A learned
     -- recipe, a skill-up or a started cooldown moves no items, so BAG_UPDATE
     -- alone left peers holding stale profession data indefinitely.
-    for _, event in ipairs({ "BAG_UPDATE", "SKILL_LINES_CHANGED", "TRADE_SKILL_UPDATE" }) do
+    -- The trade-skill update event comes from the Source: WoW: Forever has
+    -- no TRADE_SKILL_UPDATE, and registering an unknown event is an error.
+    for _, event in ipairs({ "BAG_UPDATE", "SKILL_LINES_CHANGED", addon.Source.EVENT.TRADE_UPDATE }) do
         addon:RegisterEvent(event, function()
             self:QueueIncrementalUpdate()
         end)
