@@ -38,6 +38,10 @@ local BAG_THROTTLE = 0.25
 -- one trailing timer the same way BAG_UPDATE is.
 local SKILL_THROTTLE = 0.5
 local SKILL_MUTE     = 1
+-- A profession list whose reagent names are still loading is not stored;
+-- it is read again this often, this many times at most.
+local PENDING_RESCAN_DELAY = 0.5
+local PENDING_RESCAN_MAX   = 6
 local function Now()
     return (GetTime and GetTime()) or time()
 end
@@ -273,6 +277,13 @@ function Scanner:ScanCurrentTradeSkill()
     local partial = false
     if win.nameFilter and win.nameFilter ~= "" then partial = true end
     if win.collapsedHeader then partial = true end   -- rows under it are not in the list
+    -- Reagent names still loading from the item cache: storing now would
+    -- store the placeholders, so try again shortly instead.
+    if win.itemsPending then
+        self:QueuePendingRescan()
+        return
+    end
+    self._pendingRescans = 0
 
     local recipes = {}
     -- difficulty: "optimal", "medium", "easy", "trivial" (headers already excluded)
@@ -311,7 +322,7 @@ function Scanner:ScanCurrentTradeSkill()
     -- spellIDs (smelting recipes resolve straight to "Smelting", so the
     -- old Mining->Smelting string hack is only a last-resort fallback).
     local profName = self:ProfessionFromRecipes(recipes) or self:Canonicalize(rawName)
-    if profName == "Mining" then profName = "Smelting" end
+    if profName == "Mining" and Source.MINING_IS_SMELTING ~= false then profName = "Smelting" end
 
     DS:SetProfessionData(profName, {
         skillLevel = rank,
@@ -327,6 +338,19 @@ function Scanner:ScanCurrentTradeSkill()
         local char = DS:GetCharacter()
         if char and char.professions then char.professions[rawName] = nil end
     end
+end
+
+-- A few tries, half a second apart; the Source has already asked the
+-- client for the missing items.
+function Scanner:QueuePendingRescan()
+    if self._pendingRescanArmed then return end
+    self._pendingRescans = (self._pendingRescans or 0) + 1
+    if self._pendingRescans > PENDING_RESCAN_MAX then return end
+    self._pendingRescanArmed = true
+    C_Timer.After(PENDING_RESCAN_DELAY, function()
+        self._pendingRescanArmed = false
+        self:ScanCurrentTradeSkill()
+    end)
 end
 
 ----------------------------------------------------------------------

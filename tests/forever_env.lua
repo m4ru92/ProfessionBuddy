@@ -9,7 +9,9 @@
 --   * GameTooltip has no OnTooltipSetItem / OnTooltipSetUnit script, and
 --     hooking a missing script raises an error, as on the client;
 --   * registering an event the Forever client does not know raises an
---     error (TRADE_SKILL_UPDATE, CRAFT_*, UPDATE_TRADESKILL_RECAST: probe).
+--     error (TRADE_SKILL_UPDATE, CRAFT_*, UPDATE_TRADESKILL_RECAST: probe);
+--   * Blizzard_Professions loads on demand, and ProfessionsFrame opens
+--     through ShowUIPanel, as in Blizzard's own `forever` UI source.
 -- Any other global a file touches resolves to a do-nothing stub value and
 -- is recorded in FALLBACK, so a real missing function shows up there
 -- instead of passing silently.
@@ -60,7 +62,8 @@ function NEW() return setmetatable({}, W) end
 FALLBACK = {}
 -- Globals a file tests for before creating them (libraries, the saved
 -- variable) must read nil.
-local NOT_YET = { LibStub = true, ChatThrottleLib = true, ProfBuddyDB = true, ProfBuddy = true, ElvUI = true }
+local NOT_YET = { LibStub = true, ChatThrottleLib = true, ProfBuddyDB = true, ProfBuddy = true, ElvUI = true,
+                  ProfessionsFrame = true }
 setmetatable(_G, { __index = function(_, k)
     if REMOVED[k] or NOT_YET[k] then return nil end
     FALLBACK[k] = true
@@ -110,7 +113,9 @@ function F:GetWidth() return 100 end
 function F:GetHeight() return 100 end
 function F:GetVerticalScroll() return 0 end
 function F:GetVerticalScrollRange() return 0 end
-function F:GetNumPoints() return 0 end
+function F:SetPoint(...) rawset(self, "_points", (rawget(self, "_points") or 0) + 1) end
+function F:ClearAllPoints() rawset(self, "_points", 0) end
+function F:GetNumPoints() return rawget(self, "_points") or 0 end
 function F:IsMouseOver() return false end
 function F:GetChecked() return false end
 function F:GetValue() return 0 end
@@ -127,9 +132,65 @@ function CreateFrame(kind, name, parent)
 end
 UIParent = CreateFrame("Frame", "UIParent")
 GameTooltip = CreateFrame("GameTooltip", "GameTooltip", UIParent)
-ProfessionsFrame = CreateFrame("Frame", "ProfessionsFrame", UIParent)
 UISpecialFrames = {}
 UIPanelWindows = {}
+
+-- Blizzard's panel manager, reduced to the branch PB depends on: a frame
+-- with a UIPanelWindows entry is laid out by the (secure) manager, any
+-- other frame is simply shown. PANEL_MANAGED records which branch ran.
+PANEL_MANAGED = {}
+function ShowUIPanel(f)
+    if not f or f:IsShown() then return end
+    PANEL_MANAGED[#PANEL_MANAGED + 1] = UIPanelWindows[f:GetName()] ~= nil
+    f:Show()
+end
+function HideUIPanel(f)
+    if not f or not f:IsShown() then return end
+    f:Hide()
+end
+
+-- Blizzard_UIParentPanelManager/Shared/UIPanelLayoutFrame.lua values.
+function GetUIPanelLayoutAttribute(name)
+    return ({ TOP_OFFSET = -116, LEFT_OFFSET = 16 })[name]
+end
+
+function ToggleFrame(f)
+    if f:IsShown() then HideUIPanel(f) else ShowUIPanel(f) end
+end
+
+-- Blizzard_Professions is load-on-demand: ProfessionsFrame does not exist
+-- until the first profession window opens (Blizzard_Professions_Bootstrap:
+-- ShowProfessionsFrame loads the addon, which registers the panel and
+-- fires ADDON_LOADED, then calls ShowUIPanel). On Forever the same frame
+-- is the profession book: a BookPage and a CraftingPage, and hiding it
+-- closes the open profession (ProfessionsMixin:OnHide).
+function ShowProfessionsFrame()
+    if not rawget(_G, "ProfessionsFrame") then
+        local f = CreateFrame("Frame", "ProfessionsFrame", UIParent)
+        f.BookPage = CreateFrame("Frame", nil, f)
+        f.CraftingPage = CreateFrame("Frame", nil, f)
+        f.CraftingPage:Show()
+        function f:SelectBookPage() self.BookPage:Show(); self.CraftingPage:Hide() end
+        f:SetScript("OnHide", function() C_TradeSkillUI.CloseTradeSkill() end)
+        f:SetScript("OnEvent", function(self, event)
+            if event == "TRADE_SKILL_SHOW" then self.BookPage:Hide(); self.CraftingPage:Show() end
+        end)
+        f:RegisterEvent("TRADE_SKILL_SHOW")
+        UIPanelWindows.ProfessionsFrame = { area = "left", pushable = 1, xoffset = 35 }
+        FIRE("ADDON_LOADED", "Blizzard_Professions")
+    end
+    ShowUIPanel(ProfessionsFrame)
+end
+
+-- The K key (Blizzard_ProfessionsBook_Bootstrap.lua, forever branch).
+function ToggleProfessionsBook()
+    if rawget(_G, "ProfessionsFrame") then
+        ToggleFrame(ProfessionsFrame)
+    else
+        ShowProfessionsFrame()
+        if ProfessionsFrame and ProfessionsFrame.SelectBookPage then ProfessionsFrame:SelectBookPage() end
+    end
+end
 SOUNDKIT = setmetatable({}, { __index = function() return 0 end })
 
 -- ------------------------------------------------------------ client
@@ -140,7 +201,18 @@ BUILD_INTERFACE = rawget(_G, "BUILD_INTERFACE") or 16001
 function GetBuildInfo() return "1.60.1", "69977", "Sep 22 2026", BUILD_INTERFACE end
 function PlaySound() end
 function InCombatLockdown() return false end
-function hooksecurefunc() end
+-- Post-hook a global function, as the client does.
+function hooksecurefunc(name, fn)
+    if type(name) ~= "string" then return end
+    local orig = rawget(_G, name)
+    if type(orig) ~= "function" then return end
+    rawset(_G, name, function(...)
+        local r = { orig(...) }
+        fn(...)
+        return unpack(r)
+    end)
+end
+Enum = { CraftingReagentType = { Basic = 1 } }
 function wipe(t) for k in pairs(t) do t[k] = nil end return t end
 function strtrim(s) return (s or ""):match("^%s*(.-)%s*$") end
 function strsplit(sep, s) local out = {}

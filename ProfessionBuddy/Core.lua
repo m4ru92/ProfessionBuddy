@@ -492,10 +492,6 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
 
     print("|cff00ccffProfessionBuddy|r v" .. addon.version .. " loaded.  /pb  or  /profbuddy")
-    if addon.Source and addon.Source.flavor == "unsupported" then
-        print("|cff00ccffProfessionBuddy:|r profession windows are not supported on WoW Forever yet. "
-            .. "Character, friends, guild and orders views load.")
-    end
 end)
 
 -- Full scan on login / reload only. Zoning, instance entry and every other

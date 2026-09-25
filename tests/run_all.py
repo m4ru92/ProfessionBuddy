@@ -25,7 +25,8 @@ ADDON = "ProfessionBuddy"
 HARNESSES = [
     ("pb_harness.lua", "ALL 79 HARNESS TESTS PASS"),
     ("pb_ghost_harness.lua", "ALL GHOST HARNESS TESTS PASS"),
-    ("pb_forever_harness.lua", "ALL FOREVER LOAD TESTS PASS (6)"),
+    ("pb_forever_harness.lua", "ALL FOREVER TESTS PASS (16)"),
+    ("pb_forever_replaceoff_harness.lua", "ALL FOREVER REPLACE-OFF TESTS PASS (2)"),
     ("pb_otherclient_harness.lua", "ALL OTHER-CLIENT TESTS PASS (2)"),
 ]
 

@@ -61,6 +61,10 @@ local SEARCH_DEBOUNCE = 0.3
 -- on cooldown, an enchant cancelled with Escape), so without this the
 -- crafting flag would wedge every later refresh for the session.
 local CRAFT_WATCHDOG = 10
+-- Reagent names still loading from the item cache: how often, and how many
+-- times, the window is read again before it settles for the placeholders.
+local ITEM_RETRY_DELAY = 0.5
+local ITEM_RETRY_MAX   = 6
 
 ----------------------------------------------------------------------
 -- Colors
@@ -350,6 +354,9 @@ function TSF:Init()
         for k, v in pairs(src) do self._savedBagState[k] = v end
         -- Pause tracker so the snapshot isn't overwritten
         self._bagTracker:SetScript("OnUpdate", nil)
+        -- The list may not be readable yet; the next TRADE_UPDATE opens PB.
+        if addon.Source.LIST_ARRIVES_LATE then self._awaitingTradeList = true end
+        self:HideSharedFrames()
         if InCombatLockdown() then
             -- If PB is already open, update content in place (no Show needed)
             if self.frame and self.frame:IsShown() then
@@ -363,6 +370,7 @@ function TSF:Init()
         end
     end)
     On(E.TRADE_CLOSE, function()
+        self._awaitingTradeList = nil
         if self._isMouseOverTab then return end
         -- A background trade-skill session closing (PB is showing Enchanting,
         -- or PB closed it itself on a switch) must not hide PB.
@@ -410,6 +418,8 @@ function TSF:Init()
             else
                 C_Timer.After(0.05, function() self:OnTradeSkillShow() end)
             end
+        elseif self._awaitingTradeList then
+            C_Timer.After(0.05, function() self:OnTradeSkillShow() end)
         end
     end)
     On(E.CRAFT_SHOW, function()
@@ -1114,6 +1124,39 @@ function TSF:HookItemTooltip()
     self._hookedTooltip = true
 end
 
+-- Hide a live Blizzard frame WITHOUT running its OnHide. CraftFrame's
+-- OnHide calls CloseCraft(), and ProfessionsFrame's calls CloseTradeSkill(),
+-- which would close the very session PB is about to show.
+local function QuietHideFrame(frame)
+    local onHide = frame:GetScript("OnHide")
+    frame:SetScript("OnHide", nil)
+    HideUIPanel(frame)
+    if frame:IsShown() then frame:Hide() end
+    frame:SetScript("OnHide", onHide)
+end
+
+-- May a gated (shared) default frame show right now? The Source decides
+-- where it says so; Classic's only shared frame is the Craft window, which
+-- shows for the hunter's Beast Training alone.
+local function SharedFrameAllowed(frameName)
+    local S = addon.Source
+    if S.SharedFrameOpen then return S:SharedFrameOpen(frameName) end
+    return S:IsPetTraining()
+end
+
+-- A shared frame that was open when PB took a profession (WoW: Forever's
+-- profession book, when a profession is opened from it) goes away quietly.
+function TSF:HideSharedFrames()
+    if not (addon.Source.SharedFrameOpen and self._killedFrames) then return end
+    for frameName in pairs(addon.Source.SHARED_FRAMES or {}) do
+        local frame = _G[frameName]
+        if frame and self._killedFrames[frameName] and frame:IsShown()
+           and not SharedFrameAllowed(frameName) then
+            QuietHideFrame(frame)
+        end
+    end
+end
+
 function TSF:SuppressDefaultFrames()
     if not addon.db.settings.replaceTradeSkill then return end
 
@@ -1145,16 +1188,7 @@ function TSF:SuppressDefaultFrames()
         frame:Hide()
     end
 
-    -- Hide a live Blizzard frame WITHOUT running its OnHide. CraftFrame's
-    -- OnHide calls CloseCraft(), which would close the very session PB is
-    -- about to show.
-    local function QuietHide(frame)
-        local onHide = frame:GetScript("OnHide")
-        frame:SetScript("OnHide", nil)
-        HideUIPanel(frame)
-        if frame:IsShown() then frame:Hide() end
-        frame:SetScript("OnHide", onHide)
-    end
+    local QuietHide = QuietHideFrame
 
     -- A default frame SHARED with something PB does not replace is GATED,
     -- not killed. Blizzard's Craft window also runs the hunter's Beast
@@ -1169,15 +1203,20 @@ function TSF:SuppressDefaultFrames()
     local function DoGate(frame, frameName)
         if not frame or killed[frameName] then return end
         killed[frameName] = true
-        if frame:IsShown() and not addon.Source:IsPetTraining() then
+        local S = addon.Source
+        if frame:IsShown() and not SharedFrameAllowed(frameName) then
             QuietHide(frame)
+        end
+        if S.AdoptSharedFrame then
+            S:AdoptSharedFrame(frame, UIPanelWindows and UIPanelWindows[frameName])
         end
         if UIPanelWindows then
             UIPanelWindows[frameName] = nil
         end
         local realShow = frame.Show
         frame.Show = function(f, ...)
-            if addon.Source:IsPetTraining() then
+            if SharedFrameAllowed(frameName) then
+                if S.BeforeSharedShow then S:BeforeSharedShow(f) end
                 return realShow(f, ...)
             end
         end
@@ -1702,9 +1741,18 @@ function TSF:BuildProfessionTabs(parent)
 
     local TAB_SIZE = 22
 
+    -- Herbalism has a recipe window only where gathering has recipes. It
+    -- goes last so every other tab keeps its ProfBuddyProfTab<n> name.
+    local tabProfs = ALL_TAB_PROFS
+    if addon.Source.GATHERING_HAS_RECIPES then
+        tabProfs = {}
+        for _, p in ipairs(ALL_TAB_PROFS) do tabProfs[#tabProfs + 1] = p end
+        tabProfs[#tabProfs + 1] = "Herbalism"
+    end
+
     -- Pre-create a secure button for every profession with attributes
     -- set NOW (at frame build time, before any taint)
-    for idx, profName in ipairs(ALL_TAB_PROFS) do
+    for idx, profName in ipairs(tabProfs) do
         local tab = CreateFrame("Button", "ProfBuddyProfTab" .. idx, self.profTabContainer, "SecureActionButtonTemplate")
         tab:SetSize(TAB_SIZE, TAB_SIZE)
 
@@ -1727,8 +1775,16 @@ function TSF:BuildProfessionTabs(parent)
             -- /cast takes the client's own spell name; 2842 is Poisons.
             ["Poisons"]       = "/cast " .. (GetSpellInfo(2842) or "Poisons"),
         }
-        tab:SetAttribute("type", "macro")
-        tab:SetAttribute("macrotext", MACRO_OVERRIDES[profName] or ("/cast " .. profName))
+        -- A flavor that opens professions by skill line gets no macro at
+        -- all: PostClick opens it (WoW: Forever, where several spells
+        -- share a profession's name).
+        local skillLine = addon.Source.TabSkillLine and addon.Source:TabSkillLine(profName)
+        if skillLine then
+            tab.skillLine = skillLine
+        else
+            tab:SetAttribute("type", "macro")
+            tab:SetAttribute("macrotext", MACRO_OVERRIDES[profName] or ("/cast " .. profName))
+        end
 
         local bg = tab:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
@@ -1765,6 +1821,8 @@ function TSF:BuildProfessionTabs(parent)
         tab:SetScript("PostClick", function(self)
             if self._isUnknown then
                 TSF:OpenWithStatic(self.profName)
+            elseif self.skillLine then
+                addon.Source:OpenProfession(self.skillLine)
             end
         end)
 
@@ -1829,7 +1887,10 @@ function TSF:UpdateProfessionTabs()
     local unknownList = {}
     if addon.db.settings.showAllProfessions then
         for profName in pairs(CraftableProfs()) do
-            if not knownSet[profName] and self.profTabsByName[profName] then
+            -- Only a profession the static DB can show; a tab for one it
+            -- cannot (no recipe data on WoW: Forever yet) would do nothing.
+            if not knownSet[profName] and self.profTabsByName[profName]
+               and RDB and RDB.data and RDB.data[profName] then
                 table.insert(unknownList, profName)
             end
         end
@@ -4015,6 +4076,10 @@ function TSF:UpdateCraftBar()
         avail = self:ReagentCraftCount(recipe)
     end
     local canCraft = avail > 0
+    -- A flavor PB cannot craft on yet (WoW: Forever before Phase 2b) keeps
+    -- every craft control disabled.
+    local craftOff = addon.Source.CAN_CRAFT == false
+    if craftOff then canCraft = false end
     local itemLess = isKnown and (not recipe.itemID or recipe.itemID == 0)
     local eb = self.enchantCraftBtn
 
@@ -4057,7 +4122,10 @@ function TSF:UpdateCraftBar()
     end
 
     if self.craftNotLearned then
-        if isKnown then
+        if isKnown and craftOff then
+            self.craftNotLearned:SetText("|cff808080Coming soon|r")
+            self.craftNotLearned:Show()
+        elseif isKnown then
             self.craftNotLearned:Hide()
         else
             self.craftNotLearned:SetText("|cffff2020Recipe unknown|r")
@@ -4325,6 +4393,10 @@ end
 -- Start the actual craft operation
 ----------------------------------------------------------------------
 function TSF:StartCraft(recipe, qty)
+    -- The disabled buttons are not the only way in: Enter in the qty box
+    -- starts a craft too.
+    if addon.Source.CAN_CRAFT == false then return end
+
     -- The Craft API (Enchanting, and pet training) has no batch: DoCraft casts
     -- once and cannot be chained on this client, whether the craft produces an
     -- item (rod, prismatic shard) or applies an enchant. So every craft-window
@@ -5106,7 +5178,7 @@ function TSF:LoadRecipes(unknown)
                     reqLevel    = rLvl,
                     skillRange  = sr,
                     spellID     = data.spellID,
-                    category    = CachedCategory(data, name, data.itemID, state.profName),
+                    category    = data.category or CachedCategory(data, name, data.itemID, state.profName),
                     subcategory = CachedSubcategory(data, name, state.profName),
                     gameOrder   = idx,
                     gameIndex   = data.index,
@@ -5567,7 +5639,8 @@ local function scrapeRecipes(isCraft)
 
     -- One enumeration for both windows, shared with the Scanner (see
     -- Source/Classic.lua). Header rows are already excluded.
-    for _, row in ipairs(addon.Source:ReadOpenWindow(isCraft).rows) do
+    local win = addon.Source:ReadOpenWindow(isCraft)
+    for _, row in ipairs(win.rows) do
         -- Locale-stable spellID from the recipe link (enchant:/spell:),
         -- same as the Scanner. Needed so item-less recipes (enchants)
         -- resolve their static entry -> real tooltip + rod requirement.
@@ -5593,9 +5666,28 @@ local function scrapeRecipes(isCraft)
             difficulty = row.difficulty,
             numAvail = row.numAvail or 0,
             reagents = reagents,
+            category = row.category,
         }
         table.insert(state.recipeOrder, row.name)
     end
+    return win.itemsPending
+end
+
+-- Some reagent names were still loading: read the window again shortly, a
+-- few times at most. (The Scanner retries its own store the same way.)
+function TSF:RetryPendingItems()
+    if self._itemRetryArmed then return end
+    self._itemRetries = (self._itemRetries or 0) + 1
+    if self._itemRetries > ITEM_RETRY_MAX then return end
+    self._itemRetryArmed = true
+    C_Timer.After(ITEM_RETRY_DELAY, function()
+        self._itemRetryArmed = false
+        if not (self.frame and self.frame:IsShown()) or state.isCraftWindow
+           or state._viewCharKey or state._isStaticView then
+            return
+        end
+        self:OnTradeSkillShow()
+    end)
 end
 
 ----------------------------------------------------------------------
@@ -5645,7 +5737,8 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
         state.collapsed    = {}
     end
 
-    scrapeRecipes(isCraft)
+    self._itemRetries = 0
+    local itemsPending = scrapeRecipes(isCraft)
 
     self:UpdateSkillBar()
 
@@ -5688,6 +5781,7 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
     if not (InCombatLockdown() and self.frame:IsShown()) then
         self.frame:Show()
     end
+    if itemsPending then self:RetryPendingItems() end
 
     -- Restore material calc if it was open when we last closed
     if state._restoreCalc then
@@ -5958,10 +6052,14 @@ end
 function TSF:OnTradeSkillShow()
     local rawName, rank, maxRank = addon.Source:GetOpenSkillLine(false)
     if not rawName or rawName == "UNKNOWN" then return end
+    self._awaitingTradeList = nil
+    self:HideSharedFrames()
     local profName = CanonicalProf(rawName)
     -- TBCCA returns "Mining" from GetTradeSkillLine() when the Smelting
     -- window is open. PB's static DB is registered under "Smelting".
-    if profName == "Mining" then profName = "Smelting" end
+    if profName == "Mining" and addon.Source.MINING_IS_SMELTING ~= false then
+        profName = "Smelting"
+    end
 
     state.profDisplayName = rawName
     state._isLinkedView = LinkedView(false)
@@ -6015,13 +6113,14 @@ function TSF:RefreshTradeData(profName, rank, maxRank, isCraft)
     state.skillLevel = rank or 0
     state.maxSkill   = maxRank or 375
 
-    scrapeRecipes(isCraft)
+    local itemsPending = scrapeRecipes(isCraft)
 
     self:UpdateSkillBar()
     self:RefreshRecipeList()
     self:UpdateListHighlights()
     self:RefreshDetailPanel(true)
     self:UpdateCraftBar()
+    if itemsPending then self:RetryPendingItems() end
 end
 
 -- fromEvent = true when called from the game's TRADE_SKILL_CLOSE /

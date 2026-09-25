@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: ProfessionBuddy
-## Notes: Cross-character profession management for WoW: Forever. Profession windows are not supported on Forever yet.
+## Notes: Cross-character profession management for WoW: Forever.
 ## Author: m4ru
 ## Version: 1.1.5
 ## SavedVariables: ProfBuddyDB
@@ -13,7 +13,7 @@
 Libs/libs.xml
 Core.lua
 Source/Source.lua
-Source/Unsupported.lua
+Source/Forever.lua
 DataStore.lua
 Scanner.lua
 Comm.lua

@@ -40,6 +40,21 @@
 --   Source:CloseWindow(isCraft)
 --   Source:IsSessionOpen(isCraft)      is that channel's backend session
 --       open right now (it can be open with no window showing)
+--
+-- Optional, for a flavor that differs from Classic. Absent means the
+-- Classic behaviour, so Source/Classic.lua sets none of them:
+--
+--   Source.MINING_IS_SMELTING     false: Mining is its own profession,
+--                                 never filed under Smelting
+--   Source.LIST_ARRIVES_LATE      true: the recipe list is not readable at
+--                                 TRADE_SHOW, only at the next TRADE_UPDATE
+--   Source.GATHERING_HAS_RECIPES  true: Herbalism gets a profession tab
+--   Source.CAN_CRAFT              false: PB offers no craft controls
+--   Source:TabSkillLine(profName) the skill line a profession tab opens,
+--                                 or nil for a tab that stays a /cast macro
+--   Source:OpenProfession(skillLine)
+--   ReadOpenWindow may also set win.itemsPending (reagent names still
+--   loading) and give each row a category name.
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
