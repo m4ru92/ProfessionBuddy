@@ -1208,7 +1208,12 @@ function TSF:SuppressDefaultFrames()
             QuietHide(frame)
         end
         if S.AdoptSharedFrame then
-            S:AdoptSharedFrame(frame, UIPanelWindows and UIPanelWindows[frameName])
+            S:AdoptSharedFrame(frame, UIPanelWindows and UIPanelWindows[frameName], function()
+                -- The book's key while PB shows a profession: close PB.
+                if self.frame and self.frame:IsShown() and not SharedFrameAllowed(frameName) then
+                    self:Hide()
+                end
+            end)
         end
         if UIPanelWindows then
             UIPanelWindows[frameName] = nil

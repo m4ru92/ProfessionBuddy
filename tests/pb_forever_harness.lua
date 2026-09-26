@@ -238,8 +238,36 @@ ToggleProfessionsBook()
 EXPECT(not ProfessionsFrame:IsShown(), "K did not close the book")
 print("  PASS F16 K opens the profession book (book page, Blizzard's spot) when no profession is open; a profession opened from it goes to PB without closing")
 
+-- F17: m4ru's 2026-09-26 run. Once any profession has been open, every
+-- later show of Blizzard's frame made its right-hand profession tabs cast
+-- their spells, so K reopened the last tab's profession (Cooking) in PB
+-- instead of showing the book; and K did not close PB's window
+ToggleProfessionsBook()
+C_TradeSkillUI.OpenTradeSkill(185)
+TS_LIST_READY()
+FLUSH()
+EXPECT(st.profName == "Cooking" and TSF.frame:IsShown(), "Cooking from the book did not open in PB")
+TSF.frame:Hide()
+FLUSH()
+TS_CALLS = {}
+ToggleProfessionsBook()
+FLUSH()
+EXPECT(not called("OpenTradeSkill"), "showing the book opened a profession: " .. table.concat(TS_CALLS, ", "))
+EXPECT(ProfessionsFrame:IsShown() and ProfessionsFrame.BookPage:IsShown(), "K did not show the book")
+EXPECT(not TSF.frame:IsShown(), "PB opened on K")
+ToggleProfessionsBook()
+C_TradeSkillUI.OpenTradeSkill(165)
+TS_LIST_READY()
+FLUSH()
+TS_CALLS = {}
+ToggleProfessionsBook()
+FLUSH()
+EXPECT(not TSF.frame:IsShown() and called("CloseTradeSkill"), "K did not close PB's profession window")
+EXPECT(not ProfessionsFrame:IsShown(), "K opened the book over the closing profession")
+print("  PASS F17 after a profession was open, K shows the book and opens no profession; K closes PB's profession window")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (16)")
+print("ALL FOREVER TESTS PASS (17)")

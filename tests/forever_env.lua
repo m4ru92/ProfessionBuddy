@@ -154,6 +154,22 @@ function GetUIPanelLayoutAttribute(name)
     return ({ TOP_OFFSET = -116, LEFT_OFFSET = 16 })[name]
 end
 
+-- EventRegistry, reduced to callbacks keyed by owner.
+EventRegistry = { _cb = {} }
+function EventRegistry:RegisterCallback(event, fn, owner)
+    self._cb[event] = self._cb[event] or {}
+    self._cb[event][owner or fn] = fn
+end
+function EventRegistry:UnregisterCallback(event, owner)
+    if self._cb[event] then self._cb[event][owner] = nil end
+end
+function EventRegistry:TriggerEvent(event, ...)
+    local list = {}
+    for owner, fn in pairs(self._cb[event] or {}) do list[#list + 1] = { owner, fn } end
+    table.sort(list, function(a, b) return (a[1].order or 0) < (b[1].order or 0) end)
+    for _, e in ipairs(list) do e[2](...) end
+end
+
 function ToggleFrame(f)
     if f:IsShown() then HideUIPanel(f) else ShowUIPanel(f) end
 end
@@ -171,6 +187,27 @@ function ShowProfessionsFrame()
         f.CraftingPage = CreateFrame("Frame", nil, f)
         f.CraftingPage:Show()
         function f:SelectBookPage() self.BookPage:Show(); self.CraftingPage:Hide() end
+        -- The profession tabs on the right (Camelot ProfessionsFrame.xml:
+        -- LW, Skinning, Cooking here). Each casts its profession on
+        -- "ProfessionsFrame.Show" unless it is the one still loaded
+        -- (ProfessionsLargeRightTabMixin); the frame fills spellOffsetIndex in
+        -- RefreshRightTabs, AFTER that event, so the first show casts nothing.
+        f.rightProfessionTabs = {}
+        for i, sl in ipairs({ 165, 393, 185 }) do
+            local tab = CreateFrame("Frame", nil, f)
+            tab.order, tab.skillLine = i, sl
+            EventRegistry:RegisterCallback("ProfessionsFrame.Show", function()
+                local info = C_TradeSkillUI.GetBaseProfessionInfo()
+                if rawget(tab, "spellOffsetIndex") and info.professionID ~= tab.skillLine then
+                    C_TradeSkillUI.OpenTradeSkill(tab.skillLine)   -- CastSpellBookItem
+                end
+            end, tab)
+            f.rightProfessionTabs[i] = tab
+        end
+        f:SetScript("OnShow", function(self)
+            EventRegistry:TriggerEvent("ProfessionsFrame.Show")
+            for _, tab in ipairs(self.rightProfessionTabs) do tab.spellOffsetIndex = 1 end
+        end)
         f:SetScript("OnHide", function() C_TradeSkillUI.CloseTradeSkill() end)
         f:SetScript("OnEvent", function(self, event)
             if event == "TRADE_SKILL_SHOW" then self.BookPage:Hide(); self.CraftingPage:Show() end

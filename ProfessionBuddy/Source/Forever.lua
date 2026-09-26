@@ -106,13 +106,31 @@ function Source:SharedFrameOpen()
     return not self:ProfessionOpen()
 end
 
--- Out of Blizzard's panel manager, ProfessionsFrame has no position (the
--- manager set it), so it goes where the manager would put it.
-function Source:AdoptSharedFrame(frame, layout)
-    if frame:GetNumPoints() > 0 then return end
-    local left = (GetUIPanelLayoutAttribute and GetUIPanelLayoutAttribute("LEFT_OFFSET")) or 16
-    local top  = (GetUIPanelLayoutAttribute and GetUIPanelLayoutAttribute("TOP_OFFSET")) or -116
-    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", left + ((layout and layout.xoffset) or 0), top)
+-- Taking over ProfessionsFrame as the profession book, once:
+--   * Out of Blizzard's panel manager it has no position (the manager set
+--     it), so it goes where the manager would put it.
+--   * Every profession tab on its right casts its profession spell each
+--     time the frame shows (ProfessionsLargeRightTabMixin, on
+--     "ProfessionsFrame.Show"), skipping only the profession the game
+--     still reports as loaded. After a profession was open the book would
+--     reopen one (the last tab, Cooking) instead of showing, so the book
+--     stops doing that; clicking a tab still opens its profession.
+--   * K toggles the book, so with a profession open in PB's window it
+--     closes that window (onToggle), as it closes Blizzard's.
+function Source:AdoptSharedFrame(frame, layout, onToggle)
+    if frame:GetNumPoints() == 0 then
+        local left = (GetUIPanelLayoutAttribute and GetUIPanelLayoutAttribute("LEFT_OFFSET")) or 16
+        local top  = (GetUIPanelLayoutAttribute and GetUIPanelLayoutAttribute("TOP_OFFSET")) or -116
+        frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", left + ((layout and layout.xoffset) or 0), top)
+    end
+    if EventRegistry and EventRegistry.UnregisterCallback then
+        for _, tab in ipairs(frame.rightProfessionTabs or {}) do
+            EventRegistry:UnregisterCallback("ProfessionsFrame.Show", tab)
+        end
+    end
+    if onToggle and type(ToggleProfessionsBook) == "function" then
+        hooksecurefunc("ToggleProfessionsBook", onToggle)
+    end
 end
 
 -- Always the book page. Once Blizzard_Professions is loaded, Blizzard's
