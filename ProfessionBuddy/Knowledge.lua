@@ -73,10 +73,16 @@ local function Entry(recipeID)
     return store[recipeID]
 end
 
--- The learn level a trainer showed for this recipe, or nil.
+-- The learn level a trainer showed for this recipe, or nil. A recipe that
+-- comes with the profession keeps the data's level, whatever a trainer
+-- lists: the Cooking trainer lists Basic Campfire at 20, but it comes with
+-- Cooking at 1.
 function KN:LearnLevel(recipeID)
     local e = self:Get(recipeID)
-    return e and e.learnLevel or nil
+    if not (e and e.learnLevel) then return nil end
+    local r = addon.RecipeDB and addon.RecipeDB:GetRecipeBySpell(recipeID)
+    if r and r.learnFrom == "automatic" then return nil end
+    return e.learnLevel
 end
 
 -- recipe item ID -> { recipeID, ... }, from the teachItems in

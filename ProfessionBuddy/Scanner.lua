@@ -532,6 +532,10 @@ function Scanner:ScanInventory()
     end
 
     DS:SetInventory("bags", items)
+
+    -- A tab bank (Source:BankBags) changes through BAG_UPDATE, not
+    -- PLAYERBANKSLOTS_CHANGED. ScanBank does nothing while the bank is shut.
+    if addon.Source.BankBags then self:ScanBank() end
 end
 
 function Scanner:ScanBank()
@@ -541,8 +545,10 @@ function Scanner:ScanBank()
 
     local items = {}
 
-    -- Bank container (bag -1) + bank bags (5-11)
-    local bankBags = { -1, 5, 6, 7, 8, 9, 10, 11 }
+    -- Bank container (bag -1) + bank bags (5-11), unless the client's bank
+    -- is laid out differently (WoW: Forever's tab bank)
+    local bankBags = addon.Source.BankBags and addon.Source:BankBags()
+        or { -1, 5, 6, 7, 8, 9, 10, 11 }
     for _, bag in ipairs(bankBags) do
         local slots = GetContainerNumSlots(bag)
         for slot = 1, slots do

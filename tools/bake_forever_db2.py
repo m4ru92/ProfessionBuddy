@@ -17,9 +17,11 @@ and so on), so PB can tell which recipe a vendor's or a bag's item
 teaches (Knowledge.lua).
 
 Learn level (orange), first match wins:
-  1. m4ru's trainer captures (tools/forever/trainer_captures.json)
-  2. learned automatically with the profession (SkillLineAbility
-     AcquireMethod 1 or 2): the ability's MinSkillLineRank, at least 1
+  1. learned automatically with the profession (SkillLineAbility
+     AcquireMethod 1 or 2): the ability's MinSkillLineRank, at least 1.
+     This beats a trainer's listing: Basic Campfire comes with Cooking at
+     1 though the Cooking trainer lists it at 20 (m4ru had it at Cooking 1)
+  2. m4ru's trainer captures (tools/forever/trainer_captures.json)
   3. taught by a recipe item: the lowest RequiredSkillRank of its teaching
      items in Forever's ItemSparse
   4. item recipe missing there: Classic Era's item rank, shifted by how far
@@ -178,10 +180,10 @@ def build(csvdir):
         cap = caps.get(spell)
 
         learn, learn_from = None, None
-        if cap:
-            learn, learn_from = cap["rank"], "trainer capture"
-        elif acquire in (1, 2):
+        if acquire in (1, 2):
             learn, learn_from = max(I(r["MinSkillLineRank"]), 1), "automatic"
+        elif cap:
+            learn, learn_from = cap["rank"], "trainer capture"
         elif tinv:
             ranks = [items[i][1] for i in tinv if i in items and items[i][1] > 0]
             if ranks:
@@ -197,10 +199,10 @@ def build(csvdir):
                 learn, learn_from = None, None
         report["learn level: " + (learn_from or "unknown")] += 1
 
-        if cap or (not tinv and acquire not in (1, 2)):
-            sources = [{"method": "trainer"}]
-        elif acquire in (1, 2):
+        if acquire in (1, 2):
             sources = [{"method": "automatic"}]
+        elif cap or not tinv:
+            sources = [{"method": "trainer"}]
         else:
             nm = next((items[i][0] for i in tinv if i in items and items[i][0]), None)
             sources = [{"method": "undetermined", "detail": nm}] if nm else [{"method": "undetermined"}]

@@ -128,6 +128,17 @@ local function EffectiveSources(recipe)
     return RecipeSources(recipe)
 end
 
+-- EffectiveSources plus the trainers and vendors seen on WoW: Forever
+-- (Knowledge.lua), so the list row, the Source filter and the detail
+-- panel all say the same thing.
+local function ShownSources(recipe)
+    local vis = EffectiveSources(recipe)
+    if addon.Knowledge and recipe.spellID then
+        vis = addon.Knowledge:MergeSources(vis, recipe.spellID, FactionHideOn() and PlayerFaction() or nil)
+    end
+    return vis
+end
+
 -- True when a recipe is obtainable ONLY by the opposite faction and the hide is
 -- on. VisibleSources returns nil when a recipe carries no source data at all,
 -- which must never hide it (unknown source is not an opposite-faction source).
@@ -2440,7 +2451,7 @@ function TSF:UpdateListRows()
                         row.rightText:SetText(rangeStr)
                     end
                 else
-                    local vis = EffectiveSources(entry)
+                    local vis = ShownSources(entry)
                     local src = (vis and vis[1] and vis[1].method) or entry.source or ""
                     local c = SOURCE_COLORS[src] or "|cff888888"
                     local displaySrc = src:sub(1,1):upper() .. src:sub(2)
@@ -2940,12 +2951,8 @@ function TSF:RefreshDetailPanel(preserveScroll)
         self.detCat:SetText("")
     end
 
-    local vis = EffectiveSources(recipe)
-    -- The trainers and vendors seen for it (WoW: Forever, Knowledge.lua).
-    if addon.Knowledge and recipe.spellID then
-        vis = addon.Knowledge:MergeSources(vis, recipe.spellID, FactionHideOn() and PlayerFaction() or nil)
-        if self.detSourceHover then self.detSourceHover.spellID = recipe.spellID end
-    end
+    local vis = ShownSources(recipe)
+    if self.detSourceHover then self.detSourceHover.spellID = recipe.spellID end
     if vis and #vis > 0 then
         local lines = {}
         for _, s in ipairs(vis) do
@@ -5368,7 +5375,7 @@ function TSF:LoadRecipes(unknown)
                 passDiff = (r.difficulty == diffMap[state.filterDiff])
             end
         else
-            local vis = EffectiveSources(r)
+            local vis = ShownSources(r)
             if vis ~= nil and #vis == 0 then
                 passFaction = false
             elseif state.filterDiff ~= "All" then

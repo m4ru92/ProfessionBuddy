@@ -55,6 +55,22 @@ Source.ENCHANT_BY_CRAFT      = true
 -- The equipped reagent bag (bag 5) holds reagents too.
 Source.HAS_REAGENT_BAG       = true
 
+-- The bank is a tab bank (Blizzard's Camelot BankFrame.lua): the character
+-- bank is its purchased tabs, bags 6 to 14 (Enum.BagIndex). Here bag -1 is
+-- the keyring and bag 5 the reagent bag, so Classic's list is wrong.
+function Source:BankBags()
+    if C_Bank and C_Bank.FetchPurchasedBankTabIDs and Enum.BankType then
+        return C_Bank.FetchPurchasedBankTabIDs(Enum.BankType.Character) or {}
+    end
+    local bags = {}
+    local first = Enum.BagIndex and Enum.BagIndex.CharacterBankTab_1
+    local last = Enum.BagIndex and Enum.BagIndex.CharacterBankTab_9
+    if first and last then
+        for bag = first, last do bags[#bags + 1] = bag end
+    end
+    return bags
+end
+
 -- Gathering professions have recipe lists here, so they can be browsed,
 -- ordered and synced like any crafting profession. Smelting does not exist.
 addon.CRAFTABLE_PROFS["Smelting"]  = nil

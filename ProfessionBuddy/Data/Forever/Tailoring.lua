@@ -3741,11 +3741,11 @@ local recipes = {
     ["Linen Bag"] = {
         spellID    = 3755,
         itemID     = 4238,
-        skillReq   = 5,
-        learnFrom  = "trainer capture",
-        skillRange = { 5, 30, 47, 65 },
+        skillReq   = 1,
+        learnFrom  = "automatic",
+        skillRange = { 1, 30, 47, 65 },
         category   = "Bags",
-        sources    = { { method = "trainer", faction = "Both" } },
+        sources    = { { method = "automatic", faction = "Both" } },
         reagents   = {
             { itemID = 2996, count = 3, name = "Bolt of Linen Cloth" },
             { itemID = 2320, count = 3, name = "Coarse Thread" },

@@ -55,6 +55,11 @@
 --                                 not the secure macro button
 --   Source.HAS_REAGENT_BAG        true: the bag scan includes the equipped
 --                                 reagent bag (NUM_TOTAL_EQUIPPED_BAG_SLOTS)
+--   Source:BankBags()             the containers that make up the character's
+--                                 bank, for a client whose bank is not
+--                                 Classic's bag -1 plus bank bags 5 to 11.
+--                                 That bank changes through BAG_UPDATE, so
+--                                 the bag scan rescans it while it is open
 --   Source:TabSkillLine(profName) the skill line a profession tab opens,
 --                                 or nil for a tab that stays a /cast macro
 --   Source:OpenProfession(skillLine)

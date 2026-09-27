@@ -657,8 +657,71 @@ st.showTab, st.searchText, st.selected = "known", "", nil
 TSF:RefreshRecipeList()
 print("  PASS F21 vendors: recipe items recorded with where, price and stock (one item teaching three recipes too), others skipped; bag recipe items noted; Source line two names, here first then newest, other faction left out, full list in its tooltip; a closed trainer window left alone")
 
+-- F22: the round after 4c. The list row and the Source filter use the
+-- same sources as the detail panel, trainers and vendors seen included;
+-- a recipe that comes with the profession keeps its own learn level
+-- whatever a trainer lists (Basic Campfire); the bank is Forever's tab
+-- bank, never the keyring or the reagent bag
+st.showTab, st.searchText, st.selected = "missing", "", nil
+st.filterDiff = "Vendor"
+TSF:RefreshRecipeList()
+local inVendor = {}
+for _, r in ipairs(st.recipes) do if not r.isHeader then inVendor[r.name] = true end end
+EXPECT(inVendor["Kodo Hide Bag"], "the Vendor filter misses a recipe with a seen vendor")
+EXPECT(not inVendor["Azure Gustwoven Belt"], "the Vendor filter shows a recipe no vendor was seen for")
+st.filterDiff = "All"
+st.searchText = "kodo hide bag"
+TSF:RefreshRecipeList()
+local rowText = {}
+for i, row in ipairs(TSF.listRows) do
+    rawset(row.rightText, "SetText", function(_, t) rowText[i] = t end)
+end
+TSF:UpdateListRows()
+local kodoRow
+for _, t in pairs(rowText) do
+    if type(t) == "string" and t:find("Vendor", 1, true) then kodoRow = t end
+end
+EXPECT(kodoRow == "|cffffff00Vendor|r |cffff4444[35]|r", "Kodo Hide Bag row: " .. tostring(kodoRow))
+
+-- Basic Campfire comes with Cooking at 1; the Cooking trainer's 20 is
+-- ignored for it, and still counts for a trainer recipe
+local camp = RDB.data.Cooking["Basic Campfire"]
+EXPECT(camp.skillReq == 1 and camp.learnFrom == "automatic" and camp.skillRange[1] == 1
+       and camp.sources[1].method == "automatic", "Basic Campfire data")
+EXPECT(RDB.data.Tailoring["Linen Bag"].skillReq == 1, "Linen Bag data")
+ProfBuddyDB.knowledge[1229737] = { learnLevel = 20 }
+EXPECT(KN:LearnLevel(1229737) == nil, "a trainer's 20 overrides Basic Campfire")
+EXPECT(KN:LearnLevel(2153) == 15, "a trainer recipe lost its recorded learn level")
+
+-- the bank: purchased character tabs only
+Enum.BankType = { Character = 0, Account = 2 }
+C_Bank = { FetchPurchasedBankTabIDs = function(t) return t == 0 and { 6, 7, 12 } or {} end }
+BAGS[-1] = { [1] = { id = 5396, count = 1 } }     -- keyring
+BAGS[6]  = { [1] = { id = 2589, count = 5 } }     -- Linen Cloth, tab 1
+BAGS[12] = { [1] = { id = 2589, count = 3 }, [2] = { id = 2592, count = 2 } }  -- tab 7
+FIRE("BANKFRAME_OPENED")
+local bank = DS:GetCharacter().inventory.bank
+EXPECT(bank[2589] == 8 and bank[2592] == 2, "bank tabs not counted: " .. tostring(bank[2589]))
+EXPECT(bank[2318] == nil, "the reagent bag counted as bank")
+EXPECT(bank[5396] == nil, "the keyring counted as bank")
+-- a deposit shows up through BAG_UPDATE while the bank is open
+BAGS[7] = { [1] = { id = 2592, count = 4 } }
+FIRE("BAG_UPDATE", 7)
+FLUSH()
+bank = DS:GetCharacter().inventory.bank
+EXPECT(bank[2592] == 6, "a deposit was not rescanned: " .. tostring(bank[2592]))
+-- the bank shut: a bag change does not wipe it
+FIRE("BANKFRAME_CLOSED")
+FIRE("BAG_UPDATE", 0)
+FLUSH()
+EXPECT(DS:GetCharacter().inventory.bank[2592] == 6, "the stored bank was wiped with the bank shut")
+BAGS[-1], BAGS[6], BAGS[7], BAGS[12] = nil, nil, nil, nil
+st.showTab, st.searchText = "known", ""
+TSF:RefreshRecipeList()
+print("  PASS F22 list row and Source filter use seen vendors; Basic Campfire and Linen Bag learned at 1 and a trainer's 20 ignored; bank = purchased character tabs, not the keyring or reagent bag, rescanned on BAG_UPDATE while open, kept while shut")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (21)")
+print("ALL FOREVER TESTS PASS (22)")

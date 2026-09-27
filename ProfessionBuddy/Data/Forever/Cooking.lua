@@ -40,11 +40,11 @@ local recipes = {
     ["Basic Campfire"] = {
         spellID    = 1229737,
         itemID     = 279981,
-        skillReq   = 20,
-        learnFrom  = "trainer capture",
-        skillRange = { 20, 1, 3, 5 },
+        skillReq   = 1,
+        learnFrom  = "automatic",
+        skillRange = { 1, 1, 3, 5 },
         category   = "Camping",
-        sources    = { { method = "trainer", faction = "Both" } },
+        sources    = { { method = "automatic", faction = "Both" } },
         reagents   = {
             { itemID = 4470, count = 1, name = "Simple Wood" },
         },
