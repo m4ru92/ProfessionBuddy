@@ -56,13 +56,16 @@ EXPECT(ProfBuddy.CRAFTABLE_PROFS.Mining and ProfBuddy.CRAFTABLE_PROFS.Skinning
        and not ProfBuddy.CRAFTABLE_PROFS.Smelting, "craftable set not Forever's")
 print("  PASS F3 Source/Forever.lua meets the contract: modern events, ProfessionsFrame, no Craft API, no Smelting")
 
--- F4: profession events on, trainer events off, no tooltip script hooked
+-- F4: profession events on; TRAINER_SHOW for the Forever trainer scan
+-- (Knowledge.lua) but not TRAINER_UPDATE, which only the Classic scan
+-- uses; no tooltip script hooked
 for _, e in ipairs({ "TRADE_SKILL_SHOW", "TRADE_SKILL_LIST_UPDATE", "TRADE_SKILL_CLOSE" }) do
     EXPECT(REGISTERED[e], e .. " not registered")
 end
-for _, e in ipairs({ "TRAINER_SHOW", "TRAINER_UPDATE" }) do EXPECT(not REGISTERED[e], e .. " registered") end
+EXPECT(REGISTERED.TRAINER_SHOW, "TRAINER_SHOW not registered")
+EXPECT(not REGISTERED.TRAINER_UPDATE, "TRAINER_UPDATE registered (the Classic trainer scan is on)")
 for _, h in ipairs(HOOKED) do EXPECT(not h:find("OnTooltipSet", 1, true), "hooked " .. h) end
-print("  PASS F4 profession events registered, trainer events not, no OnTooltipSet* hooks")
+print("  PASS F4 profession events and TRAINER_SHOW registered, TRAINER_UPDATE not, no OnTooltipSet* hooks")
 
 -- F5: the C_ replacements are the ones in use
 ProfBuddy.Scanner:ScanInventory()
@@ -402,8 +405,123 @@ TSF:RefreshRecipeList()
 EXPECT(ok3, "a known recipe with an unknown learn level errored: " .. tostring(err3))
 print("  PASS F19 Forever data: 13 professions, 2347 recipes, well-formed, no TBC data; Missing list uses captured learn levels; unknown learn level (" .. unknownLearn .. ") shows without error")
 
+-- F20: Phase 4b, the trainer scan (Knowledge.lua), fed m4ru's real Thunder
+-- Bluff captures (tests/forever_trainer.lua). A profession trainer's every
+-- recipe is recorded with its learn level and the trainer, including known
+-- ones that only show with the "used" filter on; the filters go back after;
+-- profession ranks and a weapon master are left alone; a recorded learn
+-- level replaces the data's on the Missing list, in Learnable Now and in the
+-- detail panel, whose Source line names the trainer
+dofile("tests/forever_trainer.lua")
+local KN = ProfBuddy.Knowledge
+EXPECT(KN, "Knowledge module missing")
+ProfBuddyDB.knowledge = nil
+TRAINER_FILTER_CALLS = {}
+TRAINER_OPEN(11869)                 -- Ansekhwa, weapon master
+FLUSH()
+EXPECT(#TRAINER_FILTER_CALLS == 0, "a weapon master's filters were changed")
+EXPECT(ProfBuddyDB.knowledge == nil, "a weapon master was recorded")
+TRAINER_CLOSE()
+
+TRAINER_OPEN(3008)                  -- Mak, Leatherworking
+EXPECT(TRAINER_FILTER.used == true, "the used filter was not switched on for the scan")
+FLUSH()
+EXPECT(TRAINER_FILTER.used == false and TRAINER_FILTER.available and TRAINER_FILTER.unavailable,
+       "trainer filters not put back")
+local K = ProfBuddyDB.knowledge
+local nMak = 0
+for _, sv in ipairs(TRAINERS[3008].services) do
+    if RDB.spellToRecipe[sv.id] then
+        nMak = nMak + 1
+        local e = K[sv.id]
+        EXPECT(e and e.learnLevel == sv.rank, sv.name .. " learn level " .. tostring(e and e.learnLevel))
+        local t = e.teachers[3008]
+        EXPECT(t and t.name == "Mak" and t.zone == "Thunder Bluff" and t.faction == "Horde", sv.name .. " teacher")
+    else
+        EXPECT(K[sv.id] == nil, sv.name .. " (not a recipe) was recorded")
+    end
+end
+EXPECT(nMak == 16, "expected Mak's 16 recipes in the data, got " .. nMak)
+TRAINER_CLOSE()
+TRAINER_OPEN(7089)                  -- Mooranta, Skinning
+FLUSH()
+EXPECT(K[1229517] and K[1229517].learnLevel == 20, "Camp Chair (known, used filter) not recorded")
+EXPECT(K[8617] == nil and K[8613] == nil, "a Skinning rank was recorded")
+TRAINER_CLOSE()
+-- Vhan, Tailoring: this character has no Tailoring, and every Tailoring
+-- recipe he lists is still recorded (the capture came from such a character)
+EXPECT(not DS:GetProfession(nil, "Tailoring"), "the test character knows Tailoring")
+TRAINER_OPEN(11051)
+FLUSH()
+local nVhan = 0
+for _, sv in ipairs(TRAINERS[11051].services) do
+    if RDB.spellToRecipe[sv.id] then
+        nVhan = nVhan + 1
+        local e = K[sv.id]
+        EXPECT(e and e.learnLevel == sv.rank and e.teachers[11051] and e.teachers[11051].name == "Vhan",
+               sv.name .. " (Tailoring) not recorded")
+    else
+        EXPECT(K[sv.id] == nil, sv.name .. " (not a recipe) was recorded")
+    end
+end
+EXPECT(nVhan == 24, "expected Vhan's 24 recipes in the data, got " .. nVhan)
+EXPECT(K[3908] == nil, "Apprentice Tailoring was recorded")
+TRAINER_CLOSE()
+
+-- a recorded learn level replaces the data's: a Leatherworking recipe whose
+-- learn level the data does not know, taught at 1 by a test trainer
+local unk = RDB.data.Leatherworking[unknownLearn]
+TRAINERS[90001] = { name = "Tester", tradeskill = true, services = {
+    { id = unk.spellID, name = unknownLearn, type = "unavailable", skill = "Leatherworking", rank = 1 } } }
+-- the summary line is a stub font string here, so read what is set on it
+local keepSummary = TSF.summaryText
+TSF.summaryText = { SetText = function(self, t) self.t = t end, GetText = function(self) return self.t end }
+TSF:UpdateBottomBar()
+local learnBefore = tonumber(TSF.summaryText:GetText():match("Learnable Now: (%d+)"))
+TRAINER_OPEN(90001)
+FLUSH()
+TRAINER_CLOSE()
+EXPECT(K[unk.spellID].learnLevel == 1, "test trainer not recorded")
+TSF:UpdateBottomBar()
+local learnAfter = tonumber(TSF.summaryText:GetText():match("Learnable Now: (%d+)"))
+EXPECT(learnAfter == learnBefore + 1, "Learnable Now " .. tostring(learnBefore) .. " -> " .. tostring(learnAfter))
+TSF.summaryText = keepSummary
+st.showTab, st.searchText = "missing", unknownLearn:lower()
+TSF:RefreshRecipeList()
+local row
+for _, r in ipairs(st.recipes) do if r.name == unknownLearn then row = r end end
+EXPECT(row and row.skillReq == 1, "Missing row learn level " .. tostring(row and row.skillReq))
+-- the detail panel's font strings are stubs here, so record what is set
+local SHOWN = {}
+for _, key in ipairs({ "detSkill", "detRange", "detSource" }) do
+    rawset(TSF[key], "SetText", function(_, t) SHOWN[key] = t end)
+end
+local function shown(key) return type(SHOWN[key]) == "string" and SHOWN[key] or "" end
+st.selected = unknownLearn
+TSF:RefreshDetailPanel()
+EXPECT(shown("detSkill"):find("Requires: 1 (learnable)", 1, true), "detail: " .. shown("detSkill"))
+EXPECT(shown("detRange"):find("Orange: 1|r", 1, true), "detail range: " .. shown("detRange"))
+EXPECT(shown("detSource"):find("Trainer - Tester (Thunder Bluff)", 1, true), "Source: " .. shown("detSource"))
+EXPECT(unk.skillRange[1] == false and unk.skillReq == nil, "the static data was written to")
+-- Mak's recipe names Mak
+st.searchText = "handstitched leather pants"
+TSF:RefreshRecipeList()
+st.selected = "Handstitched Leather Pants"
+TSF:RefreshDetailPanel()
+EXPECT(shown("detSource"):find("Trainer - Mak (Thunder Bluff)", 1, true), "Source: " .. shown("detSource"))
+-- the other faction's trainers are left out while their recipes are hidden
+local pants = K[2153]
+pants.teachers[1] = { name = "Aaron", zone = "Stormwind City", faction = "Alliance" }
+EXPECT(KN:TeacherText(2153, "Horde") == "Mak (Thunder Bluff)", "Alliance trainer shown to Horde")
+EXPECT(KN:TeacherText(2153) == "Aaron (Stormwind City), Mak (Thunder Bluff)", "all trainers: " .. tostring(KN:TeacherText(2153)))
+for i = 2, 4 do pants.teachers[i] = { name = "T" .. i, faction = "Horde" } end
+EXPECT(KN:TeacherText(2153, "Horde") == "Mak (Thunder Bluff), T2, T3, and 1 more", "long list: " .. tostring(KN:TeacherText(2153, "Horde")))
+st.showTab, st.searchText, st.selected = "known", "", nil
+TSF:RefreshRecipeList()
+print("  PASS F20 trainer scan: Mak's 16 recipes with his learn levels, known ones via the used filter, Vhan's 24 Tailoring recipes on a character with no Tailoring, filters put back, ranks and a weapon master skipped; a recorded learn level drives the Missing row, Learnable Now and the detail panel; Source names the trainer")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (19)")
+print("ALL FOREVER TESTS PASS (20)")

@@ -23,9 +23,9 @@ REPO = os.path.normpath(os.path.join(HERE, ".."))
 ADDON = "ProfessionBuddy"
 
 HARNESSES = [
-    ("pb_harness.lua", "ALL 79 HARNESS TESTS PASS"),
+    ("pb_harness.lua", "ALL 80 HARNESS TESTS PASS"),
     ("pb_ghost_harness.lua", "ALL GHOST HARNESS TESTS PASS"),
-    ("pb_forever_harness.lua", "ALL FOREVER TESTS PASS (19)"),
+    ("pb_forever_harness.lua", "ALL FOREVER TESTS PASS (20)"),
     ("pb_forever_replaceoff_harness.lua", "ALL FOREVER REPLACE-OFF TESTS PASS (2)"),
     ("pb_otherclient_harness.lua", "ALL OTHER-CLIENT TESTS PASS (2)"),
 ]

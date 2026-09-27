@@ -187,7 +187,7 @@ function Scanner:Init()
 
     -- Trainer events. The scan reads GetTrainerServiceInfo in the Classic
     -- return order; WoW: Forever returns a different order, so it runs only
-    -- with the Classic source loaded.
+    -- with the Classic source loaded. Forever's trainer scan is Knowledge.lua.
     if addon.Source.flavor == "classic" then
         addon:RegisterEvent("TRAINER_SHOW",      function() self:ScanTrainer() end)
         addon:RegisterEvent("TRAINER_UPDATE",    function() self:ScanTrainer() end)
@@ -418,7 +418,9 @@ function Scanner:ReconcileSkillReq(recipes)
     local newCorrections = 0
     for name, info in pairs(recipes) do
         local tv = info.skillReq
-        if type(tv) == "number" and tv > 0 and ov[name] ~= tv then
+        -- Only a recipe PB has data for: a header row or a profession rank
+        -- ("Journeyman Tailoring") carries a skill requirement too.
+        if type(tv) == "number" and tv > 0 and ov[name] ~= tv and RDB.nameToRecipe[name] then
             local static = RDB:StaticSkillReq(name)
             if static ~= tv then
                 ov[name] = tv
@@ -442,15 +444,15 @@ function Scanner:ScanTrainer()
         local name, _, category = GetTrainerServiceInfo(i)
         -- category: "available", "unavailable", "used" (already known)
         if name and category ~= "used" then
-            -- GetTrainerServiceSkillReq can return a non-numeric requirement
-            -- (a profession name on spec trainers) AND can return multiple
-            -- values (nil plus an extra on header rows). Read ONE value into a
-            -- local first: tonumber() on the raw multi-return would take the
-            -- extra as a base and error. Anything non-numeric then becomes 0.
-            local reqRaw = GetTrainerServiceSkillReq(i)
+            -- GetTrainerServiceSkillReq returns skill, rank, hasReq (Blizzard's
+            -- own trainer window reads it that way): the first value is the
+            -- skill NAME and the learn level is the second. Read the rank into
+            -- a local first: tonumber() on the raw multi-return would take the
+            -- next value as a base. Anything non-numeric then becomes 0.
+            local _, rank = GetTrainerServiceSkillReq(i)
             available[name] = {
                 category  = category,       -- "available" or "unavailable"
-                skillReq  = tonumber(reqRaw) or 0,
+                skillReq  = tonumber(rank) or 0,
             }
 
             -- Is this a PROFESSION trainer? skillReqOverrides is keyed by bare

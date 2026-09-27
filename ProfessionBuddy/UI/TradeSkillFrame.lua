@@ -173,7 +173,14 @@ end
 ----------------------------------------------------------------------
 -- Skill-range utilities
 ----------------------------------------------------------------------
-local function GetSkillRange(recipe)
+-- The learn level a trainer showed on WoW: Forever (Knowledge.lua, which
+-- only the Mainline toc loads), or nil.
+local function RecordedLearnLevel(spellID)
+    local KN = addon.Knowledge
+    return KN and spellID and KN:LearnLevel(spellID) or nil
+end
+
+local function StaticSkillRange(recipe)
     if recipe.skillRange then
         return recipe.skillRange
     end
@@ -187,13 +194,24 @@ local function GetSkillRange(recipe)
     return nil
 end
 
+-- On WoW: Forever the orange value is the learn level, so a recorded one
+-- replaces it. The static table is shared, so this returns a copy.
+local function GetSkillRange(recipe)
+    local sr = StaticSkillRange(recipe)
+    local learn = RecordedLearnLevel(recipe.spellID)
+    if sr and learn and sr[1] ~= learn then
+        return { learn, sr[2], sr[3], sr[4] }
+    end
+    return sr
+end
+
 -- Authoritative learn level from a trainer scan (self-healing via
--- Scanner:ReconcileSkillReq -> ProfBuddyDB.skillReqOverrides), else the given
--- static value.
-local function LearnLevelFor(name, staticVal)
+-- Scanner:ReconcileSkillReq -> ProfBuddyDB.skillReqOverrides, or
+-- Knowledge.lua on WoW: Forever), else the given static value.
+local function LearnLevelFor(name, staticVal, spellID)
     local ov = addon.db and addon.db.skillReqOverrides
     if ov and name and ov[name] ~= nil then return ov[name] end
-    return staticVal
+    return RecordedLearnLevel(spellID) or staticVal
 end
 
 local function GetSkillReq(recipe)
@@ -2898,6 +2916,21 @@ function TSF:RefreshDetailPanel(preserveScroll)
     end
 
     local vis = EffectiveSources(recipe)
+    -- Trainers seen teaching it (WoW: Forever, Knowledge.lua) fill in the
+    -- trainer source, or add one the data did not have.
+    local teachers = addon.Knowledge and recipe.spellID
+        and addon.Knowledge:TeacherText(recipe.spellID, FactionHideOn() and PlayerFaction() or nil)
+    if teachers then
+        local hasTrainer = false
+        for _, s in ipairs(vis or {}) do
+            if s.method == "trainer" then hasTrainer = true end
+        end
+        if not hasTrainer then
+            local withTrainer = { { method = "trainer" } }
+            for _, s in ipairs(vis or {}) do withTrainer[#withTrainer + 1] = s end
+            vis = withTrainer
+        end
+    end
     if vis and #vis > 0 then
         local lines = {}
         for _, s in ipairs(vis) do
@@ -2907,6 +2940,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
             if detail and m == "quest" then
                 detail = detail:gsub("^[Qq]uest:%s*", "")
             end
+            if m == "trainer" and teachers then detail = teachers end
             local line = disp
             if detail then line = line .. " - " .. detail end
             lines[#lines + 1] = (SOURCE_COLORS[m] or "") .. line .. "|r"
@@ -5049,7 +5083,7 @@ function TSF:UpdateBottomBar(unknown)
     local learnableNow = 0
     unknown = unknown or self:GetUnknownForView()
     if unknown then
-        for _, info in pairs(unknown) do
+        for name, info in pairs(unknown) do
             missingCount = missingCount + 1
             -- Count every recipe this faction can buy from a trainer, not
             -- just the ones whose FIRST listed source happens to be the
@@ -5066,7 +5100,9 @@ function TSF:UpdateBottomBar(unknown)
                     end
                 end
             end
-            if info.skillReq and info.skillReq <= (state.skillLevel or 0)
+            -- The same learn level the recipe's row shows.
+            local req = LearnLevelFor(name, info.skillReq, info.spellID)
+            if req and req <= (state.skillLevel or 0)
                and (not info.reqLevel or info.reqLevel <= ViewLevel()) then
                 learnableNow = learnableNow + 1
             end
@@ -5199,7 +5235,7 @@ function TSF:LoadRecipes(unknown)
                     itemLink    = data.itemLink,
                     numAvail    = data.numAvail or 0,
                     reagents    = data.reagents,
-                    skillReq    = LearnLevelFor(name, sReq or data.skillReq),
+                    skillReq    = LearnLevelFor(name, sReq or data.skillReq, data.spellID),
                     reqLevel    = rLvl,
                     skillRange  = sr,
                     spellID     = data.spellID,
@@ -5227,7 +5263,7 @@ function TSF:LoadRecipes(unknown)
                 name         = name,
                 difficulty   = "medium",
                 itemID       = info.itemID,
-                skillReq     = LearnLevelFor(name, info.skillReq),
+                skillReq     = LearnLevelFor(name, info.skillReq, info.spellID),
                 reqLevel     = info.reqLevel,
                 skillRange   = info.skillRange,
                 spellID      = info.spellID,
@@ -6017,7 +6053,8 @@ function TSF:OpenWithCharacter(charKey, profName)
                 itemLink    = itemLink,
                 numAvail    = numAvail,
                 reagents    = reagents,
-                skillReq    = LearnLevelFor(recipeName, staticEntry and staticEntry.skillReq or nil),
+                skillReq    = LearnLevelFor(recipeName, staticEntry and staticEntry.skillReq or nil,
+                                            recipeSpellID or (staticEntry and staticEntry.spellID)),
                 skillRange  = sr,
                 spellID     = recipeSpellID or (staticEntry and staticEntry.spellID),
                 index       = nil, -- no live game index

@@ -1700,11 +1700,12 @@ end
 passed("T66 reflex floor -- one refusal reply per sender per 5 s across claim, update and new")
 
 -- ── T67: trainer scan tolerates non-numeric and multi-return skill reqs ──
--- Regression guard for two real ScanTrainer crashes. A specialization trainer
--- returns a profession NAME where a skill level is expected; a header row
--- returns nil PLUS an extra value. Neither may reach the numeric compare, and
--- the raw multi-return must never be forwarded whole into tonumber (the extra
--- would be taken as a base and error). ScanTrainer must simply not throw.
+-- Regression guard for two real ScanTrainer crashes. GetTrainerServiceSkillReq
+-- returns skill, rank, hasReq: a row can carry a skill name with no rank, and
+-- a header row returns nil PLUS an extra value. Neither may reach the numeric
+-- compare, and the raw multi-return must never be forwarded whole into
+-- tonumber (the next value would be taken as a base and error). ScanTrainer
+-- must simply not throw.
 do
     local sNum, sInfo, sReq = GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq
     GetNumTrainerServices    = function() return 3 end
@@ -1715,8 +1716,8 @@ do
     end
     GetTrainerServiceSkillReq = function(i)
         if i == 1 then return nil, 3 end            -- header: multi-return, nil first
-        if i == 2 then return "Blacksmithing" end   -- spec trainer: a profession name
-        return 285                                  -- a normal numeric requirement
+        if i == 2 then return "Blacksmithing" end   -- a skill name with no rank
+        return "Mining", 285, true                  -- a normal requirement
     end
     local ok, err = pcall(function() ProfBuddy.Scanner:ScanTrainer() end)
     GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq = sNum, sInfo, sReq
@@ -2001,12 +2002,15 @@ do
         if i == 1 then return "Deadly Poison III", "", "available" end
         return "Sinister Strike", "Rank 9", "available"
     end
-    GetTrainerServiceSkillReq = function(i) return (i == 2) and 5 or 0 end
+    GetTrainerServiceSkillReq = function(i)
+        if i == 2 then return "Swords", 5, true end
+        return nil, 0, false
+    end
     Scanner:ScanTrainer()
     assert(ov["Sinister Strike"] == nil, "T78: a rogue class trainer wrote a class spell into skillReqOverrides")
     GetNumTrainerServices = function() return 1 end
     GetTrainerServiceInfo = function() return "Smelt Bronze", "", "available" end
-    GetTrainerServiceSkillReq = function() return 70 end
+    GetTrainerServiceSkillReq = function() return "Mining", 70, true end
     Scanner:ScanTrainer()
     GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq = sNum, sInfo, sReq
     assert(ov["Smelt Bronze"] == 70, "T78: a profession trainer stopped reconciling")
@@ -2048,8 +2052,39 @@ do
 end
 passed("T79 Poisons stays local -- not in HELLO, SYNC_DATA or the full-push signature")
 
+-- ── T80: the trainer's learn level is the SECOND value of the skill req ─────
+-- GetTrainerServiceSkillReq returns skill, rank, hasReq (Blizzard's own trainer
+-- window, classic_anniversary branch). Reading the first value took the skill
+-- NAME, which tonumber() made 0, so no trainer correction was ever recorded.
+-- Only recipe names are written: a header row and a profession rank carry a
+-- skill requirement too.
+do
+    local sNum, sInfo, sReq = GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq
+    local ov = addon.db.skillReqOverrides
+    ov["Smelt Bronze"], ov["Mining"], ov["Journeyman Mining"] = nil, nil, nil
+    GetNumTrainerServices = function() return 3 end
+    GetTrainerServiceInfo = function(i)
+        if i == 1 then return "Mining", "", "header" end
+        if i == 2 then return "Journeyman Mining", "", "available" end
+        return "Smelt Bronze", "", "available"
+    end
+    GetTrainerServiceSkillReq = function(i)
+        if i == 1 then return nil, 3 end
+        if i == 2 then return "Mining", 50, true end
+        return "Mining", 70, true
+    end
+    Scanner:ScanTrainer()
+    GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq = sNum, sInfo, sReq
+    assert(RDB:StaticSkillReq("Smelt Bronze") ~= 70, "T80: the static value already matches, so this proves nothing")
+    assert(ov["Smelt Bronze"] == 70, "T80: the trainer's rank was not recorded as the learn level")
+    assert(ov["Mining"] == nil, "T80: a header row was written")
+    assert(ov["Journeyman Mining"] == nil, "T80: a profession rank was written")
+    ov["Smelt Bronze"] = nil
+end
+passed("T80 trainer learn level -- read from the rank, recipe names only")
+
 leaveGuild()
-print("ALL 79 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 80 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2061,6 +2096,7 @@ print("ALL 79 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " favorites data layer, T70 the item favorites data layer and T71 the order"
     .. " source relation, T72 the order origin stamp, T73 the skinning loot data"
     .. " and T74 the recipe faction visibility rule, T75-T79 Poisons data, localized storage,"
-    .. " class gating, the class-trainer guard and Poisons never leaving the client; "
+    .. " class gating, the class-trainer guard and Poisons never leaving the client,"
+    .. " T80 the trainer learn level read from the rank; "
     .. pass .. " of them print a PASS line above)")
 
