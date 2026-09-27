@@ -5601,7 +5601,11 @@ function TSF:RefreshRecipeList()
             -- Only clear selection if recipe is truly gone from the profession,
             -- not merely filtered out. Prevents random detail panel resets when
             -- TRADE_SKILL_UPDATE fires and difficulty/filter state diverges.
-            if not state.allRecipes[state.selected] then
+            -- A Missing recipe is never in allRecipes (you do not know it), so
+            -- it counts as present while the profession's data has it.
+            local data = RDB and RDB.data and RDB.data[state.profName]
+            if not state.allRecipes[state.selected]
+               and not (data and data[state.selected]) then
                 state.selected = nil
                 self:ClearDetailPanel()
                 self:UpdateCraftBar()

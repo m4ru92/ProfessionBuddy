@@ -720,8 +720,39 @@ st.showTab, st.searchText = "known", ""
 TSF:RefreshRecipeList()
 print("  PASS F22 list row and Source filter use seen vendors; Basic Campfire and Linen Bag learned at 1 and a trainer's 20 ignored; bank = purchased character tabs, not the keyring or reagent bag, rescanned on BAG_UPDATE while open, kept while shut")
 
+-- F23: a selected Missing recipe stays selected when a filter hides it
+-- (m4ru 2026-09-27: Longjaw Mud Snapper went blank while he switched the
+-- Skill Up filter). Missing recipes are never in allRecipes, so only the
+-- profession's data can tell PB the recipe still exists
+C_TradeSkillUI.OpenTradeSkill(165)
+TS_LIST_READY()
+FLUSH()
+local detailCleared = 0
+local clear = TSF.ClearDetailPanel
+st.showTab, st.searchText, st.filterDiff = "missing", "azure gustwoven belt", "All"
+TSF:RefreshRecipeList()
+st.selected = "Azure Gustwoven Belt"
+TSF:RefreshDetailPanel()
+TSF.ClearDetailPanel = function(...) detailCleared = detailCleared + 1; return clear(...) end
+for _, o in ipairs(TSF.diffDropdown.optionBtns) do
+    if o.value == "Vendor" then o:GetScript("OnClick")(o) end
+end
+TSF.ClearDetailPanel = clear
+local listed = false
+for _, r in ipairs(st.recipes) do if r.name == "Azure Gustwoven Belt" then listed = true end end
+EXPECT(st.filterDiff == "Vendor" and not listed, "the Vendor filter did not hide the belt; the test proves nothing")
+EXPECT(st.selected == "Azure Gustwoven Belt", "a filtered-out Missing recipe lost its selection")
+EXPECT(detailCleared == 0, "the detail panel was cleared")
+-- a recipe that is really gone still clears
+st.selected = "No Such Recipe"
+TSF:RefreshRecipeList()
+EXPECT(st.selected == nil, "a recipe the profession does not have kept the selection")
+st.showTab, st.searchText, st.filterDiff = "known", "", "All"
+TSF:RefreshRecipeList()
+print("  PASS F23 a Missing recipe hidden by a filter stays selected and its detail panel stays; a recipe the profession lacks still clears")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (22)")
+print("ALL FOREVER TESTS PASS (23)")
