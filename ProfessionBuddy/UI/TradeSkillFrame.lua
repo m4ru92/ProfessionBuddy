@@ -2643,6 +2643,27 @@ function TSF:BuildDetailPanel(parent)
     detSource:SetPoint("TOPLEFT", detCat, "BOTTOMLEFT", 0, -2)
     self.detSource = detSource
 
+    -- WoW: Forever (Knowledge.lua): the Source line names the trainers and
+    -- vendors seen, so it wraps inside the panel, and hovering it lists
+    -- every one of them.
+    if addon.Knowledge then
+        detSource:SetWidth(DETAIL_W - 40)
+        detSource:SetJustifyH("LEFT")
+        local hover = CreateFrame("Frame", nil, sc)
+        hover:SetAllPoints(detSource)
+        hover:EnableMouse(true)
+        hover:SetScript("OnEnter", function(f)
+            local lines = f.spellID and addon.Knowledge:TooltipLines(f.spellID,
+                FactionHideOn() and PlayerFaction() or nil)
+            if not lines then return end
+            GameTooltip:SetOwner(f, "ANCHOR_RIGHT")
+            for _, l in ipairs(lines) do GameTooltip:AddLine(l, 1, 1, 1) end
+            GameTooltip:Show()
+        end)
+        hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        self.detSourceHover = hover
+    end
+
     local detCanMake = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     detCanMake:SetPoint("TOPLEFT", detSource, "BOTTOMLEFT", 0, -8)
     self.detCanMake = detCanMake
@@ -2808,6 +2829,7 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.detSkill:SetText("")
     self.detCat:SetText("")
     self.detSource:SetText("")
+    if self.detSourceHover then self.detSourceHover.spellID = nil end
     self.detCanMake:SetText("")
     self.nameDivider:Hide()
     self.itemTooltipHeader:Hide()
@@ -2919,31 +2941,20 @@ function TSF:RefreshDetailPanel(preserveScroll)
     end
 
     local vis = EffectiveSources(recipe)
-    -- Trainers seen teaching it (WoW: Forever, Knowledge.lua) fill in the
-    -- trainer source, or add one the data did not have.
-    local teachers = addon.Knowledge and recipe.spellID
-        and addon.Knowledge:TeacherText(recipe.spellID, FactionHideOn() and PlayerFaction() or nil)
-    if teachers then
-        local hasTrainer = false
-        for _, s in ipairs(vis or {}) do
-            if s.method == "trainer" then hasTrainer = true end
-        end
-        if not hasTrainer then
-            local withTrainer = { { method = "trainer" } }
-            for _, s in ipairs(vis or {}) do withTrainer[#withTrainer + 1] = s end
-            vis = withTrainer
-        end
+    -- The trainers and vendors seen for it (WoW: Forever, Knowledge.lua).
+    if addon.Knowledge and recipe.spellID then
+        vis = addon.Knowledge:MergeSources(vis, recipe.spellID, FactionHideOn() and PlayerFaction() or nil)
+        if self.detSourceHover then self.detSourceHover.spellID = recipe.spellID end
     end
     if vis and #vis > 0 then
         local lines = {}
         for _, s in ipairs(vis) do
             local m = s.method or "?"
-            local disp = m:sub(1,1):upper() .. m:sub(2)
+            local disp = s.label or (m:sub(1,1):upper() .. m:sub(2))
             local detail = s.detail
             if detail and m == "quest" then
                 detail = detail:gsub("^[Qq]uest:%s*", "")
             end
-            if m == "trainer" and teachers then detail = teachers end
             local line = disp
             if detail then line = line .. " - " .. detail end
             lines[#lines + 1] = (SOURCE_COLORS[m] or "") .. line .. "|r"

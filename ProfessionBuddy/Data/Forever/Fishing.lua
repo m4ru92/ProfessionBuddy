@@ -29,6 +29,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273119 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Fishing Hut" } },
         reagents   = {
             { itemID = 4470, count = 5, name = "Simple Wood" },
@@ -43,6 +44,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273141 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Fishing Rack" } },
         reagents   = {
             { itemID = 4470, count = 2, name = "Simple Wood" },

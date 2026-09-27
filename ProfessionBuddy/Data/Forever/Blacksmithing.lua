@@ -16,6 +16,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 115, 130, 145 },
         category   = "Mail Boots",
+        teachItems = { 251358 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Acolyte's Boots" } },
         reagents   = {
             { itemID = 2841, count = 12, name = "Bronze Bar" },
@@ -31,6 +32,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 45, 85, 105, 125 },
         category   = "Mail Belts",
+        teachItems = { 251368 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Acolyte's Chain Belt" } },
         reagents   = {
             { itemID = 2840, count = 12, name = "Copper Bar" },
@@ -44,6 +46,7 @@ local recipes = {
         itemID     = 250501,
         skillRange = { false, 130, 130, 130 },
         category   = "Mail Helmets",
+        teachItems = { 251353 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 8, name = "Bronze Bar" },
@@ -56,6 +59,7 @@ local recipes = {
         itemID     = 250496,
         skillRange = { false, 100, 100, 100 },
         category   = "Mail Legguards",
+        teachItems = { 251348 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 6, name = "Bronze Bar" },
@@ -68,6 +72,7 @@ local recipes = {
         itemID     = 250491,
         skillRange = { false, 85, 85, 85 },
         category   = "Mail Chestguards",
+        teachItems = { 251343 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 4, name = "Bronze Bar" },
@@ -82,6 +87,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 110, 125, 140 },
         category   = "Mail Gauntlets",
+        teachItems = { 251363 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Acolyte's Gloves" } },
         reagents   = {
             { itemID = 2841, count = 10, name = "Bronze Bar" },
@@ -97,6 +103,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 125, 140, 155 },
         category   = "Mail Helmets",
+        teachItems = { 251383 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Acolyte's Silvered Chain Helm" } },
         reagents   = {
             { itemID = 2841, count = 15, name = "Bronze Bar" },
@@ -113,6 +120,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 155, 170, 185 },
         category   = "Mail Legguards",
+        teachItems = { 251378 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Acolyte's Silvered Chain Leggings" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -129,6 +137,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 140, 155, 170 },
         category   = "Mail Chestguards",
+        teachItems = { 251373 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Acolyte's Silvered Chain Shirt" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -145,6 +154,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 295, 305, 315 },
         category   = "One-Handed Axes",
+        teachItems = { 12835 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Annihilator" } },
         reagents   = {
             { itemID = 12359, count = 40, name = "Thorium Bar" },
@@ -162,6 +172,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273086 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Anvil" } },
         reagents   = {
             { itemID = 2841, count = 5, name = "Bronze Bar" },
@@ -176,6 +187,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 275, 277, 280 },
         category   = "Thrown",
+        teachItems = { 285291 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Arcanite Blacksmith Hammer" } },
         reagents   = {
             { itemID = 11371, count = 4, name = "Dark Iron Bar" },
@@ -190,6 +202,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Two-Handed Swords",
+        teachItems = { 12834 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Arcanite Champion" } },
         reagents   = {
             { itemID = 12360, count = 15, name = "Arcanite Bar" },
@@ -207,6 +220,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Two-Handed Axes",
+        teachItems = { 12838 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Arcanite Reaper" } },
         reagents   = {
             { itemID = 12360, count = 20, name = "Arcanite Bar" },
@@ -248,6 +262,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Plate Legguards",
+        teachItems = { 279314 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Azerothium Legplates" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -262,6 +277,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Mail Belts",
+        teachItems = { 276955 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Azure Skyforged Chain" } },
         reagents   = {
             { itemID = 2840, count = 6, name = "Copper Bar" },
@@ -274,6 +290,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Mail Chestguards",
+        teachItems = { 276952 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Azure Skyforged Chainmail" } },
         reagents   = {
             { itemID = 2840, count = 8, name = "Copper Bar" },
@@ -287,6 +304,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Mail Gauntlets",
+        teachItems = { 276954 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Azure Skyforged Gauntlets" } },
         reagents   = {
             { itemID = 2840, count = 7, name = "Copper Bar" },
@@ -299,6 +317,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Mail Boots",
+        teachItems = { 276957 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Azure Skyforged Greaves" } },
         reagents   = {
             { itemID = 2840, count = 7, name = "Copper Bar" },
@@ -311,6 +330,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Mail Helmets",
+        teachItems = { 276984 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Azure Skyforged Helm" } },
         reagents   = {
             { itemID = 3575, count = 18, name = "Iron Bar" },
@@ -325,6 +345,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Mail Legguards",
+        teachItems = { 276956 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Azure Skyforged Legguards" } },
         reagents   = {
             { itemID = 2840, count = 8, name = "Copper Bar" },
@@ -338,6 +359,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Mail Pauldrons",
+        teachItems = { 276985 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Azure Skyforged Pauldrons" } },
         reagents   = {
             { itemID = 3575, count = 14, name = "Iron Bar" },
@@ -352,6 +374,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Mail Bracers",
+        teachItems = { 276953 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Azure Skyforged Wristguards" } },
         reagents   = {
             { itemID = 2840, count = 5, name = "Copper Bar" },
@@ -364,6 +387,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Fist Weapons",
+        teachItems = { 251470 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Bagh Nakh" } },
         reagents   = {
             { itemID = 251290, count = 10, name = "Legionite Bar" },
@@ -380,6 +404,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 155, 180, 192, 205 },
         category   = "Mail Boots",
+        teachItems = { 7981 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Barbaric Iron Boots" } },
         reagents   = {
             { itemID = 3575, count = 12, name = "Iron Bar" },
@@ -395,6 +420,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 160, 172, 185 },
         category   = "Mail Chestguards",
+        teachItems = { 7979 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Barbaric Iron Breastplate" } },
         reagents   = {
             { itemID = 3575, count = 20, name = "Iron Bar" },
@@ -408,6 +434,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 160, 185, 197, 210 },
         category   = "Mail Gauntlets",
+        teachItems = { 7982 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Barbaric Iron Gloves" } },
         reagents   = {
             { itemID = 3575, count = 14, name = "Iron Bar" },
@@ -422,6 +449,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 175, 187, 200 },
         category   = "Mail Helmets",
+        teachItems = { 7980 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Barbaric Iron Helm" } },
         reagents   = {
             { itemID = 3575, count = 10, name = "Iron Bar" },
@@ -436,6 +464,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 160, 172, 185 },
         category   = "Mail Pauldrons",
+        teachItems = { 7978 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Barbaric Iron Shoulders" } },
         reagents   = {
             { itemID = 3575, count = 8, name = "Iron Bar" },
@@ -483,6 +512,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Daggers",
+        teachItems = { 19208 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Black Amnesty" } },
         reagents   = {
             { itemID = 17011, count = 3, name = "Lava Core" },
@@ -499,6 +529,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Gauntlets",
+        teachItems = { 22220 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Black Grasp of the Destroyer" } },
         reagents   = {
             { itemID = 22203, count = 8, name = "Large Obsidian Shard" },
@@ -514,6 +545,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 100, 100, 110, 120 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 211846 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2863, count = 1, name = "Coarse Sharpening Stone" },
@@ -527,6 +559,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Polearms",
+        teachItems = { 19209 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blackfury" } },
         reagents   = {
             { itemID = 17011, count = 5, name = "Lava Core" },
@@ -542,6 +575,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 295, 305, 315 },
         category   = "One-Handed Swords",
+        teachItems = { 19211 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blackguard" } },
         reagents   = {
             { itemID = 17011, count = 6, name = "Lava Core" },
@@ -558,6 +592,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 280, 292, 305 },
         category   = "One-Handed Swords",
+        teachItems = { 12825 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blazing Rapier" } },
         reagents   = {
             { itemID = 12655, count = 10, name = "Enchanted Thorium Bar" },
@@ -574,6 +609,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 245, 270, 282, 295 },
         category   = "Two-Handed Axes",
+        teachItems = { 12817 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12359, count = 30, name = "Thorium Bar" },
@@ -591,6 +627,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Plate Belts",
+        teachItems = { 251444 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blessed Plate Belt" } },
         reagents   = {
             { itemID = 12359, count = 18, name = "Thorium Bar" },
@@ -606,6 +643,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Plate Boots",
+        teachItems = { 251439 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blessed Plate Boots" } },
         reagents   = {
             { itemID = 12359, count = 24, name = "Thorium Bar" },
@@ -620,6 +658,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Plate Bracers",
+        teachItems = { 251442 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blessed Plate Bracers" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -633,6 +672,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Plate Chestguards",
+        teachItems = { 251446 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blessed Plate Chest" } },
         reagents   = {
             { itemID = 12359, count = 36, name = "Thorium Bar" },
@@ -646,6 +686,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Plate Gauntlets",
+        teachItems = { 251440 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blessed Plate Gauntlet" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -659,6 +700,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Plate Helmets",
+        teachItems = { 251445 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blessed Plate Helm" } },
         reagents   = {
             { itemID = 12359, count = 30, name = "Thorium Bar" },
@@ -672,6 +714,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Plate Legguards",
+        teachItems = { 251443 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blessed Plate Leggings" } },
         reagents   = {
             { itemID = 12359, count = 40, name = "Thorium Bar" },
@@ -685,6 +728,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Plate Pauldrons",
+        teachItems = { 251438 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blessed Plate Pauldrons" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -715,6 +759,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 325, 337, 350 },
         category   = "Fist Weapons",
+        teachItems = { 12831 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12655, count = 10, name = "Enchanted Thorium Bar" },
@@ -731,6 +776,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Chestguards",
+        teachItems = { 19776 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Bloodsoul Breastplate" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -746,6 +792,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Gauntlets",
+        teachItems = { 19778 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Bloodsoul Gauntlets" } },
         reagents   = {
             { itemID = 12359, count = 12, name = "Thorium Bar" },
@@ -761,6 +808,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Pauldrons",
+        teachItems = { 19777 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Bloodsoul Shoulders" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -776,6 +824,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 220, 232, 245 },
         category   = "One-Handed Axes",
+        teachItems = { 7992 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Blue Glittering Axe" } },
         reagents   = {
             { itemID = 3860, count = 16, name = "Mithril Bar" },
@@ -791,6 +840,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Daggers",
+        teachItems = { 251468 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Bold Dirk" } },
         reagents   = {
             { itemID = 12359, count = 30, name = "Thorium Bar" },
@@ -806,6 +856,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 110, 125, 140 },
         category   = "Fist Weapons",
+        teachItems = { 251454 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Brass Knuckles" } },
         reagents   = {
             { itemID = 2841, count = 6, name = "Bronze Bar" },
@@ -822,6 +873,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Chestguards",
+        teachItems = { 251453 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Breastplate of Salvation" } },
         reagents   = {
             { itemID = 251290, count = 12, name = "Legionite Bar" },
@@ -866,6 +918,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 125, 140, 155 },
         category   = "Polearms",
+        teachItems = { 251455 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Bronze Dory" } },
         reagents   = {
             { itemID = 2841, count = 8, name = "Bronze Bar" },
@@ -936,6 +989,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Legguards",
+        teachItems = { 251450 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Champion's Legplates" } },
         reagents   = {
             { itemID = 251290, count = 12, name = "Legionite Bar" },
@@ -951,6 +1005,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 235, 245, 255 },
         category   = "Two-Handed Axes",
+        teachItems = { 251464 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Charged Mithril Battleaxe" } },
         reagents   = {
             { itemID = 3860, count = 20, name = "Mithril Bar" },
@@ -966,6 +1021,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Mail Belts",
+        teachItems = { 276931 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Cloudy Skyforged Chain" } },
         reagents   = {
             { itemID = 2840, count = 6, name = "Copper Bar" },
@@ -978,6 +1034,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Mail Chestguards",
+        teachItems = { 276928 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Cloudy Skyforged Chainmail" } },
         reagents   = {
             { itemID = 2840, count = 8, name = "Copper Bar" },
@@ -991,6 +1048,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Mail Gauntlets",
+        teachItems = { 276930 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Cloudy Skyforged Gauntlets" } },
         reagents   = {
             { itemID = 2840, count = 7, name = "Copper Bar" },
@@ -1003,6 +1061,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Mail Boots",
+        teachItems = { 276933 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Cloudy Skyforged Greaves" } },
         reagents   = {
             { itemID = 2840, count = 7, name = "Copper Bar" },
@@ -1015,6 +1074,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Mail Helmets",
+        teachItems = { 276976 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Cloudy Skyforged Helm" } },
         reagents   = {
             { itemID = 3575, count = 18, name = "Iron Bar" },
@@ -1029,6 +1089,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Mail Legguards",
+        teachItems = { 276932 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Cloudy Skyforged Legguards" } },
         reagents   = {
             { itemID = 2840, count = 8, name = "Copper Bar" },
@@ -1042,6 +1103,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Mail Pauldrons",
+        teachItems = { 276977 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Cloudy Skyforged Pauldrons" } },
         reagents   = {
             { itemID = 3575, count = 14, name = "Iron Bar" },
@@ -1056,6 +1118,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Mail Bracers",
+        teachItems = { 276929 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Cloudy Skyforged Wristguards" } },
         reagents   = {
             { itemID = 2840, count = 5, name = "Copper Bar" },
@@ -1068,6 +1131,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Plate Gauntlets",
+        teachItems = { 275601 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Clutchlord's Grips" } },
         reagents   = {
             { itemID = 12359, count = 7, name = "Thorium Bar" },
@@ -1083,6 +1147,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 295, 297, 300 },
         category   = "Plate Boots",
+        teachItems = { 275603 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Clutchlord's Stompers" } },
         reagents   = {
             { itemID = 12359, count = 9, name = "Thorium Bar" },
@@ -1098,6 +1163,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 295, 297, 300 },
         category   = "Plate Belts",
+        teachItems = { 275602 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Clutchlord's Support" } },
         reagents   = {
             { itemID = 12359, count = 11, name = "Thorium Bar" },
@@ -1227,6 +1293,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 30, 70, 90, 110 },
         category   = "Mail Chestguards",
+        teachItems = { 3609 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Copper Chain Vest" } },
         reagents   = {
             { itemID = 2840, count = 8, name = "Copper Bar" },
@@ -1311,6 +1378,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 290, 302, 315 },
         category   = "Two-Handed Swords",
+        teachItems = { 12830 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Corruption" } },
         reagents   = {
             { itemID = 12359, count = 40, name = "Thorium Bar" },
@@ -1329,6 +1397,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 115, 117, 120 },
         category   = "Thrown",
+        teachItems = { 285289 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Cracked Blacksmith Hammer" } },
         reagents   = {
             { itemID = 2841, count = 18, name = "Bronze Bar" },
@@ -1343,6 +1412,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 115, 130, 145 },
         category   = "Mail Boots",
+        teachItems = { 251359 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Crusader's Boots" } },
         reagents   = {
             { itemID = 2841, count = 12, name = "Bronze Bar" },
@@ -1358,6 +1428,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 45, 85, 105, 125 },
         category   = "Mail Belts",
+        teachItems = { 251369 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Crusader's Chain Belt" } },
         reagents   = {
             { itemID = 2840, count = 12, name = "Copper Bar" },
@@ -1371,6 +1442,7 @@ local recipes = {
         itemID     = 250502,
         skillRange = { false, 130, 130, 130 },
         category   = "Mail Helmets",
+        teachItems = { 251354 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 8, name = "Bronze Bar" },
@@ -1383,6 +1455,7 @@ local recipes = {
         itemID     = 250497,
         skillRange = { false, 100, 100, 100 },
         category   = "Mail Legguards",
+        teachItems = { 251349 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 6, name = "Bronze Bar" },
@@ -1395,6 +1468,7 @@ local recipes = {
         itemID     = 250492,
         skillRange = { false, 85, 85, 85 },
         category   = "Mail Chestguards",
+        teachItems = { 251344 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 4, name = "Bronze Bar" },
@@ -1409,6 +1483,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 110, 125, 140 },
         category   = "Mail Gauntlets",
+        teachItems = { 251364 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Crusader's Gloves" } },
         reagents   = {
             { itemID = 2841, count = 10, name = "Bronze Bar" },
@@ -1424,6 +1499,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 125, 140, 155 },
         category   = "Mail Helmets",
+        teachItems = { 251384 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Crusader's Silvered Chain Helm" } },
         reagents   = {
             { itemID = 2841, count = 15, name = "Bronze Bar" },
@@ -1440,6 +1516,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 155, 170, 185 },
         category   = "Mail Legguards",
+        teachItems = { 251379 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Crusader's Silvered Chain Leggings" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -1456,6 +1533,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 140, 155, 170 },
         category   = "Mail Chestguards",
+        teachItems = { 251374 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Crusader's Silvered Chain Shirt" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -1472,6 +1550,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Boots",
+        teachItems = { 20040 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Boots" } },
         reagents   = {
             { itemID = 17011, count = 3, name = "Lava Core" },
@@ -1487,6 +1566,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Plate Bracers",
+        teachItems = { 17051 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Bracers" } },
         reagents   = {
             { itemID = 11371, count = 4, name = "Dark Iron Bar" },
@@ -1501,6 +1581,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "One-Handed Axes",
+        teachItems = { 17060 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Destroyer" } },
         reagents   = {
             { itemID = 11371, count = 18, name = "Dark Iron Bar" },
@@ -1516,6 +1597,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Gauntlets",
+        teachItems = { 19207 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Gauntlets" } },
         reagents   = {
             { itemID = 17011, count = 3, name = "Lava Core" },
@@ -1532,6 +1614,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Helmets",
+        teachItems = { 19206 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Helm" } },
         reagents   = {
             { itemID = 17011, count = 4, name = "Lava Core" },
@@ -1546,6 +1629,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Legguards",
+        teachItems = { 17052 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Leggings" } },
         reagents   = {
             { itemID = 11371, count = 16, name = "Dark Iron Bar" },
@@ -1560,6 +1644,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Mail Chestguards",
+        teachItems = { 11614 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Mail" } },
         reagents   = {
             { itemID = 11371, count = 10, name = "Dark Iron Bar" },
@@ -1573,6 +1658,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Plate Chestguards",
+        teachItems = { 11612 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Plate" } },
         reagents   = {
             { itemID = 11371, count = 20, name = "Dark Iron Bar" },
@@ -1586,6 +1672,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Two-Handed Maces",
+        teachItems = { 11610 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Pulverizer" } },
         reagents   = {
             { itemID = 11371, count = 18, name = "Dark Iron Bar" },
@@ -1599,6 +1686,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "One-Handed Swords",
+        teachItems = { 17059 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Reaver" } },
         reagents   = {
             { itemID = 11371, count = 16, name = "Dark Iron Bar" },
@@ -1614,6 +1702,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Plate Pauldrons",
+        teachItems = { 11615 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Shoulders" } },
         reagents   = {
             { itemID = 11371, count = 6, name = "Dark Iron Bar" },
@@ -1627,6 +1716,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Two-Handed Axes",
+        teachItems = { 11611 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dark Iron Sunderer" } },
         reagents   = {
             { itemID = 11371, count = 26, name = "Dark Iron Bar" },
@@ -1640,6 +1730,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Chestguards",
+        teachItems = { 20554 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Darkrune Breastplate" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -1654,6 +1745,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Gauntlets",
+        teachItems = { 20553 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Darkrune Gauntlets" } },
         reagents   = {
             { itemID = 12359, count = 12, name = "Thorium Bar" },
@@ -1669,6 +1761,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Helmets",
+        teachItems = { 20555 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Darkrune Helm" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -1684,6 +1777,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Chestguards",
+        teachItems = { 19779 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Darksoul Breastplate" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -1698,6 +1792,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Legguards",
+        teachItems = { 19780 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Darksoul Leggings" } },
         reagents   = {
             { itemID = 12359, count = 18, name = "Thorium Bar" },
@@ -1712,6 +1807,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Pauldrons",
+        teachItems = { 19781 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Darksoul Shoulders" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -1726,6 +1822,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 325, 337, 350 },
         category   = "Polearms",
+        teachItems = { 12832 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12655, count = 20, name = "Enchanted Thorium Bar" },
@@ -1742,6 +1839,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 275, 287, 300 },
         category   = "One-Handed Axes",
+        teachItems = { 12821 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dawn's Edge" } },
         reagents   = {
             { itemID = 12359, count = 30, name = "Thorium Bar" },
@@ -1759,6 +1857,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Plate Pauldrons",
+        teachItems = { 12698, 227891 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dawnbringer Shoulders" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -1774,6 +1873,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 240, 252, 265 },
         category   = "One-Handed Swords",
+        teachItems = { 7993 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Dazzling Mithril Rapier" } },
         reagents   = {
             { itemID = 3860, count = 14, name = "Mithril Bar" },
@@ -1791,6 +1891,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 130, 145, 160 },
         category   = "Daggers",
+        teachItems = { 2883 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Deadly Bronze Poniard" } },
         reagents   = {
             { itemID = 2841, count = 4, name = "Bronze Bar" },
@@ -1808,6 +1909,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Plate Chestguards",
+        teachItems = { 12696 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Demon Forged Breastplate" } },
         reagents   = {
             { itemID = 12359, count = 40, name = "Thorium Bar" },
@@ -1859,6 +1961,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Plate Boots",
+        teachItems = { 279312 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Depleted Thorium Sabatons" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -1873,6 +1976,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234488 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 20, name = "Arcanite Bar" },
@@ -1889,6 +1993,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 295, 305, 315 },
         category   = "One-Handed Maces",
+        teachItems = { 19210 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Ebon Hand" } },
         reagents   = {
             { itemID = 17011, count = 4, name = "Lava Core" },
@@ -1905,6 +2010,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 255, 267, 280 },
         category   = "Daggers",
+        teachItems = { 8030 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Ebon Shiv" } },
         reagents   = {
             { itemID = 3860, count = 12, name = "Mithril Bar" },
@@ -1921,6 +2027,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 190, 202, 215 },
         category   = "One-Handed Axes",
+        teachItems = { 17706 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Edge of Winter" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -1937,6 +2044,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 275, 285, 295 },
         category   = "Weapon Stones",
+        teachItems = { 18264 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Elemental Sharpening Stone" } },
         reagents   = {
             { itemID = 7067, count = 2, name = "Elemental Earth" },
@@ -1950,6 +2058,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 280, 292, 305 },
         category   = "Two-Handed Maces",
+        teachItems = { 12824 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Enchanted Battlehammer" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -1966,6 +2075,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Chestguards",
+        teachItems = { 12727 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Enchanted Thorium Breastplate" } },
         reagents   = {
             { itemID = 12360, count = 8, name = "Arcanite Bar" },
@@ -1983,6 +2093,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Helmets",
+        teachItems = { 12725 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Enchanted Thorium Helm" } },
         reagents   = {
             { itemID = 12360, count = 6, name = "Arcanite Bar" },
@@ -1999,6 +2110,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Legguards",
+        teachItems = { 12726 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Enchanted Thorium Leggings" } },
         reagents   = {
             { itemID = 12360, count = 10, name = "Arcanite Bar" },
@@ -2015,6 +2127,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Chestguards",
+        teachItems = { 251447 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Enriched Thorium Breastplate" } },
         reagents   = {
             { itemID = 251290, count = 8, name = "Legionite Bar" },
@@ -2031,6 +2144,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Helmets",
+        teachItems = { 251449 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Enriched Thorium Helm" } },
         reagents   = {
             { itemID = 251290, count = 6, name = "Legionite Bar" },
@@ -2046,6 +2160,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Legguards",
+        teachItems = { 251448 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Enriched Thorium Leggings" } },
         reagents   = {
             { itemID = 251290, count = 10, name = "Legionite Bar" },
@@ -2061,6 +2176,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Shields",
+        teachItems = { 279311 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Evergreen Shield" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -2075,6 +2191,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Mail Belts",
+        teachItems = { 17049 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Fiery Chain Girdle" } },
         reagents   = {
             { itemID = 11371, count = 6, name = "Dark Iron Bar" },
@@ -2089,6 +2206,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Pauldrons",
+        teachItems = { 17053 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Fiery Chain Shoulders" } },
         reagents   = {
             { itemID = 11371, count = 16, name = "Dark Iron Bar" },
@@ -2103,6 +2221,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Plate Gauntlets",
+        teachItems = { 12699 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Fiery Plate Gauntlets" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -2118,6 +2237,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Two-Handed Axes",
+        teachItems = { 279309 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Forest Defender's Axe" } },
         reagents   = {
             { itemID = 274030, count = 4, name = "Malleable Essence of Nature" },
@@ -2132,6 +2252,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Two-Handed Swords",
+        teachItems = { 3868 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Frost Tiger Blade" } },
         reagents   = {
             { itemID = 3859, count = 8, name = "Steel Bar" },
@@ -2149,6 +2270,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "One-Handed Swords",
+        teachItems = { 12836 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Frostguard" } },
         reagents   = {
             { itemID = 12360, count = 18, name = "Arcanite Bar" },
@@ -2166,6 +2288,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Gauntlets",
+        teachItems = { 274013 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Gauntlets of Glory" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2181,6 +2304,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 35, 40, 40, 40 },
         category   = "Mail Boots",
+        teachItems = { 251332 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2840, count = 2, name = "Copper Bar" },
@@ -2196,6 +2320,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 35, 75, 95, 115 },
         category   = "Mail Gauntlets",
+        teachItems = { 3610 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Gemmed Copper Gauntlets" } },
         reagents   = {
             { itemID = 2840, count = 8, name = "Copper Bar" },
@@ -2210,6 +2335,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Plate Belts",
+        teachItems = { 19203, 227893 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Girdle of the Dawn" } },
         reagents   = {
             { itemID = 12359, count = 8, name = "Thorium Bar" },
@@ -2240,6 +2366,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Gauntlets",
+        teachItems = { 19205, 227892 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Gloves of the Dawn" } },
         reagents   = {
             { itemID = 12360, count = 2, name = "Arcanite Bar" },
@@ -2254,6 +2381,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 35, 40, 40, 40 },
         category   = "Mail Boots",
+        teachItems = { 251334 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2840, count = 2, name = "Copper Bar" },
@@ -2268,6 +2396,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 170, 182, 195 },
         category   = "Two-Handed Maces",
+        teachItems = { 3867 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Golden Iron Destroyer" } },
         reagents   = {
             { itemID = 3575, count = 10, name = "Iron Bar" },
@@ -2298,6 +2427,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Mail Boots",
+        teachItems = { 3875 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Golden Scale Boots" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -2326,6 +2456,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 190, 202, 215 },
         category   = "Mail Helmets",
+        teachItems = { 6047 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Golden Scale Coif" } },
         reagents   = {
             { itemID = 3859, count = 8, name = "Steel Bar" },
@@ -2340,6 +2471,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 170, 195, 207, 220 },
         category   = "Mail Chestguards",
+        teachItems = { 3873 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Golden Scale Cuirass" } },
         reagents   = {
             { itemID = 3859, count = 12, name = "Steel Bar" },
@@ -2355,6 +2487,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 200, 210, 220 },
         category   = "Mail Gauntlets",
+        teachItems = { 9367 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Golden Scale Gauntlets" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -2370,6 +2503,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 170, 182, 195 },
         category   = "Mail Legguards",
+        teachItems = { 3872 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Golden Scale Leggings" } },
         reagents   = {
             { itemID = 3575, count = 10, name = "Iron Bar" },
@@ -2384,6 +2518,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 175, 187, 200 },
         category   = "Mail Pauldrons",
+        teachItems = { 3871 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Golden Scale Shoulders" } },
         reagents   = {
             { itemID = 3859, count = 6, name = "Steel Bar" },
@@ -2412,6 +2547,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Plate Gauntlets",
+        teachItems = { 275598 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Goregasher Grips" } },
         reagents   = {
             { itemID = 12359, count = 7, name = "Thorium Bar" },
@@ -2427,6 +2563,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 295, 297, 300 },
         category   = "Plate Boots",
+        teachItems = { 275600 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Goregasher Stompers" } },
         reagents   = {
             { itemID = 12359, count = 9, name = "Thorium Bar" },
@@ -2442,6 +2579,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 295, 297, 300 },
         category   = "Plate Belts",
+        teachItems = { 275599 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Goregasher Support" } },
         reagents   = {
             { itemID = 12359, count = 11, name = "Thorium Bar" },
@@ -2457,6 +2595,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Boots",
+        teachItems = { 274015 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Greaves of Glory" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2472,6 +2611,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 150, 165, 180 },
         category   = "Mail Boots",
+        teachItems = { 3611 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Green Iron Boots" } },
         reagents   = {
             { itemID = 3575, count = 4, name = "Iron Bar" },
@@ -2500,6 +2640,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 155, 170, 185 },
         category   = "Mail Gauntlets",
+        teachItems = { 3612 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Green Iron Gauntlets" } },
         reagents   = {
             { itemID = 3575, count = 4, name = "Iron Bar" },
@@ -2559,6 +2700,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 160, 172, 185 },
         category   = "Mail Pauldrons",
+        teachItems = { 3870 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Green Iron Shoulders" } },
         reagents   = {
             { itemID = 3575, count = 7, name = "Iron Bar" },
@@ -2573,6 +2715,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "One-Handed Maces",
+        teachItems = { 279310 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Greenhammer" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -2587,6 +2730,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 115, 130, 145 },
         category   = "Mail Boots",
+        teachItems = { 251356 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Guard's Boots" } },
         reagents   = {
             { itemID = 2841, count = 12, name = "Bronze Bar" },
@@ -2602,6 +2746,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 45, 85, 105, 125 },
         category   = "Mail Belts",
+        teachItems = { 251366 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Guard's Chain Belt" } },
         reagents   = {
             { itemID = 2840, count = 12, name = "Copper Bar" },
@@ -2615,6 +2760,7 @@ local recipes = {
         itemID     = 250499,
         skillRange = { false, 130, 130, 130 },
         category   = "Mail Helmets",
+        teachItems = { 251351 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 8, name = "Bronze Bar" },
@@ -2627,6 +2773,7 @@ local recipes = {
         itemID     = 250494,
         skillRange = { false, 100, 100, 100 },
         category   = "Mail Legguards",
+        teachItems = { 251346 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 6, name = "Bronze Bar" },
@@ -2641,6 +2788,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 85, 85, 85 },
         category   = "Mail Chestguards",
+        teachItems = { 251341 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Guard's Chain Shirt" } },
         reagents   = {
             { itemID = 2841, count = 4, name = "Bronze Bar" },
@@ -2655,6 +2803,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 110, 125, 140 },
         category   = "Mail Gauntlets",
+        teachItems = { 251361 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Guard's Gloves" } },
         reagents   = {
             { itemID = 2841, count = 10, name = "Bronze Bar" },
@@ -2670,6 +2819,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 125, 140, 155 },
         category   = "Mail Helmets",
+        teachItems = { 251381 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Guard's Silvered Chain Helm" } },
         reagents   = {
             { itemID = 2841, count = 15, name = "Bronze Bar" },
@@ -2686,6 +2836,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 155, 170, 185 },
         category   = "Mail Legguards",
+        teachItems = { 251376 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Guard's Silvered Chain Leggings" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -2702,6 +2853,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 140, 155, 170 },
         category   = "Mail Chestguards",
+        teachItems = { 251371 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Guard's Silvered Chain Shirt" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -2718,6 +2870,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Two-Handed Maces",
+        teachItems = { 12833 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Hammer of the Titans" } },
         reagents   = {
             { itemID = 12359, count = 50, name = "Thorium Bar" },
@@ -2734,6 +2887,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Gauntlets",
+        teachItems = { 274017 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Handguards of Glory" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2749,6 +2903,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 175, 187, 200 },
         category   = "Mail Boots",
+        teachItems = { 251386 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Hard Gold Boots" } },
         reagents   = {
             { itemID = 3577, count = 6, name = "Gold Bar" },
@@ -2764,6 +2919,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 160, 185, 197, 210 },
         category   = "Mail Bracers",
+        teachItems = { 251387 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Hard Gold Bracers" } },
         reagents   = {
             { itemID = 3577, count = 6, name = "Gold Bar" },
@@ -2778,6 +2934,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 170, 195, 207, 220 },
         category   = "Mail Helmets",
+        teachItems = { 251389 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Hard Gold Coif" } },
         reagents   = {
             { itemID = 3577, count = 10, name = "Gold Bar" },
@@ -2792,6 +2949,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 170, 182, 195 },
         category   = "Mail Helmets",
+        teachItems = { 251385 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Hard Gold Cuirass" } },
         reagents   = {
             { itemID = 3577, count = 12, name = "Gold Bar" },
@@ -2806,6 +2964,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Mail Gauntlets",
+        teachItems = { 251390 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Hard Gold Gauntlet" } },
         reagents   = {
             { itemID = 3577, count = 8, name = "Gold Bar" },
@@ -2820,6 +2979,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 190, 202, 215 },
         category   = "Mail Legguards",
+        teachItems = { 251388 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Hard Gold Leggings" } },
         reagents   = {
             { itemID = 3577, count = 10, name = "Gold Bar" },
@@ -2834,6 +2994,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Mail Pauldrons",
+        teachItems = { 251391 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Hard Gold Pauldrons" } },
         reagents   = {
             { itemID = 3577, count = 8, name = "Gold Bar" },
@@ -2848,6 +3009,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 160, 172, 185 },
         category   = "One-Handed Swords",
+        teachItems = { 12162 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Hardened Iron Shortsword" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -2864,6 +3026,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Daggers",
+        teachItems = { 12839 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Heartseeker" } },
         reagents   = {
             { itemID = 12360, count = 10, name = "Arcanite Bar" },
@@ -2993,6 +3156,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 230, 240, 250 },
         category   = "Plate Helmets",
+        teachItems = { 7990 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Heavy Mithril Helm" } },
         reagents   = {
             { itemID = 3860, count = 14, name = "Mithril Bar" },
@@ -3006,6 +3170,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 205, 215, 225 },
         category   = "Plate Legguards",
+        teachItems = { 7975 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Heavy Mithril Pants" } },
         reagents   = {
             { itemID = 3860, count = 10, name = "Mithril Bar" },
@@ -3032,6 +3197,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Belts",
+        teachItems = { 22209 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22202, count = 14, name = "Small Obsidian Shard" },
@@ -3058,6 +3224,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Plate Gauntlets",
+        teachItems = { 279313 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Heavy Thorium Gauntlets" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -3084,6 +3251,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 280, 292, 305 },
         category   = "Two-Handed Axes",
+        teachItems = { 12823 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Huge Thorium Battleaxe" } },
         reagents   = {
             { itemID = 12359, count = 40, name = "Thorium Bar" },
@@ -3098,6 +3266,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Bracers",
+        teachItems = { 22705 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Icebane Bracers" } },
         reagents   = {
             { itemID = 22682, count = 4, name = "Frozen Rune" },
@@ -3113,6 +3282,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Chestguards",
+        teachItems = { 22703 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Icebane Breastplate" } },
         reagents   = {
             { itemID = 22682, count = 7, name = "Frozen Rune" },
@@ -3128,6 +3298,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Gauntlets",
+        teachItems = { 22704 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Icebane Gauntlets" } },
         reagents   = {
             { itemID = 22682, count = 5, name = "Frozen Rune" },
@@ -3143,6 +3314,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Plate Belts",
+        teachItems = { 12688 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Imperial Plate Belt" } },
         reagents   = {
             { itemID = 12359, count = 22, name = "Thorium Bar" },
@@ -3157,6 +3329,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Plate Boots",
+        teachItems = { 12700 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Imperial Plate Boots" } },
         reagents   = {
             { itemID = 12359, count = 34, name = "Thorium Bar" },
@@ -3171,6 +3344,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Plate Bracers",
+        teachItems = { 12690 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Imperial Plate Bracers" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -3184,6 +3358,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Plate Chestguards",
+        teachItems = { 12705 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Imperial Plate Chest" } },
         reagents   = {
             { itemID = 12359, count = 40, name = "Thorium Bar" },
@@ -3197,6 +3372,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Plate Gauntlets",
+        teachItems = { 251441 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Imperial Plate Gauntlets" } },
         reagents   = {
             { itemID = 12359, count = 24, name = "Thorium Bar" },
@@ -3210,6 +3386,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Plate Helmets",
+        teachItems = { 12701 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Imperial Plate Helm" } },
         reagents   = {
             { itemID = 12359, count = 34, name = "Thorium Bar" },
@@ -3223,6 +3400,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Plate Legguards",
+        teachItems = { 12715 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Imperial Plate Leggings" } },
         reagents   = {
             { itemID = 12359, count = 44, name = "Thorium Bar" },
@@ -3236,6 +3414,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Plate Pauldrons",
+        teachItems = { 12687 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Imperial Plate Shoulders" } },
         reagents   = {
             { itemID = 12359, count = 24, name = "Thorium Bar" },
@@ -3250,6 +3429,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 200, 212, 225 },
         category   = "Reagents",
+        teachItems = { 10713 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Inlaid Mithril Cylinder" } },
         reagents   = {
             { itemID = 3860, count = 5, name = "Mithril Bar" },
@@ -3264,6 +3444,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 245, 270, 282, 295 },
         category   = "Two-Handed Maces",
+        teachItems = { 12818 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12359, count = 30, name = "Thorium Bar" },
@@ -3280,6 +3461,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 115, 145, 160, 175 },
         category   = "One-Handed Maces",
+        teachItems = { 5543 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Iridescent Hammer" } },
         reagents   = {
             { itemID = 2841, count = 10, name = "Bronze Bar" },
@@ -3309,6 +3491,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 165, 177, 190 },
         category   = "Miscellaneous",
+        teachItems = { 6045 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Iron Counterweight" } },
         reagents   = {
             { itemID = 3575, count = 4, name = "Iron Bar" },
@@ -3323,6 +3506,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 155, 167, 180 },
         category   = "Fist Weapons",
+        teachItems = { 251456 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Iron Fists" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -3339,6 +3523,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 190, 202, 215 },
         category   = "One-Handed Maces",
+        teachItems = { 251458 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Iron Morningstar" } },
         reagents   = {
             { itemID = 3575, count = 14, name = "Iron Bar" },
@@ -3355,6 +3540,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 155, 170, 185 },
         category   = "Miscellaneous",
+        teachItems = { 6044 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Iron Shield Spike" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -3368,6 +3554,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 115, 135, 155 },
         category   = "Mail Chestguards",
+        teachItems = { 6735 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Ironforge Breastplate" } },
         reagents   = {
             { itemID = 2840, count = 16, name = "Copper Bar" },
@@ -3382,6 +3569,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 40, 80, 100, 120 },
         category   = "Mail Chestguards",
+        teachItems = { 6734 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2840, count = 12, name = "Copper Bar" },
@@ -3396,6 +3584,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 110, 140, 155, 170 },
         category   = "Mail Gauntlets",
+        teachItems = { 6736 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 8, name = "Bronze Bar" },
@@ -3410,6 +3599,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234289 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12655, count = 8, name = "Enchanted Thorium Bar" },
@@ -3424,6 +3614,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234293 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12655, count = 14, name = "Enchanted Thorium Bar" },
@@ -3439,6 +3630,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234291 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12655, count = 12, name = "Enchanted Thorium Bar" },
@@ -3453,6 +3645,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "One-Handed Swords",
+        teachItems = { 279308 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Ironwood Blade" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -3467,6 +3660,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 175, 187, 200 },
         category   = "One-Handed Swords",
+        teachItems = { 3866 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Jade Serpentblade" } },
         reagents   = {
             { itemID = 3575, count = 8, name = "Iron Bar" },
@@ -3483,6 +3677,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Shields",
+        teachItems = { 22219 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Jagged Obsidian Shield" } },
         reagents   = {
             { itemID = 22203, count = 8, name = "Large Obsidian Shard" },
@@ -3498,6 +3693,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Plate Belts",
+        teachItems = { 251412 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justicar's Belt" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -3512,6 +3708,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Plate Boots",
+        teachItems = { 251402 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justicar's Boots" } },
         reagents   = {
             { itemID = 3859, count = 4, name = "Steel Bar" },
@@ -3526,6 +3723,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Plate Gauntlets",
+        teachItems = { 251422 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justicar's Gauntlet" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -3542,6 +3740,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Plate Gauntlets",
+        teachItems = { 251407 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justicar's Gloves" } },
         reagents   = {
             { itemID = 12359, count = 8, name = "Thorium Bar" },
@@ -3556,6 +3755,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Plate Pauldrons",
+        teachItems = { 251432 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justicar's Pauldrons" } },
         reagents   = {
             { itemID = 3860, count = 20, name = "Mithril Bar" },
@@ -3573,6 +3773,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Plate Boots",
+        teachItems = { 251417 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justicar's Sabatons" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -3590,6 +3791,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Plate Belts",
+        teachItems = { 251427 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justicar's Waistguard" } },
         reagents   = {
             { itemID = 12359, count = 24, name = "Thorium Bar" },
@@ -3606,6 +3808,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 250, 262, 275 },
         category   = "Plate Bracers",
+        teachItems = { 251437 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justicar's Wristguards" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -3623,6 +3826,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Pauldrons",
+        teachItems = { 273982 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Epaulets" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3638,6 +3842,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Gauntlets",
+        teachItems = { 273977 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Gauntlets" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3653,6 +3858,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Gauntlets",
+        teachItems = { 273981 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Gloves" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3668,6 +3874,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Boots",
+        teachItems = { 273979 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Greaves" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3683,6 +3890,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Gauntlets",
+        teachItems = { 273985 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Handguards" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3698,6 +3906,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Legguards",
+        teachItems = { 273976 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Leggings" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -3713,6 +3922,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Legguards",
+        teachItems = { 273984 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Legguards" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -3728,6 +3938,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Legguards",
+        teachItems = { 273980 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Legplates" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -3743,6 +3954,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Pauldrons",
+        teachItems = { 273986 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Pauldrons" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3758,6 +3970,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Boots",
+        teachItems = { 273987 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Sabatons" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3773,6 +3986,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Pauldrons",
+        teachItems = { 273978 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Spaulders" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3788,6 +4002,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Boots",
+        teachItems = { 273983 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Justice Treads" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3803,6 +4018,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Legguards",
+        teachItems = { 274016 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Legguards of Glory" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -3818,6 +4034,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Polearms",
+        teachItems = { 251471 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Legionite Glaive" } },
         reagents   = {
             { itemID = 251290, count = 15, name = "Legionite Bar" },
@@ -3834,6 +4051,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Legguards",
+        teachItems = { 274012 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Legplates of Glory" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -3849,6 +4067,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Belts",
+        teachItems = { 22214 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22202, count = 14, name = "Small Obsidian Shard" },
@@ -3862,6 +4081,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Helmets",
+        teachItems = { 12717 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Lionheart Helm" } },
         reagents   = {
             { itemID = 12359, count = 80, name = "Thorium Bar" },
@@ -3878,6 +4098,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 200, 210, 220 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 215384 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Low-Background Truesilver Plates" } },
         reagents   = {
             { itemID = 6037, count = 1, name = "Truesilver Bar" },
@@ -3891,6 +4112,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Legguards",
+        teachItems = { 251452 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Martyr's Legplates" } },
         reagents   = {
             { itemID = 251290, count = 12, name = "Legionite Bar" },
@@ -3906,6 +4128,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 160, 185, 197, 210 },
         category   = "Two-Handed Axes",
+        teachItems = { 12164 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Massive Iron Axe" } },
         reagents   = {
             { itemID = 3575, count = 14, name = "Iron Bar" },
@@ -3922,6 +4145,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273113 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Master Forge" } },
         reagents   = {
             { itemID = 273127, count = 1, name = "Golem Heart" },
@@ -3936,6 +4160,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "One-Handed Maces",
+        teachItems = { 12837 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Masterwork Stormhammer" } },
         reagents   = {
             { itemID = 12655, count = 20, name = "Enchanted Thorium Bar" },
@@ -3952,6 +4177,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 150, 165, 180 },
         category   = "One-Handed Maces",
+        teachItems = { 3608 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mighty Iron Hammer" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -3969,6 +4195,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 200, 202, 205 },
         category   = "Thrown",
+        teachItems = { 285290 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Blacksmith Hammer" } },
         reagents   = {
             { itemID = 3860, count = 10, name = "Mithril Bar" },
@@ -3983,6 +4210,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Fist Weapons",
+        teachItems = { 251461 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Claws" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -3998,6 +4226,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Two-Handed Swords",
+        teachItems = { 251462 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Claymore" } },
         reagents   = {
             { itemID = 3860, count = 16, name = "Mithril Bar" },
@@ -4026,6 +4255,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 210, 220, 230 },
         category   = "Mail Bracers",
+        teachItems = { 7995 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Plate Bracers" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -4039,6 +4269,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 195, 215, 225, 235 },
         category   = "Mail Gauntlets",
+        teachItems = { 7977 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -4065,6 +4296,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Mail Pauldrons",
+        teachItems = { 7991 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Plate Shoulders" } },
         reagents   = {
             { itemID = 3860, count = 14, name = "Mithril Bar" },
@@ -4079,6 +4311,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 210, 220, 230 },
         category   = "Miscellaneous",
+        teachItems = { 7976 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Shield Spike" } },
         reagents   = {
             { itemID = 3860, count = 4, name = "Mithril Bar" },
@@ -4093,6 +4326,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 200, 210, 220 },
         category   = "Daggers",
+        teachItems = { 251459 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Shortsword" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -4109,6 +4343,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Miscellaneous",
+        teachItems = { 7989 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Spurs" } },
         reagents   = {
             { itemID = 3860, count = 4, name = "Mithril Bar" },
@@ -4122,6 +4357,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Daggers",
+        teachItems = { 251463 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Stiletto" } },
         reagents   = {
             { itemID = 3860, count = 16, name = "Mithril Bar" },
@@ -4137,6 +4373,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 210, 220, 230 },
         category   = "Two-Handed Maces",
+        teachItems = { 251460 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Mithril Warhammer" } },
         reagents   = {
             { itemID = 3860, count = 12, name = "Mithril Bar" },
@@ -4152,6 +4389,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 155, 180, 192, 205 },
         category   = "Two-Handed Swords",
+        teachItems = { 12163 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Moonsteel Broadsword" } },
         reagents   = {
             { itemID = 3859, count = 8, name = "Steel Bar" },
@@ -4168,6 +4406,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 295, 305, 315 },
         category   = "Two-Handed Axes",
+        teachItems = { 19212 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Nightfall" } },
         reagents   = {
             { itemID = 17011, count = 8, name = "Lava Core" },
@@ -4184,6 +4423,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234224 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 40, name = "Arcanite Bar" },
@@ -4201,6 +4441,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234228 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 30, name = "Arcanite Bar" },
@@ -4218,6 +4459,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234225 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 40, name = "Arcanite Bar" },
@@ -4235,6 +4477,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234279 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22202, count = 5, name = "Small Obsidian Shard" },
@@ -4247,6 +4490,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234429 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 30, name = "Arcanite Bar" },
@@ -4264,6 +4508,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Chestguards",
+        teachItems = { 22221 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Obsidian Mail Tunic" } },
         reagents   = {
             { itemID = 22203, count = 15, name = "Large Obsidian Shard" },
@@ -4280,6 +4525,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234223 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 40, name = "Arcanite Bar" },
@@ -4297,6 +4543,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234227 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 30, name = "Arcanite Bar" },
@@ -4314,6 +4561,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234226 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 30, name = "Arcanite Bar" },
@@ -4331,6 +4579,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Plate Belts",
+        teachItems = { 251408 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Officer's Belt" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -4345,6 +4594,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Plate Boots",
+        teachItems = { 251398 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Officer's Boots" } },
         reagents   = {
             { itemID = 3859, count = 4, name = "Steel Bar" },
@@ -4359,6 +4609,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Plate Gauntlets",
+        teachItems = { 251418 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Officer's Gauntlet" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -4375,6 +4626,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Plate Gauntlets",
+        teachItems = { 251403 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Officer's Gloves" } },
         reagents   = {
             { itemID = 12359, count = 8, name = "Thorium Bar" },
@@ -4389,6 +4641,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Plate Pauldrons",
+        teachItems = { 251428 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Officer's Pauldrons" } },
         reagents   = {
             { itemID = 3860, count = 20, name = "Mithril Bar" },
@@ -4406,6 +4659,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Plate Boots",
+        teachItems = { 251413 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Officer's Sabatons" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -4423,6 +4677,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Plate Belts",
+        teachItems = { 251423 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Officer's Waistguard" } },
         reagents   = {
             { itemID = 12359, count = 24, name = "Thorium Bar" },
@@ -4439,6 +4694,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 250, 262, 275 },
         category   = "Plate Bracers",
+        teachItems = { 251433 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Officer's Wristguard" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -4456,6 +4712,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 225, 235, 245 },
         category   = "Mail Legguards",
+        teachItems = { 7994 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 3860, count = 12, name = "Mithril Bar" },
@@ -4469,6 +4726,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 220, 240, 250, 260 },
         category   = "Plate Boots",
+        teachItems = { 7988 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 3860, count = 14, name = "Mithril Bar" },
@@ -4485,6 +4743,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 215, 235, 245, 255 },
         category   = "Plate Chestguards",
+        teachItems = { 7986 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 3860, count = 16, name = "Mithril Bar" },
@@ -4500,6 +4759,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Plate Gauntlets",
+        teachItems = { 7984 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Ornate Mithril Gloves" } },
         reagents   = {
             { itemID = 3860, count = 10, name = "Mithril Bar" },
@@ -4515,6 +4775,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 220, 240, 250, 260 },
         category   = "Plate Helmets",
+        teachItems = { 7987 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 3860, count = 16, name = "Mithril Bar" },
@@ -4530,6 +4791,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Plate Legguards",
+        teachItems = { 7983 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Ornate Mithril Pants" } },
         reagents   = {
             { itemID = 3860, count = 12, name = "Mithril Bar" },
@@ -4545,6 +4807,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 230, 240 },
         category   = "Plate Pauldrons",
+        teachItems = { 7985 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Ornate Mithril Shoulders" } },
         reagents   = {
             { itemID = 3860, count = 12, name = "Mithril Bar" },
@@ -4559,6 +4822,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 275, 287, 300 },
         category   = "One-Handed Axes",
+        teachItems = { 12819 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Ornate Thorium Handaxe" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -4587,6 +4851,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Pauldrons",
+        teachItems = { 274018 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Pauldrons of Glory" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -4617,6 +4882,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "One-Handed Maces",
+        teachItems = { 22390 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Persuader" } },
         reagents   = {
             { itemID = 12360, count = 15, name = "Arcanite Bar" },
@@ -4652,6 +4918,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 160, 185, 197, 210 },
         category   = "Mail Boots",
+        teachItems = { 3874 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Polished Steel Boots" } },
         reagents   = {
             { itemID = 3859, count = 8, name = "Steel Bar" },
@@ -4667,6 +4934,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Plate Belts",
+        teachItems = { 251411 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Prefect's Belt" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -4681,6 +4949,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Plate Boots",
+        teachItems = { 251401 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Prefect's Boots" } },
         reagents   = {
             { itemID = 3859, count = 4, name = "Steel Bar" },
@@ -4695,6 +4964,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Plate Gauntlets",
+        teachItems = { 251421 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Prefect's Gauntlet" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -4711,6 +4981,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Plate Gauntlets",
+        teachItems = { 251406 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Prefect's Gloves" } },
         reagents   = {
             { itemID = 12359, count = 8, name = "Thorium Bar" },
@@ -4725,6 +4996,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Plate Pauldrons",
+        teachItems = { 251431 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Prefect's Pauldrons" } },
         reagents   = {
             { itemID = 3860, count = 20, name = "Mithril Bar" },
@@ -4742,6 +5014,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Plate Boots",
+        teachItems = { 251416 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Prefect's Sabatons" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -4773,6 +5046,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 250, 262, 275 },
         category   = "Plate Bracers",
+        teachItems = { 251436 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Prefect's Wristguard" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -4790,6 +5064,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 115, 130, 145 },
         category   = "Mail Boots",
+        teachItems = { 251357 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Protector's Boots" } },
         reagents   = {
             { itemID = 2841, count = 12, name = "Bronze Bar" },
@@ -4805,6 +5080,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 45, 85, 105, 125 },
         category   = "Mail Belts",
+        teachItems = { 251367 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Protector's Chain Belt" } },
         reagents   = {
             { itemID = 2840, count = 12, name = "Copper Bar" },
@@ -4818,6 +5094,7 @@ local recipes = {
         itemID     = 250500,
         skillRange = { false, 130, 130, 130 },
         category   = "Mail Helmets",
+        teachItems = { 251352 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 8, name = "Bronze Bar" },
@@ -4830,6 +5107,7 @@ local recipes = {
         itemID     = 250495,
         skillRange = { false, 100, 100, 100 },
         category   = "Mail Legguards",
+        teachItems = { 251347 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 6, name = "Bronze Bar" },
@@ -4842,6 +5120,7 @@ local recipes = {
         itemID     = 250490,
         skillRange = { false, 85, 85, 85 },
         category   = "Mail Chestguards",
+        teachItems = { 251342 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 4, name = "Bronze Bar" },
@@ -4856,6 +5135,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 110, 125, 140 },
         category   = "Mail Gauntlets",
+        teachItems = { 251362 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Protector's Gloves" } },
         reagents   = {
             { itemID = 2841, count = 10, name = "Bronze Bar" },
@@ -4871,6 +5151,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 125, 140, 155 },
         category   = "Mail Helmets",
+        teachItems = { 251382 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Protector's Silvered Chain Helm" } },
         reagents   = {
             { itemID = 2841, count = 15, name = "Bronze Bar" },
@@ -4887,6 +5168,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 155, 170, 185 },
         category   = "Mail Legguards",
+        teachItems = { 251377 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Protector's Silvered Chain Leggings" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -4903,6 +5185,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 140, 155, 170 },
         category   = "Mail Chestguards",
+        teachItems = { 251372 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Protector's Silvered Chain Shirt" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -4919,6 +5202,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Mail Belts",
+        teachItems = { 12685 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Radiant Belt" } },
         reagents   = {
             { itemID = 12359, count = 10, name = "Thorium Bar" },
@@ -4932,6 +5216,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Plate Boots",
+        teachItems = { 12697 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Radiant Boots" } },
         reagents   = {
             { itemID = 12359, count = 14, name = "Thorium Bar" },
@@ -4945,6 +5230,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Mail Chestguards",
+        teachItems = { 12689 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Radiant Breastplate" } },
         reagents   = {
             { itemID = 12359, count = 18, name = "Thorium Bar" },
@@ -4959,6 +5245,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Mail Helmets",
+        teachItems = { 12702 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Radiant Circlet" } },
         reagents   = {
             { itemID = 12359, count = 18, name = "Thorium Bar" },
@@ -4972,6 +5259,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Mail Gauntlets",
+        teachItems = { 12695 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Radiant Gloves" } },
         reagents   = {
             { itemID = 12359, count = 18, name = "Thorium Bar" },
@@ -4985,6 +5273,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Mail Legguards",
+        teachItems = { 12713 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Radiant Leggings" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -4998,6 +5287,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234222 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 20, name = "Arcanite Bar" },
@@ -5014,6 +5304,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234220 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 15, name = "Arcanite Bar" },
@@ -5030,6 +5321,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234221 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 15, name = "Arcanite Bar" },
@@ -5059,6 +5351,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 70, 115, 130, 145 },
         category   = "Mail Bracers",
+        teachItems = { 5577 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 4, name = "Bronze Bar" },
@@ -5109,6 +5402,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 60, 65, 70 },
         category   = "Mail Boots",
+        teachItems = { 277673 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Rough Copper Chain Boots" } },
         reagents   = {
             { itemID = 2840, count = 9, name = "Copper Bar" },
@@ -5169,6 +5463,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 260, 285, 297, 310 },
         category   = "One-Handed Axes",
+        teachItems = { 12826 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12359, count = 30, name = "Thorium Bar" },
@@ -5209,6 +5504,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 95, 115, 135 },
         category   = "Mail Chestguards",
+        teachItems = { 2881 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Runed Copper Breastplate" } },
         reagents   = {
             { itemID = 2840, count = 12, name = "Copper Bar" },
@@ -5250,6 +5546,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 245, 257, 270 },
         category   = "One-Handed Maces",
+        teachItems = { 8028 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Runed Mithril Hammer" } },
         reagents   = {
             { itemID = 3860, count = 18, name = "Mithril Bar" },
@@ -5265,6 +5562,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 305, 315, 325 },
         category   = "Plate Chestguards",
+        teachItems = { 12718 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Runic Breastplate" } },
         reagents   = {
             { itemID = 12359, count = 40, name = "Thorium Bar" },
@@ -5279,6 +5577,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Plate Boots",
+        teachItems = { 12707 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Runic Plate Boots" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -5293,6 +5592,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Plate Helmets",
+        teachItems = { 12714 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Runic Plate Helm" } },
         reagents   = {
             { itemID = 12359, count = 30, name = "Thorium Bar" },
@@ -5308,6 +5608,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 305, 315, 325 },
         category   = "Plate Legguards",
+        teachItems = { 12719 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Runic Plate Leggings" } },
         reagents   = {
             { itemID = 12359, count = 40, name = "Thorium Bar" },
@@ -5322,6 +5623,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Plate Pauldrons",
+        teachItems = { 12706 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Runic Plate Shoulders" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -5336,6 +5638,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Boots",
+        teachItems = { 274019 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sabatons of Glory" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5351,6 +5654,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "One-Handed Swords",
+        teachItems = { 22389 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sageblade" } },
         reagents   = {
             { itemID = 12360, count = 12, name = "Arcanite Bar" },
@@ -5366,6 +5670,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 295, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238324 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Scarlet Soldier's Chestplate" } },
         reagents   = {
             { itemID = 12938, count = 1, name = "Blood of Heroes" },
@@ -5380,6 +5685,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 270, 287, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238326, 250390 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Scarlet Soldier's Grips" } },
         reagents   = {
             { itemID = 12811, count = 1, name = "Righteous Orb" },
@@ -5393,6 +5699,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 295, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238322 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Scarlet Soldier's Helmet" } },
         reagents   = {
             { itemID = 12938, count = 1, name = "Blood of Heroes" },
@@ -5407,6 +5714,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 280, 292, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238328, 250392 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Scarlet Soldier's Legplates" } },
         reagents   = {
             { itemID = 12938, count = 1, name = "Blood of Heroes" },
@@ -5421,6 +5729,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 282, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238325 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Scarlet Soldier's Protectors" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -5433,6 +5742,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 295, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238323 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Scarlet Soldier's Spaulders" } },
         reagents   = {
             { itemID = 12811, count = 1, name = "Righteous Orb" },
@@ -5446,6 +5756,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 270, 287, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238329, 250393 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Scarlet Soldier's Stompers" } },
         reagents   = {
             { itemID = 12811, count = 1, name = "Righteous Orb" },
@@ -5459,6 +5770,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 282, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238327, 250391 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Scarlet Soldier's Waistguard" } },
         reagents   = {
             { itemID = 12811, count = 1, name = "Righteous Orb" },
@@ -5472,6 +5784,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 190, 202, 215 },
         category   = "Daggers",
+        teachItems = { 12261 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Searing Golden Blade" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -5487,6 +5800,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Plate Belts",
+        teachItems = { 251409 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sentinel's Belt" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -5501,6 +5815,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Plate Boots",
+        teachItems = { 251399 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sentinel's Boots" } },
         reagents   = {
             { itemID = 3859, count = 4, name = "Steel Bar" },
@@ -5515,6 +5830,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Plate Gauntlets",
+        teachItems = { 251419 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sentinel's Gauntlet" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -5531,6 +5847,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Plate Gauntlets",
+        teachItems = { 251404 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sentinel's Gloves" } },
         reagents   = {
             { itemID = 12359, count = 8, name = "Thorium Bar" },
@@ -5545,6 +5862,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Plate Pauldrons",
+        teachItems = { 251429 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sentinel's Pauldrons" } },
         reagents   = {
             { itemID = 3860, count = 20, name = "Mithril Bar" },
@@ -5562,6 +5880,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Plate Boots",
+        teachItems = { 251414 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sentinel's Sabatons" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -5579,6 +5898,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Plate Belts",
+        teachItems = { 251424 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sentinel's Waistguard" } },
         reagents   = {
             { itemID = 12359, count = 24, name = "Thorium Bar" },
@@ -5595,6 +5915,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 250, 262, 275 },
         category   = "Plate Bracers",
+        teachItems = { 251434 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sentinel's Wristguard" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -5612,6 +5933,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 285, 297, 310 },
         category   = "One-Handed Maces",
+        teachItems = { 12827 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Serenity" } },
         reagents   = {
             { itemID = 12655, count = 6, name = "Enchanted Thorium Bar" },
@@ -5629,6 +5951,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Two-Handed Axes",
+        teachItems = { 3869 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Shadow Crescent Axe" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -5659,6 +5982,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 230, 240 },
         category   = "Plate Boots",
+        teachItems = { 251394 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Shining Mithril Boots" } },
         reagents   = {
             { itemID = 3860, count = 4, name = "Mithril Bar" },
@@ -5674,6 +5998,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Plate Chestguards",
+        teachItems = { 251392 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Shining Mithril Breastplate" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -5689,6 +6014,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 240, 250, 260 },
         category   = "Plate Gauntlets",
+        teachItems = { 251397 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Shining Mithril Gauntlet" } },
         reagents   = {
             { itemID = 3860, count = 5, name = "Mithril Bar" },
@@ -5702,6 +6028,7 @@ local recipes = {
         itemID     = 250543,
         skillRange = { false, 235, 245, 255 },
         category   = "Plate Helmets",
+        teachItems = { 251395 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -5717,6 +6044,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 240, 250, 260 },
         category   = "Plate Legguards",
+        teachItems = { 251396 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Shining Mithril Pants" } },
         reagents   = {
             { itemID = 3860, count = 6, name = "Mithril Bar" },
@@ -5732,6 +6060,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Plate Pauldrons",
+        teachItems = { 251393 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Shining Mithril Pauldrons" } },
         reagents   = {
             { itemID = 3860, count = 6, name = "Mithril Bar" },
@@ -5763,6 +6092,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Plate Pauldrons",
+        teachItems = { 274014 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Shoulders of Glory" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5819,6 +6149,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 105, 135, 150, 165 },
         category   = "Mail Chestguards",
+        teachItems = { 5578 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Silvered Bronze Breastplate" } },
         reagents   = {
             { itemID = 2841, count = 10, name = "Bronze Bar" },
@@ -5848,6 +6179,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 155, 167, 180 },
         category   = "Mail Legguards",
+        teachItems = { 10424 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Silvered Bronze Leggings" } },
         reagents   = {
             { itemID = 2841, count = 12, name = "Bronze Bar" },
@@ -5862,6 +6194,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 130, 145, 160 },
         category   = "Mail Pauldrons",
+        teachItems = { 2882 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Silvered Bronze Shoulders" } },
         reagents   = {
             { itemID = 2841, count = 8, name = "Bronze Bar" },
@@ -5888,6 +6221,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 155, 167, 180 },
         category   = "Two-Handed Maces",
+        teachItems = { 10858 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Solid Iron Maul" } },
         reagents   = {
             { itemID = 3575, count = 8, name = "Iron Bar" },
@@ -5928,6 +6262,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Helmets",
+        teachItems = { 251451 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Stalwart Helm" } },
         reagents   = {
             { itemID = 251290, count = 12, name = "Legionite Bar" },
@@ -5970,6 +6305,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 160, 185, 197, 210 },
         category   = "Polearms",
+        teachItems = { 251457 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Steel Spear" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -5986,6 +6322,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 190, 202, 215 },
         category   = "Miscellaneous",
+        teachItems = { 6046 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Steel Weapon Chain" } },
         reagents   = {
             { itemID = 3859, count = 8, name = "Steel Bar" },
@@ -6000,6 +6337,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 130, 145, 160 },
         category   = "Mail Boots",
+        teachItems = { 251335 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sterling Silver Boots" } },
         reagents   = {
             { itemID = 2842, count = 6, name = "Silver Bar" },
@@ -6015,6 +6353,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 155, 170, 185 },
         category   = "Mail Chestguards",
+        teachItems = { 251339 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sterling Silver Breastplate" } },
         reagents   = {
             { itemID = 2842, count = 12, name = "Silver Bar" },
@@ -6029,6 +6368,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 105, 135, 150, 165 },
         category   = "Mail Gauntlets",
+        teachItems = { 251337 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sterling Silver Gauntlet" } },
         reagents   = {
             { itemID = 2842, count = 6, name = "Silver Bar" },
@@ -6043,6 +6383,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 105, 135, 150, 165 },
         category   = "Mail Legguards",
+        teachItems = { 251336 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sterling Silver Leggings" } },
         reagents   = {
             { itemID = 2842, count = 10, name = "Silver Bar" },
@@ -6057,6 +6398,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 140, 155, 170 },
         category   = "Mail Pauldrons",
+        teachItems = { 251338 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sterling Silver Shoulders" } },
         reagents   = {
             { itemID = 2842, count = 6, name = "Silver Bar" },
@@ -6071,6 +6413,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Two-Handed Axes",
+        teachItems = { 251469 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Stormcarver" } },
         reagents   = {
             { itemID = 251290, count = 20, name = "Legionite Bar" },
@@ -6085,6 +6428,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 35, 40, 40, 40 },
         category   = "Mail Boots",
+        teachItems = { 251333 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2840, count = 2, name = "Copper Bar" },
@@ -6099,6 +6443,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Gauntlets",
+        teachItems = { 12720, 228118 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Stronghold Gauntlets" } },
         reagents   = {
             { itemID = 12360, count = 15, name = "Arcanite Bar" },
@@ -6115,6 +6460,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 325, 337, 350 },
         category   = "Two-Handed Maces",
+        teachItems = { 18592 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Sulfuron Hammer" } },
         reagents   = {
             { itemID = 17203, count = 8, name = "Sulfuron Ingot" },
@@ -6151,6 +6497,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Chestguards",
+        teachItems = { 22222 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thick Obsidian Breastplate" } },
         reagents   = {
             { itemID = 22203, count = 18, name = "Large Obsidian Shard" },
@@ -6183,6 +6530,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Plate Chestguards",
+        teachItems = { 12682 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Armor" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -6197,6 +6545,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Plate Belts",
+        teachItems = { 12683 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Belt" } },
         reagents   = {
             { itemID = 12359, count = 12, name = "Thorium Bar" },
@@ -6210,6 +6559,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Plate Boots",
+        teachItems = { 12693 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Boots" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -6224,6 +6574,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 250, 260, 270 },
         category   = "Plate Bracers",
+        teachItems = { 12684 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Bracers" } },
         reagents   = {
             { itemID = 12359, count = 12, name = "Thorium Bar" },
@@ -6237,6 +6588,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Fist Weapons",
+        teachItems = { 251466 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Cestus" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -6253,6 +6605,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Two-Handed Maces",
+        teachItems = { 251465 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Greatmace" } },
         reagents   = {
             { itemID = 12359, count = 30, name = "Thorium Bar" },
@@ -6269,6 +6622,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 235, 260, 272, 285 },
         category   = "Two-Handed Swords",
+        teachItems = { 12816 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -6283,6 +6637,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Plate Helmets",
+        teachItems = { 12694 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Helm" } },
         reagents   = {
             { itemID = 12359, count = 24, name = "Thorium Bar" },
@@ -6297,6 +6652,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Plate Legguards",
+        teachItems = { 12704 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Leggings" } },
         reagents   = {
             { itemID = 12359, count = 26, name = "Thorium Bar" },
@@ -6310,6 +6666,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 292, 305 },
         category   = "Polearms",
+        teachItems = { 251467 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Poleaxe" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -6326,6 +6683,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Miscellaneous",
+        teachItems = { 12692 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Thorium Shield Spike" } },
         reagents   = {
             { itemID = 12359, count = 4, name = "Thorium Bar" },
@@ -6340,6 +6698,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Plate Legguards",
+        teachItems = { 22388 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Titanic Leggings" } },
         reagents   = {
             { itemID = 12360, count = 12, name = "Arcanite Bar" },
@@ -6432,6 +6791,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 115, 130, 145 },
         category   = "Mail Boots",
+        teachItems = { 251355 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Veteran's Boots" } },
         reagents   = {
             { itemID = 2841, count = 12, name = "Bronze Bar" },
@@ -6447,6 +6807,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 45, 85, 105, 125 },
         category   = "Mail Belts",
+        teachItems = { 251365 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Veteran's Chain Belt" } },
         reagents   = {
             { itemID = 2840, count = 12, name = "Copper Bar" },
@@ -6460,6 +6821,7 @@ local recipes = {
         itemID     = 250498,
         skillRange = { false, 130, 130, 130 },
         category   = "Mail Helmets",
+        teachItems = { 251350 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 8, name = "Bronze Bar" },
@@ -6472,6 +6834,7 @@ local recipes = {
         itemID     = 250493,
         skillRange = { false, 100, 100, 100 },
         category   = "Mail Legguards",
+        teachItems = { 251345 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 6, name = "Bronze Bar" },
@@ -6484,6 +6847,7 @@ local recipes = {
         itemID     = 250488,
         skillRange = { false, 85, 85, 85 },
         category   = "Mail Chestguards",
+        teachItems = { 251340 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2841, count = 4, name = "Bronze Bar" },
@@ -6498,6 +6862,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 110, 125, 140 },
         category   = "Mail Gauntlets",
+        teachItems = { 251360 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Veteran's Gloves" } },
         reagents   = {
             { itemID = 2841, count = 10, name = "Bronze Bar" },
@@ -6513,6 +6878,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 125, 140, 155 },
         category   = "Mail Helmets",
+        teachItems = { 251380 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Veteran's Silvered Chain Helm" } },
         reagents   = {
             { itemID = 2841, count = 15, name = "Bronze Bar" },
@@ -6529,6 +6895,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 155, 170, 185 },
         category   = "Mail Legguards",
+        teachItems = { 251375 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Veteran's Silvered Chain Leggings" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -6545,6 +6912,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 140, 155, 170 },
         category   = "Mail Chestguards",
+        teachItems = { 251370 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Veteran's Silvered Chain Shirt" } },
         reagents   = {
             { itemID = 2841, count = 20, name = "Bronze Bar" },
@@ -6561,6 +6929,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 290, 302, 315 },
         category   = "One-Handed Maces",
+        teachItems = { 12828 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Volcanic Hammer" } },
         reagents   = {
             { itemID = 12359, count = 30, name = "Thorium Bar" },
@@ -6576,6 +6945,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Plate Belts",
+        teachItems = { 251410 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Warder's Belt" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -6590,6 +6960,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Plate Boots",
+        teachItems = { 251400 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Warder's Boots" } },
         reagents   = {
             { itemID = 3859, count = 4, name = "Steel Bar" },
@@ -6604,6 +6975,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Plate Gauntlets",
+        teachItems = { 251420 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Warder's Gauntlet" } },
         reagents   = {
             { itemID = 3859, count = 10, name = "Steel Bar" },
@@ -6620,6 +6992,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Plate Gauntlets",
+        teachItems = { 251405 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Warder's Gloves" } },
         reagents   = {
             { itemID = 12359, count = 8, name = "Thorium Bar" },
@@ -6634,6 +7007,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Plate Pauldrons",
+        teachItems = { 251430 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Warder's Pauldrons" } },
         reagents   = {
             { itemID = 3860, count = 20, name = "Mithril Bar" },
@@ -6651,6 +7025,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Plate Boots",
+        teachItems = { 251415 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Warder's Sabatons" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -6668,6 +7043,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Plate Belts",
+        teachItems = { 251425 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Warder's Waistguard" } },
         reagents   = {
             { itemID = 12359, count = 24, name = "Thorium Bar" },
@@ -6684,6 +7060,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 250, 262, 275 },
         category   = "Plate Bracers",
+        teachItems = { 251435 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Warder's Wristguard" } },
         reagents   = {
             { itemID = 12359, count = 16, name = "Thorium Bar" },
@@ -6701,6 +7078,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Plate Helmets",
+        teachItems = { 12711 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Whitesoul Helm" } },
         reagents   = {
             { itemID = 12359, count = 20, name = "Thorium Bar" },
@@ -6717,6 +7095,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 225, 237, 250 },
         category   = "One-Handed Swords",
+        teachItems = { 8029 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Plans: Wicked Mithril Blade" } },
         reagents   = {
             { itemID = 3860, count = 14, name = "Mithril Bar" },

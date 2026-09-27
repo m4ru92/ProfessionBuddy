@@ -16,6 +16,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Leather Belts",
+        teachItems = { 276961 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Gustwoven Belt" } },
         reagents   = {
             { itemID = 2318, count = 5, name = "Light Leather" },
@@ -29,6 +30,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Leather Boots",
+        teachItems = { 276963 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Gustwoven Boots" } },
         reagents   = {
             { itemID = 2318, count = 6, name = "Light Leather" },
@@ -42,6 +44,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Leather Bracers",
+        teachItems = { 276959 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Gustwoven Bracers" } },
         reagents   = {
             { itemID = 2318, count = 4, name = "Light Leather" },
@@ -55,6 +58,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Leather Gauntlets",
+        teachItems = { 276960 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Gustwoven Gloves" } },
         reagents   = {
             { itemID = 2318, count = 6, name = "Light Leather" },
@@ -68,6 +72,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leather Chestguards",
+        teachItems = { 276958 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Gustwoven Harness" } },
         reagents   = {
             { itemID = 2318, count = 7, name = "Light Leather" },
@@ -82,6 +87,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Leather Helmets",
+        teachItems = { 276986 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Gustwoven Hood" } },
         reagents   = {
             { itemID = 4234, count = 15, name = "Heavy Leather" },
@@ -97,6 +103,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Leather Pauldrons",
+        teachItems = { 276987 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Gustwoven Spaulders" } },
         reagents   = {
             { itemID = 4234, count = 12, name = "Heavy Leather" },
@@ -112,6 +119,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leather Legguards",
+        teachItems = { 276962 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Gustwoven Trousers" } },
         reagents   = {
             { itemID = 2318, count = 7, name = "Light Leather" },
@@ -125,6 +133,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Leather Bracers",
+        teachItems = { 276965 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Windraveled Armguards" } },
         reagents   = {
             { itemID = 2318, count = 4, name = "Light Leather" },
@@ -138,6 +147,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Leather Helmets",
+        teachItems = { 276988 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Windraveled Cover" } },
         reagents   = {
             { itemID = 4234, count = 15, name = "Heavy Leather" },
@@ -153,6 +163,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Leather Pauldrons",
+        teachItems = { 276989 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Windraveled Drapes" } },
         reagents   = {
             { itemID = 4234, count = 12, name = "Heavy Leather" },
@@ -168,6 +179,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Leather Boots",
+        teachItems = { 276969 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Windraveled Footwraps" } },
         reagents   = {
             { itemID = 2318, count = 6, name = "Light Leather" },
@@ -181,6 +193,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leather Chestguards",
+        teachItems = { 276964 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Windraveled Jerkin" } },
         reagents   = {
             { itemID = 2318, count = 7, name = "Light Leather" },
@@ -195,6 +208,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Leather Gauntlets",
+        teachItems = { 276966 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Windraveled Mitts" } },
         reagents   = {
             { itemID = 2318, count = 6, name = "Light Leather" },
@@ -208,6 +222,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leather Legguards",
+        teachItems = { 276968 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Windraveled Pants" } },
         reagents   = {
             { itemID = 2318, count = 7, name = "Light Leather" },
@@ -221,6 +236,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Leather Belts",
+        teachItems = { 276967 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Windraveled Strap" } },
         reagents   = {
             { itemID = 2318, count = 5, name = "Light Leather" },
@@ -234,6 +250,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Belts",
+        teachItems = { 4301 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Barbaric Belt" } },
         reagents   = {
             { itemID = 4234, count = 6, name = "Heavy Leather" },
@@ -251,6 +268,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 155, 165, 175 },
         category   = "Leather Bracers",
+        teachItems = { 18949 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Barbaric Bracers" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -267,6 +285,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 160, 170 },
         category   = "Leather Gauntlets",
+        teachItems = { 4297 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Barbaric Gloves" } },
         reagents   = {
             { itemID = 4234, count = 6, name = "Heavy Leather" },
@@ -295,6 +314,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 165, 175, 185 },
         category   = "Leather Legguards",
+        teachItems = { 5973 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Barbaric Leggings" } },
         reagents   = {
             { itemID = 4234, count = 10, name = "Heavy Leather" },
@@ -323,6 +343,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 235, 245, 255 },
         category   = "Cloaks",
+        teachItems = { 8390 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Big Voodoo Cloak" } },
         reagents   = {
             { itemID = 4304, count = 14, name = "Thick Leather" },
@@ -337,6 +358,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Leather Helmets",
+        teachItems = { 8387 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Big Voodoo Mask" } },
         reagents   = {
             { itemID = 4304, count = 8, name = "Thick Leather" },
@@ -351,6 +373,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 240, 250 },
         category   = "Leather Legguards",
+        teachItems = { 8389 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Big Voodoo Pants" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -365,6 +388,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 210, 220, 230 },
         category   = "Leather Chestguards",
+        teachItems = { 8386 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Big Voodoo Robe" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -379,6 +403,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 295, 297, 300 },
         category   = "Leather Boots",
+        teachItems = { 275588 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Bileblister Boots" } },
         reagents   = {
             { itemID = 8170, count = 15, name = "Rugged Leather" },
@@ -394,6 +419,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Leather Gauntlets",
+        teachItems = { 275586 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Bileblister Claws" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -409,6 +435,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 295, 297, 300 },
         category   = "Leather Belts",
+        teachItems = { 275587 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Bileblister Girdle" } },
         reagents   = {
             { itemID = 8170, count = 18, name = "Rugged Leather" },
@@ -424,6 +451,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Boots",
+        teachItems = { 17025 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Dragonscale Boots" } },
         reagents   = {
             { itemID = 12810, count = 6, name = "Enchanted Leather" },
@@ -440,6 +468,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Mail Chestguards",
+        teachItems = { 15759 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Dragonscale Breastplate" } },
         reagents   = {
             { itemID = 8170, count = 40, name = "Rugged Leather" },
@@ -455,6 +484,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Helmets",
+        teachItems = { 252939 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Dragonscale Helm" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -473,6 +503,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Mail Legguards",
+        teachItems = { 15781 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Dragonscale Leggings" } },
         reagents   = {
             { itemID = 8170, count = 40, name = "Rugged Leather" },
@@ -489,6 +520,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 310, 320, 330 },
         category   = "Mail Pauldrons",
+        teachItems = { 15770 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Dragonscale Shoulders" } },
         reagents   = {
             { itemID = 8170, count = 44, name = "Rugged Leather" },
@@ -505,6 +537,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Cloaks",
+        teachItems = { 7289 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Whelp Cloak" } },
         reagents   = {
             { itemID = 7286, count = 12, name = "Black Whelp Scale" },
@@ -519,6 +552,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 35, 40, 40, 40 },
         category   = "Leather Boots",
+        teachItems = { 252761 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 12, name = "Light Leather" },
@@ -533,6 +567,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Leather Chestguards",
+        teachItems = { 20576 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Whelp Tunic" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -548,6 +583,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Chestguards",
+        teachItems = { 19772 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blood Tiger Breastplate" } },
         reagents   = {
             { itemID = 19768, count = 35, name = "Primal Tiger Leather" },
@@ -563,6 +599,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Pauldrons",
+        teachItems = { 19773 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blood Tiger Shoulders" } },
         reagents   = {
             { itemID = 19768, count = 25, name = "Primal Tiger Leather" },
@@ -578,6 +615,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Mail Chestguards",
+        teachItems = { 15751 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Dragonscale Breastplate" } },
         reagents   = {
             { itemID = 8170, count = 28, name = "Rugged Leather" },
@@ -593,6 +631,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Helmets",
+        teachItems = { 252938 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Dragonscale Helm" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -626,6 +665,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Mail Pauldrons",
+        teachItems = { 15763 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Dragonscale Shoulders" } },
         reagents   = {
             { itemID = 8170, count = 28, name = "Rugged Leather" },
@@ -642,6 +682,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Leather Chestguards",
+        teachItems = { 252883 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Suede Armor" } },
         reagents   = {
             { itemID = 8170, count = 14, name = "Rugged Leather" },
@@ -658,6 +699,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Leather Belts",
+        teachItems = { 252886 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Suede Belt" } },
         reagents   = {
             { itemID = 8170, count = 14, name = "Rugged Leather" },
@@ -672,6 +714,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Leather Bracers",
+        teachItems = { 252888 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Suede Bracers" } },
         reagents   = {
             { itemID = 8170, count = 10, name = "Rugged Leather" },
@@ -686,6 +729,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Leather Gauntlets",
+        teachItems = { 252866 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Suede Gloves" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -700,6 +744,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Leather Helmets",
+        teachItems = { 252890 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Suede Hat" } },
         reagents   = {
             { itemID = 8170, count = 16, name = "Rugged Leather" },
@@ -714,6 +759,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Leather Legguards",
+        teachItems = { 252878 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Suede Pants" } },
         reagents   = {
             { itemID = 8170, count = 14, name = "Rugged Leather" },
@@ -729,6 +775,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Leather Boots",
+        teachItems = { 252859 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Suede Shoes" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -743,6 +790,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Leather Pauldrons",
+        teachItems = { 252881 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Suede Shoulder" } },
         reagents   = {
             { itemID = 8170, count = 10, name = "Rugged Leather" },
@@ -757,6 +805,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Belts",
+        teachItems = { 22769 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12810, count = 4, name = "Enchanted Leather" },
@@ -771,6 +820,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Boots",
+        teachItems = { 22770 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12810, count = 6, name = "Enchanted Leather" },
@@ -786,6 +836,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Helmets",
+        teachItems = { 22771 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12810, count = 12, name = "Enchanted Leather" },
@@ -799,6 +850,7 @@ local recipes = {
         itemID     = 252490,
         skillRange = { false, 80, 80, 80 },
         category   = "Leather Chestguards",
+        teachItems = { 252771 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 16, name = "Light Leather" },
@@ -813,6 +865,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 90, 105, 120 },
         category   = "Leather Belts",
+        teachItems = { 252765 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brawler's Leather Belt" } },
         reagents   = {
             { itemID = 2318, count = 10, name = "Light Leather" },
@@ -829,6 +882,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 122, 135 },
         category   = "Leather Boots",
+        teachItems = { 252786 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brawler's Leather Boots" } },
         reagents   = {
             { itemID = 2318, count = 14, name = "Light Leather" },
@@ -845,6 +899,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Leather Gauntlets",
+        teachItems = { 252777 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brawler's Leather Gloves" } },
         reagents   = {
             { itemID = 2318, count = 12, name = "Light Leather" },
@@ -859,6 +914,7 @@ local recipes = {
         itemID     = 252512,
         skillRange = { false, 130, 130, 130 },
         category   = "Leather Helmets",
+        teachItems = { 252814 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -873,6 +929,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 137, 150 },
         category   = "Leather Helmets",
+        teachItems = { 252798 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brawler's Leather Hood" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -889,6 +946,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 160, 170 },
         category   = "Leather Legguards",
+        teachItems = { 252820 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brawler's Leather Legguards" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -903,6 +961,7 @@ local recipes = {
         itemID     = 252500,
         skillRange = { false, 105, 105, 105 },
         category   = "Leather Legguards",
+        teachItems = { 252792 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -917,6 +976,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 147, 160 },
         category   = "Leather Chestguards",
+        teachItems = { 252805 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brawler's Leather Tunic" } },
         reagents   = {
             { itemID = 2319, count = 10, name = "Medium Leather" },
@@ -933,6 +993,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 295, 297, 300 },
         category   = "Mail Belts",
+        teachItems = { 275596 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Broodwatcher's Belt" } },
         reagents   = {
             { itemID = 15408, count = 7, name = "Heavy Scorpid Scale" },
@@ -948,6 +1009,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Mail Gauntlets",
+        teachItems = { 275595 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Broodwatcher's Clenchers" } },
         reagents   = {
             { itemID = 15408, count = 5, name = "Heavy Scorpid Scale" },
@@ -963,6 +1025,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 295, 297, 300 },
         category   = "Mail Boots",
+        teachItems = { 275597 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Broodwatcher's Treaders" } },
         reagents   = {
             { itemID = 15408, count = 6, name = "Heavy Scorpid Scale" },
@@ -990,6 +1053,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 250, 260, 270 },
         category   = "Mail Belts",
+        teachItems = { 252909 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Charged Scorpid Belt" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -1004,6 +1068,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Mail Boots",
+        teachItems = { 252936 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Charged Scorpid Boots" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -1019,6 +1084,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Mail Bracers",
+        teachItems = { 252927 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Charged Scorpid Bracers" } },
         reagents   = {
             { itemID = 8170, count = 2, name = "Rugged Leather" },
@@ -1034,6 +1100,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Mail Gauntlets",
+        teachItems = { 252930 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Charged Scorpid Gauntlets" } },
         reagents   = {
             { itemID = 8170, count = 4, name = "Rugged Leather" },
@@ -1049,6 +1116,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Mail Helmets",
+        teachItems = { 252915 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Charged Scorpid Helm" } },
         reagents   = {
             { itemID = 8170, count = 4, name = "Rugged Leather" },
@@ -1064,6 +1132,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Mail Legguards",
+        teachItems = { 252934 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Charged Scorpid Leggings" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -1079,6 +1148,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Pauldrons",
+        teachItems = { 252917 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Charged Scorpid Shoulder" } },
         reagents   = {
             { itemID = 8170, count = 4, name = "Rugged Leather" },
@@ -1094,6 +1164,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Mail Chestguards",
+        teachItems = { 252932 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Charged Scorpid Vest" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -1109,6 +1180,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Boots",
+        teachItems = { 15737 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Chimeric Boots" } },
         reagents   = {
             { itemID = 8170, count = 4, name = "Rugged Leather" },
@@ -1123,6 +1195,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Leather Gauntlets",
+        teachItems = { 15729 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Chimeric Gloves" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -1137,6 +1210,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Leather Legguards",
+        teachItems = { 15746 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Chimeric Leggings" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -1151,6 +1225,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Leather Chestguards",
+        teachItems = { 15755 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Chimeric Vest" } },
         reagents   = {
             { itemID = 8170, count = 10, name = "Rugged Leather" },
@@ -1165,6 +1240,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Cloaks",
+        teachItems = { 18517 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Chromatic Cloak" } },
         reagents   = {
             { itemID = 8170, count = 30, name = "Rugged Leather" },
@@ -1182,6 +1258,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Gauntlets",
+        teachItems = { 19331 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Chromatic Gauntlets" } },
         reagents   = {
             { itemID = 17010, count = 5, name = "Fiery Core" },
@@ -1199,6 +1276,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Leather Belts",
+        teachItems = { 276937 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Gustwoven Belt" } },
         reagents   = {
             { itemID = 2318, count = 5, name = "Light Leather" },
@@ -1212,6 +1290,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Leather Boots",
+        teachItems = { 276939 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Gustwoven Boots" } },
         reagents   = {
             { itemID = 2318, count = 6, name = "Light Leather" },
@@ -1225,6 +1304,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Leather Bracers",
+        teachItems = { 276935 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Gustwoven Bracers" } },
         reagents   = {
             { itemID = 2318, count = 4, name = "Light Leather" },
@@ -1238,6 +1318,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Leather Gauntlets",
+        teachItems = { 276936 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Gustwoven Gloves" } },
         reagents   = {
             { itemID = 2318, count = 6, name = "Light Leather" },
@@ -1251,6 +1332,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leather Chestguards",
+        teachItems = { 276934 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Gustwoven Harness" } },
         reagents   = {
             { itemID = 2318, count = 7, name = "Light Leather" },
@@ -1265,6 +1347,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Leather Helmets",
+        teachItems = { 276978 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Gustwoven Hood" } },
         reagents   = {
             { itemID = 4234, count = 15, name = "Heavy Leather" },
@@ -1280,6 +1363,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Leather Pauldrons",
+        teachItems = { 276979 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Gustwoven Spaulders" } },
         reagents   = {
             { itemID = 4234, count = 12, name = "Heavy Leather" },
@@ -1295,6 +1379,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leather Legguards",
+        teachItems = { 276938 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Gustwoven Trousers" } },
         reagents   = {
             { itemID = 2318, count = 7, name = "Light Leather" },
@@ -1308,6 +1393,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Leather Bracers",
+        teachItems = { 276941 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Windraveled Armguards" } },
         reagents   = {
             { itemID = 2318, count = 4, name = "Light Leather" },
@@ -1321,6 +1407,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Leather Helmets",
+        teachItems = { 276980 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Windraveled Cover" } },
         reagents   = {
             { itemID = 4234, count = 15, name = "Heavy Leather" },
@@ -1336,6 +1423,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Leather Pauldrons",
+        teachItems = { 276981 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Windraveled Drapes" } },
         reagents   = {
             { itemID = 4234, count = 12, name = "Heavy Leather" },
@@ -1351,6 +1439,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Leather Boots",
+        teachItems = { 276945 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Windraveled Footwraps" } },
         reagents   = {
             { itemID = 2318, count = 6, name = "Light Leather" },
@@ -1364,6 +1453,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leather Chestguards",
+        teachItems = { 276940 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Windraveled Jerkin" } },
         reagents   = {
             { itemID = 2318, count = 7, name = "Light Leather" },
@@ -1378,6 +1468,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Leather Gauntlets",
+        teachItems = { 276942 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Windraveled Mitts" } },
         reagents   = {
             { itemID = 2318, count = 6, name = "Light Leather" },
@@ -1391,6 +1482,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leather Legguards",
+        teachItems = { 276944 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Windraveled Pants" } },
         reagents   = {
             { itemID = 2318, count = 7, name = "Light Leather" },
@@ -1404,6 +1496,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Leather Belts",
+        teachItems = { 276943 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Windraveled Strap" } },
         reagents   = {
             { itemID = 2318, count = 5, name = "Light Leather" },
@@ -1417,6 +1510,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Helmets",
+        teachItems = { 8384 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Comfortable Leather Hat" } },
         reagents   = {
             { itemID = 4234, count = 12, name = "Heavy Leather" },
@@ -1431,6 +1525,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Armor Kits",
+        teachItems = { 18252 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Core Armor Kit" } },
         reagents   = {
             { itemID = 17012, count = 3, name = "Core Leather" },
@@ -1444,6 +1539,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Belts",
+        teachItems = { 19332 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Corehound Belt" } },
         reagents   = {
             { itemID = 17010, count = 8, name = "Fiery Core" },
@@ -1460,6 +1556,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 315, 325, 335 },
         category   = "Leather Boots",
+        teachItems = { 17022 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Corehound Boots" } },
         reagents   = {
             { itemID = 17012, count = 20, name = "Core Leather" },
@@ -1556,6 +1653,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 35, 40, 40, 40 },
         category   = "Leather Boots",
+        teachItems = { 252762 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 24, name = "Light Leather" },
@@ -1584,6 +1682,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 140, 152, 165 },
         category   = "Leather Gauntlets",
+        teachItems = { 7360 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Dark Leather Gloves" } },
         reagents   = {
             { itemID = 2312, count = 1, name = "Fine Leather Gloves" },
@@ -1613,6 +1712,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 115, 140, 152, 165 },
         category   = "Leather Pauldrons",
+        teachItems = { 4296 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Dark Leather Shoulders" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -1628,6 +1728,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Leather Chestguards",
+        teachItems = { 2409 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Dark Leather Tunic" } },
         reagents   = {
             { itemID = 2319, count = 6, name = "Medium Leather" },
@@ -1642,6 +1743,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Chestguards",
+        teachItems = { 252892 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Dawn Armor" } },
         reagents   = {
             { itemID = 12810, count = 6, name = "Enchanted Leather" },
@@ -1660,6 +1762,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Leather Boots",
+        teachItems = { 19328, 227894 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Dawn Treaders" } },
         reagents   = {
             { itemID = 8170, count = 30, name = "Rugged Leather" },
@@ -1674,6 +1777,7 @@ local recipes = {
         itemID     = 252434,
         skillRange = { false, 80, 80, 80 },
         category   = "Leather Chestguards",
+        teachItems = { 252773 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 16, name = "Light Leather" },
@@ -1688,6 +1792,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 90, 105, 120 },
         category   = "Leather Belts",
+        teachItems = { 252767 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Defender's Leather Belt" } },
         reagents   = {
             { itemID = 2318, count = 10, name = "Light Leather" },
@@ -1704,6 +1809,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 122, 135 },
         category   = "Leather Boots",
+        teachItems = { 252788 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Defender's Leather Boots" } },
         reagents   = {
             { itemID = 2318, count = 14, name = "Light Leather" },
@@ -1720,6 +1826,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Leather Gauntlets",
+        teachItems = { 252779 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Defender's Leather Gloves" } },
         reagents   = {
             { itemID = 2318, count = 12, name = "Light Leather" },
@@ -1734,6 +1841,7 @@ local recipes = {
         itemID     = 252455,
         skillRange = { false, 130, 130, 130 },
         category   = "Leather Helmets",
+        teachItems = { 252816 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -1748,6 +1856,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 137, 150 },
         category   = "Leather Helmets",
+        teachItems = { 252800 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Defender's Leather Hood" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -1764,6 +1873,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 160, 170 },
         category   = "Leather Legguards",
+        teachItems = { 252822 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Defender's Leather Kilt" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -1778,6 +1888,7 @@ local recipes = {
         itemID     = 252445,
         skillRange = { false, 105, 105, 105 },
         category   = "Leather Legguards",
+        teachItems = { 252794 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -1792,6 +1903,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 147, 160 },
         category   = "Leather Chestguards",
+        teachItems = { 252807 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Defender's Leather Tunic" } },
         reagents   = {
             { itemID = 2319, count = 10, name = "Medium Leather" },
@@ -1808,6 +1920,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 115, 127, 140 },
         category   = "Leather Belts",
+        teachItems = { 6476 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Deviate Scale Belt" } },
         reagents   = {
             { itemID = 6471, count = 10, name = "Perfect Deviate Scale" },
@@ -1822,6 +1935,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 65, 95, 110, 125 },
         category   = "Cloaks",
+        teachItems = { 6474 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Deviate Scale Cloak" } },
         reagents   = {
             { itemID = 6470, count = 8, name = "Deviate Scale" },
@@ -1836,6 +1950,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 105, 117, 130 },
         category   = "Leather Gauntlets",
+        teachItems = { 6475 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Deviate Scale Gloves" } },
         reagents   = {
             { itemID = 6471, count = 2, name = "Perfect Deviate Scale" },
@@ -1850,6 +1965,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Leather Gauntlets",
+        teachItems = { 15758 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Devilsaur Gauntlets" } },
         reagents   = {
             { itemID = 8170, count = 30, name = "Rugged Leather" },
@@ -1864,6 +1980,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Leather Legguards",
+        teachItems = { 15772 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Devilsaur Leggings" } },
         reagents   = {
             { itemID = 8170, count = 30, name = "Rugged Leather" },
@@ -1909,6 +2026,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Chestguards",
+        teachItems = { 20382 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12810, count = 12, name = "Enchanted Leather" },
@@ -1940,6 +2058,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Boots",
+        teachItems = { 7452, 215150, 215151 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Dusky Boots" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -1983,6 +2102,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 160, 170, 180 },
         category   = "Leather Legguards",
+        teachItems = { 7449 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Dusky Leather Leggings" } },
         reagents   = {
             { itemID = 4234, count = 10, name = "Heavy Leather" },
@@ -1997,6 +2117,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 147, 160 },
         category   = "Leather Pauldrons",
+        teachItems = { 7362 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthen Leather Shoulders" } },
         reagents   = {
             { itemID = 2319, count = 6, name = "Medium Leather" },
@@ -2011,6 +2132,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Leather Legguards",
+        teachItems = { 279303 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Elderwild Pants" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2025,6 +2147,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Leather Belts",
+        teachItems = { 279301 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Elderwild Waistcord" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -2105,6 +2228,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Mail Pauldrons",
+        teachItems = { 279304 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Eternity Pauldrons" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -2119,6 +2243,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 200, 210, 220 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 215367 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Faintly Glowing Leather" } },
         reagents   = {
             { itemID = 8172, count = 1, name = "Cured Thick Hide" },
@@ -2161,6 +2286,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 65, 95, 110, 125 },
         category   = "Leather Boots",
+        teachItems = { 2406 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fine Leather Boots" } },
         reagents   = {
             { itemID = 2318, count = 7, name = "Light Leather" },
@@ -2187,6 +2313,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 80, 95, 110 },
         category   = "Leather Gauntlets",
+        teachItems = { 2408 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fine Leather Gloves" } },
         reagents   = {
             { itemID = 4231, count = 1, name = "Cured Light Hide" },
@@ -2201,6 +2328,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 105, 117, 130 },
         category   = "Leather Legguards",
+        teachItems = { 5972 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fine Leather Pants" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -2243,6 +2371,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 155, 165, 175 },
         category   = "Armor Kits",
+        teachItems = { 252812 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Forceful Heavy Armor Kit" } },
         reagents   = {
             { itemID = 4265, count = 1, name = "Heavy Armor Kit" },
@@ -2257,6 +2386,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 95, 102, 110 },
         category   = "Armor Kits",
+        teachItems = { 252784 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Forceful Medium Armor Kit" } },
         reagents   = {
             { itemID = 2313, count = 1, name = "Medium Armor Kit" },
@@ -2271,6 +2401,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 235, 245, 255 },
         category   = "Armor Kits",
+        teachItems = { 252942 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Forceful Rugged Armor Kit" } },
         reagents   = {
             { itemID = 15564, count = 1, name = "Rugged Armor Kit" },
@@ -2287,6 +2418,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 205, 215, 225 },
         category   = "Armor Kits",
+        teachItems = { 252834 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Forceful Thick Armor Kit" } },
         reagents   = {
             { itemID = 8173, count = 1, name = "Thick Armor Kit" },
@@ -2316,6 +2448,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Boots",
+        teachItems = { 15740 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frostsaber Boots" } },
         reagents   = {
             { itemID = 8170, count = 4, name = "Rugged Leather" },
@@ -2330,6 +2463,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Leather Gauntlets",
+        teachItems = { 15761 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frostsaber Gloves" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -2344,6 +2478,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Leather Legguards",
+        teachItems = { 15747 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frostsaber Leggings" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -2358,6 +2493,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Leather Chestguards",
+        teachItems = { 15779 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frostsaber Tunic" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -2389,6 +2525,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 160, 180, 190, 200 },
         category   = "Leather Belts",
+        teachItems = { 14635 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gem-studded Leather Belt" } },
         reagents   = {
             { itemID = 4236, count = 4, name = "Cured Heavy Hide" },
@@ -2405,6 +2542,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Leather Belts",
+        teachItems = { 18514 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Girdle of Insight" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -2420,6 +2558,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 195, 205 },
         category   = "Leather Gauntlets",
+        teachItems = { 17722 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gloves of the Greatfather" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -2434,6 +2573,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 315, 325, 335 },
         category   = "Leather Pauldrons",
+        teachItems = { 19329, 227895 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Golden Mantle of the Dawn" } },
         reagents   = {
             { itemID = 12810, count = 8, name = "Enchanted Leather" },
@@ -2463,6 +2603,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Mail Chestguards",
+        teachItems = { 15726 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Dragonscale Breastplate" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -2492,6 +2633,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Mail Legguards",
+        teachItems = { 15733 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Dragonscale Leggings" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -2506,6 +2648,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 150, 160, 170 },
         category   = "Leather Chestguards",
+        teachItems = { 7613 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Leather Armor" } },
         reagents   = {
             { itemID = 4234, count = 9, name = "Heavy Leather" },
@@ -2551,6 +2694,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 170, 180, 190 },
         category   = "Leather Chestguards",
+        teachItems = { 7450 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Whelp Armor" } },
         reagents   = {
             { itemID = 7392, count = 4, name = "Green Whelp Scale" },
@@ -2565,6 +2709,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 195, 205 },
         category   = "Leather Bracers",
+        teachItems = { 7451 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Whelp Bracers" } },
         reagents   = {
             { itemID = 7392, count = 6, name = "Green Whelp Scale" },
@@ -2579,6 +2724,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Boots",
+        teachItems = { 273999 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grimstitch Boots" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2594,6 +2740,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Gauntlets",
+        teachItems = { 273997 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grimstitch Gloves" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2609,6 +2756,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Legguards",
+        teachItems = { 273996 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grimstitch Pants" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -2624,6 +2772,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Pauldrons",
+        teachItems = { 273998 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grimstitch Spaulders" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2639,6 +2788,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Boots",
+        teachItems = { 273963 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Boots" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2654,6 +2804,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Gauntlets",
+        teachItems = { 273965 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Gauntlets" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2669,6 +2820,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Gauntlets",
+        teachItems = { 273953 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Grips" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2684,6 +2836,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Gauntlets",
+        teachItems = { 273961 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Handguards" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2699,6 +2852,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Legguards",
+        teachItems = { 273956 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Kilt" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -2714,6 +2868,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Legguards",
+        teachItems = { 273964 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Leggings" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -2729,6 +2884,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Legguards",
+        teachItems = { 273960 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Legguards" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -2744,6 +2900,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Pauldrons",
+        teachItems = { 273958 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Mantle" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2759,6 +2916,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Gauntlets",
+        teachItems = { 273957 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Mitts" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2774,6 +2932,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Pauldrons",
+        teachItems = { 273962 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Pauldrons" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2789,6 +2948,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Boots",
+        teachItems = { 273959 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Sandals" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2804,6 +2964,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Pauldrons",
+        teachItems = { 273954 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Shoulderpads" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2819,6 +2980,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Pauldrons",
+        teachItems = { 273966 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Spaulders" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2834,6 +2996,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Boots",
+        teachItems = { 273955 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Stompers" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2849,6 +3012,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Boots",
+        teachItems = { 273967 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Treads" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -2864,6 +3028,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leather Legguards",
+        teachItems = { 273952 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Grovekeeper Trousers" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -2879,6 +3044,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 170, 180, 190 },
         category   = "Leather Chestguards",
+        teachItems = { 4299 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Guardian Armor" } },
         reagents   = {
             { itemID = 4236, count = 2, name = "Cured Heavy Hide" },
@@ -2894,6 +3060,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 165, 175, 185 },
         category   = "Leather Belts",
+        teachItems = { 4298 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Guardian Belt" } },
         reagents   = {
             { itemID = 4236, count = 2, name = "Cured Heavy Hide" },
@@ -2909,6 +3076,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 180, 190, 200 },
         category   = "Cloaks",
+        teachItems = { 4295, 5974 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Double-stitched Leather Gloves OLD" } },
         reagents   = {
             { itemID = 4234, count = 14, name = "Heavy Leather" },
@@ -2937,6 +3105,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 170, 190, 200, 210 },
         category   = "Leather Bracers",
+        teachItems = { 4300 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Guardian Leather Bracers" } },
         reagents   = {
             { itemID = 4234, count = 6, name = "Heavy Leather" },
@@ -3056,6 +3225,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 145, 157, 170 },
         category   = "Leather Gauntlets",
+        teachItems = { 7364 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Earthen Gloves" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -3096,6 +3266,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 125, 130, 135 },
         category   = "Miscellaneous",
+        teachItems = { 18731 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Leather Ball" } },
         reagents   = {
             { itemID = 4234, count = 2, name = "Heavy Leather" },
@@ -3122,6 +3293,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Mail Belts",
+        teachItems = { 15743 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Scorpid Belt" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -3136,6 +3308,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Mail Boots",
+        teachItems = { 252928 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Scorpid Boots" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -3150,6 +3323,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 250, 260, 270 },
         category   = "Mail Bracers",
+        teachItems = { 15724 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Scorpid Bracers" } },
         reagents   = {
             { itemID = 8170, count = 4, name = "Rugged Leather" },
@@ -3164,6 +3338,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Mail Gauntlets",
+        teachItems = { 15738 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Scorpid Gauntlets" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -3178,6 +3353,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Mail Helmets",
+        teachItems = { 15762 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Scorpid Helm" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -3193,6 +3369,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Mail Legguards",
+        teachItems = { 15748 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Scorpid Leggings" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -3207,6 +3384,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Mail Pauldrons",
+        teachItems = { 15774 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Scorpid Shoulders" } },
         reagents   = {
             { itemID = 8170, count = 14, name = "Rugged Leather" },
@@ -3222,6 +3400,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Mail Chestguards",
+        teachItems = { 15727 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Scorpid Vest" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -3236,6 +3415,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Mail Belts",
+        teachItems = { 19202 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Timbermaw Belt" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -3251,6 +3431,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 300, 310, 320 },
         category   = "Mail Boots",
+        teachItems = { 19204 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Timbermaw Boots" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -3282,6 +3463,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 290, 300, 310 },
         category   = "Mail Helmets",
+        teachItems = { 12716 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Helm of the Great Chief" } },
         reagents   = {
             { itemID = 8170, count = 40, name = "Rugged Leather" },
@@ -3299,6 +3481,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 147, 160 },
         category   = "Leather Gauntlets",
+        teachItems = { 7361 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Herbalist's Gloves" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -3313,6 +3496,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Cloaks",
+        teachItems = { 18518 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Hide of the Wild" } },
         reagents   = {
             { itemID = 8170, count = 30, name = "Rugged Leather" },
@@ -3330,6 +3514,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 125, 137, 150 },
         category   = "Leather Belts",
+        teachItems = { 4294 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Hillman's Belt" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -3357,6 +3542,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 147, 160 },
         category   = "Leather Boots",
+        teachItems = { 252804 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Hillman's Leather Boots" } },
         reagents   = {
             { itemID = 4233, count = 1, name = "Cured Medium Hide" },
@@ -3384,6 +3570,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Leather Chestguards",
+        teachItems = { 4293 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Hillman's Leather Vest" } },
         reagents   = {
             { itemID = 4243, count = 1, name = "Fine Leather Tunic" },
@@ -3412,6 +3599,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 295, 297, 300 },
         category   = "Leather Boots",
+        teachItems = { 275591 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Hivethrasher's Boots" } },
         reagents   = {
             { itemID = 8170, count = 15, name = "Rugged Leather" },
@@ -3427,6 +3615,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Leather Gauntlets",
+        teachItems = { 275589 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Hivethrasher's Claws" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -3442,6 +3631,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 295, 297, 300 },
         category   = "Leather Belts",
+        teachItems = { 275590 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Hivethrasher's Girdle" } },
         reagents   = {
             { itemID = 8170, count = 18, name = "Rugged Leather" },
@@ -3457,6 +3647,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Bracers",
+        teachItems = { 22698 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 4, name = "Frozen Rune" },
@@ -3473,6 +3664,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Chestguards",
+        teachItems = { 22696 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 7, name = "Frozen Rune" },
@@ -3489,6 +3681,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Gauntlets",
+        teachItems = { 22697 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 5, name = "Frozen Rune" },
@@ -3505,6 +3698,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 295, 302, 310 },
         category   = "Mail Chestguards",
+        teachItems = { 12728 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Invulnerable Mail" } },
         reagents   = {
             { itemID = 249427, count = 20, name = "Pristine Leather" },
@@ -3522,6 +3716,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Leather Chestguards",
+        teachItems = { 15760 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ironfeather Breastplate" } },
         reagents   = {
             { itemID = 8170, count = 40, name = "Rugged Leather" },
@@ -3538,6 +3733,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Legguards",
+        teachItems = { 252895 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ironfeather Leggings" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -3556,6 +3752,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Leather Pauldrons",
+        teachItems = { 15735 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ironfeather Shoulders" } },
         reagents   = {
             { itemID = 8170, count = 24, name = "Rugged Leather" },
@@ -3571,6 +3768,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 35, 65, 80, 95 },
         category   = "Bags",
+        teachItems = { 5083 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Kodo Hide Bag" } },
         reagents   = {
             { itemID = 5082, count = 3, name = "Thin Kodo Leather" },
@@ -3585,6 +3783,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Belts",
+        teachItems = { 19330 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Lava Belt" } },
         reagents   = {
             { itemID = 17011, count = 5, name = "Lava Core" },
@@ -3663,6 +3862,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 30, 40, 45, 50 },
         category   = "Bags",
+        teachItems = { 277716 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Light Leather Reagent Bag" } },
         reagents   = {
             { itemID = 2318, count = 8, name = "Light Leather" },
@@ -3677,6 +3877,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Leather Chestguards",
+        teachItems = { 15771 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Living Breastplate" } },
         reagents   = {
             { itemID = 8170, count = 16, name = "Rugged Leather" },
@@ -3693,6 +3894,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Helmets",
+        teachItems = { 252891 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Living Crown" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -3711,6 +3913,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Leather Legguards",
+        teachItems = { 15752 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Living Leggings" } },
         reagents   = {
             { itemID = 8170, count = 16, name = "Rugged Leather" },
@@ -3726,6 +3929,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Leather Pauldrons",
+        teachItems = { 15734 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Living Shoulders" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -3765,6 +3969,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Leather Belts",
+        teachItems = { 252832 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Leather Belt" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -3779,6 +3984,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Leather Boots",
+        teachItems = { 252864 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Leather Boots" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -3796,6 +4002,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Leather Bracers",
+        teachItems = { 252857 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Leather Bracers" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -3813,6 +4020,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Leather Gauntlets",
+        teachItems = { 252871 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Leather Gauntlets" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -3827,6 +4035,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Gauntlets",
+        teachItems = { 252842 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Leather Gloves" } },
         reagents   = {
             { itemID = 4234, count = 16, name = "Heavy Leather" },
@@ -3844,6 +4053,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Leather Boots",
+        teachItems = { 252847 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Leather Shoes" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -3858,6 +4068,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Leather Pauldrons",
+        teachItems = { 252852 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Leather Shoulder" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -3875,6 +4086,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Belts",
+        teachItems = { 252876 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Leather Waistguard" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -3892,6 +4104,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Mail Belts",
+        teachItems = { 252925 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Mail Belt" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -3909,6 +4122,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Mail Boots",
+        teachItems = { 252899 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Mail Boots" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -3923,6 +4137,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 220, 230, 240 },
         category   = "Mail Bracers",
+        teachItems = { 252907 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Mail Bracers" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -3940,6 +4155,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Mail Gauntlets",
+        teachItems = { 252921 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Mail Gauntlets" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -3954,6 +4170,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Mail Boots",
+        teachItems = { 252913 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Mail Sabatons" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -3971,6 +4188,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 220, 230, 240 },
         category   = "Mail Pauldrons",
+        teachItems = { 252903 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mender's Mail Shoulder" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -3988,6 +4206,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Leather Chestguards",
+        teachItems = { 19326 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Might of the Timbermaw" } },
         reagents   = {
             { itemID = 8170, count = 30, name = "Rugged Leather" },
@@ -4004,6 +4223,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Belts",
+        teachItems = { 19333 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Molten Belt" } },
         reagents   = {
             { itemID = 17010, count = 2, name = "Fiery Core" },
@@ -4020,6 +4240,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Helmets",
+        teachItems = { 17023 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Molten Helm" } },
         reagents   = {
             { itemID = 17012, count = 15, name = "Core Leather" },
@@ -4035,6 +4256,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Leather Boots",
+        teachItems = { 18515 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mongoose Boots" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -4051,6 +4273,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 35, 40, 40, 40 },
         category   = "Leather Boots",
+        teachItems = { 252764 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 12, name = "Light Leather" },
@@ -4065,6 +4288,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 65, 90, 105, 120 },
         category   = "Leather Chestguards",
+        teachItems = { 6710 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Moonglow Vest" } },
         reagents   = {
             { itemID = 2318, count = 6, name = "Light Leather" },
@@ -4080,6 +4304,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Mail Gauntlets",
+        teachItems = { 279306 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mourning Handguards" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -4094,6 +4319,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 65, 95, 110, 125 },
         category   = "Leather Belts",
+        teachItems = { 5786 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Murloc Scale Belt" } },
         reagents   = {
             { itemID = 5784, count = 8, name = "Slimy Murloc Scale" },
@@ -4108,6 +4334,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 195, 205 },
         category   = "Leather Bracers",
+        teachItems = { 5789 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Murloc Scale Bracers" } },
         reagents   = {
             { itemID = 5785, count = 16, name = "Thick Murloc Scale" },
@@ -4123,6 +4350,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 70, 100, 115, 130 },
         category   = "Leather Chestguards",
+        teachItems = { 5787 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Murloc Scale Breastplate" } },
         reagents   = {
             { itemID = 5784, count = 12, name = "Slimy Murloc Scale" },
@@ -4138,6 +4366,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 35, 40, 40, 40 },
         category   = "Leather Boots",
+        teachItems = { 252763 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 12, name = "Light Leather" },
@@ -4152,6 +4381,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 155, 165, 175 },
         category   = "Armor Kits",
+        teachItems = { 252811 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mystic Heavy Armor Kit" } },
         reagents   = {
             { itemID = 4265, count = 1, name = "Heavy Armor Kit" },
@@ -4166,6 +4396,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 95, 102, 110 },
         category   = "Armor Kits",
+        teachItems = { 252783 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mystic Medium Armor Kit" } },
         reagents   = {
             { itemID = 2313, count = 1, name = "Medium Armor Kit" },
@@ -4180,6 +4411,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 235, 245, 255 },
         category   = "Armor Kits",
+        teachItems = { 252941 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mystic Rugged Armor Kit" } },
         reagents   = {
             { itemID = 15564, count = 1, name = "Rugged Armor Kit" },
@@ -4196,6 +4428,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 205, 215, 225 },
         category   = "Armor Kits",
+        teachItems = { 252833 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mystic Thick Armor Kit" } },
         reagents   = {
             { itemID = 8173, count = 1, name = "Thick Armor Kit" },
@@ -4223,6 +4456,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 225, 235, 245 },
         category   = "Cloaks",
+        teachItems = { 8388 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Nightscape Cloak" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -4262,6 +4496,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 205, 215, 225 },
         category   = "Leather Pauldrons",
+        teachItems = { 8409 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Nightscape Shoulders" } },
         reagents   = {
             { itemID = 4304, count = 8, name = "Thick Leather" },
@@ -4303,6 +4538,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Chestguards",
+        teachItems = { 15780 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 8170, count = 40, name = "Rugged Leather" },
@@ -4318,6 +4554,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Cloaks",
+        teachItems = { 15769 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 15410, count = 1, name = "Scale of Onyxia" },
@@ -4332,6 +4569,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Leather Helmets",
+        teachItems = { 279302 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Outlaw's Collar" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -4346,6 +4584,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 115, 140, 152, 165 },
         category   = "Leather Gauntlets",
+        teachItems = { 7363 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pilferer's Gloves" } },
         reagents   = {
             { itemID = 2319, count = 10, name = "Medium Leather" },
@@ -4360,6 +4599,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Bracers",
+        teachItems = { 22695 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 4, name = "Frozen Rune" },
@@ -4376,6 +4616,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Gauntlets",
+        teachItems = { 22694 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 5, name = "Frozen Rune" },
@@ -4392,6 +4633,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Chestguards",
+        teachItems = { 22692 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 7, name = "Frozen Rune" },
@@ -4408,6 +4650,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Bracers",
+        teachItems = { 19771 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Primal Batskin Bracers" } },
         reagents   = {
             { itemID = 19767, count = 8, name = "Primal Bat Leather" },
@@ -4423,6 +4666,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Gauntlets",
+        teachItems = { 19770 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Primal Batskin Gloves" } },
         reagents   = {
             { itemID = 19767, count = 10, name = "Primal Bat Leather" },
@@ -4438,6 +4682,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Chestguards",
+        teachItems = { 19769 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Primal Batskin Jerkin" } },
         reagents   = {
             { itemID = 19767, count = 14, name = "Primal Bat Leather" },
@@ -4453,6 +4698,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Legguards",
+        teachItems = { 252940 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pristine Scorpid Leggings" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -4471,6 +4717,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Leather Belts",
+        teachItems = { 252826 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Prowler's Leather Belt" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -4485,6 +4732,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Leather Boots",
+        teachItems = { 252860 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Prowler's Leather Boots" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -4502,6 +4750,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Leather Bracers",
+        teachItems = { 252853 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Prowler's Leather Bracers" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -4519,6 +4768,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Leather Gauntlets",
+        teachItems = { 252867 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Prowler's Leather Gauntlets" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -4533,6 +4783,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Gauntlets",
+        teachItems = { 252836 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Prowler's Leather Gloves" } },
         reagents   = {
             { itemID = 4234, count = 16, name = "Heavy Leather" },
@@ -4550,6 +4801,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Leather Boots",
+        teachItems = { 252843 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Prowler's Leather Shoes" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -4564,6 +4816,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Leather Pauldrons",
+        teachItems = { 252848 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Prowler's Leather Shoulder" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -4581,6 +4834,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Belts",
+        teachItems = { 252872 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Prowler's Leather Waistguard" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -4613,6 +4867,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 160, 170, 180 },
         category   = "Leather Belts",
+        teachItems = { 13288 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Raptor Hide Belt" } },
         reagents   = {
             { itemID = 4461, count = 4, name = "Raptor Hide" },
@@ -4627,6 +4882,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 160, 170, 180 },
         category   = "Leather Chestguards",
+        teachItems = { 13287 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Raptor Hide Harness" } },
         reagents   = {
             { itemID = 4461, count = 6, name = "Raptor Hide" },
@@ -4641,6 +4897,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Mail Chestguards",
+        teachItems = { 15730 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Dragonscale Breastplate" } },
         reagents   = {
             { itemID = 8170, count = 40, name = "Rugged Leather" },
@@ -4655,6 +4912,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Mail Legguards",
+        teachItems = { 252937 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Dragonscale Leggings" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -4673,6 +4931,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 120, 132, 145 },
         category   = "Leather Gauntlets",
+        teachItems = { 7290 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Whelp Gloves" } },
         reagents   = {
             { itemID = 7287, count = 6, name = "Red Whelp Scale" },
@@ -4711,6 +4970,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 30, 60, 75, 90 },
         category   = "Leather Legguards",
+        teachItems = { 7288 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Rugged Leather Pants" } },
         reagents   = {
             { itemID = 2318, count = 5, name = "Light Leather" },
@@ -4724,6 +4984,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 305, 315, 325 },
         category   = "Leather Chestguards",
+        teachItems = { 15776 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runic Leather Armor" } },
         reagents   = {
             { itemID = 8170, count = 22, name = "Rugged Leather" },
@@ -4740,6 +5001,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Leather Belts",
+        teachItems = { 15745 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runic Leather Belt" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -4754,6 +5016,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Bracers",
+        teachItems = { 15739 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runic Leather Bracers" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -4769,6 +5032,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Leather Gauntlets",
+        teachItems = { 15731 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runic Leather Gauntlets" } },
         reagents   = {
             { itemID = 8170, count = 10, name = "Rugged Leather" },
@@ -4783,6 +5047,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Leather Helmets",
+        teachItems = { 15756 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runic Leather Headband" } },
         reagents   = {
             { itemID = 8170, count = 14, name = "Rugged Leather" },
@@ -4797,6 +5062,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Leather Legguards",
+        teachItems = { 15765 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runic Leather Pants" } },
         reagents   = {
             { itemID = 8170, count = 18, name = "Rugged Leather" },
@@ -4812,6 +5078,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 305, 315, 325 },
         category   = "Leather Pauldrons",
+        teachItems = { 15777 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runic Leather Shoulders" } },
         reagents   = {
             { itemID = 8170, count = 16, name = "Rugged Leather" },
@@ -4828,6 +5095,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 290, 310, 320, 330 },
         category   = "Mail Bracers",
+        teachItems = { 20509 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20501, count = 1, name = "Heavy Silithid Carapace" },
@@ -4842,6 +5110,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 290, 310, 320, 330 },
         category   = "Mail Chestguards",
+        teachItems = { 20511 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20501, count = 3, name = "Heavy Silithid Carapace" },
@@ -4857,6 +5126,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 290, 310, 320, 330 },
         category   = "Mail Gauntlets",
+        teachItems = { 20510 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20501, count = 2, name = "Heavy Silithid Carapace" },
@@ -4872,6 +5142,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 295, 297, 300 },
         category   = "Mail Belts",
+        teachItems = { 275593 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scalegut Belt" } },
         reagents   = {
             { itemID = 15408, count = 7, name = "Heavy Scorpid Scale" },
@@ -4887,6 +5158,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Mail Gauntlets",
+        teachItems = { 275592 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scalegut Clenchers" } },
         reagents   = {
             { itemID = 15408, count = 5, name = "Heavy Scorpid Scale" },
@@ -4902,6 +5174,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 295, 297, 300 },
         category   = "Mail Boots",
+        teachItems = { 275594 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scalegut Treaders" } },
         reagents   = {
             { itemID = 15408, count = 6, name = "Heavy Scorpid Scale" },
@@ -4917,6 +5190,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273121 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Sewing Machine" } },
         reagents   = {
             { itemID = 273130, count = 1, name = "Undeath Engine" },
@@ -4931,6 +5205,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 195, 205 },
         category   = "Leather Gauntlets",
+        teachItems = { 18239 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shadowskin Gloves" } },
         reagents   = {
             { itemID = 4304, count = 6, name = "Thick Leather" },
@@ -4948,6 +5223,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Cloaks",
+        teachItems = { 18519 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shifting Cloak" } },
         reagents   = {
             { itemID = 8170, count = 30, name = "Rugged Leather" },
@@ -4965,6 +5241,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Leather Belts",
+        teachItems = { 252830 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skirmisher's Leather Belt" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -4979,6 +5256,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Gauntlets",
+        teachItems = { 252840 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skirmisher's Leather Gloves" } },
         reagents   = {
             { itemID = 4234, count = 16, name = "Heavy Leather" },
@@ -4996,6 +5274,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Mail Belts",
+        teachItems = { 252924 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skirmisher's Mail Belt" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -5013,6 +5292,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Mail Boots",
+        teachItems = { 252898 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skirmisher's Mail Boots" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -5027,6 +5307,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 220, 230, 240 },
         category   = "Mail Bracers",
+        teachItems = { 252906 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skirmisher's Mail Bracers" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -5044,6 +5325,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Mail Gauntlets",
+        teachItems = { 252920 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skirmisher's Mail Gauntlets" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5058,6 +5340,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Mail Boots",
+        teachItems = { 252912 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skirmisher's Mail Sabatons" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5075,6 +5358,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 220, 230, 240 },
         category   = "Mail Pauldrons",
+        teachItems = { 252902 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skirmisher's Mail Shoulder" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -5092,6 +5376,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Leather Belts",
+        teachItems = { 252827 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skulker's Leather Belt" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -5106,6 +5391,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Leather Boots",
+        teachItems = { 252861 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skulker's Leather Boots" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5123,6 +5409,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Leather Bracers",
+        teachItems = { 252854 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skulker's Leather Bracers" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -5140,6 +5427,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Leather Gauntlets",
+        teachItems = { 252868 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skulker's Leather Gauntlets" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5154,6 +5442,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Gauntlets",
+        teachItems = { 252837 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skulker's Leather Gloves" } },
         reagents   = {
             { itemID = 4234, count = 16, name = "Heavy Leather" },
@@ -5171,6 +5460,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Leather Boots",
+        teachItems = { 252844 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skulker's Leather Shoes" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -5185,6 +5475,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Leather Pauldrons",
+        teachItems = { 252849 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skulker's Leather Shoulder" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -5202,6 +5493,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Belts",
+        teachItems = { 252873 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skulker's Leather Waistguard" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -5219,6 +5511,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Leather Belts",
+        teachItems = { 252831 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Leather Belt" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -5233,6 +5526,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Leather Boots",
+        teachItems = { 252863 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Leather Boots" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5250,6 +5544,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Leather Bracers",
+        teachItems = { 252856 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Leather Bracers" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -5267,6 +5562,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Leather Gauntlets",
+        teachItems = { 252870 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Leather Gauntlets" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5281,6 +5577,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Gauntlets",
+        teachItems = { 252841 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Leather Gloves" } },
         reagents   = {
             { itemID = 4234, count = 16, name = "Heavy Leather" },
@@ -5298,6 +5595,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Leather Boots",
+        teachItems = { 252846 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Leather Shoes" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -5312,6 +5610,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Leather Pauldrons",
+        teachItems = { 252851 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Leather Shoulder" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -5329,6 +5628,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Belts",
+        teachItems = { 252875 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Leather Waistguard" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -5346,6 +5646,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Mail Belts",
+        teachItems = { 252923 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Mail Belt" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -5363,6 +5664,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Mail Boots",
+        teachItems = { 252897 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Mail Boots" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -5377,6 +5679,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 220, 230, 240 },
         category   = "Mail Bracers",
+        teachItems = { 252905 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Mail Bracers" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -5394,6 +5697,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Mail Gauntlets",
+        teachItems = { 252919 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Mail Gauntlets" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5408,6 +5712,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Mail Boots",
+        teachItems = { 252911 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Mail Sabatons" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5425,6 +5730,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 220, 230, 240 },
         category   = "Mail Pauldrons",
+        teachItems = { 252901 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Skycaller's Mail Shoulder" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -5455,6 +5761,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Boots",
+        teachItems = { 274003 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Treads" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5470,6 +5777,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Pauldrons",
+        teachItems = { 274006 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Epaulets" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5485,6 +5793,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Gauntlets",
+        teachItems = { 274005 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Gauntlets" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5500,6 +5809,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Gauntlets",
+        teachItems = { 276543 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Gloves" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5515,6 +5825,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Boots",
+        teachItems = { 274007 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Greaves" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5530,6 +5841,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Gauntlets",
+        teachItems = { 274001 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Grips" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5545,6 +5857,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Legguards",
+        teachItems = { 276542 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Kilt" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -5560,6 +5873,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Legguards",
+        teachItems = { 274000 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Leggings" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -5575,6 +5889,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Pauldrons",
+        teachItems = { 276544 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Mantle" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5590,6 +5905,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Legguards",
+        teachItems = { 274004 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Pants" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -5605,6 +5921,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Pauldrons",
+        teachItems = { 274002 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Spaulders" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5620,6 +5937,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Boots",
+        teachItems = { 276545 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spiritcaller Boots" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -5635,6 +5953,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 290, 310, 320, 330 },
         category   = "Mail Bracers",
+        teachItems = { 20506 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20500, count = 1, name = "Light Silithid Carapace" },
@@ -5649,6 +5968,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 290, 310, 320, 330 },
         category   = "Mail Chestguards",
+        teachItems = { 20508 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20500, count = 3, name = "Light Silithid Carapace" },
@@ -5664,6 +5984,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 285, 305, 315, 325 },
         category   = "Mail Gauntlets",
+        teachItems = { 20507 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20500, count = 2, name = "Light Silithid Carapace" },
@@ -5679,6 +6000,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Leather Belts",
+        teachItems = { 252828 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stalker's Leather Belt" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -5693,6 +6015,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Gauntlets",
+        teachItems = { 252838 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stalker's Leather Gloves" } },
         reagents   = {
             { itemID = 4234, count = 16, name = "Heavy Leather" },
@@ -5710,6 +6033,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Mail Belts",
+        teachItems = { 252922 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stalker's Mail Belt" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -5727,6 +6051,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Mail Boots",
+        teachItems = { 252896 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stalker's Mail Boots" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -5741,6 +6066,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 220, 230, 240 },
         category   = "Mail Bracers",
+        teachItems = { 252904 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stalker's Mail Bracers" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -5758,6 +6084,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Mail Gauntlets",
+        teachItems = { 252918 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stalker's Mail Gauntlets" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5772,6 +6099,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Mail Boots",
+        teachItems = { 252910 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stalker's Mail Sabatons" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -5789,6 +6117,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 220, 230, 240 },
         category   = "Mail Pauldrons",
+        teachItems = { 252900 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stalker's Mail Shoulder" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -5806,6 +6135,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Mail Gauntlets",
+        teachItems = { 12703 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Storm Gauntlets" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -5820,6 +6150,7 @@ local recipes = {
         itemID     = 252492,
         skillRange = { false, 80, 80, 80 },
         category   = "Leather Chestguards",
+        teachItems = { 252775 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 16, name = "Light Leather" },
@@ -5834,6 +6165,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 90, 105, 120 },
         category   = "Leather Belts",
+        teachItems = { 252769 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormrider's Leather Belt" } },
         reagents   = {
             { itemID = 2318, count = 10, name = "Light Leather" },
@@ -5850,6 +6182,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 122, 135 },
         category   = "Leather Boots",
+        teachItems = { 252790 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormrider's Leather Boots" } },
         reagents   = {
             { itemID = 2318, count = 14, name = "Light Leather" },
@@ -5866,6 +6199,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Leather Gauntlets",
+        teachItems = { 252781 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormrider's Leather Gloves" } },
         reagents   = {
             { itemID = 2318, count = 12, name = "Light Leather" },
@@ -5880,6 +6214,7 @@ local recipes = {
         itemID     = 252514,
         skillRange = { false, 130, 130, 130 },
         category   = "Leather Helmets",
+        teachItems = { 252818 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -5894,6 +6229,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 137, 150 },
         category   = "Leather Helmets",
+        teachItems = { 252802 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormrider's Leather Hood" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -5910,6 +6246,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 160, 170 },
         category   = "Leather Legguards",
+        teachItems = { 252824 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormrider's Leather Kilt" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -5924,6 +6261,7 @@ local recipes = {
         itemID     = 252502,
         skillRange = { false, 105, 105, 105 },
         category   = "Leather Legguards",
+        teachItems = { 252796 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -5938,6 +6276,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 147, 160 },
         category   = "Leather Chestguards",
+        teachItems = { 252809 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormrider's Leather Tunic" } },
         reagents   = {
             { itemID = 2319, count = 10, name = "Medium Leather" },
@@ -5954,6 +6293,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Leather Chestguards",
+        teachItems = { 15753 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormshroud Armor" } },
         reagents   = {
             { itemID = 8170, count = 16, name = "Rugged Leather" },
@@ -5970,6 +6310,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Leather Gauntlets",
+        teachItems = { 21548 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormshroud Gloves" } },
         reagents   = {
             { itemID = 12810, count = 6, name = "Enchanted Leather" },
@@ -5986,6 +6327,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Legguards",
+        teachItems = { 15741 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormshroud Pants" } },
         reagents   = {
             { itemID = 8170, count = 16, name = "Rugged Leather" },
@@ -6001,6 +6343,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Leather Pauldrons",
+        teachItems = { 15764 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormshroud Shoulders" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -6017,6 +6360,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Mail Belts",
+        teachItems = { 252929 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Supple Scorpid Belt" } },
         reagents   = {
             { itemID = 8170, count = 9, name = "Rugged Leather" },
@@ -6031,6 +6375,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 250, 260, 270 },
         category   = "Mail Boots",
+        teachItems = { 252908 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Supple Scorpid Boots" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -6045,6 +6390,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Mail Bracers",
+        teachItems = { 252916 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Supple Scorpid Bracers" } },
         reagents   = {
             { itemID = 8170, count = 7, name = "Rugged Leather" },
@@ -6059,6 +6405,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Mail Helmets",
+        teachItems = { 252931 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Supple Scorpid Helm" } },
         reagents   = {
             { itemID = 8170, count = 11, name = "Rugged Leather" },
@@ -6073,6 +6420,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Mail Legguards",
+        teachItems = { 252914 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Supple Scorpid Leggings" } },
         reagents   = {
             { itemID = 8170, count = 9, name = "Rugged Leather" },
@@ -6087,6 +6435,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Mail Boots",
+        teachItems = { 252935 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Supple Scorpid Sabatons" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -6101,6 +6450,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Mail Pauldrons",
+        teachItems = { 252926 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Supple Scorpid Shoulder" } },
         reagents   = {
             { itemID = 8170, count = 9, name = "Rugged Leather" },
@@ -6115,6 +6465,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Mail Chestguards",
+        teachItems = { 252933 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Supple Scorpid Vest" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -6129,6 +6480,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Boots",
+        teachItems = { 7453 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Swift Boots" } },
         reagents   = {
             { itemID = 4234, count = 10, name = "Heavy Leather" },
@@ -6144,6 +6496,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Mail Bracers",
+        teachItems = { 18516 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Swift Flight Bracers" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -6160,6 +6513,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273096 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Tanning Rack" } },
         reagents   = {
             { itemID = 2319, count = 5, name = "Medium Leather" },
@@ -6214,6 +6568,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 165, 175, 185 },
         category   = "Leather Chestguards",
+        teachItems = { 5788 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Thick Murloc Armor" } },
         reagents   = {
             { itemID = 5785, count = 12, name = "Thick Murloc Scale" },
@@ -6229,6 +6584,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 315, 325, 335 },
         category   = "Leather Gauntlets",
+        teachItems = { 19327 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Timbermaw Brawlers" } },
         reagents   = {
             { itemID = 12810, count = 8, name = "Enchanted Leather" },
@@ -6245,6 +6601,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Chestguards",
+        teachItems = { 252893 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Timbermaw Tunic" } },
         reagents   = {
             { itemID = 12810, count = 6, name = "Enchanted Leather" },
@@ -6263,6 +6620,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Leather Chestguards",
+        teachItems = { 252877 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tooled Leather Armor" } },
         reagents   = {
             { itemID = 8170, count = 16, name = "Rugged Leather" },
@@ -6279,6 +6637,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Leather Belts",
+        teachItems = { 252858 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tooled Leather Belt" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -6293,6 +6652,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Leather Boots",
+        teachItems = { 252865 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tooled Leather Boots" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -6307,6 +6667,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Leather Bracers",
+        teachItems = { 252885 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tooled Leather Bracers" } },
         reagents   = {
             { itemID = 8170, count = 10, name = "Rugged Leather" },
@@ -6321,6 +6682,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Leather Helmets",
+        teachItems = { 252882 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tooled Leather Crown" } },
         reagents   = {
             { itemID = 8170, count = 14, name = "Rugged Leather" },
@@ -6335,6 +6697,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Leather Pauldrons",
+        teachItems = { 252887 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tooled Leather Epaulets" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -6350,6 +6713,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Leather Gauntlets",
+        teachItems = { 252880 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tooled Leather Gauntlets" } },
         reagents   = {
             { itemID = 8170, count = 10, name = "Rugged Leather" },
@@ -6364,6 +6728,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Leather Legguards",
+        teachItems = { 252889 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tooled Leather Pants" } },
         reagents   = {
             { itemID = 8170, count = 18, name = "Rugged Leather" },
@@ -6377,6 +6742,7 @@ local recipes = {
         itemID     = 252435,
         skillRange = { false, 80, 80, 80 },
         category   = "Leather Chestguards",
+        teachItems = { 252774 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 16, name = "Light Leather" },
@@ -6391,6 +6757,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 90, 105, 120 },
         category   = "Leather Belts",
+        teachItems = { 252768 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Totemic Leather Belt" } },
         reagents   = {
             { itemID = 2318, count = 10, name = "Light Leather" },
@@ -6407,6 +6774,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 122, 135 },
         category   = "Leather Boots",
+        teachItems = { 252789 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Totemic Leather Boots" } },
         reagents   = {
             { itemID = 2318, count = 14, name = "Light Leather" },
@@ -6423,6 +6791,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Leather Gauntlets",
+        teachItems = { 252780 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Totemic Leather Gloves" } },
         reagents   = {
             { itemID = 2318, count = 12, name = "Light Leather" },
@@ -6437,6 +6806,7 @@ local recipes = {
         itemID     = 252456,
         skillRange = { false, 130, 130, 130 },
         category   = "Leather Helmets",
+        teachItems = { 252817 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -6451,6 +6821,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 137, 150 },
         category   = "Leather Helmets",
+        teachItems = { 252801 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Totemic Leather Hood" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -6467,6 +6838,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 160, 170 },
         category   = "Leather Legguards",
+        teachItems = { 252823 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Totemic Leather Leggings" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -6481,6 +6853,7 @@ local recipes = {
         itemID     = 252446,
         skillRange = { false, 105, 105, 105 },
         category   = "Leather Legguards",
+        teachItems = { 252795 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -6495,6 +6868,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 147, 160 },
         category   = "Leather Chestguards",
+        teachItems = { 252808 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Totemic Leather Tunic" } },
         reagents   = {
             { itemID = 2319, count = 10, name = "Medium Leather" },
@@ -6511,6 +6885,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Mail Boots",
+        teachItems = { 8399 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tough Scorpid Boots" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -6525,6 +6900,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Mail Bracers",
+        teachItems = { 8397 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tough Scorpid Bracers" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -6539,6 +6915,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Mail Chestguards",
+        teachItems = { 8395 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tough Scorpid Breastplate" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -6553,6 +6930,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 230, 240 },
         category   = "Mail Gauntlets",
+        teachItems = { 8398 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tough Scorpid Gloves" } },
         reagents   = {
             { itemID = 4304, count = 6, name = "Thick Leather" },
@@ -6567,6 +6945,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Mail Helmets",
+        teachItems = { 8402 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tough Scorpid Helm" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -6581,6 +6960,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 240, 250, 260 },
         category   = "Mail Legguards",
+        teachItems = { 8401 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tough Scorpid Leggings" } },
         reagents   = {
             { itemID = 4304, count = 14, name = "Thick Leather" },
@@ -6595,6 +6975,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 235, 245, 255 },
         category   = "Mail Pauldrons",
+        teachItems = { 8400 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tough Scorpid Shoulders" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -6639,6 +7020,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Mail Bracers",
+        teachItems = { 279305 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tranquil Wristguards" } },
         reagents   = {
             { itemID = 274030, count = 1, name = "Malleable Essence of Nature" },
@@ -6651,6 +7033,7 @@ local recipes = {
         itemID     = 252491,
         skillRange = { false, 80, 80, 80 },
         category   = "Leather Chestguards",
+        teachItems = { 252772 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 16, name = "Light Leather" },
@@ -6665,6 +7048,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 90, 105, 120 },
         category   = "Leather Belts",
+        teachItems = { 252766 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Trapper's Leather Belt" } },
         reagents   = {
             { itemID = 2318, count = 10, name = "Light Leather" },
@@ -6681,6 +7065,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 122, 135 },
         category   = "Leather Boots",
+        teachItems = { 252787 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Trapper's Leather Boots" } },
         reagents   = {
             { itemID = 2318, count = 14, name = "Light Leather" },
@@ -6697,6 +7082,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Leather Gauntlets",
+        teachItems = { 252778 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Trapper's Leather Gloves" } },
         reagents   = {
             { itemID = 2318, count = 12, name = "Light Leather" },
@@ -6711,6 +7097,7 @@ local recipes = {
         itemID     = 252513,
         skillRange = { false, 130, 130, 130 },
         category   = "Leather Helmets",
+        teachItems = { 252815 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -6725,6 +7112,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 137, 150 },
         category   = "Leather Helmets",
+        teachItems = { 252799 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Trapper's Leather Hood" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -6741,6 +7129,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 160, 170 },
         category   = "Leather Legguards",
+        teachItems = { 252821 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Trapper's Leather Legguards" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -6755,6 +7144,7 @@ local recipes = {
         itemID     = 252501,
         skillRange = { false, 105, 105, 105 },
         category   = "Leather Legguards",
+        teachItems = { 252793 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -6769,6 +7159,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 147, 160 },
         category   = "Leather Chestguards",
+        teachItems = { 252806 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Trapper's Leather Tunic" } },
         reagents   = {
             { itemID = 2319, count = 10, name = "Medium Leather" },
@@ -6813,6 +7204,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 200, 210, 220 },
         category   = "Mail Gauntlets",
+        teachItems = { 8385 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Turtle Scale Gloves" } },
         reagents   = {
             { itemID = 4304, count = 6, name = "Thick Leather" },
@@ -6855,6 +7247,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Leather Chestguards",
+        teachItems = { 15749 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Volcanic Breastplate" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -6870,6 +7263,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Leather Legguards",
+        teachItems = { 15732 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Volcanic Leggings" } },
         reagents   = {
             { itemID = 8170, count = 6, name = "Rugged Leather" },
@@ -6885,6 +7279,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Leather Pauldrons",
+        teachItems = { 15775 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Volcanic Shoulders" } },
         reagents   = {
             { itemID = 8170, count = 10, name = "Rugged Leather" },
@@ -6900,6 +7295,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Chestguards",
+        teachItems = { 15742, 20253 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warbear Harness" } },
         reagents   = {
             { itemID = 8170, count = 28, name = "Rugged Leather" },
@@ -6914,6 +7310,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Leather Helmets",
+        teachItems = { 252894 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warbear Helm" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -6931,6 +7328,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Leather Legguards",
+        teachItems = { 20254 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warbear Woolies" } },
         reagents   = {
             { itemID = 8170, count = 24, name = "Rugged Leather" },
@@ -6945,6 +7343,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 155, 155 },
         category   = "Leather Belts",
+        teachItems = { 252829 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warden's Leather Belt" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -6959,6 +7358,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Leather Boots",
+        teachItems = { 252862 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warden's Leather Boots" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -6976,6 +7376,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Leather Bracers",
+        teachItems = { 252855 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warden's Leather Bracers" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -6993,6 +7394,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 255, 255 },
         category   = "Leather Gauntlets",
+        teachItems = { 252869 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warden's Leather Gauntlets" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -7007,6 +7409,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Leather Gauntlets",
+        teachItems = { 252839 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warden's Leather Gloves" } },
         reagents   = {
             { itemID = 4234, count = 16, name = "Heavy Leather" },
@@ -7024,6 +7427,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 205, 205 },
         category   = "Leather Boots",
+        teachItems = { 252845 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warden's Leather Shoes" } },
         reagents   = {
             { itemID = 4234, count = 8, name = "Heavy Leather" },
@@ -7038,6 +7442,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Leather Pauldrons",
+        teachItems = { 252850 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warden's Leather Shoulder" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -7055,6 +7460,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Leather Belts",
+        teachItems = { 252874 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Warden's Leather Waistguard" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -7072,6 +7478,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 40, 70, 85, 100 },
         category   = "Leather Chestguards",
+        teachItems = { 2407 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: White Leather Jerkin" } },
         reagents   = {
             { itemID = 2318, count = 8, name = "Light Leather" },
@@ -7086,6 +7493,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 310, 320 },
         category   = "Leather Chestguards",
+        teachItems = { 15773 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wicked Leather Armor" } },
         reagents   = {
             { itemID = 8170, count = 20, name = "Rugged Leather" },
@@ -7102,6 +7510,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Leather Belts",
+        teachItems = { 15768 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wicked Leather Belt" } },
         reagents   = {
             { itemID = 8170, count = 14, name = "Rugged Leather" },
@@ -7116,6 +7525,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Leather Boots",
+        teachItems = { 252879 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wicked Leather Boots" } },
         reagents   = {
             { itemID = 8170, count = 10, name = "Rugged Leather" },
@@ -7130,6 +7540,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Leather Bracers",
+        teachItems = { 15728 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wicked Leather Bracers" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -7144,6 +7555,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 265, 275 },
         category   = "Leather Gauntlets",
+        teachItems = { 15725 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wicked Leather Gauntlets" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -7158,6 +7570,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 285, 295 },
         category   = "Leather Helmets",
+        teachItems = { 15744 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wicked Leather Headband" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -7172,6 +7585,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Leather Legguards",
+        teachItems = { 15757 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wicked Leather Pants" } },
         reagents   = {
             { itemID = 8170, count = 16, name = "Rugged Leather" },
@@ -7187,6 +7601,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Leather Pauldrons",
+        teachItems = { 252884 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wicked Leather Shoulder" } },
         reagents   = {
             { itemID = 8170, count = 12, name = "Rugged Leather" },
@@ -7202,6 +7617,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Armor Kits",
+        teachItems = { 279307 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wild Leather Armor Kit" } },
         reagents   = {
             { itemID = 248825, count = 22, name = "Fel Leather" },
@@ -7215,6 +7631,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 240, 250, 260 },
         category   = "Leather Boots",
+        teachItems = { 8406 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wild Leather Boots" } },
         reagents   = {
             { itemID = 4304, count = 14, name = "Thick Leather" },
@@ -7229,6 +7646,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Cloaks",
+        teachItems = { 8408 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wild Leather Cloak" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -7243,6 +7661,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 230, 240 },
         category   = "Leather Helmets",
+        teachItems = { 8405 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wild Leather Helmet" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -7257,6 +7676,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Leather Legguards",
+        teachItems = { 8407 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wild Leather Leggings" } },
         reagents   = {
             { itemID = 4304, count = 16, name = "Thick Leather" },
@@ -7271,6 +7691,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Leather Pauldrons",
+        teachItems = { 8403 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wild Leather Shoulders" } },
         reagents   = {
             { itemID = 4304, count = 10, name = "Thick Leather" },
@@ -7285,6 +7706,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 230, 240 },
         category   = "Leather Chestguards",
+        teachItems = { 8404 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wild Leather Vest" } },
         reagents   = {
             { itemID = 4304, count = 12, name = "Thick Leather" },
@@ -7299,6 +7721,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Gauntlets",
+        teachItems = { 273969 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wildstalker's Gauntlets" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -7314,6 +7737,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Boots",
+        teachItems = { 273971 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wildstalker's Greaves" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -7329,6 +7753,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Legguards",
+        teachItems = { 273968 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wildstalker's Legguards" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -7344,6 +7769,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Mail Pauldrons",
+        teachItems = { 273970 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wildstalker's Spaulders" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -7359,6 +7785,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 275, 285 },
         category   = "Mail Chestguards",
+        teachItems = { 12691 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wildthorn Mail" } },
         reagents   = {
             { itemID = 8170, count = 40, name = "Rugged Leather" },
@@ -7376,6 +7803,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 285, 287, 290 },
         category   = "Leather Gauntlets",
+        teachItems = { 34262 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Winter Boots" } },
         reagents   = {
             { itemID = 2840, count = 1, name = "Copper Bar" },
@@ -7389,6 +7817,7 @@ local recipes = {
         itemID     = 252493,
         skillRange = { false, 80, 80, 80 },
         category   = "Leather Chestguards",
+        teachItems = { 252776 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2318, count = 16, name = "Light Leather" },
@@ -7403,6 +7832,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 90, 105, 120 },
         category   = "Leather Belts",
+        teachItems = { 252770 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wisdom's Leather Belt" } },
         reagents   = {
             { itemID = 2318, count = 10, name = "Light Leather" },
@@ -7419,6 +7849,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 122, 135 },
         category   = "Leather Boots",
+        teachItems = { 252791 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wisdom's Leather Boots" } },
         reagents   = {
             { itemID = 2318, count = 14, name = "Light Leather" },
@@ -7435,6 +7866,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 112, 125 },
         category   = "Leather Gauntlets",
+        teachItems = { 252782 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wisdom's Leather Gloves" } },
         reagents   = {
             { itemID = 2318, count = 12, name = "Light Leather" },
@@ -7449,6 +7881,7 @@ local recipes = {
         itemID     = 252515,
         skillRange = { false, 130, 130, 130 },
         category   = "Leather Helmets",
+        teachItems = { 252819 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -7463,6 +7896,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 137, 150 },
         category   = "Leather Helmets",
+        teachItems = { 252803 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wisdom's Leather Hood" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -7479,6 +7913,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 160, 170 },
         category   = "Leather Legguards",
+        teachItems = { 252825 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wisdom's Leather Leggings" } },
         reagents   = {
             { itemID = 2319, count = 12, name = "Medium Leather" },
@@ -7493,6 +7928,7 @@ local recipes = {
         itemID     = 252503,
         skillRange = { false, 105, 105, 105 },
         category   = "Leather Legguards",
+        teachItems = { 252797 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2319, count = 8, name = "Medium Leather" },
@@ -7507,6 +7943,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 147, 160 },
         category   = "Leather Chestguards",
+        teachItems = { 252810 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wisdom's Leather Tunic" } },
         reagents   = {
             { itemID = 2319, count = 10, name = "Medium Leather" },

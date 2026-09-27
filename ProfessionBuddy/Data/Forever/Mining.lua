@@ -29,6 +29,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273122 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Molten Foundry" } },
         reagents   = {
             { itemID = 12359, count = 5, name = "Thorium Bar" },
@@ -43,6 +44,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273097 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Rock Garden" } },
         reagents   = {
             { itemID = 2838, count = 2, name = "Heavy Stone" },

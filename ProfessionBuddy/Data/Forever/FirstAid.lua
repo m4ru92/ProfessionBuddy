@@ -30,6 +30,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 160, 190, 220 },
         category   = "Curatives",
+        teachItems = { 255724 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Clever Poultice" } },
         reagents   = {
             { itemID = 1468, count = 1, name = "Murloc Fin" },
@@ -45,6 +46,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 300, 330, 360 },
         category   = "Bandages",
+        teachItems = { 23689 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 23567, count = 1, name = "DEPRECATED ITEM" },
@@ -58,6 +60,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 327, 340 },
         category   = "Bandages",
+        teachItems = { 232434 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Dense Runecloth Bandage" } },
         reagents   = {
             { itemID = 14530, count = 2, name = "Heavy Runecloth Bandage" },
@@ -83,6 +86,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 155, 175, 195, 215 },
         category   = "Healing Potions",
+        teachItems = { 255723 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Greater Healing Potion" } },
         reagents   = {
             { itemID = 3372, count = 1, name = "Leaded Vial" },
@@ -147,6 +151,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 180, 210, 240 },
         category   = "Bandages",
+        teachItems = { 16112 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Heavy Silk Bandage" } },
         reagents   = {
             { itemID = 4306, count = 2, name = "Silk Cloth" },
@@ -171,6 +176,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 250, 280 },
         category   = "Curatives",
+        teachItems = { 255726 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Leather Tourniquet" } },
         reagents   = {
             { itemID = 4304, count = 2, name = "Thick Leather" },
@@ -210,6 +216,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 210, 240, 270 },
         category   = "Bandages",
+        teachItems = { 16113 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Mageweave Bandage" } },
         reagents   = {
             { itemID = 4338, count = 1, name = "Mageweave Cloth" },
@@ -222,6 +229,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 290, 310, 330 },
         category   = "Healing Potions",
+        teachItems = { 255729 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Major Healing Potion" } },
         reagents   = {
             { itemID = 8925, count = 1, name = "Crystal Vial" },
@@ -250,6 +258,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273118 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Plague Doctor's Laboratory" } },
         reagents   = {
             { itemID = 4470, count = 2, name = "Simple Wood" },
@@ -265,6 +274,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 260, 290 },
         category   = "Curatives",
+        teachItems = { 255728 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Potent Anti-Venom" } },
         reagents   = {
             { itemID = 255645, count = 1, name = "Swollen Venom Sac" },
@@ -278,6 +288,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 330, 360 },
         category   = "Curatives",
+        teachItems = { 19442 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Powerful Anti-Venom" } },
         reagents   = {
             { itemID = 19441, count = 1, name = "Huge Venom Sac" },
@@ -291,6 +302,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 295, 325, 355 },
         category   = "Curatives",
+        teachItems = { 255731 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Powerful Poultice" } },
         reagents   = {
             { itemID = 7080, count = 1, name = "Essence of Water" },
@@ -345,6 +357,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 130, 165, 200 },
         category   = "Curatives",
+        teachItems = { 6454 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Strong Anti-Venom" } },
         reagents   = {
             { itemID = 1288, count = 1, name = "Large Venom Sac" },
@@ -357,6 +370,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 250, 270 },
         category   = "Healing Potions",
+        teachItems = { 255725 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Superior Healing Potion" } },
         reagents   = {
             { itemID = 8925, count = 1, name = "Crystal Vial" },
@@ -372,6 +386,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 255, 285 },
         category   = "Curatives",
+        teachItems = { 255727 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Superior Poultice" } },
         reagents   = {
             { itemID = 7070, count = 1, name = "Elemental Water" },
@@ -386,6 +401,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 280, 310, 340 },
         category   = "Curatives",
+        teachItems = { 255730 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Manual: Surgical Tourniquet" } },
         reagents   = {
             { itemID = 8170, count = 2, name = "Rugged Leather" },
@@ -400,6 +416,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273105 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Toxin Study" } },
         reagents   = {
             { itemID = 6452, count = 1, name = "Anti-Venom" },

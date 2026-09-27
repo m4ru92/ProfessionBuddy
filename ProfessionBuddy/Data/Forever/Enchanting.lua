@@ -16,6 +16,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273116 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Arcane Forge" } },
         reagents   = {
             { itemID = 273128, count = 1, name = "Maker's Spark" },
@@ -30,6 +31,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273103 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Arcane Salvager" } },
         reagents   = {
             { itemID = 11137, count = 2, name = "Vision Dust" },
@@ -43,6 +45,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 320, 330 },
         category   = "Wizard Oils",
+        teachItems = { 20757 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Brilliant Mana Oil" } },
         reagents   = {
             { itemID = 14344, count = 2, name = "Large Brilliant Shard" },
@@ -57,6 +60,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 320, 340, 360 },
         category   = "Wands",
+        teachItems = { 249537 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Brilliant Wand" } },
         reagents   = {
             { itemID = 16203, count = 1, name = "Greater Eternal Essence" },
@@ -72,6 +76,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 320, 330 },
         category   = "Wizard Oils",
+        teachItems = { 20756 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Brilliant Wizard Oil" } },
         reagents   = {
             { itemID = 14344, count = 2, name = "Large Brilliant Shard" },
@@ -86,6 +91,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 285, 295, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 228981 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Conductive Shield Coating" } },
         reagents   = {
             { itemID = 16204, count = 2, name = "Illusion Dust" },
@@ -98,6 +104,7 @@ local recipes = {
         itemID     = 249473,
         skillRange = { false, 285, 305, 325 },
         category   = "Curios",
+        teachItems = { 249521 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 11382, count = 1, name = "Blood of the Mountain" },
@@ -112,6 +119,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 235, 255, 275 },
         category   = "Wands",
+        teachItems = { 249512 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Dreambough Wand" } },
         reagents   = {
             { itemID = 11174, count = 2, name = "Lesser Nether Essence" },
@@ -126,6 +134,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 225, 245, 265 },
         category   = "Staves",
+        teachItems = { 249507 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Dreamstaff" } },
         reagents   = {
             { itemID = 11178, count = 4, name = "Large Radiant Shard" },
@@ -157,6 +166,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 330, 350 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 22392 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Agility" } },
         reagents   = {
             { itemID = 14344, count = 10, name = "Large Brilliant Shard" },
@@ -172,6 +182,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 305, 307, 310 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 241195 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Grand Arcanist" } },
         reagents   = {
             { itemID = 14344, count = 10, name = "Large Brilliant Shard" },
@@ -187,6 +198,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 305, 307, 310 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 242361 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Grand Inquisitor" } },
         reagents   = {
             { itemID = 14344, count = 10, name = "Large Brilliant Shard" },
@@ -228,6 +240,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 250, 270 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 249511 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Lesser Agility" } },
         reagents   = {
             { itemID = 11137, count = 2, name = "Vision Dust" },
@@ -255,6 +268,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 130, 150, 170 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 6349 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Lesser Intellect" } },
         reagents   = {
             { itemID = 10938, count = 4, name = "Lesser Magic Essence" },
@@ -267,6 +281,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 155, 175 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 11038 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Lesser Spirit" } },
         reagents   = {
             { itemID = 10998, count = 1, name = "Lesser Astral Essence" },
@@ -280,6 +295,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 240, 260, 280 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 249513 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Lesser Strength" } },
         reagents   = {
             { itemID = 11137, count = 1, name = "Vision Dust" },
@@ -294,6 +310,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 16249 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Major Intellect" } },
         reagents   = {
             { itemID = 16203, count = 12, name = "Greater Eternal Essence" },
@@ -307,6 +324,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 16255 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Major Spirit" } },
         reagents   = {
             { itemID = 16203, count = 12, name = "Greater Eternal Essence" },
@@ -320,6 +338,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 249526 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Mighty Healing Power" } },
         reagents   = {
             { itemID = 248819, count = 4, name = "Fel Crystal" },
@@ -337,6 +356,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 249525 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Mighty Spell Power" } },
         reagents   = {
             { itemID = 248819, count = 4, name = "Fel Crystal" },
@@ -367,6 +387,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 274394 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Spellblasting" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -382,6 +403,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 290, 295, 300 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 249523 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Strength" } },
         reagents   = {
             { itemID = 14344, count = 8, name = "Large Brilliant Shard" },
@@ -397,6 +419,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 315, 335, 355 },
         category   = "Two-Handed Weapon Enchants",
+        teachItems = { 16247 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant 2H Weapon - Superior Impact" } },
         reagents   = {
             { itemID = 14344, count = 4, name = "Large Brilliant Shard" },
@@ -422,6 +445,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 315, 335, 355 },
         category   = "Boots Enchants",
+        teachItems = { 16245 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Boots - Greater Agility" } },
         reagents   = {
             { itemID = 16203, count = 8, name = "Greater Eternal Essence" },
@@ -434,6 +458,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 300, 320 },
         category   = "Boots Enchants",
+        teachItems = { 16215 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Boots - Greater Stamina" } },
         reagents   = {
             { itemID = 11176, count = 6, name = "Dream Dust" },
@@ -458,6 +483,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 210, 230, 250 },
         category   = "Boots Enchants",
+        teachItems = { 11167 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Boots - Lesser Spirit" } },
         reagents   = {
             { itemID = 11134, count = 2, name = "Lesser Mystic Essence" },
@@ -482,6 +508,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 170, 190 },
         category   = "Boots Enchants",
+        teachItems = { 6377 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Boots - Minor Agility" } },
         reagents   = {
             { itemID = 10940, count = 3, name = "Strange Dust" },
@@ -509,6 +536,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 170, 190 },
         category   = "Boots Enchants",
+        teachItems = { 6376 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Boots - Minor Stamina" } },
         reagents   = {
             { itemID = 10940, count = 4, name = "Strange Dust" },
@@ -521,6 +549,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 315, 335 },
         category   = "Boots Enchants",
+        teachItems = { 16220 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Boots - Spirit" } },
         reagents   = {
             { itemID = 16203, count = 2, name = "Greater Eternal Essence" },
@@ -546,6 +575,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 225, 245, 265 },
         category   = "Bracer Enchants",
+        teachItems = { 249488 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Agility" } },
         reagents   = {
             { itemID = 11137, count = 1, name = "Vision Dust" },
@@ -558,6 +588,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 275, 295 },
         category   = "Bracer Enchants",
+        teachItems = { 11223 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Deflection" } },
         reagents   = {
             { itemID = 11174, count = 2, name = "Lesser Nether Essence" },
@@ -571,6 +602,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 280, 300 },
         category   = "Bracer Enchants",
+        teachItems = { 249514 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Greater Agility" } },
         reagents   = {
             { itemID = 11176, count = 3, name = "Dream Dust" },
@@ -584,6 +616,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 275, 295, 315 },
         category   = "Bracer Enchants",
+        teachItems = { 16214 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Greater Intellect" } },
         reagents   = {
             { itemID = 16202, count = 2, name = "Lesser Eternal Essence" },
@@ -596,6 +629,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Bracer Enchants",
+        teachItems = { 274401 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Greater Spellpower" } },
         reagents   = {
             { itemID = 16203, count = 3, name = "Greater Eternal Essence" },
@@ -611,6 +645,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 240, 260, 280 },
         category   = "Bracer Enchants",
+        teachItems = { 11204 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Greater Spirit" } },
         reagents   = {
             { itemID = 11174, count = 1, name = "Lesser Nether Essence" },
@@ -624,6 +659,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 285, 305 },
         category   = "Bracer Enchants",
+        teachItems = { 11225 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Greater Stamina" } },
         reagents   = {
             { itemID = 11176, count = 3, name = "Dream Dust" },
@@ -649,6 +685,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Bracer Enchants",
+        teachItems = { 19447 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Healing" } },
         reagents   = {
             { itemID = 14344, count = 2, name = "Large Brilliant Shard" },
@@ -688,6 +725,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 165, 185, 205 },
         category   = "Bracer Enchants",
+        teachItems = { 249486 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Lesser Agility" } },
         reagents   = {
             { itemID = 11134, count = 1, name = "Lesser Mystic Essence" },
@@ -700,6 +738,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 170, 190, 210, 230 },
         category   = "Bracer Enchants",
+        teachItems = { 11163 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Lesser Deflection" } },
         reagents   = {
             { itemID = 11134, count = 1, name = "Lesser Mystic Essence" },
@@ -713,6 +752,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 225, 245, 265 },
         category   = "Bracer Enchants",
+        teachItems = { 249489 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Lesser Healing Power" } },
         reagents   = {
             { itemID = 11134, count = 2, name = "Lesser Mystic Essence" },
@@ -737,6 +777,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 145, 165, 185 },
         category   = "Bracer Enchants",
+        teachItems = { 6375 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Lesser Spirit" } },
         reagents   = {
             { itemID = 10998, count = 1, name = "Lesser Astral Essence" },
@@ -761,6 +802,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 165, 185, 205 },
         category   = "Bracer Enchants",
+        teachItems = { 11101 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Lesser Strength" } },
         reagents   = {
             { itemID = 11083, count = 1, name = "Soul Dust" },
@@ -773,6 +815,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 330, 350 },
         category   = "Bracer Enchants",
+        teachItems = { 19446 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Mana Regeneration" } },
         reagents   = {
             { itemID = 16204, count = 16, name = "Illusion Dust" },
@@ -812,6 +855,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 120, 140, 160 },
         category   = "Bracer Enchants",
+        teachItems = { 249475 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Minor Healing Power" } },
         reagents   = {
             { itemID = 10938, count = 2, name = "Lesser Magic Essence" },
@@ -824,6 +868,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 70, 110, 130, 150 },
         category   = "Bracer Enchants",
+        teachItems = { 249474 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Minor Intellect" } },
         reagents   = {
             { itemID = 10938, count = 1, name = "Lesser Magic Essence" },
@@ -836,6 +881,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 105, 125, 145 },
         category   = "Bracer Enchants",
+        teachItems = { 6344 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Minor Spirit" } },
         reagents   = {
             { itemID = 10938, count = 1, name = "Lesser Magic Essence" },
@@ -860,6 +906,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 115, 135, 155 },
         category   = "Bracer Enchants",
+        teachItems = { 6347 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Minor Strength" } },
         reagents   = {
             { itemID = 10940, count = 3, name = "Strange Dust" },
@@ -872,6 +919,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235526 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 14344, count = 2, name = "Large Brilliant Shard" },
@@ -925,6 +973,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 315, 335, 355 },
         category   = "Bracer Enchants",
+        teachItems = { 249524 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Superior Agility" } },
         reagents   = {
             { itemID = 16204, count = 3, name = "Illusion Dust" },
@@ -939,6 +988,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Bracer Enchants",
+        teachItems = { 249539 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Superior Deflection" } },
         reagents   = {
             { itemID = 14344, count = 3, name = "Large Brilliant Shard" },
@@ -951,6 +1001,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Bracer Enchants",
+        teachItems = { 249538 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Superior Intellect" } },
         reagents   = {
             { itemID = 16203, count = 10, name = "Greater Eternal Essence" },
@@ -963,6 +1014,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 310, 330 },
         category   = "Bracer Enchants",
+        teachItems = { 16218 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Superior Spirit" } },
         reagents   = {
             { itemID = 16202, count = 2, name = "Lesser Eternal Essence" },
@@ -976,6 +1028,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Bracer Enchants",
+        teachItems = { 16251 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Superior Stamina" } },
         reagents   = {
             { itemID = 16204, count = 15, name = "Illusion Dust" },
@@ -988,6 +1041,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 315, 335, 355 },
         category   = "Bracer Enchants",
+        teachItems = { 16246 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Bracer - Superior Strength" } },
         reagents   = {
             { itemID = 16204, count = 6, name = "Illusion Dust" },
@@ -1001,6 +1055,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 225, 245, 265 },
         category   = "Chest Enchants",
+        teachItems = { 249510 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Chest - Absorption" } },
         reagents   = {
             { itemID = 11176, count = 10, name = "Dream Dust" },
@@ -1039,6 +1094,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Chest Enchants",
+        teachItems = { 16253 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Chest - Greater Stats" } },
         reagents   = {
             { itemID = 14344, count = 4, name = "Large Brilliant Shard" },
@@ -1091,6 +1147,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 115, 135, 155 },
         category   = "Chest Enchants",
+        teachItems = { 6346 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Chest - Lesser Intellect" } },
         reagents   = {
             { itemID = 10938, count = 2, name = "Lesser Magic Essence" },
@@ -1130,6 +1187,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 233997 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -1147,6 +1205,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 330, 350 },
         category   = "Chest Enchants",
+        teachItems = { 16242 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Chest - Major Intellect" } },
         reagents   = {
             { itemID = 16203, count = 3, name = "Greater Eternal Essence" },
@@ -1160,6 +1219,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 315, 335 },
         category   = "Chest Enchants",
+        teachItems = { 16221 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Chest - Major Stamina" } },
         reagents   = {
             { itemID = 16204, count = 6, name = "Illusion Dust" },
@@ -1185,6 +1245,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 20, 80, 100, 120 },
         category   = "Chest Enchants",
+        teachItems = { 6342 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Chest - Minor Intellect" } },
         reagents   = {
             { itemID = 10938, count = 1, name = "Lesser Magic Essence" },
@@ -1211,6 +1272,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 200, 220, 240 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 215138 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Chest - Retricutioner" } },
         reagents   = {
             { itemID = 11177, count = 1, name = "Small Radiant Shard" },
@@ -1275,6 +1337,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Cloak Enchants",
+        teachItems = { 274399 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Agility" } },
         reagents   = {
             { itemID = 16203, count = 3, name = "Greater Eternal Essence" },
@@ -1302,6 +1365,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Cloak Enchants",
+        teachItems = { 20736 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Dodge" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -1341,6 +1405,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Cloak Enchants",
+        teachItems = { 20732, 229008 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Greater Fire Resistance" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -1355,6 +1420,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Cloak Enchants",
+        teachItems = { 20733, 229009 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Greater Nature Resistance" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -1369,6 +1435,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 305, 325 },
         category   = "Cloak Enchants",
+        teachItems = { 16216 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Greater Resistance" } },
         reagents   = {
             { itemID = 16202, count = 1, name = "Lesser Eternal Essence" },
@@ -1386,6 +1453,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 265, 285 },
         category   = "Cloak Enchants",
+        teachItems = { 11206 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Lesser Agility" } },
         reagents   = {
             { itemID = 11174, count = 1, name = "Lesser Nether Essence" },
@@ -1424,6 +1492,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 160, 180, 200 },
         category   = "Cloak Enchants",
+        teachItems = { 11098 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Lesser Shadow Resistance" } },
         reagents   = {
             { itemID = 10998, count = 1, name = "Lesser Astral Essence" },
@@ -1437,6 +1506,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 155, 175 },
         category   = "Cloak Enchants",
+        teachItems = { 11039 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Minor Agility" } },
         reagents   = {
             { itemID = 10998, count = 1, name = "Lesser Astral Essence" },
@@ -1449,6 +1519,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 70, 110, 130, 150 },
         category   = "Cloak Enchants",
+        teachItems = { 6345 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 10940, count = 2, name = "Strange Dust" },
@@ -1486,6 +1557,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Cloak Enchants",
+        teachItems = { 20734 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Stealth" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -1500,6 +1572,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Cloak Enchants",
+        teachItems = { 20735 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Subtlety" } },
         reagents   = {
             { itemID = 20725, count = 4, name = "Nexus Crystal" },
@@ -1514,6 +1587,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 305, 325, 345 },
         category   = "Cloak Enchants",
+        teachItems = { 16224 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Cloak - Superior Defense" } },
         reagents   = {
             { itemID = 16204, count = 8, name = "Illusion Dust" },
@@ -1526,6 +1600,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 265, 285 },
         category   = "Glove Enchants",
+        teachItems = { 11205 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Advanced Herbalism" } },
         reagents   = {
             { itemID = 11137, count = 2, name = "Vision Dust" },
@@ -1539,6 +1614,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 235, 255, 275 },
         category   = "Glove Enchants",
+        teachItems = { 11203 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Advanced Mining" } },
         reagents   = {
             { itemID = 11137, count = 2, name = "Vision Dust" },
@@ -1552,6 +1628,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 290, 310 },
         category   = "Glove Enchants",
+        teachItems = { 249516 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Advanced Skinning" } },
         reagents   = {
             { itemID = 11176, count = 2, name = "Dream Dust" },
@@ -1577,6 +1654,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 233999, 249534 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Arcane Power" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -1591,6 +1669,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Glove Enchants",
+        teachItems = { 20729 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Fire Power" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -1605,6 +1684,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 170, 190, 210 },
         category   = "Glove Enchants",
+        teachItems = { 11152 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Fishing" } },
         reagents   = {
             { itemID = 11083, count = 1, name = "Soul Dust" },
@@ -1618,6 +1698,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Glove Enchants",
+        teachItems = { 20728 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Frost Power" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -1632,6 +1713,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 310, 330 },
         category   = "Glove Enchants",
+        teachItems = { 16219 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Greater Agility" } },
         reagents   = {
             { itemID = 16202, count = 2, name = "Lesser Eternal Essence" },
@@ -1645,6 +1727,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 315, 335, 355 },
         category   = "Glove Enchants",
+        teachItems = { 16244 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Greater Strength" } },
         reagents   = {
             { itemID = 16203, count = 4, name = "Greater Eternal Essence" },
@@ -1658,6 +1741,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Glove Enchants",
+        teachItems = { 20730 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Healing Power" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -1672,6 +1756,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 170, 190, 210 },
         category   = "Glove Enchants",
+        teachItems = { 11151 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Herbalism" } },
         reagents   = {
             { itemID = 11083, count = 1, name = "Soul Dust" },
@@ -1685,6 +1770,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 233998, 249536 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Holy Power" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -1700,6 +1786,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 285, 287, 290 },
         category   = "Glove Enchants",
+        teachItems = { 274424 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Lotus Claw" } },
         reagents   = {
             { itemID = 248822, count = 1, name = "Death Lotus" },
@@ -1715,6 +1802,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 170, 190, 210 },
         category   = "Glove Enchants",
+        teachItems = { 11150 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Mining" } },
         reagents   = {
             { itemID = 11083, count = 1, name = "Soul Dust" },
@@ -1741,6 +1829,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Glove Enchants",
+        teachItems = { 249535 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Natural Power" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -1755,6 +1844,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 290, 310 },
         category   = "Glove Enchants",
+        teachItems = { 11226 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Riding Skill" } },
         reagents   = {
             { itemID = 11178, count = 1, name = "Large Radiant Shard" },
@@ -1768,6 +1858,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Glove Enchants",
+        teachItems = { 20727 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Shadow Power" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -1782,6 +1873,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 240, 260 },
         category   = "Glove Enchants",
+        teachItems = { 11166 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Skinning" } },
         reagents   = {
             { itemID = 11137, count = 1, name = "Vision Dust" },
@@ -1808,6 +1900,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Cloak Enchants",
+        teachItems = { 20731 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Superior Agility" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -1822,6 +1915,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Glove Enchants",
+        teachItems = { 249533, 274398 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Superior Strength" } },
         reagents   = {
             { itemID = 20725, count = 4, name = "Nexus Crystal" },
@@ -1836,6 +1930,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Glove Enchants",
+        teachItems = { 20726 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Gloves - Threat" } },
         reagents   = {
             { itemID = 20725, count = 4, name = "Nexus Crystal" },
@@ -1850,6 +1945,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Amulet Enchants",
+        teachItems = { 249504 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Necklace - Agility" } },
         reagents   = {
             { itemID = 11175, count = 2, name = "Greater Nether Essence" },
@@ -1866,6 +1962,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Amulet Enchants",
+        teachItems = { 249505 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Necklace - Deflection" } },
         reagents   = {
             { itemID = 11175, count = 8, name = "Greater Nether Essence" },
@@ -1882,6 +1979,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Amulet Enchants",
+        teachItems = { 249503 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Necklace - Healing Power" } },
         reagents   = {
             { itemID = 11175, count = 3, name = "Greater Nether Essence" },
@@ -1898,6 +1996,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Amulet Enchants",
+        teachItems = { 249502 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Necklace - Spell Power" } },
         reagents   = {
             { itemID = 11175, count = 5, name = "Greater Nether Essence" },
@@ -1914,6 +2013,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Amulet Enchants",
+        teachItems = { 249496 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Necklace - Strength" } },
         reagents   = {
             { itemID = 11175, count = 4, name = "Greater Nether Essence" },
@@ -1930,6 +2030,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Off-Hand Enchants",
+        teachItems = { 274392 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Off-Hand - Excellent Spirit" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -1944,6 +2045,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Off-Hand Enchants",
+        teachItems = { 274391 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Off-Hand - Superior Intellect" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -1958,6 +2060,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Off-Hand Enchants",
+        teachItems = { 274393 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Off-Hand - Wisdom" } },
         reagents   = {
             { itemID = 14344, count = 6, name = "Large Brilliant Shard" },
@@ -1973,6 +2076,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Shield Enchants",
+        teachItems = { 274400 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Shield - Critical Strike" } },
         reagents   = {
             { itemID = 14344, count = 5, name = "Large Brilliant Shard" },
@@ -1987,6 +2091,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Shield Enchants",
+        teachItems = { 274395 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Shield - Excellent Stamina" } },
         reagents   = {
             { itemID = 14344, count = 6, name = "Large Brilliant Shard" },
@@ -2001,6 +2106,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 255, 275, 295 },
         category   = "Shield Enchants",
+        teachItems = { 11224 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Shield - Frost Resistance" } },
         reagents   = {
             { itemID = 11178, count = 1, name = "Large Radiant Shard" },
@@ -2027,6 +2133,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 305, 325 },
         category   = "Shield Enchants",
+        teachItems = { 16217 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Shield - Greater Stamina" } },
         reagents   = {
             { itemID = 11176, count = 6, name = "Dream Dust" },
@@ -2039,6 +2146,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 228982 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Shield - Law of Nature" } },
         reagents   = {
             { itemID = 14344, count = 4, name = "Large Brilliant Shard" },
@@ -2056,6 +2164,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 235, 255 },
         category   = "Shield Enchants",
+        teachItems = { 11168 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Shield - Lesser Block" } },
         reagents   = {
             { itemID = 11135, count = 1, name = "Greater Mystic Essence" },
@@ -2070,6 +2179,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 115, 140, 160, 180 },
         category   = "Shield Enchants",
+        teachItems = { 11081 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Shield - Lesser Protection" } },
         reagents   = {
             { itemID = 10940, count = 1, name = "Strange Dust" },
@@ -2134,6 +2244,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 250, 270 },
         category   = "Shield Enchants",
+        teachItems = { 11202 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Shield - Stamina" } },
         reagents   = {
             { itemID = 11137, count = 2, name = "Vision Dust" },
@@ -2146,6 +2257,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 300, 320, 340 },
         category   = "Shield Enchants",
+        teachItems = { 16222 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Shield - Superior Spirit" } },
         reagents   = {
             { itemID = 16203, count = 2, name = "Greater Eternal Essence" },
@@ -2159,6 +2271,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 330, 350 },
         category   = "Weapon Enchants",
+        teachItems = { 19445 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Agility" } },
         reagents   = {
             { itemID = 14344, count = 6, name = "Large Brilliant Shard" },
@@ -2174,6 +2287,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Weapon Enchants",
+        teachItems = { 16252 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Crusader" } },
         reagents   = {
             { itemID = 14344, count = 4, name = "Large Brilliant Shard" },
@@ -2187,6 +2301,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 250, 270, 290 },
         category   = "Weapon Enchants",
+        teachItems = { 11208, 215140 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Demonslaying" } },
         reagents   = {
             { itemID = 11177, count = 1, name = "Small Radiant Shard" },
@@ -2201,6 +2316,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 200, 217, 235 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 215129 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Dismantle" } },
         reagents   = {
             { itemID = 11174, count = 4, name = "Lesser Nether Essence" },
@@ -2215,6 +2331,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 305, 325 },
         category   = "Weapon Enchants",
+        teachItems = { 11207 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Fiery Weapon" } },
         reagents   = {
             { itemID = 11177, count = 2, name = "Small Radiant Shard" },
@@ -2228,6 +2345,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 305, 307, 310 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 241191 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Grand Crusader" } },
         reagents   = {
             { itemID = 14344, count = 5, name = "Large Brilliant Shard" },
@@ -2243,6 +2361,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 305, 307, 310 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 241201 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Grand Sorcerer" } },
         reagents   = {
             { itemID = 14344, count = 6, name = "Large Brilliant Shard" },
@@ -2271,6 +2390,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Weapon Enchants",
+        teachItems = { 18260 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Healing Power" } },
         reagents   = {
             { itemID = 14344, count = 4, name = "Large Brilliant Shard" },
@@ -2287,6 +2407,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 305, 325, 345 },
         category   = "Weapon Enchants",
+        teachItems = { 16223 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Icy Chill" } },
         reagents   = {
             { itemID = 14343, count = 4, name = "Small Brilliant Shard" },
@@ -2302,6 +2423,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 160, 180 },
         category   = "Weapon Enchants",
+        teachItems = { 249479 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Insight" } },
         reagents   = {
             { itemID = 10940, count = 10, name = "Strange Dust" },
@@ -2318,6 +2440,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 215, 235 },
         category   = "Weapon Enchants",
+        teachItems = { 11164 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Lesser Beastslayer" } },
         reagents   = {
             { itemID = 5637, count = 1, name = "Large Fang" },
@@ -2331,6 +2454,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 215, 235 },
         category   = "Weapon Enchants",
+        teachItems = { 11165 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Lesser Elemental Slayer" } },
         reagents   = {
             { itemID = 7067, count = 1, name = "Elemental Earth" },
@@ -2357,6 +2481,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Weapon Enchants",
+        teachItems = { 16254 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Lifestealing" } },
         reagents   = {
             { itemID = 14344, count = 6, name = "Large Brilliant Shard" },
@@ -2371,6 +2496,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Weapon Enchants",
+        teachItems = { 19449 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Mighty Intellect" } },
         reagents   = {
             { itemID = 14344, count = 15, name = "Large Brilliant Shard" },
@@ -2385,6 +2511,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Weapon Enchants",
+        teachItems = { 19448 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Mighty Spirit" } },
         reagents   = {
             { itemID = 14344, count = 10, name = "Large Brilliant Shard" },
@@ -2399,6 +2526,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 120, 140, 160 },
         category   = "Weapon Enchants",
+        teachItems = { 6348 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Minor Beastslayer" } },
         reagents   = {
             { itemID = 10940, count = 2, name = "Strange Dust" },
@@ -2426,6 +2554,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 160, 180 },
         category   = "Weapon Enchants",
+        teachItems = { 249480 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Recovery" } },
         reagents   = {
             { itemID = 11083, count = 6, name = "Soul Dust" },
@@ -2442,6 +2571,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 160, 180 },
         category   = "Weapon Enchants",
+        teachItems = { 249481 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Revelation" } },
         reagents   = {
             { itemID = 11083, count = 8, name = "Soul Dust" },
@@ -2458,6 +2588,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Weapon Enchants",
+        teachItems = { 18259 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Spell Power" } },
         reagents   = {
             { itemID = 14344, count = 4, name = "Large Brilliant Shard" },
@@ -2475,6 +2606,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 330, 350 },
         category   = "Weapon Enchants",
+        teachItems = { 19444 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Strength" } },
         reagents   = {
             { itemID = 14344, count = 6, name = "Large Brilliant Shard" },
@@ -2503,6 +2635,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Weapon Enchants",
+        teachItems = { 16250 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Superior Striking" } },
         reagents   = {
             { itemID = 14344, count = 2, name = "Large Brilliant Shard" },
@@ -2516,6 +2649,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 315, 335, 355 },
         category   = "Weapon Enchants",
+        teachItems = { 16248 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Unholy Weapon" } },
         reagents   = {
             { itemID = 14344, count = 4, name = "Large Brilliant Shard" },
@@ -2529,6 +2663,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 210, 230, 250 },
         category   = "Weapon Enchants",
+        teachItems = { 17725 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Enchant Weapon - Winter's Might" } },
         reagents   = {
             { itemID = 11135, count = 1, name = "Greater Mystic Essence" },
@@ -2570,6 +2705,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234277 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -2586,6 +2722,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234275 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -2601,6 +2738,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234272 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234011, count = 3, name = "item:234011" },
@@ -2615,6 +2753,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234269 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234003, count = 3, name = "item:234003" },
@@ -2643,6 +2782,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234276 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -2656,6 +2796,7 @@ local recipes = {
         itemID     = 249469,
         skillRange = { false, 285, 305, 325 },
         category   = "Curios",
+        teachItems = { 249519 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 11382, count = 1, name = "Blood of the Mountain" },
@@ -2670,6 +2811,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 160, 180 },
         category   = "Staves",
+        teachItems = { 249482 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Glimmering Staff" } },
         reagents   = {
             { itemID = 11084, count = 4, name = "Large Glimmering Shard" },
@@ -2687,6 +2829,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 285, 295, 305 },
         category   = "Wands",
+        teachItems = { 249522 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Greater Eternal Wand" } },
         reagents   = {
             { itemID = 16203, count = 2, name = "Greater Eternal Essence" },
@@ -2728,6 +2871,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235140 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -2744,6 +2888,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235139 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -2760,6 +2905,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Relics",
+        teachItems = { 279299 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Idol of Swiftness" } },
         reagents   = {
             { itemID = 274030, count = 1, name = "Malleable Essence of Nature" },
@@ -2775,6 +2921,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235141 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 2, name = "Nexus Crystal" },
@@ -2791,6 +2938,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Relics",
+        teachItems = { 249529 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Idol of the Dream" } },
         reagents   = {
             { itemID = 14344, count = 2, name = "Large Brilliant Shard" },
@@ -2809,6 +2957,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Relics",
+        teachItems = { 279300 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Idol of the Ursine Twins" } },
         reagents   = {
             { itemID = 274030, count = 1, name = "Malleable Essence of Nature" },
@@ -2824,6 +2973,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 265, 285, 305 },
         category   = "Wands",
+        teachItems = { 249515 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Lesser Eternal Wand" } },
         reagents   = {
             { itemID = 16202, count = 1, name = "Lesser Eternal Essence" },
@@ -2851,6 +3001,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 270, 280 },
         category   = "Wizard Oils",
+        teachItems = { 20754 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Lesser Mana Oil" } },
         reagents   = {
             { itemID = 11176, count = 1, name = "Dream Dust" },
@@ -2878,6 +3029,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 210, 220, 230 },
         category   = "Wizard Oils",
+        teachItems = { 20753 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Lesser Wizard Oil" } },
         reagents   = {
             { itemID = 11137, count = 1, name = "Vision Dust" },
@@ -2892,6 +3044,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Relics",
+        teachItems = { 249530 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Libram of Holy Alacrity" } },
         reagents   = {
             { itemID = 14344, count = 4, name = "Large Brilliant Shard" },
@@ -2910,6 +3063,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Relics",
+        teachItems = { 279297 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Libram of Infusion" } },
         reagents   = {
             { itemID = 274030, count = 1, name = "Malleable Essence of Nature" },
@@ -2925,6 +3079,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Relics",
+        teachItems = { 249494 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Libram of Invocation" } },
         reagents   = {
             { itemID = 11178, count = 3, name = "Large Radiant Shard" },
@@ -2942,6 +3097,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235133 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -2957,6 +3113,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235135 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -2972,6 +3129,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235134 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -2987,6 +3145,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234268 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234007, count = 10, name = "item:234007" },
@@ -3003,6 +3162,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 320, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 232610 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Magnificent Trollshine" } },
         reagents   = {
             { itemID = 8151, count = 3, name = "Flask of Mojo" },
@@ -3018,6 +3178,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 160, 170, 180 },
         category   = "Wizard Oils",
+        teachItems = { 20752 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Minor Mana Oil" } },
         reagents   = {
             { itemID = 11083, count = 1, name = "Soul Dust" },
@@ -3032,6 +3193,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 5, 30, 47, 65 },
         category   = "Wizard Oils",
+        teachItems = { 20751, 20758 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Minor Wizard Oil" } },
         reagents   = {
             { itemID = 10940, count = 1, name = "Strange Dust" },
@@ -3044,6 +3206,7 @@ local recipes = {
         itemID     = 249470,
         skillRange = { false, 285, 305, 325 },
         category   = "Curios",
+        teachItems = { 249520 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 11382, count = 1, name = "Blood of the Mountain" },
@@ -3058,6 +3221,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 140, 160, 180 },
         category   = "Relics",
+        teachItems = { 249476 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Mystic Mushroom" } },
         reagents   = {
             { itemID = 10978, count = 1, name = "Small Glimmering Shard" },
@@ -3086,6 +3250,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 160, 180 },
         category   = "Off-Hands",
+        teachItems = { 249484 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Orb of Mystic Insight" } },
         reagents   = {
             { itemID = 10978, count = 2, name = "Small Glimmering Shard" },
@@ -3100,6 +3265,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 160, 180 },
         category   = "Off-Hands",
+        teachItems = { 249485 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Orb of Souls" } },
         reagents   = {
             { itemID = 10978, count = 2, name = "Small Glimmering Shard" },
@@ -3114,6 +3280,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 140, 160, 180 },
         category   = "Relics",
+        teachItems = { 249478 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Polished Driftwood Icon" } },
         reagents   = {
             { itemID = 11084, count = 1, name = "Large Glimmering Shard" },
@@ -3129,6 +3296,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 225, 245, 265 },
         category   = "Staves",
+        teachItems = { 249506 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Radiant Staff" } },
         reagents   = {
             { itemID = 11178, count = 6, name = "Large Radiant Shard" },
@@ -3147,6 +3315,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234270 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234007, count = 10, name = "item:234007" },
@@ -3164,6 +3333,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 330, 350 },
         category   = "Runed Enchanting Rods",
+        teachItems = { 16243 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Runed Arcanite Rod" } },
         reagents   = {
             { itemID = 16206, count = 1, name = "Arcanite Rod" },
@@ -3239,6 +3409,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 120, 140, 160 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 223163 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Scroll of Spatial Mending" } },
         reagents   = {
             { itemID = 4470, count = 1, name = "Simple Wood" },
@@ -3252,6 +3423,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234271 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 16203, count = 1, name = "Greater Eternal Essence" },
@@ -3265,6 +3437,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 312, 320 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 228979 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Enchanted Sigil: Flowing Waters" } },
         reagents   = {
             { itemID = 16204, count = 1, name = "Illusion Dust" },
@@ -3277,6 +3450,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 227, 230 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 215141 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Enchanted Sigil: Innovation" } },
         reagents   = {
             { itemID = 11137, count = 5, name = "Vision Dust" },
@@ -3289,6 +3463,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 305, 325 },
         category   = "Curios",
+        teachItems = { 11813 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Smoking Heart of the Mountain" } },
         reagents   = {
             { itemID = 11382, count = 1, name = "Blood of the Mountain" },
@@ -3303,6 +3478,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 160, 180 },
         category   = "Staves",
+        teachItems = { 249483 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Soulstaff" } },
         reagents   = {
             { itemID = 11084, count = 2, name = "Large Glimmering Shard" },
@@ -3320,6 +3496,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234266 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234006, count = 10, name = "item:234006" },
@@ -3336,6 +3513,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Relics",
+        teachItems = { 279296 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Steadfast Libram" } },
         reagents   = {
             { itemID = 274030, count = 1, name = "Malleable Essence of Nature" },
@@ -3351,6 +3529,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Relics",
+        teachItems = { 249493 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Talons of Wrath" } },
         reagents   = {
             { itemID = 11178, count = 2, name = "Large Radiant Shard" },
@@ -3368,6 +3547,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234267 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234006, count = 10, name = "item:234006" },
@@ -3384,6 +3564,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 140, 160, 180 },
         category   = "Relics",
+        teachItems = { 249477 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Tenets of the Silver Hand" } },
         reagents   = {
             { itemID = 11084, count = 1, name = "Large Glimmering Shard" },
@@ -3399,6 +3580,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Wands",
+        teachItems = { 279295 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Torch of Light" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -3414,6 +3596,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Relics",
+        teachItems = { 249495 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Totem of Ancestral Protection" } },
         reagents   = {
             { itemID = 11178, count = 4, name = "Large Radiant Shard" },
@@ -3431,6 +3614,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235138 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -3446,6 +3630,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235136 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -3461,6 +3646,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 340, 360 },
         category   = "Relics",
+        teachItems = { 249532 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Totem of Thunder" } },
         reagents   = {
             { itemID = 14344, count = 1, name = "Large Brilliant Shard" },
@@ -3479,6 +3665,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 340, 360 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235137 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 20725, count = 3, name = "Nexus Crystal" },
@@ -3494,6 +3681,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Relics",
+        teachItems = { 279298 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Totem of Urgency" } },
         reagents   = {
             { itemID = 274030, count = 1, name = "Malleable Essence of Nature" },
@@ -3509,6 +3697,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 225, 245, 265 },
         category   = "Off-Hands",
+        teachItems = { 249508 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Truesilver Conduit" } },
         reagents   = {
             { itemID = 11178, count = 3, name = "Large Radiant Shard" },
@@ -3527,6 +3716,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 205, 225, 245 },
         category   = "Wands",
+        teachItems = { 249487 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Twisted Nether Wand" } },
         reagents   = {
             { itemID = 11174, count = 1, name = "Lesser Nether Essence" },
@@ -3541,6 +3731,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 225, 245, 265 },
         category   = "Off-Hands",
+        teachItems = { 249509 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Twisting Essence Jar" } },
         reagents   = {
             { itemID = 6037, count = 4, name = "Truesilver Bar" },
@@ -3557,6 +3748,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 285, 295, 305 },
         category   = "Wizard Oils",
+        teachItems = { 20755 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Formula: Wizard Oil" } },
         reagents   = {
             { itemID = 16204, count = 3, name = "Illusion Dust" },

@@ -16,6 +16,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 315, 322, 330 },
         category   = "Miscellaneous",
+        teachItems = { 13517 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Alchemists' Stone" } },
         reagents   = {
             { itemID = 7078, count = 8, name = "Essence of Fire" },
@@ -34,6 +35,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273112 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Alchemy Laboratory" } },
         reagents   = {
             { itemID = 273125, count = 1, name = "Lich's Index Finger" },
@@ -89,6 +91,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 270, 272, 275 },
         category   = "Potions",
+        teachItems = { 250995 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Caustic Smog Potion" } },
         reagents   = {
             { itemID = 8845, count = 2, name = "Ghost Mushroom" },
@@ -116,6 +119,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 150, 152, 155 },
         category   = "Elixirs",
+        teachItems = { 250368 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Cleric's Elixir" } },
         reagents   = {
             { itemID = 3819, count = 2, name = "Wintersbite" },
@@ -142,6 +146,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 185, 187, 190 },
         category   = "Potions",
+        teachItems = { 250996 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Disorienting Smog Potion" } },
         reagents   = {
             { itemID = 8845, count = 3, name = "Ghost Mushroom" },
@@ -156,6 +161,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 265, 270 },
         category   = "Elixirs",
+        teachItems = { 236754 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Distilled Firewater" } },
         reagents   = {
             { itemID = 3819, count = 4, name = "Wintersbite" },
@@ -170,6 +176,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 250, 252, 255 },
         category   = "Potions",
+        teachItems = { 250997 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Dragonfire Potion" } },
         reagents   = {
             { itemID = 13465, count = 2, name = "Mountain Silversage" },
@@ -197,6 +204,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 235, 255 },
         category   = "Draughts",
+        teachItems = { 3832 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Detect Lesser Invisibility" } },
         reagents   = {
             { itemID = 3358, count = 1, name = "Khadgar's Whisker" },
@@ -224,6 +232,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 255, 275, 295 },
         category   = "Draughts",
+        teachItems = { 9297 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Draught of Dream Vision" } },
         reagents   = {
             { itemID = 8831, count = 3, name = "Purple Lotus" },
@@ -251,6 +260,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 200, 202, 205 },
         category   = "Draughts",
+        teachItems = { 250363 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Draught of Predatory Senses" } },
         reagents   = {
             { itemID = 3818, count = 2, name = "Fadeleaf" },
@@ -263,6 +273,7 @@ local recipes = {
         itemID     = 2460,
         skillRange = { false, 100, 120, 140 },
         category   = "Draughts",
+        teachItems = { 2556 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2449, count = 2, name = "Earthroot" },
@@ -330,6 +341,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234260 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 13463, count = 2, name = "Dreamfoil" },
@@ -345,6 +357,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 290, 310, 330 },
         category   = "Elixirs",
+        teachItems = { 13481 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Brute Force" } },
         reagents   = {
             { itemID = 8846, count = 2, name = "Gromsblood" },
@@ -359,6 +372,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 90, 100, 110 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 210709 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Coalesced Regret" } },
         reagents   = {
             { itemID = 3820, count = 5, name = "Stranglekelp" },
@@ -374,6 +388,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 280, 282, 285 },
         category   = "Elixirs",
+        teachItems = { 250364 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Cunning" } },
         reagents   = {
             { itemID = 13463, count = 3, name = "Dreamfoil" },
@@ -402,6 +417,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 280, 282, 285 },
         category   = "Elixirs",
+        teachItems = { 250386 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Ferocity" } },
         reagents   = {
             { itemID = 8846, count = 3, name = "Gromsblood" },
@@ -430,6 +446,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 157, 160 },
         category   = "Elixirs",
+        teachItems = { 250370 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Fortitude" } },
         reagents   = {
             { itemID = 3821, count = 4, name = "Goldthorn" },
@@ -443,6 +460,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 210, 230, 250 },
         category   = "Elixirs",
+        teachItems = { 17709 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Frost Power" } },
         reagents   = {
             { itemID = 3819, count = 2, name = "Wintersbite" },
@@ -457,6 +475,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 120, 140, 160 },
         category   = "Elixirs",
+        teachItems = { 6663 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Giant Growth" } },
         reagents   = {
             { itemID = 6522, count = 1, name = "Deviate Fish" },
@@ -485,6 +504,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 280, 300, 320 },
         category   = "Elixirs",
+        teachItems = { 13478 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Superior Defense" } },
         reagents   = {
             { itemID = 13423, count = 2, name = "Stonescale Oil" },
@@ -499,6 +519,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 207, 210 },
         category   = "Elixirs",
+        teachItems = { 250371 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Greater Fortitude" } },
         reagents   = {
             { itemID = 8838, count = 4, name = "Sungrass" },
@@ -526,6 +547,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 170, 172, 175 },
         category   = "Elixirs",
+        teachItems = { 250383 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Greater Spirit" } },
         reagents   = {
             { itemID = 8836, count = 3, name = "Arthas' Tears" },
@@ -540,6 +562,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 260, 280, 300 },
         category   = "Elixirs",
+        teachItems = { 9298 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Giants" } },
         reagents   = {
             { itemID = 8838, count = 1, name = "Sungrass" },
@@ -554,6 +577,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 265, 285, 305 },
         category   = "Elixirs",
+        teachItems = { 21547 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Greater Firepower" } },
         reagents   = {
             { itemID = 6371, count = 3, name = "Fire Oil" },
@@ -568,6 +592,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 140, 142, 145 },
         category   = "Elixirs",
+        teachItems = { 250389 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Intellect" } },
         reagents   = {
             { itemID = 3358, count = 3, name = "Khadgar's Whisker" },
@@ -581,6 +606,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 165, 185, 205 },
         category   = "Elixirs",
+        teachItems = { 3396 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Lesser Agility" } },
         reagents   = {
             { itemID = 3355, count = 1, name = "Wild Steelbloom" },
@@ -609,6 +635,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 215, 235 },
         category   = "Elixirs",
+        teachItems = { 3830 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Lesser Fortitude" } },
         reagents   = {
             { itemID = 3355, count = 1, name = "Wild Steelbloom" },
@@ -623,6 +650,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 100, 102, 105 },
         category   = "Elixirs",
+        teachItems = { 250388 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Lesser Intellect" } },
         reagents   = {
             { itemID = 3356, count = 3, name = "Kingsblood" },
@@ -636,6 +664,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 65, 70, 72, 75 },
         category   = "Elixirs",
+        teachItems = { 250381 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Lesser Spirit" } },
         reagents   = {
             { itemID = 3355, count = 2, name = "Wild Steelbloom" },
@@ -650,6 +679,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 80, 100, 120 },
         category   = "Elixirs",
+        teachItems = { 2553 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Minor Agility" } },
         reagents   = {
             { itemID = 2452, count = 1, name = "Swiftthistle" },
@@ -691,6 +721,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 50, 80, 100, 120 },
         category   = "Elixirs",
+        teachItems = { 2554 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2449, count = 2, name = "Earthroot" },
@@ -705,6 +736,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 15, 20, 22, 25 },
         category   = "Elixirs",
+        teachItems = { 250380 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Minor Spirit" } },
         reagents   = {
             { itemID = 2449, count = 2, name = "Earthroot" },
@@ -733,6 +765,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Elixirs",
+        teachItems = { 250379 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Nature Power" } },
         reagents   = {
             { itemID = 13464, count = 4, name = "Golden Sansam" },
@@ -747,6 +780,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 175, 195, 215 },
         category   = "Elixirs",
+        teachItems = { 6211 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Ogre's Strength" } },
         reagents   = {
             { itemID = 2449, count = 1, name = "Earthroot" },
@@ -761,6 +795,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 280, 282, 285 },
         category   = "Elixirs",
+        teachItems = { 250374 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Sages" } },
         reagents   = {
             { itemID = 13463, count = 4, name = "Dreamfoil" },
@@ -775,6 +810,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 265, 285, 305 },
         category   = "Elixirs",
+        teachItems = { 9301 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Shadow Power" } },
         reagents   = {
             { itemID = 8845, count = 3, name = "Ghost Mushroom" },
@@ -788,6 +824,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 115, 120, 122, 125 },
         category   = "Elixirs",
+        teachItems = { 250382 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Spirit" } },
         reagents   = {
             { itemID = 3358, count = 3, name = "Khadgar's Whisker" },
@@ -802,6 +839,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 155, 157, 160 },
         category   = "Elixirs",
+        teachItems = { 250385 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Strength" } },
         reagents   = {
             { itemID = 3355, count = 3, name = "Wild Steelbloom" },
@@ -816,6 +854,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Elixirs",
+        teachItems = { 250372 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of Wicked Regeneration" } },
         reagents   = {
             { itemID = 13464, count = 3, name = "Golden Sansam" },
@@ -844,6 +883,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 305, 307, 310 },
         category   = "Elixirs",
+        teachItems = { 250387 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of the Grizzly" } },
         reagents   = {
             { itemID = 8846, count = 3, name = "Gromsblood" },
@@ -858,6 +898,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234257 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 13465, count = 2, name = "Mountain Silversage" },
@@ -873,6 +914,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234259 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 13467, count = 2, name = "Icecap" },
@@ -888,6 +930,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234258 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 13466, count = 2, name = "Plaguebloom" },
@@ -903,6 +946,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 295, 315, 335 },
         category   = "Elixirs",
+        teachItems = { 13491 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of the Mongoose" } },
         reagents   = {
             { itemID = 13465, count = 2, name = "Mountain Silversage" },
@@ -917,6 +961,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 287, 290 },
         category   = "Elixirs",
+        teachItems = { 250373 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of the Owl" } },
         reagents   = {
             { itemID = 13463, count = 4, name = "Dreamfoil" },
@@ -931,6 +976,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 257, 260 },
         category   = "Elixirs",
+        teachItems = { 250365 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of the Phalanx" } },
         reagents   = {
             { itemID = 13464, count = 2, name = "Golden Sansam" },
@@ -945,6 +991,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 285, 305, 325 },
         category   = "Elixirs",
+        teachItems = { 13479 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of the Sages" } },
         reagents   = {
             { itemID = 13463, count = 1, name = "Dreamfoil" },
@@ -959,6 +1006,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 280, 282, 285 },
         category   = "Elixirs",
+        teachItems = { 250384 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Elixir of the Whale" } },
         reagents   = {
             { itemID = 13463, count = 3, name = "Dreamfoil" },
@@ -973,6 +1021,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273085 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Fermenter" } },
         reagents   = {
             { itemID = 3372, count = 1, name = "Leaded Vial" },
@@ -1001,6 +1050,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 210, 230, 250 },
         category   = "Potions",
+        teachItems = { 6055 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Fire Protection Potion" } },
         reagents   = {
             { itemID = 4402, count = 1, name = "Small Flame Sac" },
@@ -1015,6 +1065,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234253 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 16203, count = 1, name = "Greater Eternal Essence" },
@@ -1030,6 +1081,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 322, 330 },
         category   = "Flasks",
+        teachItems = { 13522 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flask of Chromatic Resistance" } },
         reagents   = {
             { itemID = 13467, count = 30, name = "Icecap" },
@@ -1045,6 +1097,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 322, 330 },
         category   = "Flasks",
+        teachItems = { 13520 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flask of Distilled Wisdom" } },
         reagents   = {
             { itemID = 13463, count = 30, name = "Dreamfoil" },
@@ -1060,6 +1113,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234256 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 16203, count = 1, name = "Greater Eternal Essence" },
@@ -1075,6 +1129,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Flasks",
+        teachItems = { 274277 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flask of Natural Accuracy" } },
         reagents   = {
             { itemID = 248822, count = 1, name = "Death Lotus" },
@@ -1090,6 +1145,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Flasks",
+        teachItems = { 274278 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flask of Natural Aggression" } },
         reagents   = {
             { itemID = 248822, count = 1, name = "Death Lotus" },
@@ -1105,6 +1161,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Flasks",
+        teachItems = { 274279 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flask of Natural Precision" } },
         reagents   = {
             { itemID = 248822, count = 1, name = "Death Lotus" },
@@ -1120,6 +1177,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Flasks",
+        teachItems = { 274280 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flask of Natural Swiftness" } },
         reagents   = {
             { itemID = 248822, count = 1, name = "Death Lotus" },
@@ -1135,6 +1193,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 322, 330 },
         category   = "Flasks",
+        teachItems = { 13518 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flask of Petrification" } },
         reagents   = {
             { itemID = 13423, count = 30, name = "Stonescale Oil" },
@@ -1150,6 +1209,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 322, 330 },
         category   = "Flasks",
+        teachItems = { 13521 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flask of Supreme Power" } },
         reagents   = {
             { itemID = 13463, count = 30, name = "Dreamfoil" },
@@ -1165,6 +1225,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234252 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 16203, count = 1, name = "Greater Eternal Essence" },
@@ -1180,6 +1241,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234255 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 16203, count = 1, name = "Greater Eternal Essence" },
@@ -1195,6 +1257,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 322, 330 },
         category   = "Flasks",
+        teachItems = { 13519 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flask of the Titans" } },
         reagents   = {
             { itemID = 8846, count = 30, name = "Gromsblood" },
@@ -1210,6 +1273,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 175, 195, 215 },
         category   = "Potions",
+        teachItems = { 5642 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Free Action Potion" } },
         reagents   = {
             { itemID = 6370, count = 2, name = "Blackmouth Oil" },
@@ -1224,6 +1288,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 145, 147, 150 },
         category   = "Potions",
+        teachItems = { 250984 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Frenzy Potion" } },
         reagents   = {
             { itemID = 3818, count = 2, name = "Fadeleaf" },
@@ -1239,6 +1304,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 240, 260 },
         category   = "Weapon Oils",
+        teachItems = { 14634 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Frost Oil" } },
         reagents   = {
             { itemID = 3358, count = 4, name = "Khadgar's Whisker" },
@@ -1253,6 +1319,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 205, 225, 245 },
         category   = "Potions",
+        teachItems = { 6056 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Frost Protection Potion" } },
         reagents   = {
             { itemID = 3819, count = 1, name = "Wintersbite" },
@@ -1268,6 +1335,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 260, 280, 300 },
         category   = "Reagents",
+        teachItems = { 9302 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Ghost Dye" } },
         reagents   = {
             { itemID = 8845, count = 2, name = "Ghost Mushroom" },
@@ -1282,6 +1350,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 255, 275, 295 },
         category   = "Elixirs",
+        teachItems = { 9296 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Gift of Arthas" } },
         reagents   = {
             { itemID = 8836, count = 1, name = "Arthas' Tears" },
@@ -1297,6 +1366,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Reagents",
+        teachItems = { 10644 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Goblin Rocket Fuel" } },
         reagents   = {
             { itemID = 4625, count = 1, name = "Firebloom" },
@@ -1311,6 +1381,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 215, 235 },
         category   = "Potions",
+        teachItems = { 5643 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Great Rage Potion" } },
         reagents   = {
             { itemID = 5637, count = 1, name = "Large Fang" },
@@ -1325,6 +1396,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 300, 320, 340 },
         category   = "Elixirs",
+        teachItems = { 13493 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Arcane Elixir" } },
         reagents   = {
             { itemID = 13463, count = 3, name = "Dreamfoil" },
@@ -1339,6 +1411,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 325, 345 },
         category   = "Potions",
+        teachItems = { 13497 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Arcane Protection Potion" } },
         reagents   = {
             { itemID = 11176, count = 1, name = "Dream Dust" },
@@ -1353,6 +1426,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 200, 202, 205 },
         category   = "Elixirs",
+        teachItems = { 250369 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Cleric's Elixir" } },
         reagents   = {
             { itemID = 8836, count = 3, name = "Arthas' Tears" },
@@ -1379,6 +1453,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 290, 310, 330 },
         category   = "Recovery Potions",
+        teachItems = { 20012 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Dreamless Sleep" } },
         reagents   = {
             { itemID = 13463, count = 2, name = "Dreamfoil" },
@@ -1393,6 +1468,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 325, 345 },
         category   = "Potions",
+        teachItems = { 13494 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Fire Protection Potion" } },
         reagents   = {
             { itemID = 7068, count = 1, name = "Elemental Fire" },
@@ -1407,6 +1483,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 195, 197, 200 },
         category   = "Potions",
+        teachItems = { 250985 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Frenzy Potion" } },
         reagents   = {
             { itemID = 4625, count = 3, name = "Firebloom" },
@@ -1421,6 +1498,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 325, 345 },
         category   = "Potions",
+        teachItems = { 13495 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Frost Protection Potion" } },
         reagents   = {
             { itemID = 7070, count = 1, name = "Elemental Water" },
@@ -1435,6 +1513,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 325, 345 },
         category   = "Potions",
+        teachItems = { 13500 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Holy Protection Potion" } },
         reagents   = {
             { itemID = 7069, count = 1, name = "Elemental Air" },
@@ -1449,6 +1528,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 180, 182, 185 },
         category   = "Elixirs",
+        teachItems = { 250377 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Mageblood Elixir" } },
         reagents   = {
             { itemID = 8839, count = 3, name = "Blindweed" },
@@ -1475,6 +1555,7 @@ local recipes = {
         itemID     = 250947,
         skillRange = { false, 185, 187, 190 },
         category   = "Potions",
+        teachItems = { 250991 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 8836, count = 2, name = "Arthas' Tears" },
@@ -1489,6 +1570,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 325, 345 },
         category   = "Potions",
+        teachItems = { 13496 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Nature Protection Potion" } },
         reagents   = {
             { itemID = 7067, count = 1, name = "Elemental Earth" },
@@ -1503,6 +1585,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 325, 345 },
         category   = "Potions",
+        teachItems = { 13499 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Shadow Protection Potion" } },
         reagents   = {
             { itemID = 3824, count = 1, name = "Shadow Oil" },
@@ -1517,6 +1600,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 190, 192, 195 },
         category   = "Potions",
+        teachItems = { 250979 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Spellblasting Potion" } },
         reagents   = {
             { itemID = 3356, count = 2, name = "Kingsblood" },
@@ -1531,6 +1615,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 295, 315, 335 },
         category   = "Potions",
+        teachItems = { 13490 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Greater Stoneshield Potion" } },
         reagents   = {
             { itemID = 13423, count = 3, name = "Stonescale Oil" },
@@ -1559,6 +1644,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 130, 150, 170 },
         category   = "Potions",
+        teachItems = { 6053 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Holy Protection Potion" } },
         reagents   = {
             { itemID = 2453, count = 1, name = "Bruiseweed" },
@@ -1573,6 +1659,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 270, 290 },
         category   = "Potions",
+        teachItems = { 9295 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Invisibility Potion" } },
         reagents   = {
             { itemID = 8845, count = 1, name = "Ghost Mushroom" },
@@ -1587,6 +1674,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 125, 127, 130 },
         category   = "Elixirs",
+        teachItems = { 250378 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lesser Arcane Elixir" } },
         reagents   = {
             { itemID = 3356, count = 4, name = "Kingsblood" },
@@ -1600,6 +1688,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 100, 102, 105 },
         category   = "Elixirs",
+        teachItems = { 250367 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lesser Cleric's Elixir" } },
         reagents   = {
             { itemID = 3356, count = 2, name = "Kingsblood" },
@@ -1626,6 +1715,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 95, 97, 100 },
         category   = "Potions",
+        teachItems = { 250983 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lesser Frenzy Potion" } },
         reagents   = {
             { itemID = 2450, count = 1, name = "Briarthorn" },
@@ -1654,6 +1744,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 80, 82, 85 },
         category   = "Elixirs",
+        teachItems = { 250376 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lesser Mageblood Elixir" } },
         reagents   = {
             { itemID = 3356, count = 3, name = "Kingsblood" },
@@ -1681,6 +1772,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 85, 87, 90 },
         category   = "Potions",
+        teachItems = { 250989 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lesser Mender's Potion" } },
         reagents   = {
             { itemID = 3356, count = 2, name = "Kingsblood" },
@@ -1695,6 +1787,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 90, 92, 95 },
         category   = "Potions",
+        teachItems = { 250977 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lesser Spellblasting Potion" } },
         reagents   = {
             { itemID = 785, count = 1, name = "Mageroyal" },
@@ -1709,6 +1802,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 250, 270 },
         category   = "Potions",
+        teachItems = { 4624 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lesser Stoneshield Potion" } },
         reagents   = {
             { itemID = 3858, count = 1, name = "Mithril Ore" },
@@ -1737,6 +1831,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 275, 295, 315 },
         category   = "Potions",
+        teachItems = { 3395 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Limited Invulnerability Potion" } },
         reagents   = {
             { itemID = 8839, count = 2, name = "Blindweed" },
@@ -1751,6 +1846,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 300, 320, 340 },
         category   = "Potions",
+        teachItems = { 20013 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Living Action Potion" } },
         reagents   = {
             { itemID = 13467, count = 2, name = "Icecap" },
@@ -1766,6 +1862,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 290, 310, 330 },
         category   = "Elixirs",
+        teachItems = { 20011 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Mageblood Elixir" } },
         reagents   = {
             { itemID = 13463, count = 1, name = "Dreamfoil" },
@@ -1791,6 +1888,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 245, 265 },
         category   = "Potions",
+        teachItems = { 9293 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Magic Resistance Potion" } },
         reagents   = {
             { itemID = 3358, count = 1, name = "Khadgar's Whisker" },
@@ -1805,6 +1903,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 290, 310, 330 },
         category   = "Recovery Potions",
+        teachItems = { 241651 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Major Discolored Healing Potion" } },
         reagents   = {
             { itemID = 8925, count = 1, name = "Crystal Vial" },
@@ -1819,6 +1918,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 295, 297, 300 },
         category   = "Potions",
+        teachItems = { 250987 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Major Frenzy Potion" } },
         reagents   = {
             { itemID = 13466, count = 3, name = "Plaguebloom" },
@@ -1833,6 +1933,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 310, 330, 350 },
         category   = "Recovery Potions",
+        teachItems = { 13501 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Major Mana Potion" } },
         reagents   = {
             { itemID = 13463, count = 3, name = "Dreamfoil" },
@@ -1847,6 +1948,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 287, 290 },
         category   = "Potions",
+        teachItems = { 250993 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Major Mender's Potion" } },
         reagents   = {
             { itemID = 13463, count = 3, name = "Dreamfoil" },
@@ -1861,6 +1963,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 320, 330 },
         category   = "Recovery Potions",
+        teachItems = { 18257 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Major Rejuvenation Potion" } },
         reagents   = {
             { itemID = 10286, count = 1, name = "Heart of the Wild" },
@@ -1876,6 +1979,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Potions",
+        teachItems = { 250981 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Major Spellblasting Potion" } },
         reagents   = {
             { itemID = 13463, count = 2, name = "Dreamfoil" },
@@ -1890,6 +1994,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 325, 345 },
         category   = "Elixirs",
+        teachItems = { 20014 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Major Troll's Blood Elixir" } },
         reagents   = {
             { itemID = 8846, count = 1, name = "Gromsblood" },
@@ -1931,6 +2036,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 135, 137, 140 },
         category   = "Potions",
+        teachItems = { 250990 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Mender's Potion" } },
         reagents   = {
             { itemID = 3819, count = 2, name = "Wintersbite" },
@@ -1945,6 +2051,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 270, 290, 310 },
         category   = "Potions",
+        teachItems = { 13476 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Mighty Rage Potion" } },
         reagents   = {
             { itemID = 8846, count = 3, name = "Gromsblood" },
@@ -1971,6 +2078,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 45, 50, 52, 55 },
         category   = "Elixirs",
+        teachItems = { 250366 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Minor Cleric's Elixir" } },
         reagents   = {
             { itemID = 785, count = 2, name = "Mageroyal" },
@@ -1985,6 +2093,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 75, 95 },
         category   = "Recovery Potions",
+        teachItems = { 4597 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Minor Discolored Healing Potion" } },
         reagents   = {
             { itemID = 3371, count = 1, name = "Empty Vial" },
@@ -1999,6 +2108,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 40, 45, 47, 50 },
         category   = "Potions",
+        teachItems = { 250982 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Minor Frenzy Potion" } },
         reagents   = {
             { itemID = 2449, count = 1, name = "Earthroot" },
@@ -2013,6 +2123,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 25, 30, 32, 35 },
         category   = "Elixirs",
+        teachItems = { 250375 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Minor Mageblood Elixir" } },
         reagents   = {
             { itemID = 785, count = 2, name = "Mageroyal" },
@@ -2026,6 +2137,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 135, 155, 175 },
         category   = "Potions",
+        teachItems = { 3393 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Minor Magic Resistance Potion" } },
         reagents   = {
             { itemID = 785, count = 3, name = "Mageroyal" },
@@ -2054,6 +2166,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 30, 35, 37, 40 },
         category   = "Potions",
+        teachItems = { 250988 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Minor Mender's Potion" } },
         reagents   = {
             { itemID = 785, count = 2, name = "Mageroyal" },
@@ -2082,6 +2195,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 35, 40, 42, 45 },
         category   = "Potions",
+        teachItems = { 250976 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Minor Spellblasting Potion" } },
         reagents   = {
             { itemID = 765, count = 1, name = "Silverleaf" },
@@ -2110,6 +2224,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 210, 230, 250 },
         category   = "Potions",
+        teachItems = { 6057 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Nature Protection Potion" } },
         reagents   = {
             { itemID = 3357, count = 1, name = "Liferoot" },
@@ -2138,6 +2253,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 240, 260, 280 },
         category   = "Miscellaneous",
+        teachItems = { 9303 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Philosopher's Stone" } },
         reagents   = {
             { itemID = 3575, count = 4, name = "Iron Bar" },
@@ -2153,6 +2269,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 287, 290 },
         category   = "Potions",
+        teachItems = { 250999 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Potion of Beast Slaying" } },
         reagents   = {
             { itemID = 8846, count = 2, name = "Gromsblood" },
@@ -2167,6 +2284,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 265, 285, 305 },
         category   = "Elixirs",
+        teachItems = { 9300 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Potion of Demon Slaying" } },
         reagents   = {
             { itemID = 8846, count = 1, name = "Gromsblood" },
@@ -2181,6 +2299,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 287, 290 },
         category   = "Potions",
+        teachItems = { 250998 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Potion of Elemental Purging" } },
         reagents   = {
             { itemID = 4625, count = 2, name = "Firebloom" },
@@ -2195,6 +2314,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 145, 165, 185 },
         category   = "Elixirs",
+        teachItems = { 3394 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Potion of Poison Cleansing" } },
         reagents   = {
             { itemID = 1288, count = 1, name = "Large Venom Sac" },
@@ -2209,6 +2329,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 280, 282, 285 },
         category   = "Potions",
+        teachItems = { 250994 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Potion of Venomous Blood" } },
         reagents   = {
             { itemID = 8846, count = 3, name = "Gromsblood" },
@@ -2223,6 +2344,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 300, 320, 340 },
         category   = "Potions",
+        teachItems = { 13492 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Purification Potion" } },
         reagents   = {
             { itemID = 13467, count = 2, name = "Icecap" },
@@ -2237,6 +2359,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 90, 110, 130 },
         category   = "Potions",
+        teachItems = { 5640 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Rage Potion" } },
         reagents   = {
             { itemID = 5635, count = 1, name = "Sharp Claw" },
@@ -2271,6 +2394,7 @@ local recipes = {
         itemID     = 250326,
         skillRange = { false, 205, 207, 210 },
         category   = "Draughts",
+        teachItems = { 250362 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 3818, count = 3, name = "Fadeleaf" },
@@ -2286,6 +2410,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 190, 210, 230 },
         category   = "Weapon Oils",
+        teachItems = { 6068 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Shadow Oil" } },
         reagents   = {
             { itemID = 3818, count = 4, name = "Fadeleaf" },
@@ -2300,6 +2425,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 160, 180, 200 },
         category   = "Potions",
+        teachItems = { 6054 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Shadow Protection Potion" } },
         reagents   = {
             { itemID = 3369, count = 1, name = "Grave Moss" },
@@ -2314,6 +2440,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 140, 142, 145 },
         category   = "Potions",
+        teachItems = { 250978 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Spellblasting Potion" } },
         reagents   = {
             { itemID = 3355, count = 1, name = "Wild Steelbloom" },
@@ -2367,6 +2494,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 245, 247, 250 },
         category   = "Potions",
+        teachItems = { 250986 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Superior Frenzy Potion" } },
         reagents   = {
             { itemID = 8839, count = 3, name = "Blindweed" },
@@ -2381,6 +2509,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 275, 295, 315 },
         category   = "Recovery Potions",
+        teachItems = { 13477 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Superior Mana Potion" } },
         reagents   = {
             { itemID = 8838, count = 2, name = "Sungrass" },
@@ -2395,6 +2524,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 235, 237, 240 },
         category   = "Potions",
+        teachItems = { 250992 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Superior Mender's Potion" } },
         reagents   = {
             { itemID = 8838, count = 2, name = "Sungrass" },
@@ -2409,6 +2539,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 240, 242, 245 },
         category   = "Potions",
+        teachItems = { 250980 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Superior Spellblasting Potion" } },
         reagents   = {
             { itemID = 3819, count = 2, name = "Wintersbite" },
@@ -2423,6 +2554,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 90, 110, 130 },
         category   = "Potions",
+        teachItems = { 2555 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Swiftness Potion" } },
         reagents   = {
             { itemID = 2452, count = 1, name = "Swiftthistle" },
@@ -2451,6 +2583,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Lesser Transmutations",
+        teachItems = { 13482 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Air to Fire" } },
         reagents   = {
             { itemID = 7082, count = 1, name = "Essence of Air" },
@@ -2463,6 +2596,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Greater Transmutations",
+        teachItems = { 12958 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Arcanite" } },
         reagents   = {
             { itemID = 12359, count = 1, name = "Thorium Bar" },
@@ -2476,6 +2610,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Lesser Transmutations",
+        teachItems = { 13489 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Earth to Life" } },
         reagents   = {
             { itemID = 7076, count = 1, name = "Essence of Earth" },
@@ -2488,6 +2623,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Lesser Transmutations",
+        teachItems = { 13484 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Earth to Water" } },
         reagents   = {
             { itemID = 7076, count = 1, name = "Essence of Earth" },
@@ -2501,6 +2637,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 301, 305, 310 },
         category   = "Lesser Transmutations",
+        teachItems = { 20761 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Elemental Fire" } },
         reagents   = {
             { itemID = 7077, count = 1, name = "Heart of Fire" },
@@ -2513,6 +2650,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Lesser Transmutations",
+        teachItems = { 13483 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Fire to Earth" } },
         reagents   = {
             { itemID = 7078, count = 1, name = "Essence of Fire" },
@@ -2525,6 +2663,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 240, 260, 280 },
         category   = "Lesser Transmutations",
+        teachItems = { 9304 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Iron to Gold" } },
         reagents   = {
             { itemID = 3575, count = 1, name = "Iron Bar" },
@@ -2537,6 +2676,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Greater Transmutations",
+        teachItems = { 284871 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Legionite" } },
         reagents   = {
             { itemID = 251291, count = 1, name = "Heavy Thorium Bar" },
@@ -2550,6 +2690,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Lesser Transmutations",
+        teachItems = { 13488 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Life to Earth" } },
         reagents   = {
             { itemID = 12803, count = 1, name = "Living Essence" },
@@ -2562,6 +2703,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 240, 260, 280 },
         category   = "Lesser Transmutations",
+        teachItems = { 9305 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Mithril to Truesilver" } },
         reagents   = {
             { itemID = 3860, count = 1, name = "Mithril Bar" },
@@ -2574,6 +2716,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Lesser Transmutations",
+        teachItems = { 13486 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Undeath to Water" } },
         reagents   = {
             { itemID = 12808, count = 1, name = "Essence of Undeath" },
@@ -2586,6 +2729,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Lesser Transmutations",
+        teachItems = { 13485 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Water to Air" } },
         reagents   = {
             { itemID = 7080, count = 1, name = "Essence of Water" },
@@ -2598,6 +2742,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 282, 290 },
         category   = "Lesser Transmutations",
+        teachItems = { 13487 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Transmute Water to Undeath" } },
         reagents   = {
             { itemID = 7080, count = 1, name = "Essence of Water" },
@@ -2610,6 +2755,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 200, 220, 240 },
         category   = "Elixirs",
+        teachItems = { 3831 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Troll's Blood Elixir" } },
         reagents   = {
             { itemID = 3357, count = 1, name = "Liferoot" },
@@ -2635,6 +2781,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 237, 250 },
         category   = "Recovery Potions",
+        teachItems = { 9294 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Wildvine Potion" } },
         reagents   = {
             { itemID = 8153, count = 1, name = "Wildvine" },

@@ -14,6 +14,7 @@ local recipes = {
         itemID     = 274048,
         skillRange = { false, 125, 135, 145 },
         category   = "Consumable Devices",
+        teachItems = { 274049 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 249409, count = 1, name = "Cerulean Dye" },
@@ -28,6 +29,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 200, 210, 220 },
         category   = "Scopes",
+        teachItems = { 13310 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Accurate Scope" } },
         reagents   = {
             { itemID = 4371, count = 1, name = "Bronze Tube" },
@@ -57,6 +59,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 275, 280, 285 },
         category   = "Pets and Guardians",
+        teachItems = { 18654 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Gnomish Alarm-O-Bot" } },
         reagents   = {
             { itemID = 12359, count = 4, name = "Thorium Bar" },
@@ -73,6 +76,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273117 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Anarchist's Workbench" } },
         reagents   = {
             { itemID = 273129, count = 1, name = "Essence of Anarchy" },
@@ -102,6 +106,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Explosives",
+        teachItems = { 16055 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Arcane Bomb" } },
         reagents   = {
             { itemID = 16006, count = 1, name = "Delicate Arcanite Converter" },
@@ -117,6 +122,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234261 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 16006, count = 1, name = "Delicate Arcanite Converter" },
@@ -131,6 +137,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Pets and Guardians",
+        teachItems = { 16054 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Arcanite Dragonling" } },
         reagents   = {
             { itemID = 10576, count = 1, name = "Mithril Mechanical Dragonling" },
@@ -160,6 +167,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 207, 210 },
         category   = "Leather Headgear",
+        teachItems = { 280326 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Bent Goggles" } },
         reagents   = {
             { itemID = 5507, count = 1, name = "Ornate Spyglass" },
@@ -204,6 +212,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Scopes",
+        teachItems = { 18290 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Biznicks 247x128 Accurascope" } },
         reagents   = {
             { itemID = 17011, count = 2, name = "Lava Core" },
@@ -220,6 +229,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Cloth Headgear",
+        teachItems = { 20000 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Bloodvine Goggles" } },
         reagents   = {
             { itemID = 19726, count = 4, name = "Bloodvine" },
@@ -236,6 +246,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Cloth Headgear",
+        teachItems = { 20001 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Bloodvine Lens" } },
         reagents   = {
             { itemID = 19726, count = 5, name = "Bloodvine" },
@@ -253,6 +264,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 150, 162, 175 },
         category   = "Fireworks",
+        teachItems = { 18649 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Blue Firework" } },
         reagents   = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -267,6 +279,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 237, 250 },
         category   = "Fireworks",
+        teachItems = { 21730 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Blue Rocket Cluster" } },
         reagents   = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
@@ -280,6 +293,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 205, 215 },
         category   = "Cloth Headgear",
+        teachItems = { 10601 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Bright-Eye Goggles" } },
         reagents   = {
             { itemID = 4234, count = 6, name = "Heavy Leather" },
@@ -320,6 +334,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 240, 250, 260 },
         category   = "Cloth Headgear",
+        teachItems = { 10603 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Catseye Ultra Goggles" } },
         reagents   = {
             { itemID = 4304, count = 4, name = "Thick Leather" },
@@ -334,6 +349,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 190, 197, 205 },
         category   = "Devices",
+        teachItems = { 269901 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Centaur Banner Deployment Device" } },
         reagents   = {
             { itemID = 4387, count = 6, name = "Iron Strut" },
@@ -349,6 +365,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 180, 182, 185 },
         category   = "Gadgets",
+        teachItems = { 280323 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Clanking Cord" } },
         reagents   = {
             { itemID = 4371, count = 2, name = "Bronze Tube" },
@@ -389,6 +406,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 230, 232, 235 },
         category   = "Devices",
+        teachItems = { 264217 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Compact Critter Carrier" } },
         reagents   = {
             { itemID = 4234, count = 10, name = "Heavy Leather" },
@@ -446,6 +464,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Ranged Weapons",
+        teachItems = { 18292 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Core Marksman Rifle" } },
         reagents   = {
             { itemID = 17010, count = 4, name = "Fiery Core" },
@@ -504,6 +523,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 205, 215, 225 },
         category   = "Cloth Headgear",
+        teachItems = { 4415 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Craftsman's Monocle" } },
         reagents   = {
             { itemID = 4234, count = 6, name = "Heavy Leather" },
@@ -517,6 +537,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 275, 277, 280 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 236872 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Creepy Censor Sensors" } },
         reagents   = {
             { itemID = 8170, count = 8, name = "Rugged Leather" },
@@ -545,6 +566,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 305, 315, 325 },
         category   = "Explosives",
+        teachItems = { 16049 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Dark Iron Bomb" } },
         reagents   = {
             { itemID = 15994, count = 2, name = "Thorium Widget" },
@@ -560,6 +582,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Ranged Weapons",
+        teachItems = { 16048 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Dark Iron Rifle" } },
         reagents   = {
             { itemID = 16000, count = 2, name = "Thorium Tube" },
@@ -592,6 +615,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 230, 240, 250 },
         category   = "Scopes",
+        teachItems = { 10602 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Deadly Scope" } },
         reagents   = {
             { itemID = 10559, count = 1, name = "Mithril Tube" },
@@ -606,6 +630,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 250, 260, 270 },
         category   = "Cloth Headgear",
+        teachItems = { 10607 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Deepdive Helmet" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -622,6 +647,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 305, 315, 325 },
         category   = "Parts",
+        teachItems = { 16050 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Delicate Arcanite Converter" } },
         reagents   = {
             { itemID = 12360, count = 1, name = "Arcanite Bar" },
@@ -661,6 +687,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 207, 210 },
         category   = "Plate Headgear",
+        teachItems = { 280328 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Dented Goggles" } },
         reagents   = {
             { itemID = 5507, count = 1, name = "Ornate Spyglass" },
@@ -689,6 +716,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Devices",
+        teachItems = { 264233 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Dimensional Transporter: Mt. Hyjal" } },
         reagents   = {
             { itemID = 3860, count = 10, name = "Mithril Bar" },
@@ -705,6 +733,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 160, 180, 190, 200 },
         category   = "Gadgets",
+        teachItems = { 4413 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Discombobulator Ray" } },
         reagents   = {
             { itemID = 4375, count = 3, name = "Whirring Bronze Gizmo" },
@@ -720,6 +749,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Consumable Devices",
+        teachItems = { 264231 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ and SAF Field Transporter: Mt. Hyjal" } },
         reagents   = {
             { itemID = 260823, count = 1, name = "Dimensional Transporter - Mt. Hyjal" },
@@ -734,6 +764,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 210, 220, 230 },
         category   = "Explosives",
+        teachItems = { 264212 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Bronze Mortar" } },
         reagents   = {
             { itemID = 4371, count = 4, name = "Bronze Tube" },
@@ -750,6 +781,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 130, 155, 180 },
         category   = "Explosives",
+        teachItems = { 264205 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Copper Bomb XL" } },
         reagents   = {
             { itemID = 2840, count = 3, name = "Copper Bar" },
@@ -765,6 +797,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Explosives",
+        teachItems = { 264227 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Dark Bomb" } },
         reagents   = {
             { itemID = 15994, count = 2, name = "Thorium Widget" },
@@ -782,6 +815,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 115, 122, 130 },
         category   = "Explosives",
+        teachItems = { 6716 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Dynamite" } },
         reagents   = {
             { itemID = 4364, count = 3, name = "Coarse Blasting Powder" },
@@ -796,6 +830,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 200, 210, 220 },
         category   = "Explosives",
+        teachItems = { 18650 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Dynamite II" } },
         reagents   = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
@@ -810,6 +845,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Consumable Devices",
+        teachItems = { 264229 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Field Transporter: Gadgetzan" } },
         reagents   = {
             { itemID = 18986, count = 1, name = "Ultrasafe Transporter: Gadgetzan" },
@@ -823,6 +859,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 190, 192, 195 },
         category   = "Parts",
+        teachItems = { 264211 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Fireproof Fuse" } },
         reagents   = {
             { itemID = 4404, count = 1, name = "Silver Contact" },
@@ -836,6 +873,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 200, 220, 240 },
         category   = "Explosives",
+        teachItems = { 264213 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Grenade" } },
         reagents   = {
             { itemID = 3575, count = 1, name = "Iron Bar" },
@@ -851,6 +889,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Consumable Devices",
+        teachItems = { 264239 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Magnetic Displacer" } },
         reagents   = {
             { itemID = 238788, count = 1, name = "Schematic: Tinker: Magnetic Displacement" },
@@ -864,6 +903,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Explosives",
+        teachItems = { 264228 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Mana Bomb" } },
         reagents   = {
             { itemID = 16006, count = 1, name = "Delicate Arcanite Converter" },
@@ -879,6 +919,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 285, 287, 290 },
         category   = "Parts",
+        teachItems = { 264225 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Shell" } },
         reagents   = {
             { itemID = 12359, count = 2, name = "Thorium Bar" },
@@ -892,6 +933,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 285, 295, 305 },
         category   = "Explosives",
+        teachItems = { 264226 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Thorium Grenade" } },
         reagents   = {
             { itemID = 15994, count = 1, name = "Thorium Widget" },
@@ -908,6 +950,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 240, 242, 245 },
         category   = "Parts",
+        teachItems = { 264218 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Tru-Trigger" } },
         reagents   = {
             { itemID = 6037, count = 1, name = "Truesilver Bar" },
@@ -921,6 +964,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 100, 102, 105 },
         category   = "Parts",
+        teachItems = { 264204 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: EZ-Thro Wrap" } },
         reagents   = {
             { itemID = 2592, count = 1, name = "Wool Cloth" },
@@ -934,6 +978,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Gadgets",
+        teachItems = { 264216 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Emergency Field Cloak" } },
         reagents   = {
             { itemID = 4397, count = 1, name = "Gnomish Cloaking Device" },
@@ -975,6 +1020,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Consumable Devices",
+        teachItems = { 18235 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Field Repair Bot 74A" } },
         reagents   = {
             { itemID = 12359, count = 12, name = "Thorium Bar" },
@@ -1006,6 +1052,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Fireworks",
+        teachItems = { 21737 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Cluster Launcher" } },
         reagents   = {
             { itemID = 9060, count = 3, name = "Inlaid Mithril Cylinder" },
@@ -1021,6 +1068,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Fireworks",
+        teachItems = { 21738 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Firework Launcher" } },
         reagents   = {
             { itemID = 9060, count = 2, name = "Inlaid Mithril Cylinder" },
@@ -1036,6 +1084,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 125, 150, 175 },
         category   = "Gadgets",
+        teachItems = { 4411 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Flame Deflector" } },
         reagents   = {
             { itemID = 4375, count = 1, name = "Whirring Bronze Gizmo" },
@@ -1049,6 +1098,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 185, 205, 225 },
         category   = "Explosives",
+        teachItems = { 6672 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Flash Bomb" } },
         reagents   = {
             { itemID = 4611, count = 1, name = "Blue Pearl" },
@@ -1063,6 +1113,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Ranged Weapons",
+        teachItems = { 16056 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Flawless Arcanite Rifle" } },
         reagents   = {
             { itemID = 12360, count = 10, name = "Arcanite Bar" },
@@ -1080,6 +1131,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 207, 210 },
         category   = "Cloth Headgear",
+        teachItems = { 280325 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Floppy Goggles" } },
         reagents   = {
             { itemID = 5507, count = 1, name = "Ornate Spyglass" },
@@ -1107,6 +1159,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Gadgets",
+        teachItems = { 18291 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Force Reactive Disk" } },
         reagents   = {
             { itemID = 12360, count = 6, name = "Arcanite Bar" },
@@ -1123,6 +1176,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234264 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234005, count = 20, name = "item:234005" },
@@ -1140,6 +1194,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 180, 182, 185 },
         category   = "Gadgets",
+        teachItems = { 280322 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Gizmo Girdle" } },
         reagents   = {
             { itemID = 4375, count = 2, name = "Whirring Bronze Gizmo" },
@@ -1154,6 +1209,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 250, 252, 255 },
         category   = "Devices",
+        teachItems = { 264221 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Gnomish Army Knife" } },
         reagents   = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
@@ -1168,6 +1224,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 250, 260, 270 },
         category   = "Gadgets",
+        teachItems = { 221332 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
@@ -1185,6 +1242,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 230, 240 },
         category   = "Gadgets",
+        teachItems = { 7742 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Gnomish Cloaking Device" } },
         reagents   = {
             { itemID = 4389, count = 4, name = "Gyrochronatom" },
@@ -1201,6 +1259,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 260, 270, 280 },
         category   = "Gadgets",
+        teachItems = { 221334 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10559, count = 2, name = "Mithril Tube" },
@@ -1217,6 +1276,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 230, 240, 250 },
         category   = "Cloth Headgear",
+        teachItems = { 221328 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10500, count = 1, name = "Fire Goggles" },
@@ -1246,6 +1306,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 235, 245, 255 },
         category   = "Gadgets",
+        teachItems = { 221330 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 7387, count = 1, name = "Dusky Belt" },
@@ -1262,6 +1323,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 255, 265, 275 },
         category   = "Cloth Headgear",
+        teachItems = { 221333 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 3860, count = 10, name = "Mithril Bar" },
@@ -1278,6 +1340,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 230, 240, 250 },
         category   = "Gadgets",
+        teachItems = { 221329 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10559, count = 1, name = "Mithril Tube" },
@@ -1294,6 +1357,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Gadgets",
+        teachItems = { 264234 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Gnomish Poultryizer" } },
         reagents   = {
             { itemID = 16204, count = 10, name = "Illusion Dust" },
@@ -1309,6 +1373,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 245, 255, 265 },
         category   = "Gadgets",
+        teachItems = { 221331 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10026, count = 1, name = "Black Mageweave Boots" },
@@ -1325,6 +1390,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 225, 235, 245 },
         category   = "Gadgets",
+        teachItems = { 221327 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10559, count = 1, name = "Mithril Tube" },
@@ -1341,6 +1407,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 150, 162, 175 },
         category   = "Gadgets",
+        teachItems = { 7560 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Gnomish Universal Remote" } },
         reagents   = {
             { itemID = 2841, count = 6, name = "Bronze Bar" },
@@ -1357,6 +1424,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Devices",
+        teachItems = { 264236 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Gnomish Weather Machine" } },
         reagents   = {
             { itemID = 7076, count = 2, name = "Essence of Earth" },
@@ -1386,6 +1454,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 230, 250, 270 },
         category   = "Explosives",
+        teachItems = { 221340 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10561, count = 2, name = "Mithril Casing" },
@@ -1402,6 +1471,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 225, 235, 245 },
         category   = "Cloth Headgear",
+        teachItems = { 221335 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -1416,6 +1486,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 260, 270, 280 },
         category   = "Gadgets",
+        teachItems = { 221342 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10559, count = 2, name = "Mithril Tube" },
@@ -1432,6 +1503,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 160, 180, 200 },
         category   = "Devices",
+        teachItems = { 7561 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Goblin Jumper Cables" } },
         reagents   = {
             { itemID = 3575, count = 6, name = "Iron Bar" },
@@ -1449,6 +1521,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Devices",
+        teachItems = { 18653 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Goblin Jumper Cables XL" } },
         reagents   = {
             { itemID = 15994, count = 2, name = "Thorium Widget" },
@@ -1465,6 +1538,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 215, 225, 235 },
         category   = "Explosives",
+        teachItems = { 4416 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Goblin Land Mine" } },
         reagents   = {
             { itemID = 4377, count = 3, name = "Heavy Blasting Powder" },
@@ -1479,6 +1553,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 225, 235, 245 },
         category   = "Cloth Headgear",
+        teachItems = { 221336 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Goblin Mining Helmet" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -1493,6 +1568,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 225, 235, 245 },
         category   = "Explosives",
+        teachItems = { 221337 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10559, count = 2, name = "Mithril Tube" },
@@ -1522,6 +1598,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 245, 255, 265 },
         category   = "Gadgets",
+        teachItems = { 7192, 221339 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Goblin Rocket Boots" } },
         reagents   = {
             { itemID = 10026, count = 1, name = "Black Mageweave Boots" },
@@ -1551,6 +1628,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 265, 275, 285 },
         category   = "Cloth Headgear",
+        teachItems = { 221343 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10543, count = 1, name = "Goblin Construction Helmet" },
@@ -1566,6 +1644,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 205, 225, 245 },
         category   = "Explosives",
+        teachItems = { 221338 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 4338, count = 1, name = "Mageweave Cloth" },
@@ -1594,6 +1673,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 150, 162, 175 },
         category   = "Fireworks",
+        teachItems = { 18648 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Green Firework" } },
         reagents   = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -1624,6 +1704,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 237, 250 },
         category   = "Fireworks",
+        teachItems = { 21731 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Green Rocket Cluster" } },
         reagents   = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
@@ -1664,6 +1745,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Devices",
+        teachItems = { 18652 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Gyrofreeze Ice Reflector" } },
         reagents   = {
             { itemID = 15994, count = 6, name = "Thorium Widget" },
@@ -1705,6 +1787,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 65, 65, 72, 80 },
         category   = "Consumable Devices",
+        teachItems = { 277470 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Harvester Override Signalcaster" } },
         reagents   = {
             { itemID = 255007, count = 4, name = "Golem Isospring" },
@@ -1774,6 +1857,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 150, 155, 160 },
         category   = "Consumable Devices",
+        teachItems = { 269903 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Hoof-Shaped Foot Pedal" } },
         reagents   = {
             { itemID = 4387, count = 3, name = "Iron Strut" },
@@ -1790,6 +1874,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Ranged Weapons",
+        teachItems = { 279322 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Hyper Deluxe Sniper Rifle Mk XVII" } },
         reagents   = {
             { itemID = 274030, count = 4, name = "Malleable Essence of Nature" },
@@ -1805,6 +1890,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Devices",
+        teachItems = { 18657 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Hyper-Radiant Flame Reflector" } },
         reagents   = {
             { itemID = 11371, count = 4, name = "Dark Iron Bar" },
@@ -1821,6 +1907,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 155, 175, 185, 195 },
         category   = "Gadgets",
+        teachItems = { 13308 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Ice Deflector" } },
         reagents   = {
             { itemID = 4375, count = 1, name = "Whirring Bronze Gizmo" },
@@ -1875,6 +1962,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 175, 187, 200 },
         category   = "Fireworks",
+        teachItems = { 21727 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Blue Rocket" } },
         reagents   = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -1889,6 +1977,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 280, 285 },
         category   = "Fireworks",
+        teachItems = { 21733 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Blue Rocket Cluster" } },
         reagents   = {
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
@@ -1918,6 +2007,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 175, 187, 200 },
         category   = "Fireworks",
+        teachItems = { 21728 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Green Rocket" } },
         reagents   = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -1932,6 +2022,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 280, 285 },
         category   = "Fireworks",
+        teachItems = { 21734 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Green Rocket Cluster" } },
         reagents   = {
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
@@ -1946,6 +2037,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 175, 187, 200 },
         category   = "Fireworks",
+        teachItems = { 286079 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Purple Rocket" } },
         reagents   = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -1960,6 +2052,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 280, 285 },
         category   = "Fireworks",
+        teachItems = { 286085 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Purple Rocket Cluster" } },
         reagents   = {
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
@@ -1974,6 +2067,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 175, 187, 200 },
         category   = "Fireworks",
+        teachItems = { 21729 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Red Rocket" } },
         reagents   = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -1988,6 +2082,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 280, 285 },
         category   = "Fireworks",
+        teachItems = { 21735 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Red Rocket Cluster" } },
         reagents   = {
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
@@ -2001,6 +2096,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 200, 220, 240 },
         category   = "Explosives",
+        teachItems = { 4417 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Seaforium Charge" } },
         reagents   = {
             { itemID = 10505, count = 2, name = "Solid Blasting Powder" },
@@ -2016,6 +2112,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 175, 187, 200 },
         category   = "Fireworks",
+        teachItems = { 286080 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large White Rocket" } },
         reagents   = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -2030,6 +2127,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 280, 285 },
         category   = "Fireworks",
+        teachItems = { 286086 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large White Rocket Cluster" } },
         reagents   = {
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
@@ -2044,6 +2142,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 175, 187, 200 },
         category   = "Fireworks",
+        teachItems = { 286081 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Yellow Rocket" } },
         reagents   = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -2058,6 +2157,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 280, 285 },
         category   = "Fireworks",
+        teachItems = { 286087 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Large Yellow Rocket Cluster" } },
         reagents   = {
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
@@ -2071,6 +2171,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 285, 295, 305 },
         category   = "Pets and Guardians",
+        teachItems = { 16044 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Lifelike Mechanical Toad" } },
         reagents   = {
             { itemID = 12803, count = 1, name = "Living Essence" },
@@ -2086,6 +2187,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 205, 205, 205 },
         category   = "Pets and Guardians",
+        teachItems = { 11827 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Lil' Smoky" } },
         reagents   = {
             { itemID = 7075, count = 1, name = "Core of Earth" },
@@ -2102,6 +2204,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 277, 280 },
         category   = "Devices",
+        teachItems = { 264222 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Loot-A-Rang" } },
         reagents   = {
             { itemID = 12359, count = 5, name = "Thorium Bar" },
@@ -2115,6 +2218,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 145, 157, 170 },
         category   = "Ranged Weapons",
+        teachItems = { 13309 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Lovingly Crafted Boomstick" } },
         reagents   = {
             { itemID = 4371, count = 2, name = "Bronze Tube" },
@@ -2130,6 +2234,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 285, 290, 295 },
         category   = "Devices",
+        teachItems = { 18655 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Major Recombobulator" } },
         reagents   = {
             { itemID = 16000, count = 2, name = "Thorium Tube" },
@@ -2144,6 +2249,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Cloth Headgear",
+        teachItems = { 16053 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Master Engineer's Goggles" } },
         reagents   = {
             { itemID = 10500, count = 1, name = "Fire Goggles" },
@@ -2158,6 +2264,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Pets and Guardians",
+        teachItems = { 16046 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Masterwork Target Dummy" } },
         reagents   = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
@@ -2175,6 +2282,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 230, 240 },
         category   = "Pets and Guardians",
+        teachItems = { 13311 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Mechanical Dragonling" } },
         reagents   = {
             { itemID = 4382, count = 1, name = "Bronze Framework" },
@@ -2205,6 +2313,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 105, 120, 135 },
         category   = "Pets and Guardians",
+        teachItems = { 4408 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Mechanical Squirrel" } },
         reagents   = {
             { itemID = 4363, count = 1, name = "Copper Modulator" },
@@ -2220,6 +2329,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 165, 177, 190 },
         category   = "Gadgets",
+        teachItems = { 14639 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Minor Recombobulator" } },
         reagents   = {
             { itemID = 4371, count = 1, name = "Bronze Tube" },
@@ -2292,6 +2402,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 240, 250, 260 },
         category   = "Ranged Weapons",
+        teachItems = { 10604 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Mithril Heavy-bore Rifle" } },
         reagents   = {
             { itemID = 10559, count = 2, name = "Mithril Tube" },
@@ -2308,6 +2419,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Pets and Guardians",
+        teachItems = { 10609 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Mithril Mechanical Dragonling" } },
         reagents   = {
             { itemID = 3860, count = 14, name = "Mithril Bar" },
@@ -2349,6 +2461,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 170, 182, 195 },
         category   = "Ranged Weapons",
+        teachItems = { 4412 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Moonsight Rifle" } },
         reagents   = {
             { itemID = 4371, count = 3, name = "Bronze Tube" },
@@ -2364,6 +2477,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 145, 147, 150 },
         category   = "Parts",
+        teachItems = { 264206 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: No Slip SAF-T Padding" } },
         reagents   = {
             { itemID = 4234, count = 1, name = "Heavy Leather" },
@@ -2377,6 +2491,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234280 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22202, count = 2, name = "Small Obsidian Shard" },
@@ -2390,6 +2505,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234263 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234005, count = 3, name = "item:234005" },
@@ -2405,6 +2521,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 235530 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 16000, count = 1, name = "Thorium Tube" },
@@ -2419,6 +2536,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234435 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 12360, count = 30, name = "Arcanite Bar" },
@@ -2451,6 +2569,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Gadgets",
+        teachItems = { 10606, 215157 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Parachute Cloak" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -2466,6 +2585,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 205, 205, 205 },
         category   = "Pets and Guardians",
+        teachItems = { 11828 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Pet Bombling" } },
         reagents   = {
             { itemID = 4394, count = 1, name = "Big Iron Bomb" },
@@ -2481,6 +2601,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 200, 210, 220 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 215429 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Polished Truesilver Gears" } },
         reagents   = {
             { itemID = 6037, count = 1, name = "Truesilver Bar" },
@@ -2494,6 +2615,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 255, 257, 260 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 239222 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Pop-Up Shrub" } },
         reagents   = {
             { itemID = 15994, count = 1, name = "Thorium Widget" },
@@ -2508,6 +2630,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 195, 205 },
         category   = "Explosives",
+        teachItems = { 4414 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Portable Bronze Mortar" } },
         reagents   = {
             { itemID = 4371, count = 4, name = "Bronze Tube" },
@@ -2523,6 +2646,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 285, 295 },
         category   = "Explosives",
+        teachItems = { 18656 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Powerful Seaforium Charge" } },
         reagents   = {
             { itemID = 15994, count = 2, name = "Thorium Widget" },
@@ -2553,6 +2677,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 237, 250 },
         category   = "Fireworks",
+        teachItems = { 286082 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Purple Rocket Cluster" } },
         reagents   = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
@@ -2578,6 +2703,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 150, 162, 175 },
         category   = "Fireworks",
+        teachItems = { 18647 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Red Firework" } },
         reagents   = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -2592,6 +2718,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 237, 250 },
         category   = "Fireworks",
+        teachItems = { 21732 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Red Rocket Cluster" } },
         reagents   = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
@@ -2605,6 +2732,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273092 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Repair Bot" } },
         reagents   = {
             { itemID = 4375, count = 2, name = "Whirring Bronze Gizmo" },
@@ -2688,6 +2816,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 175, 177, 180 },
         category   = "Parts",
+        teachItems = { 264209 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Bell" } },
         reagents   = {
             { itemID = 2841, count = 2, name = "Bronze Bar" },
@@ -2701,6 +2830,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 215, 230, 245 },
         category   = "Explosives",
+        teachItems = { 264215 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Bomb" } },
         reagents   = {
             { itemID = 3575, count = 3, name = "Iron Bar" },
@@ -2716,6 +2846,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 145, 170, 195 },
         category   = "Explosives",
+        teachItems = { 264207 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Bronze Bomb" } },
         reagents   = {
             { itemID = 4364, count = 4, name = "Coarse Blasting Powder" },
@@ -2732,6 +2863,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 215, 217, 220 },
         category   = "Parts",
+        teachItems = { 264214 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Casing" } },
         reagents   = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
@@ -2745,6 +2877,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 285, 295 },
         category   = "Explosives",
+        teachItems = { 264224 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Clever Dynamite" } },
         reagents   = {
             { itemID = 15992, count = 2, name = "Dense Blasting Powder" },
@@ -2759,6 +2892,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 55, 60, 65 },
         category   = "Explosives",
+        teachItems = { 264203 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Copper Bomb" } },
         reagents   = {
             { itemID = 2840, count = 1, name = "Copper Bar" },
@@ -2775,6 +2909,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 270, 280, 290 },
         category   = "Gadgets",
+        teachItems = { 264220 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Disposable Parachute" } },
         reagents   = {
             { itemID = 10518, count = 1, name = "Parachute Cloak" },
@@ -2788,6 +2923,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 25, 25, 30, 35 },
         category   = "Explosives",
+        teachItems = { 264202 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Dynamite" } },
         reagents   = {
             { itemID = 4357, count = 2, name = "Rough Blasting Powder" },
@@ -2801,6 +2937,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Consumable Devices",
+        teachItems = { 264230 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Emergency Ripper: Everlook" } },
         reagents   = {
             { itemID = 18984, count = 1, name = "Dimensional Ripper - Everlook" },
@@ -2814,6 +2951,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 150, 160, 170 },
         category   = "Explosives",
+        teachItems = { 264208 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Jumbo Dynamite" } },
         reagents   = {
             { itemID = 4377, count = 2, name = "Heavy Blasting Powder" },
@@ -2828,6 +2966,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Consumable Devices",
+        teachItems = { 264238 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Nitro Boosts" } },
         reagents   = {
             { itemID = 238787, count = 1, name = "Schematic: Tinker: Nitro Boosts" },
@@ -2841,6 +2980,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 25, 25, 27, 30 },
         category   = "Parts",
+        teachItems = { 264201 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Tabs" } },
         reagents   = {
             { itemID = 2570, count = 1, name = "Linen Cloak" },
@@ -2854,6 +2994,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Consumable Devices",
+        teachItems = { 264240 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Teleport" } },
         reagents   = {
             { itemID = 238786, count = 1, name = "Schematic: Tinker: Teleport" },
@@ -2867,6 +3008,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 277, 280 },
         category   = "Parts",
+        teachItems = { 264223 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Tube" } },
         reagents   = {
             { itemID = 12359, count = 1, name = "Thorium Bar" },
@@ -2880,6 +3022,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Scopes",
+        teachItems = { 279321 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: SAF-T Ultra Precision Scope" } },
         reagents   = {
             { itemID = 251290, count = 1, name = "Legionite Bar" },
@@ -2919,6 +3062,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 170, 172, 175 },
         category   = "Ranged Weapons",
+        teachItems = { 285286 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Satchel of Bronze Bombs" } },
         reagents   = {
             { itemID = 4380, count = 20, name = "Big Bronze Bomb" },
@@ -2933,6 +3077,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 90, 92, 95 },
         category   = "Ranged Weapons",
+        teachItems = { 285285 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Satchel of Copper Bombs" } },
         reagents   = {
             { itemID = 4360, count = 20, name = "Rough Copper Bomb" },
@@ -2947,6 +3092,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Ranged Weapons",
+        teachItems = { 285288 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Satchel of Dark Iron Bombs" } },
         reagents   = {
             { itemID = 16005, count = 20, name = "Dark Iron Bomb" },
@@ -2961,6 +3107,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 235, 237, 240 },
         category   = "Ranged Weapons",
+        teachItems = { 285287 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Satchel of Iron Bombs" } },
         reagents   = {
             { itemID = 4394, count = 20, name = "Big Iron Bomb" },
@@ -2975,6 +3122,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 305, 305, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238789 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Semisafe Transporter: New Avalon" } },
         reagents   = {
             { itemID = 16006, count = 1, name = "Delicate Arcanite Converter" },
@@ -2992,6 +3140,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 180, 182, 185 },
         category   = "Gadgets",
+        teachItems = { 280324 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Serrated Strap" } },
         reagents   = {
             { itemID = 4363, count = 2, name = "Copper Modulator" },
@@ -3006,6 +3155,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 145, 157, 170 },
         category   = "Cloth Headgear",
+        teachItems = { 4410 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Shadow Goggles" } },
         reagents   = {
             { itemID = 2319, count = 4, name = "Medium Leather" },
@@ -3019,6 +3169,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 212, 225 },
         category   = "Explosives",
+        teachItems = { 264210 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Shafety Sheep" } },
         reagents   = {
             { itemID = 4382, count = 1, name = "Bronze Framework" },
@@ -3035,6 +3186,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 135, 140, 145 },
         category   = "Devices",
+        teachItems = { 210178 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Shredder Autosalvage Unit" } },
         reagents   = {
             { itemID = 4382, count = 1, name = "Bronze Framework" },
@@ -3078,6 +3230,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 125, 137, 150 },
         category   = "Fireworks",
+        teachItems = { 21724 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Small Blue Rocket" } },
         reagents   = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
@@ -3108,6 +3261,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 125, 137, 150 },
         category   = "Fireworks",
+        teachItems = { 21725 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Small Green Rocket" } },
         reagents   = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
@@ -3122,6 +3276,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 125, 137, 150 },
         category   = "Fireworks",
+        teachItems = { 286076 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Small Purple Rocket" } },
         reagents   = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
@@ -3136,6 +3291,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 125, 137, 150 },
         category   = "Fireworks",
+        teachItems = { 21726 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Small Red Rocket" } },
         reagents   = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
@@ -3149,6 +3305,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 130, 145, 160 },
         category   = "Explosives",
+        teachItems = { 4409 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Small Seaforium Charge" } },
         reagents   = {
             { itemID = 4364, count = 2, name = "Coarse Blasting Powder" },
@@ -3165,6 +3322,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 125, 137, 150 },
         category   = "Fireworks",
+        teachItems = { 286077 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Small White Rocket" } },
         reagents   = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
@@ -3179,6 +3337,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 125, 137, 150 },
         category   = "Fireworks",
+        teachItems = { 286078 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Small Yellow Rocket" } },
         reagents   = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
@@ -3193,6 +3352,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 250, 260, 270 },
         category   = "Fireworks",
+        teachItems = { 19027 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Snake Burst Firework" } },
         reagents   = {
             { itemID = 15992, count = 2, name = "Dense Blasting Powder" },
@@ -3207,6 +3367,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 260, 270, 280 },
         category   = "Scopes",
+        teachItems = { 10608 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Sniper Scope" } },
         reagents   = {
             { itemID = 10559, count = 1, name = "Mithril Tube" },
@@ -3221,6 +3382,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 190, 210, 230 },
         category   = "Devices",
+        teachItems = { 17720 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Snowmaster 9000" } },
         reagents   = {
             { itemID = 3860, count = 8, name = "Mithril Bar" },
@@ -3262,6 +3424,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 205, 210, 215 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 212230 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Soul Vessel" } },
         reagents   = {
             { itemID = 1210, count = 4, name = "Shadowgem" },
@@ -3276,6 +3439,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 255, 265 },
         category   = "Cloth Headgear",
+        teachItems = { 10605 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Spellpower Goggles Xtreme" } },
         reagents   = {
             { itemID = 4304, count = 4, name = "Thick Leather" },
@@ -3289,6 +3453,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 290, 300, 310 },
         category   = "Cloth Headgear",
+        teachItems = { 16045 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Spellpower Goggles Xtreme Plus" } },
         reagents   = {
             { itemID = 10502, count = 1, name = "Spellpower Goggles Xtreme" },
@@ -3317,6 +3482,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Gadgets",
+        teachItems = { 264237 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Stealthman 52" } },
         reagents   = {
             { itemID = 7082, count = 6, name = "Essence of Air" },
@@ -3333,6 +3499,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Devices",
+        teachItems = { 22729 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Steam Tonk Controller" } },
         reagents   = {
             { itemID = 15994, count = 2, name = "Thorium Widget" },
@@ -3347,6 +3514,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 207, 210 },
         category   = "Mail Headgear",
+        teachItems = { 280327 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Stuckbutton Goggles" } },
         reagents   = {
             { itemID = 5507, count = 1, name = "Ornate Spyglass" },
@@ -3362,6 +3530,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 315, 320 },
         category   = "Ammunition",
+        teachItems = { 274389 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Swiftfeather Arrow" } },
         reagents   = {
             { itemID = 251291, count = 8, name = "Heavy Thorium Bar" },
@@ -3377,6 +3546,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 315, 320 },
         category   = "Ammunition",
+        teachItems = { 274390 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Swiftstrike Shot" } },
         reagents   = {
             { itemID = 251291, count = 8, name = "Heavy Thorium Bar" },
@@ -3407,6 +3577,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 205, 235, 255, 275 },
         category   = "Explosives",
+        teachItems = { 221341 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
@@ -3422,6 +3593,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234262 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234011, count = 1, name = "item:234011" },
@@ -3433,6 +3605,7 @@ local recipes = {
         spellID    = 13240,
         itemID     = 10577,
         category   = "Explosives",
+        teachItems = { 221337 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 10577, count = 1, name = "Goblin Mortar" },
@@ -3448,6 +3621,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Explosives",
+        teachItems = { 16041 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Thorium Grenade" } },
         reagents   = {
             { itemID = 15994, count = 1, name = "Thorium Widget" },
@@ -3463,6 +3637,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Ranged Weapons",
+        teachItems = { 16043 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Thorium Rifle" } },
         reagents   = {
             { itemID = 10559, count = 2, name = "Mithril Tube" },
@@ -3480,6 +3655,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 305, 315, 325 },
         category   = "Ammunition",
+        teachItems = { 16051 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Thorium Shells" } },
         reagents   = {
             { itemID = 12359, count = 2, name = "Thorium Bar" },
@@ -3493,6 +3669,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 295, 305, 315 },
         category   = "Parts",
+        teachItems = { 16047 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Thorium Tube" } },
         reagents   = {
             { itemID = 12359, count = 6, name = "Thorium Bar" },
@@ -3505,6 +3682,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Parts",
+        teachItems = { 16042 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Thorium Widget" } },
         reagents   = {
             { itemID = 12359, count = 3, name = "Thorium Bar" },
@@ -3518,6 +3696,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 280, 282, 285 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238788, 240018 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Tinker: Magnetic Displacement" } },
         reagents   = {
             { itemID = 238737, count = 1, name = "Tinkerbox" },
@@ -3532,6 +3711,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 280, 282, 285 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238787, 240018 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Tinker: Nitro Boosts" } },
         reagents   = {
             { itemID = 238737, count = 1, name = "Tinkerbox" },
@@ -3546,6 +3726,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 280, 282, 285 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238786, 240018 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Tinker: Teleport" } },
         reagents   = {
             { itemID = 238737, count = 1, name = "Tinkerbox" },
@@ -3560,6 +3741,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 270, 280 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238782, 250400 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Tinkerbox" } },
         reagents   = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
@@ -3573,6 +3755,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 270, 280, 290 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238785 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Tinkerbox: Magnetic Displacement" } },
         reagents   = {
             { itemID = 238737, count = 1, name = "Tinkerbox" },
@@ -3587,6 +3770,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 270, 280, 290 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238784 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Tinkerbox: Nitro Boosts" } },
         reagents   = {
             { itemID = 238737, count = 1, name = "Tinkerbox" },
@@ -3601,6 +3785,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 270, 280, 290 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238783, 250401 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Tinkerbox: Teleport" } },
         reagents   = {
             { itemID = 238737, count = 1, name = "Tinkerbox" },
@@ -3629,6 +3814,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 240, 260, 280 },
         category   = "Explosives",
+        teachItems = { 264219 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Tru-Trigger Frag Bomb" } },
         reagents   = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
@@ -3644,6 +3830,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 270, 275, 280 },
         category   = "Parts",
+        teachItems = { 18651 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Truesilver Transformer" } },
         reagents   = {
             { itemID = 6037, count = 2, name = "Truesilver Bar" },
@@ -3658,6 +3845,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234265 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 18168, count = 1, name = "Force Reactive Disk" },
@@ -3673,6 +3861,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Devices",
+        teachItems = { 18658 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Ultra-Flash Shadow Reflector" } },
         reagents   = {
             { itemID = 11371, count = 8, name = "Dark Iron Bar" },
@@ -3690,6 +3879,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Gadgets",
+        teachItems = { 264235 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Ultralight Goblin Glider" } },
         reagents   = {
             { itemID = 249431, count = 2, name = "Viridian Dye" },
@@ -3705,6 +3895,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 330, 340 },
         category   = "Consumable Devices",
+        teachItems = { 264232 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Ultrasafe Rechargeable Battery" } },
         reagents   = {
             { itemID = 249410, count = 2, name = "Sulfuric Acid" },
@@ -3738,6 +3929,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 280, 290, 300 },
         category   = "Explosives",
+        teachItems = { 284870 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Unsanctified Grenade" } },
         reagents   = {
             { itemID = 18631, count = 1, name = "Truesilver Transformer" },
@@ -3767,6 +3959,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 310, 320, 330 },
         category   = "Devices",
+        teachItems = { 16052 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Voice Amplification Modulator" } },
         reagents   = {
             { itemID = 16006, count = 2, name = "Delicate Arcanite Converter" },
@@ -3782,6 +3975,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 180, 182, 185 },
         category   = "Gadgets",
+        teachItems = { 280321 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Whimsical Waistwrap" } },
         reagents   = {
             { itemID = 4382, count = 2, name = "Bronze Framework" },
@@ -3810,6 +4004,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 237, 250 },
         category   = "Fireworks",
+        teachItems = { 286083 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: White Rocket Cluster" } },
         reagents   = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
@@ -3823,6 +4018,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 260, 265, 270 },
         category   = "Devices",
+        teachItems = { 18661 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: World Enlarger" } },
         reagents   = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
@@ -3840,6 +4036,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 237, 250 },
         category   = "Fireworks",
+        teachItems = { 286084 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Schematic: Yellow Rocket Cluster" } },
         reagents   = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },

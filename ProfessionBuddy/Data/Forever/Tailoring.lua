@@ -16,6 +16,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 215, 230, 245 },
         category   = "Hoods",
+        teachItems = { 10318 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Admiral's Hat" } },
         reagents   = {
             { itemID = 4339, count = 3, name = "Bolt of Mageweave" },
@@ -30,6 +31,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 270, 285, 300 },
         category   = "Shoes",
+        teachItems = { 19216, 227896 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Argent Boots" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -46,6 +48,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 320, 335 },
         category   = "Spaulders",
+        teachItems = { 19217, 227897 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Argent Shoulders" } },
         reagents   = {
             { itemID = 14342, count = 5, name = "Mooncloth" },
@@ -60,6 +63,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 155, 175, 190, 205 },
         category   = "Spaulders",
+        teachItems = { 7085 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Shoulders" } },
         reagents   = {
             { itemID = 4305, count = 6, name = "Bolt of Silk Cloth" },
@@ -91,6 +95,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 160, 175, 190 },
         category   = "Cloaks",
+        teachItems = { 7089 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Silk Cloak" } },
         reagents   = {
             { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
@@ -105,6 +110,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 140, 155, 170 },
         category   = "Gloves",
+        teachItems = { 7114 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Silk Gloves" } },
         reagents   = {
             { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
@@ -161,6 +167,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Belts",
+        teachItems = { 276973 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Stormsewn Cord" } },
         reagents   = {
             { itemID = 2996, count = 3, name = "Bolt of Linen Cloth" },
@@ -174,6 +181,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Hoods",
+        teachItems = { 276990 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Stormsewn Cowl" } },
         reagents   = {
             { itemID = 4305, count = 7, name = "Bolt of Silk Cloth" },
@@ -189,6 +197,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Bracers",
+        teachItems = { 276971 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Stormsewn Cuffs" } },
         reagents   = {
             { itemID = 2996, count = 3, name = "Bolt of Linen Cloth" },
@@ -202,6 +211,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Spaulders",
+        teachItems = { 276991 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Stormsewn Epaulets" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -217,6 +227,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Gloves",
+        teachItems = { 276972 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Stormsewn Handwraps" } },
         reagents   = {
             { itemID = 2996, count = 4, name = "Bolt of Linen Cloth" },
@@ -230,6 +241,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leggings",
+        teachItems = { 276974 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Stormsewn Leggings" } },
         reagents   = {
             { itemID = 2996, count = 5, name = "Bolt of Linen Cloth" },
@@ -243,6 +255,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Shoes",
+        teachItems = { 276975 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Stormsewn Shoes" } },
         reagents   = {
             { itemID = 2996, count = 4, name = "Bolt of Linen Cloth" },
@@ -256,6 +269,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Robes and Vests",
+        teachItems = { 276970 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Azure Stormsewn Vest" } },
         reagents   = {
             { itemID = 2996, count = 5, name = "Bolt of Linen Cloth" },
@@ -283,6 +297,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 310, 325, 340 },
         category   = "Belts",
+        teachItems = { 18414 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Belt of the Archmage" } },
         reagents   = {
             { itemID = 14048, count = 16, name = "Bolt of Runecloth" },
@@ -302,6 +317,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 270, 285, 300 },
         category   = "Specialty Bags",
+        teachItems = { 22309 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Big Bag of Enchantment" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -317,6 +333,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 195, 195, 195 },
         category   = "Belts",
+        teachItems = { 254044 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Cord" } },
         reagents   = {
             { itemID = 4339, count = 28, name = "Bolt of Mageweave" },
@@ -333,6 +350,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 240, 240, 240 },
         category   = "Gloves",
+        teachItems = { 254102 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Gloves" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -349,6 +367,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 200, 215 },
         category   = "Gloves",
+        teachItems = { 254028 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Handwraps" } },
         reagents   = {
             { itemID = 4339, count = 12, name = "Bolt of Mageweave" },
@@ -457,6 +476,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Shoes",
+        teachItems = { 254114 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Sandals" } },
         reagents   = {
             { itemID = 14048, count = 10, name = "Bolt of Runecloth" },
@@ -474,6 +494,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 170, 185, 200 },
         category   = "Bags",
+        teachItems = { 5775 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Silk Pack" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -488,6 +509,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 145, 145, 145 },
         category   = "Shoes",
+        teachItems = { 254008 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Slippers" } },
         reagents   = {
             { itemID = 4339, count = 8, name = "Bolt of Mageweave" },
@@ -504,6 +526,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 175, 180, 185 },
         category   = "Shirts",
+        teachItems = { 10728 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Swashbuckler's Shirt" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -518,6 +541,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Belts",
+        teachItems = { 254088 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Black Waistcord" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -534,6 +558,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Shoes",
+        teachItems = { 19766 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Bloodvine Boots" } },
         reagents   = {
             { itemID = 14342, count = 3, name = "Mooncloth" },
@@ -550,6 +575,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Leggings",
+        teachItems = { 19765 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Bloodvine Leggings" } },
         reagents   = {
             { itemID = 14342, count = 4, name = "Mooncloth" },
@@ -566,6 +592,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Robes and Vests",
+        teachItems = { 19764 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Bloodvine Vest" } },
         reagents   = {
             { itemID = 14342, count = 3, name = "Mooncloth" },
@@ -582,6 +609,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 45, 70, 87, 105 },
         category   = "Robes and Vests",
+        teachItems = { 6272 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Linen Robe" } },
         reagents   = {
             { itemID = 2996, count = 4, name = "Bolt of Linen Cloth" },
@@ -610,6 +638,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 35, 60, 77, 95 },
         category   = "Robes and Vests",
+        teachItems = { 6270 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Linen Vest" } },
         reagents   = {
             { itemID = 2996, count = 3, name = "Bolt of Linen Cloth" },
@@ -624,6 +653,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 117, 135 },
         category   = "Robes and Vests",
+        teachItems = { 6274 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Blue Overalls" } },
         reagents   = {
             { itemID = 2997, count = 4, name = "Bolt of Woolen Cloth" },
@@ -662,6 +692,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 322, 330 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234445 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234008, count = 5, name = "item:234008" },
@@ -710,6 +741,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Shoes",
+        teachItems = { 273995 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Boots of Conviction" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -725,6 +757,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 115, 135, 150, 165 },
         category   = "Shoes",
+        teachItems = { 7093 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
@@ -740,6 +773,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 160, 175, 190 },
         category   = "Shoes",
+        teachItems = { 4352 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Boots of the Enchanter" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -754,6 +788,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Bags",
+        teachItems = { 14510 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Bottomless Bag" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -772,6 +807,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Specialty Bags",
+        teachItems = { 254140 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Bottomless Reagent Bag" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -790,6 +826,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 120, 125, 130 },
         category   = "Shirts",
+        teachItems = { 14627 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Bright Yellow Shirt" } },
         reagents   = {
             { itemID = 4305, count = 1, name = "Bolt of Silk Cloth" },
@@ -804,6 +841,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 245, 260, 275 },
         category   = "Cloaks",
+        teachItems = { 14484 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brightcloth Cloak" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -818,6 +856,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 240, 255, 270 },
         category   = "Gloves",
+        teachItems = { 14479 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brightcloth Gloves" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -832,6 +871,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 260, 275, 290 },
         category   = "Leggings",
+        teachItems = { 14494 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brightcloth Pants" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -847,6 +887,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 240, 255, 270 },
         category   = "Robes and Vests",
+        teachItems = { 14478 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Brightcloth Robe" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -913,6 +954,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 245, 260, 275 },
         category   = "Specialty Bags",
+        teachItems = { 22310 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cenarion Herb Bag" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -943,6 +985,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 245, 260, 275 },
         category   = "Cloaks",
+        teachItems = { 14482 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cindercloth Cloak" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -957,6 +1000,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 240, 255, 270 },
         category   = "Gloves",
+        teachItems = { 14476 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cindercloth Gloves" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -971,6 +1015,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Leggings",
+        teachItems = { 14490 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cindercloth Pants" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -999,6 +1044,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Robes and Vests",
+        teachItems = { 14471 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cindercloth Vest" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -1013,6 +1059,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Cloaks",
+        teachItems = { 279319 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloak of Earth and Sky" } },
         reagents   = {
             { itemID = 274030, count = 1, name = "Malleable Essence of Nature" },
@@ -1027,6 +1074,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Cloaks",
+        teachItems = { 14486 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloak of Fire" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -1043,6 +1091,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 295, 310, 325 },
         category   = "Cloaks",
+        teachItems = { 18418 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloak of Warding" } },
         reagents   = {
             { itemID = 14048, count = 12, name = "Bolt of Runecloth" },
@@ -1058,6 +1107,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Belts",
+        teachItems = { 276949 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Stormsewn Cord" } },
         reagents   = {
             { itemID = 2996, count = 3, name = "Bolt of Linen Cloth" },
@@ -1071,6 +1121,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Hoods",
+        teachItems = { 276982 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Stormsewn Cowl" } },
         reagents   = {
             { itemID = 4305, count = 7, name = "Bolt of Silk Cloth" },
@@ -1086,6 +1137,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 55, 57, 60 },
         category   = "Bracers",
+        teachItems = { 276947 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Stormsewn Cuffs" } },
         reagents   = {
             { itemID = 2996, count = 3, name = "Bolt of Linen Cloth" },
@@ -1099,6 +1151,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 185, 187, 190 },
         category   = "Spaulders",
+        teachItems = { 276983 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Stormsewn Epaulets" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -1114,6 +1167,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Gloves",
+        teachItems = { 276948 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Stormsewn Handwraps" } },
         reagents   = {
             { itemID = 2996, count = 4, name = "Bolt of Linen Cloth" },
@@ -1127,6 +1181,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Leggings",
+        teachItems = { 276950 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Stormsewn Leggings" } },
         reagents   = {
             { itemID = 2996, count = 5, name = "Bolt of Linen Cloth" },
@@ -1140,6 +1195,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 55, 60, 62, 65 },
         category   = "Shoes",
+        teachItems = { 276951 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Stormsewn Shoes" } },
         reagents   = {
             { itemID = 2996, count = 4, name = "Bolt of Linen Cloth" },
@@ -1153,6 +1209,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 65, 67, 70 },
         category   = "Robes and Vests",
+        teachItems = { 276946 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Cloudy Stormsewn Vest" } },
         reagents   = {
             { itemID = 2996, count = 5, name = "Bolt of Linen Cloth" },
@@ -1166,6 +1223,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 70, 95, 112, 130 },
         category   = "Leggings",
+        teachItems = { 10316 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Colorful Kilt" } },
         reagents   = {
             { itemID = 2997, count = 5, name = "Bolt of Woolen Cloth" },
@@ -1180,6 +1238,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Specialty Bags",
+        teachItems = { 21371 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Core Felcloth Bag" } },
         reagents   = {
             { itemID = 14256, count = 20, name = "Felcloth" },
@@ -1196,6 +1255,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 300, 302, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 239150 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Crimson Dawnwoven Bag" } },
         reagents   = {
             { itemID = 12938, count = 1, name = "Blood of Heroes" },
@@ -1227,6 +1287,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 165, 180, 195 },
         category   = "Cloaks",
+        teachItems = { 7087 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Crimson Silk Cloak" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -1273,6 +1334,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 170, 185, 200, 215 },
         category   = "Robes and Vests",
+        teachItems = { 7088 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Crimson Silk Robe" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -1289,6 +1351,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 155, 175, 190, 205 },
         category   = "Spaulders",
+        teachItems = { 7084 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Crimson Silk Shoulders" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -1318,6 +1381,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 262, 265 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 239149 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Crusader's Knapsack" } },
         reagents   = {
             { itemID = 12811, count = 1, name = "Righteous Orb" },
@@ -1333,6 +1397,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 130, 135, 140 },
         category   = "Shirts",
+        teachItems = { 6401 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Dark Silk Shirt" } },
         reagents   = {
             { itemID = 4305, count = 2, name = "Bolt of Silk Cloth" },
@@ -1347,6 +1412,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Shoes",
+        teachItems = { 274011 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Demonheart Boots" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -1362,6 +1428,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Gloves",
+        teachItems = { 274009 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Demonheart Gloves" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -1377,6 +1444,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leggings",
+        teachItems = { 274008 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Demonheart Leggings" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -1392,6 +1460,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Spaulders",
+        teachItems = { 274010 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Demonheart Spaulders" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -1420,6 +1489,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234483 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 14048, count = 30, name = "Bolt of Runecloth" },
@@ -1436,6 +1506,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234486 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 14048, count = 30, name = "Bolt of Runecloth" },
@@ -1499,6 +1570,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 160, 175, 190 },
         category   = "Leggings",
+        teachItems = { 254000 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthen Leggings" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -1513,6 +1585,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 160, 180, 195, 210 },
         category   = "Belts",
+        teachItems = { 7086 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthen Silk Belt" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -1529,6 +1602,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 200, 215 },
         category   = "Bracers",
+        teachItems = { 254020 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthen Silk Cuffs" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -1543,6 +1617,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 160, 180, 195, 210 },
         category   = "Gloves",
+        teachItems = { 254018 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthen Silk Gloves" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -1557,6 +1632,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 170, 185, 200 },
         category   = "Hoods",
+        teachItems = { 254016 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthen Silk Hood" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -1571,6 +1647,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 170, 185, 200, 215 },
         category   = "Spaulders",
+        teachItems = { 254034 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthen Silk Shoulders" } },
         reagents   = {
             { itemID = 4305, count = 6, name = "Bolt of Silk Cloth" },
@@ -1585,6 +1662,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 165, 180, 195 },
         category   = "Shoes",
+        teachItems = { 254014 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthen Silk Slippers" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -1614,6 +1692,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 240, 255, 270 },
         category   = "Shoes",
+        teachItems = { 254094 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthenweave Boots" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -1629,6 +1708,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Belts",
+        teachItems = { 254078 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthenweave Cord" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -1643,6 +1723,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 275, 290, 305 },
         category   = "Hoods",
+        teachItems = { 254138 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthenweave Crown" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -1657,6 +1738,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 270, 285, 300 },
         category   = "Bracers",
+        teachItems = { 254132 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthenweave Cuffs" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -1671,6 +1753,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Gloves",
+        teachItems = { 254076 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthenweave Gloves" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -1685,6 +1768,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 260, 275, 290 },
         category   = "Leggings",
+        teachItems = { 254126 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthenweave Leggings" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -1699,6 +1783,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 255, 270, 285 },
         category   = "Spaulders",
+        teachItems = { 254120 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthenweave Mantle" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -1713,6 +1798,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 265, 280, 295 },
         category   = "Robes and Vests",
+        teachItems = { 254122 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Earthenweave Vest" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -1727,6 +1813,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 205, 220, 235 },
         category   = "Specialty Bags",
+        teachItems = { 22307 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Enchanted Mageweave Pouch" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -1741,6 +1828,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 245, 260, 275 },
         category   = "Specialty Bags",
+        teachItems = { 22308 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Enchanted Runecloth Bag" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -1755,6 +1843,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 150, 165, 180 },
         category   = "Hoods",
+        teachItems = { 14630 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Enchanter's Cowl" } },
         reagents   = {
             { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
@@ -1782,6 +1871,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Cloaks",
+        teachItems = { 279318 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fel Cape" } },
         reagents   = {
             { itemID = 274030, count = 1, name = "Malleable Essence of Nature" },
@@ -1796,6 +1886,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Specialty Bags",
+        teachItems = { 279320 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Felblood Soul Bag" } },
         reagents   = {
             { itemID = 14256, count = 8, name = "Felcloth" },
@@ -1809,6 +1900,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 245, 260, 275, 290 },
         category   = "Specialty Bags",
+        teachItems = { 21369 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 14256, count = 12, name = "Felcloth" },
@@ -1824,6 +1916,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 255, 270, 285 },
         category   = "Shoes",
+        teachItems = { 14492 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Felcloth Boots" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -1839,6 +1932,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 295, 310, 325 },
         category   = "Gloves",
+        teachItems = { 18415 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Felcloth Gloves" } },
         reagents   = {
             { itemID = 14048, count = 12, name = "Bolt of Runecloth" },
@@ -1855,6 +1949,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 260, 275, 290 },
         category   = "Hoods",
+        teachItems = { 14496 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Felcloth Hood" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -1869,6 +1964,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 245, 260, 275 },
         category   = "Leggings",
+        teachItems = { 14483 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Felcloth Pants" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -1883,6 +1979,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 275, 290, 305 },
         category   = "Robes and Vests",
+        teachItems = { 14506 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Felcloth Robe" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -1898,6 +1995,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 265, 280, 295, 310 },
         category   = "Spaulders",
+        teachItems = { 14508 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Felcloth Shoulders" } },
         reagents   = {
             { itemID = 14048, count = 7, name = "Bolt of Runecloth" },
@@ -1914,6 +2012,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 220, 235, 250 },
         category   = "Dressed for the Occasion",
+        teachItems = { 21722 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Festival Dress" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -1929,6 +2028,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 220, 235, 250 },
         category   = "Dressed for the Occasion",
+        teachItems = { 21723 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Festival Suit" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -1944,6 +2044,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 195, 195, 195 },
         category   = "Belts",
+        teachItems = { 254042 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fiery Cord" } },
         reagents   = {
             { itemID = 4339, count = 28, name = "Bolt of Mageweave" },
@@ -1960,6 +2061,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 240, 240, 240 },
         category   = "Gloves",
+        teachItems = { 254100 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fiery Gloves" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -1976,6 +2078,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 200, 215 },
         category   = "Gloves",
+        teachItems = { 254026 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fiery Handwraps" } },
         reagents   = {
             { itemID = 4339, count = 12, name = "Bolt of Mageweave" },
@@ -1992,6 +2095,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Shoes",
+        teachItems = { 254112 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fiery Sandals" } },
         reagents   = {
             { itemID = 14048, count = 10, name = "Bolt of Runecloth" },
@@ -2009,6 +2113,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 145, 145, 145 },
         category   = "Shoes",
+        teachItems = { 254006 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fiery Slippers" } },
         reagents   = {
             { itemID = 4339, count = 8, name = "Bolt of Mageweave" },
@@ -2025,6 +2130,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Belts",
+        teachItems = { 254086 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Fiery Waistcord" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -2041,6 +2147,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 130, 130, 130 },
         category   = "Hoods",
+        teachItems = { 253980 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Flame Circlet" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2056,6 +2163,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 80, 80, 80 },
         category   = "Robes and Vests",
+        teachItems = { 253906 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Flame Gown" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -2071,6 +2179,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 105, 105, 105 },
         category   = "Leggings",
+        teachItems = { 253942 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Flame Leggings" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2086,6 +2195,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 130, 130, 130 },
         category   = "Hoods",
+        teachItems = { 253984 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Pearly Circlet" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2101,6 +2211,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 80, 80, 80 },
         category   = "Robes and Vests",
+        teachItems = { 253910 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Pearly Gown" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -2116,6 +2227,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 105, 105, 105 },
         category   = "Leggings",
+        teachItems = { 253946 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Pearly Leggings" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2131,6 +2243,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 130, 130, 130 },
         category   = "Hoods",
+        teachItems = { 253976 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Pristine Circlet" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2146,6 +2259,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 80, 80, 80 },
         category   = "Robes and Vests",
+        teachItems = { 253902 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Pristine Gown" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -2161,6 +2275,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 105, 105, 105 },
         category   = "Leggings",
+        teachItems = { 253938 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Pristine Leggings" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2176,6 +2291,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 130, 130, 130 },
         category   = "Hoods",
+        teachItems = { 253982 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Shadow Circlet" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2191,6 +2307,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 80, 80, 80 },
         category   = "Robes and Vests",
+        teachItems = { 253908 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Shadow Gown" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -2206,6 +2323,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 105, 105, 105 },
         category   = "Leggings",
+        teachItems = { 253944 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Shadow Leggings" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2221,6 +2339,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 130, 130, 130 },
         category   = "Hoods",
+        teachItems = { 253986 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Shining Circlet" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2236,6 +2355,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 80, 80, 80 },
         category   = "Robes and Vests",
+        teachItems = { 253912 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Shining Gown" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -2251,6 +2371,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 105, 105, 105 },
         category   = "Leggings",
+        teachItems = { 253948 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Shining Leggings" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2266,6 +2387,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 130, 130, 130 },
         category   = "Hoods",
+        teachItems = { 253978 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Silky Circlet" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2281,6 +2403,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 80, 80, 80 },
         category   = "Robes and Vests",
+        teachItems = { 253904 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Silky Gown" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -2296,6 +2419,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 105, 105, 105 },
         category   = "Leggings",
+        teachItems = { 253940 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Filigreed Silky Leggings" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2311,6 +2435,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 85, 102, 120 },
         category   = "Shoes",
+        teachItems = { 253894 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flame Boots" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -2326,6 +2451,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 142, 160 },
         category   = "Hoods",
+        teachItems = { 253954 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flame Circlet" } },
         reagents   = {
             { itemID = 4305, count = 10, name = "Bolt of Silk Cloth" },
@@ -2343,6 +2469,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 117, 135 },
         category   = "Gloves",
+        teachItems = { 253918 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flame Gloves" } },
         reagents   = {
             { itemID = 2997, count = 6, name = "Bolt of Woolen Cloth" },
@@ -2358,6 +2485,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 130, 145, 160 },
         category   = "Robes and Vests",
+        teachItems = { 253966 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flame Gown" } },
         reagents   = {
             { itemID = 4305, count = 12, name = "Bolt of Silk Cloth" },
@@ -2375,6 +2503,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 145, 160, 175 },
         category   = "Leggings",
+        teachItems = { 253992 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flame Leggings" } },
         reagents   = {
             { itemID = 4305, count = 14, name = "Bolt of Silk Cloth" },
@@ -2392,6 +2521,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 127, 145 },
         category   = "Belts",
+        teachItems = { 253930 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flame Sash" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -2407,6 +2537,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Gloves",
+        teachItems = { 17018 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flarecore Gloves" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -2423,6 +2554,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Leggings",
+        teachItems = { 19220 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flarecore Leggings" } },
         reagents   = {
             { itemID = 14342, count = 8, name = "Mooncloth" },
@@ -2439,6 +2571,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Spaulders",
+        teachItems = { 17017 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flarecore Mantle" } },
         reagents   = {
             { itemID = 14048, count = 12, name = "Bolt of Runecloth" },
@@ -2455,6 +2588,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Robes and Vests",
+        teachItems = { 19219 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flarecore Robe" } },
         reagents   = {
             { itemID = 14342, count = 10, name = "Mooncloth" },
@@ -2471,6 +2605,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 335, 350 },
         category   = "Bracers",
+        teachItems = { 18265 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Flarecore Wraps" } },
         reagents   = {
             { itemID = 14342, count = 6, name = "Mooncloth" },
@@ -2501,6 +2636,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Gloves",
+        teachItems = { 14474 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frostweave Gloves" } },
         reagents   = {
             { itemID = 14048, count = 3, name = "Bolt of Runecloth" },
@@ -2515,6 +2651,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Leggings",
+        teachItems = { 14489 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frostweave Pants" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -2529,6 +2666,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 240, 255 },
         category   = "Robes and Vests",
+        teachItems = { 14467 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frostweave Robe" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -2543,6 +2681,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 210, 225, 240, 255 },
         category   = "Robes and Vests",
+        teachItems = { 14466 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frostweave Tunic" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -2596,6 +2735,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 195, 195, 195 },
         category   = "Belts",
+        teachItems = { 254040 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frothing Cord" } },
         reagents   = {
             { itemID = 4339, count = 28, name = "Bolt of Mageweave" },
@@ -2612,6 +2752,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 240, 240, 240 },
         category   = "Gloves",
+        teachItems = { 254098 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frothing Gloves" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -2628,6 +2769,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 200, 215 },
         category   = "Gloves",
+        teachItems = { 254024 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frothing Handwraps" } },
         reagents   = {
             { itemID = 4339, count = 12, name = "Bolt of Mageweave" },
@@ -2644,6 +2786,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Shoes",
+        teachItems = { 254110 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frothing Sandals" } },
         reagents   = {
             { itemID = 14048, count = 10, name = "Bolt of Runecloth" },
@@ -2661,6 +2804,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 145, 145, 145 },
         category   = "Shoes",
+        teachItems = { 254004 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frothing Slippers" } },
         reagents   = {
             { itemID = 4339, count = 8, name = "Bolt of Mageweave" },
@@ -2677,6 +2821,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Belts",
+        teachItems = { 254084 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Frothing Waistcord" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -2693,6 +2838,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Cloaks",
+        teachItems = { 22683 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gaea's Embrace" } },
         reagents   = {
             { itemID = 19726, count = 1, name = "Bloodvine" },
@@ -2708,6 +2854,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 235, 250, 265 },
         category   = "Belts",
+        teachItems = { 14473 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ghostweave Belt" } },
         reagents   = {
             { itemID = 14048, count = 3, name = "Bolt of Runecloth" },
@@ -2723,6 +2870,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 265, 280, 295 },
         category   = "Shoes",
+        teachItems = { 254130 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ghostweave Boots" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -2739,6 +2887,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Belts",
+        teachItems = { 254074 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ghostweave Cord" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -2754,6 +2903,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 240, 255, 270 },
         category   = "Gloves",
+        teachItems = { 14477 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ghostweave Gloves" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -2769,6 +2919,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 275, 290, 305 },
         category   = "Hoods",
+        teachItems = { 254136 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ghostweave Hood" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -2784,6 +2935,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 265, 280, 295 },
         category   = "Spaulders",
+        teachItems = { 254128 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ghostweave Mantle" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -2799,6 +2951,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 260, 275, 290 },
         category   = "Leggings",
+        teachItems = { 14495 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ghostweave Pants" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -2813,6 +2966,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 240, 255, 270 },
         category   = "Robes and Vests",
+        teachItems = { 14480 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Ghostweave Vest" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -2828,6 +2982,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 195, 195, 195 },
         category   = "Belts",
+        teachItems = { 254038 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gilded Cord" } },
         reagents   = {
             { itemID = 4339, count = 28, name = "Bolt of Mageweave" },
@@ -2844,6 +2999,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 240, 240, 240 },
         category   = "Gloves",
+        teachItems = { 254096 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gilded Gloves" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -2860,6 +3016,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 200, 215 },
         category   = "Gloves",
+        teachItems = { 254022 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gilded Handwraps" } },
         reagents   = {
             { itemID = 4339, count = 12, name = "Bolt of Mageweave" },
@@ -2876,6 +3033,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Shoes",
+        teachItems = { 254108 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gilded Sandals" } },
         reagents   = {
             { itemID = 14048, count = 10, name = "Bolt of Runecloth" },
@@ -2893,6 +3051,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 145, 145, 145 },
         category   = "Shoes",
+        teachItems = { 254002 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gilded Slippers" } },
         reagents   = {
             { itemID = 4339, count = 8, name = "Bolt of Mageweave" },
@@ -2909,6 +3068,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Belts",
+        teachItems = { 254082 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gilded Waistcord" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -2925,6 +3085,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 330, 345 },
         category   = "Cloaks",
+        teachItems = { 22685, 236691 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 5, name = "Frozen Rune" },
@@ -2940,6 +3101,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 330, 345 },
         category   = "Gloves",
+        teachItems = { 22684 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 5, name = "Frozen Rune" },
@@ -2955,6 +3117,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 330, 345 },
         category   = "Robes and Vests",
+        teachItems = { 22686 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 7, name = "Frozen Rune" },
@@ -2970,6 +3133,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 330, 345 },
         category   = "Bracers",
+        teachItems = { 22687 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 22682, count = 4, name = "Frozen Rune" },
@@ -2985,6 +3149,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Gloves",
+        teachItems = { 273989 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gloves of Conviction" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3014,6 +3179,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 310, 325, 340 },
         category   = "Gloves",
+        teachItems = { 14511 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gloves of Spell Mastery" } },
         reagents   = {
             { itemID = 14048, count = 10, name = "Bolt of Runecloth" },
@@ -3033,6 +3199,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 195, 195, 195 },
         category   = "Belts",
+        teachItems = { 254046 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Golden Cord" } },
         reagents   = {
             { itemID = 4339, count = 28, name = "Bolt of Mageweave" },
@@ -3049,6 +3216,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 240, 240, 240 },
         category   = "Gloves",
+        teachItems = { 254104 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Golden Gloves" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -3065,6 +3233,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 200, 215 },
         category   = "Gloves",
+        teachItems = { 254030 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Golden Handwraps" } },
         reagents   = {
             { itemID = 4339, count = 12, name = "Bolt of Mageweave" },
@@ -3081,6 +3250,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Shoes",
+        teachItems = { 254116 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Golden Sandals" } },
         reagents   = {
             { itemID = 14048, count = 10, name = "Bolt of Runecloth" },
@@ -3098,6 +3268,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 145, 145, 145 },
         category   = "Shoes",
+        teachItems = { 254010 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Golden Slippers" } },
         reagents   = {
             { itemID = 4339, count = 8, name = "Bolt of Mageweave" },
@@ -3114,6 +3285,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Belts",
+        teachItems = { 254090 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Golden Waistcord" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -3143,6 +3315,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 105, 122, 140 },
         category   = "Robes and Vests",
+        teachItems = { 2601 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Gray Woolen Robe" } },
         reagents   = {
             { itemID = 2997, count = 4, name = "Bolt of Woolen Cloth" },
@@ -3171,6 +3344,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 115, 132, 150 },
         category   = "Robes and Vests",
+        teachItems = { 6275 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Greater Adept's Robe" } },
         reagents   = {
             { itemID = 2997, count = 5, name = "Bolt of Woolen Cloth" },
@@ -3185,6 +3359,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 155, 165, 170, 175 },
         category   = "Shirts",
+        teachItems = { 17724 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Holiday Shirt" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -3227,6 +3402,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 150, 165, 180 },
         category   = "Robes and Vests",
+        teachItems = { 7090 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Silk Armor" } },
         reagents   = {
             { itemID = 4305, count = 5, name = "Bolt of Silk Cloth" },
@@ -3241,6 +3417,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 160, 175, 190 },
         category   = "Bags",
+        teachItems = { 5774 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Silk Pack" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -3269,6 +3446,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 250, 252, 255 },
         category   = "Robes and Vests",
+        teachItems = { 34261 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Winter Clothes" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -3284,6 +3462,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 117, 135 },
         category   = "Bags",
+        teachItems = { 4292 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Green Woolen Bag" } },
         reagents   = {
             { itemID = 2997, count = 4, name = "Bolt of Woolen Cloth" },
@@ -3298,6 +3477,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 65, 90, 107, 125 },
         category   = "Robes and Vests",
+        teachItems = { 6273 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 2997, count = 3, name = "Bolt of Woolen Cloth" },
@@ -3326,6 +3506,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Gloves",
+        teachItems = { 273993 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Handguards of Conviction" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3341,6 +3522,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 140, 155, 170 },
         category   = "Gloves",
+        teachItems = { 7092 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Hands of Darkness" } },
         reagents   = {
             { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
@@ -3382,6 +3564,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 105, 122, 140 },
         category   = "Cloaks",
+        teachItems = { 4346 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Heavy Woolen Cloak" } },
         reagents   = {
             { itemID = 2997, count = 3, name = "Bolt of Woolen Cloth" },
@@ -3422,6 +3605,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 200, 210, 220 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 215368 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Hyperconductive Arcano-Filament" } },
         reagents   = {
             { itemID = 4339, count = 2, name = "Bolt of Mageweave" },
@@ -3436,6 +3620,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 200, 215 },
         category   = "Cloaks",
+        teachItems = { 4355 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Icy Cloak" } },
         reagents   = {
             { itemID = 4339, count = 3, name = "Bolt of Mageweave" },
@@ -3451,6 +3636,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 295, 310, 325 },
         category   = "Gloves",
+        teachItems = { 18416 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Inferno Gloves" } },
         reagents   = {
             { itemID = 14048, count = 12, name = "Bolt of Runecloth" },
@@ -3466,6 +3652,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 170, 185, 200 },
         category   = "Belts",
+        teachItems = { 215369 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Invoker's Cord" } },
         reagents   = {
             { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
@@ -3481,6 +3668,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 170, 185, 200 },
         category   = "Spaulders",
+        teachItems = { 215370 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Invoker's Mantle" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -3496,6 +3684,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 195, 200, 205 },
         category   = "Shirts",
+        teachItems = { 10314 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Lavender Mageweave Shirt" } },
         reagents   = {
             { itemID = 4339, count = 2, name = "Bolt of Mageweave" },
@@ -3510,6 +3699,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 228121 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Leather-Reinforced Runecloth Bag" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -3525,6 +3715,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leggings",
+        teachItems = { 273992 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Leggings of Conviction" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -3607,6 +3798,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 5, 30, 47, 65 },
         category   = "Specialty Bags",
+        teachItems = { 253665 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Linen Reagent Bag" } },
         reagents   = {
             { itemID = 2996, count = 6, name = "Bolt of Linen Cloth" },
@@ -3634,6 +3826,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273124 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Loom" } },
         reagents   = {
             { itemID = 273131, count = 1, name = "Bottled Screams" },
@@ -3661,6 +3854,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 205, 210, 215 },
         category   = "Specialty Bags",
+        teachItems = { 254036 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mageweave Reagent Bag" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -3676,6 +3870,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Belts",
+        teachItems = { 279316 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mana-infused Cord" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -3690,6 +3885,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Shoes",
+        teachItems = { 273975 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Manaflare Boots" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3705,6 +3901,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Gloves",
+        teachItems = { 273973 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Manaflare Gloves" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3720,6 +3917,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Spaulders",
+        teachItems = { 273974 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Manaflare Mantle" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3735,6 +3933,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leggings",
+        teachItems = { 273972 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Manaflare Pants" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -3750,6 +3949,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Spaulders",
+        teachItems = { 273990 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mantle of Conviction" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -3765,6 +3965,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 305, 319, 334 },
         category   = "Spaulders",
+        teachItems = { 19218 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mantle of the Timbermaw" } },
         reagents   = {
             { itemID = 14342, count = 5, name = "Mooncloth" },
@@ -3780,6 +3981,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 270, 285, 300 },
         category   = "Reagents",
+        teachItems = { 14526 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mooncloth" } },
         reagents   = {
             { itemID = 14256, count = 2, name = "Felcloth" },
@@ -3792,6 +3994,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 270, 285, 300 },
         category   = "Bags",
+        teachItems = { 14499 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mooncloth Bag" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -3822,6 +4025,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 295, 310, 325 },
         category   = "Hoods",
+        teachItems = { 14509 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mooncloth Circlet" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -3838,6 +4042,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 295, 310, 325 },
         category   = "Gloves",
+        teachItems = { 18417 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mooncloth Gloves" } },
         reagents   = {
             { itemID = 14048, count = 12, name = "Bolt of Runecloth" },
@@ -3853,6 +4058,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 270, 285, 300 },
         category   = "Leggings",
+        teachItems = { 14497 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mooncloth Leggings" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -3867,6 +4073,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 270, 285, 300 },
         category   = "Specialty Bags",
+        teachItems = { 254134 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mooncloth Reagent Bag" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -3884,6 +4091,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 290, 305, 320 },
         category   = "Robes and Vests",
+        teachItems = { 18487 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mooncloth Robe" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -3899,6 +4107,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 290, 305, 320 },
         category   = "Spaulders",
+        teachItems = { 14507 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mooncloth Shoulders" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -3913,6 +4122,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 285, 300, 315 },
         category   = "Robes and Vests",
+        teachItems = { 14501 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Mooncloth Vest" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -3927,6 +4137,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 220, 235, 250 },
         category   = "Bracers",
+        teachItems = { 254066 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Netherflame Cuffs" } },
         reagents   = {
             { itemID = 4339, count = 18, name = "Bolt of Mageweave" },
@@ -3944,6 +4155,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 210, 225, 240 },
         category   = "Spaulders",
+        teachItems = { 254054 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Netherflame Shoulders" } },
         reagents   = {
             { itemID = 4339, count = 16, name = "Bolt of Mageweave" },
@@ -3961,6 +4173,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 220, 235, 250 },
         category   = "Bracers",
+        teachItems = { 254064 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Netherfroth Cuffs" } },
         reagents   = {
             { itemID = 4339, count = 18, name = "Bolt of Mageweave" },
@@ -3978,6 +4191,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 210, 225, 240 },
         category   = "Spaulders",
+        teachItems = { 254052 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Netherfroth Shoulders" } },
         reagents   = {
             { itemID = 4339, count = 16, name = "Bolt of Mageweave" },
@@ -3995,6 +4209,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 220, 235, 250 },
         category   = "Bracers",
+        teachItems = { 254062 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Nethergeld Cuffs" } },
         reagents   = {
             { itemID = 4339, count = 18, name = "Bolt of Mageweave" },
@@ -4012,6 +4227,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 210, 225, 240 },
         category   = "Spaulders",
+        teachItems = { 254050 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Nethergeld Shoulders" } },
         reagents   = {
             { itemID = 4339, count = 16, name = "Bolt of Mageweave" },
@@ -4029,6 +4245,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 220, 235, 250 },
         category   = "Bracers",
+        teachItems = { 254072 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Netherlight Cuffs" } },
         reagents   = {
             { itemID = 4339, count = 18, name = "Bolt of Mageweave" },
@@ -4046,6 +4263,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 210, 225, 240 },
         category   = "Spaulders",
+        teachItems = { 254060 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Netherlight Shoulders" } },
         reagents   = {
             { itemID = 4339, count = 16, name = "Bolt of Mageweave" },
@@ -4063,6 +4281,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 220, 235, 250 },
         category   = "Bracers",
+        teachItems = { 254068 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Netherpearl Cuffs" } },
         reagents   = {
             { itemID = 4339, count = 18, name = "Bolt of Mageweave" },
@@ -4080,6 +4299,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 210, 225, 240 },
         category   = "Spaulders",
+        teachItems = { 254056 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Netherpearl Shoulders" } },
         reagents   = {
             { itemID = 4339, count = 16, name = "Bolt of Mageweave" },
@@ -4097,6 +4317,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 220, 235, 250 },
         category   = "Bracers",
+        teachItems = { 254070 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Nethershine Cuffs" } },
         reagents   = {
             { itemID = 4339, count = 18, name = "Bolt of Mageweave" },
@@ -4114,6 +4335,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 210, 225, 240 },
         category   = "Spaulders",
+        teachItems = { 254058 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Nethershine Shoulders" } },
         reagents   = {
             { itemID = 4339, count = 16, name = "Bolt of Mageweave" },
@@ -4131,6 +4353,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 35, 55, 55, 55 },
         category   = "Belts",
+        teachItems = { 253886 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2996, count = 8, name = "Bolt of Linen Cloth" },
@@ -4145,6 +4368,7 @@ local recipes = {
         learnFrom  = "trainer capture",
         skillRange = { 35, 55, 55, 55 },
         category   = "Belts",
+        teachItems = { 253888 },
         sources    = { { method = "trainer", faction = "Both" } },
         reagents   = {
             { itemID = 2996, count = 12, name = "Bolt of Linen Cloth" },
@@ -4173,6 +4397,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 190, 195, 200 },
         category   = "Shirts",
+        teachItems = { 10311 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Orange Martial Shirt" } },
         reagents   = {
             { itemID = 4339, count = 2, name = "Bolt of Mageweave" },
@@ -4187,6 +4412,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Leggings",
+        teachItems = { 273988 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pants of Conviction" } },
         reagents   = {
             { itemID = 274030, count = 5, name = "Malleable Essence of Nature" },
@@ -4202,6 +4428,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Spaulders",
+        teachItems = { 273994 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pauldrons of Conviction" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -4231,6 +4458,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 85, 102, 120 },
         category   = "Shoes",
+        teachItems = { 253898 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pearly Boots" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -4246,6 +4474,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 142, 160 },
         category   = "Hoods",
+        teachItems = { 253958 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pearly Circlet" } },
         reagents   = {
             { itemID = 4305, count = 10, name = "Bolt of Silk Cloth" },
@@ -4263,6 +4492,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 117, 135 },
         category   = "Gloves",
+        teachItems = { 253922 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pearly Gloves" } },
         reagents   = {
             { itemID = 2997, count = 6, name = "Bolt of Woolen Cloth" },
@@ -4278,6 +4508,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 130, 145, 160 },
         category   = "Robes and Vests",
+        teachItems = { 253970 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pearly Gown" } },
         reagents   = {
             { itemID = 4305, count = 12, name = "Bolt of Silk Cloth" },
@@ -4295,6 +4526,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 145, 160, 175 },
         category   = "Leggings",
+        teachItems = { 253996 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pearly Leggings" } },
         reagents   = {
             { itemID = 4305, count = 14, name = "Bolt of Silk Cloth" },
@@ -4312,6 +4544,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 127, 145 },
         category   = "Belts",
+        teachItems = { 253934 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pearly Sash" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -4327,6 +4560,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 125, 137, 150 },
         category   = "Bracers",
+        teachItems = { 211247 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Phoenix Bindings" } },
         reagents   = {
             { itemID = 2997, count = 6, name = "Bolt of Woolen Cloth" },
@@ -4341,6 +4575,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 142, 160 },
         category   = "Gloves",
+        teachItems = { 4348 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Phoenix Gloves" } },
         reagents   = {
             { itemID = 2997, count = 4, name = "Bolt of Woolen Cloth" },
@@ -4356,6 +4591,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 142, 160 },
         category   = "Leggings",
+        teachItems = { 4349 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Phoenix Pants" } },
         reagents   = {
             { itemID = 2997, count = 6, name = "Bolt of Woolen Cloth" },
@@ -4370,6 +4606,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 200, 205, 210 },
         category   = "Shirts",
+        teachItems = { 10317 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pink Mageweave Shirt" } },
         reagents   = {
             { itemID = 4339, count = 3, name = "Bolt of Mageweave" },
@@ -4384,6 +4621,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 85, 102, 120 },
         category   = "Shoes",
+        teachItems = { 253890 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pristine Boots" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -4399,6 +4637,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 142, 160 },
         category   = "Hoods",
+        teachItems = { 253950 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pristine Circlet" } },
         reagents   = {
             { itemID = 4305, count = 10, name = "Bolt of Silk Cloth" },
@@ -4416,6 +4655,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 117, 135 },
         category   = "Robes and Vests",
+        teachItems = { 253914 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pristine Gloves" } },
         reagents   = {
             { itemID = 2997, count = 6, name = "Bolt of Woolen Cloth" },
@@ -4431,6 +4671,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 130, 145, 160 },
         category   = "Robes and Vests",
+        teachItems = { 253962 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pristine Gown" } },
         reagents   = {
             { itemID = 4305, count = 12, name = "Bolt of Silk Cloth" },
@@ -4448,6 +4689,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 145, 160, 175 },
         category   = "Leggings",
+        teachItems = { 253988 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pristine Leggings" } },
         reagents   = {
             { itemID = 4305, count = 14, name = "Bolt of Silk Cloth" },
@@ -4465,6 +4707,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 127, 145 },
         category   = "Belts",
+        teachItems = { 253926 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Pristine Sash" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -4480,6 +4723,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234249 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234009, count = 9, name = "item:234009" },
@@ -4496,6 +4740,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234250 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234009, count = 9, name = "item:234009" },
@@ -4512,6 +4757,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234251 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234009, count = 9, name = "item:234009" },
@@ -4528,6 +4774,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 320, 330, 340 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234244 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234009, count = 9, name = "item:234009" },
@@ -4544,6 +4791,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 195, 195, 195 },
         category   = "Belts",
+        teachItems = { 254048 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Radiant Cord" } },
         reagents   = {
             { itemID = 4339, count = 28, name = "Bolt of Mageweave" },
@@ -4560,6 +4808,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 240, 240, 240 },
         category   = "Gloves",
+        teachItems = { 254106 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Radiant Gloves" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -4576,6 +4825,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 200, 215 },
         category   = "Gloves",
+        teachItems = { 254032 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Radiant Handwraps" } },
         reagents   = {
             { itemID = 4339, count = 12, name = "Bolt of Mageweave" },
@@ -4592,6 +4842,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Shoes",
+        teachItems = { 254118 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Radiant Sandals" } },
         reagents   = {
             { itemID = 14048, count = 10, name = "Bolt of Runecloth" },
@@ -4609,6 +4860,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 145, 145, 145 },
         category   = "Shoes",
+        teachItems = { 254012 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Radiant Slippers" } },
         reagents   = {
             { itemID = 4339, count = 8, name = "Bolt of Mageweave" },
@@ -4625,6 +4877,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Belts",
+        teachItems = { 254092 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Radiant Waistcord" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -4641,6 +4894,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 75, 92, 110 },
         category   = "Bags",
+        teachItems = { 5771 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Linen Bag" } },
         reagents   = {
             { itemID = 2996, count = 4, name = "Bolt of Linen Cloth" },
@@ -4655,6 +4909,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 25, 50, 67, 85 },
         category   = "Robes and Vests",
+        teachItems = { 2598 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Linen Robe" } },
         reagents   = {
             { itemID = 2996, count = 3, name = "Bolt of Linen Cloth" },
@@ -4683,6 +4938,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 35, 60, 77, 95 },
         category   = "Robes and Vests",
+        teachItems = { 6271 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Linen Vest" } },
         reagents   = {
             { itemID = 2996, count = 3, name = "Bolt of Linen Cloth" },
@@ -4711,6 +4967,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 205, 220, 235 },
         category   = "Gloves",
+        teachItems = { 10312 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Mageweave Gloves" } },
         reagents   = {
             { itemID = 4339, count = 3, name = "Bolt of Mageweave" },
@@ -4725,6 +4982,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 215, 230, 245 },
         category   = "Hoods",
+        teachItems = { 10320 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Mageweave Headband" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -4739,6 +4997,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 195, 210, 225 },
         category   = "Leggings",
+        teachItems = { 10302 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Mageweave Pants" } },
         reagents   = {
             { itemID = 4339, count = 3, name = "Bolt of Mageweave" },
@@ -4753,6 +5012,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 195, 210, 225, 240 },
         category   = "Spaulders",
+        teachItems = { 10315 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Mageweave Shoulders" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -4767,6 +5027,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 195, 210, 225 },
         category   = "Robes and Vests",
+        teachItems = { 10300 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Mageweave Vest" } },
         reagents   = {
             { itemID = 4339, count = 3, name = "Bolt of Mageweave" },
@@ -4795,6 +5056,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 250, 252, 255 },
         category   = "Robes and Vests",
+        teachItems = { 34319 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Winter Clothes" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -4810,6 +5072,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 115, 132, 150 },
         category   = "Bags",
+        teachItems = { 5772 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Woolen Bag" } },
         reagents   = {
             { itemID = 2997, count = 4, name = "Bolt of Woolen Cloth" },
@@ -4824,6 +5087,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 80, 97, 115 },
         category   = "Shoes",
+        teachItems = { 4345 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Red Woolen Boots" } },
         reagents   = {
             { itemID = 2997, count = 4, name = "Bolt of Woolen Cloth" },
@@ -4852,6 +5116,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 120, 137, 155 },
         category   = "Spaulders",
+        teachItems = { 4347 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Reinforced Woolen Shoulders" } },
         reagents   = {
             { itemID = 2997, count = 6, name = "Bolt of Woolen Cloth" },
@@ -4866,6 +5131,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 160, 165, 170 },
         category   = "Shirts",
+        teachItems = { 4354 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Rich Purple Silk Shirt" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -4880,6 +5146,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Shoes",
+        teachItems = { 279317 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Rime-encrusted Boots" } },
         reagents   = {
             { itemID = 274030, count = 2, name = "Malleable Essence of Nature" },
@@ -4911,6 +5178,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 245, 260, 275, 290 },
         category   = "Robes and Vests",
+        teachItems = { 14493 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Robe of Winter Night" } },
         reagents   = {
             { itemID = 14048, count = 10, name = "Bolt of Runecloth" },
@@ -4927,6 +5195,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 310, 325, 340 },
         category   = "Robes and Vests",
+        teachItems = { 14513 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Robe of the Archmage" } },
         reagents   = {
             { itemID = 14048, count = 12, name = "Bolt of Runecloth" },
@@ -4945,6 +5214,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 310, 325, 340 },
         category   = "Robes and Vests",
+        teachItems = { 14514 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Robe of the Void" } },
         reagents   = {
             { itemID = 14048, count = 12, name = "Bolt of Runecloth" },
@@ -4963,6 +5233,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 145, 160, 175 },
         category   = "Robes and Vests",
+        teachItems = { 5773 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Robes of Arcana" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -4977,6 +5248,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 310, 317, 325 },
         category   = "Robes and Vests",
+        teachItems = { 279315 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Robes of Fiery Devastation" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -4991,6 +5263,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Bags",
+        teachItems = { 14468 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Bag" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -5020,6 +5293,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 235, 250, 265, 280 },
         category   = "Shoes",
+        teachItems = { 14488 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Boots" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -5035,6 +5309,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 220, 240, 255, 270 },
         category   = "Cloaks",
+        teachItems = { 14472 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Cloak" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -5049,6 +5324,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 265, 280, 295 },
         category   = "Bracers",
+        teachItems = { 254124 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Cuffs" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -5063,6 +5339,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 245, 260, 275 },
         category   = "Gloves",
+        teachItems = { 14481 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Gloves" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -5077,6 +5354,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 265, 280, 295 },
         category   = "Hoods",
+        teachItems = { 14498 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Headband" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -5091,6 +5369,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 255, 270, 285 },
         category   = "Leggings",
+        teachItems = { 14491 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Pants" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -5105,6 +5384,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Specialty Bags",
+        teachItems = { 254080 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Reagent Bag" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -5120,6 +5400,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Robes and Vests",
+        teachItems = { 14469 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Robe" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -5134,6 +5415,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 275, 290, 305 },
         category   = "Spaulders",
+        teachItems = { 14504 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Shoulders" } },
         reagents   = {
             { itemID = 14048, count = 7, name = "Bolt of Runecloth" },
@@ -5149,6 +5431,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Robes and Vests",
+        teachItems = { 14470 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runecloth Tunic" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -5163,6 +5446,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 300, 315, 330 },
         category   = "Belts",
+        teachItems = { 20548 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runed Stygian Belt" } },
         reagents   = {
             { itemID = 14048, count = 2, name = "Bolt of Runecloth" },
@@ -5179,6 +5463,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 300, 315, 330 },
         category   = "Shoes",
+        teachItems = { 20547 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runed Stygian Boots" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -5195,6 +5480,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 300, 315, 330 },
         category   = "Leggings",
+        teachItems = { 20546 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Runed Stygian Leggings" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -5210,6 +5496,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 270, 285, 300 },
         category   = "Specialty Bags",
+        teachItems = { 22312 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Satchel of Cenarius" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -5225,6 +5512,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 282, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238301 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scarlet Augur's Cuffs" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -5237,6 +5525,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 295, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238298 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scarlet Augur's Hood" } },
         reagents   = {
             { itemID = 12938, count = 1, name = "Blood of Heroes" },
@@ -5251,6 +5540,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 270, 280, 292, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238304 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scarlet Augur's Leggings" } },
         reagents   = {
             { itemID = 12938, count = 1, name = "Blood of Heroes" },
@@ -5265,6 +5555,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 295, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238299 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scarlet Augur's Mantle" } },
         reagents   = {
             { itemID = 12811, count = 1, name = "Righteous Orb" },
@@ -5278,6 +5569,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 270, 287, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238302 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scarlet Augur's Mitts" } },
         reagents   = {
             { itemID = 12811, count = 1, name = "Righteous Orb" },
@@ -5291,6 +5583,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 270, 287, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238305 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scarlet Augur's Soles" } },
         reagents   = {
             { itemID = 12811, count = 1, name = "Righteous Orb" },
@@ -5304,6 +5597,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 282, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238303 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scarlet Augur's Strap" } },
         reagents   = {
             { itemID = 12811, count = 1, name = "Righteous Orb" },
@@ -5317,6 +5611,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 285, 295, 305 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238300 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Scarlet Augur's Vestments" } },
         reagents   = {
             { itemID = 12938, count = 1, name = "Blood of Heroes" },
@@ -5331,6 +5626,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 85, 102, 120 },
         category   = "Shoes",
+        teachItems = { 253896 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shadow Boots" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -5346,6 +5642,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 142, 160 },
         category   = "Hoods",
+        teachItems = { 253956 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shadow Circlet" } },
         reagents   = {
             { itemID = 4305, count = 10, name = "Bolt of Silk Cloth" },
@@ -5363,6 +5660,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 117, 135 },
         category   = "Gloves",
+        teachItems = { 253920 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shadow Gloves" } },
         reagents   = {
             { itemID = 2997, count = 6, name = "Bolt of Woolen Cloth" },
@@ -5378,6 +5676,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 130, 145, 160 },
         category   = "Robes and Vests",
+        teachItems = { 253968 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shadow Gown" } },
         reagents   = {
             { itemID = 4305, count = 12, name = "Bolt of Silk Cloth" },
@@ -5395,6 +5694,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 135, 155, 170, 185 },
         category   = "Hoods",
+        teachItems = { 4351 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shadow Hood" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -5409,6 +5709,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 145, 160, 175 },
         category   = "Leggings",
+        teachItems = { 253994 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shadow Leggings" } },
         reagents   = {
             { itemID = 4305, count = 14, name = "Bolt of Silk Cloth" },
@@ -5426,6 +5727,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 127, 145 },
         category   = "Belts",
+        teachItems = { 253932 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shadow Sash" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -5470,6 +5772,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 215, 230, 245 },
         category   = "Hoods",
+        teachItems = { 10463 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shadoweave Mask" } },
         reagents   = {
             { itemID = 4339, count = 2, name = "Bolt of Mageweave" },
@@ -5526,6 +5829,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 85, 102, 120 },
         category   = "Shoes",
+        teachItems = { 253900 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shining Boots" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -5541,6 +5845,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 142, 160 },
         category   = "Hoods",
+        teachItems = { 253960 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shining Circlet" } },
         reagents   = {
             { itemID = 4305, count = 10, name = "Bolt of Silk Cloth" },
@@ -5558,6 +5863,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 117, 135 },
         category   = "Gloves",
+        teachItems = { 253924 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shining Gloves" } },
         reagents   = {
             { itemID = 2997, count = 6, name = "Bolt of Woolen Cloth" },
@@ -5573,6 +5879,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 130, 145, 160 },
         category   = "Robes and Vests",
+        teachItems = { 253972 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shining Gown" } },
         reagents   = {
             { itemID = 4305, count = 12, name = "Bolt of Silk Cloth" },
@@ -5590,6 +5897,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 145, 160, 175 },
         category   = "Leggings",
+        teachItems = { 253998 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shining Leggings" } },
         reagents   = {
             { itemID = 4305, count = 14, name = "Bolt of Silk Cloth" },
@@ -5607,6 +5915,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 127, 145 },
         category   = "Belts",
+        teachItems = { 253936 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Shining Sash" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -5635,6 +5944,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 135, 137, 140 },
         category   = "Specialty Bags",
+        teachItems = { 253974 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Silk Reagent Bag" } },
         reagents   = {
             { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
@@ -5650,6 +5960,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 85, 102, 120 },
         category   = "Shoes",
+        teachItems = { 253892 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Silky Boots" } },
         reagents   = {
             { itemID = 2997, count = 8, name = "Bolt of Woolen Cloth" },
@@ -5665,6 +5976,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 125, 142, 160 },
         category   = "Hoods",
+        teachItems = { 253952 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Silky Circlet" } },
         reagents   = {
             { itemID = 4305, count = 10, name = "Bolt of Silk Cloth" },
@@ -5682,6 +5994,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 100, 117, 135 },
         category   = "Gloves",
+        teachItems = { 253916 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Silky Gloves" } },
         reagents   = {
             { itemID = 2997, count = 6, name = "Bolt of Woolen Cloth" },
@@ -5697,6 +6010,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 130, 145, 160 },
         category   = "Robes and Vests",
+        teachItems = { 253964 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Silky Gown" } },
         reagents   = {
             { itemID = 4305, count = 12, name = "Bolt of Silk Cloth" },
@@ -5714,6 +6028,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 145, 160, 175 },
         category   = "Leggings",
+        teachItems = { 253990 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Silky Leggings" } },
         reagents   = {
             { itemID = 4305, count = 14, name = "Bolt of Silk Cloth" },
@@ -5731,6 +6046,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 110, 127, 145 },
         category   = "Belts",
+        teachItems = { 253928 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Silky Sash" } },
         reagents   = {
             { itemID = 4305, count = 8, name = "Bolt of Silk Cloth" },
@@ -5844,6 +6160,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 215, 230, 245, 260 },
         category   = "Specialty Bags",
+        teachItems = { 21358 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Soul Pouch" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -5859,6 +6176,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 145, 165, 180, 195 },
         category   = "Belts",
+        teachItems = { 4353 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spider Belt" } },
         reagents   = {
             { itemID = 4305, count = 4, name = "Bolt of Silk Cloth" },
@@ -5873,6 +6191,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 115, 135, 147, 160 },
         category   = "Shoes",
+        teachItems = { 4350 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Spider Silk Slippers" } },
         reagents   = {
             { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
@@ -5902,6 +6221,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273099 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Spinning Wheel" } },
         reagents   = {
             { itemID = 4470, count = 2, name = "Simple Wood" },
@@ -5916,6 +6236,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 165, 185, 200, 215 },
         category   = "Belts",
+        teachItems = { 4356 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Star Belt" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -5932,6 +6253,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 205, 220, 235, 250 },
         category   = "Shoes",
+        teachItems = { 10324, 254686 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormcloth Boots" } },
         reagents   = {
             { itemID = 4339, count = 6, name = "Bolt of Mageweave" },
@@ -5947,6 +6269,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 200, 215, 230 },
         category   = "Gloves",
+        teachItems = { 10304, 254682 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormcloth Gloves" } },
         reagents   = {
             { itemID = 4339, count = 3, name = "Bolt of Mageweave" },
@@ -5961,6 +6284,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 215, 230, 245 },
         category   = "Hoods",
+        teachItems = { 10319, 254684 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormcloth Headband" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -5975,6 +6299,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 200, 215, 230 },
         category   = "Leggings",
+        teachItems = { 10303, 254681 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormcloth Pants" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -5989,6 +6314,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 215, 230, 245 },
         category   = "Spaulders",
+        teachItems = { 10322, 254685 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormcloth Shoulders" } },
         reagents   = {
             { itemID = 4339, count = 5, name = "Bolt of Mageweave" },
@@ -6003,6 +6329,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 190, 205, 220, 235 },
         category   = "Robes and Vests",
+        teachItems = { 10313, 254683 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stormcloth Vest" } },
         reagents   = {
             { itemID = 4339, count = 5, name = "Bolt of Mageweave" },
@@ -6017,6 +6344,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 120, 137, 155 },
         category   = "Shirts",
+        teachItems = { 6390 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stylish Blue Shirt" } },
         reagents   = {
             { itemID = 2997, count = 4, name = "Bolt of Woolen Cloth" },
@@ -6032,6 +6360,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 95, 120, 137, 155 },
         category   = "Shirts",
+        teachItems = { 6391 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Stylish Green Shirt" } },
         reagents   = {
             { itemID = 2997, count = 4, name = "Bolt of Woolen Cloth" },
@@ -6061,6 +6390,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 295, 297, 300 },
         category   = "Belts",
+        teachItems = { 275584 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Swarmtender's Cord" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -6076,6 +6406,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 295, 297, 300 },
         category   = "Shoes",
+        teachItems = { 275585 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Swarmtender's Footpads" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -6091,6 +6422,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Gloves",
+        teachItems = { 275583 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Swarmtender's Gloves" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -6106,6 +6438,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Hoods",
+        teachItems = { 22773 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Sylvan Crown" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -6121,6 +6454,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Spaulders",
+        teachItems = { 22772 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Sylvan Shoulders" } },
         reagents   = {
             { itemID = 14048, count = 2, name = "Bolt of Runecloth" },
@@ -6135,6 +6469,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 315, 330, 345 },
         category   = "Robes and Vests",
+        teachItems = { 22774 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Sylvan Vest" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -6150,6 +6485,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 320, 325, 330 },
         category   = "Shoes",
+        teachItems = { 273991 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Treads of Conviction" } },
         reagents   = {
             { itemID = 274030, count = 3, name = "Malleable Essence of Nature" },
@@ -6165,6 +6501,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 145, 160, 175 },
         category   = "Gloves",
+        teachItems = { 7091 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Truefaith Gloves" } },
         reagents   = {
             { itemID = 4305, count = 3, name = "Bolt of Silk Cloth" },
@@ -6180,6 +6517,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 310, 325, 340 },
         category   = "Robes and Vests",
+        teachItems = { 14512 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Truefaith Vestments" } },
         reagents   = {
             { itemID = 14048, count = 12, name = "Bolt of Runecloth" },
@@ -6198,6 +6536,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 155, 170, 185 },
         category   = "Dressed for the Occasion",
+        teachItems = { 10326 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tuxedo Jacket" } },
         reagents   = {
             { itemID = 4339, count = 5, name = "Bolt of Mageweave" },
@@ -6211,6 +6550,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 205, 210, 215 },
         category   = "Dressed for the Occasion",
+        teachItems = { 10323 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tuxedo Pants" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -6224,6 +6564,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 205, 210, 215 },
         category   = "Dressed for the Occasion",
+        teachItems = { 10321 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Tuxedo Shirt" } },
         reagents   = {
             { itemID = 4339, count = 4, name = "Bolt of Mageweave" },
@@ -6237,6 +6578,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 330, 345 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234240 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234009, count = 15, name = "item:234009" },
@@ -6252,6 +6594,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 330, 345 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234242 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234009, count = 25, name = "item:234009" },
@@ -6267,6 +6610,7 @@ local recipes = {
         learnFrom  = "Era item, shifted",
         skillRange = { 300, 315, 330, 345 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 234241 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 234009, count = 15, name = "item:234009" },
@@ -6282,6 +6626,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 290, 295, 297, 300 },
         category   = "Belts",
+        teachItems = { 275581 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Venomspew Cord" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -6297,6 +6642,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 295, 295, 297, 300 },
         category   = "Shoes",
+        teachItems = { 275582 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Venomspew Footpads" } },
         reagents   = {
             { itemID = 14048, count = 5, name = "Bolt of Runecloth" },
@@ -6312,6 +6658,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 285, 290, 292, 295 },
         category   = "Gloves",
+        teachItems = { 275580 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Venomspew Gloves" } },
         reagents   = {
             { itemID = 14048, count = 4, name = "Bolt of Runecloth" },
@@ -6327,6 +6674,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 185, 190, 195 },
         category   = "Hoods",
+        teachItems = { 10301 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: White Bandit Mask" } },
         reagents   = {
             { itemID = 4339, count = 1, name = "Bolt of Mageweave" },
@@ -6383,6 +6731,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 145, 150, 155 },
         category   = "Dressed for the Occasion",
+        teachItems = { 10325 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: White Wedding Dress" } },
         reagents   = {
             { itemID = 4339, count = 5, name = "Bolt of Mageweave" },
@@ -6411,6 +6760,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 270, 285, 300 },
         category   = "Belts",
+        teachItems = { 19215 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wisdom of the Timbermaw" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -6426,6 +6776,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 230, 245, 260, 275 },
         category   = "Leggings",
+        teachItems = { 14485 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wizardweave Leggings" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -6440,6 +6791,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 255, 270, 285, 300 },
         category   = "Robes and Vests",
+        teachItems = { 14500 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wizardweave Robe" } },
         reagents   = {
             { itemID = 14048, count = 8, name = "Bolt of Runecloth" },
@@ -6454,6 +6806,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 260, 275, 290, 305 },
         category   = "Hoods",
+        teachItems = { 14505 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Wizardweave Turban" } },
         reagents   = {
             { itemID = 14048, count = 6, name = "Bolt of Runecloth" },
@@ -6509,6 +6862,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 70, 75, 92, 110 },
         category   = "Specialty Bags",
+        teachItems = { 253668 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Pattern: Woolen Reagent Bag" } },
         reagents   = {
             { itemID = 2997, count = 3, name = "Bolt of Woolen Cloth" },

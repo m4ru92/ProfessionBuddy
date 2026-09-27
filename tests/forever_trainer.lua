@@ -130,11 +130,16 @@ function UnitFactionGroup(u)
     return baseFaction(u)
 end
 
+-- Blizzard's trainer window, shown while a trainer is open.
+ClassTrainerFrame = CreateFrame("Frame", "ClassTrainerFrame")
+
 function TRAINER_OPEN(npcID)
     TRAINER.open = npcID
+    ClassTrainerFrame:Show()
     FIRE("TRAINER_SHOW")
 end
 function TRAINER_CLOSE()
     TRAINER.open = nil
+    ClassTrainerFrame:Hide()
     FIRE("TRAINER_CLOSED")
 end

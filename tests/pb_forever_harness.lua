@@ -522,10 +522,13 @@ EXPECT(shown("detSource"):find("Trainer - Mak (Thunder Bluff)", 1, true), "Sourc
 -- the other faction's trainers are left out while their recipes are hidden
 local pants = K[2153]
 pants.teachers[1] = { name = "Aaron", zone = "Stormwind City", faction = "Alliance" }
-EXPECT(KN:TeacherText(2153, "Horde") == "Mak (Thunder Bluff)", "Alliance trainer shown to Horde")
-EXPECT(KN:TeacherText(2153) == "Aaron (Stormwind City), Mak (Thunder Bluff)", "all trainers: " .. tostring(KN:TeacherText(2153)))
-for i = 2, 4 do pants.teachers[i] = { name = "T" .. i, faction = "Horde" } end
-EXPECT(KN:TeacherText(2153, "Horde") == "Mak (Thunder Bluff), T2, T3, and 1 more", "long list: " .. tostring(KN:TeacherText(2153, "Horde")))
+local function trainerText(faction)
+    local out = KN:MergeSources({ { method = "trainer" } }, 2153, faction)
+    return out[1].detail
+end
+EXPECT(trainerText("Horde") == "Mak (Thunder Bluff)", "Alliance trainer shown to Horde")
+EXPECT(trainerText() == "Mak (Thunder Bluff), Aaron (Stormwind City)", "all trainers: " .. tostring(trainerText()))
+pants.teachers[1] = nil
 -- a known recipe: the trainer on its Source line, and "Learned at" in
 -- grey instead of a requirement
 C_TradeSkillUI.OpenTradeSkill(393)
@@ -544,8 +547,118 @@ st.showTab, st.searchText, st.selected = "known", "", nil
 TSF:RefreshRecipeList()
 print("  PASS F20 trainer scan: Mak's 16 recipes with his learn levels, known ones via the used filter switched on and back inside the capture, a trainer closed first left alone, Vhan's 24 Tailoring recipes on a character with no Tailoring, filters put back, ranks and a weapon master skipped; a recorded learn level drives the Missing row, Learnable Now and the detail panel; Source names the trainer; a known recipe says Learned at in grey")
 
+-- F21: Phase 4c, vendors and recipe items (Knowledge.lua). A vendor's
+-- recipe items are recorded against the recipes they teach, with where
+-- and the price; a recipe item in your bags is noted; the Source line
+-- shows two names at most, the current zone first then the most recent,
+-- with the full list in its tooltip; a trainer window the player closed
+-- before the capture is left alone
+dofile("tests/forever_merchant.lua")
+MERCHANT_OPEN(90101)
+MERCHANT_CLOSE()
+local bag = K[5244] and K[5244].vendors and K[5244].vendors[90101]
+EXPECT(bag and bag.name == "Test Vendor" and bag.zone == "Thunder Bluff" and bag.itemID == 5083
+       and bag.price == 1350 and bag.stock == 1, "Kodo Hide Bag vendor not recorded")
+for _, id in ipairs({ 1226212, 1226211, 1226210 }) do
+    EXPECT(K[id] and K[id].vendors and K[id].vendors[90101], "tinker " .. id .. " (shared recipe item) not recorded")
+end
+local leather = RDB.spellToRecipe[2881]
+EXPECT(not (K[2881] and K[2881].vendors), "Light Leather (not a recipe item) recorded as a vendor recipe")
+MERCHANT_OPEN(90102)
+MERCHANT_CLOSE()
+EXPECT(K[5244].vendors[90102] and K[5244].vendors[90102].zone == "Orgrimmar", "second vendor not recorded")
+
+-- Source line: the vendors replace "Undetermined - Pattern: Kodo Hide Bag",
+-- Thunder Bluff's first because the player is there
+C_TradeSkillUI.OpenTradeSkill(165)
+TS_LIST_READY()
+FLUSH()
+st.showTab, st.searchText = "missing", "kodo hide bag"
+TSF:RefreshRecipeList()
+st.selected = "Kodo Hide Bag"
+TSF:RefreshDetailPanel()
+EXPECT(shown("detSource") == "Source: |cffffff00Vendor - Test Vendor (Thunder Bluff), Other Vendor (Orgrimmar)|r",
+       "Kodo Hide Bag Source: " .. shown("detSource"))
+-- the most recently seen comes next; a third makes "and 1 more"
+K[5244].vendors[90103] = { name = "Zeta Vendor", zone = "Durotar", faction = "Horde", seen = 9999 }
+K[5244].vendors[90104] = { name = "Alliance Vendor", zone = "Stormwind City", faction = "Alliance", seen = 9999 }
+TSF:RefreshDetailPanel()
+EXPECT(shown("detSource") == "Source: |cffffff00Vendor - Test Vendor (Thunder Bluff), Zeta Vendor (Durotar), and 1 more|r",
+       "three vendors: " .. shown("detSource"))
+-- the tooltip lists every one of this faction's vendors, with the price
+local tip = {}
+rawset(GameTooltip, "AddLine", function(_, l) tip[#tip + 1] = l end)
+rawset(GameTooltip, "SetOwner", function() end)
+rawset(GameTooltip, "Show", function() end)
+TSF.detSourceHover:GetScript("OnEnter")(TSF.detSourceHover)
+local tipText = table.concat(tip, "\n")
+EXPECT(tip[1] == "|cffffff00Vendors|r" and #tip == 4, "tooltip: " .. tipText)
+EXPECT(tipText:find("Test Vendor - Thunder Bluff  MONEY:1350", 1, true) and tipText:find("Other Vendor - Orgrimmar", 1, true)
+       and tipText:find("Zeta Vendor - Durotar", 1, true) and not tipText:find("Alliance", 1, true), "tooltip: " .. tipText)
+K[5244].vendors[90103], K[5244].vendors[90104] = nil, nil
+
+-- a recipe item in your bags: "Recipe item - Pattern: Guardian Belt"
+BAGS[0][2] = { id = 4298, count = 1 }       -- Pattern: Guardian Belt
+ProfBuddy.Scanner:ScanInventory()
+BAGS[0][2] = nil
+EXPECT(K[3775] and K[3775].items and K[3775].items[4298], "Pattern: Guardian Belt in the bags not noted")
+EXPECT(DS:GetCharacter().inventory.bags[4298] == 1, "the bag scan itself changed")
+st.searchText = "guardian belt"
+TSF:RefreshRecipeList()
+st.selected = "Guardian Belt"
+TSF:RefreshDetailPanel()
+EXPECT(shown("detSource") == "Source: |cff888888Recipe item - Pattern: Guardian Belt|r", "Guardian Belt Source: " .. shown("detSource"))
+tip = {}
+TSF.detSourceHover:GetScript("OnEnter")(TSF.detSourceHover)
+EXPECT(tip[1] == "|cff888888Recipe item seen in your bags|r", "bag tooltip: " .. table.concat(tip, "\n"))
+-- a recipe nothing was seen for keeps the data's Source line and no tooltip
+st.searchText = "azure gustwoven belt"
+TSF:RefreshRecipeList()
+st.selected = "Azure Gustwoven Belt"
+TSF:RefreshDetailPanel()
+EXPECT(shown("detSource") == "Source: |cff888888Undetermined - Pattern: Azure Gustwoven Belt|r", "untouched Source: " .. shown("detSource"))
+tip = {}
+TSF.detSourceHover:GetScript("OnEnter")(TSF.detSourceHover)
+EXPECT(#tip == 0, "a tooltip for a recipe nothing was seen for")
+-- with no recipe selected, hovering shows nothing
+st.searchText = "kodo hide bag"
+TSF:RefreshRecipeList()
+st.selected = "Kodo Hide Bag"
+TSF:RefreshDetailPanel()
+tip = {}
+TSF.detSourceHover:GetScript("OnEnter")(TSF.detSourceHover)
+EXPECT(#tip > 0, "no tooltip for Kodo Hide Bag")
+st.selected = nil
+TSF:RefreshDetailPanel()
+tip = {}
+TSF.detSourceHover:GetScript("OnEnter")(TSF.detSourceHover)
+EXPECT(#tip == 0, "the tooltip outlived its recipe")
+
+-- a trainer window the player closed before the capture is left alone,
+-- even if the game has not said the trainer closed yet
+TRAINER_FILTER_CALLS = {}
+TRAINER_OPEN(3008)
+ClassTrainerFrame:Hide()
+FLUSH()
+EXPECT(#TRAINER_FILTER_CALLS == 0, "a closed trainer window had its filters switched")
+TRAINER_CLOSE()
+-- without Blizzard's trainer window (another addon's instead), the game's
+-- closed event alone stops the capture
+local blizzardWindow = ClassTrainerFrame
+ClassTrainerFrame = nil
+TRAINER.open = 3008
+FIRE("TRAINER_SHOW")
+TRAINER.open = nil
+FIRE("TRAINER_CLOSED")
+FLUSH()
+ClassTrainerFrame = blizzardWindow
+EXPECT(#TRAINER_FILTER_CALLS == 0, "a closed trainer had its filters switched")
+st.showTab, st.searchText, st.selected = "known", "", nil
+TSF:RefreshRecipeList()
+print("  PASS F21 vendors: recipe items recorded with where, price and stock (one item teaching three recipes too), others skipped; bag recipe items noted; Source line two names, here first then newest, other faction left out, full list in its tooltip; a closed trainer window left alone")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (20)")
+print("ALL FOREVER TESTS PASS (21)")

@@ -14,6 +14,7 @@ local recipes = {
         itemID     = 217347,
         skillRange = { false, 300, 325, 350 },
         category   = "Poisons",
+        teachItems = { 226394 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 8924, count = 7, name = "Dust of Deterioration" },
@@ -116,6 +117,7 @@ local recipes = {
         itemID     = 20844,
         skillRange = { false, 300, 325, 350 },
         category   = "Poisons",
+        teachItems = { 21302 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Handbook of Deadly Poison V" } },
         reagents   = {
             { itemID = 5173, count = 7, name = "Deathweed" },
@@ -247,6 +249,7 @@ local recipes = {
         itemID     = 217346,
         skillRange = { false, 300, 325, 350 },
         category   = "Poisons",
+        teachItems = { 226395 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 8924, count = 3, name = "Dust of Deterioration" },
@@ -259,6 +262,7 @@ local recipes = {
         itemID     = 226374,
         skillRange = { false, 295, 320, 345 },
         category   = "Poisons",
+        teachItems = { 226396 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 5173, count = 5, name = "Deathweed" },
@@ -271,6 +275,7 @@ local recipes = {
         itemID     = 234444,
         skillRange = { false, 300, 325, 350 },
         category   = "Poisons",
+        teachItems = { 234124 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 5173, count = 7, name = "Deathweed" },
@@ -282,6 +287,7 @@ local recipes = {
         itemID     = 217345,
         skillRange = { false, 300, 325, 350 },
         category   = "Poisons",
+        teachItems = { 226397 },
         sources    = { { method = "undetermined", faction = "Both" } },
         reagents   = {
             { itemID = 8923, count = 4, name = "Essence of Agony" },

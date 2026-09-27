@@ -12,6 +12,10 @@ Writes ProfessionBuddy/Data/Forever/<Profession>.lua, one file per
 profession, in PB's RecipeDB format (keyed by recipe name), and prints a
 report. Forever is its own game version: no TBC data is read.
 
+teachItems lists the items that teach a recipe (Pattern, Plans, Recipe
+and so on), so PB can tell which recipe a vendor's or a bag's item
+teaches (Knowledge.lua).
+
 Learn level (orange), first match wins:
   1. m4ru's trainer captures (tools/forever/trainer_captures.json)
   2. learned automatically with the profession (SkillLineAbility
@@ -206,6 +210,7 @@ def build(csvdir):
             "itemID": out[0] if out else 0,
             "itemKnown": bool(out and out[0] in items),
             "teachKnown": any(i in items for i in tinv),
+            "teachItems": tinv,
             "yield": out[1] if out else 1,
             "skillReq": learn,
             "learnFrom": learn_from,
@@ -267,6 +272,8 @@ def emit(prof, recs, build_id):
                 "false" if sr[0] is False else str(sr[0]), sr[1], sr[2], sr[3]))
         if r["category"]:
             L.append("        category   = %s," % lua_str(r["category"]))
+        if r["teachItems"]:
+            L.append("        teachItems = { %s }," % ", ".join(str(i) for i in r["teachItems"]))
         src = []
         for s in r["sources"]:
             parts = ['method = %s' % lua_str(s["method"]), 'faction = "Both"']

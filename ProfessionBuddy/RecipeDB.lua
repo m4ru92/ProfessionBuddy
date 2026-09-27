@@ -34,6 +34,9 @@
 --                  sources[1] at RegisterProfession for readers not yet
 --                  migrated to sources[] (UI migration = source-overhaul Inc 3).
 --   category     = top-level grouping shown in the browser.
+--   teachItems   = optional, WoW: Forever: the item IDs that teach the recipe
+--                  (Pattern, Plans, Recipe and so on). Knowledge.lua matches a
+--                  vendor's or a bag's item to its recipe with it.
 --   subcategory  = optional grouping inside the category.
 --   reagents     = { { itemID = X, count = N, name = "Display Name" }, ... }
 --                  name is required: the material calculator shows ??? without it.

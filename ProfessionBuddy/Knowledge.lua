@@ -9,15 +9,23 @@
 --   [recipeID] = {
 --       learnLevel = 35,   -- the skill a trainer asks for
 --       teachers   = { [npcID] = { name, zone, subZone, faction, seen } },
+--       vendors    = { [npcID] = { name, zone, subZone, faction, seen,
+--                                  itemID, price, stock } },
+--       items      = { [itemID] = true },  -- recipe items seen in your bags
 --   }
 --
 -- A recorded learn level beats the one in Data/Forever wherever PB shows
--- a learn level. Only the Mainline toc loads this file.
+-- a learn level, and the detail panel's Source line names the trainers
+-- and vendors. Only the Mainline toc loads this file.
 --
--- Recorded from trainer windows: every service a profession trainer
--- lists, including the ones far above your skill. The capture is moved
--- from ForeverProbe 1.9.3, which read these values at 11 Thunder Bluff
--- trainers on the Forever beta.
+-- Recorded from:
+--   * trainer windows: every service a profession trainer lists,
+--     including the ones far above your skill (moved from ForeverProbe
+--     1.9.3, which read these values at 11 Thunder Bluff trainers);
+--   * vendor windows: every recipe item a vendor sells;
+--   * your bags: every recipe item the bag scan finds.
+-- A vendor's or a bag's item is matched to its recipe through the
+-- teachItems in Data/Forever.
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
@@ -28,17 +36,41 @@ local KN = addon:NewModule("Knowledge")
 local FILTERS = { "available", "unavailable", "used" }
 -- ForeverProbe captured one second after the trainer opened.
 local CAPTURE_DELAY = 1.0
--- Teachers named on the Source line before "and N more".
-local MAX_TEACHERS_SHOWN = 3
+-- Trainers or vendors named on the Source line before "and N more". The
+-- full list is in the Source line's tooltip.
+local MAX_NAMES_SHOWN = 2
 
 function KN:Init()
     addon:RegisterEvent("TRAINER_SHOW", function() self:OnTrainerShow() end)
     addon:RegisterEvent("TRAINER_CLOSED", function() self._trainerOpen = false end)
+    addon:RegisterEvent("MERCHANT_SHOW", function() self:ScanMerchant() end)
+    addon:RegisterEvent("MERCHANT_UPDATE", function() self:ScanMerchant() end)
+
+    -- Note recipe items after every bag scan. Wrapped here, not added to
+    -- Scanner.lua, because TBC Anniversary does not record them.
+    local SC = addon.Scanner
+    if SC and SC.ScanInventory then
+        local scan = SC.ScanInventory
+        SC.ScanInventory = function(sc, ...)
+            scan(sc, ...)
+            local ok, err = pcall(self.NoteBagItems, self)
+            if not ok then
+                print("|cff00ccffProfessionBuddy:|r recipe item scan failed: " .. tostring(err))
+            end
+        end
+    end
 end
 
 function KN:Get(recipeID)
     local store = recipeID and addon.db and addon.db.knowledge
     return store and store[recipeID] or nil
+end
+
+local function Entry(recipeID)
+    addon.db.knowledge = addon.db.knowledge or {}
+    local store = addon.db.knowledge
+    store[recipeID] = store[recipeID] or {}
+    return store[recipeID]
 end
 
 -- The learn level a trainer showed for this recipe, or nil.
@@ -47,29 +79,150 @@ function KN:LearnLevel(recipeID)
     return e and e.learnLevel or nil
 end
 
--- "Mak (Thunder Bluff), Vhan (Thunder Bluff)" for the trainers seen
--- teaching this recipe, or nil. With faction, trainers of the other
--- faction are left out; a trainer with no faction counts for both.
-function KN:TeacherText(recipeID, faction)
-    local e = self:Get(recipeID)
-    if not (e and e.teachers) then return nil end
-    local names = {}
-    for _, t in pairs(e.teachers) do
-        if not faction or not t.faction or t.faction == faction
-           or t.faction == "Neutral" then
-            local label = t.name or "?"
-            if t.zone and t.zone ~= "" then label = label .. " (" .. t.zone .. ")" end
-            names[#names + 1] = label
+-- recipe item ID -> { recipeID, ... }, from the teachItems in
+-- Data/Forever. Built on first use, after every data file has loaded.
+function KN:TeachIndex()
+    if self._teach then return self._teach end
+    local index = {}
+    local RDB = addon.RecipeDB
+    for profName, recipes in pairs(RDB and RDB.data or {}) do
+        if not addon.CLASS_PROFS[profName] then
+            for _, r in pairs(recipes) do
+                for _, itemID in ipairs(r.teachItems or {}) do
+                    index[itemID] = index[itemID] or {}
+                    table.insert(index[itemID], r.spellID)
+                end
+            end
         end
     end
-    if #names == 0 then return nil end
-    table.sort(names)
-    local more = #names - MAX_TEACHERS_SHOWN
-    if more > 0 then
-        for i = #names, MAX_TEACHERS_SHOWN + 1, -1 do names[i] = nil end
-        names[#names + 1] = "and " .. more .. " more"
+    self._teach = index
+    return index
+end
+
+-- The NPC the player is talking to, or nil.
+local function CurrentNpc()
+    local name = UnitName("npc")
+    local guid = UnitGUID("npc")
+    local npcID = guid and tonumber((select(6, strsplit("-", guid))))
+    local key = npcID or name
+    if not key then return nil end
+    return key, { name = name, zone = GetRealZoneText(), subZone = GetSubZoneText(),
+                  faction = UnitFactionGroup("npc"), seen = time() }
+end
+
+local function Copy(t)
+    local out = {}
+    for k, v in pairs(t) do out[k] = v end
+    return out
+end
+
+----------------------------------------------------------------------
+-- Display
+----------------------------------------------------------------------
+
+local function ForFaction(npc, faction)
+    return not faction or not npc.faction or npc.faction == faction or npc.faction == "Neutral"
+end
+
+-- The NPCs of `faction` (plus neutral ones) in a teachers or vendors
+-- table, the current zone first, then the most recently seen.
+local function Sorted(list, faction)
+    local out = {}
+    for _, npc in pairs(list or {}) do
+        if ForFaction(npc, faction) then out[#out + 1] = npc end
     end
+    local here = GetRealZoneText()
+    table.sort(out, function(a, b)
+        local ah, bh = a.zone == here, b.zone == here
+        if ah ~= bh then return ah end
+        if (a.seen or 0) ~= (b.seen or 0) then return (a.seen or 0) > (b.seen or 0) end
+        return (a.name or "") < (b.name or "")
+    end)
+    return out
+end
+
+local function Label(npc)
+    local label = npc.name or "?"
+    if npc.zone and npc.zone ~= "" then label = label .. " (" .. npc.zone .. ")" end
+    return label
+end
+
+-- "Mak (Thunder Bluff), Vhan (Thunder Bluff), and 3 more", or nil.
+local function Names(list, faction)
+    local npcs = Sorted(list, faction)
+    if #npcs == 0 then return nil end
+    local names = {}
+    for i = 1, math.min(#npcs, MAX_NAMES_SHOWN) do names[i] = Label(npcs[i]) end
+    local more = #npcs - MAX_NAMES_SHOWN
+    if more > 0 then names[#names + 1] = "and " .. more .. " more" end
     return table.concat(names, ", ")
+end
+
+-- The recipe's sources as the Source line shows them: what this account
+-- has seen first, then the data's own. Seen trainers fill in the data's
+-- trainer source; a seen vendor stands in for the data's recipe item
+-- ("Undetermined - Pattern: X"), and an item seen in your bags relabels
+-- it "Recipe item". With faction, the other faction's NPCs are left out.
+-- Returns the data's sources untouched when nothing was seen.
+function KN:MergeSources(sources, recipeID, faction)
+    local e = self:Get(recipeID)
+    if not e then return sources end
+    local trainers = Names(e.teachers, faction)
+    local vendors = Names(e.vendors, faction)
+    local inBags = e.items and next(e.items) ~= nil
+    if not (trainers or vendors or inBags) then return sources end
+    local out = {}
+    if trainers then out[#out + 1] = { method = "trainer", detail = trainers } end
+    if vendors then out[#out + 1] = { method = "vendor", detail = vendors } end
+    for _, s in ipairs(sources or {}) do
+        if s.method == "trainer" then
+            if not trainers then out[#out + 1] = s end
+        elseif s.method == "undetermined" and (vendors or inBags) then
+            if not vendors then
+                out[#out + 1] = { method = "undetermined", label = "Recipe item", detail = s.detail }
+            end
+        else
+            out[#out + 1] = s
+        end
+    end
+    return out
+end
+
+local function Money(copper)
+    if not copper or copper <= 0 then return nil end
+    if GetMoneyString then return GetMoneyString(copper) end
+    return copper .. "c"
+end
+
+-- Every trainer and vendor seen for this recipe, one per line, for the
+-- Source line's tooltip. nil when nothing was seen.
+function KN:TooltipLines(recipeID, faction)
+    local e = self:Get(recipeID)
+    if not e then return nil end
+    local lines = {}
+    local function place(npc)
+        local where = npc.zone or ""
+        if npc.subZone and npc.subZone ~= "" then where = where .. ", " .. npc.subZone end
+        return (npc.name or "?") .. (where ~= "" and (" - " .. where) or "")
+    end
+    local trainers = Sorted(e.teachers, faction)
+    if #trainers > 0 then
+        lines[#lines + 1] = "|cff00ff00Trainers|r"
+        for _, npc in ipairs(trainers) do lines[#lines + 1] = "  " .. place(npc) end
+    end
+    local vendors = Sorted(e.vendors, faction)
+    if #vendors > 0 then
+        lines[#lines + 1] = "|cffffff00Vendors|r"
+        for _, npc in ipairs(vendors) do
+            local price = Money(npc.price)
+            lines[#lines + 1] = "  " .. place(npc) .. (price and ("  " .. price) or "")
+        end
+    end
+    if e.items and next(e.items) then
+        lines[#lines + 1] = "|cff888888Recipe item seen in your bags|r"
+    end
+    if #lines == 0 then return nil end
+    return lines
 end
 
 ----------------------------------------------------------------------
@@ -96,17 +249,8 @@ function KN:CaptureTrainer()
     local n = GetNumTrainerServices() or 0
     local RDB = addon.RecipeDB
     if n == 0 or not (RDB and addon.db) then return 0 end
-    local npcName = UnitName("npc")
-    local guid = UnitGUID("npc")
-    local npcID = guid and tonumber((select(6, strsplit("-", guid))))
-    local key = npcID or npcName
+    local key, npc = CurrentNpc()
     if not key then return 0 end
-    local zone, subZone = GetRealZoneText(), GetSubZoneText()
-    local faction = UnitFactionGroup("npc")
-    local now = time()
-
-    addon.db.knowledge = addon.db.knowledge or {}
-    local store = addon.db.knowledge
     local recorded = 0
     for i = 1, n do
         local id, rank = ReadService(i)
@@ -114,12 +258,10 @@ function KN:CaptureTrainer()
         -- ranks ("Journeyman Tailoring") and, on a class trainer, spells.
         local ref = id and RDB.spellToRecipe[id]
         if ref and not addon.CLASS_PROFS[ref.profName] then
-            local e = store[id] or {}
-            store[id] = e
+            local e = Entry(id)
             if rank and rank > 0 then e.learnLevel = rank end
             e.teachers = e.teachers or {}
-            e.teachers[key] = { name = npcName, zone = zone, subZone = subZone,
-                                faction = faction, seen = now }
+            e.teachers[key] = Copy(npc)
             recorded = recorded + 1
         end
     end
@@ -127,12 +269,15 @@ function KN:CaptureTrainer()
 end
 
 -- Capture a second after a profession trainer opens. Class, weapon and
--- pet trainers are skipped.
+-- pet trainers are skipped. A window the player already closed is left
+-- alone: switching its filters can make it open again.
 function KN:OnTrainerShow()
     if IsTradeskillTrainer and not IsTradeskillTrainer() then return end
     self._trainerOpen = true
     C_Timer.After(CAPTURE_DELAY, function()
-        if self._trainerOpen then self:ScanTrainer() end
+        if not self._trainerOpen then return end
+        if ClassTrainerFrame and not ClassTrainerFrame:IsShown() then return end
+        self:ScanTrainer()
     end)
 end
 
@@ -157,4 +302,62 @@ function KN:ScanTrainer()
     if not ok then
         print("|cff00ccffProfessionBuddy:|r trainer scan failed: " .. tostring(err))
     end
+end
+
+----------------------------------------------------------------------
+-- Vendor scan
+----------------------------------------------------------------------
+
+-- Record every recipe item the open vendor sells: the vendor, where, the
+-- price and the stock. Returns how many recipes. Reads the list as the
+-- vendor window shows it.
+function KN:ScanMerchant()
+    local n = GetMerchantNumItems and GetMerchantNumItems() or 0
+    if n == 0 or not addon.db then return 0 end
+    local key, npc = CurrentNpc()
+    if not key then return 0 end
+    local index = self:TeachIndex()
+    local recorded = 0
+    for i = 1, n do
+        local itemID = GetMerchantItemID(i)
+        local recipes = itemID and index[itemID]
+        if recipes then
+            local info = C_MerchantFrame and C_MerchantFrame.GetItemInfo
+                and C_MerchantFrame.GetItemInfo(i)
+            for _, id in ipairs(recipes) do
+                local e = Entry(id)
+                e.vendors = e.vendors or {}
+                local v = Copy(npc)
+                v.itemID = itemID
+                v.price = info and info.price
+                v.stock = info and info.numAvailable
+                e.vendors[key] = v
+                recorded = recorded + 1
+            end
+        end
+    end
+    return recorded
+end
+
+----------------------------------------------------------------------
+-- Recipe items in your bags
+----------------------------------------------------------------------
+
+-- Note every recipe item in the bags the Scanner just stored. Returns how
+-- many recipes.
+function KN:NoteBagItems()
+    local char = addon.DataStore and addon.DataStore:GetCharacter(addon:PlayerKey())
+    local bags = char and char.inventory and char.inventory.bags
+    if not bags then return 0 end
+    local index = self:TeachIndex()
+    local noted = 0
+    for itemID in pairs(bags) do
+        for _, id in ipairs(index[itemID] or {}) do
+            local e = Entry(id)
+            e.items = e.items or {}
+            e.items[itemID] = true
+            noted = noted + 1
+        end
+    end
+    return noted
 end

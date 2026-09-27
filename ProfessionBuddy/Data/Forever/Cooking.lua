@@ -16,6 +16,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 315, 335, 355 },
         category   = "Spell Damage Food",
+        teachItems = { 13949 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Baked Salmon" } },
         reagents   = {
             { itemID = 13889, count = 1, name = "Raw Whitescale Salmon" },
@@ -29,6 +30,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Intellect Food",
+        teachItems = { 4609 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Barbecued Buzzard Wing" } },
         reagents   = {
             { itemID = 3404, count = 1, name = "Buzzard Wing" },
@@ -54,6 +56,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 280, 295, 310 },
         category   = "Intellect Food",
+        teachItems = { 250175 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Bat Hachee" } },
         reagents   = {
             { itemID = 12223, count = 3, name = "Meaty Bat Wing" },
@@ -67,6 +70,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 200, 210, 220 },
         category   = "Strength Food",
+        teachItems = { 250182 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Bear Brisket" } },
         reagents   = {
             { itemID = 3730, count = 2, name = "Big Bear Meat" },
@@ -80,6 +84,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 290, 305 },
         category   = "Strength Food",
+        teachItems = { 250178 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Bear Bruscitti" } },
         reagents   = {
             { itemID = 3730, count = 3, name = "Big Bear Meat" },
@@ -93,6 +98,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 25, 60, 80, 100 },
         category   = "Strength Food",
+        teachItems = { 2889 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Beer Basted Boar Ribs" } },
         reagents   = {
             { itemID = 2886, count = 1, name = "Crag Boar Rib" },
@@ -106,6 +112,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 150, 170, 190 },
         category   = "Strength Food",
+        teachItems = { 3734 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Big Bear Steak" } },
         reagents   = {
             { itemID = 3730, count = 1, name = "Big Bear Meat" },
@@ -120,6 +127,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 100, 120, 140 },
         category   = "Strength Food",
+        teachItems = { 3679 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Blood Sausage" } },
         reagents   = {
             { itemID = 3173, count = 1, name = "Bear Meat" },
@@ -147,6 +155,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 75, 92, 110 },
         category   = "Stamina Food",
+        teachItems = { 250188 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Breakfast Omelette" } },
         reagents   = {
             { itemID = 6889, count = 1, name = "Small Egg" },
@@ -160,6 +169,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 1, 45, 65, 85 },
         category   = "Attack Power Food",
+        teachItems = { 6325 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Brilliant Smallfish" } },
         reagents   = {
             { itemID = 6291, count = 1, name = "Raw Brilliant Smallfish" },
@@ -172,6 +182,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 230, 240 },
         category   = "Spell Damage Food",
+        teachItems = { 274972 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Briny Seafood Stew" } },
         reagents   = {
             { itemID = 730, count = 2, name = "Murloc Eye" },
@@ -186,6 +197,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 140, 160, 180 },
         category   = "Fisherman's Delights",
+        teachItems = { 6330 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Bristle Whisker Catfish" } },
         reagents   = {
             { itemID = 6308, count = 1, name = "Raw Bristle Whisker Catfish" },
@@ -198,6 +210,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 185, 190, 195 },
         category   = "Delightful Drinks",
+        teachItems = { 249888 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Calcified Smoothie" } },
         reagents   = {
             { itemID = 1708, count = 1, name = "Sweet Nectar" },
@@ -212,6 +225,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Everyday Meals",
+        teachItems = { 12232 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Carrion Surprise" } },
         reagents   = {
             { itemID = 12037, count = 1, name = "Mystery Meat" },
@@ -237,6 +251,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 130, 150, 170 },
         category   = "Everyday Meals",
+        teachItems = { 5528 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Clam Chowder" } },
         reagents   = {
             { itemID = 5503, count = 1, name = "Clam Meat" },
@@ -251,6 +266,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 200, 220, 240 },
         category   = "Everyday Meals",
+        teachItems = { 250189 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Clam Linguine" } },
         reagents   = {
             { itemID = 7974, count = 3, name = "Zesty Clam Meat" },
@@ -264,6 +280,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 125, 145, 165 },
         category   = "Intellect Food",
+        teachItems = { 2698 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Cooked Crab Claw" } },
         reagents   = {
             { itemID = 2675, count = 1, name = "Crawler Claw" },
@@ -277,6 +294,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 265, 285, 305 },
         category   = "Attack Power Food",
+        teachItems = { 13940 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Cooked Glossy Mightfish" } },
         reagents   = {
             { itemID = 13754, count = 1, name = "Raw Glossy Mightfish" },
@@ -290,6 +308,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 140, 140, 142, 145 },
         category   = "Camping",
+        teachItems = { 273102 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Cookie's Feast" } },
         reagents   = {
             { itemID = 12037, count = 2, name = "Mystery Meat" },
@@ -329,6 +348,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 1, 45, 65, 85 },
         category   = "Intellect Food",
+        teachItems = { 12226 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Crispy Bat Wing" } },
         reagents   = {
             { itemID = 12223, count = 1, name = "Meaty Bat Wing" },
@@ -343,6 +363,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 140, 160, 180 },
         category   = "Stamina Food",
+        teachItems = { 5488 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Crispy Lizard Tail" } },
         reagents   = {
             { itemID = 5470, count = 1, name = "Thunder Lizard Tail" },
@@ -356,6 +377,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 120, 160, 180, 200 },
         category   = "Agility Food",
+        teachItems = { 3681 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Crocolisk Gumbo" } },
         reagents   = {
             { itemID = 3667, count = 1, name = "Tender Crocolisk Meat" },
@@ -369,6 +391,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 120, 140, 160 },
         category   = "Agility Food",
+        teachItems = { 3678 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Crocolisk Steak" } },
         reagents   = {
             { itemID = 2924, count = 1, name = "Crocolisk Meat" },
@@ -382,6 +405,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 130, 170, 190, 210 },
         category   = "Stamina Food",
+        teachItems = { 3682 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Curiously Tasty Omelet" } },
         reagents   = {
             { itemID = 3685, count = 1, name = "Raptor Egg" },
@@ -395,6 +419,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 325, 345, 365 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 232437 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Darkclaw Bisque" } },
         reagents   = {
             { itemID = 13888, count = 1, name = "Darkclaw Lobster" },
@@ -409,6 +434,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 130, 150, 170 },
         category   = "Everyday Meals",
+        teachItems = { 5487 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Dig Rat Stew" } },
         reagents   = {
             { itemID = 5051, count = 1, name = "Dig Rat" },
@@ -422,6 +448,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 325, 345, 365 },
         category   = "Miscellaneous Cuisines",
+        teachItems = { 21025 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Dirge's Kickin' Chimaerok Chops" } },
         reagents   = {
             { itemID = 2692, count = 1, name = "Hot Spices" },
@@ -437,6 +464,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 240, 260, 280 },
         category   = "Everyday Meals",
+        teachItems = { 12239 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Dragonbreath Chili" } },
         reagents   = {
             { itemID = 12037, count = 1, name = "Mystery Meat" },
@@ -464,6 +492,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 35, 75, 95, 115 },
         category   = "Winter Veil Treats",
+        teachItems = { 17201 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Egg Nog" } },
         reagents   = {
             { itemID = 6889, count = 1, name = "Small Egg" },
@@ -479,6 +508,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 200, 212, 225 },
         category   = "Camping",
+        teachItems = { 273101 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Expert Campfire" } },
         reagents   = {
             { itemID = 272941, count = 1, name = "Thick Logs" },
@@ -492,6 +522,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 270, 280 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238646, 250395 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Filet o' Flank" } },
         reagents   = {
             { itemID = 12203, count = 2, name = "Red Wolf Meat" },
@@ -505,6 +536,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 265, 285, 305 },
         category   = "Fisherman's Delights",
+        teachItems = { 13941 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Filet of Redgill" } },
         reagents   = {
             { itemID = 13758, count = 1, name = "Raw Redgill" },
@@ -518,6 +550,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 90, 110, 130 },
         category   = "Fisherman's Delights",
+        teachItems = { 5485 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Fillet of Frenzy" } },
         reagents   = {
             { itemID = 5468, count = 1, name = "Soft Frenzy Flesh" },
@@ -531,6 +564,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 285, 300, 315 },
         category   = "Agility Food",
+        teachItems = { 250177 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Flank au Poivre" } },
         reagents   = {
             { itemID = 12203, count = 3, name = "Red Wolf Meat" },
@@ -544,6 +578,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Everyday Meals",
+        teachItems = { 6039 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Giant Clam Scorcho" } },
         reagents   = {
             { itemID = 4655, count = 1, name = "Giant Clam Meat" },
@@ -557,6 +592,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 195, 207, 220 },
         category   = "Stamina Food",
+        teachItems = { 250186 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Giant Scrambled Eggs" } },
         reagents   = {
             { itemID = 12207, count = 2, name = "Giant Egg" },
@@ -570,6 +606,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 1, 45, 65, 85 },
         category   = "Winter Veil Treats",
+        teachItems = { 17200 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Gingerbread Cookie" } },
         reagents   = {
             { itemID = 6889, count = 1, name = "Small Egg" },
@@ -610,6 +647,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 150, 170, 190 },
         category   = "Everyday Meals",
+        teachItems = { 3683 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Gooey Spider Cake" } },
         reagents   = {
             { itemID = 2251, count = 2, name = "Gooey Spider Leg" },
@@ -623,6 +661,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 90, 110, 130 },
         category   = "Strength Food",
+        teachItems = { 2697 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Goretusk Liver Pie" } },
         reagents   = {
             { itemID = 723, count = 1, name = "Goretusk Liver" },
@@ -636,6 +675,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 290, 300, 310 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238650, 239021, 250399 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Grand Lobster Banquet" } },
         reagents   = {
             { itemID = 13888, count = 12, name = "Darkclaw Lobster" },
@@ -651,6 +691,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 280, 300, 320 },
         category   = "Combat Prowess Food",
+        teachItems = { 13942 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Grilled Squid" } },
         reagents   = {
             { itemID = 13755, count = 1, name = "Raw Winter Squid" },
@@ -664,6 +705,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 160, 180, 200 },
         category   = "Agility Food",
+        teachItems = { 20075 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Heavy Crocolisk Stew" } },
         reagents   = {
             { itemID = 3667, count = 2, name = "Tender Crocolisk Meat" },
@@ -678,6 +720,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 240, 260, 280 },
         category   = "Stamina Food",
+        teachItems = { 12240 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Heavy Kodo Stew" } },
         reagents   = {
             { itemID = 12204, count = 2, name = "Heavy Kodo Meat" },
@@ -692,6 +735,7 @@ local recipes = {
         learnFrom  = "automatic",
         skillRange = { 1, 45, 65, 85 },
         category   = "Stamina Food",
+        teachItems = { 6891 },
         sources    = { { method = "automatic", faction = "Both" } },
         reagents   = {
             { itemID = 6889, count = 1, name = "Small Egg" },
@@ -705,6 +749,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 175, 195, 215 },
         category   = "Agility Food",
+        teachItems = { 3735 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Hot Lion Chops" } },
         reagents   = {
             { itemID = 3731, count = 1, name = "Lion Meat" },
@@ -718,6 +763,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 240, 280, 300, 320 },
         category   = "Combat Prowess Food",
+        teachItems = { 13943 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Hot Smoked Bass" } },
         reagents   = {
             { itemID = 13756, count = 1, name = "Raw Summer Bass" },
@@ -731,6 +777,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Agility Food",
+        teachItems = { 12229 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Hot Wolf Ribs" } },
         reagents   = {
             { itemID = 12203, count = 1, name = "Red Wolf Meat" },
@@ -744,6 +791,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 300, 300, 300 },
         category   = "Camping",
+        teachItems = { 273115 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Baker's Oven" } },
         reagents   = {
             { itemID = 10284, count = 10, name = "Simple Flour" },
@@ -758,6 +806,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 90, 115, 140 },
         category   = "Camping",
+        teachItems = { 273087 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Blueprint: Journeyman Campfire" } },
         reagents   = {
             { itemID = 11291, count = 1, name = "Star Wood" },
@@ -771,6 +820,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Agility Food",
+        teachItems = { 12231 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Jungle Stew" } },
         reagents   = {
             { itemID = 12202, count = 1, name = "Tiger Meat" },
@@ -785,6 +835,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 10, 50, 70, 90 },
         category   = "Everyday Meals",
+        teachItems = { 5482 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Kaldorei Spider Kabob" } },
         reagents   = {
             { itemID = 5465, count = 1, name = "Small Spider Leg" },
@@ -798,6 +849,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 150, 170, 190 },
         category   = "Strength Food",
+        teachItems = { 5489 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lean Venison" } },
         reagents   = {
             { itemID = 5471, count = 1, name = "Stag Meat" },
@@ -811,6 +863,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 165, 185, 205 },
         category   = "Agility Food",
+        teachItems = { 12227 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lean Wolf Steak" } },
         reagents   = {
             { itemID = 1015, count = 1, name = "Lean Wolf Flank" },
@@ -824,6 +877,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 315, 335, 355 },
         category   = "Spell Damage Food",
+        teachItems = { 13947 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Lobster Stew" } },
         reagents   = {
             { itemID = 13888, count = 1, name = "Darkclaw Lobster" },
@@ -837,6 +891,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 90, 110, 130 },
         category   = "Fisherman's Delights",
+        teachItems = { 6329 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Loch Frenzy Delight" } },
         reagents   = {
             { itemID = 6317, count = 1, name = "Raw Loch Frenzy" },
@@ -850,6 +905,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 90, 110, 130 },
         category   = "Attack Power Food",
+        teachItems = { 6328 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Longjaw Mud Snapper" } },
         reagents   = {
             { itemID = 6289, count = 1, name = "Raw Longjaw Mud Snapper" },
@@ -862,6 +918,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 315, 335, 355 },
         category   = "Attack Power Food",
+        teachItems = { 13948 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Mightfish Steak" } },
         reagents   = {
             { itemID = 13893, count = 1, name = "Large Raw Mightfish" },
@@ -876,6 +933,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Attack Power Food",
+        teachItems = { 17062 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Mithril Head Trout" } },
         reagents   = {
             { itemID = 8365, count = 1, name = "Raw Mithril Head Trout" },
@@ -888,6 +946,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 265, 285, 305 },
         category   = "Stamina Food",
+        teachItems = { 16110 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Monster Omelet" } },
         reagents   = {
             { itemID = 12207, count = 1, name = "Giant Egg" },
@@ -901,6 +960,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 135, 140, 145 },
         category   = "Delightful Drinks",
+        teachItems = { 249887 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Mrrggl Smrrthle" } },
         reagents   = {
             { itemID = 1205, count = 1, name = "Melon Juice" },
@@ -915,6 +975,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 90, 130, 150, 170 },
         category   = "Stamina Food",
+        teachItems = { 3680 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Murloc Fin Soup" } },
         reagents   = {
             { itemID = 1468, count = 2, name = "Murloc Fin" },
@@ -928,6 +989,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Everyday Meals",
+        teachItems = { 12233 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Mystery Stew" } },
         reagents   = {
             { itemID = 12037, count = 1, name = "Mystery Meat" },
@@ -941,6 +1003,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 290, 310, 330 },
         category   = "Spell Damage Food",
+        teachItems = { 13945 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Nightfin Soup" } },
         reagents   = {
             { itemID = 13759, count = 1, name = "Raw Nightfin Snapper" },
@@ -954,6 +1017,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 25, 25, 45, 65 },
         category   = "Soothing Drinks",
+        teachItems = { 249879 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Peace Tea" } },
         reagents   = {
             { itemID = 159, count = 1, name = "Refreshing Spring Water" },
@@ -967,6 +1031,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 35, 30, 42, 55 },
         category   = "Miscellaneous Cuisines",
+        teachItems = { 263513 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Pincer Bites" } },
         reagents   = {
             { itemID = 2675, count = 1, name = "Crawler Claw" },
@@ -980,6 +1045,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 185, 200, 215, 230 },
         category   = "Strength Food",
+        teachItems = { 274977 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Plain Ol' Paletusk" } },
         reagents   = {
             { itemID = 769, count = 2, name = "Chunk of Boar Meat" },
@@ -993,6 +1059,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 245, 250, 255 },
         category   = "Armor Food",
+        teachItems = { 286153 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Plated Armorfish" } },
         reagents   = {
             { itemID = 13890, count = 1, name = "Raw Plated Armorfish" },
@@ -1006,6 +1073,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 290, 310, 330 },
         category   = "Attack Power Food",
+        teachItems = { 13946 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Poached Sunscale Salmon" } },
         reagents   = {
             { itemID = 13760, count = 1, name = "Raw Sunscale Salmon" },
@@ -1018,6 +1086,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 260, 280, 300 },
         category   = "Intellect Food",
+        teachItems = { 250183 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Prehistoric Pulled Raptor" } },
         reagents   = {
             { itemID = 12184, count = 3, name = "Raptor Flesh" },
@@ -1032,6 +1101,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 270, 280 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238645, 250394 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Prowler Steak" } },
         reagents   = {
             { itemID = 12202, count = 2, name = "Tiger Meat" },
@@ -1045,6 +1115,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 185, 200, 215 },
         category   = "Intellect Food",
+        teachItems = { 250181 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Raging Raptor Ribs" } },
         reagents   = {
             { itemID = 12184, count = 2, name = "Raptor Flesh" },
@@ -1058,6 +1129,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 90, 110, 130 },
         category   = "Spell Damage Food",
+        teachItems = { 6368 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Rainbow Fin Albacore" } },
         reagents   = {
             { itemID = 6361, count = 1, name = "Raw Rainbow Fin Albacore" },
@@ -1070,6 +1142,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 237, 250 },
         category   = "Intellect Food",
+        teachItems = { 250184 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Raptor Rouladen" } },
         reagents   = {
             { itemID = 12184, count = 2, name = "Raptor Flesh" },
@@ -1083,6 +1156,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 135, 155, 175 },
         category   = "Intellect Food",
+        teachItems = { 2699 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Redridge Goulash" } },
         reagents   = {
             { itemID = 1081, count = 1, name = "Crisp Spider Meat" },
@@ -1096,6 +1170,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Intellect Food",
+        teachItems = { 12228 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Roast Raptor" } },
         reagents   = {
             { itemID = 12184, count = 1, name = "Raptor Flesh" },
@@ -1122,6 +1197,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 35, 75, 95, 115 },
         category   = "Stamina Food",
+        teachItems = { 5484 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Roasted Kodo Meat" } },
         reagents   = {
             { itemID = 5467, count = 1, name = "Kodo Meat" },
@@ -1135,6 +1211,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 190, 210, 230 },
         category   = "Fisherman's Delights",
+        teachItems = { 6369 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Rockscale Cod" } },
         reagents   = {
             { itemID = 6362, count = 1, name = "Raw Rockscale Cod" },
@@ -1147,6 +1224,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 125, 155, 170, 185 },
         category   = "Soothing Drinks",
+        teachItems = { 249881 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Root Tea" } },
         reagents   = {
             { itemID = 1205, count = 1, name = "Melon Juice" },
@@ -1160,6 +1238,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 85, 105, 125 },
         category   = "Soothing Drinks",
+        teachItems = { 249880 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Royal Tea" } },
         reagents   = {
             { itemID = 1179, count = 1, name = "Ice Cold Milk" },
@@ -1173,6 +1252,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 315, 335, 355 },
         category   = "Intellect Food",
+        teachItems = { 18267 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Runn Tum Tuber Surprise" } },
         reagents   = {
             { itemID = 18255, count = 1, name = "Runn Tum Tuber" },
@@ -1186,6 +1266,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 275, 290 },
         category   = "Soothing Drinks",
+        teachItems = { 249884 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Sage's Tea" } },
         reagents   = {
             { itemID = 8766, count = 1, name = "Morning Glory Dew" },
@@ -1199,6 +1280,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Spell Damage Food",
+        teachItems = { 21219 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Sagefish Delight" } },
         reagents   = {
             { itemID = 21153, count = 1, name = "Raw Greater Sagefish" },
@@ -1212,6 +1294,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 125, 145, 165 },
         category   = "Miscellaneous Cuisines",
+        teachItems = { 6661 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Savory Deviate Delight" } },
         reagents   = {
             { itemID = 6522, count = 1, name = "Deviate Fish" },
@@ -1225,6 +1308,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 225, 240, 255 },
         category   = "Strength Food",
+        teachItems = { 250173 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Savory Stag Sliders" } },
         reagents   = {
             { itemID = 5471, count = 2, name = "Stag Meat" },
@@ -1238,6 +1322,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 260, 280, 300 },
         category   = "Stamina Food",
+        teachItems = { 250176 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Savory Turtle Stew" } },
         reagents   = {
             { itemID = 3712, count = 3, name = "Turtle Meat" },
@@ -1251,6 +1336,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 85, 125, 145, 165 },
         category   = "Miscellaneous Cuisines",
+        teachItems = { 251526 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Savory Whimsyfin Delight" } },
         reagents   = {
             { itemID = 251524, count = 1, name = "Whimsyfin" },
@@ -1264,6 +1350,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 20, 60, 80, 100 },
         category   = "Miscellaneous Cuisines",
+        teachItems = { 5483 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Scorpid Surprise" } },
         reagents   = {
             { itemID = 5466, count = 1, name = "Scorpid Stinger" },
@@ -1277,6 +1364,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 140, 160, 180 },
         category   = "Agility Food",
+        teachItems = { 2701 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Seasoned Wolf Kabob" } },
         reagents   = {
             { itemID = 1015, count = 2, name = "Lean Wolf Flank" },
@@ -1290,6 +1378,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 25, 20, 32, 45 },
         category   = "Stamina Food",
+        teachItems = { 263511 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Skywall Souffle" } },
         reagents   = {
             { itemID = 6889, count = 2, name = "Small Egg" },
@@ -1303,6 +1392,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 100, 85, 90, 95 },
         category   = "Delightful Drinks",
+        teachItems = { 249886 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Slimy Smoothie" } },
         reagents   = {
             { itemID = 1179, count = 1, name = "Ice Cold Milk" },
@@ -1317,6 +1407,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 1, 45, 65, 85 },
         category   = "Attack Power Food",
+        teachItems = { 6326 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Slitherskin Mackerel" } },
         reagents   = {
             { itemID = 6303, count = 1, name = "Raw Slitherskin Mackerel" },
@@ -1329,6 +1420,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 40, 80, 100, 120 },
         category   = "Strength Food",
+        teachItems = { 6892 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Smoked Bear Meat" } },
         reagents   = {
             { itemID = 3173, count = 1, name = "Bear Meat" },
@@ -1352,6 +1444,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 300, 325, 345, 365 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 232443 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Smoked Redgill" } },
         reagents   = {
             { itemID = 13758, count = 1, name = "Raw Redgill" },
@@ -1364,6 +1457,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 80, 120, 140, 160 },
         category   = "Spell Damage Food",
+        teachItems = { 21099 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Smoked Sagefish" } },
         reagents   = {
             { itemID = 21071, count = 1, name = "Raw Sagefish" },
@@ -1377,6 +1471,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 275, 292, 310 },
         category   = "Intellect Food",
+        teachItems = { 250174 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Soaring Pamplona" } },
         reagents   = {
             { itemID = 3404, count = 3, name = "Buzzard Wing" },
@@ -1390,6 +1485,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 175, 215, 235, 255 },
         category   = "Everyday Meals",
+        teachItems = { 3737 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Soothing Turtle Bisque" } },
         reagents   = {
             { itemID = 3712, count = 1, name = "Turtle Meat" },
@@ -1403,6 +1499,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 280, 290, 300, 310 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238649, 239021, 250398 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Specklefin Feast" } },
         reagents   = {
             { itemID = 4603, count = 12, name = "Raw Spotted Yellowtail" },
@@ -1418,6 +1515,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 265, 285, 305 },
         category   = "Intellect Food",
+        teachItems = { 16111 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Spiced Chili Crab" } },
         reagents   = {
             { itemID = 12206, count = 1, name = "Tender Crab Meat" },
@@ -1444,6 +1542,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 215, 220, 225 },
         category   = "Delightful Drinks",
+        teachItems = { 249889 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Spicy Smoothie" } },
         reagents   = {
             { itemID = 1645, count = 1, name = "Moonberry Juice" },
@@ -1480,6 +1579,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 265, 285, 305 },
         category   = "Spell Damage Food",
+        teachItems = { 13939 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Spotted Yellowtail" } },
         reagents   = {
             { itemID = 4603, count = 1, name = "Raw Spotted Yellowtail" },
@@ -1492,6 +1592,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 260, 280, 300 },
         category   = "Strength Food",
+        teachItems = { 250179 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Steaming Stag Steak" } },
         reagents   = {
             { itemID = 5471, count = 3, name = "Stag Meat" },
@@ -1506,6 +1607,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 50, 90, 110, 130 },
         category   = "Intellect Food",
+        teachItems = { 5486 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Strider Stew" } },
         reagents   = {
             { itemID = 5469, count = 1, name = "Strider Meat" },
@@ -1519,6 +1621,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 110, 130, 150, 170 },
         category   = "Strength Food",
+        teachItems = { 2700 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Succulent Pork Ribs" } },
         reagents   = {
             { itemID = 2677, count = 2, name = "Boar Ribs" },
@@ -1532,6 +1635,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 200, 220, 235, 250 },
         category   = "Soothing Drinks",
+        teachItems = { 249883 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Sunny Tea" } },
         reagents   = {
             { itemID = 1645, count = 1, name = "Moonberry Juice" },
@@ -1546,6 +1650,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 260, 270, 280 },
         category   = "SEASON OF DISCOVERY",
+        teachItems = { 238647, 250396 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Sunrise Omelette" } },
         reagents   = {
             { itemID = 12207, count = 2, name = "Giant Egg" },
@@ -1559,6 +1664,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 280, 282, 285 },
         category   = "Miscellaneous Cuisines",
+        teachItems = { 274415 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Sweetpaw Jam" } },
         reagents   = {
             { itemID = 249796, count = 3, name = "Hyjal Berries" },
@@ -1572,6 +1678,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 275, 175, 190, 205 },
         category   = "Agility Food",
+        teachItems = { 250180 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Swiftstrike Steak" } },
         reagents   = {
             { itemID = 12202, count = 3, name = "Tiger Meat" },
@@ -1585,6 +1692,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 150, 190, 210, 230 },
         category   = "Agility Food",
+        teachItems = { 3736 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Tasty Lion Steak" } },
         reagents   = {
             { itemID = 3731, count = 2, name = "Lion Meat" },
@@ -1598,6 +1706,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 25, 35, 55, 75 },
         category   = "Intellect Food",
+        teachItems = { 250187 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Tasty Raptor Bites" } },
         reagents   = {
             { itemID = 3685, count = 1, name = "Raptor Egg" },
@@ -1611,6 +1720,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 265, 285, 305 },
         category   = "Agility Food",
+        teachItems = { 18046 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Tender Wolf Steak" } },
         reagents   = {
             { itemID = 12208, count = 1, name = "Tender Wolf Meat" },
@@ -1624,6 +1734,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 60, 100, 120, 140 },
         category   = "Miscellaneous Cuisines",
+        teachItems = { 7678, 18160 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Thistle Tea" } },
         reagents   = {
             { itemID = 2452, count = 1, name = "Swiftthistle" },
@@ -1637,6 +1748,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 180, 195, 215, 235 },
         category   = "Soothing Drinks",
+        teachItems = { 249882 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Triage Tea" } },
         reagents   = {
             { itemID = 1708, count = 1, name = "Sweet Nectar" },
@@ -1650,6 +1762,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 115, 132, 150 },
         category   = "Intellect Food",
+        teachItems = { 250185 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Twice-Spiced Raptor Slice" } },
         reagents   = {
             { itemID = 12184, count = 1, name = "Raptor Flesh" },
@@ -1664,6 +1777,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 225, 265, 285, 305 },
         category   = "Everyday Meals",
+        teachItems = { 16767 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Undermine Clam Chowder" } },
         reagents   = {
             { itemID = 7974, count = 2, name = "Zesty Clam Meat" },
@@ -1678,6 +1792,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 25, 5, 10, 15 },
         category   = "Delightful Drinks",
+        teachItems = { 249885 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Venomous Smoothie" } },
         reagents   = {
             { itemID = 159, count = 1, name = "Refreshing Spring Water" },
@@ -1692,6 +1807,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 75, 115, 135, 155 },
         category   = "Miscellaneous Cuisines",
+        teachItems = { 728 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Westfall Stew" } },
         reagents   = {
             { itemID = 729, count = 1, name = "Stringy Vulture Meat" },
@@ -1706,6 +1822,7 @@ local recipes = {
         learnFrom  = "recipe item",
         skillRange = { 250, 240, 245, 250 },
         category   = "Delightful Drinks",
+        teachItems = { 249890 },
         sources    = { { method = "undetermined", faction = "Both", detail = "Recipe: Wicked Smoothie" } },
         reagents   = {
             { itemID = 8766, count = 1, name = "Morning Glory Dew" },
