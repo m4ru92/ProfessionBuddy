@@ -423,9 +423,19 @@ EXPECT(#TRAINER_FILTER_CALLS == 0, "a weapon master's filters were changed")
 EXPECT(ProfBuddyDB.knowledge == nil, "a weapon master was recorded")
 TRAINER_CLOSE()
 
-TRAINER_OPEN(3008)                  -- Mak, Leatherworking
-EXPECT(TRAINER_FILTER.used == true, "the used filter was not switched on for the scan")
+-- a trainer closed before the capture is left alone
+TRAINER_OPEN(3008)
+TRAINER_CLOSE()
 FLUSH()
+EXPECT(#TRAINER_FILTER_CALLS == 0 and ProfBuddyDB.knowledge == nil, "a closed trainer was scanned")
+
+-- the filters switch on and back inside the capture, so the window never
+-- shows the change
+TRAINER_OPEN(3008)                  -- Mak, Leatherworking
+EXPECT(#TRAINER_FILTER_CALLS == 0, "filters changed before the capture")
+FLUSH()
+EXPECT(table.concat(TRAINER_FILTER_CALLS, ",") == "used=true,used=false",
+       "filter calls: " .. table.concat(TRAINER_FILTER_CALLS, ","))
 EXPECT(TRAINER_FILTER.used == false and TRAINER_FILTER.available and TRAINER_FILTER.unavailable,
        "trainer filters not put back")
 local K = ProfBuddyDB.knowledge
@@ -516,9 +526,23 @@ EXPECT(KN:TeacherText(2153, "Horde") == "Mak (Thunder Bluff)", "Alliance trainer
 EXPECT(KN:TeacherText(2153) == "Aaron (Stormwind City), Mak (Thunder Bluff)", "all trainers: " .. tostring(KN:TeacherText(2153)))
 for i = 2, 4 do pants.teachers[i] = { name = "T" .. i, faction = "Horde" } end
 EXPECT(KN:TeacherText(2153, "Horde") == "Mak (Thunder Bluff), T2, T3, and 1 more", "long list: " .. tostring(KN:TeacherText(2153, "Horde")))
+-- a known recipe: the trainer on its Source line, and "Learned at" in
+-- grey instead of a requirement
+C_TradeSkillUI.OpenTradeSkill(393)
+TS_LIST_READY()
+FLUSH()
+st.showTab, st.searchText = "known", ""
+TSF:RefreshRecipeList()
+st.selected = "Camp Chair"
+TSF:RefreshDetailPanel()
+EXPECT(shown("detSource"):find("Trainer - Mooranta (Thunder Bluff)", 1, true), "Camp Chair Source: " .. shown("detSource"))
+EXPECT(shown("detSkill") == "|cff888888Learned at: 20|r", "Camp Chair: " .. shown("detSkill"))
+C_TradeSkillUI.OpenTradeSkill(165)
+TS_LIST_READY()
+FLUSH()
 st.showTab, st.searchText, st.selected = "known", "", nil
 TSF:RefreshRecipeList()
-print("  PASS F20 trainer scan: Mak's 16 recipes with his learn levels, known ones via the used filter, Vhan's 24 Tailoring recipes on a character with no Tailoring, filters put back, ranks and a weapon master skipped; a recorded learn level drives the Missing row, Learnable Now and the detail panel; Source names the trainer")
+print("  PASS F20 trainer scan: Mak's 16 recipes with his learn levels, known ones via the used filter switched on and back inside the capture, a trainer closed first left alone, Vhan's 24 Tailoring recipes on a character with no Tailoring, filters put back, ranks and a weapon master skipped; a recorded learn level drives the Missing row, Learnable Now and the detail panel; Source names the trainer; a known recipe says Learned at in grey")
 
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end

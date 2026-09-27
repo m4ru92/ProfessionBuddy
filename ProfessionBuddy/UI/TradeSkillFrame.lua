@@ -2898,6 +2898,9 @@ function TSF:RefreshDetailPanel(preserveScroll)
         else
             self.detSkill:SetText("|cffff4444Requires level " .. lvlReq .. " (need " .. (lvlReq - lvl) .. " more)|r")
         end
+    elseif sReq and recipe.isKnown then
+        -- Already learned: the learn level is history, not a requirement.
+        self.detSkill:SetText("|cff888888Learned at: " .. sReq .. "|r")
     elseif sReq then
         local canLearn = (state.skillLevel or 0) >= sReq
         if canLearn then

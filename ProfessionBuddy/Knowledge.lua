@@ -26,14 +26,14 @@ local KN = addon:NewModule("Knowledge")
 -- Trainer list filters. All three go on for the capture so no service is
 -- hidden, then each goes back to what the player had.
 local FILTERS = { "available", "unavailable", "used" }
--- The list refreshes after a filter change; ForeverProbe captured after
--- one second.
+-- ForeverProbe captured one second after the trainer opened.
 local CAPTURE_DELAY = 1.0
 -- Teachers named on the Source line before "and N more".
 local MAX_TEACHERS_SHOWN = 3
 
 function KN:Init()
     addon:RegisterEvent("TRAINER_SHOW", function() self:OnTrainerShow() end)
+    addon:RegisterEvent("TRAINER_CLOSED", function() self._trainerOpen = false end)
 end
 
 function KN:Get(recipeID)
@@ -126,11 +126,21 @@ function KN:CaptureTrainer()
     return recorded
 end
 
--- Show every service (all three filters on), wait for the list to
--- refresh, capture, then put the filters back. Class, weapon and pet
--- trainers are skipped, so their lists never change under the player.
+-- Capture a second after a profession trainer opens. Class, weapon and
+-- pet trainers are skipped.
 function KN:OnTrainerShow()
     if IsTradeskillTrainer and not IsTradeskillTrainer() then return end
+    self._trainerOpen = true
+    C_Timer.After(CAPTURE_DELAY, function()
+        if self._trainerOpen then self:ScanTrainer() end
+    end)
+end
+
+-- Show every service (all three filters on), capture, then put each filter
+-- back. The game refilters the list the moment a filter changes (m4ru
+-- checked 2026-09-27: 15 services, then 17 with "used" on), so all of this
+-- runs in one frame and the trainer window never shows the change.
+function KN:ScanTrainer()
     local prev = {}
     if GetTrainerServiceTypeFilter and SetTrainerServiceTypeFilter then
         for _, f in ipairs(FILTERS) do
@@ -138,15 +148,13 @@ function KN:OnTrainerShow()
             if not prev[f] then SetTrainerServiceTypeFilter(f, true) end
         end
     end
-    C_Timer.After(CAPTURE_DELAY, function()
-        local ok, err = pcall(self.CaptureTrainer, self)
-        if SetTrainerServiceTypeFilter then
-            for f, was in pairs(prev) do
-                if not was then SetTrainerServiceTypeFilter(f, false) end
-            end
+    local ok, err = pcall(self.CaptureTrainer, self)
+    if SetTrainerServiceTypeFilter then
+        for f, was in pairs(prev) do
+            if not was then SetTrainerServiceTypeFilter(f, false) end
         end
-        if not ok then
-            print("|cff00ccffProfessionBuddy:|r trainer scan failed: " .. tostring(err))
-        end
-    end)
+    end
+    if not ok then
+        print("|cff00ccffProfessionBuddy:|r trainer scan failed: " .. tostring(err))
+    end
 end
