@@ -116,8 +116,13 @@ function T.GetCategoryInfo(id)
     return name and { categoryID = id, name = name } or nil
 end
 
-function T.GetRecipeCooldown() return nil end
-function T.GetCraftableCount(id) return (id == 2881) and 14 or 0 end
+function T.GetCraftableCount(id)
+    local e = byRecipe[id]
+    if e and e.r.craftable then return e.r.craftable end
+    return (id == 2881) and 14 or 0
+end
+TS_COOLDOWN = {}
+function T.GetRecipeCooldown(id) return TS_COOLDOWN[id] end
 function T.GetRecipeLink(id)
     local e = byRecipe[id]
     return e and ("|cffffd000|Henchant:" .. id .. "|h[" .. e.prof .. ": " .. e.r.name .. "]|h|r")

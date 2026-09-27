@@ -3932,10 +3932,12 @@ end
 
 -- craftIndex: the Craft-API index to chain the next unit of a batch from,
 -- or nil for anything that is not a batchable craft-window recipe.
-function TSF:BeginCraftTracking(spellName, qty, craftIndex)
+-- spellID: the recipe's spell, for a Source that matches casts by ID.
+function TSF:BeginCraftTracking(spellName, qty, craftIndex, spellID)
     self._craftingActive = true
     self._craftRemaining = qty or 1
     self._craftSpellName = spellName
+    self._craftSpellID   = spellID
     self._craftIndex     = craftIndex
     self:ArmCraftWatchdog()
 end
@@ -3944,9 +3946,19 @@ function TSF:StopCraftTracking()
     self._craftingActive = false
     self._craftRemaining = 0
     self._craftSpellName = nil
+    self._craftSpellID   = nil
     self._craftIndex     = nil
     -- Invalidates any watchdog still pending for the craft we just ended.
     self._craftToken     = (self._craftToken or 0) + 1
+end
+
+-- Is this cast the recipe being crafted? By name, or by spell ID where the
+-- Source says names are not unique (WoW: Forever).
+function TSF:IsTrackedCast(spellID)
+    if addon.Source.TRACK_BY_SPELL_ID and self._craftSpellID then
+        return spellID == self._craftSpellID
+    end
+    return GetSpellInfo(spellID) == self._craftSpellName
 end
 
 function TSF:RegisterCraftEvents()
@@ -3959,9 +3971,8 @@ function TSF:RegisterCraftEvents()
         if unit ~= "player" then return end
         if not self._craftingActive then return end
 
-        -- Match spell name against the recipe we're crafting
-        local spellName = GetSpellInfo(spellID)
-        if spellName ~= self._craftSpellName then return end
+        -- Match the cast against the recipe we're crafting
+        if not self:IsTrackedCast(spellID) then return end
 
         self._craftRemaining = (self._craftRemaining or 0) - 1
         if self._craftRemaining >= 1 then
@@ -3990,8 +4001,7 @@ function TSF:RegisterCraftEvents()
     addon:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED", function(_, unit, _, spellID)
         if unit ~= "player" then return end
         if not self._craftingActive then return end
-        local spellName = GetSpellInfo(spellID)
-        if spellName ~= self._craftSpellName then return end
+        if not self:IsTrackedCast(spellID) then return end
         self:StopCraftTracking()
         -- Leave the qty box at its current text so the user can see how
         -- many were left.
@@ -4000,8 +4010,7 @@ function TSF:RegisterCraftEvents()
     addon:RegisterEvent("UNIT_SPELLCAST_FAILED", function(_, unit, _, spellID)
         if unit ~= "player" then return end
         if not self._craftingActive then return end
-        local spellName = GetSpellInfo(spellID)
-        if spellName ~= self._craftSpellName then return end
+        if not self:IsTrackedCast(spellID) then return end
         self:StopCraftTracking()
     end)
 end
@@ -4081,14 +4090,26 @@ function TSF:UpdateCraftBar()
         avail = self:ReagentCraftCount(recipe)
     end
     local canCraft = avail > 0
-    -- A flavor PB cannot craft on yet (WoW: Forever before Phase 2b) keeps
-    -- every craft control disabled.
-    local craftOff = addon.Source.CAN_CRAFT == false
-    if craftOff then canCraft = false end
     local itemLess = isKnown and (not recipe.itemID or recipe.itemID == 0)
     local eb = self.enchantCraftBtn
 
-    if itemLess and eb then
+    if itemLess and addon.Source.ENCHANT_BY_CRAFT then
+        -- Enchant cast through the Source (WoW: Forever): the plain Craft
+        -- button, one cast per target item, so no quantity controls.
+        if eb then
+            eb:SetAlpha(0)
+            eb:EnableMouse(false)
+        end
+        for i, btn in ipairs(self.craftBtns) do
+            if i == 1 then
+                btn:Show()
+                if canCraft then btn:Enable() else btn:Disable() end
+            else
+                btn:Hide()
+            end
+        end
+        if self.qtyBox then self.qtyBox:Hide() end
+    elseif itemLess and eb then
         -- Enchant: use the secure cast button; the normal craft buttons
         -- and qty box don't apply (enchants are one cast per target item).
         for _, btn in ipairs(self.craftBtns) do btn:Hide() end
@@ -4127,10 +4148,7 @@ function TSF:UpdateCraftBar()
     end
 
     if self.craftNotLearned then
-        if isKnown and craftOff then
-            self.craftNotLearned:SetText("|cff808080Coming soon|r")
-            self.craftNotLearned:Show()
-        elseif isKnown then
+        if isKnown then
             self.craftNotLearned:Hide()
         else
             self.craftNotLearned:SetText("|cffff2020Recipe unknown|r")
@@ -4398,10 +4416,6 @@ end
 -- Start the actual craft operation
 ----------------------------------------------------------------------
 function TSF:StartCraft(recipe, qty)
-    -- The disabled buttons are not the only way in: Enter in the qty box
-    -- starts a craft too.
-    if addon.Source.CAN_CRAFT == false then return end
-
     -- The Craft API (Enchanting, and pet training) has no batch: DoCraft casts
     -- once and cannot be chained on this client, whether the craft produces an
     -- item (rod, prismatic shard) or applies an enchant. So every craft-window
@@ -4412,7 +4426,7 @@ function TSF:StartCraft(recipe, qty)
         self:BeginCraftTracking(recipe.name, 1, recipe.gameIndex)
         addon.Source:Craft(recipe.gameIndex, 1, true)
     else
-        self:BeginCraftTracking(recipe.name, qty, nil)
+        self:BeginCraftTracking(recipe.name, qty, nil, recipe.spellID)
         addon.Source:Craft(recipe.gameIndex, qty, false)
     end
 end

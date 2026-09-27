@@ -49,7 +49,10 @@
 --   Source.LIST_ARRIVES_LATE      true: the recipe list is not readable at
 --                                 TRADE_SHOW, only at the next TRADE_UPDATE
 --   Source.GATHERING_HAS_RECIPES  true: Herbalism gets a profession tab
---   Source.CAN_CRAFT              false: PB offers no craft controls
+--   Source.TRACK_BY_SPELL_ID      true: a finished cast is matched to the
+--                                 craft by spell ID, not spell name
+--   Source.ENCHANT_BY_CRAFT       true: an enchant is cast through Craft,
+--                                 not the secure macro button
 --   Source:TabSkillLine(profName) the skill line a profession tab opens,
 --                                 or nil for a tab that stays a /cast macro
 --   Source:OpenProfession(skillLine)

@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------
--- WoW: Forever harness (Forever 2.0.0, Phases 0 and 2a).
+-- WoW: Forever harness (Forever 2.0.0, Phases 0, 2a and 2b).
 --
 -- Loads ProfessionBuddy_Mainline.toc into a modern-client stub
 -- (tests/forever_env.lua) with a fake profession backend built from
@@ -7,7 +7,7 @@
 -- that PB starts cleanly and that its own window reads Forever's
 -- professions: Blizzard's window suppressed, the known recipes with
 -- reagents, counts, colours and the game's categories, tabs that open by
--- skill line, Mining never filed under Smelting, crafting switched off,
+-- skill line, Mining never filed under Smelting, crafting (Phase 2b),
 -- late item names retried, a clean close and reopen, the K profession
 -- book, and the edge rows the harvest has no example of.
 ----------------------------------------------------------------------
@@ -114,11 +114,71 @@ EXPECT(stored and stored.recipes["Light Leather"] and stored.recipes["Light Leat
 EXPECT(count(stored.recipes) == 6, "stored " .. count(stored.recipes) .. " recipes")
 print("  PASS F9 the Scanner stored the 6 recipes under Leatherworking with recipe IDs")
 
--- F10: crafting is off: no craft call, no craft tracking
-TSF:DoCraftImmediate(1)
+-- F10: crafting (Phase 2b). CraftRecipe(recipeID, n); each finished cast of
+-- THAT spell ID counts the quantity box down, even when another spell has
+-- the same name; an interrupt stops tracking; Craft All and the qty box are
+-- capped at what you can make; a cooldown shows; an enchant that goes on
+-- gear is one plain Craft, an Enchanting recipe that makes an item crafts
+-- like any other
+local function pick(name) st.selected = name; TSF:UpdateCraftBar() end
+-- No FLUSH here: the fake C_Timer runs every pending timer at once, and
+-- that would fire PB's 10-second craft watchdog mid-batch.
+local function cast(event, spellID) FIRE(event, "player", "Cast-guid", spellID) end
+local realSpellInfo = C_Spell.GetSpellInfo
+C_Spell.GetSpellInfo = function(id)
+    if id == 2881 or id == 99999 then return { name = "Light Leather", spellID = id } end
+    return realSpellInfo(id)
+end
+pick("Light Leather")
+TS_CALLS = {}
+TSF:DoCraftImmediate(5)
+EXPECT(called("CraftRecipe:2881x5") and TSF._craftingActive and TSF._craftSpellID == 2881, "Craft 5 did not start")
+cast("UNIT_SPELLCAST_SUCCEEDED", 99999)
+EXPECT(TSF._craftRemaining == 5, "a same-name spell counted as the craft")
+cast("UNIT_SPELLCAST_SUCCEEDED", 2881)
+EXPECT(TSF._craftRemaining == 4 and TSF.qtyBox:GetText() == "4", "the quantity did not count down")
+for _ = 1, 4 do cast("UNIT_SPELLCAST_SUCCEEDED", 2881) end
+EXPECT(not TSF._craftingActive and TSF.qtyBox:GetText() == "1", "tracking did not stop at zero")
+TS_CALLS = {}
+TSF:DoCraftImmediate("all")
+EXPECT(called("CraftRecipe:2881x14"), "Craft All did not craft what you can make: " .. table.concat(TS_CALLS, ", "))
+cast("UNIT_SPELLCAST_INTERRUPTED", 12345)
+EXPECT(TSF._craftingActive, "another spell's interrupt stopped the craft")
+cast("UNIT_SPELLCAST_INTERRUPTED", 2881)
+EXPECT(not TSF._craftingActive, "an interrupt did not stop tracking")
+TS_CALLS = {}
+TSF.qtyBox:SetText("99")
 TSF:DoCraft()
-EXPECT(not called("CraftRecipe") and not TSF._craftingActive, "a craft started")
-print("  PASS F10 craft buttons and the qty box start no craft (Phase 2b)")
+EXPECT(called("CraftRecipe:2881x14"), "the qty box was not capped at what you can make")
+TSF:StopCraftTracking()
+C_Spell.GetSpellInfo = realSpellInfo
+TS_COOLDOWN[2881] = 3600
+FIRE("TRADE_SKILL_LIST_UPDATE")
+FLUSH()
+EXPECT(TSF:CooldownSuffix({ name = "Light Leather" }):find("On cooldown", 1, true), "no cooldown line")
+TS_COOLDOWN[2881] = nil
+C_TradeSkillUI.OpenTradeSkill(333)
+TS_LIST_READY()
+FLUSH()
+EXPECT(st.profName == "Enchanting", "Enchanting did not open")
+pick("Enchant Bracer - Minor Stamina")
+EXPECT(TSF.craftBtns[1]:IsShown() and not TSF.craftBtns[2]:IsShown() and not TSF.qtyBox:IsShown(),
+       "the enchant does not show one plain Craft button")
+TS_CALLS = {}
+TSF.qtyBox:SetText("5")
+TSF:DoCraft()
+EXPECT(called("CraftRecipe:7457x1") and #TS_CALLS == 1, "the enchant was not one CraftRecipe: " .. table.concat(TS_CALLS, ", "))
+TSF:StopCraftTracking()
+pick("Lesser Magic Wand")
+EXPECT(TSF.craftBtns[2]:IsShown() and TSF.qtyBox:IsShown(), "the wand lost its quantity controls")
+TS_CALLS = {}
+TSF:DoCraftImmediate(2)
+EXPECT(called("CraftRecipe:14293x2"), "the wand did not craft 2")
+TSF:StopCraftTracking()
+C_TradeSkillUI.OpenTradeSkill(165)
+TS_LIST_READY()
+FLUSH()
+print("  PASS F10 crafting: CraftRecipe with the count, countdown by spell ID, interrupt, Craft All and qty capped, cooldown line, enchant as one Craft, wand batches")
 
 -- F11: tabs open by skill line; Skinning shows its camp recipe in grey
 local tabs = TSF.profTabsByName

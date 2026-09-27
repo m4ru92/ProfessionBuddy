@@ -116,6 +116,7 @@ function F:GetVerticalScrollRange() return 0 end
 function F:SetPoint(...) rawset(self, "_points", (rawget(self, "_points") or 0) + 1) end
 function F:ClearAllPoints() rawset(self, "_points", 0) end
 function F:GetNumPoints() return rawget(self, "_points") or 0 end
+function F:NumLines() return 0 end
 function F:IsMouseOver() return false end
 function F:GetChecked() return false end
 function F:GetValue() return 0 end

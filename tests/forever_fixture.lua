@@ -9,7 +9,9 @@
 --
 -- Mining is SYNTHETIC: no harvest exists. One recipe (Smelt Copper, 2657)
 -- from SkillLineAbility 1.60.1.70009, there only to prove Mining is not
--- filed under Smelting.
+-- filed under Smelting. Enchanting is SYNTHETIC the same way (Phase 2b's
+-- enchant tests): IDs, reagents and categories are from the game files;
+-- icons, difficulty and `craftable` are test values.
 ----------------------------------------------------------------------
 FOREVER_FIXTURE = {
     professions = {
@@ -44,6 +46,12 @@ FOREVER_FIXTURE = {
             { recipeID = 1262982, name = "Trapper's Workbench", learned = false, categoryID = 2718, relativeDifficulty = 0, canSkillUp = true, icon = 5948139, outputItemID = 279938, reagents = { { itemID = 4470, quantity = 2 }, { itemID = 4234, quantity = 4 }, { itemID = 3575, quantity = 1 } } },
             { recipeID = 1262985, name = "Field Guide", learned = false, categoryID = 2718, relativeDifficulty = 0, canSkillUp = true, icon = 133735, outputItemID = 279969, reagents = { { itemID = 2319, quantity = 3 }, { itemID = 5784, quantity = 2 }, { itemID = 2321, quantity = 1 } } },
         } },
+        -- SYNTHETIC like Mining (m4ru has no Enchanting on Forever): one enchant
+        -- that goes on gear (no output item) and one that makes an item.
+        ["Enchanting"] = { skillLine = 333, rank = 100, maxRank = 150, synthetic = true, recipes = {
+            { recipeID = 7457, name = "Enchant Bracer - Minor Stamina", learned = true, categoryID = 2496, relativeDifficulty = 1, canSkillUp = true, icon = 0, outputItemID = 0, craftable = 3, reagents = { { itemID = 10940, quantity = 2 } } },
+            { recipeID = 14293, name = "Lesser Magic Wand", learned = true, categoryID = 2512, relativeDifficulty = 2, canSkillUp = true, icon = 0, outputItemID = 11287, craftable = 2, reagents = { { itemID = 4470, quantity = 1 }, { itemID = 10938, quantity = 1 } } },
+        } },
         ["Mining"] = { skillLine = 186, rank = 1, maxRank = 75, synthetic = true, recipes = {
             { recipeID = 2657, name = "Smelt Copper", learned = true, categoryID = 2575, relativeDifficulty = 0, canSkillUp = true, icon = 133217, outputItemID = 2840, reagents = { { itemID = 2770, quantity = 1 } } },
         } },
@@ -57,6 +65,8 @@ FOREVER_FIXTURE = {
         [2569] = "Armor Kits",
         [2574] = "Camping",
         [2575] = "Smelted Bars",
+        [2496] = "Bracer Enchants",
+        [2512] = "Wands",
         [2632] = "Everyday Meals",
         [2633] = "Strength Food",
         [2640] = "Stamina Food",
@@ -73,6 +83,9 @@ FOREVER_FIXTURE = {
         [2840] = "Copper Bar",
         [2934] = "Ruined Leather Scraps",
         [4470] = "Simple Wood",
+        [10938] = "Lesser Magic Essence",
+        [10940] = "Strange Dust",
+        [11287] = "Lesser Magic Wand",
         [6889] = "Small Egg",
     },
 }

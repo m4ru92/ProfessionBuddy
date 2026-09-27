@@ -44,8 +44,14 @@ Source.SHARED_FRAMES = {
 Source.MINING_IS_SMELTING    = false
 Source.LIST_ARRIVES_LATE     = true
 Source.GATHERING_HAS_RECIPES = true
--- Crafting through PB's window is the next increment (Phase 2b).
-Source.CAN_CRAFT             = false
+-- 67 recipe names belong to two recipe IDs, so a finished cast is matched
+-- to the craft by its spell ID (the recipe ID), not its name.
+Source.TRACK_BY_SPELL_ID     = true
+-- Enchants go through Craft like any recipe: the enchant lands on the
+-- cursor to click an item, as Blizzard's own window does with no target
+-- picked. No secure macro (TBCCA needs one; DoTradeSkill is protected for
+-- enchants there).
+Source.ENCHANT_BY_CRAFT      = true
 
 -- Gathering professions have recipe lists here, so they can be browsed,
 -- ordered and synced like any crafting profession. Smelting does not exist.
@@ -283,8 +289,11 @@ function Source:GetRowState(index, isCraft)
     return Difficulty(info), T.GetCraftableCount and T.GetCraftableCount(index) or 0
 end
 
--- Not built yet: CAN_CRAFT is false, so the window never offers a craft.
-function Source:Craft()
+-- The game repeats the cast qty times itself, as DoTradeSkill does on
+-- TBCCA. The same call Blizzard's Create button ends in.
+function Source:Craft(index, qty, isCraft)
+    if isCraft then return end
+    C_TradeSkillUI.CraftRecipe(index, qty or 1)
 end
 
 function Source:CloseWindow(isCraft)
