@@ -509,8 +509,12 @@ function Scanner:ScanInventory()
 
     local items = {}
 
-    -- Backpack (bag 0) + 4 regular bags
-    for bag = 0, 4 do
+    -- Backpack (bag 0) + 4 regular bags, plus the reagent bag where the
+    -- client has one (WoW: Forever: bag 5, counted in Blizzard's
+    -- NUM_TOTAL_EQUIPPED_BAG_SLOTS). On TBCCA bag 5 is the first BANK bag.
+    local lastBag = 4
+    if addon.Source.HAS_REAGENT_BAG then lastBag = NUM_TOTAL_EQUIPPED_BAG_SLOTS or 4 end
+    for bag = 0, lastBag do
         local slots = GetContainerNumSlots(bag)
         for slot = 1, slots do
             local link = GetContainerItemLink(bag, slot)

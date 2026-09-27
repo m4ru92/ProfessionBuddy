@@ -148,3 +148,25 @@ C_Item.RequestLoadItemDataByID = function(id)
     TS_CALLS[#TS_CALLS + 1] = "RequestLoadItemDataByID:" .. tostring(id)
     UNCACHED[id] = nil
 end
+
+-- Bags: the backpack and the equipped reagent bag, which is bag 5 on
+-- Forever (Blizzard Constants.lua: NUM_TOTAL_EQUIPPED_BAG_SLOTS =
+-- NUM_BAG_SLOTS + NUM_REAGENTBAG_SLOTS; m4ru keeps his Skinning Satchel
+-- there). Loaded before PB, which binds the C_Container calls at load.
+NUM_TOTAL_EQUIPPED_BAG_SLOTS = 5
+BAGS = {
+    [0] = { [1] = { id = 2934, count = 3 } },    -- Ruined Leather Scraps
+    [5] = { [1] = { id = 2318, count = 14 } },   -- Light Leather
+}
+C_Container.GetContainerNumSlots = function(bag)
+    CALLS[#CALLS + 1] = "C_Container.GetContainerNumSlots"
+    return BAGS[bag] and 4 or 0
+end
+C_Container.GetContainerItemLink = function(bag, slot)
+    local e = BAGS[bag] and BAGS[bag][slot]
+    return e and ("|cffffffff|Hitem:" .. e.id .. "::::::::|h[x]|h|r") or nil
+end
+C_Container.GetContainerItemInfo = function(bag, slot)
+    local e = BAGS[bag] and BAGS[bag][slot]
+    return e and { stackCount = e.count } or nil
+end

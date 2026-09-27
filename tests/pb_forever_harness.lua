@@ -326,8 +326,17 @@ EXPECT(not TSF.frame:IsShown() and called("CloseTradeSkill"), "K did not close P
 EXPECT(not ProfessionsFrame:IsShown(), "K opened the book over the closing profession")
 print("  PASS F17 after a profession was open, K shows the book and opens no profession; K closes PB's profession window")
 
+-- F18: the bag scan reads the reagent bag. m4ru's 2026-09-27 run: Light
+-- Leather in the Skinning Satchel (reagent bag slot) read 0 on the reagent
+-- lines while the game said Can make 14
+ProfBuddy.Scanner:ScanInventory()
+local bags = DS:GetCharacter().inventory.bags
+EXPECT(bags[2934] == 3, "backpack reagent not counted")
+EXPECT(bags[2318] == 14, "reagent bag not counted: " .. tostring(bags[2318]))
+print("  PASS F18 the bag scan counts the backpack and the reagent bag (bag 5)")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (17)")
+print("ALL FOREVER TESTS PASS (18)")

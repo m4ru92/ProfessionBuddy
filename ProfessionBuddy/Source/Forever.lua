@@ -52,6 +52,8 @@ Source.TRACK_BY_SPELL_ID     = true
 -- picked. No secure macro (TBCCA needs one; DoTradeSkill is protected for
 -- enchants there).
 Source.ENCHANT_BY_CRAFT      = true
+-- The equipped reagent bag (bag 5) holds reagents too.
+Source.HAS_REAGENT_BAG       = true
 
 -- Gathering professions have recipe lists here, so they can be browsed,
 -- ordered and synced like any crafting profession. Smelting does not exist.
