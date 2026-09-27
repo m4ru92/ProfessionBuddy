@@ -212,9 +212,14 @@ local function GetSkillReq(recipe)
     return nil
 end
 
+-- A learn level PB does not know yet (WoW: Forever data) is false and reads "?".
+local function RangeNum(v)
+    return type(v) == "number" and v or "?"
+end
+
 local function SkillRangeCompact(range)
     if not range then return "" end
-    return "(" .. range[1] .. "-" .. range[4] .. ")"
+    return "(" .. RangeNum(range[1]) .. "-" .. range[4] .. ")"
 end
 
 -- Maps the game's difficulty tier to the skillRange index (1=orange .. 4=grey)
@@ -262,11 +267,12 @@ local function SkillRangeDetailed(range, currentSkill, knownDiff)
         elseif currentSkill then
             if i == 4 and currentSkill >= range[4] then
                 isCurrent = true
-            elseif i < 4 and currentSkill >= range[i] and currentSkill < range[i + 1] then
+            elseif i < 4 and type(range[i]) == "number" and currentSkill >= range[i]
+                   and currentSkill < range[i + 1] then
                 isCurrent = true
             end
         end
-        local text = labels[i] .. ": " .. range[i]
+        local text = labels[i] .. ": " .. RangeNum(range[i])
         if isCurrent then
             table.insert(parts, "|cffffffff>|r" .. colors[i] .. text .. "|r" .. "|cffffffff<|r")
         else

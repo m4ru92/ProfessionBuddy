@@ -18,7 +18,10 @@
 --                  taught by level with no skill requirement (rogue poisons).
 --                  Absent means no level gate.
 --   skillRange   = { orange, yellow, green, grey }, ascending. orange equals
---                  skillReq unless the recipe is not trainer-taught.
+--                  skillReq unless the recipe is not trainer-taught. On WoW:
+--                  Forever orange is false where the learn level is not
+--                  known yet (skillReq absent), and learnFrom names where a
+--                  known one came from (tools/bake_forever_db2.py).
 --   sources      = { { method = "trainer"|"vendor"|"drop"|"quest"|
 --                      "reputation"|"discovery"|"automatic"|"undetermined",
 --                      faction = "Alliance"|"Horde"|"Both",

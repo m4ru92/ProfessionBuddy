@@ -273,10 +273,15 @@ def verify_zip(out_zip, addon_dir):
             for rel in toc_files(addon_dir, toc):
                 if "%s/%s" % (ADDON_NAME, rel) not in names:
                     problems.append("%s lists %s, which is not in the zip" % (toc, rel))
-        # 2b) Forever never loads TBC data or the Classic profession source
+        # 2b) Forever never loads TBC data or the Classic profession source,
+        #     and TBC Anniversary never loads Forever data
         for rel in toc_files(addon_dir, TOC_MAINLINE):
-            if rel.startswith("Data/") or rel == "Source/Classic.lua":
+            if (rel.startswith("Data/") and not rel.startswith("Data/Forever/")) \
+                    or rel == "Source/Classic.lua":
                 problems.append("%s must not load %s" % (TOC_MAINLINE, rel))
+        for rel in toc_files(addon_dir, TOC_TBC):
+            if rel.startswith("Data/Forever/"):
+                problems.append("%s must not load %s" % (TOC_TBC, rel))
         if "Source/Classic.lua" not in toc_files(addon_dir, TOC_TBC):
             problems.append("%s does not load Source/Classic.lua" % TOC_TBC)
         # 3) every shipped .lua/.xml is either loaded by the .toc or a library.

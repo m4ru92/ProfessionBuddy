@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------
--- WoW: Forever harness (Forever 2.0.0, Phases 0, 2a and 2b).
+-- WoW: Forever harness (Forever 2.0.0, Phases 0, 2a, 2b and 4a).
 --
 -- Loads ProfessionBuddy_Mainline.toc into a modern-client stub
 -- (tests/forever_env.lua) with a fake profession backend built from
@@ -25,7 +25,8 @@ end
 local files, errs = LOAD_TOC("ProfessionBuddy_Mainline.toc")
 EXPECT(#errs == 0, "load errors: " .. table.concat(errs, " | "))
 for _, f in ipairs(files) do
-    EXPECT(not f:match("^Data/") and f ~= "Source/Classic.lua", "Mainline toc loads " .. f)
+    EXPECT((not f:match("^Data/") or f:match("^Data/Forever/")) and f ~= "Source/Classic.lua",
+           "Mainline toc loads " .. f)
 end
 print("  PASS F1 Mainline toc loads " .. #files .. " entries with no error, no TBC data, no Classic source")
 
@@ -335,8 +336,74 @@ EXPECT(bags[2934] == 3, "backpack reagent not counted")
 EXPECT(bags[2318] == 14, "reagent bag not counted: " .. tostring(bags[2318]))
 print("  PASS F18 the bag scan counts the backpack and the reagent bag (bag 5)")
 
+-- F19: Phase 4a, the Forever recipe data (Data/Forever, baked from build
+-- 1.60.1.70009). Every profession loads through RecipeDB with well-formed
+-- rows and no TBC data; the Missing list shows the recipes you do not know
+-- with m4ru's captured learn levels; a recipe whose learn level is not
+-- known yet shows "?" without an error
+local RDB = ProfBuddy.RecipeDB
+local nProf, nRec, unknownLearn = 0, 0, nil
+local METHODS = { trainer = true, automatic = true, undetermined = true }
+for prof, recipes in pairs(RDB.data) do
+    nProf = nProf + 1
+    for name, r in pairs(recipes) do
+        nRec = nRec + 1
+        EXPECT(type(r.spellID) == "number" and type(r.itemID) == "number", prof .. "/" .. name .. " ids")
+        local sr = r.skillRange
+        if sr then
+            EXPECT(sr[2] <= sr[3] and sr[3] <= sr[4], prof .. "/" .. name .. " range order")
+            EXPECT((sr[1] == false) == (r.skillReq == nil), prof .. "/" .. name .. " orange vs skillReq")
+            -- orange above yellow is real on Forever (28 recipes, e.g. Basic
+            -- Campfire: taught at 20, yellow at 1), so it is not checked
+            if sr[1] == false and prof == "Leatherworking" and not unknownLearn then unknownLearn = name end
+        end
+        for _, g in ipairs(r.reagents or {}) do
+            EXPECT(type(g.name) == "string" and g.name ~= "", prof .. "/" .. name .. " reagent name")
+        end
+        EXPECT(r.sources and METHODS[r.sources[1].method], prof .. "/" .. name .. " source")
+    end
+end
+EXPECT(nProf == 13 and nRec == 2347, "expected 13 professions / 2347 recipes, got " .. nProf .. " / " .. nRec)
+EXPECT(not RDB.data.Smelting and not RDB.data.Jewelcrafting, "TBC data loaded on Forever")
+EXPECT(RDB.spellToRecipe[2881] and RDB.spellToRecipe[2881].recipeName == "Light Leather", "spell index")
+C_TradeSkillUI.OpenTradeSkill(165)
+TS_LIST_READY()
+FLUSH()
+local unknown = TSF:GetUnknownForView()
+EXPECT(count(unknown) == count(RDB.data.Leatherworking) - 6, "Missing list count " .. count(unknown))
+EXPECT(not unknown["Light Leather"], "a known recipe is in the Missing list")
+EXPECT(unknown["Handstitched Leather Pants"].skillReq == 15 and unknown["Embossed Leather Boots"].skillReq == 50,
+       "captured learn levels not used")
+EXPECT(unknownLearn and unknown[unknownLearn], "no Leatherworking recipe with an unknown learn level to check")
+st.showTab = "missing"
+st.searchText = unknownLearn:lower()   -- so its list row is one of the rows drawn
+local ok2, err2 = pcall(function()
+    TSF:RefreshRecipeList()
+    st.selected = unknownLearn
+    TSF:RefreshDetailPanel()
+    TSF:UpdateListRows()
+end)
+EXPECT(ok2, "Missing view with an unknown learn level errored: " .. tostring(err2))
+local drawn = false
+for _, r in ipairs(st.recipes) do if r.name == unknownLearn then drawn = true end end
+EXPECT(drawn, "the unknown-learn recipe was not in the drawn list")
+st.showTab, st.searchText = "known", ""
+-- a KNOWN recipe whose learn level is unknown draws its "(?-grey)" range
+local ll = RDB.data.Leatherworking["Light Leather"]
+local keepOrange, keepReq = ll.skillRange[1], ll.skillReq
+ll.skillRange[1], ll.skillReq = false, nil
+st.searchText = "light leather"
+local ok3, err3 = pcall(function()
+    TSF:RefreshRecipeList()
+    TSF:UpdateListRows()
+end)
+ll.skillRange[1], ll.skillReq, st.searchText = keepOrange, keepReq, ""
+TSF:RefreshRecipeList()
+EXPECT(ok3, "a known recipe with an unknown learn level errored: " .. tostring(err3))
+print("  PASS F19 Forever data: 13 professions, 2347 recipes, well-formed, no TBC data; Missing list uses captured learn levels; unknown learn level (" .. unknownLearn .. ") shows without error")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (18)")
+print("ALL FOREVER TESTS PASS (19)")
