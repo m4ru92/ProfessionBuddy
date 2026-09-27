@@ -743,13 +743,30 @@ for _, r in ipairs(st.recipes) do if r.name == "Azure Gustwoven Belt" then liste
 EXPECT(st.filterDiff == "Vendor" and not listed, "the Vendor filter did not hide the belt; the test proves nothing")
 EXPECT(st.selected == "Azure Gustwoven Belt", "a filtered-out Missing recipe lost its selection")
 EXPECT(detailCleared == 0, "the detail panel was cleared")
+-- the game's own list updates keep coming while it is hidden (m4ru
+-- 2026-09-27: it went blank "on its own"); each redraws the detail panel,
+-- which must keep the hidden recipe, and so must the craft bar
+local shownName
+rawset(TSF.detName, "SetText", function(_, t) shownName = t end)
+TS_LIST_READY()
+FLUSH()
+EXPECT(st.selected == "Azure Gustwoven Belt" and shownName == "Azure Gustwoven Belt",
+       "a list update blanked the hidden recipe's detail panel: " .. tostring(shownName))
+EXPECT(TSF:GetSelectedRecipe() and TSF:GetSelectedRecipe().name == "Azure Gustwoven Belt", "the craft bar lost the recipe")
+-- back to All: listed again, still selected
+for _, o in ipairs(TSF.diffDropdown.optionBtns) do
+    if o.value == "All" then o:GetScript("OnClick")(o) end
+end
+listed = false
+for _, r in ipairs(st.recipes) do if r.name == "Azure Gustwoven Belt" then listed = true end end
+EXPECT(listed and st.selected == "Azure Gustwoven Belt", "not listed and selected after All")
 -- a recipe that is really gone still clears
 st.selected = "No Such Recipe"
 TSF:RefreshRecipeList()
 EXPECT(st.selected == nil, "a recipe the profession does not have kept the selection")
 st.showTab, st.searchText, st.filterDiff = "known", "", "All"
 TSF:RefreshRecipeList()
-print("  PASS F23 a Missing recipe hidden by a filter stays selected and its detail panel stays; a recipe the profession lacks still clears")
+print("  PASS F23 a Missing recipe hidden by a filter stays selected and its detail panel stays, through the game's list updates too; a recipe the profession lacks still clears")
 
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end

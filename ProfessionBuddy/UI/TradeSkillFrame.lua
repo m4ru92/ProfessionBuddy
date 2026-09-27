@@ -2858,13 +2858,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
     self:ClearDetailPanel(preserveScroll)
     if not state.selected then return end
 
-    local recipe = nil
-    for _, r in ipairs(state.recipes) do
-        if not r.isHeader and r.name == state.selected then
-            recipe = r
-            break
-        end
-    end
+    local recipe = self:GetSelectedRecipe()
     if not recipe then return end
 
     self.detPlaceholder:Hide()
@@ -4076,6 +4070,8 @@ function TSF:RegisterCraftEvents()
     end)
 end
 
+-- The selected recipe's entry: from the shown list, else from the whole
+-- view when a filter or search hides it (state.entries).
 function TSF:GetSelectedRecipe()
     if not state.selected then return nil end
     for _, r in ipairs(state.recipes) do
@@ -4083,7 +4079,7 @@ function TSF:GetSelectedRecipe()
             return r
         end
     end
-    return nil
+    return state.entries and state.entries[state.selected] or nil
 end
 
 -- How many times the current player could make this recipe based purely
@@ -5299,6 +5295,11 @@ function TSF:LoadRecipes(unknown)
             })
         end
     end
+
+    -- Every entry of this view by name, filtered out or not, so the detail
+    -- panel and the craft bar keep showing a selected recipe a filter hides.
+    state.entries = {}
+    for _, r in ipairs(rawList) do state.entries[r.name] = r end
 
     -- Discover categories
     local catSet = {}
