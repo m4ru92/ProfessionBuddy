@@ -260,6 +260,13 @@ local DIFF_TIER_INDEX = { optimal = 1, medium = 2, easy = 3, trivial = 4 }
 -- lists) and RefreshRecipeList (the filter branch). Value string doubles as
 -- the dropdown label, shown after the "Skill Up: " prefix.
 local SKILLUP_NOGREY = "No Grey"
+-- Skill Up filters by skill-up colour, which only a known recipe has;
+-- Source filters by where a recipe comes from, which only a missing recipe
+-- carries. Skill Up shows in the Known and All views, Source in Missing and
+-- All. Until this split one dropdown, labelled Skill Up, held both lists.
+local SKILLUP_OPTIONS = { "All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey" }
+local SOURCE_OPTIONS  = { "All", "Trainer", "Vendor", "Drop", "Quest", "Reputation",
+                          "Discovery", "Automatic", "Undetermined" }
 
 -- Professions whose static skillRange NUMBERS are known-unreliable, so we
 -- suppress the threshold-number DISPLAY for them (difficulty COLOR/tier
@@ -327,7 +334,8 @@ local state = {
     selected     = nil,
     scrollOffset = 0,
     searchText   = "",
-    filterDiff   = "All",
+    filterDiff   = "All",   -- Skill Up: colour of a known recipe
+    filterSource = "All",   -- Source: where a missing recipe comes from
     filterCat    = "All",
     sortBy       = "Category",
     sortAsc      = true,
@@ -2080,7 +2088,7 @@ function TSF:BuildToolbar(parent)
 
     -- Skill Up dropdown
     self.diffDropdown = CreateDropdown(parent, 130,
-        {"All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey"}, "All",
+        SKILLUP_OPTIONS, "All",
         function(val)
             state.filterDiff = val
             self:RefreshRecipeList()
@@ -2089,15 +2097,35 @@ function TSF:BuildToolbar(parent)
     )
     self.diffDropdown:SetPoint("LEFT", self.catDropdown, "RIGHT", 4, 0)
 
+    -- Source dropdown. Anchored to Skill Up even while that one is hidden,
+    -- so neither moves when the View changes.
+    -- 130 wide: the View dropdown starts 14 past its right edge.
+    self.sourceDropdown = CreateDropdown(parent, 130,
+        SOURCE_OPTIONS, "All",
+        function(val)
+            state.filterSource = val
+            self:RefreshRecipeList()
+        end,
+        "Source: "
+    )
+    self.sourceDropdown:SetPoint("LEFT", self.diffDropdown, "RIGHT", 4, 0)
+
     -- View dropdown (right-aligned)
     self.viewDropdown = CreateDropdown(parent, 150,
         {"Known", "Missing", "All"}, "Known",
         function(val)
             local base = val:match("^(%a+)") or val
             state.showTab = base:lower()
-            state.selected = nil
             state.scrollOffset = 0
             self:RefreshRecipeList()
+            -- Keep the selected recipe if the new view has it (All has
+            -- every recipe), filtered out or not; otherwise clear it.
+            if state.selected and not (state.entries and state.entries[state.selected]) then
+                state.selected = nil
+            end
+            self:UpdateListHighlights()
+            self:RefreshDetailPanel()
+            self:UpdateCraftBar()
         end,
         "View: "
     )
@@ -4993,9 +5021,19 @@ function TSF:RestoreContentPanels()
     if self.skillBar then self.skillBar:Show() end
     if self.searchBox then self.searchBox:Show() end
     if self.catDropdown then self.catDropdown:Show() end
-    if self.diffDropdown then self.diffDropdown:Show() end
+    self:UpdateFilterVisibility()
     if self.sortDropdown then self.sortDropdown:Show() end
     if self.viewDropdown then self.viewDropdown:Show() end
+end
+
+-- Skill Up shows in the Known and All views, Source in Missing and All.
+function TSF:UpdateFilterVisibility()
+    if self.diffDropdown then
+        if state.showTab == "missing" then self.diffDropdown:Hide() else self.diffDropdown:Show() end
+    end
+    if self.sourceDropdown then
+        if state.showTab == "known" then self.sourceDropdown:Hide() else self.sourceDropdown:Show() end
+    end
 end
 
 function TSF:HideContentPanels()
@@ -5010,6 +5048,7 @@ function TSF:HideContentPanels()
     if self.searchBox then self.searchBox:Hide() end
     if self.catDropdown then self.catDropdown:Hide() end
     if self.diffDropdown then self.diffDropdown:Hide() end
+    if self.sourceDropdown then self.sourceDropdown:Hide() end
     if self.sortDropdown then self.sortDropdown:Hide() end
     if self.viewDropdown then self.viewDropdown:Hide() end
     if self.calcPanel then self.calcPanel:Hide() end
@@ -5322,29 +5361,24 @@ function TSF:LoadRecipes(unknown)
         end
     end
 
-    if self.diffDropdown then
-        local diffOpts
-        if state.showTab == "known" then
-            diffOpts = {"All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey"}
-        elseif state.showTab == "missing" then
-            diffOpts = {"All", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic", "Undetermined"}
-        else
-            diffOpts = {"All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey", "Trainer", "Vendor", "Drop", "Quest", "Reputation", "Discovery", "Automatic", "Undetermined"}
-        end
-        self.diffDropdown:SetOptions(diffOpts)
-        -- Reset a stale selection not offered on this tab (mirrors the
-        -- catDropdown guard above): e.g. a difficulty pick carried into the
-        -- Missing tab, or a source pick carried into Known. Without this the
-        -- filter silently hides every row and the label reads wrong.
-        if state.filterDiff ~= "All" then
-            local found = false
-            for _, o in ipairs(diffOpts) do if o == state.filterDiff then found = true; break end end
-            if not found then
-                state.filterDiff = "All"
-                self.diffDropdown:SetValue("All")
-            end
-        end
+    -- Reset a value neither list offers (mirrors the catDropdown guard
+    -- above), so a filter can never silently hide every row.
+    local function known(opts, v)
+        for _, o in ipairs(opts) do if o == v then return true end end
+        return false
     end
+    if not known(SKILLUP_OPTIONS, state.filterDiff) then
+        state.filterDiff = "All"
+        if self.diffDropdown then self.diffDropdown:SetValue("All") end
+    end
+    if not known(SOURCE_OPTIONS, state.filterSource or "All") then
+        state.filterSource = "All"
+        if self.sourceDropdown then self.sourceDropdown:SetValue("All") end
+    end
+    if self.listPanel and self.listPanel:IsShown() then self:UpdateFilterVisibility() end
+    -- A filter counts only in the views that show its dropdown.
+    local useDiff = state.showTab ~= "missing" and state.filterDiff ~= "All"
+    local useSrc  = state.showTab ~= "known" and (state.filterSource or "All") ~= "All"
 
     -- Filter
     local filtered = {}
@@ -5369,18 +5403,25 @@ function TSF:LoadRecipes(unknown)
         -- source is the opposite faction; filter by visible sources.
         local passFaction = true
         if r.isKnown then
-            if state.filterDiff == SKILLUP_NOGREY then
+            if not useDiff then
+                -- no Skill Up filter
+            elseif state.filterDiff == SKILLUP_NOGREY then
                 -- "still gives a skill up" = anything but grey/trivial
                 passDiff = (r.difficulty ~= "trivial")
-            elseif state.filterDiff ~= "All" then
+            else
                 passDiff = (r.difficulty == diffMap[state.filterDiff])
             end
+            -- a known recipe carries no sources, so a Source filter hides it
+            if useSrc then passDiff = false end
         else
             local vis = ShownSources(r)
             if vis ~= nil and #vis == 0 then
                 passFaction = false
-            elseif state.filterDiff ~= "All" then
-                local want = srcMap[state.filterDiff]
+            elseif useDiff then
+                -- a missing recipe has no skill-up colour yet
+                passDiff = false
+            elseif useSrc then
+                local want = srcMap[state.filterSource]
                 if vis ~= nil then
                     passDiff = false
                     for _, s in ipairs(vis) do
@@ -5618,10 +5659,12 @@ end
 function TSF:RebuildAndRefresh()
     state.filterCat = "All"
     state.filterDiff = "All"
+    state.filterSource = "All"
     state.sortBy = "Category"
     state.sortAsc = true
     if self.catDropdown then self.catDropdown:SetValue("All") end
     if self.diffDropdown then self.diffDropdown:SetValue("All") end
+    if self.sourceDropdown then self.sourceDropdown:SetValue("All") end
     if self.sortDropdown then self.sortDropdown:SetValue("Sort: Category ^", "Category") end
     self:RefreshRecipeList()
 end
@@ -5672,6 +5715,7 @@ function TSF:SaveWindowState()
         showTab      = state.showTab,
         filterCat    = state.filterCat,
         filterDiff   = state.filterDiff,
+        filterSource = state.filterSource,
         sortBy       = state.sortBy,
         sortAsc      = state.sortAsc,
         searchText   = state.searchText,
@@ -5692,6 +5736,7 @@ function TSF:RestoreWindowState(profName)
     state.showTab      = saved.showTab
     state.filterCat    = saved.filterCat
     state.filterDiff   = saved.filterDiff
+    state.filterSource = saved.filterSource or "All"
     state.sortBy       = saved.sortBy
     -- Migrate removed sort options from older versions
     if state.sortBy == "Skill Req" or state.sortBy == "Craftable" or state.sortBy == "Difficulty" then
@@ -5818,6 +5863,7 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
         state.showTab      = "known"
         state.filterCat    = "All"
         state.filterDiff   = "All"
+        state.filterSource = "All"
         state.sortBy       = "Category"
         state.sortAsc      = true
         state.searchText   = ""
@@ -5833,6 +5879,7 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
     if self.searchBox then self.searchBox:SetText(state.searchText or "") end
     if self.catDropdown then self.catDropdown:SetValue(state.filterCat or "All") end
     if self.diffDropdown then self.diffDropdown:SetValue(state.filterDiff or "All") end
+    if self.sourceDropdown then self.sourceDropdown:SetValue(state.filterSource or "All") end
     if self.sortDropdown then
         local arrow = state.sortAsc and " ^" or " v"
         self.sortDropdown:SetValue("Sort: " .. (state.sortBy or "Category") .. arrow, state.sortBy or "Category")
@@ -5934,6 +5981,7 @@ function TSF:OpenWithStatic(profName)
     state.showTab       = "missing"
     state.filterCat     = "All"
     state.filterDiff    = "All"
+    state.filterSource  = "All"
     state.sortBy        = "Category"
     state.sortAsc       = true
     state.searchText    = ""
@@ -5954,6 +6002,7 @@ function TSF:OpenWithStatic(profName)
     if self.searchBox then self.searchBox:SetText("") end
     if self.catDropdown then self.catDropdown:SetValue("All") end
     if self.diffDropdown then self.diffDropdown:SetValue("All") end
+    if self.sourceDropdown then self.sourceDropdown:SetValue("All") end
     if self.sortDropdown then
         self.sortDropdown:SetValue("Sort: Category ^", "Category")
     end
@@ -6006,6 +6055,7 @@ function TSF:OpenWithCharacter(charKey, profName)
     state.showTab       = "known"
     state.filterCat     = "All"
     state.filterDiff    = "All"
+    state.filterSource  = "All"
     state.sortBy        = "Category"
     state.sortAsc       = true
     state.searchText    = ""
@@ -6106,6 +6156,7 @@ function TSF:OpenWithCharacter(charKey, profName)
     if self.searchBox then self.searchBox:SetText("") end
     if self.catDropdown then self.catDropdown:SetValue("All") end
     if self.diffDropdown then self.diffDropdown:SetValue("All") end
+    if self.sourceDropdown then self.sourceDropdown:SetValue("All") end
     if self.sortDropdown then
         self.sortDropdown:SetValue("Sort: Category ^", "Category")
     end

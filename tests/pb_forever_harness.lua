@@ -663,13 +663,13 @@ print("  PASS F21 vendors: recipe items recorded with where, price and stock (on
 -- whatever a trainer lists (Basic Campfire); the bank is Forever's tab
 -- bank, never the keyring or the reagent bag
 st.showTab, st.searchText, st.selected = "missing", "", nil
-st.filterDiff = "Vendor"
+st.filterSource = "Vendor"
 TSF:RefreshRecipeList()
 local inVendor = {}
 for _, r in ipairs(st.recipes) do if not r.isHeader then inVendor[r.name] = true end end
 EXPECT(inVendor["Kodo Hide Bag"], "the Vendor filter misses a recipe with a seen vendor")
 EXPECT(not inVendor["Azure Gustwoven Belt"], "the Vendor filter shows a recipe no vendor was seen for")
-st.filterDiff = "All"
+st.filterSource = "All"
 st.searchText = "kodo hide bag"
 TSF:RefreshRecipeList()
 local rowText = {}
@@ -734,13 +734,13 @@ TSF:RefreshRecipeList()
 st.selected = "Azure Gustwoven Belt"
 TSF:RefreshDetailPanel()
 TSF.ClearDetailPanel = function(...) detailCleared = detailCleared + 1; return clear(...) end
-for _, o in ipairs(TSF.diffDropdown.optionBtns) do
+for _, o in ipairs(TSF.sourceDropdown.optionBtns) do
     if o.value == "Vendor" then o:GetScript("OnClick")(o) end
 end
 TSF.ClearDetailPanel = clear
 local listed = false
 for _, r in ipairs(st.recipes) do if r.name == "Azure Gustwoven Belt" then listed = true end end
-EXPECT(st.filterDiff == "Vendor" and not listed, "the Vendor filter did not hide the belt; the test proves nothing")
+EXPECT(st.filterSource == "Vendor" and not listed, "the Vendor filter did not hide the belt; the test proves nothing")
 EXPECT(st.selected == "Azure Gustwoven Belt", "a filtered-out Missing recipe lost its selection")
 EXPECT(detailCleared == 0, "the detail panel was cleared")
 -- the game's own list updates keep coming while it is hidden (m4ru
@@ -754,7 +754,7 @@ EXPECT(st.selected == "Azure Gustwoven Belt" and shownName == "Azure Gustwoven B
        "a list update blanked the hidden recipe's detail panel: " .. tostring(shownName))
 EXPECT(TSF:GetSelectedRecipe() and TSF:GetSelectedRecipe().name == "Azure Gustwoven Belt", "the craft bar lost the recipe")
 -- back to All: listed again, still selected
-for _, o in ipairs(TSF.diffDropdown.optionBtns) do
+for _, o in ipairs(TSF.sourceDropdown.optionBtns) do
     if o.value == "All" then o:GetScript("OnClick")(o) end
 end
 listed = false
@@ -768,8 +768,88 @@ st.showTab, st.searchText, st.filterDiff = "known", "", "All"
 TSF:RefreshRecipeList()
 print("  PASS F23 a Missing recipe hidden by a filter stays selected and its detail panel stays, through the game's list updates too; a recipe the profession lacks still clears")
 
+-- F24: the filters split (m4ru 2026-09-27: the Skill Up dropdown held only
+-- sources in the Missing view). Skill Up lists skill-up colours and shows
+-- in Known and All; Source lists sources and shows in Missing and All.
+-- Changing the View keeps the selected recipe when the new view has it
+C_TradeSkillUI.OpenTradeSkill(165)
+TS_LIST_READY()
+FLUSH()
+local function values(dd)
+    local out = {}
+    for _, o in ipairs(dd.optionBtns) do if o:IsShown() ~= false then out[#out + 1] = o.value end end
+    return table.concat(out, ",")
+end
+local function pick(dd, v)
+    for _, o in ipairs(dd.optionBtns) do if o.value == v then o:GetScript("OnClick")(o); return end end
+    for i, o in ipairs(TSF.viewDropdown.optionBtns) do
+        if dd == TSF.viewDropdown and o.value:match("^" .. v) then o:GetScript("OnClick")(o); return end
+    end
+    error("no option " .. v)
+end
+EXPECT(values(TSF.diffDropdown) == "All,No Grey,Orange,Yellow,Green,Grey", "Skill Up options: " .. values(TSF.diffDropdown))
+EXPECT(values(TSF.sourceDropdown) == "All,Trainer,Vendor,Drop,Quest,Reputation,Discovery,Automatic,Undetermined",
+       "Source options: " .. values(TSF.sourceDropdown))
+st.searchText = ""
+pick(TSF.viewDropdown, "Known")
+EXPECT(TSF.diffDropdown:IsShown() and not TSF.sourceDropdown:IsShown(), "Known view: Skill Up only")
+pick(TSF.viewDropdown, "Missing")
+EXPECT(not TSF.diffDropdown:IsShown() and TSF.sourceDropdown:IsShown(), "Missing view: Source only")
+pick(TSF.viewDropdown, "All")
+EXPECT(TSF.diffDropdown:IsShown() and TSF.sourceDropdown:IsShown(), "All view: both")
+-- All view: a Skill Up colour lists only known recipes, a Source only missing ones
+local function listed()
+    local known, missing = 0, 0
+    for _, r in ipairs(st.recipes) do
+        if not r.isHeader then if r.isKnown then known = known + 1 else missing = missing + 1 end end
+    end
+    return known, missing
+end
+pick(TSF.diffDropdown, "Orange")
+local k, m = listed()
+EXPECT(k > 0 and m == 0, "Skill Up Orange in All: " .. k .. " known, " .. m .. " missing")
+pick(TSF.diffDropdown, "All")
+pick(TSF.sourceDropdown, "Vendor")
+k, m = listed()
+EXPECT(k == 0 and m > 0, "Source Vendor in All: " .. k .. " known, " .. m .. " missing")
+-- a Source pick waits while Known hides its dropdown, and applies again in Missing
+pick(TSF.viewDropdown, "Known")
+k, m = listed()
+EXPECT(k == 6 and st.filterSource == "Vendor", "Known view filtered by Source: " .. k)
+pick(TSF.viewDropdown, "Missing")
+local kodo = false
+for _, r in ipairs(st.recipes) do if r.name == "Kodo Hide Bag" then kodo = true end end
+EXPECT(kodo and #st.recipes < 40, "Source Vendor not applied back in Missing")
+-- and a Skill Up pick waits while Missing hides its dropdown
+pick(TSF.sourceDropdown, "All")
+pick(TSF.viewDropdown, "Known")
+pick(TSF.diffDropdown, "Orange")
+pick(TSF.viewDropdown, "Missing")
+k, m = listed()
+EXPECT(m > 100 and st.filterDiff == "Orange", "Missing view filtered by Skill Up: " .. m)
+pick(TSF.viewDropdown, "Known")
+pick(TSF.diffDropdown, "All")
+pick(TSF.viewDropdown, "Missing")
+pick(TSF.sourceDropdown, "Vendor")
+-- the View change keeps a selection the new view has, and clears one it lacks
+st.selected = "Kodo Hide Bag"
+TSF:RefreshDetailPanel()
+local name
+rawset(TSF.detName, "SetText", function(_, t) name = t end)
+pick(TSF.viewDropdown, "All")
+EXPECT(st.selected == "Kodo Hide Bag" and name == "Kodo Hide Bag", "Missing -> All lost the recipe: " .. tostring(name))
+pick(TSF.viewDropdown, "Known")
+EXPECT(st.selected == nil, "Known kept a recipe it does not have")
+pick(TSF.sourceDropdown, "All")
+st.selected = "Light Leather"
+pick(TSF.viewDropdown, "All")
+EXPECT(st.selected == "Light Leather" and name == "Light Leather", "Known -> All lost the recipe")
+pick(TSF.viewDropdown, "Known")
+EXPECT(st.selected == "Light Leather", "All -> Known lost a known recipe")
+print("  PASS F24 Skill Up (colours; Known and All) and Source (sources; Missing and All) are separate; each filters its own recipes; a View change keeps a selection the new view has and clears one it lacks")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (23)")
+print("ALL FOREVER TESTS PASS (24)")
