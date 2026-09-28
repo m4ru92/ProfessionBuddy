@@ -2083,8 +2083,30 @@ do
 end
 passed("T80 trainer learn level -- read from the rank, recipe names only")
 
+-- ── T81: TBC Anniversary ignores WoW: Forever knowledge sharing ──────────
+-- COMM_REV 8 adds KNOW_REQ / KNOW_DATA for Forever (Knowledge.lua). This
+-- client has no knowledge store: a KNOW_REQ from a trusted contact gets no
+-- answer, a KNOW_DATA is dropped without an error, and a rev-8 SYNC_DATA
+-- does not make it ask.
+do
+    assert(addon.COMM_REV == 8, "T81: COMM_REV is " .. tostring(addon.COMM_REV))
+    assert(addon.Knowledge == nil, "T81: Knowledge loaded on TBC Anniversary")
+    addon.db.contacts["Knowy-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 }
+    clearSent()
+    recv("Knowy-TestRealm", { _type = "KNOW_REQ", since = 0, profs = { "Tailoring" } })
+    assert(#sentOfType("KNOW_DATA") == 0, "T81: TBC Anniversary answered a KNOW_REQ")
+    recv("Knowy-TestRealm", { _type = "KNOW_DATA", at = 1, npcs = {}, r = {} })
+    recv("Knowy-TestRealm", { _type = "SYNC_DATA", _commrev = 8, class = "MAGE", level = 70,
+                              faction = "Horde", professions = {}, partial = true })
+    assert(#sentOfType("KNOW_REQ") == 0, "T81: TBC Anniversary asked for knowledge")
+    assert(addon.db.knowledgeShared == nil, "T81: TBC Anniversary stored shared knowledge")
+    addon.db.contacts["Knowy-TestRealm"] = nil
+    DS:RemoveRemoteCharacter("Knowy-TestRealm")
+end
+passed("T81 TBC Anniversary ignores KNOW_REQ / KNOW_DATA and never asks (COMM_REV 8)")
+
 leaveGuild()
-print("ALL 80 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 81 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2097,6 +2119,6 @@ print("ALL 80 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " source relation, T72 the order origin stamp, T73 the skinning loot data"
     .. " and T74 the recipe faction visibility rule, T75-T79 Poisons data, localized storage,"
     .. " class gating, the class-trainer guard and Poisons never leaving the client,"
-    .. " T80 the trainer learn level read from the rank; "
+    .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored; "
     .. pass .. " of them print a PASS line above)")
 

@@ -13,7 +13,18 @@
 --                                  itemID, price, stock } },
 --       items      = { [itemID] = true },  -- recipe items seen in your bags
 --       seenBy     = { [charKey] = true },  -- who saw it; "*" = everyone
+--       at         = time(),                -- last written, for sharing
 --   }
+--
+-- ProfBuddyDB.knowledgeShared holds what friends and guildmates shared
+-- (Phase 4e; Comm.lua carries it), one table per peer, never merged into
+-- your own records:
+--   [peerKey] = { at = last exchange, since = newest record they sent,
+--                 records = { [recipeID] = { at, learnLevel, teachers,
+--                                            vendors, items } } }
+-- Reads merge it in: your own learn level wins, else the most recent a
+-- peer saw; trainers and vendors are yours plus theirs; a peer's sighting
+-- counts as seen for Learn as you go.
 --
 -- A recorded learn level beats the one in Data/Forever wherever PB shows
 -- a learn level, and the detail panel's Source line names the trainers
@@ -53,6 +64,7 @@ local CAPTURE_DELAY = 1.0
 local MAX_NAMES_SHOWN = 2
 
 function KN:Init()
+    self:PrunePeers()
     addon:RegisterEvent("TRADE_SKILL_SHOW", function()
         if addon.db.settings.foreverRecipes == nil then
             -- after PB's window is up, so the question sits over it
@@ -98,6 +110,7 @@ local function Entry(recipeID)
         e.seenBy = { ["*"] = true }
     end
     e.seenBy[addon:PlayerKey()] = true
+    e.at = time()
     return e
 end
 
@@ -105,12 +118,21 @@ end
 -- comes with the profession keeps the data's level, whatever a trainer
 -- lists: the Cooking trainer lists Basic Campfire at 20, but it comes with
 -- Cooking at 1.
+-- With no sighting of your own, the most recent one a peer shared.
 function KN:LearnLevel(recipeID)
-    local e = self:Get(recipeID)
-    if not (e and e.learnLevel) then return nil end
+    if not recipeID then return nil end
     local r = addon.RecipeDB and addon.RecipeDB:GetRecipeBySpell(recipeID)
     if r and r.learnFrom == "automatic" then return nil end
-    return e.learnLevel
+    local e = self:Get(recipeID)
+    if e and e.learnLevel then return e.learnLevel end
+    local best, bestAt
+    for _, shared in pairs(addon.db and addon.db.knowledgeShared or {}) do
+        local p = shared.records and shared.records[recipeID]
+        if p and p.learnLevel and (not bestAt or (p.at or 0) > bestAt) then
+            best, bestAt = p.learnLevel, p.at or 0
+        end
+    end
+    return best
 end
 
 -- recipe item ID -> { recipeID, ... }, from the teachItems in
@@ -192,18 +214,57 @@ local function Names(list, faction)
     return table.concat(names, ", ")
 end
 
+-- Your own trainers or vendors (`field` "teachers" or "vendors") for this
+-- recipe plus every peer's, one per NPC, yours kept where both have one. A
+-- peer's copy carries `from`, the peer's name; when several peers saw the
+-- same NPC, the one with the most recent record is credited. nil when
+-- there are none.
+local function Combined(recipeID, field)
+    local own = KN:Get(recipeID)
+    local out, any = {}, false
+    for k, v in pairs(own and own[field] or {}) do out[k] = v; any = true end
+    for peer, shared in pairs(addon.db.knowledgeShared or {}) do
+        local p = shared.records and shared.records[recipeID]
+        for k, v in pairs(p and p[field] or {}) do
+            local have = out[k]
+            local at = p.at or 0
+            if have == nil or (have.from and (at > have._at
+                    or (at == have._at and addon:ShortName(peer) < have.from))) then
+                local c = Copy(v)
+                c.from, c._at = addon:ShortName(peer), at
+                out[k] = c
+                any = true
+            end
+        end
+    end
+    return any and out or nil
+end
+
+-- The peers who shared seeing this recipe's item in their bags.
+local function PeerItems(recipeID)
+    local names
+    for peer, shared in pairs(addon.db.knowledgeShared or {}) do
+        local p = shared.records and shared.records[recipeID]
+        if p and p.items then
+            names = names or {}
+            names[#names + 1] = addon:ShortName(peer)
+        end
+    end
+    if names then table.sort(names) end
+    return names
+end
+
 -- The recipe's sources as the Source line shows them: what this account
--- has seen first, then the data's own. Seen trainers fill in the data's
+-- and its peers have seen first, then the data's own. Seen trainers fill in the data's
 -- trainer source; a seen vendor stands in for the data's recipe item
 -- ("Undetermined - Pattern: X"), and an item seen in your bags relabels
 -- it "Recipe item". With faction, the other faction's NPCs are left out.
 -- Returns the data's sources untouched when nothing was seen.
 function KN:MergeSources(sources, recipeID, faction)
     local e = self:Get(recipeID)
-    if not e then return sources end
-    local trainers = Names(e.teachers, faction)
-    local vendors = Names(e.vendors, faction)
-    local inBags = e.items and next(e.items) ~= nil
+    local trainers = Names(Combined(recipeID, "teachers"), faction)
+    local vendors = Names(Combined(recipeID, "vendors"), faction)
+    local inBags = (e and e.items and next(e.items) ~= nil) or PeerItems(recipeID) ~= nil
     if not (trainers or vendors or inBags) then return sources end
     local out = {}
     if trainers then out[#out + 1] = { method = "trainer", detail = trainers } end
@@ -232,19 +293,19 @@ end
 -- Source line's tooltip. nil when nothing was seen.
 function KN:TooltipLines(recipeID, faction)
     local e = self:Get(recipeID)
-    if not e then return nil end
     local lines = {}
     local function place(npc)
         local where = npc.zone or ""
         if npc.subZone and npc.subZone ~= "" then where = where .. ", " .. npc.subZone end
-        return (npc.name or "?") .. (where ~= "" and (" - " .. where) or "")
+        local from = npc.from and ("  |cff888888(from " .. npc.from .. ")|r") or ""
+        return (npc.name or "?") .. (where ~= "" and (" - " .. where) or "") .. from
     end
-    local trainers = Sorted(e.teachers, faction)
+    local trainers = Sorted(Combined(recipeID, "teachers"), faction)
     if #trainers > 0 then
         lines[#lines + 1] = "|cff00ff00Trainers|r"
         for _, npc in ipairs(trainers) do lines[#lines + 1] = "  " .. place(npc) end
     end
-    local vendors = Sorted(e.vendors, faction)
+    local vendors = Sorted(Combined(recipeID, "vendors"), faction)
     if #vendors > 0 then
         lines[#lines + 1] = "|cffffff00Vendors|r"
         for _, npc in ipairs(vendors) do
@@ -252,8 +313,12 @@ function KN:TooltipLines(recipeID, faction)
             lines[#lines + 1] = "  " .. place(npc) .. (price and ("  " .. price) or "")
         end
     end
-    if e.items and next(e.items) then
+    if e and e.items and next(e.items) then
         lines[#lines + 1] = "|cff888888Recipe item seen in your bags|r"
+    end
+    local peers = PeerItems(recipeID)
+    if peers then
+        lines[#lines + 1] = "|cff888888Recipe item seen by " .. table.concat(peers, ", ") .. "|r"
     end
     if #lines == 0 then return nil end
     return lines
@@ -270,12 +335,18 @@ end
 
 -- Has this recipe been seen at a trainer, a vendor or in the bags: by any
 -- character, or with alts kept separate by `charKey` itself?
+-- A peer's sighting counts for every one of your characters.
 function KN:Seen(recipeID, charKey)
     local e = self:Get(recipeID)
-    if not e then return false end
-    if not addon.db.settings.foreverAltsSeparate then return true end
-    local by = e.seenBy
-    return not by or by["*"] or (charKey and by[charKey]) or false
+    if e then
+        if not addon.db.settings.foreverAltsSeparate then return true end
+        local by = e.seenBy
+        if not by or by["*"] or (charKey and by[charKey]) then return true end
+    end
+    for _, shared in pairs(addon.db.knowledgeShared or {}) do
+        if shared.records and shared.records[recipeID] then return true end
+    end
+    return false
 end
 
 -- The unknown recipes the Missing list shows: all of them, or with Learn
@@ -324,6 +395,112 @@ function KN:AskRecipeMode()
         }
     end
     StaticPopup_Show(PROMPT)
+end
+
+----------------------------------------------------------------------
+-- Sharing (Phase 4e). Comm.lua carries it: KNOW_REQ asks, KNOW_DATA
+-- answers. What we send is our own records only, never what peers shared.
+----------------------------------------------------------------------
+
+-- A peer who has not exchanged with us for this long is dropped, unless
+-- they are a contact (a contact goes when removed; Comm:ForgetPeer).
+local SHARED_TTL = 30 * 86400
+local MAX_SHARED_PEERS = 100
+
+-- The newest record a peer already sent us, so they send only newer ones.
+function KN:SharedSince(peer)
+    local shared = addon.db.knowledgeShared and addon.db.knowledgeShared[peer]
+    return shared and shared.since or 0
+end
+
+-- Every profession any of our own characters has.
+function KN:OurProfessions()
+    local out, seen = {}, {}
+    for _, char in pairs(addon.db.characters or {}) do
+        if not char.isRemote then
+            for prof in pairs(char.professions or {}) do
+                if not seen[prof] then seen[prof] = true; out[#out + 1] = prof end
+            end
+        end
+    end
+    table.sort(out)
+    return out
+end
+
+-- Our records for `profs` (a set of profession names) written after
+-- `since`, in the compact wire shape: NPCs once in `npcs`, referenced by
+-- index from each recipe. `at` is the newest record sent.
+--   { at, npcs = { { npcID, name, zone, subZone, faction } },
+--     r = { [recipeID] = { a = at, l = learnLevel, t = { npc index },
+--                          v = { { npc index, itemID, price } }, i = true } } }
+function KN:BuildShare(since, profs, maxRecipes, maxPerRecipe)
+    local RDB = addon.RecipeDB
+    local npcs, index, r, newest, n = {}, {}, {}, since, 0
+    local function ref(key, npc)
+        local k = tostring(key)
+        if not index[k] then
+            npcs[#npcs + 1] = { type(key) == "number" and key or nil, npc.name, npc.zone,
+                                npc.subZone, npc.faction }
+            index[k] = #npcs
+        end
+        return index[k]
+    end
+    for id, e in pairs(addon.db.knowledge or {}) do
+        local recipe = RDB and RDB.spellToRecipe[id]
+        local at = e.at or 1
+        if recipe and profs[recipe.profName] and at > since then
+            n = n + 1
+            if n > maxRecipes then break end
+            local out = { a = at, l = e.learnLevel }
+            for key, t in pairs(e.teachers or {}) do
+                out.t = out.t or {}
+                if #out.t < maxPerRecipe then out.t[#out.t + 1] = ref(key, t) end
+            end
+            for key, v in pairs(e.vendors or {}) do
+                out.v = out.v or {}
+                if #out.v < maxPerRecipe then out.v[#out.v + 1] = { ref(key, v), v.itemID, v.price } end
+            end
+            if e.items and next(e.items) then out.i = true end
+            r[id] = out
+            if at > newest then newest = at end
+        end
+    end
+    return { at = newest, npcs = npcs, r = r }
+end
+
+-- A sanitized KNOW_DATA (Comm:SanitizeKnowledge) from `peer`.
+function KN:StoreShared(peer, clean)
+    addon.db.knowledgeShared = addon.db.knowledgeShared or {}
+    local all = addon.db.knowledgeShared
+    local shared = all[peer] or { records = {}, since = 0 }
+    all[peer] = shared
+    for id, rec in pairs(clean.records) do shared.records[id] = rec end
+    shared.at = time()
+    if (clean.at or 0) > (shared.since or 0) then shared.since = clean.at end
+    self:PrunePeers()
+end
+
+function KN:ForgetPeer(peer)
+    if addon.db and addon.db.knowledgeShared then addon.db.knowledgeShared[peer] = nil end
+end
+
+-- Drop peers past SHARED_TTL (contacts excepted), then the oldest beyond
+-- MAX_SHARED_PEERS.
+function KN:PrunePeers()
+    local all = addon.db and addon.db.knowledgeShared
+    if not all then return end
+    local now, contacts, kept = time(), addon.db.contacts or {}, {}
+    for peer, shared in pairs(all) do
+        if not contacts[peer] and (now - (shared.at or 0)) > SHARED_TTL then
+            all[peer] = nil
+        else
+            kept[#kept + 1] = peer
+        end
+    end
+    if #kept > MAX_SHARED_PEERS then
+        table.sort(kept, function(a, b) return (all[a].at or 0) > (all[b].at or 0) end)
+        for i = MAX_SHARED_PEERS + 1, #kept do all[kept[i]] = nil end
+    end
 end
 
 ----------------------------------------------------------------------

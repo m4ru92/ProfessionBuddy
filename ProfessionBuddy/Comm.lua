@@ -11,6 +11,10 @@
 --   SYNC_REQ   -> request full data from a player
 --   SYNC_DATA  -> full character payload (professions, recipes, inventory)
 --   INCR       -> incremental inventory/profession update (debounced)
+--   KNOW_REQ   -> WoW: Forever: ask a peer for the trainers, vendors and
+--                 learn levels they have seen (Knowledge.lua)
+--   KNOW_DATA  -> their own sightings, for our professions, newer than
+--                 the last ones they sent us
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
@@ -43,7 +47,11 @@ local Comm = addon:NewModule("Comm")
 -- before. `_from` and `_ver` were REMOVED from every message: a self-reported
 -- identity on the wire is exactly what a future handler must never trust, and
 -- nothing ever read either field.
-local COMM_REV = 7
+-- rev 8 = WoW: Forever knowledge sharing (Phase 4e, FOREVER-phase4e-scope.md):
+-- KNOW_REQ / KNOW_DATA, whisper only. Sent only to a peer whose SYNC_DATA
+-- carried rev >= 8, and only by a client with Knowledge.lua (Forever), so a
+-- TBC Anniversary client and an older one never see either.
+local COMM_REV = 8
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -87,6 +95,14 @@ local WHISPER_MEMORY    = 10      -- a system line must follow our whisper this 
 local TRUST_PENDING_TTL     = 60  -- seconds a held message stays replayable
 local TRUST_PENDING_SENDERS = 16  -- max distinct not-yet-trusted senders held at once
 local TRUST_PENDING_PER     = 2   -- max messages held per such sender (newest kept)
+
+-- Knowledge sharing (WoW: Forever). One KNOW_DATA over any of these caps is
+-- dropped whole: an honest client never gets near them (2,347 recipes exist).
+local KNOW_MIN_REV        = 8
+local MAX_KNOW_RECIPES    = 3000
+local MAX_KNOW_NPCS       = 600
+local MAX_KNOW_PER_RECIPE = 12    -- trainers, or vendors, on one recipe
+local MAX_KNOW_PROFS      = 16
 
 ----------------------------------------------------------------------
 -- Init
@@ -533,6 +549,8 @@ local ALLOWED_DIST = {
     ORDER_UPDATE = WHISPER_ONLY,
     ORDER_ACK    = WHISPER_ONLY,
     ORDER_CLAIM  = WHISPER_ONLY,
+    KNOW_REQ     = WHISPER_ONLY,
+    KNOW_DATA    = WHISPER_ONLY,
     HELLO        = BROADCASTABLE,
     ORDER_OPEN   = BROADCASTABLE,
     ORDER_CLOSED = BROADCASTABLE,
@@ -611,6 +629,10 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
             self:HandleOrderClaim(sender, data, distribution)
         elseif msgType == "ORDER_CLOSED" then
             self:HandleOrderClosed(sender, data, distribution)
+        elseif msgType == "KNOW_REQ" then
+            self:HandleKnowReq(sender, data, distribution)
+        elseif msgType == "KNOW_DATA" then
+            self:HandleKnowData(sender, data, distribution)
         end
         -- Any message from a trusted peer proves they're online -- deliver any
         -- order messages we had queued for them while offline.
@@ -1568,6 +1590,8 @@ function Comm:RequestSync(target, isManual)
         }
     end
     addon.db.contacts[target].trusted = true
+    -- A manual sync asks for their knowledge again too.
+    if isManual and self._knowAsked then self._knowAsked[target] = nil end
 
     -- Record the outstanding request: it is what lets a reply from a peer we
     -- have no other relationship with (a guildmate) be accepted at all.
@@ -1874,7 +1898,139 @@ function Comm:HandleSyncData(sender, data, distribution)
         print("|cff00ccffProfessionBuddy:|r Synced data from " .. sender .. ".")
     end
 
+    -- A peer new enough to share knowledge: ask once this session.
+    if sanInt(data._commrev, 0, 1000, 0) >= KNOW_MIN_REV then
+        self:RequestKnowledge(sender)
+    end
+
     self:NotifyUIRefresh()
+end
+
+----------------------------------------------------------------------
+-- Knowledge sharing (WoW: Forever, Phase 4e; the store is Knowledge.lua)
+-- After a peer's SYNC_DATA we ask them once a session (KNOW_REQ) for the
+-- trainers, vendors, learn levels and recipe items they have seen, naming
+-- our professions and the newest record they already sent us. They answer
+-- with their OWN sightings only (KNOW_DATA). Both are whispers and ride
+-- the sync trust tiers: a guild-tier peer pays from the guild serve budget.
+----------------------------------------------------------------------
+function Comm:RequestKnowledge(peer)
+    local KN = addon.Knowledge
+    if not (KN and self._ready) then return end
+    peer = normFullKey(peer)
+    if not peer then return end
+    self._knowAsked = self._knowAsked or {}
+    if self._knowAsked[peer] then return end
+    local now = time()
+    self._knowAsked[peer] = now
+    self._knowPending = self._knowPending or {}
+    self._knowPending[peer] = now
+    self:SendWhisper("KNOW_REQ", { since = KN:SharedSince(peer), profs = KN:OurProfessions() },
+        peer, "BULK")
+end
+
+function Comm:HandleKnowReq(sender, data, distribution)
+    local KN = addon.Knowledge
+    if not (KN and self:SharingEnabled()) then return end
+    local tier = self:TrustLevel(sender)
+    if not tier then return end
+    local now = time()
+    self._knowServed = self._knowServed or {}
+    local cooldown = (tier == "guild") and GUILD_SERVE_COOLDOWN or SERVE_COOLDOWN
+    if self._knowServed[sender] and (now - self._knowServed[sender]) < cooldown then return end
+    if tier == "guild" and not self:GuildServeBudget(now) then return end
+
+    local profs, n = {}, 0
+    if type(data.profs) == "table" then
+        for _, raw in ipairs(data.profs) do
+            n = n + 1
+            if n > MAX_KNOW_PROFS then break end
+            local name = sanStr(raw, 40)
+            if name then profs[name] = true end
+        end
+    end
+    local since = sanInt(data.since, 0, now + 86400, 0)
+    self._knowServed[sender] = now
+    if tier == "guild" then self:GuildServeBudget(now, true) end
+    self:SendWhisper("KNOW_DATA", KN:BuildShare(since, profs, MAX_KNOW_RECIPES, MAX_KNOW_PER_RECIPE),
+        sender, "BULK")
+end
+
+-- Only in answer to our own KNOW_REQ, and only from a peer still trusted
+-- (the dispatcher already dropped anyone else).
+function Comm:HandleKnowData(sender, data, distribution)
+    local KN = addon.Knowledge
+    if not KN then return end
+    local due = self._knowPending and self._knowPending[sender]
+    if not due or (time() - due) > PENDING_REQ_TTL then return end
+    self._knowPending[sender] = nil
+    local clean = self:SanitizeKnowledge(data)
+    if not clean then return end
+    KN:StoreShared(sender, clean)
+    self:NotifyUIRefresh()
+end
+
+local function cleanNpc(n)
+    local fac = sanFaction(n[5])
+    if fac == "Unknown" then fac = nil end
+    return { id = sanID(n[1], 10^7), name = sanStr(n[2], 48) or "?", zone = sanStr(n[3], 48),
+             subZone = sanStr(n[4], 48), faction = fac }
+end
+
+local function copyNpc(n)
+    return { name = n.name, zone = n.zone, subZone = n.subZone, faction = n.faction }
+end
+
+-- Rebuild one KNOW_DATA field by field. nil drops the whole message: the
+-- wrong shape, or over any cap. Inside it, a recipe PB does not know or a
+-- junk entry is skipped.
+function Comm:SanitizeKnowledge(data)
+    local RDB = addon.RecipeDB
+    if not (RDB and type(data.npcs) == "table" and type(data.r) == "table") then return nil end
+    local npcs, nN = {}, 0
+    for _ in pairs(data.npcs) do
+        nN = nN + 1
+        if nN > MAX_KNOW_NPCS then return nil end
+    end
+    for i, n in ipairs(data.npcs) do
+        if type(n) ~= "table" then return nil end
+        npcs[i] = cleanNpc(n)
+    end
+    local now, records, nR = time(), {}, 0
+    for rawID, rec in pairs(data.r) do
+        nR = nR + 1
+        if nR > MAX_KNOW_RECIPES then return nil end
+        local id = sanID(rawID, 10^7)
+        if id and type(rec) == "table" and RDB.spellToRecipe[id] then
+            local out = { at = sanInt(rec.a, 0, now + 86400, 0), learnLevel = sanID(rec.l, 450) }
+            if rec.i == true then out.items = true end
+            if type(rec.t) == "table" then
+                if #rec.t > MAX_KNOW_PER_RECIPE then return nil end
+                for _, idx in ipairs(rec.t) do
+                    local n = npcs[sanID(idx, MAX_KNOW_NPCS) or 0]
+                    if n then
+                        out.teachers = out.teachers or {}
+                        out.teachers[n.id or n.name] = copyNpc(n)
+                    end
+                end
+            end
+            if type(rec.v) == "table" then
+                if #rec.v > MAX_KNOW_PER_RECIPE then return nil end
+                for _, e in ipairs(rec.v) do
+                    local n = type(e) == "table" and npcs[sanID(e[1], MAX_KNOW_NPCS) or 0]
+                    if n then
+                        local v = copyNpc(n)
+                        v.itemID = sanID(e[2], 10^7)
+                        v.price = sanInt(e[3], 0, 10^9, 0)
+                        out.vendors = out.vendors or {}
+                        out.vendors[n.id or n.name] = v
+                    end
+                end
+            end
+            records[id] = out
+        end
+    end
+    return { at = sanInt(data.at, 0, now + 86400, 0), records = records }
 end
 
 ----------------------------------------------------------------------
@@ -2292,9 +2448,12 @@ function Comm:ForgetPeer(key)
     lastServed[k] = nil
     for _, name in ipairs({ "_pushState", "_recvState", "_guildSyncAt", "_resyncAt",
                             "_helloAckAt", "_helloPullAt", "_reflexAt",
-                            "_pendingReq", "_lastOpenAt" }) do
+                            "_pendingReq", "_lastOpenAt",
+                            "_knowAsked", "_knowPending", "_knowServed" }) do
         if self[name] then self[name][k] = nil end
     end
+    -- and what they shared with us (WoW: Forever)
+    if addon.Knowledge then addon.Knowledge:ForgetPeer(k) end
     local pkey = normKey(k)
     if self._pendingSync and pkey then self._pendingSync[pkey] = nil end
     if self._recentWhispers then self._recentWhispers[addon:ShortName(k)] = nil end
@@ -2346,6 +2505,8 @@ function Comm:SweepSessionTables()
     sweepByAge(self._resyncAt, SESSION_TTL, now)
     sweepByAge(self._lastOpenAt, SESSION_TTL, now)
     sweepByAge(self._pendingReq, PENDING_REQ_TTL, now)
+    sweepByAge(self._knowPending, PENDING_REQ_TTL, now)
+    sweepByAge(self._knowServed, SESSION_TTL, now)
     sweepByAge(self._recentWhispers, WHISPER_MEMORY * 6, now)
 
     -- An ack slot whose timer never ran (a cancelled timer, a reload mid-flight).

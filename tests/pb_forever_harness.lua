@@ -931,8 +931,203 @@ EXPECT(S.foreverAltsSeparate == true, "alts box does not save")
 S.foreverRecipes, S.foreverAltsSeparate = "all", false
 print("  PASS F25 first-open prompt (Escape asks again next session); Learn as you go lists only seen recipes and the counts follow; separate alts count their own sightings, pre-4d records stay everyone's; Settings title-line controls")
 
+-- F26: Phase 4e, sharing sightings (COMM_REV 8). After a rev-8 peer's
+-- SYNC_DATA, PB asks once a session (KNOW_REQ, whisper, BULK) with our
+-- professions; a KNOW_REQ is answered with our own records for the asked
+-- professions only, rate-limited, never with sharing off; a KNOW_DATA is
+-- taken only in answer to our request, sanitized, capped, stored per peer;
+-- reads merge it (own learn level first, else the most recent peer's;
+-- trainers and vendors from both, "(from <name>)" in the tooltip; a peer's
+-- sighting counts as seen); removing the contact or 30 days drops it
+local Comm = ProfBuddy.Comm
+local AS = LibStub("AceSerializer-3.0")
+EXPECT(ProfBuddy.COMM_REV == 8, "COMM_REV is " .. tostring(ProfBuddy.COMM_REV))
+local SENT = {}
+local realWhisper = Comm.SendWhisper
+Comm.SendWhisper = function(_, t, d, target, prio) SENT[#SENT + 1] = { t = t, d = d, to = target, prio = prio } end
+local function deliver(from, msg) Comm:OnMessageReceived("PBuddy", AS:Serialize(msg), "WHISPER", from) end
+local function sentOf(t) local out = {} for _, m in ipairs(SENT) do if m.t == t then out[#out + 1] = m end end return out end
+local FRIEND, OTHER = "Friend-Realm", "Other-Realm"
+ProfBuddyDB.contacts[FRIEND] = { trusted = true, autoSync = false, lastSync = 0 }
+ProfBuddyDB.contacts[OTHER] = { trusted = true, autoSync = false, lastSync = 0 }
+local syncData = { _type = "SYNC_DATA", _commrev = 8, class = "HUNTER", level = 6,
+                   faction = "Horde", professions = {}, partial = true }
+
+-- asks after a rev-8 SYNC_DATA, once; a rev-7 peer is never asked
+deliver(OTHER, { _type = "SYNC_DATA", _commrev = 7, class = "MAGE", level = 6, faction = "Horde",
+                 professions = {}, partial = true })
+EXPECT(#sentOf("KNOW_REQ") == 0, "a rev-7 peer was asked for knowledge")
+deliver(FRIEND, syncData)
+local req = sentOf("KNOW_REQ")
+EXPECT(#req == 1 and req[1].to == FRIEND and req[1].prio == "BULK", "no KNOW_REQ after a rev-8 SYNC_DATA")
+EXPECT(req[1].d.since == 0 and table.concat(req[1].d.profs, ",") == "Cooking,Enchanting,Leatherworking,Mining,Skinning",
+       "KNOW_REQ profs: " .. table.concat(req[1].d.profs, ","))
+deliver(FRIEND, syncData)
+EXPECT(#sentOf("KNOW_REQ") == 1, "asked twice in one session")
+
+-- serving: our own records for the asked professions, then a cooldown
+deliver(FRIEND, { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
+local out = sentOf("KNOW_DATA")
+EXPECT(#out == 1 and out[1].to == FRIEND and out[1].prio == "BULK", "KNOW_REQ not answered")
+local share = out[1].d
+EXPECT(share.r[2153] and share.r[2153].l == 15 and #share.npcs > 0, "Mak's Handstitched Leather Pants not shared")
+EXPECT(K[1229517] and share.r[1229517] == nil, "a Skinning record (Camp Chair) went to a Leatherworking request")
+local makIdx
+for i, n in ipairs(share.npcs) do if n[2] == "Mak" then makIdx = i end end
+EXPECT(makIdx and share.npcs[makIdx][1] == 3008 and share.npcs[makIdx][3] == "Thunder Bluff", "Mak's NPC row")
+deliver(FRIEND, { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
+EXPECT(#sentOf("KNOW_DATA") == 1, "a second KNOW_REQ inside the cooldown was answered")
+Comm._knowServed[FRIEND] = nil
+deliver(FRIEND, { _type = "KNOW_REQ", since = share.at, profs = { "Leatherworking" } })
+out = sentOf("KNOW_DATA")
+EXPECT(#out == 2 and next(out[2].d.r) == nil, "since did not cut the answer to newer records")
+-- a new sighting after that passes the since cut
+local realTime = time
+time = function() return realTime() + 1000 end
+TRAINER_OPEN(90002); FLUSH(); TRAINER_CLOSE()
+Comm._knowServed[FRIEND] = nil
+deliver(FRIEND, { _type = "KNOW_REQ", since = share.at, profs = { "Leatherworking" } })
+out = sentOf("KNOW_DATA")
+local newer = RDB.data.Leatherworking["Embossed Leather Boots"].spellID
+EXPECT(#out == 3 and out[3].d.r[newer] and not out[3].d.r[2153], "a newer sighting did not pass the since cut")
+time = realTime
+-- directed messages only: a KNOW_REQ on the guild channel is ignored
+Comm._knowServed[FRIEND] = nil
+Comm:OnMessageReceived("PBuddy", AS:Serialize({ _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } }), "GUILD", FRIEND)
+EXPECT(#sentOf("KNOW_DATA") == 3, "a KNOW_REQ on the guild channel was answered")
+-- a guild-tier peer pays from the guild serve budget
+local realTier = Comm.TrustLevel
+Comm.TrustLevel = function(_, who) if who == "Guildie-Realm" then return "guild" end return realTier(Comm, who) end
+Comm._guildServes = {}
+for i = 1, 10 do Comm._guildServes[i] = time() end
+deliver("Guildie-Realm", { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
+EXPECT(#sentOf("KNOW_DATA") == 3, "a guild peer was served past the guild budget")
+Comm._guildServes = {}
+deliver("Guildie-Realm", { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
+EXPECT(#sentOf("KNOW_DATA") == 4 and #Comm._guildServes == 1, "a guild peer inside the budget was not served, or not counted")
+Comm.TrustLevel = realTier
+Comm._knowServed[FRIEND] = nil
+ProfBuddyDB.settings.shareData = false
+deliver(FRIEND, { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
+ProfBuddyDB.settings.shareData = true
+EXPECT(#sentOf("KNOW_DATA") == 4, "answered with sharing off")
+
+-- the wire round trip: our own answer, taken in as if a friend sent it
+Comm._knowPending[FRIEND] = time()
+share._type, share._commrev = "KNOW_DATA", 8      -- what Comm:Send adds on the way out
+deliver(FRIEND, share)
+local fs = ProfBuddyDB.knowledgeShared and ProfBuddyDB.knowledgeShared[FRIEND]
+EXPECT(fs and fs.records[2153] and fs.records[2153].learnLevel == 15
+       and fs.records[2153].teachers[3008] and fs.records[2153].teachers[3008].name == "Mak",
+       "round trip lost Mak's record")
+EXPECT(KN:SharedSince(FRIEND) == share.at, "since not kept")
+ProfBuddyDB.knowledgeShared[FRIEND] = nil
+
+-- receiving a friend's sightings
+local peerOnly
+for name, r in pairs(RDB.data.Leatherworking) do
+    if not K[r.spellID] and r.learnFrom ~= "automatic" and name ~= "Kodo Hide Bag" then peerOnly = r; break end
+end
+local kodo = RDB.data.Leatherworking["Kodo Hide Bag"].spellID
+local function know(at, l, extra)
+    local m = { _type = "KNOW_DATA", at = at, npcs = { { 3999, "Friend Trainer", "Orgrimmar", "", "Horde" },
+                                                     { 3998, "Friend Vendor", "Orgrimmar", "Drag", "Horde" } },
+                r = { [peerOnly.spellID] = { a = at, l = l, t = { 1 }, i = true },
+                      [2153] = { a = at, l = 99, t = { 1 } },
+                      [kodo] = { a = at, v = { { 2, 5083, 999 } } } } }
+    for k, v in pairs(extra or {}) do m[k] = v end
+    return m
+end
+deliver(FRIEND, know(100, 77))
+EXPECT(ProfBuddyDB.knowledgeShared == nil or ProfBuddyDB.knowledgeShared[FRIEND] == nil,
+       "an unrequested KNOW_DATA was stored")
+Comm._knowPending[FRIEND] = time()
+deliver(FRIEND, know(100, 77))
+EXPECT(ProfBuddyDB.knowledgeShared[FRIEND], "a requested KNOW_DATA was not stored")
+EXPECT(KN:LearnLevel(peerOnly.spellID) == 77, "a peer's learn level not used")
+EXPECT(KN:LearnLevel(2153) == 15, "a peer's learn level beat our own")
+Comm._knowPending[OTHER] = time()
+deliver(OTHER, know(200, 88))
+EXPECT(KN:LearnLevel(peerOnly.spellID) == 88, "the most recent peer did not win")
+local merged = KN:MergeSources({ { method = "trainer" } }, peerOnly.spellID, "Horde")
+EXPECT(merged[1].detail == "Friend Trainer (Orgrimmar)", "peer trainer on the Source line: " .. tostring(merged[1].detail))
+local tip = table.concat(KN:TooltipLines(peerOnly.spellID, "Horde"), "\n")
+-- both peers saw Friend Trainer; the newer record (Other's) is credited
+EXPECT(tip:find("Friend Trainer - Orgrimmar", 1, true) and tip:find("(from Other)", 1, true)
+       and tip:find("Recipe item seen by Friend, Other", 1, true), "tooltip: " .. tip)
+local kv = table.concat(KN:TooltipLines(kodo, "Horde"), "\n")
+EXPECT(kv:find("Friend Vendor - Orgrimmar, Drag", 1, true) and kv:find("Test Vendor", 1, true), "vendors merged: " .. kv)
+ProfBuddyDB.settings.foreverAltsSeparate = true
+EXPECT(KN:Seen(peerOnly.spellID, "Anyone-Realm"), "a peer's sighting does not count as seen")
+ProfBuddyDB.settings.foreverAltsSeparate = false
+
+-- sanitizing and caps
+local function tryFrom(msg)
+    ProfBuddyDB.knowledgeShared[FRIEND] = nil
+    Comm._knowPending[FRIEND] = time()
+    deliver(FRIEND, msg)
+    return ProfBuddyDB.knowledgeShared[FRIEND]
+end
+local big = know(300, 5)
+for i = 1, 3001 do big.r[5000000 + i] = { a = 1 } end
+EXPECT(tryFrom(big) == nil, "an oversized KNOW_DATA was stored")
+local manyN = know(300, 5)
+for i = 3, 601 do manyN.npcs[i] = { 4000 + i, "N" .. i, "Z", "", "Horde" } end
+EXPECT(tryFrom(manyN) == nil, "601 NPCs were stored")
+local manyV = know(300, 5)
+manyV.r[kodo].v = {}
+for i = 1, 13 do manyV.r[kodo].v[i] = { 2, 5083, 1 } end
+EXPECT(tryFrom(manyV) == nil, "13 vendors on one recipe was stored")
+local manyT = know(300, 5)
+manyT.r[2153].t = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
+EXPECT(tryFrom(manyT) == nil, "13 trainers on one recipe was stored")
+EXPECT(tryFrom({ _type = "KNOW_DATA", at = 1, npcs = "x", r = {} }) == nil, "a malformed KNOW_DATA was stored")
+local junk = know(300, 9999)
+junk.npcs[1][2] = "Bad|cffff0000Name"
+junk.npcs[1][5] = "Martian"
+junk.r[9999999] = { a = 1, l = 5 }                 -- in range, but no such recipe
+local got = tryFrom(junk)
+EXPECT(got and got.records[9999999] == nil, "an unknown recipe was stored")
+EXPECT(got.records[peerOnly.spellID].learnLevel == nil, "a learn level of 9999 was stored")
+local t1 = got.records[peerOnly.spellID].teachers[3999]
+EXPECT(t1.name == "Bad||cffff0000Name" and t1.faction == nil, "name or faction not sanitized")
+
+-- your own NPC beats a peer's copy of it (no "(from)")
+local mine = { _type = "KNOW_DATA", at = 400, npcs = { { 3008, "Mak", "Thunder Bluff", "", "Horde" } },
+               r = { [2153] = { a = 400, t = { 1 } } } }
+tryFrom(mine)
+local pantsTip = table.concat(KN:TooltipLines(2153, "Horde"), "\n")
+EXPECT(pantsTip:find("Mak - Thunder Bluff", 1, true) and not pantsTip:find("Mak - Thunder Bluff  |cff888888(from", 1, true),
+       "a peer's copy of our own trainer shows (from): " .. pantsTip)
+-- a manual sync asks for their knowledge again
+deliver(FRIEND, syncData)
+local before = #sentOf("KNOW_REQ")
+Comm:RequestSync(FRIEND, true)
+deliver(FRIEND, syncData)
+EXPECT(#sentOf("KNOW_REQ") == before + 1, "a manual sync did not ask again")
+
+-- removing the contact drops their data; a non-contact goes after 30 days
+Comm:ForgetPeer(FRIEND)
+EXPECT(ProfBuddyDB.knowledgeShared[FRIEND] == nil, "a removed contact's data kept")
+ProfBuddyDB.knowledgeShared["Guildie-Realm"] = { at = time() - 31 * 86400, since = 1, records = {} }
+ProfBuddyDB.knowledgeShared[OTHER].at = time() - 31 * 86400
+KN:PrunePeers()
+EXPECT(ProfBuddyDB.knowledgeShared["Guildie-Realm"] == nil, "a 31-day-old non-contact kept")
+EXPECT(ProfBuddyDB.knowledgeShared[OTHER], "a contact's data dropped by age")
+for i = 1, 105 do ProfBuddyDB.knowledgeShared["P" .. i .. "-Realm"] = { at = time() - i, since = 1, records = {} } end
+KN:PrunePeers()
+local peersLeft = 0
+for _ in pairs(ProfBuddyDB.knowledgeShared) do peersLeft = peersLeft + 1 end
+EXPECT(peersLeft == 100 and ProfBuddyDB.knowledgeShared["P1-Realm"] and not ProfBuddyDB.knowledgeShared["P105-Realm"],
+       "peer cap: " .. peersLeft .. " left")
+
+Comm.SendWhisper = realWhisper
+ProfBuddyDB.knowledgeShared = nil
+ProfBuddyDB.contacts[FRIEND], ProfBuddyDB.contacts[OTHER] = nil, nil
+print("  PASS F26 knowledge sharing: asked once after a rev-8 sync; served own records for the asked professions, since-cut, rate-limited, not with sharing off; round trip; only requested KNOW_DATA stored, sanitized and capped; own learn level first then the newest peer; peer trainers and vendors merged with (from); peer sightings count as seen; forget and 30-day prune")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (25)")
+print("ALL FOREVER TESTS PASS (26)")
