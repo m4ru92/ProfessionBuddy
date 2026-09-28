@@ -12,6 +12,7 @@
 --       vendors    = { [npcID] = { name, zone, subZone, faction, seen,
 --                                  itemID, price, stock } },
 --       items      = { [itemID] = true },  -- recipe items seen in your bags
+--       seenBy     = { [charKey] = true },  -- who saw it; "*" = everyone
 --   }
 --
 -- A recorded learn level beats the one in Data/Forever wherever PB shows
@@ -26,6 +27,17 @@
 --   * your bags: every recipe item the bag scan finds.
 -- A vendor's or a bag's item is matched to its recipe through the
 -- teachItems in Data/Forever.
+--
+-- What the Missing list shows is the player's choice (Phase 4d), asked the
+-- first time a profession opens and changeable in Settings:
+--   settings.foreverRecipes      "all"  Show everything: every recipe in
+--                                        the data (nil, not asked yet,
+--                                        behaves the same)
+--                                "seen" Learn as you go: only recipes seen
+--                                        at a trainer, a vendor or in bags
+--   settings.foreverAltsSeparate with Learn as you go, a character counts
+--                                only what it saw itself. Off by default:
+--                                everything seen is shared by the account
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
@@ -41,6 +53,12 @@ local CAPTURE_DELAY = 1.0
 local MAX_NAMES_SHOWN = 2
 
 function KN:Init()
+    addon:RegisterEvent("TRADE_SKILL_SHOW", function()
+        if addon.db.settings.foreverRecipes == nil then
+            -- after PB's window is up, so the question sits over it
+            C_Timer.After(0.5, function() self:AskRecipeMode() end)
+        end
+    end)
     addon:RegisterEvent("TRAINER_SHOW", function() self:OnTrainerShow() end)
     addon:RegisterEvent("TRAINER_CLOSED", function() self._trainerOpen = false end)
     addon:RegisterEvent("MERCHANT_SHOW", function() self:ScanMerchant() end)
@@ -66,11 +84,21 @@ function KN:Get(recipeID)
     return store and store[recipeID] or nil
 end
 
+-- The record a recorder writes to, marked as seen by this character. A
+-- record from before seenBy existed was the account's, so it keeps
+-- counting for every character ("*").
 local function Entry(recipeID)
     addon.db.knowledge = addon.db.knowledge or {}
     local store = addon.db.knowledge
-    store[recipeID] = store[recipeID] or {}
-    return store[recipeID]
+    local e = store[recipeID]
+    if not e then
+        e = { seenBy = {} }
+        store[recipeID] = e
+    elseif not e.seenBy then
+        e.seenBy = { ["*"] = true }
+    end
+    e.seenBy[addon:PlayerKey()] = true
+    return e
 end
 
 -- The learn level a trainer showed for this recipe, or nil. A recipe that
@@ -229,6 +257,73 @@ function KN:TooltipLines(recipeID, faction)
     end
     if #lines == 0 then return nil end
     return lines
+end
+
+----------------------------------------------------------------------
+-- Show everything or Learn as you go
+----------------------------------------------------------------------
+
+function KN:LearnAsYouGo()
+    local st = addon.db and addon.db.settings
+    return (st and st.foreverRecipes == "seen") or false
+end
+
+-- Has this recipe been seen at a trainer, a vendor or in the bags: by any
+-- character, or with alts kept separate by `charKey` itself?
+function KN:Seen(recipeID, charKey)
+    local e = self:Get(recipeID)
+    if not e then return false end
+    if not addon.db.settings.foreverAltsSeparate then return true end
+    local by = e.seenBy
+    return not by or by["*"] or (charKey and by[charKey]) or false
+end
+
+-- The unknown recipes the Missing list shows: all of them, or with Learn
+-- as you go the ones seen. `unknown` is keyed by recipe name.
+function KN:FilterUnknown(unknown, charKey)
+    if not self:LearnAsYouGo() then return unknown end
+    charKey = charKey or addon:PlayerKey()
+    local out = {}
+    for name, info in pairs(unknown) do
+        if info.spellID and self:Seen(info.spellID, charKey) then out[name] = info end
+    end
+    return out
+end
+
+function KN:SetRecipeMode(mode)
+    addon.db.settings.foreverRecipes = mode
+    local tsf = addon.TradeSkillFrame
+    if tsf and tsf.UpdateForeverSettings then tsf:UpdateForeverSettings() end
+    if tsf and tsf.scrollBar then tsf:RefreshRecipeList() end
+end
+
+local PROMPT = "PROFBUDDY_FOREVER_RECIPES"
+
+-- Asked once a session until the player picks. Escape leaves it unpicked
+-- (Show everything meanwhile) and it asks again next session.
+function KN:AskRecipeMode()
+    if self._asked or addon.db.settings.foreverRecipes ~= nil then return end
+    self._asked = true
+    if not StaticPopupDialogs[PROMPT] then
+        StaticPopupDialogs[PROMPT] = {
+            text = "How should ProfessionBuddy show recipes you haven't learned?\n\n"
+                .. "Show everything: every recipe in the game. PB adds trainers, "
+                .. "vendors and learn levels as you play.\n\n"
+                .. "Learn as you go: only recipes you've found at a trainer, a vendor, "
+                .. "or as a recipe item in your bags. The list grows as you explore.\n\n"
+                .. "You can change this later in Settings.",
+            button1 = "Show everything",
+            button2 = "Learn as you go",
+            OnAccept = function() KN:SetRecipeMode("all") end,
+            OnCancel = function() KN:SetRecipeMode("seen") end,
+            OnEscape = function() end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3,
+        }
+    end
+    StaticPopup_Show(PROMPT)
 end
 
 ----------------------------------------------------------------------

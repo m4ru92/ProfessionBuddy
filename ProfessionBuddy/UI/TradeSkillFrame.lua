@@ -4627,8 +4627,35 @@ function TSF:BuildSettingsPanel(parent)
     divider:SetHeight(1)
     divider:SetColorTexture(0.3, 0.3, 0.35, 0.6)
 
-    -- Checkbox factory (supports x offset for columns)
     local settings = addon.db.settings
+
+    -- WoW: Forever (Knowledge.lua): which unlearned recipes the Missing list
+    -- shows, and whether alts share what they saw. On the title line,
+    -- because both columns below are full.
+    if addon.Knowledge then
+        local modeDD = CreateDropdown(panel, 200, { "Show everything", "Learn as you go" },
+            "Show everything",
+            function(val)
+                addon.Knowledge:SetRecipeMode(val == "Learn as you go" and "seen" or "all")
+            end,
+            "Unlearned: ")
+        modeDD:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -16, -12)
+        local altsText = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        altsText:SetPoint("RIGHT", modeDD, "LEFT", -12, 0)
+        altsText:SetText("Keep alts separate")
+        altsText:SetTextColor(0.9, 0.9, 0.9)
+        local altsCB = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+        altsCB:SetSize(24, 24)
+        altsCB:SetPoint("RIGHT", altsText, "LEFT", -2, 0)
+        altsCB:SetScript("OnClick", function(cb)
+            settings.foreverAltsSeparate = cb:GetChecked() and true or false
+            if TSF.scrollBar then TSF:RefreshRecipeList() end
+        end)
+        self.foreverModeDD, self.foreverAltsCB, self.foreverAltsText = modeDD, altsCB, altsText
+        self:UpdateForeverSettings()
+    end
+
+    -- Checkbox factory (supports x offset for columns)
     local checkboxes = {}
     local COL_LEFT = 14
     local COL_RIGHT = 370
@@ -5052,6 +5079,21 @@ function TSF:HideContentPanels()
     if self.sortDropdown then self.sortDropdown:Hide() end
     if self.viewDropdown then self.viewDropdown:Hide() end
     if self.calcPanel then self.calcPanel:Hide() end
+end
+
+-- Match the Forever controls to the settings; the alts box only applies to
+-- Learn as you go.
+function TSF:UpdateForeverSettings()
+    if not self.foreverModeDD then return end
+    local st = addon.db.settings
+    local seen = st.foreverRecipes == "seen"
+    self.foreverModeDD:SetValue(seen and "Learn as you go" or "Show everything")
+    self.foreverAltsCB:SetChecked(st.foreverAltsSeparate and true or false)
+    if seen then
+        self.foreverAltsCB:Show(); self.foreverAltsText:Show()
+    else
+        self.foreverAltsCB:Hide(); self.foreverAltsText:Hide()
+    end
 end
 
 function TSF:OpenSettings(origin)

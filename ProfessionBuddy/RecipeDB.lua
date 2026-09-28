@@ -146,10 +146,20 @@ end
 ----------------------------------------------------------------------
 -- Query: what recipes does this character NOT know for a profession?
 ----------------------------------------------------------------------
+-- The unknown recipes the Missing list and the character panel show: all
+-- of them, or on WoW: Forever with Learn as you go only the ones seen
+-- (Knowledge.lua, which only the Mainline toc loads).
+function RDB:GetUnknownRecipes(charKey, profName)
+    local unknown = self:GetAllUnknownRecipes(charKey, profName)
+    local KN = addon.Knowledge
+    if KN then return KN:FilterUnknown(unknown, charKey) end
+    return unknown
+end
+
 -- NOTE: the returned entries are the STATIC tables out of self.data, handed
 -- out by reference for cheapness. Read them; never write to one, or the edit
 -- is visible to every other reader for the rest of the session.
-function RDB:GetUnknownRecipes(charKey, profName)
+function RDB:GetAllUnknownRecipes(charKey, profName)
     local profData = addon.DataStore:GetProfession(charKey, profName)
 
     local allRecipes = self.data[profName]

@@ -848,8 +848,91 @@ pick(TSF.viewDropdown, "Known")
 EXPECT(st.selected == "Light Leather", "All -> Known lost a known recipe")
 print("  PASS F24 Skill Up (colours; Known and All) and Source (sources; Missing and All) are separate; each filters its own recipes; a View change keeps a selection the new view has and clears one it lacks")
 
+-- F25: Phase 4d. The first profession open asks Show everything or Learn
+-- as you go (Escape asks again next session); Learn as you go lists only
+-- recipes seen at a trainer, a vendor or in the bags, and the counts
+-- follow; keep alts separate counts only what a character saw itself,
+-- while a record from before 4d still counts for everyone; Settings
+-- carries both controls on its title line
+local S = ProfBuddyDB.settings
+S.foreverRecipes, S.foreverAltsSeparate = nil, nil
+KN._asked = nil
+local shownPopup
+StaticPopupDialogs = {}
+StaticPopup_Show = function(which) shownPopup = which end
+C_TradeSkillUI.OpenTradeSkill(165)
+TS_LIST_READY()
+FLUSH()
+EXPECT(shownPopup == "PROFBUDDY_FOREVER_RECIPES", "no first-open prompt")
+local dlg = StaticPopupDialogs.PROFBUDDY_FOREVER_RECIPES
+EXPECT(dlg.button1 == "Show everything" and dlg.button2 == "Learn as you go", "prompt buttons")
+EXPECT(dlg.text:find("You can change this later in Settings.", 1, true), "prompt text")
+dlg.OnEscape()
+EXPECT(S.foreverRecipes == nil, "Escape picked a mode")
+shownPopup = nil
+C_TradeSkillUI.CloseTradeSkill()
+C_TradeSkillUI.OpenTradeSkill(165)
+TS_LIST_READY()
+FLUSH()
+EXPECT(shownPopup == nil, "asked twice in one session")
+-- not asked yet = Show everything
+local all = count(RDB:GetAllUnknownRecipes(nil, "Leatherworking"))
+EXPECT(count(RDB:GetUnknownRecipes(nil, "Leatherworking")) == all, "unpicked is not Show everything")
+dlg.OnAccept()
+EXPECT(S.foreverRecipes == "all", "Show everything not saved")
+dlg.OnCancel()
+EXPECT(S.foreverRecipes == "seen", "Learn as you go not saved")
+local seen = RDB:GetUnknownRecipes(nil, "Leatherworking")
+EXPECT(seen["Handstitched Leather Pants"] and seen["Kodo Hide Bag"] and seen["Guardian Belt"],
+       "a trainer, vendor or bag recipe is missing from Learn as you go")
+EXPECT(not seen["Azure Gustwoven Belt"] and count(seen) < all, "an unseen recipe is listed")
+local keep = TSF.summaryText
+local sumText
+TSF.summaryText = { SetText = function(_, t) sumText = t end }
+TSF:UpdateBottomBar()
+TSF.summaryText = keep
+EXPECT(sumText:find("Missing: " .. count(seen), 1, true), "Missing count: " .. sumText)
+-- keep alts separate
+local me, other = ProfBuddy:PlayerKey(), "Other-Realm"
+local pants = RDB.data.Leatherworking["Handstitched Leather Pants"].spellID
+EXPECT(K[pants].seenBy and K[pants].seenBy[me], "a record did not note who saw it")
+local legacy = RDB.data.Leatherworking["Embossed Leather Boots"].spellID
+K[legacy] = { learnLevel = 50 }                     -- recorded before 4d
+S.foreverAltsSeparate = true
+EXPECT(KN:Seen(pants, me) and not KN:Seen(pants, other), "separate alts: another character saw Mak's recipe")
+EXPECT(KN:Seen(legacy, other), "a record from before 4d stopped counting for another character")
+EXPECT(not RDB:GetUnknownRecipes(other, "Leatherworking")["Handstitched Leather Pants"],
+       "separate alts: another character's Missing list has it")
+-- recording again keeps an old record everyone's
+TRAINERS[90002] = { name = "Again", tradeskill = true, services = {
+    { id = legacy, name = "Embossed Leather Boots", type = "unavailable", skill = "Leatherworking", rank = 50 } } }
+TRAINER_OPEN(90002); FLUSH(); TRAINER_CLOSE()
+EXPECT(K[legacy].seenBy["*"] and K[legacy].seenBy[me] and KN:Seen(legacy, other), "re-recording took an old record away from others")
+S.foreverAltsSeparate = false
+EXPECT(KN:Seen(pants, other), "shared alts: another character does not see Mak's recipe")
+-- Settings: the title-line controls follow the mode
+TSF:OpenSettings("main")
+EXPECT(TSF.foreverModeDD and TSF.foreverAltsCB, "no Forever controls in Settings")
+TSF:UpdateForeverSettings()
+EXPECT(TSF.foreverAltsCB:IsShown(), "alts box hidden under Learn as you go")
+for _, o in ipairs(TSF.foreverModeDD.optionBtns) do
+    if o.value == "Show everything" then o:GetScript("OnClick")(o) end
+end
+EXPECT(S.foreverRecipes == "all" and not TSF.foreverAltsCB:IsShown(), "Show everything from Settings")
+EXPECT(count(RDB:GetUnknownRecipes(nil, "Leatherworking")) == all, "Show everything does not list everything")
+for _, o in ipairs(TSF.foreverModeDD.optionBtns) do
+    if o.value == "Learn as you go" then o:GetScript("OnClick")(o) end
+end
+EXPECT(S.foreverRecipes == "seen" and TSF.foreverAltsCB:IsShown(), "Learn as you go from Settings")
+-- the stub check box always reads unchecked; tick it for real
+rawset(TSF.foreverAltsCB, "GetChecked", function() return true end)
+TSF.foreverAltsCB:GetScript("OnClick")(TSF.foreverAltsCB)
+EXPECT(S.foreverAltsSeparate == true, "alts box does not save")
+S.foreverRecipes, S.foreverAltsSeparate = "all", false
+print("  PASS F25 first-open prompt (Escape asks again next session); Learn as you go lists only seen recipes and the counts follow; separate alts count their own sightings, pre-4d records stay everyone's; Settings title-line controls")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (24)")
+print("ALL FOREVER TESTS PASS (25)")
