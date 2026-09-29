@@ -1218,6 +1218,24 @@ do
 end
 passed("T48 bank gate -- PLAYERBANKSLOTS_CHANGED outside BANKFRAME_OPENED cannot wipe the bank")
 
+-- ── T82: a bank BAG's change reaches the stored bank while it is open ──
+-- m4ru 2026-09-29: Bolt of Silk Cloth sat in his bank while PB's copy had
+-- none. An item moved into a bank bag (5-11) fires BAG_UPDATE, not
+-- PLAYERBANKSLOTS_CHANGED, and BAG_UPDATE rescanned the carried bags only.
+do
+    sim.bags = { [-1] = { slots = 1, [1] = { link = "|Hitem:2589:0|h[Linen Cloth]|h", count = 5 } } }
+    fire("BANKFRAME_OPENED")
+    sim.bags[6] = { slots = 1, [1] = { link = "|Hitem:4305:0|h[Bolt of Silk Cloth]|h", count = 16 } }
+    Scanner:ScanInventory()                         -- what BAG_UPDATE runs (throttle: T49)
+    assert(DS:GetCharacter(ME).inventory.bank[4305] == 16, "T82: a bank bag's item did not reach the stored bank")
+    assert(DS:GetCharacter(ME).inventory.bank[2589] == 5, "T82: the main bank slots were lost")
+    fire("BANKFRAME_CLOSED")
+    sim.bags = {}
+    Scanner:ScanInventory()
+    assert(DS:GetCharacter(ME).inventory.bank[4305] == 16, "T82: a bag scan with the bank shut wiped the bank")
+end
+passed("T82 bank bags -- a bag scan rescans the bank while it is open, never while shut")
+
 -- ── T49: BAG_UPDATE throttles to leading plus one trailing scan ──
 do
     -- No autoSync contact, so Comm's own debounce arms nothing here and every
@@ -2106,7 +2124,7 @@ end
 passed("T81 TBC Anniversary ignores KNOW_REQ / KNOW_DATA and never asks (COMM_REV 8)")
 
 leaveGuild()
-print("ALL 81 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 82 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2119,6 +2137,7 @@ print("ALL 81 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " source relation, T72 the order origin stamp, T73 the skinning loot data"
     .. " and T74 the recipe faction visibility rule, T75-T79 Poisons data, localized storage,"
     .. " class gating, the class-trainer guard and Poisons never leaving the client,"
-    .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored; "
+    .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
+    .. " T82 bank bags rescanned while the bank is open; "
     .. pass .. " of them print a PASS line above)")
 

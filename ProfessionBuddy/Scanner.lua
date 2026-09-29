@@ -533,9 +533,11 @@ function Scanner:ScanInventory()
 
     DS:SetInventory("bags", items)
 
-    -- A tab bank (Source:BankBags) changes through BAG_UPDATE, not
-    -- PLAYERBANKSLOTS_CHANGED. ScanBank does nothing while the bank is shut.
-    if addon.Source.BankBags then self:ScanBank() end
+    -- While the bank is open, a bag change may be a bank bag's: those fire
+    -- BAG_UPDATE, not PLAYERBANKSLOTS_CHANGED (TBC Anniversary bank bags 5-11,
+    -- and every tab of WoW: Forever's tab bank). ScanBank does nothing while
+    -- the bank is shut.
+    self:ScanBank()
 end
 
 function Scanner:ScanBank()
