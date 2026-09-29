@@ -55,6 +55,10 @@
 --                                 not the secure macro button
 --   Source.HAS_REAGENT_BAG        true: the bag scan includes the equipped
 --                                 reagent bag (NUM_TOTAL_EQUIPPED_BAG_SLOTS)
+--   Source.FULL_NAMES             true: characters are "First Surname"; our
+--                                 own name joins UnitFullName's two values
+--                                 (addon:PlayerName) and a typed contact may
+--                                 hold a space
 --   Source:BankBags()             the containers that make up the character's
 --                                 bank, for a client whose bank is not
 --                                 Classic's bag -1 plus bank bags 5 to 11.

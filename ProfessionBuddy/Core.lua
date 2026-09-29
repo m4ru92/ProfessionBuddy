@@ -61,9 +61,34 @@ function addon:NormKey(key)
     return name .. "-" .. addon:NormRealm(realm)
 end
 
+-- WoW: Forever characters have a surname, and everyone else knows them as
+-- "First Surname": the guild roster, addon message senders and
+-- GetUnitName(unit, true). UnitName("player") gives the first name only,
+-- and UnitFullName("player") hands the surname back where the realm used
+-- to be (m4ru's client 2026-09-28; GuildOS, WoWForeverRace and CraftBoard
+-- found the same on build 1.60.1.70009). So there our own name is the two
+-- joined with a space (Source.FULL_NAMES). Elsewhere it is UnitName, as
+-- before.
+function addon:PlayerName()
+    if addon.Source and addon.Source.FULL_NAMES and UnitFullName then
+        local first, surname = UnitFullName("player")
+        if type(issecretvalue) == "function" and issecretvalue(surname) then surname = nil end
+        if type(first) == "string" and first ~= "" and type(surname) == "string" and surname ~= "" then
+            return first .. " " .. surname
+        end
+    end
+    return UnitName("player")
+end
+
+-- How a character name is typed, for usage lines and errors.
+function addon:NameHint()
+    if addon.Source and addon.Source.FULL_NAMES then return "First Surname" end
+    return "PlayerName-Realm"
+end
+
 -- Shorthand for the player's canonical key, used everywhere.
 function addon:PlayerKey()
-    return UnitName("player") .. "-" .. addon:NormRealm(GetRealmName())
+    return addon:PlayerName() .. "-" .. addon:NormRealm(GetRealmName())
 end
 
 -- Display half of a key. Non-strings pass straight through so callers keep
@@ -306,6 +331,52 @@ local function migrateToSchema2(db)
 end
 
 ----------------------------------------------------------------------
+-- WoW: Forever: move this character's own records from its first-name key
+-- ("Maru-Realm", what PB used before it knew about surnames) to its full
+-- key ("Maru Hunt-Realm"). Only the logged-in character, whose two keys we
+-- know for certain, so another player who shares the first name is never
+-- touched; each alt moves when it logs in. Runs at load and again at login
+-- (the surname may not be readable yet at load), and does nothing once the
+-- old key is gone.
+----------------------------------------------------------------------
+function addon:MigrateToFullName()
+    local db = ProfBuddyDB
+    if not (db and addon.Source and addon.Source.FULL_NAMES) then return end
+    local newKey = addon:PlayerKey()
+    local oldKey = addon:NormKey(UnitName("player"))
+    if not (newKey and oldKey) or newKey == oldKey then return end
+
+    local chars = db.characters
+    local old = chars and chars[oldKey]
+    if type(old) == "table" and not old.isRemote then
+        chars[oldKey] = nil
+        local new = chars[newKey]
+        -- A record made under the new key this very load has no professions
+        -- yet; the old one holds the character's data.
+        if type(new) ~= "table" or next(new.professions or {}) == nil then
+            chars[newKey] = old
+        end
+    end
+    local function move(o)
+        if type(o) ~= "table" then return end
+        if o.requester == oldKey then o.requester = newKey end
+        if o.crafter == oldKey then o.crafter = newKey end
+        if o.lastSentBy == oldKey then o.lastSentBy = newKey end
+    end
+    for _, o in pairs(db.orders or {}) do move(o) end
+    for _, post in pairs(db.orderBoard or {}) do move(post) end
+    for _, entry in pairs(db.orderOutbox or {}) do
+        if type(entry) == "table" and type(entry.data) == "table" then move(entry.data.order) end
+    end
+    for _, e in pairs(db.knowledge or {}) do
+        if type(e) == "table" and type(e.seenBy) == "table" and e.seenBy[oldKey] then
+            e.seenBy[oldKey] = nil
+            e.seenBy[newKey] = true
+        end
+    end
+end
+
+----------------------------------------------------------------------
 -- Event frame
 ----------------------------------------------------------------------
 local frame = CreateFrame("Frame", "ProfBuddyEventFrame")
@@ -478,6 +549,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         migrateToSchema2(ProfBuddyDB)
         ProfBuddyDB.schemaVersion = 2
     end
+    -- WoW: Forever surnames; again at PLAYER_LOGIN below.
+    addon:MigrateToFullName()
 
     -- Init modules in declared order. A module that errors here must not
     -- take the rest of the addon down with it.
@@ -493,6 +566,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
 
     print("|cff00ccffProfessionBuddy|r v" .. addon.version .. " loaded.  /pb  or  /profbuddy")
 end)
+
+-- The surname may not be readable at ADDON_LOADED; by login it is.
+addon:RegisterEvent("PLAYER_LOGIN", function() addon:MigrateToFullName() end)
 
 -- Full scan on login / reload only. Zoning, instance entry and every other
 -- loading screen fire this event too, and a rescan on each one is wasted work.
@@ -573,7 +649,7 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         local key = addon:NormKey(strtrim(rawMsg:sub(7)))
         local rec = key and addon.db.characters[key]
         if not key then
-            print("|cff00ccffProfessionBuddy:|r Usage: /pb forget PlayerName-Realm")
+            print("|cff00ccffProfessionBuddy:|r Usage: /pb forget " .. addon:NameHint())
         elseif not rec then
             print("|cff00ccffProfessionBuddy:|r No stored character " .. key .. ".")
         else
@@ -635,7 +711,7 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         -- the contact as "bob-Realm" while replies arrive from "Bob-Realm".
         local target = strtrim(rawMsg:sub(5))
         if target == "" then
-            print("|cff00ccffProfessionBuddy:|r Usage: /pb sync PlayerName-Realm")
+            print("|cff00ccffProfessionBuddy:|r Usage: /pb sync " .. addon:NameHint())
         elseif addon.Comm then
             addon.Comm:RequestSync(target, true)
         end

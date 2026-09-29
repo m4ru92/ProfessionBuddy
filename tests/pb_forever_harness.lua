@@ -1126,8 +1126,90 @@ ProfBuddyDB.knowledgeShared = nil
 ProfBuddyDB.contacts[FRIEND], ProfBuddyDB.contacts[OTHER] = nil, nil
 print("  PASS F26 knowledge sharing: asked once after a rev-8 sync; served own records for the asked professions, since-cut, rate-limited, not with sharing off; round trip; only requested KNOW_DATA stored, sanitized and capped; own learn level first then the newest peer; peer trainers and vendors merged with (from); peer sightings count as seen; forget and 30-day prune")
 
+-- F27: WoW: Forever surnames. Everyone else knows a character as "First
+-- Surname" (roster, addon senders, GetUnitName(unit, true)); UnitName gives
+-- the first name and UnitFullName puts the surname in the realm slot. Our
+-- own name joins the two; this character's records move from its first-name
+-- key to its full key (and nobody else's); contacts take "First Surname";
+-- whispers go to "First Surname"; our own echo is still ours; group trust
+-- matches a surname sender
+local Comm = ProfBuddy.Comm
+local oldKey, newKey = "Me-Realm", "Me Surname-Realm"
+EXPECT(ProfBuddy:PlayerKey() == oldKey, "no surname readable: key is " .. ProfBuddy:PlayerKey())
+function UnitFullName(u) if u == "player" then return "Me", "Surname" end end
+EXPECT(ProfBuddy:PlayerName() == "Me Surname" and ProfBuddy:PlayerKey() == newKey, "full name: " .. ProfBuddy:PlayerKey())
+issecretvalue = function(v) return v == "Surname" end
+EXPECT(ProfBuddy:PlayerName() == "Me", "a secret surname was used")
+issecretvalue = nil
+EXPECT(ProfBuddy:NameHint() == "First Surname", "usage hint")
+
+-- the move: our record, orders, board, outbox and knowledge
+local DB = ProfBuddyDB
+local mine = DB.characters[oldKey]
+EXPECT(mine and not mine.isRemote and next(mine.professions or {}), "no first-name record to move")
+DB.characters[newKey] = { professions = {}, class = "HUNTER" }       -- made this load, empty
+DB.orders.test1 = { id = "test1", requester = oldKey, crafter = "Other-Realm", lastSentBy = oldKey }
+DB.orders.test2 = { id = "test2", requester = "Other-Realm", crafter = oldKey }
+DB.orderBoard.post1 = { id = "post1", requester = oldKey }
+DB.orderOutbox = DB.orderOutbox or {}
+DB.orderOutbox.o1 = { target = "Other-Realm", data = { order = { requester = oldKey } } }
+local kid = RDB.data.Leatherworking["Handstitched Leather Pants"].spellID
+DB.knowledge[kid].seenBy[oldKey] = true
+FIRE("PLAYER_LOGIN")                        -- the move runs at login
+FLUSH()
+EXPECT(DB.characters[oldKey] == nil and DB.characters[newKey] == mine, "record not moved, or the empty new one kept")
+EXPECT(DB.orders.test1.requester == newKey and DB.orders.test1.lastSentBy == newKey
+       and DB.orders.test1.crafter == "Other-Realm" and DB.orders.test2.crafter == newKey, "order fields")
+EXPECT(DB.orderBoard.post1.requester == newKey and DB.orderOutbox.o1.data.order.requester == newKey, "board or outbox")
+EXPECT(DB.knowledge[kid].seenBy[newKey] and not DB.knowledge[kid].seenBy[oldKey], "knowledge seenBy")
+-- idempotent, and another player called "Me" is never touched
+DB.characters[oldKey] = { isRemote = true, professions = {} }
+ProfBuddy:MigrateToFullName()
+EXPECT(DB.characters[oldKey] and DB.characters[oldKey].isRemote and DB.characters[newKey] == mine,
+       "a remote first-name record was moved")
+DB.characters[oldKey] = nil
+DB.orders.test1, DB.orders.test2, DB.orderBoard.post1, DB.orderOutbox.o1 = nil, nil, nil, nil
+-- a new-key record that already has data is kept over a stale old one
+local stale = { professions = { Cooking = { skillLevel = 1 } } }
+DB.characters[oldKey] = stale
+ProfBuddy:MigrateToFullName()
+EXPECT(DB.characters[newKey] == mine and DB.characters[oldKey] == nil, "a stale old record replaced the live one")
+
+-- contacts: typed and normalized as "First Surname"
+local FPm = ProfBuddy.FriendsPanel
+EXPECT(FPm.ContactKeyFromInput("turok bokenhorn") == "Turok Bokenhorn-Realm", "Friends panel: first surname")
+EXPECT(FPm.ContactKeyFromInput("Turok O'Hara") == "Turok O'Hara-Realm", "Friends panel: apostrophe in surname")
+EXPECT(FPm.ContactKeyFromInput("Turok") == "Turok-Realm", "Friends panel: first name alone")
+EXPECT(FPm.ContactKeyFromInput("Turok Big Horn") == nil and FPm.ContactKeyFromInput("Tu|rok Horn") == nil
+       and FPm.ContactKeyFromInput("T Horn") == nil, "Friends panel: junk accepted")
+EXPECT(Comm:NormalizeContactKey("turok bokenhorn") == "Turok Bokenhorn-Realm", "sync target normalized")
+
+-- whispers go to "First Surname"
+local sentTo
+local realSend = Comm.Send
+Comm.Send = function(_, t, d, dist, target) sentTo = target end
+Comm:SendWhisper("SYNC_REQ", {}, "Turok Bokenhorn-Realm")
+EXPECT(sentTo == "Turok Bokenhorn", "whisper target: " .. tostring(sentTo))
+-- our own message, arriving from "Me Surname", is ours
+-- (trusted, so only the self check can stop it)
+sentTo = nil
+ProfBuddyDB.contacts["Me Surname-Realm"] = { trusted = true, autoSync = false, lastSync = 0 }
+Comm:OnMessageReceived("PBuddy", LibStub("AceSerializer-3.0"):Serialize({ _type = "SYNC_REQ" }), "WHISPER", "Me Surname")
+ProfBuddyDB.contacts["Me Surname-Realm"] = nil
+EXPECT(sentTo == nil, "PB answered its own message")
+Comm.Send = realSend
+-- group trust from GetUnitName(unit, true) matches a surname sender
+local keepG, keepN, keepU = IsInGroup, GetNumSubgroupMembers, GetUnitName
+IsInGroup = function() return true end
+GetNumSubgroupMembers = function() return 1 end
+GetUnitName = function(u, full) if u == "party1" then return "Turok Bokenhorn" end return keepU(u, full) end
+EXPECT(Comm:IsGroupMember("Turok Bokenhorn") and not Comm:IsGroupMember("Turok"), "group trust with a surname")
+IsInGroup, GetNumSubgroupMembers, GetUnitName = keepG, keepN, keepU
+UnitFullName = nil
+print("  PASS F27 surnames: own name First Surname (a secret surname falls back), own records move to the full key and nobody else's, contacts and sync take First Surname, whispers go to First Surname, own echo ignored, group trust matches")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (26)")
+print("ALL FOREVER TESTS PASS (27)")

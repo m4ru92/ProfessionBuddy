@@ -54,6 +54,11 @@ Source.TRACK_BY_SPELL_ID     = true
 Source.ENCHANT_BY_CRAFT      = true
 -- The equipped reagent bag (bag 5) holds reagents too.
 Source.HAS_REAGENT_BAG       = true
+-- Characters have a surname; everyone else sees "First Surname", and
+-- Blizzard's chat takes that as a whisper target ("Wherever regional unique
+-- names are enabled we need to support 'FirstName-SecondName' and
+-- 'FirstName SecondName' whisper constructions", ChatFrameEditBox.lua).
+Source.FULL_NAMES            = true
 
 -- The bank is a tab bank (Blizzard's Camelot BankFrame.lua): the character
 -- bank is its purchased tabs, bags 6 to 14 (Enum.BagIndex). Here bag -1 is

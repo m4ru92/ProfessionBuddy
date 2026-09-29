@@ -1558,10 +1558,11 @@ function Comm:NormalizeContactKey(key)
     if type(key) ~= "string" or key == "" then return nil end
     local name, realm = key:match("^([^-]+)%-?(.*)$")
     if not name then return nil end
-    local first = name:sub(1, 1)
-    if first:match("%l") then           -- ASCII only; leave UTF-8 names alone
-        name = first:upper() .. name:sub(2)
-    end
+    -- Capitalize each word ("first surname" on WoW: Forever); ASCII only,
+    -- UTF-8 letters are left alone.
+    name = name:gsub("(%S)(%S*)", function(a, rest)
+        return (a:match("%l") and a:upper() or a) .. rest
+    end)
     -- Core's NormKey owns the canonical spelling and defaults a missing realm
     -- to ours, so a contact typed as "Bob-Old Blanchy" is stored under the same
     -- key the reply arrives from ("Bob-OldBlanchy").

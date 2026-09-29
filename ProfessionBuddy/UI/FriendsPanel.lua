@@ -78,15 +78,33 @@ end
 -- UTF-8 note: a name is up to 12 characters, which is up to 24 BYTES, so the
 -- length is counted in characters (every byte that is not a continuation byte
 -- \128-\191 starts one) or a Cyrillic / Hangul name is refused out of hand.
+-- WoW: Forever (Source.FULL_NAMES) also takes "First Surname": two words,
+-- one space, each capitalized. Blizzard has not published the surname
+-- rules, so that half is looser: 2 to 24 characters, letters and
+-- apostrophes. First names on Forever are not unique, only the full name.
+local function nameWordOK(word, maxChars, extra)
+    local chars = select(2, word:gsub("[^\128-\191]", ""))
+    return chars >= 2 and chars <= (maxChars or 12)
+        and not word:find("[^%a" .. (extra or "") .. "\128-\255]")
+end
+local function capitalized(word)
+    local first = word:sub(1, 1)
+    if first:match("%l") then                       -- ASCII only; leave UTF-8 alone
+        return first:upper() .. word:sub(2)
+    end
+    return word
+end
+
 local function contactKeyFromInput(text)
     local name, realm = text:match("^([^-]+)%-?(.*)$")
     if not name then return nil end
-    local chars = select(2, name:gsub("[^\128-\191]", ""))
-    if chars < 2 or chars > 12 then return nil end
-    if name:find("[^%a\128-\255]") then return nil end
-    local first = name:sub(1, 1)
-    if first:match("%l") then                       -- ASCII only; leave UTF-8 alone
-        name = first:upper() .. name:sub(2)
+    local firstName, surname = name:match("^(%S+) (%S+)$")
+    if firstName and addon.Source and addon.Source.FULL_NAMES then
+        if not (nameWordOK(firstName) and nameWordOK(surname, 24, "'")) then return nil end
+        name = capitalized(firstName) .. " " .. capitalized(surname)
+    else
+        if not nameWordOK(name) then return nil end
+        name = capitalized(name)
     end
     if realm ~= "" then
         -- Letters, spaces, apostrophes and hyphens only (Kel'Thuzad, Mirage
@@ -97,6 +115,8 @@ local function contactKeyFromInput(text)
     end
     return addon:NormKey(name)
 end
+-- The harness checks the typed-name rules through this.
+FP.ContactKeyFromInput = contactKeyFromInput
 
 ----------------------------------------------------------------------
 -- Lightweight popup menu for picking a profession to order from.
@@ -267,7 +287,8 @@ function FP:CreateContent(parent)
             -- back: capped first so one bad paste cannot flood the chat frame,
             -- then pipe-escaped so a typed colour code prints as text.
             print("|cff00ccffProfessionBuddy:|r " .. (typed:sub(1, 40):gsub("|", "||"))
-                .. " is not a character name. Use Name or Name-Realm.")
+                .. " is not a character name. Use " .. ((addon.Source and addon.Source.FULL_NAMES)
+                    and "First Surname." or "Name or Name-Realm."))
             return
         end
 
