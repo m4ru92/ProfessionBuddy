@@ -59,6 +59,10 @@ Source.HAS_REAGENT_BAG       = true
 -- names are enabled we need to support 'FirstName-SecondName' and
 -- 'FirstName SecondName' whisper constructions", ChatFrameEditBox.lua).
 Source.FULL_NAMES            = true
+-- Tooltips are built from tooltip data: an item tooltip is extended with a
+-- TooltipDataProcessor post-call and read with TooltipUtil.GetDisplayedItem.
+-- There is no OnTooltipSetItem.
+Source.TOOLTIP_DATA          = true
 
 -- The bank is a tab bank (Blizzard's Camelot BankFrame.lua): the character
 -- bank is its purchased tabs, bags 6 to 14 (Enum.BagIndex). Here bag -1 is

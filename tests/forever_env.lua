@@ -7,7 +7,10 @@
 --     and GuildRoster, which only exist there as deprecated fallbacks;
 --   * their C_ replacements are PRESENT and record their calls;
 --   * GameTooltip has no OnTooltipSetItem / OnTooltipSetUnit script, and
---     hooking a missing script raises an error, as on the client;
+--     hooking a missing script raises an error, as on the client; item
+--     tooltips are extended through TooltipDataProcessor post-calls
+--     (TOOLTIP_POSTCALLS) and read with TooltipUtil.GetDisplayedItem, which
+--     answers from a tooltip's `_item` link (SHOW_ITEM_TOOLTIP);
 --   * registering an event the Forever client does not know raises an
 --     error (TRADE_SKILL_UPDATE, CRAFT_*, UPDATE_TRADESKILL_RECAST: probe);
 --   * Blizzard_Professions loads on demand, and ProfessionsFrame opens
@@ -108,6 +111,9 @@ function F:SetAttribute(k, v) self._attr[k] = v end
 function F:GetAttribute(k) return self._attr[k] end
 function F:GetFrameLevel() return 1 end
 function F:GetText() return self._text or "" end
+-- A tooltip line, kept in _lines so a harness can read what was added.
+function F:AddLine(text) local l = rawget(self, "_lines"); if l then l[#l + 1] = text end end
+function F:AddDoubleLine(left, right) local l = rawget(self, "_lines"); if l then l[#l + 1] = tostring(left) .. " | " .. tostring(right) end end
 function F:SetText(t) self._text = t end
 function F:GetWidth() return 100 end
 function F:GetHeight() return 100 end
@@ -250,7 +256,30 @@ function hooksecurefunc(name, fn)
         return unpack(r)
     end)
 end
-Enum = { CraftingReagentType = { Basic = 1 } }
+Enum = { CraftingReagentType = { Basic = 1 }, TooltipDataType = { Item = 0, Spell = 1, Unit = 2 } }
+
+-- Data-driven tooltips (Blizzard_SharedXMLGame/Tooltip, `forever` branch).
+TOOLTIP_POSTCALLS = {}
+TooltipDataProcessor = { AllTypes = "ALL" }
+function TooltipDataProcessor.AddTooltipPostCall(tooltipType, func)
+    TOOLTIP_POSTCALLS[#TOOLTIP_POSTCALLS + 1] = { type = tooltipType, fn = func }
+end
+TooltipUtil = {}
+function TooltipUtil.GetDisplayedItem(tip)
+    local link = rawget(tip, "_item")
+    if not link then return nil end
+    return "x", link, tonumber(link:match("item:(%d+)"))
+end
+-- Show an item on a tooltip the way the client does: clear it, set the item,
+-- run every item post-call. Lines added land in tip._lines.
+function SHOW_ITEM_TOOLTIP(tip, itemID)
+    rawset(tip, "_lines", {})
+    rawset(tip, "_item", "|cffffffff|Hitem:" .. itemID .. "::::::::|h[x]|h|r")
+    for _, c in ipairs(TOOLTIP_POSTCALLS) do
+        if c.type == Enum.TooltipDataType.Item then c.fn(tip, { id = itemID }) end
+    end
+    return rawget(tip, "_lines")
+end
 function wipe(t) for k in pairs(t) do t[k] = nil end return t end
 function strtrim(s) return (s or ""):match("^%s*(.-)%s*$") end
 function strsplit(sep, s) local out = {}

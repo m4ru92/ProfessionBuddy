@@ -608,6 +608,15 @@ TSF:RefreshRecipeList()
 st.selected = "Guardian Belt"
 TSF:RefreshDetailPanel()
 EXPECT(shown("detSource") == "Source: |cff888888Recipe item - Pattern: Guardian Belt|r", "Guardian Belt Source: " .. shown("detSource"))
+-- the list row says the same (m4ru 2026-09-29: Kodo Hide Bag's row read
+-- "Undetermined" while its detail panel read "Recipe item")
+local beltRow
+for i, row in ipairs(TSF.listRows) do
+    rawset(row.rightText, "SetText", function(_, t) if type(t) == "string" and t:find("Recipe item", 1, true) then beltRow = t end end)
+end
+TSF:UpdateListRows()
+EXPECT(beltRow and beltRow:find("Recipe item", 1, true) and not beltRow:find("Undetermined", 1, true),
+       "Guardian Belt row: " .. tostring(beltRow))
 tip = {}
 TSF.detSourceHover:GetScript("OnEnter")(TSF.detSourceHover)
 EXPECT(tip[1] == "|cff888888Recipe item seen in your bags|r", "bag tooltip: " .. table.concat(tip, "\n"))
@@ -1206,10 +1215,42 @@ GetUnitName = function(u, full) if u == "party1" then return "Turok Bokenhorn" e
 EXPECT(Comm:IsGroupMember("Turok Bokenhorn") and not Comm:IsGroupMember("Turok"), "group trust with a surname")
 IsInGroup, GetNumSubgroupMembers, GetUnitName = keepG, keepN, keepU
 UnitFullName = nil
+-- back to the no-surname character the later tests use
+DB.characters[oldKey], DB.characters[newKey] = DB.characters[newKey], nil
+for _, e in pairs(DB.knowledge) do
+    if e.seenBy and e.seenBy[newKey] then e.seenBy[newKey] = nil; e.seenBy[oldKey] = true end
+end
 print("  PASS F27 surnames: own name First Surname (a secret surname falls back), own records move to the full key and nobody else's, contacts and sync take First Surname, whispers go to First Surname, own echo ignored, group trust matches")
+
+-- F28: Phase 3, item tooltips on WoW: Forever. There is no
+-- OnTooltipSetItem; PB extends GameTooltip through TooltipDataProcessor
+-- post-calls on item tooltips and reads the item with
+-- TooltipUtil.GetDisplayedItem. Hovering a reagent shows "Used in", a
+-- crafted item "Craftable by"; another tooltip (a chat link's) is left
+-- alone, and the Used-in setting still switches it off
+rawset(GameTooltip, "AddLine", nil)                            -- F21 captured it
+rawset(GameTooltip, "Show", nil)
+local posts = 0
+for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then posts = posts + 1 end end
+EXPECT(posts == 2, "item tooltip post-calls: " .. posts)
+local function has(lines, text)
+    for _, l in ipairs(lines) do if type(l) == "string" and l:find(text, 1, true) then return l end end
+end
+local lines = SHOW_ITEM_TOOLTIP(GameTooltip, 2318)             -- Light Leather
+EXPECT(has(lines, "Used in (ProfessionBuddy):"), "no Used in on Light Leather: " .. table.concat(lines, " / "))
+EXPECT(has(lines, "Leatherworking|r - Handstitched Leather Boots"), "Used in lacks a known recipe that takes Light Leather")
+EXPECT(has(lines, "Craftable by (ProfessionBuddy):"), "no Craftable by on Light Leather")
+local other = CreateFrame("GameTooltip", "ItemRefTooltip", UIParent)
+EXPECT(#SHOW_ITEM_TOOLTIP(other, 2318) == 0, "PB added lines to a tooltip other than GameTooltip")
+ProfBuddyDB.settings.tooltipShowUsedIn = false
+lines = SHOW_ITEM_TOOLTIP(GameTooltip, 2318)
+EXPECT(not has(lines, "Used in (ProfessionBuddy):"), "Used in shown with its setting off")
+ProfBuddyDB.settings.tooltipShowUsedIn = true
+EXPECT(#SHOW_ITEM_TOOLTIP(GameTooltip, 999999) == 0, "lines on an item PB knows nothing about")
+print("  PASS F28 item tooltips through TooltipDataProcessor: Used in and Craftable by on GameTooltip, not on other tooltips, Used in follows its setting")
 
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (27)")
+print("ALL FOREVER TESTS PASS (28)")

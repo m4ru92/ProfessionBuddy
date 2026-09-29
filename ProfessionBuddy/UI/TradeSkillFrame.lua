@@ -34,9 +34,34 @@ local ChatEdit_InsertLink = ChatEdit_InsertLink or (ChatFrameUtil and ChatFrameU
 
 -- Hook a tooltip script only where this client's tooltip has it. Modern
 -- clients (WoW: Forever) have no OnTooltipSetItem / OnTooltipSetUnit, and
--- hooking a missing script is a Lua error. Forever tooltips come later.
+-- hooking a missing script is a Lua error.
 local function HookTooltipScript(tip, script, fn)
     if tip.HasScript and tip:HasScript(script) then tip:HookScript(script, fn) end
+end
+
+-- Run fn(tip) each time GameTooltip shows an item. Classic: OnTooltipSetItem.
+-- WoW: Forever tooltips are built from tooltip data (Source.TOOLTIP_DATA), so
+-- a TooltipDataProcessor post-call on item tooltips, kept to GameTooltip as
+-- the Classic hook is (Blizzard_SharedXMLGame/Tooltip/TooltipDataHandler.lua).
+local function HookItemTooltip(fn)
+    if addon.Source.TOOLTIP_DATA then
+        TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tip)
+            if tip == GameTooltip then fn(tip) end
+        end)
+    else
+        HookTooltipScript(GameTooltip, "OnTooltipSetItem", fn)
+    end
+end
+
+-- The item link an item tooltip shows, or nil. WoW: Forever reads it from
+-- the tooltip data (TooltipUtil.GetDisplayedItem); Classic from tip:GetItem().
+local function TooltipItemLink(tip)
+    if addon.Source.TOOLTIP_DATA then
+        local _, link = TooltipUtil.GetDisplayedItem(tip)
+        return link
+    end
+    local _, link = tip:GetItem()
+    return link
 end
 
 local DS   -- DataStore, set in Init
@@ -839,19 +864,19 @@ function TSF:HookItemTooltip()
         return " " .. table.concat(parts, "|cff5a5a5a/|r")
     end
 
-    HookTooltipScript(GameTooltip, "OnTooltipSetItem", function(tip)
+    HookItemTooltip(function(tip)
         -- Random-enchant line for ANY item tooltip (chat link, bags, AH, etc.):
         -- 2.5.x omits "<Random enchantment>" from a bare item link/ID, so append
         -- it for known random-property crafted items. Idempotent, and independent
         -- of the Used-in setting below.
-        local _, reLink = tip:GetItem()
+        local reLink = TooltipItemLink(tip)
         local reID = reLink and addon:ItemIDFromLink(reLink)
         if reID then self:AppendRandomEnchantLine(tip, reID) end
 
         if not addon.db.settings.tooltipShowUsedIn then return end
         if not RDB then return end
 
-        local _, itemLink = tip:GetItem()
+        local itemLink = TooltipItemLink(tip)
         if not itemLink then return end
         local itemID = addon:ItemIDFromLink(itemLink)
         if not itemID then return end
@@ -1077,13 +1102,13 @@ function TSF:HookItemTooltip()
     end)
 
     -- "Craftable by" tooltip: shows which alts can craft the hovered item
-    HookTooltipScript(GameTooltip, "OnTooltipSetItem", function(tip)
+    HookItemTooltip(function(tip)
         if not (addon.db.settings.showAltInTooltips
                 or addon.db.settings.showRemoteInTooltips) then return end
         if not DS then return end
         if not RDB then return end
 
-        local _, itemLink = tip:GetItem()
+        local itemLink = TooltipItemLink(tip)
         if not itemLink then return end
         local itemID = addon:ItemIDFromLink(itemLink)
         if not itemID then return end
@@ -2483,6 +2508,9 @@ function TSF:UpdateListRows()
                     local src = (vis and vis[1] and vis[1].method) or entry.source or ""
                     local c = SOURCE_COLORS[src] or "|cff888888"
                     local displaySrc = src:sub(1,1):upper() .. src:sub(2)
+                    -- the detail panel's label when the source has one
+                    -- ("Recipe item" for a pattern seen in your bags)
+                    if vis and vis[1] and vis[1].label then displaySrc = vis[1].label end
                     -- flag recipes obtainable more than one way (this faction)
                     if vis and #vis > 1 then displaySrc = displaySrc .. "+" end
                     local skillText = ""
