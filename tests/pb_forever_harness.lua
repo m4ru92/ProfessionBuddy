@@ -1249,8 +1249,66 @@ ProfBuddyDB.settings.tooltipShowUsedIn = true
 EXPECT(#SHOW_ITEM_TOOLTIP(GameTooltip, 999999) == 0, "lines on an item PB knows nothing about")
 print("  PASS F28 item tooltips through TooltipDataProcessor: Used in and Craftable by on GameTooltip, not on other tooltips, Used in follows its setting")
 
+-- F29: the gathering-node hook reads GameTooltip's lines 20 times a
+-- second. Forever gives some tooltip text as a secret value (m4ru
+-- 2026-09-29: a buff tooltip, "attempt to compare local 'nodeName' (a
+-- secret string value)"). The hook must test each line with
+-- issecretvalue before it compares, finds in, or looks up that text.
+-- Plain Lua cannot make == on a secret fail, so the stand-in secret
+-- errors on any other use and the node table records a lookup by it.
+do
+    local SECRET = newproxy(true)
+    local mt = getmetatable(SECRET)
+    local used = {}
+    local function touch(what) return function() used[#used + 1] = what; error("secret " .. what, 2) end end
+    mt.__index = touch("indexed"); mt.__concat = touch("concatenated"); mt.__len = touch("measured")
+    mt.__eq = touch("compared"); mt.__lt = touch("compared"); mt.__le = touch("compared")
+    mt.__tostring = function() return "<secret>" end
+    local onUpdate = GameTooltip._h.OnUpdate
+    EXPECT(type(onUpdate) == "function", "no GameTooltip OnUpdate hook")
+    local lines = {}
+    for i = 1, 2 do
+        local fs = CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(self, t) self._text = t end)
+        lines[i] = fs
+    end
+    local nLines = 1
+    rawset(GameTooltip, "GetUnit", function() return nil end)
+    rawset(GameTooltip, "GetItem", function() return nil end)
+    rawset(GameTooltip, "NumLines", function() return nLines end)
+    local added = {}
+    rawset(GameTooltip, "AddLine", function(_, t) added[#added + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    local oldMining, oldHerb = ProfBuddy.MiningNodes, ProfBuddy.HerbNodes
+    local lookedUpBySecret = false
+    ProfBuddy.MiningNodes = setmetatable({}, { __index = function(_, k)
+        if rawequal(k, SECRET) then lookedUpBySecret = true end
+        if k == "Copper Vein" then return 1 end
+    end })
+    ProfBuddy.HerbNodes = nil
+    issecretvalue = function(v) return rawequal(v, SECRET) end
+    -- 1. the tooltip's title is secret: nothing is read from it
+    lines[1]._text = SECRET
+    local ok, err = pcall(onUpdate, GameTooltip, 1)
+    EXPECT(ok, "secret title: " .. tostring(err))
+    EXPECT(not lookedUpBySecret, "secret title looked up in the node table")
+    EXPECT(#added == 0, "lines added for a secret title")
+    -- 2. a node tooltip with a secret second line: that line is skipped,
+    -- and the Requires line still goes on
+    lines[1]._text = "Copper Vein"; lines[2]._text = SECRET; nLines = 2
+    ok, err = pcall(onUpdate, GameTooltip, 1)
+    EXPECT(ok, "secret line on a node tooltip: " .. tostring(err))
+    EXPECT(#used == 0, "the secret was used: " .. table.concat(used, ", "))
+    EXPECT(added[1] and added[1]:find("Requires Mining (1)", 1, true), "no Requires line: " .. tostring(added[1]))
+    issecretvalue = nil
+    ProfBuddy.MiningNodes, ProfBuddy.HerbNodes = oldMining, oldHerb
+    rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "Show", nil)
+    rawset(GameTooltip, "GetUnit", nil); rawset(GameTooltip, "GetItem", nil); rawset(GameTooltip, "NumLines", nil)
+end
+print("  PASS F29 gathering-node tooltip skips secret tooltip text")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (28)")
+print("ALL FOREVER TESTS PASS (29)")

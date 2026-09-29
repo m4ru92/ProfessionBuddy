@@ -768,6 +768,13 @@ end
 -- OnTooltipSetUnit never fires. Match the node name against a static name->skill
 -- table (ProfBuddy.MiningNodes / HerbNodes). See DESIGN-NOTES.md for why this
 -- runs on a throttled OnUpdate and re-appends idempotently.
+-- WoW: Forever hands addons some tooltip text as a secret value (a buff's
+-- tooltip, 2026-09-29), and comparing one is a Lua error. issecretvalue
+-- is Forever's (FrameScriptDocumentation); TBC Anniversary has none.
+local function IsSecret(v)
+    return type(issecretvalue) == "function" and issecretvalue(v)
+end
+
 function TSF:HookNodeTooltip()
     if self._hookedNodeTooltip then return end
     self._hookedNodeTooltip = true
@@ -783,7 +790,7 @@ function TSF:HookNodeTooltip()
         if not tname then return end
         local fs = _G[tname .. "TextLeft1"]
         local nodeName = fs and fs:GetText()
-        if not nodeName or nodeName == "" then return end
+        if not nodeName or IsSecret(nodeName) or nodeName == "" then return end
         local prof, req
         if addon.MiningNodes and addon.MiningNodes[nodeName] then prof, req = "Mining", addon.MiningNodes[nodeName]
         elseif addon.HerbNodes and addon.HerbNodes[nodeName] then prof, req = "Herbalism", addon.HerbNodes[nodeName] end
@@ -795,7 +802,7 @@ function TSF:HookNodeTooltip()
         for i = 2, tip:NumLines() do
             local fs = _G[tname .. "TextLeft" .. i]
             local txt = fs and fs:GetText()
-            if txt then
+            if txt and not IsSecret(txt) then
                 if txt == requires then
                     reqDone = true
                 elseif (not reqDone) and txt:find(prof, 1, true) and not txt:find("Your ", 1, true) then
