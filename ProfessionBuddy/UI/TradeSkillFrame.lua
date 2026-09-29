@@ -301,6 +301,18 @@ local SOURCE_OPTIONS  = { "All", "Trainer", "Vendor", "Drop", "Quest", "Reputati
 -- its static ranges are ever found unreliable.
 local RANGE_NUMBERS_HIDDEN = {}
 
+-- The colour an unlearned recipe will have once you learn it: its range
+-- against your skill. A skill below the learn level is below the orange
+-- cutoff too, so it reads orange. nil when PB has no range for it.
+-- Missing recipes used to show a placeholder yellow (m4ru 2026-09-29).
+local function LearnedDiff(recipe, skill)
+    local sr = GetSkillRange(recipe)
+    if not sr then return nil end
+    return DiffFromSkillRange(sr, skill or 0)
+end
+-- A name with no known colour
+local NO_DIFF_COLOR = { r = 1, g = 1, b = 1 }
+
 -- knownDiff (optional): the recipe's ACTUAL difficulty tier -- from the live
 -- game for your own profession, or the best-known value for a friend/alt.
 -- When given, the bracketed tier follows it so the detail panel always
@@ -2460,7 +2472,13 @@ function TSF:UpdateListRows()
                     row.nameText:SetPoint("LEFT", 4 + recipeIndent, 0)
                 end
 
-                local dc = DiffColor(entry.difficulty)
+                local dc
+                if entry.isKnown then
+                    dc = DiffColor(entry.difficulty)
+                else
+                    local ld = LearnedDiff(entry, state.skillLevel)
+                    dc = ld and DiffColor(ld) or NO_DIFF_COLOR
+                end
                 row.nameText:SetText(entry.name)
                 row.nameText:SetTextColor(dc.r, dc.g, dc.b)
 
@@ -2943,17 +2961,23 @@ function TSF:RefreshDetailPanel(preserveScroll)
         self.detIcon:Hide()
     end
 
-    local dc = DiffColor(recipe.difficulty)
-    self.detName:SetText(recipe.name)
-    self.detName:SetTextColor(dc.r, dc.g, dc.b)
-
     local diffLabels = {
         optimal = "Orange - will level up",
         medium  = "Yellow - may level up",
         easy    = "Green - unlikely to level",
         trivial = "Grey - no skill gain",
     }
-    self.detDiff:SetText("Difficulty: " .. (diffLabels[recipe.difficulty] or recipe.difficulty or "unknown"))
+    local dc
+    if recipe.isKnown then
+        dc = DiffColor(recipe.difficulty)
+        self.detDiff:SetText("Difficulty: " .. (diffLabels[recipe.difficulty] or recipe.difficulty or "unknown"))
+    else
+        local ld = LearnedDiff(recipe, state.skillLevel)
+        dc = ld and DiffColor(ld) or NO_DIFF_COLOR
+        self.detDiff:SetText("Difficulty when learned: " .. (ld and diffLabels[ld] or "not known"))
+    end
+    self.detName:SetText(recipe.name)
+    self.detName:SetTextColor(dc.r, dc.g, dc.b)
     self.detDiff:SetTextColor(dc.r, dc.g, dc.b)
 
     local sr = GetSkillRange(recipe)

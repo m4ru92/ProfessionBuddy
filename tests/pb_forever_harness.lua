@@ -1307,8 +1307,73 @@ do
 end
 print("  PASS F29 gathering-node tooltip skips secret tooltip text")
 
+-- F30: a Missing recipe shows the colour it will have once learned, not a
+-- placeholder yellow (m4ru 2026-09-29: Kodo Hide Bag read "Yellow - may
+-- level up" before he knew it, and will be orange when learned). Kodo
+-- Hide Bag is learned at 35 with range 35/65/80/95; below 35 it reads
+-- orange, the colour it will have when learned at 35.
+do
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+    local diffText, nameColor, rowColor
+    rawset(TSF.detDiff, "SetText", function(_, t) diffText = t end)
+    rawset(TSF.detName, "SetTextColor", function(_, r, g, b) nameColor = string.format("%.2f,%.2f,%.2f", r, g, b) end)
+    local rowRef
+    for _, row in ipairs(TSF.listRows) do
+        rawset(row.nameText, "SetText", function(self, t) self._t = t end)
+        rawset(row.nameText, "SetTextColor", function(self, r, g, b)
+            if self._t == "Kodo Hide Bag" then rowColor = string.format("%.2f,%.2f,%.2f", r, g, b) end
+        end)
+    end
+    st.showTab, st.searchText, st.filterDiff, st.filterSource = "missing", "kodo hide bag", "All", "All"
+    TSF:RefreshRecipeList()
+    st.selected = "Kodo Hide Bag"
+    local ORANGE, YELLOW, GREEN, GREY, WHITE = "1.00,0.50,0.25", "1.00,1.00,0.00", "0.25,0.75,0.25", "0.50,0.50,0.50", "1.00,1.00,1.00"
+    local function at(skill)
+        st.skillLevel = skill
+        diffText, nameColor, rowColor = nil, nil, nil
+        TSF:RefreshDetailPanel()
+        TSF:UpdateListRows()
+        return diffText, nameColor, rowColor
+    end
+    local cases = {
+        { 1,   "Difficulty when learned: Orange - will level up", ORANGE },   -- below 35: learned at 35
+        { 64,  "Difficulty when learned: Orange - will level up", ORANGE },
+        { 65,  "Difficulty when learned: Yellow - may level up", YELLOW },
+        { 80,  "Difficulty when learned: Green - unlikely to level", GREEN },
+        { 95,  "Difficulty when learned: Grey - no skill gain", GREY },
+    }
+    for _, c in ipairs(cases) do
+        local d, n, r = at(c[1])
+        EXPECT(d == c[2], "skill " .. c[1] .. ": " .. tostring(d))
+        EXPECT(n == c[3] and r == c[3], "skill " .. c[1] .. " colours: name " .. tostring(n) .. ", row " .. tostring(r))
+    end
+    -- no range in PB's data: "not known", in white
+    local data = RDB.data.Leatherworking["Kodo Hide Bag"]
+    local sr = data.skillRange
+    data.skillRange = nil
+    TSF:RefreshRecipeList()
+    local d, n, r = at(70)
+    data.skillRange = sr
+    EXPECT(d == "Difficulty when learned: not known", "no range: " .. tostring(d))
+    EXPECT(n == WHITE and r == WHITE, "no range colours: name " .. tostring(n) .. ", row " .. tostring(r))
+    -- a known recipe keeps the game's tier
+    st.showTab, st.searchText = "known", "handstitched leather boots"
+    TSF:RefreshRecipeList()
+    st.selected = "Handstitched Leather Boots"
+    local known
+    for _, e in ipairs(st.recipes) do if e.name == st.selected then known = e end end
+    EXPECT(known and known.isKnown, "Handstitched Leather Boots not known here")
+    local d2 = at(70)
+    EXPECT(d2 and d2:find("^Difficulty: ") and not d2:find("when learned", 1, true), "known recipe: " .. tostring(d2))
+    st.showTab, st.searchText, st.selected, st.skillLevel = "known", "", nil, 1
+    TSF:RefreshRecipeList()
+end
+print("  PASS F30 a Missing recipe shows the colour it will have once learned, in the detail panel and on its row")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (29)")
+print("ALL FOREVER TESTS PASS (30)")
