@@ -290,6 +290,15 @@ function time() return 5000 end
 function date() return "2026-09-24" end
 function GetLocale() return "enUS" end
 function GetRealmName() return "Realm" end
+-- securecallfunction(f, ...) calls f (CallbackHandler, and so AceComm's
+-- delivery, goes through it)
+function securecallfunction(f, ...) return f(...) end
+-- Ambiguate(name, "none"): a same-realm name loses its "-Realm"
+function Ambiguate(name)
+    local short, realm = tostring(name):match("^(.-)%-(.+)$")
+    if short and realm == GetRealmName() then return short end
+    return name
+end
 function UnitName() return "Me" end
 function GetUnitName() return "Me" end
 function UnitClass() return "Hunter", "HUNTER" end

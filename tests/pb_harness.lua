@@ -2107,7 +2107,7 @@ passed("T80 trainer learn level -- read from the rank, recipe names only")
 -- answer, a KNOW_DATA is dropped without an error, and a rev-8 SYNC_DATA
 -- does not make it ask.
 do
-    assert(addon.COMM_REV == 8, "T81: COMM_REV is " .. tostring(addon.COMM_REV))
+    assert(addon.COMM_REV == 9, "T81: COMM_REV is " .. tostring(addon.COMM_REV))
     assert(addon.Knowledge == nil, "T81: Knowledge loaded on TBC Anniversary")
     addon.db.contacts["Knowy-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 }
     clearSent()
@@ -2123,8 +2123,21 @@ do
 end
 passed("T81 TBC Anniversary ignores KNOW_REQ / KNOW_DATA and never asks (COMM_REV 8)")
 
+-- ── T83: TBC Anniversary keeps AceComm's chunks ──────────────────────────
+-- COMM_REV 9 numbers the chunks of a long message on WoW: Forever only
+-- (Source.NUMBERED_CHUNKS). Here a long payload still goes to AceComm whole.
+do
+    assert(addon.Source.NUMBERED_CHUNKS == nil, "T83: numbered chunks on TBC Anniversary")
+    clearSent()
+    addon.Comm:Send("SYNC_DATA", { note = string.rep("x", 2000) }, "WHISPER", "Buddy", "BULK")
+    local s = sentOfType("SYNC_DATA")
+    assert(#s == 1 and #s[1].payload.note == 2000 and s[1].prio == "BULK", "T83: long send did not go to AceComm whole")
+    clearSent()
+end
+passed("T83 TBC Anniversary sends a long message through AceComm as before (COMM_REV 9 is Forever only)")
+
 leaveGuild()
-print("ALL 82 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 83 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2138,6 +2151,6 @@ print("ALL 82 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " and T74 the recipe faction visibility rule, T75-T79 Poisons data, localized storage,"
     .. " class gating, the class-trainer guard and Poisons never leaving the client,"
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
-    .. " T82 bank bags rescanned while the bank is open; "
+    .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages; "
     .. pass .. " of them print a PASS line above)")
 

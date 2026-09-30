@@ -1,9 +1,10 @@
 ----------------------------------------------------------------------
 -- One node of the WoW: Forever two-client test (tests/forever_pair.py).
 -- Each node is a whole PB in its own Lua state, on the Forever stub, as
--- the player "NODE_NAME NODE_SURNAME" on "Realm". Outgoing addon messages are caught at
--- AceComm, after Comm:Send has stamped and serialized them, into OUTBOX;
--- the driver hands each one to the other node's Comm:OnMessageReceived.
+-- the player "NODE_NAME NODE_SURNAME" on "Realm". Outgoing addon messages are caught on
+-- the wire, at ChatThrottleLib (single messages from AceComm, numbered
+-- chunks from Comm), into OUTBOX; the driver fires each at the other node
+-- as CHAT_MSG_ADDON, so AceComm and Comm:OnChunk receive them as in game.
 ----------------------------------------------------------------------
 dofile("tests/forever_env.lua")
 dofile("tests/forever_tradeskill.lua")
@@ -33,12 +34,19 @@ FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
 EXPECT(ProfBuddy:PlayerKey() == NODE_NAME .. " " .. NODE_SURNAME .. "-Realm", "node key " .. tostring(ProfBuddy:PlayerKey()))
 OUTBOX = {}
-LibStub("AceComm-3.0").SendCommMessage = function(_, prefix, text, dist, target, prio)
+ChatThrottleLib.SendAddonMessage = function(_, prio, prefix, text, dist, target)
     OUTBOX[#OUTBOX + 1] = { prefix = prefix, text = text, dist = dist, target = target, prio = prio }
 end
 function NODE_RECEIVE(prefix, text, dist, from)
-    ProfBuddy.Comm:OnMessageReceived(prefix, text, dist, from)
+    FIRE("CHAT_MSG_ADDON", prefix, text, dist, from)
     FLUSH()
+end
+-- every whole message PB takes in, by type, for the driver's flow check
+RECEIVED = {}
+local realRecv = ProfBuddy.Comm.OnMessageReceived
+ProfBuddy.Comm.OnMessageReceived = function(self, prefix, text, dist, from)
+    RECEIVED[#RECEIVED + 1] = NODE_TYPE(text)
+    return realRecv(self, prefix, text, dist, from)
 end
 function NODE_TYPE(text)
     local ok, d = LibStub("AceSerializer-3.0"):Deserialize(text)

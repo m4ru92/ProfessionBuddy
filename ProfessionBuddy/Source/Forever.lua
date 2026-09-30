@@ -63,6 +63,11 @@ Source.FULL_NAMES            = true
 -- TooltipDataProcessor post-call and read with TooltipUtil.GetDisplayedItem.
 -- There is no OnTooltipSetItem.
 Source.TOOLTIP_DATA          = true
+-- The chunks of one long addon message can arrive out of order when they
+-- go out in a burst (m4ru's two-client traces, 2026-09-30: three middle
+-- chunks of a 7-chunk SYNC_DATA arrived before its first). AceComm joins
+-- chunks in arrival order, so PB numbers them here (Comm.lua).
+Source.NUMBERED_CHUNKS       = true
 
 -- The bank is a tab bank (Blizzard's Camelot BankFrame.lua): the character
 -- bank is its purchased tabs, bags 6 to 14 (Enum.BagIndex). Here bag -1 is

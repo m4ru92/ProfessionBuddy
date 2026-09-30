@@ -6,6 +6,11 @@ every message arrives from "First Surname", as on the client. Alpha has
 talked to Mak (Thunder Bluff Leatherworking trainer); Bravo has not. Bravo
 syncs with Alpha, asks for Alpha's knowledge after the rev-8 SYNC_DATA, and
 ends up with Mak on its Source line, credited to Alpha Stone.
+
+Messages travel as raw addon messages (COMM_REV 9: a long one as numbered
+chunks), and every batch a node sends is delivered in REVERSE, as WoW:
+Forever can deliver a burst of chunks out of order (m4ru's traces,
+2026-09-30).
 Called by run_all.py.
 """
 import os
@@ -36,27 +41,36 @@ def run_pair(LuaRuntime, quiet):
             me.execute('ProfBuddyDB.contacts["%s"] = { trusted = true, autoSync = false, lastSync = 0 }' % other)
         B.execute('ProfBuddy.Comm:RequestSync("Alpha Stone-Realm", true); FLUSH()')
 
-        types = []
         # whispers are addressed to "First Surname"; senders arrive the same way
         nodes = {"Alpha Stone": A, "Bravo Reed": B}
         keys = {id(A): "Alpha Stone", id(B): "Bravo Reed"}
+        reversed_chunks = 0
         for _ in range(20):                      # pump until both outboxes stay empty
             moved = False
             for sender in (A, B):
                 box = sender.globals().OUTBOX
-                while len(box) > 0:
-                    msg = box[1]
-                    sender.execute("table.remove(OUTBOX, 1)")
+                batch = [box[i] for i in range(1, len(box) + 1)]
+                sender.execute("OUTBOX = {}")
+                chunks = [m for m in batch if m.text[:1] == "\x05"]
+                if len(chunks) > 1:
+                    reversed_chunks += len(chunks)
+                for msg in reversed(batch):
                     if msg.target not in nodes:
                         return False, "whisper addressed to %r, not a First Surname" % msg.target
-                    target = nodes[msg.target]
-                    types.append("%s>%s %s" % (keys[id(sender)][0], keys[id(target)][0],
-                                               sender.globals().NODE_TYPE(msg.text)))
-                    target.globals().NODE_RECEIVE(msg.prefix, msg.text, msg.dist, keys[id(sender)])
+                    if len(msg.text) > 255:
+                        return False, "a wire message over 255 bytes"
+                    nodes[msg.target].globals().NODE_RECEIVE(msg.prefix, msg.text, msg.dist, keys[id(sender)])
                     moved = True
             if not moved:
                 break
+        if reversed_chunks == 0:
+            return False, "no multi-chunk message crossed, so nothing was delivered out of order"
 
+        types = []
+        for node, me in ((A, "A"), (B, "B")):
+            got = node.globals().RECEIVED
+            for i in range(1, len(got) + 1):
+                types.append("%s>%s %s" % ("B" if me == "A" else "A", me, got[i]))
         flow = " ".join(types)
         want = ["B>A SYNC_REQ", "A>B SYNC_DATA", "B>A KNOW_REQ", "A>B KNOW_DATA"]
         missing = [w for w in want if w not in flow]

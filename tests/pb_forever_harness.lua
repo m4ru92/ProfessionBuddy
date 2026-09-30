@@ -950,7 +950,7 @@ print("  PASS F25 first-open prompt (Escape asks again next session); Learn as y
 -- sighting counts as seen); removing the contact or 30 days drops it
 local Comm = ProfBuddy.Comm
 local AS = LibStub("AceSerializer-3.0")
-EXPECT(ProfBuddy.COMM_REV == 8, "COMM_REV is " .. tostring(ProfBuddy.COMM_REV))
+EXPECT(ProfBuddy.COMM_REV == 9, "COMM_REV is " .. tostring(ProfBuddy.COMM_REV))
 local SENT = {}
 local realWhisper = Comm.SendWhisper
 Comm.SendWhisper = function(_, t, d, target, prio) SENT[#SENT + 1] = { t = t, d = d, to = target, prio = prio } end
@@ -1372,8 +1372,123 @@ do
 end
 print("  PASS F30 a Missing recipe shows the colour it will have once learned, in the detail panel and on its row")
 
+-- F31: numbered chunks (COMM_REV 9). Forever delivers the chunks of a long
+-- message out of order when they go out in a burst (m4ru's traces,
+-- 2026-09-30), and AceComm joins them in arrival order. A message over
+-- 255 bytes goes out as "\005<id>:<n>:<total>:<data>" through
+-- ChatThrottleLib; the receiver joins by number, in any order, ignores a
+-- duplicate and a malformed header, drops a partial message after a
+-- minute idle, and caps what one sender, and all senders, can hold.
+do
+    local Comm = ProfBuddy.Comm
+    local AS = LibStub("AceSerializer-3.0")
+    local AC = LibStub("AceComm-3.0")
+    local CTL = ChatThrottleLib
+    local wire, acSent = {}, {}
+    local realCTL, realAC = CTL.SendAddonMessage, AC.SendCommMessage
+    CTL.SendAddonMessage = function(_, prio, prefix, text, chattype, target, queue)
+        wire[#wire + 1] = { prio = prio, prefix = prefix, text = text, chattype = chattype, target = target, queue = queue }
+    end
+    AC.SendCommMessage = function(_, prefix, text) acSent[#acSent + 1] = text end
+    local big = { names = {} }
+    for i = 1, 200 do big.names[i] = "Recipe number " .. i end
+    Comm:Send("SYNC_DATA", big, "WHISPER", "Pal Friend", "BULK")
+    EXPECT(#acSent == 0 and #wire > 10, "long send: " .. #acSent .. " via AceComm, " .. #wire .. " numbered")
+    local parts = {}
+    for i, w in ipairs(wire) do
+        EXPECT(#w.text <= 255 and w.prio == "BULK" and w.prefix == "PBuddy" and w.queue == "PBuddy"
+               and w.chattype == "WHISPER" and w.target == "Pal Friend", "chunk " .. i .. " sent wrong")
+        local _, n, total, part = w.text:match("^\005(%d+):(%d+):(%d+):(.*)$")
+        EXPECT(tonumber(n) == i and tonumber(total) == #wire, "chunk " .. i .. " header: " .. w.text:sub(1, 20))
+        parts[i] = part
+    end
+    local text = table.concat(parts)
+    local ok, d = AS:Deserialize(text)
+    EXPECT(ok and d._type == "SYNC_DATA" and d._commrev == 9 and #d.names == 200, "joined chunks do not read back")
+    local longWire = wire
+    wire = {}
+    Comm:Send("SYNC_REQ", {}, "WHISPER", "Pal Friend")
+    EXPECT(#acSent == 1 and #wire == 0, "a short message left AceComm")
+    CTL.SendAddonMessage, AC.SendCommMessage = realCTL, realAC
+
+    -- receiving, through the real CHAT_MSG_ADDON event
+    local got = {}
+    local realRecv = Comm.OnMessageReceived
+    Comm.OnMessageReceived = function(_, prefix, msg, dist, sender) got[#got + 1] = { msg = msg, dist = dist, sender = sender } end
+    local function deliver(list, sender) for _, t in ipairs(list) do FIRE("CHAT_MSG_ADDON", "PBuddy", t, "WHISPER", sender or "Pal Friend") end end
+    local texts = {}
+    for i, w in ipairs(longWire) do texts[i] = w.text end
+    -- reversed, with a duplicate in the middle
+    local rev = {}
+    for i = #texts, 1, -1 do rev[#rev + 1] = texts[i] end
+    table.insert(rev, 3, texts[#texts - 2])
+    deliver(rev)
+    EXPECT(#got == 1 and got[1].msg == text and got[1].sender == "Pal Friend" and got[1].dist == "WHISPER",
+           "reversed chunks: " .. #got .. " delivered")
+    EXPECT(Comm._chunkIn == nil or next(Comm._chunkIn) == nil, "chunks left held after delivery")
+    -- the sender as AceComm names it: a same-realm "-Realm" is dropped
+    got = {}
+    deliver(texts, "Pal Friend-Realm")
+    EXPECT(#got == 1 and got[1].sender == "Pal Friend", "sender: " .. tostring(got[1] and got[1].sender))
+    -- two messages from one sender, chunks interleaved
+    local function chunked(id, str)
+        local out, total = {}, math.ceil(#str / 238)
+        for n = 1, total do out[n] = "\005" .. id .. ":" .. n .. ":" .. total .. ":" .. str:sub((n - 1) * 238 + 1, n * 238) end
+        return out
+    end
+    local s1, s2 = AS:Serialize({ _type = "SYNC_DATA", a = string.rep("a", 600) }), AS:Serialize({ _type = "ORDER_NEW", b = string.rep("b", 500) })
+    local c1, c2 = chunked(41, s1), chunked(42, s2)
+    got = {}
+    deliver({ c2[3], c1[1], c2[1], c1[3], c1[2], c2[2] })
+    EXPECT(#got == 2 and got[1].msg == s1 and got[2].msg == s2, "interleaved: " .. #got)
+    -- malformed and out-of-range headers are ignored; AceComm's own chunks are not ours
+    got = {}
+    deliver({ "\005x:1:2:abc", "\0057:3:2:abc", "\0057:0:2:abc", "\0057:1:1001:abc",
+              "\0057:1:1:" .. string.rep("z", 239), "\001plain AceComm first chunk" })
+    EXPECT(#got == 0 and (Comm._chunkIn == nil or next(Comm._chunkIn) == nil), "a bad chunk was held or delivered")
+    -- a missing chunk: nothing is delivered, and the partial goes after a minute idle
+    local realGetTime = GetTime
+    local clock = 5000
+    GetTime = function() return clock end
+    got = {}
+    deliver({ c1[1], c1[2] })
+    EXPECT(#got == 0 and Comm._chunkIn["Pal Friend\tWHISPER"].held == 2, "partial message not held")
+    clock = clock + 61
+    deliver({ c2[1] })
+    local box = Comm._chunkIn["Pal Friend\tWHISPER"]
+    EXPECT(box.msgs[41] == nil and box.msgs[42] and box.held == 1, "idle partial not dropped")
+    deliver({ c1[3] })                        -- the dropped message's last chunk alone
+    EXPECT(#got == 0, "a dropped partial was delivered")
+    -- caps: 4 unfinished messages per sender (the oldest goes), 16 senders
+    Comm._chunkIn = nil
+    for id = 1, 5 do clock = clock + 1; deliver({ "\005" .. id .. ":1:2:x" }) end
+    box = Comm._chunkIn["Pal Friend\tWHISPER"]
+    local held = 0
+    for _ in pairs(box.msgs) do held = held + 1 end
+    EXPECT(held == 4 and box.msgs[1] == nil and box.msgs[5] and box.held == 4, "per-sender cap: " .. held)
+    Comm._chunkIn = nil
+    for i = 1, 17 do deliver({ "\0051:1:2:x" }, "Stranger" .. i) end
+    local senders = 0
+    for _ in pairs(Comm._chunkIn) do senders = senders + 1 end
+    EXPECT(senders == 16 and Comm._chunkIn["Stranger17\tWHISPER"] == nil, "sender cap: " .. senders)
+    -- held chunks for one sender are capped: at 1200 the message still
+    -- growing is dropped, the other stays
+    Comm._chunkIn = nil
+    got = {}
+    for n = 1, 999 do deliver({ "\0051:" .. n .. ":1000:x" }, "Flood") end
+    for n = 1, 201 do deliver({ "\0052:" .. n .. ":1000:x" }, "Flood") end
+    box = Comm._chunkIn and Comm._chunkIn["Flood\tWHISPER"]
+    EXPECT(box and box.held == 1200 and box.msgs[2], "held before the cap: " .. tostring(box and box.held))
+    deliver({ "\0052:202:1000:x" }, "Flood")
+    EXPECT(#got == 0 and box.msgs[2] == nil and box.msgs[1] and box.held == 999, "held cap: " .. tostring(box.held))
+    Comm._chunkIn = nil
+    GetTime = realGetTime
+    Comm.OnMessageReceived = realRecv
+end
+print("  PASS F31 numbered chunks: a long message is numbered through ChatThrottleLib and joined by number in any order, duplicates and bad headers ignored, idle partials dropped, per-sender and sender caps")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (30)")
+print("ALL FOREVER TESTS PASS (31)")

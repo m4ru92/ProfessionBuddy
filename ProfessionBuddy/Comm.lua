@@ -51,7 +51,11 @@ local Comm = addon:NewModule("Comm")
 -- KNOW_REQ / KNOW_DATA, whisper only. Sent only to a peer whose SYNC_DATA
 -- carried rev >= 8, and only by a client with Knowledge.lua (Forever), so a
 -- TBC Anniversary client and an older one never see either.
-local COMM_REV = 8
+-- rev 9 = WoW: Forever numbered chunks (Source.NUMBERED_CHUNKS): a message
+-- over 255 bytes goes out as "\005<id>:<n>:<total>:<data>" chunks, joined
+-- by number, because Forever delivers a burst of chunks out of order.
+-- Payloads are unchanged, and TBC Anniversary still uses AceComm's chunks.
+local COMM_REV = 9
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -59,6 +63,18 @@ local AceSerializer
 
 local PREFIX = "PBuddy"
 local DS     -- DataStore, set in Init
+
+-- Numbered chunks (WoW: Forever, rev 9). AceComm acts only on control
+-- bytes \001-\004 and ignores \005, so these never reach its joiner.
+-- The header is at most 16 bytes ("\005" plus three 4-digit numbers and
+-- three colons), which leaves 238 of the 255 for data.
+local CHUNK_MARK   = "\005"
+local CHUNK_DATA   = 238
+local CHUNK_MAX    = 1000   -- chunks in one message (~238 KB; KNOW_DATA tops out near 150 KB)
+local CHUNK_HELD   = 1200   -- chunks held unfinished for one sender
+local CHUNK_IDLE   = 60     -- seconds without a chunk before a partial message is dropped
+local CHUNK_PER_SENDER = 4  -- unfinished messages held for one sender
+local CHUNK_SENDERS    = 16 -- senders with unfinished messages
 
 -- Debounce timer for incremental updates
 local incrTimer = nil
@@ -129,6 +145,11 @@ function Comm:Init()
         Comm:OnMessageReceived(prefix, message, distribution, sender)
     end
     AceComm.RegisterComm(self._commTarget, PREFIX)
+    if addon.Source and addon.Source.NUMBERED_CHUNKS then
+        addon:RegisterEvent("CHAT_MSG_ADDON", function(_, prefix, text, channel, sender)
+            Comm:OnChunk(prefix, text, channel, sender)
+        end)
+    end
 
     -- Auto-sync: broadcast HELLO when joining a group
     addon:RegisterEvent("GROUP_ROSTER_UPDATE", function()
@@ -223,7 +244,107 @@ function Comm:Send(msgType, data, channel, target, prio)
     data._commrev = COMM_REV
 
     local serialized = AceSerializer:Serialize(data)
-    AceComm:SendCommMessage(PREFIX, serialized, channel, target, prio or "NORMAL")
+    if addon.Source and addon.Source.NUMBERED_CHUNKS and #serialized > 255 then
+        self:SendNumbered(serialized, channel, target, prio or "NORMAL")
+    else
+        AceComm:SendCommMessage(PREFIX, serialized, channel, target, prio or "NORMAL")
+    end
+end
+
+-- A long message as numbered chunks, through ChatThrottleLib on the same
+-- queue AceComm uses, so the lanes and the bandwidth share are unchanged.
+function Comm:SendNumbered(text, channel, target, prio)
+    local total = math.ceil(#text / CHUNK_DATA)
+    if total > CHUNK_MAX or not ChatThrottleLib then return end
+    self._chunkSeq = (self._chunkSeq or 0) % 9999 + 1
+    local head = CHUNK_MARK .. self._chunkSeq .. ":"
+    for n = 1, total do
+        ChatThrottleLib:SendAddonMessage(prio, PREFIX,
+            head .. n .. ":" .. total .. ":" .. text:sub((n - 1) * CHUNK_DATA + 1, n * CHUNK_DATA),
+            channel, target, PREFIX)
+    end
+end
+
+-- One numbered chunk off CHAT_MSG_ADDON. Chunks are kept per sender and
+-- channel, keyed by message id, and the message goes to OnMessageReceived
+-- (the same door AceComm uses, with its trust check) once every number is
+-- in, whatever the order. A duplicate is ignored. Held chunks are capped
+-- per message, per sender and in senders, and a partial message idle for
+-- CHUNK_IDLE seconds is dropped, so a stranger cannot grow this.
+function Comm:OnChunk(prefix, text, channel, sender)
+    if type(issecretvalue) == "function"
+       and (issecretvalue(prefix) or issecretvalue(text) or issecretvalue(sender)) then return end
+    if prefix ~= PREFIX or type(text) ~= "string" or type(sender) ~= "string" then return end
+    -- anything else (AceComm's own messages) fails this match
+    local id, n, total, part = text:match("^\005(%d+):(%d+):(%d+):(.*)$")
+    id, n, total = tonumber(id), tonumber(n), tonumber(total)
+    if not (id and n and total) or total < 1 or total > CHUNK_MAX or n < 1 or n > total
+       or #part > CHUNK_DATA then return end
+    -- the sender as AceComm names it, so both paths agree
+    if Ambiguate then sender = Ambiguate(sender, "none") end
+
+    local now = GetTime()
+    self:SweepChunks(now)
+    self._chunkIn = self._chunkIn or {}
+    local inbox = self._chunkIn
+    local key = sender .. "\t" .. tostring(channel)
+    local box = inbox[key]
+    if not box then
+        local senders = 0
+        for _ in pairs(inbox) do senders = senders + 1 end
+        if senders >= CHUNK_SENDERS then return end
+        box = { held = 0, msgs = {} }
+        inbox[key] = box
+    end
+    local msg = box.msgs[id]
+    if msg and msg.total ~= total then        -- an id reused for another message
+        box.held = box.held - msg.got
+        box.msgs[id], msg = nil, nil
+    end
+    if not msg then
+        local count, oldestId = 0, nil
+        for mid, m in pairs(box.msgs) do
+            count = count + 1
+            if not oldestId or m.at < box.msgs[oldestId].at then oldestId = mid end
+        end
+        if count >= CHUNK_PER_SENDER then
+            box.held = box.held - box.msgs[oldestId].got
+            box.msgs[oldestId] = nil
+        end
+        msg = { total = total, got = 0, parts = {}, at = now }
+        box.msgs[id] = msg
+    end
+    msg.at = now
+    if msg.parts[n] then return end
+    if box.held >= CHUNK_HELD then
+        box.held = box.held - msg.got
+        box.msgs[id] = nil
+        return
+    end
+    msg.parts[n] = part
+    msg.got = msg.got + 1
+    box.held = box.held + 1
+    if msg.got < total then return end
+
+    box.held = box.held - msg.got
+    box.msgs[id] = nil
+    if next(box.msgs) == nil then inbox[key] = nil end
+    self:OnMessageReceived(PREFIX, table.concat(msg.parts, "", 1, total), channel, sender)
+end
+
+-- Drop partial messages no chunk has reached for CHUNK_IDLE seconds.
+function Comm:SweepChunks(now)
+    local inbox = self._chunkIn
+    if not inbox then return end
+    for key, box in pairs(inbox) do
+        for id, m in pairs(box.msgs) do
+            if now - m.at > CHUNK_IDLE then
+                box.held = box.held - m.got
+                box.msgs[id] = nil
+            end
+        end
+        if next(box.msgs) == nil then inbox[key] = nil end
+    end
 end
 
 -- Canonical "Name-Realm" for every key compare in this file. Core owns the

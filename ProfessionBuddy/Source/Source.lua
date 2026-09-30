@@ -57,6 +57,9 @@
 --                                 reagent bag (NUM_TOTAL_EQUIPPED_BAG_SLOTS)
 --   Source.TOOLTIP_DATA           true: item tooltips are extended through
 --                                 TooltipDataProcessor, not OnTooltipSetItem
+--   Source.NUMBERED_CHUNKS        true: a long addon message goes out as
+--                                 numbered chunks joined by number
+--                                 (Comm.lua), not AceComm's ordered ones
 --   Source.FULL_NAMES             true: characters are "First Surname"; our
 --                                 own name joins UnitFullName's two values
 --                                 (addon:PlayerName) and a typed contact may
