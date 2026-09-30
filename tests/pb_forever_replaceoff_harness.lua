@@ -10,7 +10,9 @@ dofile("tests/forever_tradeskill.lua")
 
 local _, errs = LOAD_TOC("ProfessionBuddy_Mainline.toc")
 EXPECT(#errs == 0, "load errors: " .. table.concat(errs, " | "))
-ProfBuddyDB = { settings = { replaceTradeSkill = false } }
+-- saved data as a pre-realm-token build left it (W3)
+ProfBuddyDB = { settings = { replaceTradeSkill = false }, schemaVersion = 2,
+                contacts = { ["Friend Surname-ClassicBetaPvP2"] = { trusted = true, autoSync = false, lastSync = 1 } } }
 FIRE("ADDON_LOADED", "ProfessionBuddy")
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
@@ -34,4 +36,11 @@ FLUSH()
 ToggleProfessionsBook()
 EXPECT(ProfessionsFrame:IsShown() and PANEL_MANAGED[#PANEL_MANAGED] == true, "K did not open Blizzard's book normally")
 print("  PASS W2 setting off: K opens the profession book through Blizzard's panel manager")
-print("ALL FOREVER REPLACE-OFF TESTS PASS (2)")
+-- W3: saved names lose their realm when PB loads (Source.REALM_TOKEN), with
+-- a backup of the old data
+local ct = ProfBuddy.db.contacts
+EXPECT(ct["Friend Surname-Forever"] and ct["Friend Surname-Forever"].trusted and not ct["Friend Surname-ClassicBetaPvP2"],
+       "saved contact not moved at load")
+EXPECT(ProfBuddyDB.realmKeyBackup and ProfBuddyDB.realmKeyBackup.contacts["Friend Surname-ClassicBetaPvP2"], "no backup at load")
+print("  PASS W3 saved names lose their realm at load, with a backup")
+print("ALL FOREVER REPLACE-OFF TESTS PASS (3)")

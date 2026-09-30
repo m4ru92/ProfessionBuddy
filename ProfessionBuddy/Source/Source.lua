@@ -57,6 +57,9 @@
 --                                 reagent bag (NUM_TOTAL_EQUIPPED_BAG_SLOTS)
 --   Source.TOOLTIP_DATA           true: item tooltips are extended through
 --                                 TooltipDataProcessor, not OnTooltipSetItem
+--   Source.REALM_TOKEN            a string: every character key's realm half
+--                                 is this token (names are unique across
+--                                 realms), and whispers carry no realm
 --   Source.NUMBERED_CHUNKS        true: a long addon message goes out as
 --                                 numbered chunks joined by number
 --                                 (Comm.lua), not AceComm's ordered ones

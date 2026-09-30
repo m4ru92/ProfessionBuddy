@@ -2107,7 +2107,7 @@ passed("T80 trainer learn level -- read from the rank, recipe names only")
 -- answer, a KNOW_DATA is dropped without an error, and a rev-8 SYNC_DATA
 -- does not make it ask.
 do
-    assert(addon.COMM_REV == 9, "T81: COMM_REV is " .. tostring(addon.COMM_REV))
+    assert(addon.COMM_REV == 10, "T81: COMM_REV is " .. tostring(addon.COMM_REV))
     assert(addon.Knowledge == nil, "T81: Knowledge loaded on TBC Anniversary")
     addon.db.contacts["Knowy-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 }
     clearSent()
@@ -2136,8 +2136,72 @@ do
 end
 passed("T83 TBC Anniversary sends a long message through AceComm as before (COMM_REV 9 is Forever only)")
 
+-- ── T84: a board post from a name with an accent is kept ─────────────────
+-- %w is ASCII only in the game's Lua (m4ru's /run on both clients printed
+-- nil for "Marü"), so the id check dropped every post from such a name.
+-- Bytes 128-255 now pass; "|" and control bytes still do not.
+do
+    addon.db.orderBoard = {}
+    joinGuild("Mar\195\188", "Buddy")
+    Comm._lastOpenAt = nil
+    recvOn("Mar\195\188", boardOpen("Mar\195\188-TestRealm-5", "Mar\195\188-TestRealm"), "GUILD")
+    assert(addon.db.orderBoard["Mar\195\188-TestRealm-5"], "T84: a post from an accented name was dropped")
+    Comm._lastOpenAt = nil
+    recvOn("Buddy", boardOpen("Buddy-TestRealm-6|cffff0000", "Buddy-TestRealm"), "GUILD")
+    Comm._lastOpenAt = nil
+    recvOn("Buddy", boardOpen("Buddy-TestRealm\0017", "Buddy-TestRealm"), "GUILD")
+    assert(boardCount("Buddy-TestRealm") == 0, "T84: an id with an escape code or a control byte was kept")
+    addon.db.orderBoard = {}
+    leaveGuild()
+end
+passed("T84 board ids -- a post from a name with an accent is kept; escape codes and control bytes still refused")
+
+-- ── T85: "offline" only for a peer we have not heard from lately ─────────
+-- m4ru 2026-09-30: two cancels 0.3 s apart, the peer answered one (the
+-- refusal floor), and PB said the peer was offline while they were talking
+-- to us. An unacked order message now queues quietly when the peer spoke in
+-- the last minute, and warns as before when they did not.
+do
+    addon.db.contacts["Buddy-TestRealm"] = addon.db.contacts["Buddy-TestRealm"] or { trusted = true, autoSync = false, lastSync = 0 }
+    addon.db.orderOutbox = {}
+    local said = {}
+    local realPrint = print
+    print = function(...) said[#said + 1] = table.concat({ ... }, " ") end
+    addon.db.orders["t85-order"] = { id = "t85-order", status = "cancelled", requester = ME, crafter = "Buddy-TestRealm" }
+    local function unacked(token)
+        clearSent()
+        addon.db.orders["t85-order"].lastSentToken = token
+        addon.db.orders["t85-order"].deliveryState = nil
+        Comm:SendOrderMessage("ORDER_UPDATE", { token = token, id = "t85-order" }, "Buddy-TestRealm", "cancelled update")
+        local h = timers[#timers]
+        assert(h and not h.cancelled, "T85: no ack timer for " .. token)
+        h.fn()
+    end
+    Comm._lastHeard = { ["Buddy-TestRealm"] = time() - 10 }
+    unacked("t85a")
+    assert(#said == 0, "T85: offline line for a peer heard 10 s ago: " .. tostring(said[1]))
+    assert(addon.db.orderOutbox["t85a"], "T85: the update was not queued for the retry")
+    assert(addon.db.orders["t85-order"].deliveryState ~= "queued", "T85: marked queued (offline) for a peer heard 10 s ago")
+    Comm._lastHeard = { ["Buddy-TestRealm"] = time() - 120 }
+    unacked("t85b")
+    assert(#said == 1 and said[1]:find("is offline", 1, true), "T85: no offline line for a peer silent 2 minutes")
+    assert(addon.db.orders["t85-order"].deliveryState == "queued", "T85: not marked queued for a silent peer")
+    Comm._lastHeard = nil
+    unacked("t85c")
+    assert(#said == 2, "T85: no offline line for a peer never heard")
+    print = realPrint
+    -- the door stamps the sender
+    Comm._lastHeard = nil
+    recv("Buddy-TestRealm", { _type = "HELLO", professions = {} })
+    assert(Comm._lastHeard and Comm._lastHeard["Buddy-TestRealm"], "T85: a trusted message did not stamp the sender")
+    addon.db.orderOutbox = {}
+    addon.db.orders["t85-order"] = nil
+    clearSent()
+end
+passed("T85 an unacked order message says offline only when the peer has been silent for a minute")
+
 leaveGuild()
-print("ALL 83 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 85 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2151,6 +2215,7 @@ print("ALL 83 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " and T74 the recipe faction visibility rule, T75-T79 Poisons data, localized storage,"
     .. " class gating, the class-trainer guard and Poisons never leaving the client,"
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
-    .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages; "
+    .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
+    .. " T84 accented board ids, T85 offline only when silent; "
     .. pass .. " of them print a PASS line above)")
 

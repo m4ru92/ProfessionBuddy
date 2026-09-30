@@ -53,10 +53,18 @@ end
 
 -- "Name" -> "Name-<our realm>"; "Name-Any Realm" -> "Name-AnyRealm".
 -- Anything that is not a string returns nil.
+-- On WoW: Forever (Source.REALM_TOKEN) the realm half is that one fixed
+-- token whatever the key carried: names there are unique across realms
+-- and arrive with no realm, so filling in OUR realm named a player on a
+-- connected realm differently from how their own PB names itself (m4ru's
+-- two-client session, 2026-09-30: every order to a friend on Classic
+-- Beta PvP 2 was refused).
 function addon:NormKey(key)
     if type(key) ~= "string" then return nil end
     local name, realm = key:match("^([^-]+)%-?(.*)$")
     if not name then return nil end
+    local token = addon.Source and addon.Source.REALM_TOKEN
+    if token then return name .. "-" .. token end
     if realm == "" then realm = GetRealmName() end
     return name .. "-" .. addon:NormRealm(realm)
 end
@@ -88,7 +96,8 @@ end
 
 -- Shorthand for the player's canonical key, used everywhere.
 function addon:PlayerKey()
-    return addon:PlayerName() .. "-" .. addon:NormRealm(GetRealmName())
+    local token = addon.Source and addon.Source.REALM_TOKEN
+    return addon:PlayerName() .. "-" .. (token or addon:NormRealm(GetRealmName()))
 end
 
 -- Display half of a key. Non-strings pass straight through so callers keep
@@ -331,6 +340,157 @@ local function migrateToSchema2(db)
 end
 
 ----------------------------------------------------------------------
+-- WoW: Forever: saved keys lose their realm (Source.REALM_TOKEN). Every
+-- character, contact, favorite, order and board name, outbox target,
+-- knowledge sighting and shared-knowledge peer is re-keyed through NormKey,
+-- which there puts the fixed token in the realm half. Two keys that become
+-- one merge: a local character beats a synced copy, otherwise the newest
+-- wins (as in schema 2); contacts keep trust and auto-sync if either had
+-- them; shared knowledge keeps the newest. Order and post ids keep their
+-- text (they compare through NormKey). Before anything moves, the tables
+-- are copied to db.realmKeyBackup, kept until the player clears it
+-- (/pb realmkeys). Nothing to move means no backup and no message.
+----------------------------------------------------------------------
+local REALM_KEY_TABLES = { "characters", "contacts", "favorites", "orders", "orderBoard",
+                           "orderOutbox", "knowledge", "knowledgeShared" }
+
+local function deepCopy(v)
+    if type(v) ~= "table" then return v end
+    local t = {}
+    for k, x in pairs(v) do t[k] = deepCopy(x) end
+    return t
+end
+
+-- Re-key a plain key -> value table; merge(new, old) picks what stays
+-- when two keys land on one. "*" (knowledge seenBy: everyone) is no key.
+local function rekeyWith(tbl, merge)
+    if type(tbl) ~= "table" then return 0 end
+    local moves = {}
+    for oldKey, v in pairs(tbl) do
+        local newKey = oldKey ~= "*" and addon:NormKey(oldKey)
+        if newKey and newKey ~= oldKey then moves[#moves + 1] = { old = oldKey, new = newKey, v = v } end
+    end
+    for _, m in ipairs(moves) do tbl[m.old] = nil end
+    for _, m in ipairs(moves) do tbl[m.new] = merge(m.v, tbl[m.new]) end
+    return #moves
+end
+
+local function mergeContact(a, b)
+    if type(b) ~= "table" then return a end
+    if type(a) ~= "table" then return b end
+    local keep, other = a, b
+    if (tonumber(b.lastSync) or 0) > (tonumber(a.lastSync) or 0) then keep, other = b, a end
+    keep.trusted = (a.trusted or b.trusted) or nil
+    keep.autoSync = (a.autoSync or b.autoSync) and true or false
+    for k, v in pairs(other) do if keep[k] == nil then keep[k] = v end end
+    return keep
+end
+
+local function mergeShared(a, b)
+    if type(b) ~= "table" then return a end
+    if type(a) ~= "table" then return b end
+    return ((tonumber(a.at) or 0) >= (tonumber(b.at) or 0)) and a or b
+end
+
+-- How many saved names would change, without changing any.
+local function countRealmKeys(db)
+    local n = 0
+    local function keys(tbl)
+        for k in pairs(type(tbl) == "table" and tbl or {}) do
+            if type(k) == "string" and addon:NormKey(k) ~= k then n = n + 1 end
+        end
+    end
+    local function field(v) if type(v) == "string" and addon:NormKey(v) ~= v then n = n + 1 end end
+    local function orderFields(o)
+        if type(o) ~= "table" then return end
+        field(o.requester); field(o.crafter); field(o.lastSentBy)
+    end
+    keys(db.characters); keys(db.contacts); keys(db.knowledgeShared)
+    keys(type(db.favorites) == "table" and db.favorites.contacts)
+    for _, o in pairs(db.orders or {}) do orderFields(o) end
+    for _, p in pairs(db.orderBoard or {}) do orderFields(p) end
+    for _, e in pairs(db.orderOutbox or {}) do
+        if type(e) == "table" then
+            field(e.target)
+            if type(e.data) == "table" then orderFields(e.data.order) end
+        end
+    end
+    for _, e in pairs(db.knowledge or {}) do
+        if type(e) == "table" and type(e.seenBy) == "table" then
+            for k in pairs(e.seenBy) do if k ~= "*" and addon:NormKey(k) ~= k then n = n + 1 end end
+        end
+    end
+    return n
+end
+
+function addon:MigrateForeverRealms()
+    local db = ProfBuddyDB
+    if not (db and addon.Source and addon.Source.REALM_TOKEN) then return end
+    if db.realmKeysRestored then return end      -- the player put the old names back
+    local changes = countRealmKeys(db)
+    if changes == 0 then return end
+    if not db.realmKeyBackup then
+        local backup = { at = time() }
+        for _, name in ipairs(REALM_KEY_TABLES) do backup[name] = deepCopy(db[name]) end
+        db.realmKeyBackup = backup
+    end
+    local before = 0
+    for _ in pairs(db.characters or {}) do before = before + 1 end
+    for _ in pairs(db.contacts or {}) do before = before + 1 end
+    rekeyByCharacter(db.characters)
+    rekeyWith(db.contacts, mergeContact)
+    rekeyWith(db.knowledgeShared, mergeShared)
+    if type(db.favorites) == "table" then
+        rekeyWith(db.favorites.contacts, function(a, b) return a or b end)
+    end
+    for _, o in pairs(db.orders or {}) do rekeyOrderFields(o) end
+    for _, p in pairs(db.orderBoard or {}) do rekeyOrderFields(p) end
+    for _, e in pairs(db.orderOutbox or {}) do
+        if type(e) == "table" then
+            e.target = addon:NormKey(e.target) or e.target
+            if type(e.data) == "table" then rekeyOrderFields(e.data.order) end
+        end
+    end
+    for _, e in pairs(db.knowledge or {}) do
+        if type(e) == "table" and type(e.seenBy) == "table" then
+            rekeyWith(e.seenBy, function(a, b) return a or b end)
+        end
+    end
+    local after = 0
+    for _ in pairs(db.characters or {}) do after = after + 1 end
+    for _ in pairs(db.contacts or {}) do after = after + 1 end
+    print(string.format("|cff00ccffProfessionBuddy:|r WoW: Forever player names no longer carry a realm: "
+        .. "%d saved name%s updated, %d duplicate%s merged. The old data is backed up: "
+        .. "/pb realmkeys to restore or clear it.",
+        changes, changes == 1 and "" or "s", before - after, (before - after) == 1 and "" or "s"))
+end
+
+-- /pb realmkeys [restore|clear]
+function addon:RealmKeysCommand(sub)
+    local db = ProfBuddyDB
+    local backup = db and db.realmKeyBackup
+    if sub == "restore" then
+        if not backup then print("|cff00ccffProfessionBuddy:|r No realm-name backup to restore."); return end
+        for _, name in ipairs(REALM_KEY_TABLES) do db[name] = backup[name] end
+        db.realmKeyBackup = nil
+        db.realmKeysRestored = true
+        print("|cff00ccffProfessionBuddy:|r The saved data from before the realm-name change is back. "
+            .. "This build still names Forever players without a realm, so go back to the previous build. "
+            .. "/reload to finish.")
+    elseif sub == "clear" then
+        if not backup then print("|cff00ccffProfessionBuddy:|r No realm-name backup to clear."); return end
+        db.realmKeyBackup = nil
+        print("|cff00ccffProfessionBuddy:|r Realm-name backup deleted.")
+    elseif backup then
+        print("|cff00ccffProfessionBuddy:|r A backup of your saved data from before the realm-name change is kept "
+            .. "(" .. date("%Y-%m-%d %H:%M", backup.at or 0) .. "). "
+            .. "/pb realmkeys clear deletes it; /pb realmkeys restore puts it back.")
+    else
+        print("|cff00ccffProfessionBuddy:|r No realm-name backup is kept.")
+    end
+end
+
+----------------------------------------------------------------------
 -- WoW: Forever: move this character's own records from its first-name key
 -- ("Maru-Realm", what PB used before it knew about surnames) to its full
 -- key ("Maru Hunt-Realm"). Only the logged-in character, whose two keys we
@@ -549,7 +709,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         migrateToSchema2(ProfBuddyDB)
         ProfBuddyDB.schemaVersion = 2
     end
-    -- WoW: Forever surnames; again at PLAYER_LOGIN below.
+    -- WoW: Forever: saved names lose their realm, then surnames
+    -- (again at PLAYER_LOGIN below).
+    addon:MigrateForeverRealms()
     addon:MigrateToFullName()
 
     -- Init modules in declared order. A module that errors here must not
@@ -632,7 +794,10 @@ SlashCmdList["PROFBUDDY"] = function(msg)
     local rawMsg = strtrim(msg or "")   -- original case, for name args
     msg = rawMsg:lower()
 
-    if msg == "scan" then
+    if msg == "realmkeys" or msg:sub(1, 10) == "realmkeys " then
+        addon:RealmKeysCommand(strtrim(msg:sub(10)))
+
+    elseif msg == "scan" then
         addon.Scanner:ScanProfessions()
         addon.Scanner:ScanInventory()
         print("|cff00ccffProfessionBuddy:|r Manual scan complete.")

@@ -9,6 +9,9 @@
 dofile("tests/forever_env.lua")
 dofile("tests/forever_tradeskill.lua")
 dofile("tests/forever_trainer.lua")
+-- each node on its own realm (NODE_REALM): the beta has connected realms,
+-- and m4ru's orders to a friend on the other one were refused (2026-09-30)
+function GetRealmName() return NODE_REALM end
 -- A Forever character: first name NODE_NAME, surname NODE_SURNAME. As on
 -- the client, UnitName gives the first name, UnitFullName puts the surname
 -- where the realm used to be, and GetUnitName(unit, true) and every addon
@@ -32,7 +35,7 @@ FIRE("ADDON_LOADED", "ProfessionBuddy")
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
-EXPECT(ProfBuddy:PlayerKey() == NODE_NAME .. " " .. NODE_SURNAME .. "-Realm", "node key " .. tostring(ProfBuddy:PlayerKey()))
+EXPECT(ProfBuddy:PlayerKey() == NODE_NAME .. " " .. NODE_SURNAME .. "-Forever", "node key " .. tostring(ProfBuddy:PlayerKey()))
 OUTBOX = {}
 ChatThrottleLib.SendAddonMessage = function(_, prio, prefix, text, dist, target)
     OUTBOX[#OUTBOX + 1] = { prefix = prefix, text = text, dist = dist, target = target, prio = prio }

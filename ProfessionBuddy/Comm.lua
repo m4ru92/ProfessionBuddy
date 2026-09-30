@@ -55,7 +55,11 @@ local Comm = addon:NewModule("Comm")
 -- over 255 bytes goes out as "\005<id>:<n>:<total>:<data>" chunks, joined
 -- by number, because Forever delivers a burst of chunks out of order.
 -- Payloads are unchanged, and TBC Anniversary still uses AceComm's chunks.
-local COMM_REV = 9
+-- rev 10 = WoW: Forever names carry no realm (Source.REALM_TOKEN): every
+-- character key in a payload (order requester and crafter, board post and
+-- order ids) has the fixed token as its realm half, and a rev-9 Forever
+-- peer would refuse those orders. TBC Anniversary keys are unchanged.
+local COMM_REV = 10
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -364,7 +368,12 @@ function Comm:SendWhisper(msgType, data, target, prio)
     -- attributed to an addon whisper rather than something the user typed.
     self._recentWhispers = self._recentWhispers or {}
     self._recentWhispers[name] = time()
-    if realm ~= "" and addon:NormRealm(realm) ~= addon:NormRealm(GetRealmName()) then
+    -- WoW: Forever: "First Surname" reaches a player on any connected realm,
+    -- and "First Surname-Realm" is the "FirstName-SecondName" form the game
+    -- reads as a surname, so a realm is never sent there.
+    if addon.Source and addon.Source.REALM_TOKEN then
+        self:Send(msgType, data, "WHISPER", name, prio)
+    elseif realm ~= "" and addon:NormRealm(realm) ~= addon:NormRealm(GetRealmName()) then
         self:Send(msgType, data, "WHISPER", name .. "-" .. realm, prio)
     else
         self:Send(msgType, data, "WHISPER", name, prio)
@@ -708,6 +717,12 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
     local allowed = ALLOWED_DIST[msgType]
     if not (allowed and allowed[distribution]) then return end
 
+    -- When we last heard anything from this (trusted) sender: an order
+    -- message they did not ack is not proof they are offline if they
+    -- spoke a moment ago (SendOrderMessage).
+    self._lastHeard = self._lastHeard or {}
+    self._lastHeard[sender] = time()
+
     local contact = addon.db.contacts[sender]
     if contact then
         -- Remember the sender's protocol revision so we only send INCR deltas
@@ -787,6 +802,7 @@ end
 -- for the better part of half a minute, and the 8 s timeout fired against
 -- perfectly healthy peers, printing "is offline" for a delivered order.
 local ORDER_ACK_TIMEOUT = 20         -- seconds to wait for a delivery ack
+local RECENTLY_HEARD    = 60         -- a peer heard from this recently is not called offline
 local PENDING_ACK_TTL   = 600        -- evict an ack slot whose timer never ran
 local pendingOrderAck = {}           -- token -> { target, at, timer = <C_Timer> }
 
@@ -861,7 +877,14 @@ function Comm:SendOrderMessage(msgType, data, target, label, isResend)
             addon.db.orderOutbox = addon.db.orderOutbox or {}
             local existing = addon.db.orderOutbox[token]
             local warned = (existing and existing.warned) or false
-            if not isResend and not warned then
+            -- No ack is not proof they are offline: a peer refuses an update
+            -- for an order it does not hold and answers only the first per
+            -- REFLEX_FLOOR (m4ru 2026-09-30: two cancels 0.3 s apart printed
+            -- "offline" for a friend who was talking to us). Heard from them
+            -- lately: queue for the retry quietly.
+            local heard = self._lastHeard and self._lastHeard[normFullKey(target) or target]
+            local online = heard ~= nil and (time() - heard) < RECENTLY_HEARD
+            if not isResend and not warned and not online then
                 warned = true
                 print("|cff00ccffProfessionBuddy:|r " .. shortName(target) ..
                     " is offline -- order " .. (label or "update") ..
@@ -875,7 +898,7 @@ function Comm:SendOrderMessage(msgType, data, target, label, isResend)
             -- Delivery indicator: no ack in time -> they're offline, mark queued.
             local oid = data.id or (data.order and data.order.id)
             local o = oid and addon.db.orders and addon.db.orders[oid]
-            if o and o.lastSentToken == token then
+            if o and o.lastSentToken == token and not online then
                 o.deliveryState = "queued"
                 if addon.OrdersPanel and addon.OrdersPanel.RefreshAll then addon.OrdersPanel:RefreshAll() end
             end
@@ -1281,7 +1304,11 @@ function Comm:HandleOrderOpen(sender, data, distribution)
     local id = o.id
     -- The id becomes a permanent SavedVariables key, so bound and charset-check
     -- it. A legacy id minted on a multi-word realm contains a space.
-    if #id == 0 or #id > 64 or not id:match("^[%w%-'_ ]+$") then return end
+    -- Bytes 128-255 are the parts of a UTF-8 letter ("Marü Hunt-...": %w is
+    -- ASCII only in the game's Lua, so this used to drop every post from a
+    -- name with an accent, on both clients). None of them is "|" or a
+    -- control byte, so escape codes still cannot get in.
+    if #id == 0 or #id > 64 or not id:match("^[%w%-'_ \128-\255]+$") then return end
     -- Bind the id to its poster. Order ids are "<requesterKey>-<seq>" and so are
     -- guessable, and the stored requester is forced to the sender: without this
     -- check a guildmate could post "Alice-Realm-3" and take ownership of Alice's

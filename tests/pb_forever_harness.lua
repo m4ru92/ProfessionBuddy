@@ -902,7 +902,7 @@ TSF:UpdateBottomBar()
 TSF.summaryText = keep
 EXPECT(sumText:find("Missing: " .. count(seen), 1, true), "Missing count: " .. sumText)
 -- keep alts separate
-local me, other = ProfBuddy:PlayerKey(), "Other-Realm"
+local me, other = ProfBuddy:PlayerKey(), "Other-Forever"
 local pants = RDB.data.Leatherworking["Handstitched Leather Pants"].spellID
 EXPECT(K[pants].seenBy and K[pants].seenBy[me], "a record did not note who saw it")
 local legacy = RDB.data.Leatherworking["Embossed Leather Boots"].spellID
@@ -950,13 +950,13 @@ print("  PASS F25 first-open prompt (Escape asks again next session); Learn as y
 -- sighting counts as seen); removing the contact or 30 days drops it
 local Comm = ProfBuddy.Comm
 local AS = LibStub("AceSerializer-3.0")
-EXPECT(ProfBuddy.COMM_REV == 9, "COMM_REV is " .. tostring(ProfBuddy.COMM_REV))
+EXPECT(ProfBuddy.COMM_REV == 10, "COMM_REV is " .. tostring(ProfBuddy.COMM_REV))
 local SENT = {}
 local realWhisper = Comm.SendWhisper
 Comm.SendWhisper = function(_, t, d, target, prio) SENT[#SENT + 1] = { t = t, d = d, to = target, prio = prio } end
 local function deliver(from, msg) Comm:OnMessageReceived("PBuddy", AS:Serialize(msg), "WHISPER", from) end
 local function sentOf(t) local out = {} for _, m in ipairs(SENT) do if m.t == t then out[#out + 1] = m end end return out end
-local FRIEND, OTHER = "Friend-Realm", "Other-Realm"
+local FRIEND, OTHER = "Friend-Forever", "Other-Forever"
 ProfBuddyDB.contacts[FRIEND] = { trusted = true, autoSync = false, lastSync = 0 }
 ProfBuddyDB.contacts[OTHER] = { trusted = true, autoSync = false, lastSync = 0 }
 local syncData = { _type = "SYNC_DATA", _commrev = 8, class = "HUNTER", level = 6,
@@ -1006,13 +1006,13 @@ Comm:OnMessageReceived("PBuddy", AS:Serialize({ _type = "KNOW_REQ", since = 0, p
 EXPECT(#sentOf("KNOW_DATA") == 3, "a KNOW_REQ on the guild channel was answered")
 -- a guild-tier peer pays from the guild serve budget
 local realTier = Comm.TrustLevel
-Comm.TrustLevel = function(_, who) if who == "Guildie-Realm" then return "guild" end return realTier(Comm, who) end
+Comm.TrustLevel = function(_, who) if who == "Guildie-Forever" then return "guild" end return realTier(Comm, who) end
 Comm._guildServes = {}
 for i = 1, 10 do Comm._guildServes[i] = time() end
-deliver("Guildie-Realm", { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
+deliver("Guildie-Forever", { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
 EXPECT(#sentOf("KNOW_DATA") == 3, "a guild peer was served past the guild budget")
 Comm._guildServes = {}
-deliver("Guildie-Realm", { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
+deliver("Guildie-Forever", { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
 EXPECT(#sentOf("KNOW_DATA") == 4 and #Comm._guildServes == 1, "a guild peer inside the budget was not served, or not counted")
 Comm.TrustLevel = realTier
 Comm._knowServed[FRIEND] = nil
@@ -1067,7 +1067,7 @@ EXPECT(tip:find("Friend Trainer - Orgrimmar", 1, true) and tip:find("(from Other
 local kv = table.concat(KN:TooltipLines(kodo, "Horde"), "\n")
 EXPECT(kv:find("Friend Vendor - Orgrimmar, Drag", 1, true) and kv:find("Test Vendor", 1, true), "vendors merged: " .. kv)
 ProfBuddyDB.settings.foreverAltsSeparate = true
-EXPECT(KN:Seen(peerOnly.spellID, "Anyone-Realm"), "a peer's sighting does not count as seen")
+EXPECT(KN:Seen(peerOnly.spellID, "Anyone-Forever"), "a peer's sighting does not count as seen")
 ProfBuddyDB.settings.foreverAltsSeparate = false
 
 -- sanitizing and caps
@@ -1118,16 +1118,16 @@ EXPECT(#sentOf("KNOW_REQ") == before + 1, "a manual sync did not ask again")
 -- removing the contact drops their data; a non-contact goes after 30 days
 Comm:ForgetPeer(FRIEND)
 EXPECT(ProfBuddyDB.knowledgeShared[FRIEND] == nil, "a removed contact's data kept")
-ProfBuddyDB.knowledgeShared["Guildie-Realm"] = { at = time() - 31 * 86400, since = 1, records = {} }
+ProfBuddyDB.knowledgeShared["Guildie-Forever"] = { at = time() - 31 * 86400, since = 1, records = {} }
 ProfBuddyDB.knowledgeShared[OTHER].at = time() - 31 * 86400
 KN:PrunePeers()
-EXPECT(ProfBuddyDB.knowledgeShared["Guildie-Realm"] == nil, "a 31-day-old non-contact kept")
+EXPECT(ProfBuddyDB.knowledgeShared["Guildie-Forever"] == nil, "a 31-day-old non-contact kept")
 EXPECT(ProfBuddyDB.knowledgeShared[OTHER], "a contact's data dropped by age")
-for i = 1, 105 do ProfBuddyDB.knowledgeShared["P" .. i .. "-Realm"] = { at = time() - i, since = 1, records = {} } end
+for i = 1, 105 do ProfBuddyDB.knowledgeShared["P" .. i .. "-Forever"] = { at = time() - i, since = 1, records = {} } end
 KN:PrunePeers()
 local peersLeft = 0
 for _ in pairs(ProfBuddyDB.knowledgeShared) do peersLeft = peersLeft + 1 end
-EXPECT(peersLeft == 100 and ProfBuddyDB.knowledgeShared["P1-Realm"] and not ProfBuddyDB.knowledgeShared["P105-Realm"],
+EXPECT(peersLeft == 100 and ProfBuddyDB.knowledgeShared["P1-Forever"] and not ProfBuddyDB.knowledgeShared["P105-Forever"],
        "peer cap: " .. peersLeft .. " left")
 
 Comm.SendWhisper = realWhisper
@@ -1143,7 +1143,7 @@ print("  PASS F26 knowledge sharing: asked once after a rev-8 sync; served own r
 -- whispers go to "First Surname"; our own echo is still ours; group trust
 -- matches a surname sender
 local Comm = ProfBuddy.Comm
-local oldKey, newKey = "Me-Realm", "Me Surname-Realm"
+local oldKey, newKey = "Me-Forever", "Me Surname-Forever"
 EXPECT(ProfBuddy:PlayerKey() == oldKey, "no surname readable: key is " .. ProfBuddy:PlayerKey())
 function UnitFullName(u) if u == "player" then return "Me", "Surname" end end
 EXPECT(ProfBuddy:PlayerName() == "Me Surname" and ProfBuddy:PlayerKey() == newKey, "full name: " .. ProfBuddy:PlayerKey())
@@ -1157,18 +1157,18 @@ local DB = ProfBuddyDB
 local mine = DB.characters[oldKey]
 EXPECT(mine and not mine.isRemote and next(mine.professions or {}), "no first-name record to move")
 DB.characters[newKey] = { professions = {}, class = "HUNTER" }       -- made this load, empty
-DB.orders.test1 = { id = "test1", requester = oldKey, crafter = "Other-Realm", lastSentBy = oldKey }
-DB.orders.test2 = { id = "test2", requester = "Other-Realm", crafter = oldKey }
+DB.orders.test1 = { id = "test1", requester = oldKey, crafter = "Other-Forever", lastSentBy = oldKey }
+DB.orders.test2 = { id = "test2", requester = "Other-Forever", crafter = oldKey }
 DB.orderBoard.post1 = { id = "post1", requester = oldKey }
 DB.orderOutbox = DB.orderOutbox or {}
-DB.orderOutbox.o1 = { target = "Other-Realm", data = { order = { requester = oldKey } } }
+DB.orderOutbox.o1 = { target = "Other-Forever", data = { order = { requester = oldKey } } }
 local kid = RDB.data.Leatherworking["Handstitched Leather Pants"].spellID
 DB.knowledge[kid].seenBy[oldKey] = true
 FIRE("PLAYER_LOGIN")                        -- the move runs at login
 FLUSH()
 EXPECT(DB.characters[oldKey] == nil and DB.characters[newKey] == mine, "record not moved, or the empty new one kept")
 EXPECT(DB.orders.test1.requester == newKey and DB.orders.test1.lastSentBy == newKey
-       and DB.orders.test1.crafter == "Other-Realm" and DB.orders.test2.crafter == newKey, "order fields")
+       and DB.orders.test1.crafter == "Other-Forever" and DB.orders.test2.crafter == newKey, "order fields")
 EXPECT(DB.orderBoard.post1.requester == newKey and DB.orderOutbox.o1.data.order.requester == newKey, "board or outbox")
 EXPECT(DB.knowledge[kid].seenBy[newKey] and not DB.knowledge[kid].seenBy[oldKey], "knowledge seenBy")
 -- idempotent, and another player called "Me" is never touched
@@ -1186,12 +1186,12 @@ EXPECT(DB.characters[newKey] == mine and DB.characters[oldKey] == nil, "a stale 
 
 -- contacts: typed and normalized as "First Surname"
 local FPm = ProfBuddy.FriendsPanel
-EXPECT(FPm.ContactKeyFromInput("turok bokenhorn") == "Turok Bokenhorn-Realm", "Friends panel: first surname")
-EXPECT(FPm.ContactKeyFromInput("Turok O'Hara") == "Turok O'Hara-Realm", "Friends panel: apostrophe in surname")
-EXPECT(FPm.ContactKeyFromInput("Turok") == "Turok-Realm", "Friends panel: first name alone")
+EXPECT(FPm.ContactKeyFromInput("turok bokenhorn") == "Turok Bokenhorn-Forever", "Friends panel: first surname")
+EXPECT(FPm.ContactKeyFromInput("Turok O'Hara") == "Turok O'Hara-Forever", "Friends panel: apostrophe in surname")
+EXPECT(FPm.ContactKeyFromInput("Turok") == "Turok-Forever", "Friends panel: first name alone")
 EXPECT(FPm.ContactKeyFromInput("Turok Big Horn") == nil and FPm.ContactKeyFromInput("Tu|rok Horn") == nil
        and FPm.ContactKeyFromInput("T Horn") == nil, "Friends panel: junk accepted")
-EXPECT(Comm:NormalizeContactKey("turok bokenhorn") == "Turok Bokenhorn-Realm", "sync target normalized")
+EXPECT(Comm:NormalizeContactKey("turok bokenhorn") == "Turok Bokenhorn-Forever", "sync target normalized")
 
 -- whispers go to "First Surname"
 local sentTo
@@ -1202,9 +1202,9 @@ EXPECT(sentTo == "Turok Bokenhorn", "whisper target: " .. tostring(sentTo))
 -- our own message, arriving from "Me Surname", is ours
 -- (trusted, so only the self check can stop it)
 sentTo = nil
-ProfBuddyDB.contacts["Me Surname-Realm"] = { trusted = true, autoSync = false, lastSync = 0 }
+ProfBuddyDB.contacts["Me Surname-Forever"] = { trusted = true, autoSync = false, lastSync = 0 }
 Comm:OnMessageReceived("PBuddy", LibStub("AceSerializer-3.0"):Serialize({ _type = "SYNC_REQ" }), "WHISPER", "Me Surname")
-ProfBuddyDB.contacts["Me Surname-Realm"] = nil
+ProfBuddyDB.contacts["Me Surname-Forever"] = nil
 EXPECT(sentTo == nil, "PB answered its own message")
 Comm.Send = realSend
 -- group trust from GetUnitName(unit, true) matches a surname sender
@@ -1404,7 +1404,7 @@ do
     end
     local text = table.concat(parts)
     local ok, d = AS:Deserialize(text)
-    EXPECT(ok and d._type == "SYNC_DATA" and d._commrev == 9 and #d.names == 200, "joined chunks do not read back")
+    EXPECT(ok and d._type == "SYNC_DATA" and d._commrev == ProfBuddy.COMM_REV and #d.names == 200, "joined chunks do not read back")
     local longWire = wire
     wire = {}
     Comm:Send("SYNC_REQ", {}, "WHISPER", "Pal Friend")
@@ -1487,8 +1487,117 @@ do
 end
 print("  PASS F31 numbered chunks: a long message is numbered through ChatThrottleLib and joined by number in any order, duplicates and bad headers ignored, idle partials dropped, per-sender and sender caps")
 
+-- F32: WoW: Forever names carry no realm (COMM_REV 10). The beta has
+-- connected realms and every sender arrives as "First Surname", so PB's
+-- keys take one fixed realm half ("Forever"): the same player is the same
+-- key on every client. Whispers never carry a realm. Saved keys move once,
+-- with a backup the player restores or clears (/pb realmkeys).
+do
+    local NK = function(k) return ProfBuddy:NormKey(k) end
+    for _, k in ipairs({ "Snorlax Trainer", "Snorlax Trainer-ClassicBetaPvP", "Snorlax Trainer-ClassicBetaPvP2",
+                         "Snorlax Trainer-Classic Beta PvP 2" }) do
+        EXPECT(NK(k) == "Snorlax Trainer-Forever", "NormKey(" .. k .. ") = " .. tostring(NK(k)))
+    end
+    EXPECT(ProfBuddy:SameKey("Snorlax Trainer-ClassicBetaPvP", "Snorlax Trainer-ClassicBetaPvP2"), "the same player on two realms")
+    EXPECT(not ProfBuddy:SameKey("Snorlax Trainer", "Snorlax Other"), "two players matched")
+    EXPECT(ProfBuddy:PlayerKey():match("%-Forever$"), "PlayerKey " .. ProfBuddy:PlayerKey())
+    -- whispers: never a realm
+    local Comm = ProfBuddy.Comm
+    local sentTo = {}
+    local realSend = Comm.Send
+    Comm.Send = function(_, t, d, chan, target) sentTo[#sentTo + 1] = target end
+    Comm:SendWhisper("SYNC_REQ", {}, "Snorlax Trainer-ClassicBetaPvP2")
+    Comm:SendWhisper("SYNC_REQ", {}, "Snorlax Trainer-Forever")
+    Comm:SendWhisper("SYNC_REQ", {}, "Snorlax Trainer")
+    Comm.Send = realSend
+    EXPECT(sentTo[1] == "Snorlax Trainer" and sentTo[2] == "Snorlax Trainer" and sentTo[3] == "Snorlax Trainer",
+           "whisper targets: " .. table.concat(sentTo, " / "))
+
+    -- the one-time move, on a saved-data table as the old build left it
+    local realDB = ProfBuddyDB
+    local function oldData()
+        return {
+            settings = realDB.settings,
+            characters = {
+                ["Me Surname-ClassicBetaPvP"] = { professions = { Tailoring = {} }, lastScan = 50 },
+                ["Snorlax Trainer-ClassicBetaPvP"] = { isRemote = true, lastSync = 5, professions = {} },
+                ["Snorlax Trainer-ClassicBetaPvP2"] = { isRemote = true, lastSync = 9, professions = { Enchanting = {} } },
+            },
+            contacts = {
+                -- the older copy holds the trust and auto-sync; the newer one says no to both
+                ["Snorlax Trainer-ClassicBetaPvP"] = { trusted = true, autoSync = true, lastSync = 5 },
+                ["Snorlax Trainer-ClassicBetaPvP2"] = { trusted = false, autoSync = false, lastSync = 9 },
+                ["Shreks Swamp-ClassicBetaPvP"] = { trusted = true, autoSync = false, lastSync = 1 },
+            },
+            favorites = { contacts = { ["Snorlax Trainer-ClassicBetaPvP"] = true }, items = { [2318] = true } },
+            orders = { ["Me Surname-ClassicBetaPvP-3"] = { id = "Me Surname-ClassicBetaPvP-3",
+                requester = "Me Surname-ClassicBetaPvP", crafter = "Snorlax Trainer-ClassicBetaPvP", status = "pending" } },
+            orderBoard = { ["Shreks Swamp-ClassicBetaPvP-1"] = { id = "Shreks Swamp-ClassicBetaPvP-1", requester = "Shreks Swamp-ClassicBetaPvP" } },
+            orderOutbox = { tok = { target = "Snorlax Trainer-ClassicBetaPvP",
+                data = { order = { requester = "Me Surname-ClassicBetaPvP", crafter = "Snorlax Trainer-ClassicBetaPvP" } } } },
+            knowledge = { [2153] = { seenBy = { ["*"] = true, ["Me Surname-ClassicBetaPvP"] = true } } },
+            knowledgeShared = { ["Alpha Stone-ClassicBetaPvP"] = { at = 5 }, ["Alpha Stone-ClassicBetaPvP2"] = { at = 9 } },
+        }
+    end
+    local said = {}
+    local realPrint = print
+    local function run(fn, ...) said = {}; print = function(...) said[#said + 1] = table.concat({ ... }, " ") end
+        fn(...); print = realPrint end
+    local db = oldData()
+    ProfBuddyDB = db
+    run(function() ProfBuddy:MigrateForeverRealms() end)
+    local c, ct = db.characters, db.contacts
+    EXPECT(c["Me Surname-Forever"] and c["Me Surname-Forever"].lastScan == 50, "own character not moved")
+    EXPECT(c["Snorlax Trainer-Forever"] and c["Snorlax Trainer-Forever"].lastSync == 9
+           and c["Snorlax Trainer-Forever"].professions.Enchanting, "the newer copy of Snorlax did not win")
+    EXPECT(not c["Snorlax Trainer-ClassicBetaPvP"] and not c["Snorlax Trainer-ClassicBetaPvP2"], "old character keys left")
+    EXPECT(ct["Snorlax Trainer-Forever"].trusted and ct["Snorlax Trainer-Forever"].autoSync == true
+           and ct["Snorlax Trainer-Forever"].lastSync == 9, "contacts not merged (trust and auto-sync kept)")
+    EXPECT(ct["Shreks Swamp-Forever"] and ct["Shreks Swamp-Forever"].trusted, "contact not moved")
+    EXPECT(db.favorites.contacts["Snorlax Trainer-Forever"] and db.favorites.items[2318], "favorites")
+    local o = db.orders["Me Surname-ClassicBetaPvP-3"]
+    EXPECT(o and o.requester == "Me Surname-Forever" and o.crafter == "Snorlax Trainer-Forever", "order fields")
+    EXPECT(db.orderBoard["Shreks Swamp-ClassicBetaPvP-1"].requester == "Shreks Swamp-Forever", "board post requester")
+    EXPECT(db.orderOutbox.tok.target == "Snorlax Trainer-Forever"
+           and db.orderOutbox.tok.data.order.crafter == "Snorlax Trainer-Forever", "outbox")
+    EXPECT(db.knowledge[2153].seenBy["*"] and db.knowledge[2153].seenBy["Me Surname-Forever"]
+           and not db.knowledge[2153].seenBy["*-Forever"], "seenBy (everyone mark kept)")
+    EXPECT(db.knowledgeShared["Alpha Stone-Forever"].at == 9 and not db.knowledgeShared["Alpha Stone-ClassicBetaPvP"], "shared knowledge")
+    EXPECT(#said == 1 and said[1]:find("saved names updated, 2 duplicates merged", 1, true)
+           and said[1]:find("/pb realmkeys", 1, true), "move message: " .. tostring(said[1]))
+    local b = db.realmKeyBackup
+    EXPECT(b and b.characters["Snorlax Trainer-ClassicBetaPvP2"] and b.contacts["Shreks Swamp-ClassicBetaPvP"]
+           and b.orders["Me Surname-ClassicBetaPvP-3"].crafter == "Snorlax Trainer-ClassicBetaPvP", "backup is not the old data")
+    -- again: nothing to move, no message, the backup is the same one
+    run(function() ProfBuddy:MigrateForeverRealms() end)
+    EXPECT(#said == 0 and db.realmKeyBackup == b, "second run was not a no-op")
+    -- /pb realmkeys shows it, restore puts the old data back and stops the move
+    run(SlashCmdList.PROFBUDDY, "realmkeys")
+    EXPECT(said[1] and said[1]:find("backup of your saved data", 1, true), "status: " .. tostring(said[1]))
+    run(SlashCmdList.PROFBUDDY, "realmkeys restore")
+    EXPECT(db.characters["Snorlax Trainer-ClassicBetaPvP2"] and not db.characters["Snorlax Trainer-Forever"]
+           and db.realmKeysRestored and db.realmKeyBackup == nil and said[1]:find("go back to the previous build", 1, true),
+           "restore: " .. tostring(said[1]))
+    run(function() ProfBuddy:MigrateForeverRealms() end)
+    EXPECT(#said == 0 and db.characters["Snorlax Trainer-ClassicBetaPvP2"], "moved again after a restore")
+    -- clear
+    db = oldData()
+    ProfBuddyDB = db
+    run(function() ProfBuddy:MigrateForeverRealms() end)
+    run(SlashCmdList.PROFBUDDY, "realmkeys clear")
+    EXPECT(db.realmKeyBackup == nil and said[1]:find("backup deleted", 1, true)
+           and db.characters["Snorlax Trainer-Forever"], "clear: " .. tostring(said[1]))
+    -- saved data with nothing to move: no backup, no message
+    db = { settings = realDB.settings, characters = { ["Me Surname-Forever"] = {} }, contacts = {} }
+    ProfBuddyDB = db
+    run(function() ProfBuddy:MigrateForeverRealms() end)
+    EXPECT(#said == 0 and db.realmKeyBackup == nil, "a backup with nothing to move")
+    ProfBuddyDB = realDB
+end
+print("  PASS F32 Forever names carry no realm: one key per player across connected realms, whispers without a realm, saved names moved once with duplicates merged and a backup to restore or clear")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (31)")
+print("ALL FOREVER TESTS PASS (32)")

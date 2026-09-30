@@ -68,6 +68,12 @@ Source.TOOLTIP_DATA          = true
 -- chunks of a 7-chunk SYNC_DATA arrived before its first). AceComm joins
 -- chunks in arrival order, so PB numbers them here (Comm.lua).
 Source.NUMBERED_CHUNKS       = true
+-- Names are unique across realms and every sender arrives as "First
+-- Surname" with no realm, while the beta has connected realms (m4ru on
+-- Classic Beta PvP, a friend on Classic Beta PvP 2). So a key's realm half
+-- is this fixed token for everyone (Core NormKey / PlayerKey), and whispers
+-- go to "First Surname" alone (Comm SendWhisper).
+Source.REALM_TOKEN           = "Forever"
 
 -- The bank is a tab bank (Blizzard's Camelot BankFrame.lua): the character
 -- bank is its purchased tabs, bags 6 to 14 (Enum.BagIndex). Here bag -1 is
