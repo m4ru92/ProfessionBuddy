@@ -2200,8 +2200,29 @@ do
 end
 passed("T85 an unacked order message says offline only when the peer has been silent for a minute")
 
+-- ── T86: every "no player named" line for our own whisper is hidden ──────
+-- A long message is several whispers and the server answers each one; the
+-- line also reaches the filter once per chat frame. All of them are ours
+-- for WHISPER_MEMORY (10 s); a line after that, or for a name we did not
+-- whisper, is the player's own and shows.
+do
+    Comm._recentWhispers = nil
+    local line = "No player named 'Offliner' is currently playing."
+    Comm:SendWhisper("SYNC_DATA", { _type = "SYNC_DATA" }, "Offliner-TestRealm", "BULK")
+    for i = 1, 6 do
+        assert(Comm:OnSystemMessage(line) == true, "T86: line " .. i .. " of one push was shown")
+    end
+    assert(Comm:OnSystemMessage("No player named 'Stranger' is currently playing.") == false,
+        "T86: a line for a name we never whispered was hidden")
+    Comm._recentWhispers["Offliner"] = time() - 11
+    assert(Comm:OnSystemMessage(line) == false, "T86: a line 11 s after our whisper was hidden")
+    Comm._recentWhispers = nil
+    clearSent()
+end
+passed("T86 offline lines -- every line answering one push is hidden, the player's own still show")
+
 leaveGuild()
-print("ALL 85 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 86 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2216,6 +2237,6 @@ print("ALL 85 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " class gating, the class-trainer guard and Poisons never leaving the client,"
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
-    .. " T84 accented board ids, T85 offline only when silent; "
+    .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden; "
     .. pass .. " of them print a PASS line above)")
 

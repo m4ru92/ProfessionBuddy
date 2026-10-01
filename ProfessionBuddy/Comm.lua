@@ -2577,7 +2577,11 @@ function Comm:OnSystemMessage(text)
     local short = addon:ShortName(who)
     local at = self._recentWhispers and short and self._recentWhispers[short]
     if not at or (time() - at) > WHISPER_MEMORY then return false end
-    self._recentWhispers[short] = nil
+    -- The whisper stays remembered for its whole window: one long message
+    -- is several whispers (a 1.2 KB SYNC_DATA is 6 chunks) and the server
+    -- answers each, and every chat frame showing system lines asks this
+    -- filter again. Forgetting it after the first line let the rest through
+    -- (m4ru 2026-10-01: five "No player named" lines for one push).
 
     local key = normFullKey(who)
     local contact = key and addon.db.contacts and addon.db.contacts[key]
