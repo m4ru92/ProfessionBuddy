@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """ProfessionBuddy gather-data DB tool.
 
+Two sources, one per client:
+  tbc      cmangos-tbc Full_DB  -> Data/GatherMobs.lua (TBC Anniversary)
+  classic  VMaNGOS db_latest    -> Data/Forever/Gather.lua (WoW: Forever)
+
 cmangos-tbc is the source of truth for the gather feature's mob data (which
 creatures are skinnable / mineable / herbable). cmangos periodically republishes
 its Full_DB under a NEW filename that encodes the version (e.g.
@@ -17,16 +21,32 @@ between versions. This tool:
             PRESERVE the validated node tables, validate known-good anchors, and
             print a diff of what changed for review before writing.
 
+WoW: Forever uses Classic NPC IDs, so its skinnable mobs and skinning loot
+come from VMaNGOS, a 1.12 emulator database, read at its 1.12 patch. It
+was picked over cmangos' own Classic DB on a check against Wowhead Classic
+(2026-10-03): of 20 sampled mobs only VMaNGOS lists as skinnable, Wowhead
+shows skinning on 17; of 20 only cmangos-classic lists, on 1. --check
+covers both sources; --regen --source classic rewrites the mob and loot
+tables of Data/Forever/Gather.lua and keeps its node tables.
+
 Usage:
   python tools/gather_db.py --check [--addon-dir <path>]
-  python tools/gather_db.py --regen [--addon-dir <path>] [--write]
+  python tools/gather_db.py --regen [--source tbc|classic] [--addon-dir <path>] [--write]
 """
 import argparse, json, os, re, sys, subprocess, urllib.request, io, gzip
+import sqlite3, tempfile, zipfile
 
 CMANGOS_API = "https://api.github.com/repos/cmangos/tbc-db/contents/Full_DB"
 EXCLUDE_SKIN = {7395}  # hand-verified cmangos false-positives (Cockroach)
 # known-good validation anchors: npcID -> expected skinnable (True/False)
 ANCHORS = {1548: True, 18205: True, 721: True, 4075: False, 2565: False, 7395: False}
+
+# WoW: Forever (Data/Forever/Gather.lua): VMaNGOS' rolling db_latest release.
+CLASSIC_RELEASE_API = "https://api.github.com/repos/vmangos/core/releases/tags/db_latest"
+CLASSIC_PATCH = 10   # VMaNGOS patch index of 1.12, Classic Era's last patch
+# npcID -> expected skinnable. 3130/3247/4129 skinned and 3113 not, in game
+# on Forever (m4ru, 2026-10-02); 4342 yes and 2565 no per Wowhead Classic.
+CLASSIC_ANCHORS = {3130: True, 3247: True, 4129: True, 3113: False, 4342: True, 2565: False}
 
 def log(m): print(m, flush=True)
 def die(m): print("ERROR: " + m, file=sys.stderr); sys.exit(1)
@@ -186,6 +206,97 @@ def skin_loot_tables(skin, cre, skinloot, refloot, meta):
     return items, tables, mob_tbl
 
 
+# ---- WoW: Forever: VMaNGOS (Classic NPC IDs) ----
+def pick_latest_classic(release):
+    """Return (version, download_url) of the SQLite dump in VMaNGOS'
+    db_latest release. The version is the commit the dump was built from
+    (asset "db-sqlite-<hash>.zip"); the tag itself never changes."""
+    for a in release.get("assets", []):
+        m = re.match(r"db-sqlite-([0-9a-f]{7,40})\.zip$", a.get("name", ""))
+        if m:
+            return m.group(1), a.get("browser_download_url")
+    die("no db-sqlite-<hash>.zip asset in VMaNGOS' db_latest release "
+        "(asset naming may have changed); nothing to compare against")
+
+def latest_classic():
+    req = urllib.request.Request(CLASSIC_RELEASE_API, headers={"User-Agent": "pb-gather-db"})
+    return pick_latest_classic(json.loads(urllib.request.urlopen(req, timeout=30).read().decode()))
+
+def forever_path(addon_dir):
+    return os.path.join(addon_dir, "Data", "Forever", "Gather.lua")
+
+def current_classic_version(addon_dir):
+    p = forever_path(addon_dir)
+    if not os.path.isfile(p):
+        die("no Data/Forever/Gather.lua at " + p)
+    m = re.search(r"VMaNGOS db ([0-9a-f]{7,40})", open(p, encoding="utf-8").read())
+    return m.group(1) if m else None
+
+def classic_tables(db):
+    """Read a VMaNGOS mangos.sqlite at CLASSIC_PATCH. Every table keeps one
+    row per patch a record changed in; the newest row at or below the patch
+    wins, and a loot row counts when the patch is inside its range.
+    Returns (skin, cre, skinloot, meta) in the shapes the TBC path uses."""
+    c = sqlite3.connect(db)
+    cre = {}
+    for e, sl in c.execute("SELECT entry, skinning_loot_id FROM creature_template "
+                           "WHERE patch <= ? ORDER BY entry, patch", (CLASSIC_PATCH,)):
+        cre[e] = (0, sl)
+    skinloot = {}
+    for e, it, ch, gid, mc, mx, cond in c.execute(
+            "SELECT entry, item, ChanceOrQuestChance, groupid, mincountOrRef, maxcount, "
+            "condition_id FROM skinning_loot_template WHERE patch_min <= ? AND ? <= patch_max",
+            (CLASSIC_PATCH, CLASSIC_PATCH)):
+        skinloot.setdefault(e, []).append(
+            dict(item=it, ch=float(ch), gid=gid, mc=mc, mx=mx, cond=cond))
+    meta = {}
+    for it, name, q in c.execute("SELECT entry, name, quality FROM item_template "
+                                 "WHERE patch <= ? ORDER BY entry, patch", (CLASSIC_PATCH,)):
+        meta[it] = (name, q)
+    c.close()
+    skin = sorted(e for e, (_, sl) in cre.items() if sl > 0 and sl in skinloot)
+    return skin, cre, skinloot, meta
+
+def regen_classic(addon_dir, url, version, write):
+    log("downloading VMaNGOS db %s ..." % version)
+    raw = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "pb"}), timeout=300).read()
+    with tempfile.TemporaryDirectory() as tmp:
+        zipfile.ZipFile(io.BytesIO(raw)).extract("sqlite-dump/mangos.sqlite", tmp)
+        skin, cre, skinloot, meta = classic_tables(os.path.join(tmp, "sqlite-dump", "mangos.sqlite"))
+    skinset = set(skin)
+    bad = [(n, exp) for n, exp in CLASSIC_ANCHORS.items() if (n in skinset) != exp]
+    if bad: die("anchor validation FAILED: %s" % bad)
+    skinitems, skintables, mob_tbl = skin_loot_tables(skin, cre, skinloot, {}, meta)
+    log("  anchors OK  |  skinnable=%d  |  skin-loot: %d loot tables, %d items"
+        % (len(skin), len(skintables), len(skinitems)))
+    cur = current_ids(addon_dir, forever_path(addon_dir))
+    if cur is not None:
+        log("  vs current skinnable: +%d added, -%d removed" % (len(skinset - cur), len(cur - skinset)))
+    if not write:
+        log("  (dry run -- pass --write to regenerate Data/Forever/Gather.lua; nodes are preserved)")
+        return
+    write_forever_gather(addon_dir, version, skin, skinitems, skintables, mob_tbl)
+    log("  WROTE Data/Forever/Gather.lua @ VMaNGOS db %s" % version)
+
+GEN_MARK = "-- Generated by tools/gather_db.py --regen --source classic: do not edit"
+
+def write_forever_gather(addon_dir, version, skin, skinitems, skintables, mob_tbl):
+    """Rewrite the generated block (everything from GEN_MARK on) and the
+    version stamp; the header and the node tables above it stay."""
+    p = forever_path(addon_dir); txt = open(p, encoding="utf-8").read()
+    cut = txt.find("\n" + GEN_MARK)
+    if cut >= 0: txt = txt[:cut + 1]
+    block = "\n".join([
+        GEN_MARK,
+        "-- below this line by hand.",
+        'ProfBuddy.SkinLootSource = "Classic"',
+        "",
+        ids_block("SkinnableMobs", skin), "",
+        loot_block(skinitems, skintables, mob_tbl), ""])
+    txt = txt.rstrip("\n") + "\n\n" + block
+    txt = re.sub(r"VMaNGOS db [0-9a-f]{7,40}", "VMaNGOS db %s" % version, txt)
+    open(p, "w", encoding="utf-8").write(txt)
+
 def regen(addon_dir, url, version, write):
     log("downloading cmangos %s ..." % version)
     raw = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent":"pb"}), timeout=120).read()
@@ -230,24 +341,23 @@ def regen(addon_dir, url, version, write):
 def t_body(insert):
     return insert.split("VALUES",1)[1] if "VALUES" in insert else ""
 
-def current_ids(addon_dir):
-    p=os.path.join(addon_dir,"Data","GatherMobs.lua")
+def current_ids(addon_dir, p=None):
+    p=p or os.path.join(addon_dir,"Data","GatherMobs.lua")
     if not os.path.isfile(p): return None
     txt=open(p,encoding="utf-8").read()
     m=re.search(r"ProfBuddy\.SkinnableMobs = \{(.*?)\n\}", txt, re.S)
     return set(int(x) for x in re.findall(r"\[(\d+)\]=true", m.group(1))) if m else None
 
-def write_gathermobs(addon_dir, version, skin, mine, herb, skinitems, skintables, mob_tbl):
-    p=os.path.join(addon_dir,"Data","GatherMobs.lua"); txt=open(p,encoding="utf-8").read()
-    def ids(name,arr):
-        L=[f"ProfBuddy.{name} = {{"]; row=[]
-        for e in arr:
-            row.append(f"[{e}]=true,")
-            if len(row)==12: L.append("    "+"".join(row)); row=[]
-        if row: L.append("    "+"".join(row))
-        L.append("}"); return "\n".join(L)
-    for name,arr in (("SkinnableMobs",skin),("MineableMobs",mine),("HerbableMobs",herb)):
-        txt=re.sub(r"ProfBuddy\.%s = \{.*?\n\}" % name, lambda m, r=ids(name,arr): r, txt, count=1, flags=re.S)
+def ids_block(name, arr):
+    L=[f"ProfBuddy.{name} = {{"]; row=[]
+    for e in arr:
+        row.append(f"[{e}]=true,")
+        if len(row)==12: L.append("    "+"".join(row)); row=[]
+    if row: L.append("    "+"".join(row))
+    L.append("}"); return "\n".join(L)
+
+def loot_block(skinitems, skintables, mob_tbl):
+    """SkinItems, SkinLootTables and SkinLoot, as Lua source."""
     def qesc(s): return s.replace("\\", "\\\\").replace('"', '\\"')
     # SkinItems: itemID -> {"name", quality}
     ib=["ProfBuddy.SkinItems = {"]
@@ -270,7 +380,13 @@ def write_gathermobs(addon_dir, version, skin, mine, herb, skinitems, skintables
         if len(row)==12: lb.append("    "+"".join(row)); row=[]
     if row: lb.append("    "+"".join(row))
     lb.append("}")
-    block="\n".join(ib) + "\n\n" + "\n".join(tb) + "\n\n" + "\n".join(lb)
+    return "\n".join(ib) + "\n\n" + "\n".join(tb) + "\n\n" + "\n".join(lb)
+
+def write_gathermobs(addon_dir, version, skin, mine, herb, skinitems, skintables, mob_tbl):
+    p=os.path.join(addon_dir,"Data","GatherMobs.lua"); txt=open(p,encoding="utf-8").read()
+    for name,arr in (("SkinnableMobs",skin),("MineableMobs",mine),("HerbableMobs",herb)):
+        txt=re.sub(r"ProfBuddy\.%s = \{.*?\n\}" % name, lambda m, r=ids_block(name,arr): r, txt, count=1, flags=re.S)
+    block=loot_block(skinitems, skintables, mob_tbl)
     # drop any prior skinning tables (this format or the retired SkinYield ones)
     for name in ("SkinItems","SkinLootTables","SkinLoot","SkinYieldProfiles","SkinYield"):
         txt=re.sub(r"\nProfBuddy\.%s = \{.*?\n\}\n" % name, "\n", txt, count=1, flags=re.S)
@@ -285,20 +401,34 @@ def main():
     ap.add_argument("--addon-dir", default=default_addon_dir())
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--regen", action="store_true")
+    ap.add_argument("--source", choices=("tbc", "classic"), default="tbc",
+                    help="with --regen: tbc = Data/GatherMobs.lua, classic = Data/Forever/Gather.lua")
     ap.add_argument("--write", action="store_true", help="with --regen, actually write the file")
     a=ap.parse_args()
+    if a.check or not a.regen:
+        # both sources, so a release never ships either client's data stale
+        cur, latest = current_version(a.addon_dir), latest_cmangos()[0]
+        ccur, clatest = current_classic_version(a.addon_dir), latest_classic()[0]
+        log("gather DB (TBC Anniversary): baked=%s  latest cmangos=%s" % (cur, latest))
+        log("gather DB (WoW: Forever):    baked=%s  latest VMaNGOS=%s" % (ccur, clatest))
+        stale = []
+        if cur != latest: stale.append("--source tbc (%s -> %s)" % (cur, latest))
+        if ccur != clatest: stale.append("--source classic (%s -> %s)" % (ccur, clatest))
+        if not stale:
+            log("UP TO DATE -- no gather-data regen needed for release."); sys.exit(0)
+        log("NEWER DB available: run --regen %s and re-validate before the CurseForge release."
+            % " and --regen ".join(stale)); sys.exit(10)
+    if a.source == "classic":
+        cur=current_classic_version(a.addon_dir); latest,url=latest_classic()
+        log("gather DB (WoW: Forever): baked=%s  latest VMaNGOS=%s" % (cur, latest))
+        regen_classic(a.addon_dir, url, latest, a.write)
+        return
     cur=current_version(a.addon_dir)
     latest,url=latest_cmangos()
     log("gather DB: baked=%s  latest cmangos=%s" % (cur, latest))
-    if a.check or not a.regen:
-        if cur==latest:
-            log("UP TO DATE -- no gather-data regen needed for release."); sys.exit(0)
-        else:
-            log("NEWER cmangos DB available (%s -> %s). Run --regen and re-validate before the CurseForge release." % (cur, latest)); sys.exit(10)
-    if a.regen:
-        if cur==latest and not a.write:
-            log("already on latest; --regen would be a no-op (use --write to force-rebuild anyway).")
-        regen(a.addon_dir, url, latest, a.write)
+    if cur==latest and not a.write:
+        log("already on latest; --regen would be a no-op (use --write to force-rebuild anyway).")
+    regen(a.addon_dir, url, latest, a.write)
 
 if __name__=="__main__":
     main()

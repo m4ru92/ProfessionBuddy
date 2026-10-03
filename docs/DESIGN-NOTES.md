@@ -92,6 +92,23 @@ detects `creature_template` columns dynamically so a schema shift between DB
 versions can't misalign the parse, validates known-good anchors, and preserves
 the node tables.
 
+## Gather data generation, WoW: Forever (Data/Forever/Gather.lua)
+
+Forever uses Classic NPC IDs, and its tooltip never says which live mobs
+are skinnable, so `tools/gather_db.py --regen --source classic` bakes
+`SkinnableMobs` and the skinning loot from VMaNGOS (`db_latest`, the
+`db-sqlite-<hash>.zip` asset), read at patch 10 (1.12): the newest row at
+or below that patch for creatures and items, and loot rows whose
+patch range includes it. A mob is skinnable if it has skinning loot rows;
+Classic has no mineable or herbable mobs. VMaNGOS was picked over
+cmangos' Classic DB after a check against Wowhead Classic (2026-10-03):
+of 20 sampled mobs only VMaNGOS lists, Wowhead shows skinning on 17; of
+20 only cmangos-classic lists, on 1. Anchors: the mobs checked in game on
+Forever (3130, 3247, 4129 skinnable; 3113 not) plus two Wowhead calls.
+The file names its source (`SkinLootSource = "Classic"`), which the loot
+heading shows. On a corpse the game's own "Skinnable" line overrides the
+list. `--check` covers both sources.
+
 **Minimap is an incidental surface.** The Anniversary client routes
 minimap node-blip tooltips through `GameTooltip`, so the node hook appends to
 them too when it can. This is a bonus, not a designed surface: it can be

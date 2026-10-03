@@ -1609,7 +1609,9 @@ do
     EXPECT(HN and HN["Earthroot"] == 15 and HN["Peacebloom"] == 1 and HN["Black Lotus"] == 300, "herb nodes")
     EXPECT(not MN["Fel Iron Deposit"] and not MN["Khorium Vein"] and not HN["Felweed"] and not HN["Bloodthistle"],
            "Outland or Eversong nodes in the Forever table")
-    EXPECT(ProfBuddy.SkinnableMobs == nil and ProfBuddy.SkinLoot == nil, "TBC mob data loaded on Forever")
+    -- the mob list is Forever's Classic-era one (3b-2), never TBC's
+    EXPECT(ProfBuddy.SkinnableMobs and ProfBuddy.SkinnableMobs[18205] == nil and ProfBuddy.MineableMobs == nil
+           and ProfBuddy.HerbableMobs == nil, "TBC mob data loaded on Forever")
 
     -- an ore vein out of combat: the game's red "Requires Mining" becomes PB's line
     local onUpdate = GameTooltip._h.OnUpdate
@@ -1667,9 +1669,9 @@ do
     mob.level = 8
     EXPECT(hover(skinnable):find("Requires Skinning (1)", 1, true), "level 8 corpse")
     EXPECT(hover({ "Razormane Dustrunner", "Level 8", "Corpse" }) == "", "a corpse the game does not mark skinnable")
-    mob.dead = false
-    EXPECT(hover({ "Thunder Lizard", "Level 10", "Beast" }) == "", "a live mob got lines with no mob list")
-    mob.dead = true
+    mob.dead, mob.npc = false, 3114
+    EXPECT(hover({ "Razormane Battleguard", "Level 8", "Humanoid" }) == "", "a live mob off the list got lines")
+    mob.dead, mob.npc = true, 4129
     local other = CreateFrame("GameTooltip", "ShoppingTooltip9", UIParent)
     rawset(other, "GetUnit", function() return "Mob", "mouseover" end)
     rawset(other, "AddLine", function(_, t) added[#added + 1] = t end)
@@ -1762,4 +1764,81 @@ do
 end
 print("  PASS F34 dungeon tooltips: a secret tooltip unit falls back to mouseover, a secret GUID or level adds nothing, no Lua error")
 
-print("ALL FOREVER TESTS PASS (34)")
+-- F35: Phase 3b-2, the Classic-era mob list and skinning loot on WoW:
+-- Forever (VMaNGOS at 1.12, tools/gather_db.py --source classic). A live
+-- mob on the list gets the Requires line and the loot, headed as Classic
+-- data; on a corpse the game's "Skinnable" line decides: without it no
+-- line (already skinned, or Forever differs), with it the lines even for
+-- a mob the list misses.
+do
+    local SM, SL, ST, SI = ProfBuddy.SkinnableMobs, ProfBuddy.SkinLoot, ProfBuddy.SkinLootTables, ProfBuddy.SkinItems
+    -- the mobs m4ru checked in game (2026-10-02), and two Wowhead Classic calls
+    EXPECT(SM[3130] and SM[3247] and SM[4129] and SM[4342], "skinnable mobs missing from the Classic list")
+    EXPECT(not SM[3113] and not SM[3114] and not SM[2565], "a mob that cannot be skinned is on the list")
+    EXPECT(ProfBuddy.SkinLootSource == "Classic", "loot source: " .. tostring(ProfBuddy.SkinLootSource))
+    local n = 0
+    for npc, idx in pairs(SL) do
+        n = n + 1
+        EXPECT(SM[npc] and type(ST[idx]) == "table" and #ST[idx] > 0, "loot for npc " .. npc)
+        for _, e in ipairs(ST[idx]) do
+            EXPECT(SI[e[1]] and e[2] >= 1 and e[2] <= 100 and e[3] >= 1 and e[4] >= e[3], "loot row for npc " .. npc)
+        end
+    end
+    for npc in pairs(SM) do EXPECT(SL[npc], "skinnable npc " .. npc .. " has no loot") end
+    EXPECT(n > 800, "only " .. n .. " mobs with loot")
+    EXPECT(SI[2318] and SI[2318][1] == "Light Leather", "Light Leather")
+
+    local post
+    for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Unit then post = c.fn end end
+    local real = { UnitExists = UnitExists, UnitCanAttack = UnitCanAttack, UnitIsDead = UnitIsDead,
+                   UnitGUID = UnitGUID, UnitLevel = UnitLevel }
+    local mob = { dead = false, level = 10, npc = 3130 }
+    UnitExists = function() return true end
+    UnitCanAttack = function() return not mob.dead end
+    UnitIsDead = function() return mob.dead end
+    UnitGUID = function() return "Creature-0-1-2-3-" .. mob.npc .. "-0000" end
+    UnitLevel = function() return mob.level end
+    local added = {}
+    rawset(GameTooltip, "GetUnit", function() return "Mob", "mouseover" end)
+    rawset(GameTooltip, "AddLine", function(_, t) added[#added + 1] = t end)
+    rawset(GameTooltip, "AddDoubleLine", function(_, l, r) added[#added + 1] = l .. " = " .. r end)
+    rawset(GameTooltip, "Show", function() end)
+    local function hover(lines)
+        added = {}
+        local data = { type = Enum.TooltipDataType.Unit, lines = {} }
+        for i, t in ipairs(lines) do data.lines[i] = { leftText = t } end
+        post(GameTooltip, data)
+        return table.concat(added, " / ")
+    end
+    local lizard = ST[SL[3130]]
+    local first = SI[lizard[1][1]][1]
+
+    -- a live Thunder Lizard: the Requires line, then its loot, marked Classic
+    local got = hover({ "Thunder Lizard", "Level 10", "Beast" })
+    EXPECT(got:find("Requires Skinning (1)", 1, true) and got:find("Your Skinning: 43", 1, true), "live lizard: " .. got)
+    EXPECT(got:find("Skins into (Classic data):", 1, true) and got:find(first, 1, true)
+           and got:find(lizard[1][2] .. "%", 1, true), "live lizard loot: " .. got)
+    -- a live level-19 Hecklefang Snarler: the edge he checked in game
+    mob.npc, mob.level = 4129, 19
+    EXPECT(hover({ "Hecklefang Snarler", "Level 19", "Beast" }):find("Requires Skinning (90)", 1, true), "live snarler")
+    -- its corpse: lines while the game says Skinnable, none once it stops
+    mob.dead = true
+    EXPECT(hover({ "Hecklefang Snarler", "Level 19", "Corpse", "Skinnable" }):find("Skins into (Classic data):", 1, true),
+           "skinnable corpse")
+    EXPECT(hover({ "Hecklefang Snarler", "Level 19", "Corpse" }) == "", "a corpse the game no longer marks skinnable")
+    -- a corpse the list misses but the game marks: the Requires line, no loot
+    mob.npc, mob.level = 999999, 12
+    got = hover({ "Mystery Beast", "Level 12", "Corpse", "Skinnable" })
+    EXPECT(got:find("Requires Skinning (20)", 1, true) and not got:find("Skins into", 1, true), "unlisted corpse: " .. got)
+    -- the loot setting off keeps the Requires line
+    mob.npc, mob.level, mob.dead = 3130, 10, false
+    ProfBuddyDB.settings.gatherYieldTooltip = false
+    got = hover({ "Thunder Lizard", "Level 10", "Beast" })
+    ProfBuddyDB.settings.gatherYieldTooltip = nil
+    EXPECT(got:find("Requires Skinning (1)", 1, true) and not got:find("Skins into", 1, true), "loot setting off: " .. got)
+    for k, v in pairs(real) do _G[k] = v end
+    for _, k in ipairs({ "GetUnit", "AddLine", "AddDoubleLine", "Show" }) do rawset(GameTooltip, k, nil) end
+end
+print("  PASS F35 Classic-era mob list: live mobs on it get Requires Skinning and their loot headed as Classic data, the game's Skinnable line decides on a corpse")
+
+print("ALL FOREVER TESTS PASS (35)")

@@ -1870,6 +1870,8 @@ do
     assert(type(addon.SkinLootTables) == "table", "T73: SkinLootTables should load")
     assert(type(addon.SkinItems) == "table", "T73: SkinItems should load")
     assert(type(addon.SkinnableMobs) == "table", "T73: SkinnableMobs should load")
+    -- no source label: TBC Anniversary's heading stays a plain "Skins into:"
+    assert(addon.SkinLootSource == nil, "T73: TBC loot names a source")
     local n = 0
     for npc, idx in pairs(addon.SkinLoot) do
         n = n + 1

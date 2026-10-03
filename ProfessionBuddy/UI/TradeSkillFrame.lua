@@ -658,12 +658,17 @@ end
 -- SkinItems itemID -> {name, quality}. GetItemInfo gives live name/quality once the
 -- client has cached the item; the baked English name/quality is the first-hover
 -- fallback so a line never shows blank.
+-- A data file that names its source (SkinLootSource: WoW: Forever's
+-- Classic-era list) gets it in the heading, so nobody takes the numbers
+-- for Forever's own.
 local YIELD_HEAD = { 0.78, 0.69, 0.53 }
 local function AddSkinLoot(tip, npcID)
     local idx  = npcID and addon.SkinLoot and addon.SkinLoot[npcID]
     local loot = idx and addon.SkinLootTables and addon.SkinLootTables[idx]
     if not loot then return end
-    tip:AddLine("Skins into:", YIELD_HEAD[1], YIELD_HEAD[2], YIELD_HEAD[3])
+    local head = addon.SkinLootSource and ("Skins into (" .. addon.SkinLootSource .. " data):")
+        or "Skins into:"
+    tip:AddLine(head, YIELD_HEAD[1], YIELD_HEAD[2], YIELD_HEAD[3])
     for _, e in ipairs(loot) do
         local itemID, pct, minc, maxc, quest = e[1], e[2], e[3], e[4], e[5]
         local meta = addon.SkinItems and addon.SkinItems[itemID]
@@ -775,10 +780,16 @@ local function AddUnitGatherLines(tip, data)
     local guid = UnitGUID(unit)
     local npcID = not IsSecret(guid) and NpcIDFromGUID(guid) or nil
     local prof  = GatherProfForNpc(npcID)
-    -- WoW: Forever has no mob list yet: a corpse the game itself marks
-    -- skinnable is one (the game shows that line on corpses only)
-    if not prof and data and GameSaysSkinnable(data) then
-        prof = "Skinning"
+    -- WoW: Forever: a live mob goes by PB's Classic-era list, but on a
+    -- corpse the game's own "Skinnable" line has the final say: it marks
+    -- a mob the list misses, and its absence means the corpse cannot be
+    -- skinned (already skinned, or Forever differs from the list)
+    if data and UnitIsDead(unit) then
+        if GameSaysSkinnable(data) then
+            prof = "Skinning"
+        elseif prof == "Skinning" then
+            prof = nil
+        end
     end
     if not prof then return end
 
