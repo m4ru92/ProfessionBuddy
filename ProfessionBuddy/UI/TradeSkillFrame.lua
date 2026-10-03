@@ -761,7 +761,13 @@ local function AddUnitGatherLines(tip, data)
     if not (addon.db and addon.db.settings) then return end
     if addon.db.settings.gatherSkillTooltip == false then return end
 
-    local unit = select(2, tip:GetUnit()) or "mouseover"
+    -- WoW: Forever hands the tooltip's unit back as a secret value in a
+    -- dungeon (a friend's error, 2026-10-02), and a secret unit passed to
+    -- UnitExists from addon code is a Lua error. "mouseover" is the unit a
+    -- world hover shows; the unit calls below take it, and only the GUID
+    -- they return can be secret (Blizzard's API docs; checked below).
+    local unit = select(2, tip:GetUnit())
+    if not unit or IsSecret(unit) then unit = "mouseover" end
     if not UnitExists(unit) then return end
     -- gatherable only: attackable OR a dead corpse (skips friendly/non-combat pets)
     if not (UnitCanAttack("player", unit) or UnitIsDead(unit)) then return end
@@ -777,6 +783,7 @@ local function AddUnitGatherLines(tip, data)
     if not prof then return end
 
     local level = UnitLevel(unit)
+    if IsSecret(level) then return end
     local req, reqStr
     if level and level < 0 then
         reqStr = "??"

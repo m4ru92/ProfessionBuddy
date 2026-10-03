@@ -1701,4 +1701,65 @@ local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (33)")
+-- F34: in a dungeon WoW: Forever hands the tooltip's unit back as a secret
+-- value, and the unit API refuses a secret argument from addon code
+-- (UnitExists, a friend's error, 2026-10-02). PB falls back to "mouseover"; a secret
+-- GUID or level ends the lines instead of an error.
+do
+    local post
+    for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Unit then post = c.fn end end
+    local SECRET = newproxy(true)
+    getmetatable(SECRET).__index = function() error("secret indexed") end
+    local real = { UnitExists = UnitExists, UnitCanAttack = UnitCanAttack, UnitIsDead = UnitIsDead,
+                   UnitGUID = UnitGUID, UnitLevel = UnitLevel }
+    local mob = { dead = true, level = 8 }
+    local seen = {}
+    local function plain(fn)
+        return function(...)
+            for i = 1, select("#", ...) do
+                if rawequal(select(i, ...), SECRET) then
+                    error("bad argument #" .. i .. ": Secret values are only allowed during untainted execution")
+                end
+            end
+            seen[#seen + 1] = (select(1, ...))
+            return fn(...)
+        end
+    end
+    UnitExists = plain(function() return true end)
+    UnitCanAttack = plain(function() return not mob.dead end)
+    UnitIsDead = plain(function() return mob.dead end)
+    UnitGUID = plain(function() return SECRET end)          -- identity restricted
+    UnitLevel = plain(function() return mob.level end)
+    issecretvalue = function(v) return rawequal(v, SECRET) end
+    local realType = type
+    type = function(v) if rawequal(v, SECRET) then return "string" end return realType(v) end
+    local added = {}
+    rawset(GameTooltip, "GetUnit", function() return SECRET, SECRET, SECRET end)
+    rawset(GameTooltip, "AddLine", function(_, t) added[#added + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    local function hover(lines)
+        added = {}
+        local data = { type = Enum.TooltipDataType.Unit, guid = SECRET, lines = {} }
+        for i, t in ipairs(lines) do data.lines[i] = { leftText = t } end
+        local ok, err = pcall(post, GameTooltip, data)
+        return ok, ok and table.concat(added, " / ") or tostring(err)
+    end
+    local ok1, got1 = hover({ "Blackfathom Snapper", "Level 8", "Corpse", "Skinnable" })
+    local ok2, got2 = hover({ "Blackfathom Tide Priestess", "Level 8", "Humanoid" })
+    mob.dead = false
+    local ok3, got3 = hover({ "Blackfathom Snapper", "Level 8", "Beast" })
+    mob.dead, mob.level = true, SECRET
+    local ok4, got4 = hover({ "Blackfathom Snapper", "Level ??", "Corpse", "Skinnable" })
+    type = realType
+    issecretvalue = nil
+    for k, v in pairs(real) do _G[k] = v end
+    for _, k in ipairs({ "GetUnit", "AddLine", "Show" }) do rawset(GameTooltip, k, nil) end
+    EXPECT(ok1 and got1:find("Requires Skinning (1)", 1, true), "dungeon corpse: " .. got1)
+    EXPECT(ok2 and got2 == "", "dungeon corpse the game does not mark: " .. got2)
+    EXPECT(ok3 and got3 == "", "dungeon live mob: " .. got3)
+    EXPECT(ok4 and got4 == "", "secret level: " .. got4)
+    for _, u in ipairs(seen) do EXPECT(u == "mouseover" or u == "player", "unit passed: " .. tostring(u)) end
+end
+print("  PASS F34 dungeon tooltips: a secret tooltip unit falls back to mouseover, a secret GUID or level adds nothing, no Lua error")
+
+print("ALL FOREVER TESTS PASS (34)")
