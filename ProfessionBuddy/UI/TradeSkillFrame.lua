@@ -732,54 +732,6 @@ local function GatherLines(prof, req, reqStr)
     return requires, yours
 end
 
-function TSF:HookUnitTooltip()
-    if self._hookedUnitTooltip then return end
-    self._hookedUnitTooltip = true
-
-    HookTooltipScript(GameTooltip, "OnTooltipSetUnit", function(tip)
-        if not (addon.db and addon.db.settings) then return end
-        if addon.db.settings.gatherSkillTooltip == false then return end
-
-        local unit = select(2, tip:GetUnit()) or "mouseover"
-        if not UnitExists(unit) then return end
-        -- gatherable only: attackable OR a dead corpse (skips friendly/non-combat pets)
-        if not (UnitCanAttack("player", unit) or UnitIsDead(unit)) then return end
-
-        local npcID = NpcIDFromGUID(UnitGUID(unit))
-        local prof  = GatherProfForNpc(npcID)
-        if not prof then return end
-
-        local level = UnitLevel(unit)
-        local req, reqStr
-        if level and level < 0 then
-            reqStr = "??"
-        else
-            req = RequiredGatherSkill(level)
-            if not req then return end
-            reqStr = tostring(req)
-        end
-
-        local requires, yours = GatherLines(prof, req, reqStr)
-        if not requires then return end
-        tip:AddLine(requires)
-        if yours then tip:AddLine(yours) end
-        -- Skinning only: mining yields ore and herbalism yields herb, which the
-        -- "Requires" line already implies, so a yield line there is just noise.
-        -- Gated to actual skinners: what a mob yields is only useful if you can
-        -- skin it, so a non-skinner never sees the line even with "show for
-        -- unlearned" on (that governs the Requires line, not this).
-        if prof == "Skinning" and addon.db.settings.gatherYieldTooltip ~= false
-           and PlayerGatherSkill("Skinning") then
-            AddSkinLoot(tip, npcID)
-        end
-        tip:Show()
-    end)
-end
-
--- World nodes (ore veins / herbs) are GameObjects, not units, so
--- OnTooltipSetUnit never fires. Match the node name against a static name->skill
--- table (ProfBuddy.MiningNodes / HerbNodes). See DESIGN-NOTES.md for why this
--- runs on a throttled OnUpdate and re-appends idempotently.
 -- WoW: Forever hands addons some tooltip text as a secret value (a buff's
 -- tooltip, 2026-09-29), and comparing one is a Lua error. issecretvalue
 -- is Forever's (FrameScriptDocumentation); TBC Anniversary has none.
@@ -787,6 +739,87 @@ local function IsSecret(v)
     return type(issecretvalue) == "function" and issecretvalue(v)
 end
 
+-- WoW: Forever: the game's own corpse line ("Skinnable", Blizzard's
+-- UNIT_SKINNABLE_LEATHER where the client defines it) appears on a corpse
+-- only when the mob can be skinned, and is readable in and out of combat
+-- (m4ru's /pbt tip check, 2026-10-02). It never says whether YOUR skill is
+-- enough: a level-19 corpse he could not skin at 87 still read green.
+local function GameSaysSkinnable(data)
+    if type(data) ~= "table" or type(data.lines) ~= "table" then return false end
+    local want = type(UNIT_SKINNABLE_LEATHER) == "string" and UNIT_SKINNABLE_LEATHER or "Skinnable"
+    for _, line in ipairs(data.lines) do
+        local t = type(line) == "table" and line.leftText
+        if type(t) == "string" and not IsSecret(t) and t == want then return true end
+    end
+    return false
+end
+
+-- The skill lines (and, for Skinning, the loot) for a gatherable mob on a
+-- unit tooltip. data is the tooltip data on WoW: Forever, nil on TBC
+-- Anniversary.
+local function AddUnitGatherLines(tip, data)
+    if not (addon.db and addon.db.settings) then return end
+    if addon.db.settings.gatherSkillTooltip == false then return end
+
+    local unit = select(2, tip:GetUnit()) or "mouseover"
+    if not UnitExists(unit) then return end
+    -- gatherable only: attackable OR a dead corpse (skips friendly/non-combat pets)
+    if not (UnitCanAttack("player", unit) or UnitIsDead(unit)) then return end
+
+    local guid = UnitGUID(unit)
+    local npcID = not IsSecret(guid) and NpcIDFromGUID(guid) or nil
+    local prof  = GatherProfForNpc(npcID)
+    -- WoW: Forever has no mob list yet: a corpse the game itself marks
+    -- skinnable is one (the game shows that line on corpses only)
+    if not prof and data and GameSaysSkinnable(data) then
+        prof = "Skinning"
+    end
+    if not prof then return end
+
+    local level = UnitLevel(unit)
+    local req, reqStr
+    if level and level < 0 then
+        reqStr = "??"
+    else
+        req = RequiredGatherSkill(level)
+        if not req then return end
+        reqStr = tostring(req)
+    end
+
+    local requires, yours = GatherLines(prof, req, reqStr)
+    if not requires then return end
+    tip:AddLine(requires)
+    if yours then tip:AddLine(yours) end
+    -- Skinning only: mining yields ore and herbalism yields herb, which the
+    -- "Requires" line already implies, so a yield line there is just noise.
+    -- Gated to actual skinners: what a mob yields is only useful if you can
+    -- skin it, so a non-skinner never sees the line even with "show for
+    -- unlearned" on (that governs the Requires line, not this).
+    if prof == "Skinning" and addon.db.settings.gatherYieldTooltip ~= false
+       and PlayerGatherSkill("Skinning") then
+        AddSkinLoot(tip, npcID)
+    end
+    tip:Show()
+end
+
+function TSF:HookUnitTooltip()
+    if self._hookedUnitTooltip then return end
+    self._hookedUnitTooltip = true
+    if addon.Source and addon.Source.TOOLTIP_DATA then
+        -- WoW: Forever builds unit tooltips from tooltip data and has no
+        -- OnTooltipSetUnit (as for items, 3a)
+        TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tip, data)
+            if tip == GameTooltip then AddUnitGatherLines(tip, data) end
+        end)
+    else
+        HookTooltipScript(GameTooltip, "OnTooltipSetUnit", function(tip) AddUnitGatherLines(tip) end)
+    end
+end
+
+-- World nodes (ore veins / herbs) are GameObjects, not units, so
+-- OnTooltipSetUnit never fires. Match the node name against a static name->skill
+-- table (ProfBuddy.MiningNodes / HerbNodes). See DESIGN-NOTES.md for why this
+-- runs on a throttled OnUpdate and re-appends idempotently.
 function TSF:HookNodeTooltip()
     if self._hookedNodeTooltip then return end
     self._hookedNodeTooltip = true

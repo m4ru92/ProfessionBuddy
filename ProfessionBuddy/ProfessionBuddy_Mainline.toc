@@ -32,6 +32,7 @@ Data/Forever/Mining.lua
 Data/Forever/Poisons.lua
 Data/Forever/Skinning.lua
 Data/Forever/Tailoring.lua
+Data/Forever/Gather.lua
 Knowledge.lua
 MaterialCalc.lua
 UI/Main.lua

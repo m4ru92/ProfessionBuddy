@@ -1596,8 +1596,109 @@ do
 end
 print("  PASS F32 Forever names carry no realm: one key per player across connected realms, whispers without a realm, saved names moved once with duplicates merged and a backup to restore or clear")
 
+-- F33: Phase 3b-1, gathering tooltips on WoW: Forever (m4ru's /pbt tip
+-- check, 2026-10-02). Ore veins and herbs: the game names the profession
+-- but not the skill, so PB reads the node name and looks it up in
+-- Data/Forever/Gather.lua (Classic-era nodes only). Corpses: the game's own
+-- "Skinnable" line marks a skinnable corpse but never says whether your
+-- skill is enough, so PB adds "Requires Skinning (N)" from the mob's level
+-- (level 18 -> 80, level 19 -> 90: the edge he checked in game).
+do
+    local MN, HN = ProfBuddy.MiningNodes, ProfBuddy.HerbNodes
+    EXPECT(MN and MN["Copper Vein"] == 1 and MN["Tin Vein"] == 65 and MN["Small Thorium Vein"] == 245, "mining nodes")
+    EXPECT(HN and HN["Earthroot"] == 15 and HN["Peacebloom"] == 1 and HN["Black Lotus"] == 300, "herb nodes")
+    EXPECT(not MN["Fel Iron Deposit"] and not MN["Khorium Vein"] and not HN["Felweed"] and not HN["Bloodthistle"],
+           "Outland or Eversong nodes in the Forever table")
+    EXPECT(ProfBuddy.SkinnableMobs == nil and ProfBuddy.SkinLoot == nil, "TBC mob data loaded on Forever")
+
+    -- an ore vein out of combat: the game's red "Requires Mining" becomes PB's line
+    local onUpdate = GameTooltip._h.OnUpdate
+    local left = {}
+    for i = 1, 3 do
+        left[i] = CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(left[i], "SetText", function(self, t) self._text = t end)
+    end
+    local n = 2
+    rawset(GameTooltip, "GetUnit", function() return nil end)
+    rawset(GameTooltip, "GetItem", function() return nil end)
+    rawset(GameTooltip, "NumLines", function() return n end)
+    local added = {}
+    rawset(GameTooltip, "AddLine", function(_, t) added[#added + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    left[1]._text, left[2]._text = "Copper Vein", "Requires Mining"
+    onUpdate(GameTooltip, 1)
+    EXPECT(left[2]._text:find("Requires Mining (1)", 1, true), "vein line: " .. tostring(left[2]._text))
+    EXPECT(added[1] and added[1]:find("Your Mining: ", 1, true), "vein extra line: " .. tostring(added[1]))
+    left[1]._text, left[2]._text = "Earthroot", "Requires Herbalism"
+    added = {}
+    onUpdate(GameTooltip, 1)
+    EXPECT(left[2]._text:find("Requires Herbalism (15)", 1, true), "herb line: " .. tostring(left[2]._text))
+    -- a node PB does not know stays the game's
+    left[1]._text, left[2]._text = "Mystery Vein", "Requires Mining"
+    onUpdate(GameTooltip, 1)
+    EXPECT(left[2]._text == "Requires Mining", "an unknown node changed: " .. tostring(left[2]._text))
+    rawset(GameTooltip, "NumLines", nil); rawset(GameTooltip, "GetItem", nil)
+
+    -- corpses, through the unit tooltip post-call
+    local post
+    for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Unit then post = c.fn end end
+    EXPECT(post, "no unit tooltip post-call on Forever")
+    local real = { UnitExists = UnitExists, UnitCanAttack = UnitCanAttack, UnitIsDead = UnitIsDead,
+                   UnitGUID = UnitGUID, UnitLevel = UnitLevel }
+    local mob = { dead = true, level = 19, npc = 4129 }
+    UnitExists = function() return true end
+    UnitCanAttack = function() return not mob.dead end
+    UnitIsDead = function() return mob.dead end
+    UnitGUID = function() return "Creature-0-1-2-3-" .. mob.npc .. "-0000" end
+    UnitLevel = function() return mob.level end
+    rawset(GameTooltip, "GetUnit", function() return "Mob", "mouseover" end)
+    local function hover(lines, tip)
+        added = {}
+        local data = { type = Enum.TooltipDataType.Unit, lines = {} }
+        for i, t in ipairs(lines) do data.lines[i] = { leftText = t } end
+        post(tip or GameTooltip, data)
+        return table.concat(added, " / ")
+    end
+    local skinnable = { "Hecklefang Snarler", "Level 19", "Corpse", "Skinnable" }
+    local got = hover(skinnable)
+    EXPECT(got:find("Requires Skinning (90)", 1, true) and got:find("Your Skinning: ", 1, true), "level 19 corpse: " .. got)
+    mob.level = 18
+    EXPECT(hover(skinnable):find("Requires Skinning (80)", 1, true), "level 18 corpse")
+    mob.level = 8
+    EXPECT(hover(skinnable):find("Requires Skinning (1)", 1, true), "level 8 corpse")
+    EXPECT(hover({ "Razormane Dustrunner", "Level 8", "Corpse" }) == "", "a corpse the game does not mark skinnable")
+    mob.dead = false
+    EXPECT(hover({ "Thunder Lizard", "Level 10", "Beast" }) == "", "a live mob got lines with no mob list")
+    mob.dead = true
+    local other = CreateFrame("GameTooltip", "ShoppingTooltip9", UIParent)
+    rawset(other, "GetUnit", function() return "Mob", "mouseover" end)
+    rawset(other, "AddLine", function(_, t) added[#added + 1] = t end)
+    rawset(other, "Show", function() end)
+    EXPECT(hover(skinnable, other) == "", "lines on a tooltip other than GameTooltip")
+    ProfBuddyDB.settings.gatherSkillTooltip = false
+    EXPECT(hover(skinnable) == "", "lines with the gather tooltip setting off")
+    ProfBuddyDB.settings.gatherSkillTooltip = true
+    -- a secret line is skipped without an error
+    local SECRET = newproxy(true)
+    getmetatable(SECRET).__index = function() error("secret indexed") end
+    issecretvalue = function(v) return rawequal(v, SECRET) end
+    local realType = type
+    type = function(v) if rawequal(v, SECRET) then return "string" end return realType(v) end
+    local okS, errS = pcall(post, GameTooltip, { type = Enum.TooltipDataType.Unit, lines = { { leftText = SECRET } } })
+    -- a hidden mob GUID: no NPC ID, the game's line still gives the corpse
+    UnitGUID = function() return SECRET end
+    local okG, gotG = pcall(hover, skinnable)
+    type = realType
+    issecretvalue = nil
+    EXPECT(okS, "secret line: " .. tostring(errS))
+    EXPECT(okG and gotG:find("Requires Skinning (1)", 1, true), "secret GUID: " .. tostring(gotG))
+    for k, v in pairs(real) do _G[k] = v end
+    rawset(GameTooltip, "GetUnit", nil); rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "Show", nil)
+end
+print("  PASS F33 gathering tooltips: Forever node table (Classic nodes only), vein and herb lines from it, corpse Requires Skinning from the level only when the game says Skinnable")
+
 local fb = {}
 for k in pairs(FALLBACK) do fb[#fb + 1] = k end
 table.sort(fb)
 print("  INFO globals PB touched that this stub does not model: " .. table.concat(fb, ", "))
-print("ALL FOREVER TESTS PASS (32)")
+print("ALL FOREVER TESTS PASS (33)")
