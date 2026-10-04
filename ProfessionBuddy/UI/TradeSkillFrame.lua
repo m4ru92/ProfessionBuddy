@@ -660,12 +660,16 @@ local function NpcIDFromGUID(guid)
     return tonumber(npcID)
 end
 
+-- The mob lists first; on WoW: Forever then what play has shown
+-- (Knowledge.lua GatheredProf: a mob you or a friend skinned, or one you
+-- mined, gathered herbs from or salvaged).
 local function GatherProfForNpc(npcID)
     if not npcID then return nil end
     if addon.SkinnableMobs and addon.SkinnableMobs[npcID] then return "Skinning" end
     if addon.MineableMobs  and addon.MineableMobs[npcID]  then return "Mining" end
     if addon.HerbableMobs  and addon.HerbableMobs[npcID]  then return "Herbalism" end
-    return nil
+    local KN = addon.Knowledge
+    return KN and KN.GatheredProf and KN:GatheredProf(npcID) or nil
 end
 
 -- Render a mob's full skinning loot as a "Skins into:" block: one line per item,
@@ -775,14 +779,28 @@ end
 -- only when the mob can be skinned, and is readable in and out of combat
 -- (m4ru's /pbt tip check, 2026-10-02). It never says whether YOUR skill is
 -- enough: a level-19 corpse he could not skin at 87 still read green.
-local function GameSaysSkinnable(data)
-    if type(data) ~= "table" or type(data.lines) ~= "table" then return false end
-    local want = type(UNIT_SKINNABLE_LEATHER) == "string" and UNIT_SKINNABLE_LEATHER or "Skinnable"
+-- Forever's GlobalStrings carry the same kind of line for a corpse you
+-- mine, gather herbs from or salvage (UNIT_SKINNABLE_ROCK, _HERB, _BOLTS:
+-- "Requires Mining", "Requires Herbalism", "Requires Engineering"), the
+-- gather spells for which are new on Forever (Knowledge.lua).
+local GAME_GATHER_LINES = {
+    { "UNIT_SKINNABLE_LEATHER", "Skinnable", "Skinning" },
+    { "UNIT_SKINNABLE_ROCK", "Requires Mining", "Mining" },
+    { "UNIT_SKINNABLE_HERB", "Requires Herbalism", "Herbalism" },
+    { "UNIT_SKINNABLE_BOLTS", "Requires Engineering", "Engineering" },
+}
+local function GameGatherProf(data)
+    if type(data) ~= "table" or type(data.lines) ~= "table" then return nil end
+    local want = {}
+    for _, g in ipairs(GAME_GATHER_LINES) do
+        local text = _G[g[1]]
+        want[type(text) == "string" and text or g[2]] = g[3]
+    end
     for _, line in ipairs(data.lines) do
         local t = type(line) == "table" and line.leftText
-        if type(t) == "string" and not IsSecret(t) and t == want then return true end
+        if type(t) == "string" and not IsSecret(t) and want[t] then return want[t] end
     end
-    return false
+    return nil
 end
 
 -- The skill lines (and, for Skinning, the loot) for a gatherable mob on a
@@ -806,16 +824,13 @@ local function AddUnitGatherLines(tip, data)
     local guid = UnitGUID(unit)
     local npcID = not IsSecret(guid) and NpcIDFromGUID(guid) or nil
     local prof  = GatherProfForNpc(npcID)
-    -- WoW: Forever: a live mob goes by PB's Classic-era list, but on a
-    -- corpse the game's own "Skinnable" line has the final say: it marks
-    -- a mob the list misses, and its absence means the corpse cannot be
-    -- skinned (already skinned, or Forever differs from the list)
+    -- WoW: Forever: a live mob goes by PB's Classic-era list and what play
+    -- has shown, but on a corpse the game's own line has the final say: it
+    -- names the profession, also for a mob nothing else knows, and with no
+    -- line the corpse cannot be gathered (done already, or Forever
+    -- differs from the list)
     if data and UnitIsDead(unit) then
-        if GameSaysSkinnable(data) then
-            prof = "Skinning"
-        elseif prof == "Skinning" then
-            prof = nil
-        end
+        prof = GameGatherProf(data)
     end
     if not prof then return end
 

@@ -2091,4 +2091,94 @@ do
 end
 print("  PASS F39 a known starting recipe reads Source: Learned with <profession>; a seen trainer still wins")
 
-print("ALL FOREVER TESTS PASS (39)")
+-- F40: mobs known from play, and the game's other corpse lines (WoW:
+-- Forever). A mob off the Classic list that you or a friend skinned gets
+-- the Skinning lines while alive. A corpse reading "Requires Mining",
+-- "Requires Herbalism" or "Requires Engineering" (Forever's GlobalStrings
+-- UNIT_SKINNABLE_ROCK, _HERB, _BOLTS) gets that profession's lines from
+-- its level, and a mob mined, gathered from or salvaged with Forever's
+-- corpse spells (1235230, 1235236, 1235244) is remembered for its live
+-- tooltip.
+do
+    local KN = ProfBuddy.Knowledge
+    local post
+    for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Unit then post = c.fn end end
+    local real = { UnitExists = UnitExists, UnitCanAttack = UnitCanAttack, UnitIsDead = UnitIsDead,
+                   UnitGUID = UnitGUID, UnitLevel = UnitLevel, GetTime = GetTime,
+                   GetNumLootItems = GetNumLootItems, GetLootSlotLink = GetLootSlotLink,
+                   GetLootSlotInfo = GetLootSlotInfo, GetLootSourceInfo = GetLootSourceInfo }
+    local mob = { dead = false, level = 30, npc = 777001 }
+    UnitExists = function() return true end
+    UnitCanAttack = function() return not mob.dead end
+    UnitIsDead = function(u) return mob.dead end
+    UnitGUID = function() return "Creature-0-1-2-3-" .. mob.npc .. "-0000" end
+    UnitLevel = function() return mob.level end
+    local added = {}
+    rawset(GameTooltip, "GetUnit", function() return "Mob", "mouseover" end)
+    rawset(GameTooltip, "AddLine", function(_, t) added[#added + 1] = t end)
+    rawset(GameTooltip, "AddDoubleLine", function(_, l, r) added[#added + 1] = l .. " = " .. r end)
+    rawset(GameTooltip, "Show", function() end)
+    local function hover(lines)
+        added = {}
+        local data = { type = Enum.TooltipDataType.Unit, lines = {} }
+        for i, t in ipairs(lines or { "Mob" }) do data.lines[i] = { leftText = t } end
+        post(GameTooltip, data)
+        return table.concat(added, " / ")
+    end
+    EXPECT(not ProfBuddy.SkinnableMobs[777001], "777001 is on the list")
+    EXPECT(hover() == "", "an unknown live mob got lines")
+    -- you skinned it once: live, it now reads Skinning (no loot list yet)
+    ProfBuddyDB.skinLoot = { [777001] = { n = 1, at = 1, seenBy = {}, items = { [2318] = { c = 1, min = 1, max = 1 } } } }
+    local got = hover()
+    EXPECT(got:find("Requires Skinning (150)", 1, true) and not got:find("Skins into", 1, true), "skinned once: " .. got)
+    -- a friend's skin counts the same
+    ProfBuddyDB.skinLoot = nil
+    ProfBuddyDB.knowledgeShared["Pal-Forever"] = { at = time(), since = 0, records = {},
+        loot = { [777001] = { at = 1, n = 2, items = {} } } }
+    EXPECT(hover():find("Requires Skinning (150)", 1, true), "a friend's skin")
+    ProfBuddyDB.knowledgeShared["Pal-Forever"] = nil
+
+    -- the game's other corpse lines
+    mob.dead, mob.level = true, 12
+    got = hover({ "Rock Thing", "Corpse", "Requires Mining" })
+    EXPECT(got:find("Requires Mining (20)", 1, true) and got:find("Your Mining: ", 1, true), "mining corpse: " .. got)
+    EXPECT(hover({ "Bog Thing", "Corpse", "Requires Herbalism" }):find("Requires Herbalism (20)", 1, true), "herb corpse")
+    got = hover({ "Clank Thing", "Corpse", "Requires Engineering" })
+    EXPECT(got:find("Requires Engineering (20)", 1, true), "engineering corpse: " .. got)
+    ProfBuddyDB.settings.gatherShowUnlearned = false
+    EXPECT(hover({ "Clank Thing", "Corpse", "Requires Engineering" }) == "", "unlearned Engineering shown with the setting off")
+    ProfBuddyDB.settings.gatherShowUnlearned = nil
+    EXPECT(hover({ "Rock Thing", "Corpse" }) == "", "a corpse with no game line")
+
+    -- mining a mob with Forever's spell remembers it for the live tooltip
+    local now = 3000
+    GetTime = function() return now end
+    UnitGUID = function() return "Creature-0-1-2-3-777002-0000" end
+    GetNumLootItems = function() return 1 end
+    GetLootSlotLink = function() return "|cffffffff|Hitem:2770::::::::|h[Copper Ore]|h|r" end
+    GetLootSlotInfo = function() return 0, "Copper Ore", 2, nil, 1 end
+    GetLootSourceInfo = function() return "Creature-0-1-2-3-777002-0000", 2 end
+    FIRE("UNIT_SPELLCAST_START", "player", "Cast-9", 1235230); now = now + 2
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-9", 1235230); now = now + 0.5
+    FIRE("LOOT_OPENED", false, false); now = now + 10
+    EXPECT(ProfBuddyDB.gatheredMobs and ProfBuddyDB.gatheredMobs[777002] == "Mining"
+           and (ProfBuddyDB.skinLoot == nil or ProfBuddyDB.skinLoot[777002] == nil), "mined mob not remembered as Mining")
+    FIRE("UNIT_SPELLCAST_START", "player", "Cast-10", 1235236); now = now + 2
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-10", 1235236); now = now + 0.5
+    GetLootSourceInfo = function() return "Creature-0-1-2-3-777003-0000", 1 end
+    FIRE("LOOT_OPENED", false, false); now = now + 10
+    EXPECT(ProfBuddyDB.gatheredMobs[777003] == "Herbalism", "herb mob not remembered")
+    mob.dead, mob.level, mob.npc = false, 30, 777002
+    UnitGUID = function() return "Creature-0-1-2-3-" .. mob.npc .. "-0000" end
+    got = hover()
+    EXPECT(got:find("Requires Mining (150)", 1, true) and not got:find("Skins into", 1, true), "live mined mob: " .. got)
+    -- its corpse with no game line: the game wins
+    mob.dead = true
+    EXPECT(hover({ "Rock Thing", "Corpse" }) == "", "a remembered mob's corpse with no game line")
+    ProfBuddyDB.gatheredMobs = nil
+    for k, v in pairs(real) do _G[k] = v end
+    for _, k in ipairs({ "GetUnit", "AddLine", "AddDoubleLine", "Show" }) do rawset(GameTooltip, k, nil) end
+end
+print("  PASS F40 mobs known from play: a mob you or a friend skinned reads Skinning alive; Requires Mining / Herbalism / Engineering corpses get their lines; mobs mined or gathered with Forever's corpse spells are remembered for the live tooltip")
+
+print("ALL FOREVER TESTS PASS (40)")

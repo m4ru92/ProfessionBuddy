@@ -36,6 +36,10 @@
 -- together, the gather tooltip lists those drops instead of the Classic
 -- list (TradeSkillFrame.lua AddSkinLoot).
 --
+-- ProfBuddyDB.gatheredMobs[npcID] = "Mining" | "Herbalism" | "Engineering":
+-- a mob this account gathered from with one of Forever's corpse gathering
+-- spells other than Skinning. Local only.
+--
 -- A recorded learn level beats the one in Data/Forever wherever PB shows
 -- a learn level, and the detail panel's Source line names the trainers
 -- and vendors. Only the Mainline toc loads this file.
@@ -75,10 +79,15 @@ local MAX_NAMES_SHOWN = 2
 -- Skins of one mob, yours and peers' together, before what they yielded
 -- replaces the Classic list on its tooltip (m4ru's decision C, 2026-10-02).
 local LEARNED_MIN = 10
--- WoW: Forever's Skinning spells: the four SPELL_EFFECT_SKINNING (95)
--- spells of skill line 393 in Forever's own SpellEffect and
--- SkillLineAbility (wago.tools, build 1.60.1.70205).
-local SKIN_SPELLS = { [8613] = true, [8617] = true, [8618] = true, [10768] = true }
+-- WoW: Forever's gathering-from-a-corpse spells: every SPELL_EFFECT_SKINNING
+-- (95) spell in Forever's own SpellEffect, with its skill line from
+-- SkillLineAbility (wago.tools, build 1.60.1.70205). Skinning (393) has
+-- four; Mining (186), Herb Gathering (182) and Engineering (202) one each,
+-- new on Forever (effect misc value 2 rock, 1 herb, 3 bolts).
+local GATHER_SPELLS = {
+    [8613] = "Skinning", [8617] = "Skinning", [8618] = "Skinning", [10768] = "Skinning",
+    [1235230] = "Mining", [1235236] = "Herbalism", [1235244] = "Engineering",
+}
 -- A loot window this long after a Skinning cast succeeds is its loot; so
 -- is one that opens while the cast is still under way (no later than
 -- SKIN_CAST_MAX after it started), in case the loot event comes first.
@@ -457,11 +466,12 @@ end
 -- (the fallback when the game cannot name a loot slot's source); when it
 -- succeeds, the next loot window is the skin's.
 function KN:OnSkinCast(phase, spellID)
-    if IsSecret(spellID) or not SKIN_SPELLS[spellID] then return end
+    if IsSecret(spellID) or not GATHER_SPELLS[spellID] then return end
     if phase == "start" then
         local guid = UnitGUID("mouseover")
         self._skinGUID = (UnitIsDead("mouseover") and not IsSecret(guid)) and guid or nil
         self._skinStart = GetTime()
+        self._skinProf = GATHER_SPELLS[spellID]
     elseif phase == "done" then
         -- its loot window already came, while the cast was under way
         local used = self._skinUsed
@@ -508,8 +518,17 @@ function KN:OnLootOpened()
         end
     end
     local npcID = LootSource(slots)
-    self._skinGUID = nil
-    if npcID and #items > 0 then self:RecordSkin(npcID, items) end
+    local prof = self._skinProf or "Skinning"
+    self._skinGUID, self._skinProf = nil, nil
+    if not npcID then return end
+    if prof == "Skinning" then
+        if #items > 0 then self:RecordSkin(npcID, items) end
+    else
+        -- a mob you mined, gathered herbs from or salvaged: remembered so
+        -- its live tooltip names that profession (no list has these mobs)
+        addon.db.gatheredMobs = addon.db.gatheredMobs or {}
+        addon.db.gatheredMobs[npcID] = prof
+    end
 end
 
 -- One skin of `npcID` that yielded `items`: { { itemID, quantity, name,
@@ -583,6 +602,21 @@ function KN:LearnedLoot(npcID)
         return a[1] < b[1]
     end)
     return n, rows
+end
+
+-- The gathering profession a mob is known for from play, or nil: one you
+-- or a friend skinned (skinLoot), or one you mined, gathered herbs from
+-- or salvaged (gatheredMobs). Fills in the live tooltip where the Classic
+-- list has no entry for the mob.
+function KN:GatheredProf(npcID)
+    if not (npcID and addon.db) then return nil end
+    local own = addon.db.skinLoot and addon.db.skinLoot[npcID]
+    if own and (own.n or 0) > 0 then return "Skinning" end
+    for _, shared in pairs(addon.db.knowledgeShared or {}) do
+        local p = shared.loot and shared.loot[npcID]
+        if p and (p.n or 0) > 0 then return "Skinning" end
+    end
+    return addon.db.gatheredMobs and addon.db.gatheredMobs[npcID] or nil
 end
 
 ----------------------------------------------------------------------
