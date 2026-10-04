@@ -2247,9 +2247,31 @@ do
     EXPECT(text:find("  Mob: Thunder Lizard (NPC 3130, level 10, corpse)", 1, true)
            and text:find("PB showed: Requires Skinning (1), Your Skinning: 43, loot from Classic data", 1, true)
            and text:find("Why: the game's corpse line; the game's line: Skinnable", 1, true), "report: " .. text)
-    -- the window builds with it
+    EXPECT(text:find("corpse)\n  Where: ", 1, true), "Where line: " .. text)
+    -- the window builds with it: the editbox inside a scroll frame that
+    -- clips it, opened at the top with the cursor at the start
+    local made, realCreate = {}, CreateFrame
+    CreateFrame = function(kind, name, parent, template)
+        local fr = realCreate(kind, name, parent, template)
+        made[#made + 1] = { kind = kind, template = template, f = fr }
+        rawset(fr, "SetScrollChild", function(self, c) self._child = c end)
+        rawset(fr, "SetVerticalScroll", function(self, v) self._scroll = v end)
+        rawset(fr, "SetCursorPosition", function(self, v) self._cursor = v end)
+        rawset(fr, "SetText", function(self, t) self._text = t end)
+        return fr
+    end
+    ProfBuddy.bugFrame = nil
     local ok, err = pcall(ProfBuddy.ShowBugReport, ProfBuddy)
+    CreateFrame = realCreate
     EXPECT(ok, "bug window: " .. tostring(err))
+    local bf = ProfBuddy.bugFrame
+    local sf, eb = bf and bf.sf, bf and bf.eb
+    local sfKind
+    for _, m in ipairs(made) do if m.f == sf then sfKind = m.kind .. "/" .. tostring(m.template) end end
+    EXPECT(sfKind == "ScrollFrame/UIPanelScrollFrameTemplate" and sf._child == eb and eb._parent == sf,
+           "editbox not in a scroll frame: " .. tostring(sfKind))
+    EXPECT(sf._scroll == 0 and eb._cursor == 0 and eb._text:find("Last gathering tooltip", 1, true),
+           "window not opened at the top")
     if ProfBuddy.bugFrame then ProfBuddy.bugFrame:Hide() end
     for k, v in pairs(real) do _G[k] = v end
     for _, k in ipairs({ "GetUnit", "AddLine", "AddDoubleLine", "Show" }) do rawset(GameTooltip, k, nil) end

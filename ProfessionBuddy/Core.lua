@@ -960,19 +960,26 @@ local function GatherSection()
         bits[#bits + 1] = g.kind
         what = "Mob: " .. g.name .. " (" .. table.concat(bits, ", ") .. ")"
     end
-    if g.zone and g.zone ~= "" then what = what .. ", " .. g.zone end
-    if g.at then what = what .. ", " .. date("%Y-%m-%d %H:%M", g.at) end
+    -- where and when on a line of their own: on the mob line they wrapped
+    -- mid-date (m4ru, 2026-10-04)
+    local where = {}
+    if g.zone and g.zone ~= "" then where[#where + 1] = g.zone end
+    if g.at then where[#where + 1] = date("%Y-%m-%d %H:%M", g.at) end
     local shown = "PB showed: " .. (g.shown or "?") .. ", " .. (g.yours or "skill not learned")
     if g.loot then shown = shown .. ", loot from " .. g.loot end
-    return {
+    local out = {
         "Last gathering tooltip (filled in by PB; check it is the one you mean):",
         "  " .. what,
+    }
+    if #where > 0 then out[#out + 1] = "  Where: " .. table.concat(where, ", ") end
+    for _, line in ipairs({
         "  " .. shown,
         "  Why: " .. (g.why or "?") .. (g.gameLine and ("; the game's line: " .. g.gameLine) or ""),
         "Could you gather it (yes / no)?",
         "",
         "",
-    }
+    }) do out[#out + 1] = line end
+    return out
 end
 
 local function BuildBugReport()
@@ -1060,9 +1067,10 @@ function addon:ShowBugReport()
         local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
         close:SetPoint("TOPRIGHT", -4, -4)
 
-        -- Bordered box holding a multiline editbox. No ScrollFrame: HighlightText
-        -- copies the whole buffer regardless of what's scrolled into view, and a
-        -- plain multiline editbox scrolls to the cursor while editing.
+        -- Bordered box holding a multiline editbox in a scroll frame. The
+        -- scroll frame clips: a bare editbox drew its text and selection past
+        -- the box's bottom once the report outgrew it (m4ru, 2026-10-04).
+        -- HighlightText still copies the whole buffer, scrolled or not.
         local box = CreateFrame("Frame", nil, f, "BackdropTemplate")
         box:SetPoint("TOPLEFT", 14, -80)
         box:SetPoint("BOTTOMRIGHT", -14, 46)
@@ -1074,14 +1082,29 @@ function addon:ShowBugReport()
         box:SetBackdropColor(0, 0, 0, 0.5)
         box:SetBackdropBorderColor(0.3, 0.3, 0.35, 0.9)
 
-        local eb = CreateFrame("EditBox", nil, box)
+        -- UIPanelScrollFrameTemplate, as the recipe detail panel uses on both
+        -- clients; its bar sits inside the box's right edge.
+        local sf = CreateFrame("ScrollFrame", nil, box, "UIPanelScrollFrameTemplate")
+        sf:SetPoint("TOPLEFT", 8, -8)
+        sf:SetPoint("BOTTOMRIGHT", -28, 8)
+        f.sf = sf
+
+        local eb = CreateFrame("EditBox", nil, sf)
         eb:SetMultiLine(true)
         eb:SetFontObject(ChatFontNormal)
         eb:SetAutoFocus(false)
-        eb:SetPoint("TOPLEFT", 8, -8)
-        eb:SetPoint("BOTTOMRIGHT", -8, 8)
+        eb:SetWidth(416)   -- the box's 452 less its insets and the scroll bar
         eb:SetJustifyH("LEFT")
         eb:SetScript("OnEscapePressed", function() f:Hide() end)
+        -- keep the cursor in view while typing (Blizzard's helpers, both clients)
+        if ScrollingEdit_OnCursorChanged and ScrollingEdit_OnUpdate then
+            eb:SetScript("OnCursorChanged", ScrollingEdit_OnCursorChanged)
+            eb:SetScript("OnUpdate", function(self, elapsed) ScrollingEdit_OnUpdate(self, elapsed, sf) end)
+        end
+        sf:SetScrollChild(eb)
+        -- a click below the text still lands in the editbox
+        box:EnableMouse(true)
+        box:SetScript("OnMouseDown", function() eb:SetFocus() end)
         f.eb = eb
 
         local selBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
@@ -1101,6 +1124,9 @@ function addon:ShowBugReport()
 
     f.eb:SetText(BuildBugReport())
     f:Show()
+    -- open at the top: the cursor would sit at the end of the text
+    f.eb:SetCursorPosition(0)
+    f.sf:SetVerticalScroll(0)
     f.eb:SetFocus()
     f.eb:HighlightText()
 end

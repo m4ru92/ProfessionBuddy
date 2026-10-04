@@ -2238,14 +2238,15 @@ do
         shown = "Requires Skinning (1)", yours = "Your Skinning: 87", why = "mob list",
         loot = "TBC data", zone = "The Barrens", at = 1000 }
     text = addon.BuildBugReport()
-    assert(text:find("  Mob: Thunder Lizard (NPC 3130, level 10, corpse), The Barrens, ", 1, true), "T87: mob line\n" .. text)
+    -- where and when on their own line (the mob line wrapped mid-date)
+    assert(text:find("  Mob: Thunder Lizard (NPC 3130, level 10, corpse)\n  Where: The Barrens, ", 1, true), "T87: mob line\n" .. text)
     assert(text:find("  PB showed: Requires Skinning (1), Your Skinning: 87, loot from TBC data", 1, true), "T87: shown line")
     assert(text:find("  Why: mob list\n", 1, true) and text:find("Could you gather it (yes / no)?", 1, true), "T87: why line")
     assert(text:find("Could you gather it", 1, true) < text:find("What happened:", 1, true), "T87: section order")
     addon.db.lastGather = { kind = "node", name = "Tin Vein", shown = "Requires Mining (65)", why = "node table",
         gameLine = "Requires Mining" }
     text = addon.BuildBugReport()
-    assert(text:find("  Node: Tin Vein\n", 1, true) and text:find("PB showed: Requires Mining (65), skill not learned", 1, true)
+    assert(text:find("  Node: Tin Vein\n  PB showed", 1, true) and text:find("PB showed: Requires Mining (65), skill not learned", 1, true)
            and text:find("Why: node table; the game's line: Requires Mining", 1, true), "T87: node lines\n" .. text)
     addon.db.lastGather = nil
 end
