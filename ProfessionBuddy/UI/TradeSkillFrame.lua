@@ -381,6 +381,23 @@ local state = {
     isCraftWindow = false,
 }
 
+-- A known recipe that comes with the profession itself (the data says
+-- learnFrom "automatic", or lists an "automatic" source). No trainer lists
+-- most of these, so with nothing seen the Source line would be blank.
+local function LearnedWithProfession(recipe)
+    if not recipe.isKnown then return false end
+    local RDB = addon.RecipeDB
+    if not RDB then return false end
+    local info = (recipe.spellID and RDB:GetRecipeBySpell(recipe.spellID))
+        or (recipe.name and RDB.data[state.profName] and RDB.data[state.profName][recipe.name])
+    if not info then return false end
+    if info.learnFrom == "automatic" then return true end
+    for _, src in ipairs(addon:RecipeSources(info) or {}) do
+        if src.method == "automatic" then return true end
+    end
+    return false
+end
+
 -- Character level of whoever the window shows: the viewed character, else
 -- you. Only a recipe with reqLevel (rogue poisons) asks.
 local function ViewLevel()
@@ -660,21 +677,30 @@ end
 -- fallback so a line never shows blank.
 -- A data file that names its source (SkinLootSource: WoW: Forever's
 -- Classic-era list) gets it in the heading, so nobody takes the numbers
--- for Forever's own.
+-- for Forever's own. On WoW: Forever, once you and your friends have
+-- skinned a mob enough times (Knowledge.lua LearnedLoot), what it really
+-- yielded replaces the list, headed with how many skins it comes from.
 local YIELD_HEAD = { 0.78, 0.69, 0.53 }
 local function AddSkinLoot(tip, npcID)
-    local idx  = npcID and addon.SkinLoot and addon.SkinLoot[npcID]
-    local loot = idx and addon.SkinLootTables and addon.SkinLootTables[idx]
-    if not loot then return end
-    local head = addon.SkinLootSource and ("Skins into (" .. addon.SkinLootSource .. " data):")
-        or "Skins into:"
+    local KN = addon.Knowledge
+    local skins, loot, head
+    if KN and KN.LearnedLoot then skins, loot = KN:LearnedLoot(npcID) end
+    if loot then
+        head = "Skins into (seen " .. skins .. " times):"
+    else
+        local idx = npcID and addon.SkinLoot and addon.SkinLoot[npcID]
+        loot = idx and addon.SkinLootTables and addon.SkinLootTables[idx]
+        if not loot then return end
+        head = addon.SkinLootSource and ("Skins into (" .. addon.SkinLootSource .. " data):")
+            or "Skins into:"
+    end
     tip:AddLine(head, YIELD_HEAD[1], YIELD_HEAD[2], YIELD_HEAD[3])
     for _, e in ipairs(loot) do
         local itemID, pct, minc, maxc, quest = e[1], e[2], e[3], e[4], e[5]
         local meta = addon.SkinItems and addon.SkinItems[itemID]
         local liveName, _, liveQ = GetItemInfo(itemID)
-        local name = liveName or (meta and meta[1]) or ("item:" .. itemID)
-        local q    = liveQ or (meta and meta[2])
+        local name = liveName or (meta and meta[1]) or e.name or ("item:" .. itemID)
+        local q    = liveQ or (meta and meta[2]) or e.q
         local stack = ""
         if maxc and maxc > 1 then
             stack = (minc == maxc) and ("  x" .. maxc) or ("  x" .. minc .. "-" .. maxc)
@@ -3100,6 +3126,9 @@ function TSF:RefreshDetailPanel(preserveScroll)
         end
         local label = (#lines > 1) and "Sources: " or "Source: "
         self.detSource:SetText(label .. table.concat(lines, "  |cff888888/|r  "))
+    elseif LearnedWithProfession(recipe) then
+        self.detSource:SetText("Source: " .. SOURCE_COLORS.automatic .. "Learned with "
+            .. (state.profDisplayName or state.profName or "the profession") .. "|r")
     elseif recipe.sources or recipe.source then
         -- Has source data, but all of it is for the opposite faction.
         self.detSource:SetText("|cff888888Source: not available to your faction|r")

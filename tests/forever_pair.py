@@ -5,7 +5,8 @@ Both are Forever characters with surnames ("Alpha Stone", "Bravo Reed"), on
 two connected realms, and
 every message arrives from "First Surname", as on the client. Alpha has
 talked to Mak (Thunder Bluff Leatherworking trainer); Bravo has not. Bravo
-syncs with Alpha, asks for Alpha's knowledge after the rev-8 SYNC_DATA, and
+syncs with Alpha, asks for Alpha's knowledge (and skinning loot, rev 11)
+after the rev-8 SYNC_DATA, and
 ends up with Mak on its Source line, credited to Alpha Stone.
 
 Messages travel as raw addon messages (COMM_REV 9: a long one as numbered
@@ -41,6 +42,9 @@ def run_pair(LuaRuntime, quiet):
         # friend on Classic Beta PvP 2)
         A, B = node("Alpha", "Stone", "Classic Beta PvP"), node("Bravo", "Reed", "Classic Beta PvP 2")
         A.execute('TRAINER_OPEN(3008); FLUSH(); TRAINER_CLOSE(); FLUSH()')
+        # Alpha has skinned a Thunder Lizard (3b-3: learned loot is shared)
+        A.execute('''ProfBuddy.Knowledge:RecordSkin(3130, { { 2934, 1, "Ruined Leather Scraps", 0 },
+                                                         { 2318, 2, "Light Leather", 1 } })''')
         for me, other in ((A, "Bravo Reed"), (B, "Alpha Stone")):
             me.execute('ProfBuddyDB.contacts[ProfBuddy:NormKey("%s")] = { trusted = true, autoSync = false, lastSync = 0 }' % other)
         B.execute('ProfBuddy.Comm:RequestSync("Alpha Stone", true); FLUSH()')
@@ -127,6 +131,10 @@ def run_pair(LuaRuntime, quiet):
             local tip = table.concat(KN:TooltipLines(2153, "Horde"), " / ")
             EXPECT(tip:find("Mak - Thunder Bluff", 1, true) and tip:find("(from Alpha Stone)", 1, true), "Bravo tooltip: " .. tip)
             EXPECT(ProfBuddyDB.knowledge == nil or ProfBuddyDB.knowledge[2153] == nil, "Alpha's record landed in Bravo's own store")
+            local l = s.loot and s.loot[3130]
+            EXPECT(l and l.n == 1 and l.items[2318] and l.items[2318].max == 2 and l.items[2934].c == 1,
+                   "Bravo did not store Alpha's skinning loot")
+            EXPECT(ProfBuddyDB.skinLoot == nil, "Alpha's skins landed in Bravo's own store")
         ''')
         A.execute('''
             EXPECT(ProfBuddyDB.knowledgeShared == nil, "Alpha stored knowledge it never asked for")

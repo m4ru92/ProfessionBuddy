@@ -12,9 +12,10 @@
 --   SYNC_DATA  -> full character payload (professions, recipes, inventory)
 --   INCR       -> incremental inventory/profession update (debounced)
 --   KNOW_REQ   -> WoW: Forever: ask a peer for the trainers, vendors and
---                 learn levels they have seen (Knowledge.lua)
---   KNOW_DATA  -> their own sightings, for our professions, newer than
---                 the last ones they sent us
+--                 learn levels they have seen, and the skinning loot they
+--                 recorded (Knowledge.lua)
+--   KNOW_DATA  -> their own sightings, for their professions and ours,
+--                 newer than the last ones they sent us
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
@@ -59,7 +60,11 @@ local Comm = addon:NewModule("Comm")
 -- character key in a payload (order requester and crafter, board post and
 -- order ids) has the fixed token as its realm half, and a rev-9 Forever
 -- peer would refuse those orders. TBC Anniversary keys are unchanged.
-local COMM_REV = 10
+-- rev 11 = WoW: Forever skinning loot learned as you skin (Phase 3b-3):
+-- KNOW_REQ gains `s` (send your skinning loot) and names the peer's own
+-- professions as well as ours; KNOW_DATA gains `s`, the loot per NPC ID.
+-- A rev-10 peer ignores both fields and answers as before.
+local COMM_REV = 11
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -123,6 +128,11 @@ local MAX_KNOW_RECIPES    = 3000
 local MAX_KNOW_NPCS       = 600
 local MAX_KNOW_PER_RECIPE = 12    -- trainers, or vendors, on one recipe
 local MAX_KNOW_PROFS      = 16
+local LOOT_MIN_REV        = 11
+local MAX_KNOW_SKIN_MOBS  = 1500  -- mobs with skinning loot (Classic has ~900 skinnable)
+local MAX_KNOW_SKIN_ITEMS = 12    -- items on one mob
+local MAX_KNOW_SKINS      = 10^6  -- skins of one mob
+local MAX_KNOW_STACK      = 200   -- items in one loot slot
 
 ----------------------------------------------------------------------
 -- Init
@@ -2074,8 +2084,10 @@ function Comm:RequestKnowledge(peer)
     self._knowAsked[peer] = now
     self._knowPending = self._knowPending or {}
     self._knowPending[peer] = now
-    self:SendWhisper("KNOW_REQ", { since = KN:SharedSince(peer), profs = KN:OurProfessions() },
-        peer, "BULK")
+    local since, profs = KN:RequestFor(peer)
+    self._knowAskedProfs = self._knowAskedProfs or {}
+    self._knowAskedProfs[peer] = profs
+    self:SendWhisper("KNOW_REQ", { since = since, profs = profs, s = true }, peer, "BULK")
 end
 
 function Comm:HandleKnowReq(sender, data, distribution)
@@ -2101,8 +2113,9 @@ function Comm:HandleKnowReq(sender, data, distribution)
     local since = sanInt(data.since, 0, now + 86400, 0)
     self._knowServed[sender] = now
     if tier == "guild" then self:GuildServeBudget(now, true) end
-    self:SendWhisper("KNOW_DATA", KN:BuildShare(since, profs, MAX_KNOW_RECIPES, MAX_KNOW_PER_RECIPE),
-        sender, "BULK")
+    local loot = data.s == true
+    self:SendWhisper("KNOW_DATA", KN:BuildShare(since, profs, MAX_KNOW_RECIPES, MAX_KNOW_PER_RECIPE,
+        loot and MAX_KNOW_SKIN_MOBS or nil, MAX_KNOW_SKIN_ITEMS), sender, "BULK")
 end
 
 -- Only in answer to our own KNOW_REQ, and only from a peer still trusted
@@ -2113,9 +2126,13 @@ function Comm:HandleKnowData(sender, data, distribution)
     local due = self._knowPending and self._knowPending[sender]
     if not due or (time() - due) > PENDING_REQ_TTL then return end
     self._knowPending[sender] = nil
+    local profs = self._knowAskedProfs and self._knowAskedProfs[sender]
+    if self._knowAskedProfs then self._knowAskedProfs[sender] = nil end
     local clean = self:SanitizeKnowledge(data)
     if not clean then return end
-    KN:StoreShared(sender, clean)
+    -- a rev-10 peer never sends loot, so asking again stays a full ask
+    KN:StoreShared(sender, clean, { profs = profs,
+        loot = sanInt(data._commrev, 0, 1000, 0) >= LOOT_MIN_REV })
     self:NotifyUIRefresh()
 end
 
@@ -2179,7 +2196,34 @@ function Comm:SanitizeKnowledge(data)
             records[id] = out
         end
     end
-    return { at = sanInt(data.at, 0, now + 86400, 0), records = records }
+    local loot
+    if data.s ~= nil then
+        if type(data.s) ~= "table" then return nil end
+        loot = {}
+        local nM = 0
+        for rawID, rec in pairs(data.s) do
+            nM = nM + 1
+            if nM > MAX_KNOW_SKIN_MOBS then return nil end
+            local npcID = sanID(rawID, 10^7)
+            if npcID and type(rec) == "table" and type(rec.i) == "table" then
+                if #rec.i > MAX_KNOW_SKIN_ITEMS then return nil end
+                local n = sanInt(rec.n, 0, MAX_KNOW_SKINS, 0)
+                local items = {}
+                for _, e in ipairs(rec.i) do
+                    local itemID = type(e) == "table" and sanID(e[1], 10^7)
+                    if itemID then
+                        local lo = sanInt(e[3], 1, MAX_KNOW_STACK, 1)
+                        items[itemID] = { c = sanInt(e[2], 0, n, 0), min = lo,
+                                          max = sanInt(e[4], lo, MAX_KNOW_STACK, lo) }
+                    end
+                end
+                if n > 0 then
+                    loot[npcID] = { at = sanInt(rec.a, 0, now + 86400, 0), n = n, items = items }
+                end
+            end
+        end
+    end
+    return { at = sanInt(data.at, 0, now + 86400, 0), records = records, loot = loot }
 end
 
 ----------------------------------------------------------------------

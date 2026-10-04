@@ -950,7 +950,7 @@ print("  PASS F25 first-open prompt (Escape asks again next session); Learn as y
 -- sighting counts as seen); removing the contact or 30 days drops it
 local Comm = ProfBuddy.Comm
 local AS = LibStub("AceSerializer-3.0")
-EXPECT(ProfBuddy.COMM_REV == 10, "COMM_REV is " .. tostring(ProfBuddy.COMM_REV))
+EXPECT(ProfBuddy.COMM_REV == 11, "COMM_REV is " .. tostring(ProfBuddy.COMM_REV))
 local SENT = {}
 local realWhisper = Comm.SendWhisper
 Comm.SendWhisper = function(_, t, d, target, prio) SENT[#SENT + 1] = { t = t, d = d, to = target, prio = prio } end
@@ -1841,4 +1841,254 @@ do
 end
 print("  PASS F35 Classic-era mob list: live mobs on it get Requires Skinning and their loot headed as Classic data, the game's Skinnable line decides on a corpse")
 
-print("ALL FOREVER TESTS PASS (35)")
+-- F36: Phase 3b-3, skinning loot learned as you skin. A loot window that
+-- opens within 3 s of a Skinning cast succeeding (Forever's Skinning
+-- spells 8613, 8617, 8618, 10768), or while that cast is under way, is the
+-- skin's: each item is counted under the NPC ID the game names as the
+-- loot's source, else the corpse the cast started on. Anything else is
+-- left alone, and a secret value records nothing.
+do
+    local KN = ProfBuddy.Knowledge
+    local real = { GetTime = GetTime, UnitGUID = UnitGUID, UnitIsDead = UnitIsDead,
+                   GetNumLootItems = GetNumLootItems, GetLootSlotLink = GetLootSlotLink,
+                   GetLootSlotInfo = GetLootSlotInfo, GetLootSourceInfo = GetLootSourceInfo }
+    local now = 2000
+    GetTime = function() return now end
+    local corpse = "Creature-0-1-2-3-3130-0000AAAA"
+    UnitGUID = function(u) if u == "mouseover" then return corpse end return "Player-1-00000001" end
+    UnitIsDead = function(u) return u == "mouseover" end
+    local slots, source = {}, "Creature-0-1-2-3-3130-0000BBBB"
+    GetNumLootItems = function() return #slots end
+    GetLootSlotLink = function(i) local e = slots[i]; return e and e.link end
+    GetLootSlotInfo = function(i) local e = slots[i]; return 134251, e.name, e.qty, nil, e.q end
+    GetLootSourceInfo = function() return source, 1 end
+    local function item(id, name, qty) return { link = "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. name .. "]|h|r", name = name, qty = qty, q = 1 } end
+    local function cast(event, spell) FIRE(event, "player", "Cast-1", spell) end
+    local function skin(loot, spell)
+        cast("UNIT_SPELLCAST_START", spell or 8613)
+        now = now + 2
+        cast("UNIT_SPELLCAST_SUCCEEDED", spell or 8613)
+        now = now + 0.5
+        slots = loot
+        FIRE("LOOT_OPENED", false, false)
+        now = now + 10
+    end
+    ProfBuddyDB.skinLoot = nil
+    skin({ item(2934, "Ruined Leather Scraps", 1), { name = "4 Copper", qty = 0 } })
+    local rec = ProfBuddyDB.skinLoot and ProfBuddyDB.skinLoot[3130]
+    EXPECT(rec and rec.n == 1 and rec.items[2934] and rec.items[2934].c == 1 and rec.items[2934].name == "Ruined Leather Scraps",
+           "first skin not recorded")
+    EXPECT(rec.seenBy[ProfBuddy:PlayerKey()] and rec.at, "seen by / at")
+    -- one item in two slots counts once, both stacks together
+    skin({ item(2318, "Light Leather", 1), item(2318, "Light Leather", 2) })
+    EXPECT(rec.n == 2 and rec.items[2318].c == 1 and rec.items[2318].min == 3 and rec.items[2318].max == 3, "two stacks")
+    -- normal corpse loot, another spell, a late window, a failed cast: nothing
+    slots = { item(2318, "Light Leather", 1) }
+    FIRE("LOOT_OPENED", false, false)
+    skin({ item(2318, "Light Leather", 1) }, 2575)
+    cast("UNIT_SPELLCAST_START", 8613); now = now + 2; cast("UNIT_SPELLCAST_SUCCEEDED", 8613)
+    now = now + 4; slots = { item(2318, "Light Leather", 1) }; FIRE("LOOT_OPENED", false, false); now = now + 10
+    cast("UNIT_SPELLCAST_START", 8617); now = now + 1; cast("UNIT_SPELLCAST_INTERRUPTED", 8617)
+    slots = { item(2318, "Light Leather", 1) }; FIRE("LOOT_OPENED", false, false); now = now + 10
+    EXPECT(rec.n == 2, "a window that was not a skin's was recorded: n = " .. rec.n)
+    -- the loot window before the success: recorded once, the success after
+    -- it does not claim the next window
+    cast("UNIT_SPELLCAST_START", 8618); now = now + 1.5
+    slots = { item(2318, "Light Leather", 1) }; FIRE("LOOT_OPENED", false, false)
+    now = now + 0.2; cast("UNIT_SPELLCAST_SUCCEEDED", 8618); now = now + 1
+    FIRE("LOOT_OPENED", false, false); now = now + 10
+    EXPECT(rec.n == 3 and rec.items[2318].c == 2, "loot before success: n = " .. rec.n)
+    -- no GetLootSourceInfo: the corpse under the cursor at the cast's start
+    GetLootSourceInfo = nil
+    corpse = "Creature-0-1-2-3-3247-0000CCCC"
+    skin({ item(4232, "Medium Hide", 1) })
+    EXPECT(ProfBuddyDB.skinLoot[3247] and ProfBuddyDB.skinLoot[3247].n == 1, "mouseover fallback")
+    -- a dungeon: the source is secret, nothing is recorded, no error
+    local SECRET = newproxy(true)
+    getmetatable(SECRET).__index = function() error("secret indexed") end
+    issecretvalue = function(v) return rawequal(v, SECRET) end
+    local realType = type
+    type = function(v) if rawequal(v, SECRET) then return "string" end return realType(v) end
+    GetLootSourceInfo = function() return SECRET, 1 end
+    corpse = SECRET
+    local before = 0
+    for _ in pairs(ProfBuddyDB.skinLoot) do before = before + 1 end
+    local okD, errD = pcall(skin, { item(2318, "Light Leather", 1) })
+    type = realType
+    issecretvalue = nil
+    local after = 0
+    for _ in pairs(ProfBuddyDB.skinLoot) do after = after + 1 end
+    EXPECT(okD and not PRINTED("skinning loot record failed") and after == before, "secret source: " .. tostring(errD))
+    for k, v in pairs(real) do _G[k] = v end
+end
+print("  PASS F36 skinning loot learned as you skin: a Skinning cast's loot window (after it or during it) is counted per mob, nothing else is, the corpse at the cast's start stands in for the loot source, a secret source records nothing")
+
+-- F37: the gather tooltip lists the learned loot once a mob has 10 skins,
+-- yours and your friends' together ("Skins into (seen N times):"), else
+-- the Classic list.
+do
+    local KN = ProfBuddy.Knowledge
+    ProfBuddyDB.skinLoot = { [3130] = { n = 6, at = 1, seenBy = {}, items = {
+        [2934] = { c = 4, min = 1, max = 1, name = "Ruined Leather Scraps", q = 0 },
+        [2318] = { c = 2, min = 1, max = 2, name = "Light Leather", q = 1 } } } }
+    EXPECT(KN:LearnedLoot(3130) == nil, "learned loot under 10 skins")
+    ProfBuddyDB.knowledgeShared = ProfBuddyDB.knowledgeShared or {}
+    ProfBuddyDB.knowledgeShared["Pal-Forever"] = { at = time(), since = 0, records = {},
+        loot = { [3130] = { at = 1, n = 4, items = { [2318] = { c = 3, min = 1, max = 3 },
+                                                     [999001] = { c = 1, min = 1, max = 1 } } } } }
+    local n, rows = KN:LearnedLoot(3130)
+    EXPECT(n == 10 and rows[1][1] == 2318 and rows[1][2] == 50 and rows[1][3] == 1 and rows[1][4] == 3
+           and rows[2][1] == 2934 and rows[2][2] == 40 and rows[3][1] == 999001 and rows[3][2] == 10,
+           "learned rows")
+    ProfBuddyDB.knowledgeShared["Pal-Forever"].loot[3130].n = 3
+    EXPECT(KN:LearnedLoot(3130) == nil, "learned loot at 9 skins")
+    ProfBuddyDB.knowledgeShared["Pal-Forever"].loot[3130].n = 4
+
+    local post
+    for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Unit then post = c.fn end end
+    local real = { UnitExists = UnitExists, UnitCanAttack = UnitCanAttack, UnitIsDead = UnitIsDead,
+                   UnitGUID = UnitGUID, UnitLevel = UnitLevel }
+    UnitExists = function() return true end
+    UnitCanAttack = function() return true end
+    UnitIsDead = function() return false end
+    UnitGUID = function() return "Creature-0-1-2-3-3130-0000" end
+    UnitLevel = function() return 10 end
+    local added = {}
+    rawset(GameTooltip, "GetUnit", function() return "Mob", "mouseover" end)
+    rawset(GameTooltip, "AddLine", function(_, t) added[#added + 1] = t end)
+    rawset(GameTooltip, "AddDoubleLine", function(_, l, r) added[#added + 1] = l .. " = " .. r end)
+    rawset(GameTooltip, "Show", function() end)
+    local function hover()
+        added = {}
+        post(GameTooltip, { type = Enum.TooltipDataType.Unit, lines = { { leftText = "Thunder Lizard" } } })
+        return table.concat(added, " / ")
+    end
+    local got = hover()
+    EXPECT(got:find("Skins into (seen 10 times):", 1, true) and got:find("Light Leather|r  x1-3 = |cffc8b08850%", 1, true)
+           and got:find("item:999001", 1, true) and not got:find("Classic data", 1, true), "learned tooltip: " .. got)
+    ProfBuddyDB.knowledgeShared["Pal-Forever"] = nil
+    got = hover()
+    EXPECT(got:find("Skins into (Classic data):", 1, true), "under 10 skins: " .. got)
+    for k, v in pairs(real) do _G[k] = v end
+    for _, k in ipairs({ "GetUnit", "AddLine", "AddDoubleLine", "Show" }) do rawset(GameTooltip, k, nil) end
+    ProfBuddyDB.skinLoot = nil
+end
+print("  PASS F37 learned loot replaces the Classic list at 10 skins (yours and friends' together), percents from skins, stacks from both")
+
+-- F38: sharing skinning loot, and friends' professions (COMM_REV 11). A
+-- KNOW_REQ asks for loot (s) and names the friend's professions before
+-- ours; a profession or the loot not asked for before resets `since`. A
+-- KNOW_DATA carries our loot only when asked, is sanitized and capped,
+-- and a rev-10 reply leaves the loot to be asked for again.
+do
+    local KN, Comm = ProfBuddy.Knowledge, ProfBuddy.Comm
+    local AS = LibStub("AceSerializer-3.0")
+    local SENT = {}
+    local realWhisper = Comm.SendWhisper
+    Comm.SendWhisper = function(_, t, d, target, prio) SENT[#SENT + 1] = { t = t, d = d, to = target } end
+    local function deliver(from, msg) Comm:OnMessageReceived("PBuddy", AS:Serialize(msg), "WHISPER", from) end
+    local function last(t) for i = #SENT, 1, -1 do if SENT[i].t == t then return SENT[i] end end end
+    local PAL = "Pal-Forever"
+    ProfBuddyDB.contacts[PAL] = { trusted = true, autoSync = false, lastSync = 0 }
+    ProfBuddyDB.knowledgeShared[PAL] = nil
+    local sync = { _type = "SYNC_DATA", _commrev = 11, class = "MAGE", level = 20, faction = "Horde", partial = true,
+                   professions = { Tailoring = { skillLevel = 50, maxSkill = 75, recipeNames = {} },
+                                   Enchanting = { skillLevel = 40, maxSkill = 75, recipeNames = {} } } }
+    deliver(PAL, sync)
+    local req = last("KNOW_REQ")
+    EXPECT(req and req.to == PAL and req.d.s == true and req.d.since == 0, "KNOW_REQ without s")
+    local list = table.concat(req.d.profs, ",")
+    EXPECT(list:find("^Enchanting,Tailoring,Cooking,") and select(2, list:gsub("Enchanting", "")) == 1,
+           "KNOW_REQ profs: " .. list)
+
+    -- our answer carries loot only when asked
+    ProfBuddyDB.skinLoot = { [3130] = { n = 3, at = 4000, seenBy = {}, items = {
+        [2934] = { c = 2, min = 1, max = 1, name = "Ruined Leather Scraps" },
+        [2318] = { c = 1, min = 1, max = 2, name = "Light Leather" } } } }
+    Comm._knowServed = {}
+    deliver(PAL, { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" } })
+    EXPECT(last("KNOW_DATA").d.s == nil, "loot sent unasked")
+    Comm._knowServed = {}
+    deliver(PAL, { _type = "KNOW_REQ", since = 0, profs = { "Leatherworking" }, s = true })
+    local share = last("KNOW_DATA").d
+    local l = share.s and share.s[3130]
+    EXPECT(l and l.n == 3 and l.i[1][1] == 2934 and l.i[1][2] == 2 and l.i[2][1] == 2318 and l.i[2][4] == 2
+           and l.i[1].name == nil, "loot on the wire")
+    EXPECT(share.at >= 4000, "share at: " .. tostring(share.at))
+
+    -- the round trip, as if Pal sent it
+    Comm._knowPending[PAL] = time()
+    Comm._knowAskedProfs = { [PAL] = req.d.profs }
+    share._type, share._commrev = "KNOW_DATA", 11
+    deliver(PAL, share)
+    local fs = ProfBuddyDB.knowledgeShared[PAL]
+    EXPECT(fs and fs.loot and fs.loot[3130] and fs.loot[3130].n == 3 and fs.loot[3130].items[2318].max == 2,
+           "loot round trip")
+    EXPECT(fs.asked.Enchanting and fs.asked.Tailoring and fs.askedLoot == true, "asked state")
+    local since = KN:RequestFor(PAL)
+    EXPECT(since == fs.since and since > 0, "since kept for the same ask: " .. tostring(since))
+    -- Pal learns a new profession: asked from 0 again
+    ProfBuddyDB.characters[PAL].professions.Alchemy = { skillLevel = 1, maxSkill = 75, recipes = {} }
+    EXPECT(KN:RequestFor(PAL) == 0, "a new profession kept since")
+    ProfBuddyDB.characters[PAL].professions.Alchemy = nil
+    -- a rev-10 reply: the loot is asked for again from 0
+    Comm._knowPending[PAL] = time()
+    Comm._knowAskedProfs = { [PAL] = req.d.profs }
+    deliver(PAL, { _type = "KNOW_DATA", _commrev = 10, at = 4100, npcs = {}, r = {} })
+    EXPECT(fs.askedLoot == nil and KN:RequestFor(PAL) == 0, "a rev-10 reply counted as loot asked")
+
+    -- sanitizing and caps
+    local function tryLoot(s)
+        ProfBuddyDB.knowledgeShared[PAL] = nil
+        Comm._knowPending[PAL] = time()
+        deliver(PAL, { _type = "KNOW_DATA", _commrev = 11, at = 4200, npcs = {}, r = {}, s = s })
+        return ProfBuddyDB.knowledgeShared[PAL]
+    end
+    local many = {}
+    for i = 1, 1501 do many[i] = { a = 1, n = 1, i = {} } end
+    EXPECT(tryLoot(many) == nil, "1501 mobs were stored")
+    local items = {}
+    for i = 1, 13 do items[i] = { 2318, 1, 1, 1 } end
+    EXPECT(tryLoot({ [3130] = { a = 1, n = 20, i = items } }) == nil, "13 items on one mob were stored")
+    EXPECT(tryLoot("junk") == nil, "a non-table s was stored")
+    local got = tryLoot({ [3130] = { a = 1, n = 5, i = { { 2318, 9, 0, 999 }, { "x" } } }, [0] = { n = 1, i = {} },
+                         [3247] = { a = 1, n = 0, i = { { 2318, 1, 1, 1 } } } })
+    local e = got and got.loot[3130] and got.loot[3130].items[2318]
+    EXPECT(e and e.c == 5 and e.min == 1 and e.max == 200 and got.loot[0] == nil and got.loot[3247] == nil,
+           "loot clamps")
+    ProfBuddyDB.knowledgeShared[PAL] = nil
+    ProfBuddyDB.contacts[PAL] = nil
+    ProfBuddyDB.characters[PAL] = nil
+    ProfBuddyDB.skinLoot = nil
+    Comm.SendWhisper = realWhisper
+end
+print("  PASS F38 sharing: KNOW_REQ asks for loot and names the friend's professions first, since resets for a new profession or loot; loot sent only when asked, round trip stored, rev-10 reply asks again, caps and clamps")
+
+-- F39: a known recipe that comes with the profession (learnFrom
+-- "automatic") reads "Source: Learned with <profession>" when nothing was
+-- seen for it; a recipe a trainer was seen teaching keeps the trainer.
+do
+    local TSF, st = ProfBuddy.TradeSkillFrame, ProfBuddy.TradeSkillFrame.state
+    local SHOWN = {}
+    rawset(TSF.detSource, "SetText", function(_, t) SHOWN.src = t end)
+    C_TradeSkillUI.OpenTradeSkill(185)
+    TS_LIST_READY()
+    FLUSH()
+    st.showTab, st.searchText = "known", ""
+    TSF:RefreshRecipeList()
+    st.selected = "Charred Wolf Meat"
+    TSF:RefreshDetailPanel()
+    EXPECT(SHOWN.src == "Source: |cff88ccffLearned with Cooking|r", "Charred Wolf Meat: " .. tostring(SHOWN.src))
+    C_TradeSkillUI.OpenTradeSkill(393)
+    TS_LIST_READY()
+    FLUSH()
+    st.showTab, st.searchText = "known", ""
+    TSF:RefreshRecipeList()
+    st.selected = "Camp Chair"
+    TSF:RefreshDetailPanel()
+    EXPECT(SHOWN.src and SHOWN.src:find("Trainer - Mooranta", 1, true), "Camp Chair: " .. tostring(SHOWN.src))
+    rawset(TSF.detSource, "SetText", nil)
+end
+print("  PASS F39 a known starting recipe reads Source: Learned with <profession>; a seen trainer still wins")
+
+print("ALL FOREVER TESTS PASS (39)")
