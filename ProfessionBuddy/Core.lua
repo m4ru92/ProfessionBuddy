@@ -944,6 +944,37 @@ end
 ----------------------------------------------------------------------
 local BUG_URL = "https://github.com/m4ru92/ProfessionBuddy/issues"
 
+-- The last gathering tooltip PB added lines to (ProfBuddyDB.lastGather,
+-- written by UI/TradeSkillFrame.lua), so a wrong skill or loot value can
+-- be reported with what PB showed and why. Empty when there is none.
+local function GatherSection()
+    local g = addon.db and addon.db.lastGather
+    if type(g) ~= "table" or not g.name then return {} end
+    local what
+    if g.kind == "node" then
+        what = "Node: " .. g.name
+    else
+        local bits = {}
+        if g.npcID then bits[#bits + 1] = "NPC " .. g.npcID end
+        if g.level then bits[#bits + 1] = "level " .. g.level end
+        bits[#bits + 1] = g.kind
+        what = "Mob: " .. g.name .. " (" .. table.concat(bits, ", ") .. ")"
+    end
+    if g.zone and g.zone ~= "" then what = what .. ", " .. g.zone end
+    if g.at then what = what .. ", " .. date("%Y-%m-%d %H:%M", g.at) end
+    local shown = "PB showed: " .. (g.shown or "?") .. ", " .. (g.yours or "skill not learned")
+    if g.loot then shown = shown .. ", loot from " .. g.loot end
+    return {
+        "Last gathering tooltip (filled in by PB; check it is the one you mean):",
+        "  " .. what,
+        "  " .. shown,
+        "  Why: " .. (g.why or "?") .. (g.gameLine and ("; the game's line: " .. g.gameLine) or ""),
+        "Could you gather it (yes / no)?",
+        "",
+        "",
+    }
+end
+
 local function BuildBugReport()
     local wv, wb, _, wtoc = GetBuildInfo()
 
@@ -963,7 +994,7 @@ local function BuildBugReport()
     end
 
     local _, class = UnitClass("player")
-    return table.concat({
+    local lines = {
         "== ProfessionBuddy Bug Report ==",
         "PB version: " .. (addon.version or "?"),
         "WoW: " .. (wv or "?") .. " (" .. (wb or "?") .. ") interface " .. (wtoc or "?"),
@@ -972,6 +1003,9 @@ local function BuildBugReport()
             .. " " .. (class or "?") .. " (" .. (UnitFactionGroup("player") or "?") .. ")",
         "Professions: " .. profStr,
         "",
+    }
+    for _, line in ipairs(GatherSection()) do lines[#lines + 1] = line end
+    for _, line in ipairs({
         "What happened:",
         "",
         "",
@@ -987,15 +1021,17 @@ local function BuildBugReport()
         "",
         "ProfessionBuddy Lua errors (if applicable -- paste from BugSack / BugGrabber):",
         "",
-    }, "\n")
+    }) do lines[#lines + 1] = line end
+    return table.concat(lines, "\n")
 end
+addon.BuildBugReport = BuildBugReport
 
 function addon:ShowBugReport()
     local f = addon.bugFrame
     if not f then
         f = CreateFrame("Frame", "PBBugReportFrame", UIParent, "BackdropTemplate")
         addon.bugFrame = f
-        f:SetSize(480, 440)
+        f:SetSize(480, 540)   -- room for the gathering section
         f:SetPoint("CENTER")
         f:SetFrameStrata("DIALOG")
         f:SetBackdrop({

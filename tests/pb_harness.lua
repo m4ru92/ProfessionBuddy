@@ -2223,8 +2223,36 @@ do
 end
 passed("T86 offline lines -- every line answering one push is hidden, the player's own still show")
 
+-- T87: /pb bug carries the last gathering tooltip (ProfBuddyDB.lastGather):
+-- what was hovered, what PB showed and why, and asks whether you could
+-- gather it. No section when there is none.
+do
+    GetBuildInfo = GetBuildInfo or function() return "2.5.6", "69110", "", 20506 end
+    UnitRace = UnitRace or function() return "Human" end
+    date = date or function(fmt, t) return os.date(fmt, t) end
+    addon.db.lastGather = nil
+    local text = addon.BuildBugReport()
+    assert(text:find("Professions:", 1, true) and not text:find("Last gathering tooltip", 1, true),
+           "T87: a gathering section with nothing recorded")
+    addon.db.lastGather = { kind = "corpse", name = "Thunder Lizard", npcID = 3130, level = 10,
+        shown = "Requires Skinning (1)", yours = "Your Skinning: 87", why = "mob list",
+        loot = "TBC data", zone = "The Barrens", at = 1000 }
+    text = addon.BuildBugReport()
+    assert(text:find("  Mob: Thunder Lizard (NPC 3130, level 10, corpse), The Barrens, ", 1, true), "T87: mob line\n" .. text)
+    assert(text:find("  PB showed: Requires Skinning (1), Your Skinning: 87, loot from TBC data", 1, true), "T87: shown line")
+    assert(text:find("  Why: mob list\n", 1, true) and text:find("Could you gather it (yes / no)?", 1, true), "T87: why line")
+    assert(text:find("Could you gather it", 1, true) < text:find("What happened:", 1, true), "T87: section order")
+    addon.db.lastGather = { kind = "node", name = "Tin Vein", shown = "Requires Mining (65)", why = "node table",
+        gameLine = "Requires Mining" }
+    text = addon.BuildBugReport()
+    assert(text:find("  Node: Tin Vein\n", 1, true) and text:find("PB showed: Requires Mining (65), skill not learned", 1, true)
+           and text:find("Why: node table; the game's line: Requires Mining", 1, true), "T87: node lines\n" .. text)
+    addon.db.lastGather = nil
+end
+passed("T87 /pb bug -- the last gathering tooltip: what, what PB showed, why, could you gather it; none when nothing recorded")
+
 leaveGuild()
-print("ALL 86 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 87 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2239,6 +2267,7 @@ print("ALL 86 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " class gating, the class-trainer guard and Poisons never leaving the client,"
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
-    .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden; "
+    .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
+    .. " T87 the last gathering tooltip in /pb bug; "
     .. pass .. " of them print a PASS line above)")
 

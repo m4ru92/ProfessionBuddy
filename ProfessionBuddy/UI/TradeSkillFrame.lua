@@ -663,13 +663,40 @@ end
 -- The mob lists first; on WoW: Forever then what play has shown
 -- (Knowledge.lua GatheredProf: a mob you or a friend skinned, or one you
 -- mined, gathered herbs from or salvaged).
+-- Second return: where it came from, for /pb bug.
 local function GatherProfForNpc(npcID)
     if not npcID then return nil end
-    if addon.SkinnableMobs and addon.SkinnableMobs[npcID] then return "Skinning" end
-    if addon.MineableMobs  and addon.MineableMobs[npcID]  then return "Mining" end
-    if addon.HerbableMobs  and addon.HerbableMobs[npcID]  then return "Herbalism" end
+    if addon.SkinnableMobs and addon.SkinnableMobs[npcID] then return "Skinning", "mob list" end
+    if addon.MineableMobs  and addon.MineableMobs[npcID]  then return "Mining", "mob list" end
+    if addon.HerbableMobs  and addon.HerbableMobs[npcID]  then return "Herbalism", "mob list" end
     local KN = addon.Knowledge
-    return KN and KN.GatheredProf and KN:GatheredProf(npcID) or nil
+    local prof = KN and KN.GatheredProf and KN:GatheredProf(npcID)
+    if prof then return prof, "gathered by you or a friend" end
+    return nil
+end
+
+-- The last gathering tooltip PB added lines to, kept in SavedVariables
+-- (ProfBuddyDB.lastGather) for the /pb bug report: what was hovered, what
+-- PB showed and why, so a wrong value can be reported and fixed. Written
+-- only when it changes (the node hook runs 20 times a second).
+local function PlainText(s)
+    return s and (s:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) or nil
+end
+local function NoteGather(t)
+    if not addon.db then return end
+    t.shown, t.yours = PlainText(t.shown), PlainText(t.yours)
+    local last = addon.db.lastGather
+    if last and last.kind == t.kind and last.name == t.name and last.shown == t.shown
+       and last.yours == t.yours and last.loot == t.loot and last.npcID == t.npcID then
+        return
+    end
+    -- the node hook overwrites the game's line on its first pass only
+    if last and last.kind == t.kind and last.name == t.name and not t.gameLine then
+        t.gameLine = last.gameLine
+    end
+    t.zone = GetRealZoneText and GetRealZoneText() or nil
+    t.at = time()
+    addon.db.lastGather = t
 end
 
 -- Render a mob's full skinning loot as a "Skins into:" block: one line per item,
@@ -689,14 +716,17 @@ local function AddSkinLoot(tip, npcID)
     local KN = addon.Knowledge
     local skins, loot, head
     if KN and KN.LearnedLoot then skins, loot = KN:LearnedLoot(npcID) end
+    local shown
     if loot then
         head = "Skins into (seen " .. skins .. " times):"
+        shown = "learned from " .. skins .. " skins"
     else
         local idx = npcID and addon.SkinLoot and addon.SkinLoot[npcID]
         loot = idx and addon.SkinLootTables and addon.SkinLootTables[idx]
-        if not loot then return end
+        if not loot then return nil end
         head = addon.SkinLootSource and ("Skins into (" .. addon.SkinLootSource .. " data):")
             or "Skins into:"
+        shown = (addon.SkinLootSource or "PB's") .. " data"
     end
     tip:AddLine(head, YIELD_HEAD[1], YIELD_HEAD[2], YIELD_HEAD[3])
     for _, e in ipairs(loot) do
@@ -722,6 +752,7 @@ local function AddSkinLoot(tip, npcID)
             tip:AddDoubleLine("  " .. hex .. name .. "|r" .. stack, "|cffc8b088" .. pct .. "%|r")
         end
     end
+    return shown
 end
 
 -- Current char's skill in a gathering prof (nil if untrained). Reads the live
@@ -798,7 +829,7 @@ local function GameGatherProf(data)
     end
     for _, line in ipairs(data.lines) do
         local t = type(line) == "table" and line.leftText
-        if type(t) == "string" and not IsSecret(t) and want[t] then return want[t] end
+        if type(t) == "string" and not IsSecret(t) and want[t] then return want[t], t end
     end
     return nil
 end
@@ -823,14 +854,16 @@ local function AddUnitGatherLines(tip, data)
 
     local guid = UnitGUID(unit)
     local npcID = not IsSecret(guid) and NpcIDFromGUID(guid) or nil
-    local prof  = GatherProfForNpc(npcID)
+    local prof, why = GatherProfForNpc(npcID)
     -- WoW: Forever: a live mob goes by PB's Classic-era list and what play
     -- has shown, but on a corpse the game's own line has the final say: it
     -- names the profession, also for a mob nothing else knows, and with no
     -- line the corpse cannot be gathered (done already, or Forever
     -- differs from the list)
+    local gameLine
     if data and UnitIsDead(unit) then
-        prof = GameGatherProf(data)
+        prof, gameLine = GameGatherProf(data)
+        why = "the game's corpse line"
     end
     if not prof then return end
 
@@ -854,11 +887,17 @@ local function AddUnitGatherLines(tip, data)
     -- Gated to actual skinners: what a mob yields is only useful if you can
     -- skin it, so a non-skinner never sees the line even with "show for
     -- unlearned" on (that governs the Requires line, not this).
+    local loot
     if prof == "Skinning" and addon.db.settings.gatherYieldTooltip ~= false
        and PlayerGatherSkill("Skinning") then
-        AddSkinLoot(tip, npcID)
+        loot = AddSkinLoot(tip, npcID)
     end
     tip:Show()
+    local name = UnitName(unit)
+    NoteGather({ kind = UnitIsDead(unit) and "corpse" or "mob",
+                 name = (type(name) == "string" and not IsSecret(name)) and name or "?",
+                 npcID = npcID, level = level, shown = requires, yours = yours,
+                 why = why, gameLine = gameLine, loot = loot })
 end
 
 function TSF:HookUnitTooltip()
@@ -902,7 +941,7 @@ function TSF:HookNodeTooltip()
         local requires, yours = GatherLines(prof, req)
         if not requires then return end
         -- Overwrite the game's "Requires <prof>" line in place; ensure "Your" exists.
-        local reqDone, yourDone = false, false
+        local reqDone, yourDone, gameLine = false, false, nil
         for i = 2, tip:NumLines() do
             local fs = _G[tname .. "TextLeft" .. i]
             local txt = fs and fs:GetText()
@@ -910,6 +949,7 @@ function TSF:HookNodeTooltip()
                 if txt == requires then
                     reqDone = true
                 elseif (not reqDone) and txt:find(prof, 1, true) and not txt:find("Your ", 1, true) then
+                    gameLine = PlainText(txt)
                     fs:SetText(requires); reqDone = true
                 end
                 if yours then
@@ -925,6 +965,8 @@ function TSF:HookNodeTooltip()
         if not reqDone then tip:AddLine(requires) end
         if yours and not yourDone then tip:AddLine(yours) end
         tip:Show()
+        NoteGather({ kind = "node", name = nodeName, shown = requires, yours = yours,
+                     why = "node table", gameLine = gameLine })
     end
 
     local acc = 0

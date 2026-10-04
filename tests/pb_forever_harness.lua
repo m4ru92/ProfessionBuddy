@@ -2181,4 +2181,80 @@ do
 end
 print("  PASS F40 mobs known from play: a mob you or a friend skinned reads Skinning alive; Requires Mining / Herbalism / Engineering corpses get their lines; mobs mined or gathered with Forever's corpse spells are remembered for the live tooltip")
 
-print("ALL FOREVER TESTS PASS (40)")
+-- F41: /pb bug carries the last gathering tooltip PB added lines to
+-- (ProfBuddyDB.lastGather): a node from the node hook with the game's own
+-- line it replaced, a mob or corpse from the unit hook with why PB showed
+-- it and where the loot came from. Written only when it changes.
+do
+    local real = { UnitExists = UnitExists, UnitCanAttack = UnitCanAttack, UnitIsDead = UnitIsDead,
+                   UnitGUID = UnitGUID, UnitLevel = UnitLevel, UnitName = UnitName, time = time }
+    ProfBuddyDB.lastGather = nil
+    -- a node, through the node hook
+    local onUpdate = GameTooltip._h.OnUpdate
+    local left = {}
+    for i = 1, 3 do
+        left[i] = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(left[i], "SetText", function(self, t) self._text = t end)
+        rawset(left[i], "GetText", function(self) return self._text end)
+    end
+    rawset(GameTooltip, "GetUnit", function() return nil end)
+    rawset(GameTooltip, "GetItem", function() return nil end)
+    rawset(GameTooltip, "NumLines", function() return 2 end)
+    rawset(GameTooltip, "AddLine", function() end)
+    rawset(GameTooltip, "AddDoubleLine", function() end)
+    rawset(GameTooltip, "Show", function() end)
+    left[1]._text, left[2]._text = "Tin Vein", "Requires Mining"
+    onUpdate(GameTooltip, 1)
+    local g = ProfBuddyDB.lastGather
+    EXPECT(g and g.kind == "node" and g.name == "Tin Vein" and g.shown == "Requires Mining (65)"
+           and g.gameLine == "Requires Mining" and g.why == "node table" and g.at == 5000, "node record")
+    -- the next passes (the line is PB's now) keep the record and its game line
+    time = function() return 6000 end
+    onUpdate(GameTooltip, 1)
+    EXPECT(ProfBuddyDB.lastGather == g and g.at == 5000 and g.gameLine == "Requires Mining", "rewritten on every pass")
+    -- a skill-up mid-hover rewrites it; the game's line (gone from the
+    -- tooltip by then) carries over
+    g.yours = "Your Mining: 0"
+    onUpdate(GameTooltip, 1)
+    EXPECT(ProfBuddyDB.lastGather ~= g and ProfBuddyDB.lastGather.at == 6000
+           and ProfBuddyDB.lastGather.gameLine == "Requires Mining", "game line after a rewrite")
+    local text = ProfBuddy.BuildBugReport()
+    EXPECT(text:find("  Node: Tin Vein", 1, true) and text:find("Why: node table; the game's line: Requires Mining", 1, true),
+           "report: " .. text)
+    rawset(GameTooltip, "NumLines", nil); rawset(GameTooltip, "GetItem", nil)
+
+    -- a live mob on the list, then its corpse, through the unit hook
+    local post
+    for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Unit then post = c.fn end end
+    local mob = { dead = false }
+    UnitExists = function() return true end
+    UnitCanAttack = function() return not mob.dead end
+    UnitIsDead = function() return mob.dead end
+    UnitGUID = function() return "Creature-0-1-2-3-3130-0000" end
+    UnitLevel = function() return 10 end
+    UnitName = function(u) if u == "mouseover" then return "Thunder Lizard" end return real.UnitName(u) end
+    rawset(GameTooltip, "GetUnit", function() return "Thunder Lizard", "mouseover" end)
+    post(GameTooltip, { type = Enum.TooltipDataType.Unit, lines = { { leftText = "Thunder Lizard" } } })
+    g = ProfBuddyDB.lastGather
+    EXPECT(g.kind == "mob" and g.name == "Thunder Lizard" and g.npcID == 3130 and g.level == 10
+           and g.shown == "Requires Skinning (1)" and g.yours == "Your Skinning: 43" and g.why == "mob list"
+           and g.loot == "Classic data" and g.at == 6000, "mob record")
+    mob.dead = true
+    post(GameTooltip, { type = Enum.TooltipDataType.Unit, lines = { { leftText = "Thunder Lizard" }, { leftText = "Skinnable" } } })
+    g = ProfBuddyDB.lastGather
+    EXPECT(g.kind == "corpse" and g.why == "the game's corpse line" and g.gameLine == "Skinnable", "corpse record")
+    text = ProfBuddy.BuildBugReport()
+    EXPECT(text:find("  Mob: Thunder Lizard (NPC 3130, level 10, corpse)", 1, true)
+           and text:find("PB showed: Requires Skinning (1), Your Skinning: 43, loot from Classic data", 1, true)
+           and text:find("Why: the game's corpse line; the game's line: Skinnable", 1, true), "report: " .. text)
+    -- the window builds with it
+    local ok, err = pcall(ProfBuddy.ShowBugReport, ProfBuddy)
+    EXPECT(ok, "bug window: " .. tostring(err))
+    if ProfBuddy.bugFrame then ProfBuddy.bugFrame:Hide() end
+    for k, v in pairs(real) do _G[k] = v end
+    for _, k in ipairs({ "GetUnit", "AddLine", "AddDoubleLine", "Show" }) do rawset(GameTooltip, k, nil) end
+    ProfBuddyDB.lastGather = nil
+end
+print("  PASS F41 /pb bug: the last node, mob or corpse PB added gathering lines to, with what it showed, why, and the game's line; kept until it changes")
+
+print("ALL FOREVER TESTS PASS (41)")
