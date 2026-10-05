@@ -109,6 +109,14 @@ The file names its source (`SkinLootSource = "Classic"`), which the loot
 heading shows. On a corpse the game's own "Skinnable" line overrides the
 list. `--check` covers both sources.
 
+Node loot (Phase 3b-4) comes from the same build: for each node name in
+`MiningNodes` / `HerbNodes`, the `gameobject_loot_template` of the
+type-3 game object entry with that name that has the most world spawns
+(one name has several entries: Copper Vein has three loot tables, the
+main one 1,622 spawns). A chance under 0.5% shows as 1%. Anchors: Copper
+Vein holds Copper Ore, Peacebloom its herb, Mithril Deposit Mithril Ore,
+Black Lotus itself.
+
 **Minimap is an incidental surface.** The Anniversary client routes
 minimap node-blip tooltips through `GameTooltip`, so the node hook appends to
 them too when it can. This is a bonus, not a designed surface: it can be

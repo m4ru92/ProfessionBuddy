@@ -47,6 +47,9 @@ CLASSIC_PATCH = 10   # VMaNGOS patch index of 1.12, Classic Era's last patch
 # npcID -> expected skinnable. 3130/3247/4129 skinned and 3113 not, in game
 # on Forever (m4ru, 2026-10-02); 4342 yes and 2565 no per Wowhead Classic.
 CLASSIC_ANCHORS = {3130: True, 3247: True, 4129: True, 3113: False, 4342: True, 2565: False}
+# node name -> an item its Classic loot must hold (Copper Ore, Peacebloom,
+# Mithril Ore, Black Lotus)
+NODE_ANCHORS = {"Copper Vein": 2770, "Peacebloom": 2447, "Mithril Deposit": 3858, "Black Lotus": 13468}
 
 def log(m): print(m, flush=True)
 def die(m): print("ERROR: " + m, file=sys.stderr); sys.exit(1)
@@ -168,6 +171,10 @@ def parse_item_meta(sql):
 def skin_loot_of(entry, skinloot, refloot):
     """Resolve one template's rows (expanding the rare reference row) into
     (itemID, pct, min, max, quest) tuples, sorted non-quest first then pct desc."""
+    return tuple((it, round(pct), mn, mx, q) for it, pct, mn, mx, q in loot_rows(entry, skinloot, refloot))
+
+def loot_rows(entry, skinloot, refloot):
+    """skin_loot_of's rows before the percents are rounded."""
     rows = []
     for r in skinloot.get(entry, []):
         if r["mc"] < 0: rows.extend(refloot.get(r["item"], []))   # reference row
@@ -188,7 +195,13 @@ def skin_loot_of(entry, skinloot, refloot):
             for r in zero: out.append((r["item"], each,     r["mc"], r["mx"], r["cond"] != 0))
             for r in neg:  out.append((r["item"], abs(r["ch"]), r["mc"], r["mx"], True))
     out.sort(key=lambda t: (t[4], -t[1]))
-    return tuple((it, round(pct), mn, mx, q) for it, pct, mn, mx, q in out)
+    return out
+
+def node_loot_of(entry, nodeloot, refloot):
+    """A node's loot, like skin_loot_of, except that a chance under 0.5%
+    (a node's gems, 0.7%) shows as 1%, not 0%."""
+    return tuple((it, max(1, round(pct)) if pct > 0 else 0, mn, mx, q)
+                 for it, pct, mn, mx, q in loot_rows(entry, nodeloot, refloot))
 
 def skin_loot_tables(skin, cre, skinloot, refloot, meta):
     """Return (items, tables, mob_tbl): items = {itemID:(name,quality)} used;
@@ -253,34 +266,93 @@ def classic_tables(db):
     for it, name, q in c.execute("SELECT entry, name, quality FROM item_template "
                                  "WHERE patch <= ? ORDER BY entry, patch", (CLASSIC_PATCH,)):
         meta[it] = (name, q)
-    c.close()
     skin = sorted(e for e, (_, sl) in cre.items() if sl > 0 and sl in skinloot)
-    return skin, cre, skinloot, meta
+    # Nodes (gameobject type 3, a chest: data1 is its loot id). One name
+    # has several entries, often with different loot (Copper Vein: three
+    # tables); the loot id with the most world spawns speaks for the name.
+    gobs = {}
+    for e, name, typ, lid in c.execute("SELECT entry, name, type, data1 FROM gameobject_template "
+                                       "WHERE patch <= ? ORDER BY entry, patch", (CLASSIC_PATCH,)):
+        gobs[e] = (name, typ, lid)
+    spawns = {}
+    for e, n in c.execute("SELECT id, count(*) FROM gameobject WHERE patch_min <= ? AND ? <= patch_max "
+                          "GROUP BY id", (CLASSIC_PATCH, CLASSIC_PATCH)):
+        spawns[e] = n
+    nodeloot, refloot = {}, {}
+    for table, out in (("gameobject_loot_template", nodeloot), ("reference_loot_template", refloot)):
+        for e, it, ch, gid, mc, mx, cond in c.execute(
+                "SELECT entry, item, ChanceOrQuestChance, groupid, mincountOrRef, maxcount, condition_id "
+                "FROM %s WHERE patch_min <= ? AND ? <= patch_max" % table, (CLASSIC_PATCH, CLASSIC_PATCH)):
+            out.setdefault(e, []).append(dict(item=it, ch=float(ch), gid=gid, mc=mc, mx=mx, cond=cond))
+    c.close()
+    return skin, cre, skinloot, meta, (gobs, spawns, nodeloot, refloot)
+
+def node_names(addon_dir):
+    """The node names in Data/Forever/Gather.lua's MiningNodes and HerbNodes."""
+    txt = open(forever_path(addon_dir), encoding="utf-8").read()
+    names = []
+    for table in ("MiningNodes", "HerbNodes"):
+        m = re.search(r"ProfBuddy\.%s = \{(.*?)\n\}" % table, txt, re.S)
+        if not m: die("no %s table in Data/Forever/Gather.lua" % table)
+        names += re.findall(r'\["([^"]+)"\]=\d+', m.group(1))
+    return names
+
+def node_loot_tables(names, nodes, meta):
+    """Return (items, tables, node_tbl, missing): node_tbl = name -> 1-based
+    table index, for each name whose most-spawned loot id has rows."""
+    gobs, spawns, nodeloot, refloot = nodes
+    tables, index, node_tbl, used, missing = [], {}, {}, set(), []
+    for name in sorted(names):
+        weight = {}
+        for e, (n, typ, lid) in gobs.items():
+            if n == name and typ == 3 and lid and lid in nodeloot:
+                weight[lid] = weight.get(lid, 0) + spawns.get(e, 0)
+        if not weight:
+            missing.append(name); continue
+        lid = max(sorted(weight), key=lambda k: weight[k])
+        loot = node_loot_of(lid, nodeloot, refloot)
+        if not loot:
+            missing.append(name); continue
+        idx = index.get(loot)
+        if idx is None:
+            tables.append(loot); idx = len(tables); index[loot] = idx
+        node_tbl[name] = idx
+        for it, *_ in loot: used.add(it)
+    items = {it: meta.get(it, ("item:" + str(it), 1)) for it in used}
+    return items, tables, node_tbl, missing
 
 def regen_classic(addon_dir, url, version, write):
     log("downloading VMaNGOS db %s ..." % version)
     raw = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "pb"}), timeout=300).read()
     with tempfile.TemporaryDirectory() as tmp:
         zipfile.ZipFile(io.BytesIO(raw)).extract("sqlite-dump/mangos.sqlite", tmp)
-        skin, cre, skinloot, meta = classic_tables(os.path.join(tmp, "sqlite-dump", "mangos.sqlite"))
+        skin, cre, skinloot, meta, nodes = classic_tables(os.path.join(tmp, "sqlite-dump", "mangos.sqlite"))
     skinset = set(skin)
     bad = [(n, exp) for n, exp in CLASSIC_ANCHORS.items() if (n in skinset) != exp]
     if bad: die("anchor validation FAILED: %s" % bad)
     skinitems, skintables, mob_tbl = skin_loot_tables(skin, cre, skinloot, {}, meta)
     log("  anchors OK  |  skinnable=%d  |  skin-loot: %d loot tables, %d items"
         % (len(skin), len(skintables), len(skinitems)))
+    nodeitems, nodetables, node_tbl, missing = node_loot_tables(node_names(addon_dir), nodes, meta)
+    for name, item in NODE_ANCHORS.items():
+        loot = nodetables[node_tbl[name] - 1] if name in node_tbl else ()
+        if item not in [t[0] for t in loot]: die("node anchor FAILED: %s has no %d" % (name, item))
+    log("  node anchors OK  |  node-loot: %d nodes over %d loot tables, %d items%s"
+        % (len(node_tbl), len(nodetables), len(nodeitems),
+           ("  |  no loot: " + ", ".join(missing)) if missing else ""))
     cur = current_ids(addon_dir, forever_path(addon_dir))
     if cur is not None:
         log("  vs current skinnable: +%d added, -%d removed" % (len(skinset - cur), len(cur - skinset)))
     if not write:
         log("  (dry run -- pass --write to regenerate Data/Forever/Gather.lua; nodes are preserved)")
         return
-    write_forever_gather(addon_dir, version, skin, skinitems, skintables, mob_tbl)
+    write_forever_gather(addon_dir, version, skin, skinitems, skintables, mob_tbl,
+                         (nodeitems, nodetables, node_tbl))
     log("  WROTE Data/Forever/Gather.lua @ VMaNGOS db %s" % version)
 
 GEN_MARK = "-- Generated by tools/gather_db.py --regen --source classic: do not edit"
 
-def write_forever_gather(addon_dir, version, skin, skinitems, skintables, mob_tbl):
+def write_forever_gather(addon_dir, version, skin, skinitems, skintables, mob_tbl, node=None):
     """Rewrite the generated block (everything from GEN_MARK on) and the
     version stamp; the header and the node tables above it stay."""
     p = forever_path(addon_dir); txt = open(p, encoding="utf-8").read()
@@ -292,7 +364,8 @@ def write_forever_gather(addon_dir, version, skin, skinitems, skintables, mob_tb
         'ProfBuddy.SkinLootSource = "Classic"',
         "",
         ids_block("SkinnableMobs", skin), "",
-        loot_block(skinitems, skintables, mob_tbl), ""])
+        loot_block(skinitems, skintables, mob_tbl), ""]
+        + ([node_block(*node), ""] if node else []))
     txt = txt.rstrip("\n") + "\n\n" + block
     txt = re.sub(r"VMaNGOS db [0-9a-f]{7,40}", "VMaNGOS db %s" % version, txt)
     open(p, "w", encoding="utf-8").write(txt)
@@ -379,6 +452,26 @@ def loot_block(skinitems, skintables, mob_tbl):
         row.append("[%d]=%d," % (e, mob_tbl[e]))
         if len(row)==12: lb.append("    "+"".join(row)); row=[]
     if row: lb.append("    "+"".join(row))
+    lb.append("}")
+    return "\n".join(ib) + "\n\n" + "\n".join(tb) + "\n\n" + "\n".join(lb)
+
+def node_block(items, tables, node_tbl):
+    """NodeItems, NodeLootTables and NodeLoot (node name -> table index),
+    the node twins of the skinning tables, as Lua source."""
+    def qesc(s): return s.replace("\\", "\\\\").replace('"', '\\"')
+    ib = ["ProfBuddy.NodeItems = {"]
+    for it in sorted(items):
+        nm, q = items[it]
+        ib.append('    [%d]={"%s",%d},' % (it, qesc(nm), q))
+    ib.append("}")
+    tb = ["ProfBuddy.NodeLootTables = {"]
+    for i, loot in enumerate(tables, 1):
+        tb.append("    [%d]={%s}," % (i, ",".join("{%d,%d,%d,%d%s}" % (it, pct, mn, mx, ",true" if q else "")
+                                                for it, pct, mn, mx, q in loot)))
+    tb.append("}")
+    lb = ["ProfBuddy.NodeLoot = {"]
+    for name in sorted(node_tbl):
+        lb.append('    ["%s"]=%d,' % (qesc(name), node_tbl[name]))
     lb.append("}")
     return "\n".join(ib) + "\n\n" + "\n".join(tb) + "\n\n" + "\n".join(lb)
 

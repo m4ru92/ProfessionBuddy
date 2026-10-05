@@ -588,6 +588,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         gatherSkillTooltip  = true,  -- required skin/mine/herb skill on mob + node tooltips
         gatherShowUnlearned = true,  -- show gather info for professions you have not learned
         gatherYieldTooltip  = true,  -- "Yields: Leather/Scale" line on skinnable mob tooltips
+        gatherLootUnlearned = false, -- that loot (and node loot) for professions you have not learned
         skillReqNotify      = false, -- dev-only: chat alert when a trainer learn-level correction is found
         tooltipMaxOwn       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)

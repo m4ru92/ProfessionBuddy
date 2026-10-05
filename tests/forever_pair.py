@@ -44,7 +44,8 @@ def run_pair(LuaRuntime, quiet):
         A.execute('TRAINER_OPEN(3008); FLUSH(); TRAINER_CLOSE(); FLUSH()')
         # Alpha has skinned a Thunder Lizard (3b-3: learned loot is shared)
         A.execute('''ProfBuddy.Knowledge:RecordSkin(3130, { { 2934, 1, "Ruined Leather Scraps", 0 },
-                                                         { 2318, 2, "Light Leather", 1 } })''')
+                                                         { 2318, 2, "Light Leather", 1 } })
+                     ProfBuddy.Knowledge:RecordNode("Copper Vein", "Mining", { { 2770, 1, "Copper Ore", 1 } })''')
         for me, other in ((A, "Bravo Reed"), (B, "Alpha Stone")):
             me.execute('ProfBuddyDB.contacts[ProfBuddy:NormKey("%s")] = { trusted = true, autoSync = false, lastSync = 0 }' % other)
         B.execute('ProfBuddy.Comm:RequestSync("Alpha Stone", true); FLUSH()')
@@ -135,6 +136,8 @@ def run_pair(LuaRuntime, quiet):
             EXPECT(l and l.n == 1 and l.items[2318] and l.items[2318].max == 2 and l.items[2934].c == 1,
                    "Bravo did not store Alpha's skinning loot")
             EXPECT(ProfBuddyDB.skinLoot == nil, "Alpha's skins landed in Bravo's own store")
+            local g = s.nodeLoot and s.nodeLoot["Copper Vein"]
+            EXPECT(g and g.n == 1 and g.prof == "Mining" and g.items[2770], "Bravo did not store Alpha's Copper Vein")
         ''')
         A.execute('''
             EXPECT(ProfBuddyDB.knowledgeShared == nil, "Alpha stored knowledge it never asked for")

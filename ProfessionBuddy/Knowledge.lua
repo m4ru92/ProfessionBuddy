@@ -36,6 +36,11 @@
 -- together, the gather tooltip lists those drops instead of the Classic
 -- list (TradeSkillFrame.lua AddSkinLoot).
 --
+-- ProfBuddyDB.nodeLoot holds the same for ore veins and herbs (Phase
+-- 3b-4), keyed by node name (the loot window names no node, and one name
+-- covers several game objects), with prof = "Mining" | "Herbalism".
+-- Peers share theirs as knowledgeShared[peer].nodeLoot.
+--
 -- ProfBuddyDB.gatheredMobs[npcID] = "Mining" | "Herbalism" | "Engineering":
 -- a mob this account gathered from with one of Forever's corpse gathering
 -- spells other than Skinning. Local only.
@@ -88,6 +93,18 @@ local GATHER_SPELLS = {
     [8613] = "Skinning", [8617] = "Skinning", [8618] = "Skinning", [10768] = "Skinning",
     [1235230] = "Mining", [1235236] = "Herbalism", [1235244] = "Engineering",
 }
+-- Opening an ore vein or an herb: every SPELL_EFFECT_OPEN_LOCK (33) spell
+-- named Mining (lock type 3, skill line 186) or Herbalism (lock type 2,
+-- skill line 182) in the same Forever tables.
+local NODE_SPELLS = {
+    [2575] = "Mining", [2576] = "Mining", [2577] = "Mining", [2578] = "Mining",
+    [2579] = "Mining", [3564] = "Mining", [10248] = "Mining",
+    [2366] = "Herbalism", [2368] = "Herbalism", [2369] = "Herbalism",
+    [2371] = "Herbalism", [3570] = "Herbalism", [11993] = "Herbalism",
+}
+-- How recent the node tooltip PB last drew (lastGather) must be to name
+-- the node a cast opens, when the tooltip is no longer showing it.
+local NODE_NAME_AGE = 10
 -- A loot window this long after a Skinning cast succeeds is its loot; so
 -- is one that opens while the cast is still under way (no later than
 -- SKIN_CAST_MAX after it started), in case the loot event comes first.
@@ -465,13 +482,34 @@ end
 -- A Skinning cast: at its start the corpse is still under the cursor
 -- (the fallback when the game cannot name a loot slot's source); when it
 -- succeeds, the next loot window is the skin's.
+-- The node a Mining or Herbalism cast is opening: the name on the game
+-- tooltip under the cursor (out of combat; in combat it is secret), else
+-- the node PB drew its lines on moments ago. nil when neither is a node
+-- PB knows for that profession.
+local function NodeUnderCursor(prof)
+    local known = (prof == "Mining") and addon.MiningNodes or addon.HerbNodes
+    if not known then return nil end
+    local fs = GameTooltip and GameTooltip:IsShown() and _G.GameTooltipTextLeft1
+    local name = fs and fs:GetText()
+    if type(name) == "string" and not IsSecret(name) and known[name] then return name end
+    local g = addon.db and addon.db.lastGather
+    if g and g.kind == "node" and known[g.name] and g.seen and (time() - g.seen) <= NODE_NAME_AGE then
+        return g.name
+    end
+    return nil
+end
+
 function KN:OnSkinCast(phase, spellID)
-    if IsSecret(spellID) or not GATHER_SPELLS[spellID] then return end
+    if IsSecret(spellID) then return end
+    local nodeProf = NODE_SPELLS[spellID]
+    if not (GATHER_SPELLS[spellID] or nodeProf) then return end
     if phase == "start" then
         local guid = UnitGUID("mouseover")
         self._skinGUID = (UnitIsDead("mouseover") and not IsSecret(guid)) and guid or nil
         self._skinStart = GetTime()
-        self._skinProf = GATHER_SPELLS[spellID]
+        self._skinProf = GATHER_SPELLS[spellID] or nodeProf
+        self._skinNode = nodeProf and NodeUnderCursor(nodeProf) or nil
+        self._skinIsNode = nodeProf and true or nil
     elseif phase == "done" then
         -- its loot window already came, while the cast was under way
         local used = self._skinUsed
@@ -479,7 +517,7 @@ function KN:OnSkinCast(phase, spellID)
         if used and (GetTime() - used) <= SKIN_CAST_MAX then return end
         self._skinDone = GetTime()
     else
-        self._skinStart, self._skinGUID = nil, nil
+        self._skinStart, self._skinGUID, self._skinNode, self._skinIsNode = nil, nil, nil, nil
     end
 end
 
@@ -517,9 +555,20 @@ function KN:OnLootOpened()
             end
         end
     end
+    local prof, node = self._skinProf or "Skinning", self._skinNode
+    self._skinProf, self._skinNode = nil, nil
+    if node then
+        self._skinGUID, self._skinIsNode = nil, nil
+        if #items > 0 then self:RecordNode(node, prof, items) end
+        return
+    end
+    if self._skinIsNode then
+        -- a node PB could not name (in combat, or one it does not know)
+        self._skinIsNode, self._skinGUID = nil, nil
+        return
+    end
     local npcID = LootSource(slots)
-    local prof = self._skinProf or "Skinning"
-    self._skinGUID, self._skinProf = nil, nil
+    self._skinGUID = nil
     if not npcID then return end
     if prof == "Skinning" then
         if #items > 0 then self:RecordSkin(npcID, items) end
@@ -531,14 +580,15 @@ function KN:OnLootOpened()
     end
 end
 
--- One skin of `npcID` that yielded `items`: { { itemID, quantity, name,
--- quality }, ... }. An item in two slots counts once, with both stacks.
-function KN:RecordSkin(npcID, items)
-    addon.db.skinLoot = addon.db.skinLoot or {}
-    local rec = addon.db.skinLoot[npcID]
+-- One gather from `key` in the store addon.db[storeName] that yielded
+-- `items`: { { itemID, quantity, name, quality }, ... }. An item in two
+-- slots counts once, with both stacks.
+local function RecordLoot(storeName, key, items)
+    addon.db[storeName] = addon.db[storeName] or {}
+    local rec = addon.db[storeName][key]
     if not rec then
         rec = { n = 0, items = {}, seenBy = {} }
-        addon.db.skinLoot[npcID] = rec
+        addon.db[storeName][key] = rec
     end
     local got = {}
     for _, it in ipairs(items) do
@@ -561,19 +611,34 @@ function KN:RecordSkin(npcID, items)
     end
     rec.seenBy[addon:PlayerKey()] = true
     rec.at = time()
+    return rec
+end
+
+-- One skin of `npcID`.
+function KN:RecordSkin(npcID, items)
+    RecordLoot("skinLoot", npcID, items)
+end
+
+-- One gather from the ore vein or herb named `name` (Phase 3b-4).
+function KN:RecordNode(name, prof, items)
+    RecordLoot("nodeLoot", name, items).prof = prof
 end
 
 -- What skinning `npcID` yields, from your skins and peers' together, once
 -- there are LEARNED_MIN of them: n, then one row per item, most frequent
 -- first, in the Classic list's shape ({ itemID, pct, min, max }) plus
 -- name and q (quality) from the loot window when known. nil below that.
-function KN:LearnedLoot(npcID)
+-- With kind "node", the same for the ore vein or herb named `npcID`
+-- (nodeLoot, and peers' nodeLoot).
+function KN:LearnedLoot(npcID, kind)
     if not npcID then return nil end
+    local ownStore, sharedField = "skinLoot", "loot"
+    if kind == "node" then ownStore, sharedField = "nodeLoot", "nodeLoot" end
     local recs = {}
-    local own = addon.db and addon.db.skinLoot and addon.db.skinLoot[npcID]
+    local own = addon.db and addon.db[ownStore] and addon.db[ownStore][npcID]
     if own then recs[#recs + 1] = own end
     for _, shared in pairs(addon.db and addon.db.knowledgeShared or {}) do
-        local p = shared.loot and shared.loot[npcID]
+        local p = shared[sharedField] and shared[sharedField][npcID]
         if p then recs[#recs + 1] = p end
     end
     local n, byItem = 0, {}
@@ -653,8 +718,8 @@ end
 -- (from their synced record) and then ours, so viewing a friend's
 -- profession shows the trainers they saw; whether we want their skinning
 -- loot; and `since`, the newest record they sent us. A profession or the
--- loot we have not asked them for before resets `since` to 0, or their
--- older records for it would never come.
+-- loot (skinning, or nodes since 3b-4) we have not asked them for before
+-- resets `since` to 0, or their older records for it would never come.
 function KN:RequestFor(peer)
     local profs, seen = {}, {}
     local function add(prof)
@@ -670,7 +735,7 @@ function KN:RequestFor(peer)
     for _, prof in ipairs(self:OurProfessions()) do add(prof) end
     local shared = addon.db.knowledgeShared and addon.db.knowledgeShared[peer]
     local since = shared and shared.since or 0
-    if not (shared and shared.asked and shared.askedLoot) then
+    if not (shared and shared.asked and shared.askedLoot and shared.askedNodes) then
         since = 0
     else
         for _, prof in ipairs(profs) do
@@ -684,12 +749,13 @@ end
 -- `since`, in the compact wire shape: NPCs once in `npcs`, referenced by
 -- index from each recipe. `at` is the newest record sent. With maxMobs,
 -- also our skinning loot (Phase 3b-3), at most maxItems items a mob, the
--- most frequent first.
+-- most frequent first; with maxNodes, our ore vein and herb loot (3b-4).
 --   { at, npcs = { { npcID, name, zone, subZone, faction } },
 --     r = { [recipeID] = { a = at, l = learnLevel, t = { npc index },
 --                          v = { { npc index, itemID, price } }, i = true } },
---     s = { [npcID] = { a = at, n = skins, i = { { itemID, c, min, max } } } } }
-function KN:BuildShare(since, profs, maxRecipes, maxPerRecipe, maxMobs, maxItems)
+--     s = { [npcID] = { a = at, n = skins, i = { { itemID, c, min, max } } } },
+--     g = { [node name] = { a = at, n = gathers, p = prof, i = { ... } } } }
+function KN:BuildShare(since, profs, maxRecipes, maxPerRecipe, maxMobs, maxItems, maxNodes)
     local RDB = addon.RecipeDB
     local npcs, index, r, newest, n = {}, {}, {}, since, 0
     local function ref(key, npc)
@@ -722,13 +788,14 @@ function KN:BuildShare(since, profs, maxRecipes, maxPerRecipe, maxMobs, maxItems
         end
     end
     local share = { at = newest, npcs = npcs, r = r }
-    if maxMobs then
+    -- one store's records written after `since`, in the wire shape
+    local function lootOf(store, max, withProf)
         local loot, m = {}, 0
-        for npcID, rec in pairs(addon.db.skinLoot or {}) do
+        for key, rec in pairs(store or {}) do
             local at = rec.at or 1
             if at > since and (rec.n or 0) > 0 then
                 m = m + 1
-                if m > maxMobs then break end
+                if m > max then break end
                 local items = {}
                 for itemID, e in pairs(rec.items or {}) do
                     items[#items + 1] = { itemID, e.c, e.min, e.max }
@@ -738,18 +805,20 @@ function KN:BuildShare(since, profs, maxRecipes, maxPerRecipe, maxMobs, maxItems
                     return a[1] < b[1]
                 end)
                 for i = #items, maxItems + 1, -1 do items[i] = nil end
-                loot[npcID] = { a = at, n = rec.n, i = items }
+                loot[key] = { a = at, n = rec.n, i = items, p = withProf and rec.prof or nil }
                 if at > share.at then share.at = at end
             end
         end
-        share.s = loot
+        return loot
     end
+    if maxMobs then share.s = lootOf(addon.db.skinLoot, maxMobs) end
+    if maxNodes then share.g = lootOf(addon.db.nodeLoot, maxNodes, true) end
     return share
 end
 
 -- A sanitized KNOW_DATA (Comm:SanitizeKnowledge) from `peer`. `asked`,
 -- what our request named: { profs = { name, ... }, loot = true when the
--- peer can send loot }.
+-- peer can send skinning loot, nodes = true when it can send node loot }.
 function KN:StoreShared(peer, clean, asked)
     addon.db.knowledgeShared = addon.db.knowledgeShared or {}
     local all = addon.db.knowledgeShared
@@ -760,10 +829,15 @@ function KN:StoreShared(peer, clean, asked)
         shared.loot = shared.loot or {}
         for npcID, rec in pairs(clean.loot) do shared.loot[npcID] = rec end
     end
+    if clean.nodeLoot then
+        shared.nodeLoot = shared.nodeLoot or {}
+        for name, rec in pairs(clean.nodeLoot) do shared.nodeLoot[name] = rec end
+    end
     if asked then
         shared.asked = {}
         for _, prof in ipairs(asked.profs or {}) do shared.asked[prof] = true end
         shared.askedLoot = asked.loot or nil
+        shared.askedNodes = asked.nodes or nil
     end
     shared.at = time()
     if (clean.at or 0) > (shared.since or 0) then shared.since = clean.at end

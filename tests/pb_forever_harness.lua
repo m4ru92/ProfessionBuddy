@@ -950,7 +950,7 @@ print("  PASS F25 first-open prompt (Escape asks again next session); Learn as y
 -- sighting counts as seen); removing the contact or 30 days drops it
 local Comm = ProfBuddy.Comm
 local AS = LibStub("AceSerializer-3.0")
-EXPECT(ProfBuddy.COMM_REV == 11, "COMM_REV is " .. tostring(ProfBuddy.COMM_REV))
+EXPECT(ProfBuddy.COMM_REV == 12, "COMM_REV is " .. tostring(ProfBuddy.COMM_REV))
 local SENT = {}
 local realWhisper = Comm.SendWhisper
 Comm.SendWhisper = function(_, t, d, target, prio) SENT[#SENT + 1] = { t = t, d = d, to = target, prio = prio } end
@@ -2019,18 +2019,23 @@ do
     -- the round trip, as if Pal sent it
     Comm._knowPending[PAL] = time()
     Comm._knowAskedProfs = { [PAL] = req.d.profs }
-    share._type, share._commrev = "KNOW_DATA", 11
+    share._type, share._commrev = "KNOW_DATA", 12
     deliver(PAL, share)
     local fs = ProfBuddyDB.knowledgeShared[PAL]
     EXPECT(fs and fs.loot and fs.loot[3130] and fs.loot[3130].n == 3 and fs.loot[3130].items[2318].max == 2,
            "loot round trip")
-    EXPECT(fs.asked.Enchanting and fs.asked.Tailoring and fs.askedLoot == true, "asked state")
+    EXPECT(fs.asked.Enchanting and fs.asked.Tailoring and fs.askedLoot == true and fs.askedNodes == true, "asked state")
     local since = KN:RequestFor(PAL)
     EXPECT(since == fs.since and since > 0, "since kept for the same ask: " .. tostring(since))
     -- Pal learns a new profession: asked from 0 again
     ProfBuddyDB.characters[PAL].professions.Alchemy = { skillLevel = 1, maxSkill = 75, recipes = {} }
     EXPECT(KN:RequestFor(PAL) == 0, "a new profession kept since")
     ProfBuddyDB.characters[PAL].professions.Alchemy = nil
+    -- a rev-11 reply (skinning loot, no node loot): asked again from 0
+    Comm._knowPending[PAL] = time()
+    Comm._knowAskedProfs = { [PAL] = req.d.profs }
+    deliver(PAL, { _type = "KNOW_DATA", _commrev = 11, at = 4050, npcs = {}, r = {} })
+    EXPECT(fs.askedLoot == true and fs.askedNodes == nil and KN:RequestFor(PAL) == 0, "a rev-11 reply counted as node loot asked")
     -- a rev-10 reply: the loot is asked for again from 0
     Comm._knowPending[PAL] = time()
     Comm._knowAskedProfs = { [PAL] = req.d.profs }
@@ -2279,4 +2284,240 @@ do
 end
 print("  PASS F41 /pb bug: the last node, mob or corpse PB added gathering lines to, with what it showed, why, and the game's line; kept until it changes")
 
-print("ALL FOREVER TESTS PASS (41)")
+-- F42: Phase 3b-4, ore vein and herb loot learned as you gather. A Mining
+-- or Herbalism cast (Forever's OPEN_LOCK spells) names its node from the
+-- tooltip under the cursor, else from the node tooltip PB drew in the last
+-- 10 s; its loot window counts under that name. In combat (secret
+-- tooltip) or for a node PB does not know, nothing is recorded, and a node
+-- is never taken for a mob.
+do
+    local real = { GetTime = GetTime, time = time, GetNumLootItems = GetNumLootItems,
+                   GetLootSlotLink = GetLootSlotLink, GetLootSlotInfo = GetLootSlotInfo,
+                   GetLootSourceInfo = GetLootSourceInfo, UnitIsDead = UnitIsDead }
+    local now, clock = 7000, 9000
+    GetTime = function() return now end
+    time = function() return clock end
+    UnitIsDead = function() return false end
+    local slots = {}
+    GetNumLootItems = function() return #slots end
+    GetLootSlotLink = function(i) return slots[i].link end
+    GetLootSlotInfo = function(i) return 0, slots[i].name, slots[i].qty, nil, 1 end
+    GetLootSourceInfo = function() return "GameObject-0-1-2-3-1731-0000ABCD", 1 end
+    local function item(id, name, qty) return { link = "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. name .. "]|h|r", name = name, qty = qty } end
+    local tl1 = _G.GameTooltipTextLeft1 or CreateFrame("Frame", "GameTooltipTextLeft1")
+    rawset(tl1, "GetText", function(self) return self._text end)
+    local shown = true
+    rawset(GameTooltip, "IsShown", function() return shown end)
+    local function gather(spell, loot)
+        FIRE("UNIT_SPELLCAST_START", "player", "Cast-N", spell); now = now + 2
+        FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-N", spell); now = now + 0.5
+        slots = loot
+        FIRE("LOOT_OPENED", false, false); now = now + 10
+    end
+    ProfBuddyDB.nodeLoot, ProfBuddyDB.gatheredMobs, ProfBuddyDB.lastGather = nil, nil, nil
+    local mobsBefore = ProfBuddyDB.skinLoot
+
+    tl1._text = "Copper Vein"
+    gather(2575, { item(2770, "Copper Ore", 1), item(2835, "Rough Stone", 2) })
+    local r = ProfBuddyDB.nodeLoot and ProfBuddyDB.nodeLoot["Copper Vein"]
+    EXPECT(r and r.n == 1 and r.prof == "Mining" and r.items[2770].c == 1 and r.items[2835].max == 2
+           and r.seenBy[ProfBuddy:PlayerKey()], "Copper Vein gather")
+    gather(10248, { item(2770, "Copper Ore", 1) })
+    EXPECT(r.n == 2 and r.items[2770].c == 2 and r.items[2835].c == 1, "a second gather (another Mining rank)")
+    EXPECT(ProfBuddyDB.gatheredMobs == nil and ProfBuddyDB.skinLoot == mobsBefore, "a node taken for a mob")
+
+    -- in combat the tooltip is secret: nothing, no error
+    local SECRET = newproxy(true)
+    getmetatable(SECRET).__index = function() error("secret indexed") end
+    issecretvalue = function(v) return rawequal(v, SECRET) end
+    local realType = type
+    type = function(v) if rawequal(v, SECRET) then return "string" end return realType(v) end
+    tl1._text = SECRET
+    local okS, errS = pcall(gather, 2575, { item(2770, "Copper Ore", 1) })
+    type = realType
+    issecretvalue = nil
+    EXPECT(okS and r.n == 2 and ProfBuddyDB.gatheredMobs == nil, "a secret node: " .. tostring(errS))
+
+    -- the tooltip already gone: the node PB drew moments ago
+    shown = false
+    ProfBuddyDB.lastGather = { kind = "node", name = "Peacebloom", seen = clock - 3 }
+    gather(2366, { item(2447, "Peacebloom", 2) })
+    local h = ProfBuddyDB.nodeLoot["Peacebloom"]
+    EXPECT(h and h.n == 1 and h.prof == "Herbalism", "Peacebloom from the last node tooltip")
+    -- too old, or the wrong profession's node: nothing
+    ProfBuddyDB.lastGather.seen = clock - 30
+    gather(2366, { item(2447, "Peacebloom", 2) })
+    shown = true
+    tl1._text = "Peacebloom"
+    gather(2575, { item(2447, "Peacebloom", 2) })
+    tl1._text = "Mystery Vein"
+    gather(2575, { item(2770, "Copper Ore", 1) })
+    EXPECT(h.n == 1 and r.n == 2 and ProfBuddyDB.nodeLoot["Mystery Vein"] == nil, "a node that should not count")
+    -- an unnamed node with a corpse under the cursor and no loot source
+    -- from the game: still not taken for that mob
+    GetLootSourceInfo = nil
+    local realGUID = UnitGUID
+    UnitIsDead = function() return true end
+    UnitGUID = function() return "Creature-0-1-2-3-3130-0000" end
+    gather(2575, { item(2770, "Copper Ore", 1) })
+    UnitGUID = realGUID
+    UnitIsDead = function() return false end
+    EXPECT(ProfBuddyDB.gatheredMobs == nil, "an unnamed node recorded as a mob")
+    rawset(GameTooltip, "IsShown", nil)
+    for k, v in pairs(real) do _G[k] = v end
+end
+print("  PASS F42 ore vein and herb loot learned as you gather: named from the tooltip or the last node tooltip, counted per node name, nothing in combat or for an unknown node, never taken for a mob")
+
+-- F43: the node tooltip gets its loot list (Classic data, or "seen N
+-- times" at 10 gathers, yours and friends'), once per tooltip, under the
+-- Requires line. Loot shows for professions you have; "Unlearned too"
+-- (gatherLootUnlearned, off by default) shows it for the others, on beasts
+-- as well; "Gathering loot" off hides all of it.
+do
+    EXPECT(ProfBuddy.NodeLoot and ProfBuddy.NodeLoot["Copper Vein"] and ProfBuddy.NodeItems[2770]
+           and ProfBuddyDB.settings.gatherLootUnlearned == false, "node data or setting default")
+    local cv = ProfBuddy.NodeLootTables[ProfBuddy.NodeLoot["Copper Vein"]]
+    EXPECT(cv[1][1] == 2770 and cv[1][2] == 100, "Copper Vein's first row")
+    local n = 0
+    for name in pairs(ProfBuddy.MiningNodes) do n = n + 1; EXPECT(ProfBuddy.NodeLoot[name], "no loot for " .. name) end
+    for name in pairs(ProfBuddy.HerbNodes) do n = n + 1; EXPECT(ProfBuddy.NodeLoot[name], "no loot for " .. name) end
+
+    -- a tooltip whose lines the hook can read back, as the game's are
+    local lines = {}
+    for i = 1, 30 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] end)
+    end
+    rawset(GameTooltip, "GetUnit", function() return nil end)
+    rawset(GameTooltip, "GetItem", function() return nil end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    rawset(GameTooltip, "AddDoubleLine", function(_, l, r) lines[#lines + 1] = l .. " = " .. r end)
+    rawset(GameTooltip, "Show", function() end)
+    local onUpdate = GameTooltip._h.OnUpdate
+    local function hover(name, game, passes)
+        lines = { name, game }
+        for _ = 1, passes or 1 do onUpdate(GameTooltip, 1) end
+        return table.concat(lines, " / ")
+    end
+    -- Mining is learned in the fixture: the Classic list, once over many passes
+    local got = hover("Tin Vein", "Requires Mining", 5)
+    local _, heads = got:gsub("Mines into %(Classic data%):", "")
+    EXPECT(got:find("Requires Mining (65)", 1, true) and heads == 1 and got:find("Tin Ore", 1, true), "Tin Vein: " .. got)
+    EXPECT(ProfBuddyDB.lastGather.loot == "Classic data", "the report's loot source: " .. tostring(ProfBuddyDB.lastGather.loot))
+    -- Herbalism is not: no loot until "Unlearned too"
+    got = hover("Peacebloom", "Requires Herbalism")
+    EXPECT(got:find("Requires Herbalism (1)", 1, true) and not got:find("Gathers into", 1, true), "unlearned herb: " .. got)
+    ProfBuddyDB.settings.gatherLootUnlearned = true
+    got = hover("Peacebloom", "Requires Herbalism")
+    EXPECT(got:find("Gathers into (Classic data):", 1, true) and got:find("Peacebloom|r  x1-3 = ", 1, true), "Unlearned too: " .. got)
+    -- "Gathering loot" off: none
+    ProfBuddyDB.settings.gatherYieldTooltip = false
+    EXPECT(not hover("Tin Vein", "Requires Mining"):find("Mines into", 1, true), "loot with Gathering loot off")
+    ProfBuddyDB.settings.gatherYieldTooltip = true
+    ProfBuddyDB.settings.gatherLootUnlearned = false
+    -- 10 gathers, yours and a friend's: what they gave
+    ProfBuddyDB.nodeLoot = { ["Tin Vein"] = { n = 7, at = 1, seenBy = {}, prof = "Mining",
+        items = { [2771] = { c = 7, min = 1, max = 2, name = "Tin Ore" }, [1206] = { c = 1, min = 1, max = 1 } } } }
+    ProfBuddyDB.knowledgeShared["Pal-Forever"] = { at = time(), since = 0, records = {},
+        nodeLoot = { ["Tin Vein"] = { at = 1, n = 3, prof = "Mining", items = { [2771] = { c = 3, min = 1, max = 1 } } } } }
+    got = hover("Tin Vein", "Requires Mining", 3)
+    EXPECT(got:find("Mines into (seen 10 times):", 1, true) and got:find("x1-2 = |cffc8b088100%", 1, true)
+           and got:find("10%", 1, true) and not got:find("Classic data", 1, true), "learned Tin Vein: " .. got)
+    ProfBuddyDB.knowledgeShared["Pal-Forever"] = nil
+    ProfBuddyDB.nodeLoot = nil
+
+    -- a beast's loot follows the same rule: no Skinning, no loot unless
+    -- "Unlearned too"
+    local SRC = ProfBuddy.Source
+    local realRead = SRC.ReadVisibleSkillLines
+    SRC.ReadVisibleSkillLines = function() return {} end
+    local char = ProfBuddy.DataStore:GetCharacter(ProfBuddy:PlayerKey())
+    local skin = char.professions.Skinning
+    char.professions.Skinning = nil
+    local post
+    for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Unit then post = c.fn end end
+    local realU = { UnitExists = UnitExists, UnitCanAttack = UnitCanAttack, UnitIsDead = UnitIsDead,
+                    UnitGUID = UnitGUID, UnitLevel = UnitLevel }
+    UnitExists = function() return true end
+    UnitCanAttack = function() return true end
+    UnitIsDead = function() return false end
+    UnitGUID = function() return "Creature-0-1-2-3-3130-0000" end
+    UnitLevel = function() return 10 end
+    rawset(GameTooltip, "GetUnit", function() return "Thunder Lizard", "mouseover" end)
+    local function beast()
+        lines = {}
+        post(GameTooltip, { type = Enum.TooltipDataType.Unit, lines = { { leftText = "Thunder Lizard" } } })
+        return table.concat(lines, " / ")
+    end
+    got = beast()
+    EXPECT(got:find("Requires Skinning (1)", 1, true) and not got:find("Skins into", 1, true), "non-skinner beast: " .. got)
+    ProfBuddyDB.settings.gatherLootUnlearned = true
+    EXPECT(beast():find("Skins into (Classic data):", 1, true), "non-skinner beast with Unlearned too")
+    ProfBuddyDB.settings.gatherLootUnlearned = false
+    char.professions.Skinning = skin
+    SRC.ReadVisibleSkillLines = realRead
+    for k, v in pairs(realU) do _G[k] = v end
+    for _, k in ipairs({ "GetUnit", "GetItem", "NumLines", "AddLine", "AddDoubleLine", "Show" }) do rawset(GameTooltip, k, nil) end
+    ProfBuddyDB.lastGather = nil
+end
+print("  PASS F43 node loot on the tooltip: Classic list for all 51 nodes, once per tooltip, learned at 10 gathers (yours and friends'); loot only for learned professions unless Unlearned too, on beasts as well; Gathering loot off hides it")
+
+-- F44: node loot on the wire (COMM_REV 12). KNOW_REQ asks for it (g); a
+-- KNOW_DATA carries it only when asked; a known node name under its own
+-- profession only; over a cap drops the message.
+do
+    local Comm = ProfBuddy.Comm
+    local AS = LibStub("AceSerializer-3.0")
+    local SENT = {}
+    local realWhisper = Comm.SendWhisper
+    Comm.SendWhisper = function(_, t, d, target) SENT[#SENT + 1] = { t = t, d = d, to = target } end
+    local function deliver(from, msg) Comm:OnMessageReceived("PBuddy", AS:Serialize(msg), "WHISPER", from) end
+    local function last(t) for i = #SENT, 1, -1 do if SENT[i].t == t then return SENT[i] end end end
+    local PAL = "Pal-Forever"
+    ProfBuddyDB.contacts[PAL] = { trusted = true, autoSync = false, lastSync = 0 }
+    Comm._knowAsked = {}
+    deliver(PAL, { _type = "SYNC_DATA", _commrev = 12, class = "MAGE", level = 20, faction = "Horde",
+                   partial = true, professions = {} })
+    EXPECT(last("KNOW_REQ") and last("KNOW_REQ").d.g == true, "KNOW_REQ without g")
+    ProfBuddyDB.nodeLoot = { ["Copper Vein"] = { n = 4, at = 4000, seenBy = {}, prof = "Mining",
+        items = { [2770] = { c = 4, min = 1, max = 1, name = "Copper Ore" } } } }
+    Comm._knowServed = {}
+    deliver(PAL, { _type = "KNOW_REQ", since = 0, profs = { "Mining" }, s = true })
+    EXPECT(last("KNOW_DATA").d.g == nil, "node loot sent unasked")
+    Comm._knowServed = {}
+    deliver(PAL, { _type = "KNOW_REQ", since = 0, profs = { "Mining" }, g = true })
+    local share = last("KNOW_DATA").d
+    local g = share.g and share.g["Copper Vein"]
+    EXPECT(g and g.n == 4 and g.p == "Mining" and g.i[1][1] == 2770 and g.i[1].name == nil, "node loot on the wire")
+
+    local function tryNodes(gfield)
+        ProfBuddyDB.knowledgeShared[PAL] = nil
+        Comm._knowPending[PAL] = time()
+        deliver(PAL, { _type = "KNOW_DATA", _commrev = 12, at = 4300, npcs = {}, r = {}, g = gfield })
+        return ProfBuddyDB.knowledgeShared[PAL]
+    end
+    local got = tryNodes(share.g)
+    EXPECT(got and got.nodeLoot["Copper Vein"].n == 4 and got.nodeLoot["Copper Vein"].prof == "Mining", "round trip")
+    got = tryNodes({ ["Copper Vein"] = { a = 1, n = 2, p = "Herbalism", i = {} },
+                     ["Mystery Vein"] = { a = 1, n = 2, p = "Mining", i = {} },
+                     ["Peacebloom"] = { a = 1, n = 2, p = "Herbalism", i = { { 2447, 2, 1, 3 } } } })
+    EXPECT(got and got.nodeLoot["Copper Vein"] == nil and got.nodeLoot["Mystery Vein"] == nil
+           and got.nodeLoot["Peacebloom"].items[2447].max == 3, "node names and professions not checked")
+    local many = {}
+    for i = 1, 201 do many["Node " .. i] = { a = 1, n = 1, p = "Mining", i = {} } end
+    EXPECT(tryNodes(many) == nil, "201 nodes were stored")
+    EXPECT(tryNodes("junk") == nil, "a non-table g was stored")
+    local items = {}
+    for i = 1, 13 do items[i] = { 2770, 1, 1, 1 } end
+    EXPECT(tryNodes({ ["Copper Vein"] = { a = 1, n = 20, p = "Mining", i = items } }) == nil, "13 items on one node")
+    ProfBuddyDB.knowledgeShared[PAL] = nil
+    ProfBuddyDB.contacts[PAL] = nil
+    ProfBuddyDB.characters[PAL] = nil
+    ProfBuddyDB.nodeLoot = nil
+    Comm.SendWhisper = realWhisper
+end
+print("  PASS F44 node loot on the wire: asked with g, sent only when asked, known node names under their own profession, caps")
+
+print("ALL FOREVER TESTS PASS (44)")

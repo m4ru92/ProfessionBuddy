@@ -12,8 +12,8 @@
 --   SYNC_DATA  -> full character payload (professions, recipes, inventory)
 --   INCR       -> incremental inventory/profession update (debounced)
 --   KNOW_REQ   -> WoW: Forever: ask a peer for the trainers, vendors and
---                 learn levels they have seen, and the skinning loot they
---                 recorded (Knowledge.lua)
+--                 learn levels they have seen, and the skinning, ore vein
+--                 and herb loot they recorded (Knowledge.lua)
 --   KNOW_DATA  -> their own sightings, for their professions and ours,
 --                 newer than the last ones they sent us
 ----------------------------------------------------------------------
@@ -64,7 +64,11 @@ local Comm = addon:NewModule("Comm")
 -- KNOW_REQ gains `s` (send your skinning loot) and names the peer's own
 -- professions as well as ours; KNOW_DATA gains `s`, the loot per NPC ID.
 -- A rev-10 peer ignores both fields and answers as before.
-local COMM_REV = 11
+-- rev 12 = WoW: Forever ore vein and herb loot learned as you gather
+-- (Phase 3b-4): KNOW_REQ gains `g` (send your node loot); KNOW_DATA gains
+-- `g`, the loot per node name with its profession. A rev-11 peer ignores
+-- both and answers as before.
+local COMM_REV = 12
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -129,6 +133,8 @@ local MAX_KNOW_NPCS       = 600
 local MAX_KNOW_PER_RECIPE = 12    -- trainers, or vendors, on one recipe
 local MAX_KNOW_PROFS      = 16
 local LOOT_MIN_REV        = 11
+local NODE_LOOT_MIN_REV   = 12
+local MAX_KNOW_NODES      = 200   -- ore veins and herbs with loot (PB knows 51)
 local MAX_KNOW_SKIN_MOBS  = 1500  -- mobs with skinning loot (Classic has ~900 skinnable)
 local MAX_KNOW_SKIN_ITEMS = 12    -- items on one mob
 local MAX_KNOW_SKINS      = 10^6  -- skins of one mob
@@ -2087,7 +2093,7 @@ function Comm:RequestKnowledge(peer)
     local since, profs = KN:RequestFor(peer)
     self._knowAskedProfs = self._knowAskedProfs or {}
     self._knowAskedProfs[peer] = profs
-    self:SendWhisper("KNOW_REQ", { since = since, profs = profs, s = true }, peer, "BULK")
+    self:SendWhisper("KNOW_REQ", { since = since, profs = profs, s = true, g = true }, peer, "BULK")
 end
 
 function Comm:HandleKnowReq(sender, data, distribution)
@@ -2113,9 +2119,10 @@ function Comm:HandleKnowReq(sender, data, distribution)
     local since = sanInt(data.since, 0, now + 86400, 0)
     self._knowServed[sender] = now
     if tier == "guild" then self:GuildServeBudget(now, true) end
-    local loot = data.s == true
+    local loot, nodes = data.s == true, data.g == true
     self:SendWhisper("KNOW_DATA", KN:BuildShare(since, profs, MAX_KNOW_RECIPES, MAX_KNOW_PER_RECIPE,
-        loot and MAX_KNOW_SKIN_MOBS or nil, MAX_KNOW_SKIN_ITEMS), sender, "BULK")
+        loot and MAX_KNOW_SKIN_MOBS or nil, MAX_KNOW_SKIN_ITEMS, nodes and MAX_KNOW_NODES or nil),
+        sender, "BULK")
 end
 
 -- Only in answer to our own KNOW_REQ, and only from a peer still trusted
@@ -2130,9 +2137,10 @@ function Comm:HandleKnowData(sender, data, distribution)
     if self._knowAskedProfs then self._knowAskedProfs[sender] = nil end
     local clean = self:SanitizeKnowledge(data)
     if not clean then return end
-    -- a rev-10 peer never sends loot, so asking again stays a full ask
-    KN:StoreShared(sender, clean, { profs = profs,
-        loot = sanInt(data._commrev, 0, 1000, 0) >= LOOT_MIN_REV })
+    -- an older peer never sends that loot, so asking again stays a full ask
+    local rev = sanInt(data._commrev, 0, 1000, 0)
+    KN:StoreShared(sender, clean, { profs = profs, loot = rev >= LOOT_MIN_REV,
+        nodes = rev >= NODE_LOOT_MIN_REV })
     self:NotifyUIRefresh()
 end
 
@@ -2196,17 +2204,18 @@ function Comm:SanitizeKnowledge(data)
             records[id] = out
         end
     end
-    local loot
-    if data.s ~= nil then
-        if type(data.s) ~= "table" then return nil end
-        loot = {}
-        local nM = 0
-        for rawID, rec in pairs(data.s) do
-            nM = nM + 1
-            if nM > MAX_KNOW_SKIN_MOBS then return nil end
-            local npcID = sanID(rawID, 10^7)
-            if npcID and type(rec) == "table" and type(rec.i) == "table" then
-                if #rec.i > MAX_KNOW_SKIN_ITEMS then return nil end
+    -- One loot field (s by NPC ID, g by node name), rebuilt the same way.
+    -- false drops the whole message; nil means the field was absent.
+    local function cleanLoot(field, maxKeys, keyOf)
+        if field == nil then return nil end
+        if type(field) ~= "table" then return false end
+        local out, nK = {}, 0
+        for rawKey, rec in pairs(field) do
+            nK = nK + 1
+            if nK > maxKeys then return false end
+            local key, prof = keyOf(rawKey, rec)
+            if key and type(rec) == "table" and type(rec.i) == "table" then
+                if #rec.i > MAX_KNOW_SKIN_ITEMS then return false end
                 local n = sanInt(rec.n, 0, MAX_KNOW_SKINS, 0)
                 local items = {}
                 for _, e in ipairs(rec.i) do
@@ -2218,12 +2227,22 @@ function Comm:SanitizeKnowledge(data)
                     end
                 end
                 if n > 0 then
-                    loot[npcID] = { at = sanInt(rec.a, 0, now + 86400, 0), n = n, items = items }
+                    out[key] = { at = sanInt(rec.a, 0, now + 86400, 0), n = n, items = items, prof = prof }
                 end
             end
         end
+        return out
     end
-    return { at = sanInt(data.at, 0, now + 86400, 0), records = records, loot = loot }
+    local loot = cleanLoot(data.s, MAX_KNOW_SKIN_MOBS, function(raw) return sanID(raw, 10^7) end)
+    -- a node name PB knows, under the profession whose table holds it
+    local nodeLoot = cleanLoot(data.g, MAX_KNOW_NODES, function(raw, rec)
+        if type(raw) ~= "string" or type(rec) ~= "table" then return nil end
+        if rec.p == "Mining" and addon.MiningNodes and addon.MiningNodes[raw] then return raw, "Mining" end
+        if rec.p == "Herbalism" and addon.HerbNodes and addon.HerbNodes[raw] then return raw, "Herbalism" end
+        return nil
+    end)
+    if loot == false or nodeLoot == false then return nil end
+    return { at = sanInt(data.at, 0, now + 86400, 0), records = records, loot = loot, nodeLoot = nodeLoot }
 end
 
 ----------------------------------------------------------------------

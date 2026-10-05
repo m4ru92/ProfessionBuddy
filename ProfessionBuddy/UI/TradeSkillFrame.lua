@@ -688,8 +688,10 @@ local function NoteGather(t)
     local last = addon.db.lastGather
     if last and last.kind == t.kind and last.name == t.name and last.shown == t.shown
        and last.yours == t.yours and last.loot == t.loot and last.npcID == t.npcID then
+        last.seen = time()   -- when it was last drawn (Knowledge.lua names a node from it)
         return
     end
+    t.seen = time()
     -- the node hook overwrites the game's line on its first pass only
     if last and last.kind == t.kind and last.name == t.name and not t.gameLine then
         t.gameLine = last.gameLine
@@ -712,29 +714,18 @@ end
 -- skinned a mob enough times (Knowledge.lua LearnedLoot), what it really
 -- yielded replaces the list, headed with how many skins it comes from.
 local YIELD_HEAD = { 0.78, 0.69, 0.53 }
-local function AddSkinLoot(tip, npcID)
-    local KN = addon.Knowledge
-    local skins, loot, head
-    if KN and KN.LearnedLoot then skins, loot = KN:LearnedLoot(npcID) end
-    local shown
-    if loot then
-        head = "Skins into (seen " .. skins .. " times):"
-        shown = "learned from " .. skins .. " skins"
-    else
-        local idx = npcID and addon.SkinLoot and addon.SkinLoot[npcID]
-        loot = idx and addon.SkinLootTables and addon.SkinLootTables[idx]
-        if not loot then return nil end
-        head = addon.SkinLootSource and ("Skins into (" .. addon.SkinLootSource .. " data):")
-            or "Skins into:"
-        shown = (addon.SkinLootSource or "PB's") .. " data"
-    end
+
+-- One loot list under `head`: rows { itemID, pct, min, max[, quest] } plus
+-- name/q, item names from `meta` (itemID -> { name, quality }) until the
+-- client has the item cached.
+local function RenderLoot(tip, head, loot, meta)
     tip:AddLine(head, YIELD_HEAD[1], YIELD_HEAD[2], YIELD_HEAD[3])
     for _, e in ipairs(loot) do
         local itemID, pct, minc, maxc, quest = e[1], e[2], e[3], e[4], e[5]
-        local meta = addon.SkinItems and addon.SkinItems[itemID]
+        local m = meta and meta[itemID]
         local liveName, _, liveQ = GetItemInfo(itemID)
-        local name = liveName or (meta and meta[1]) or e.name or ("item:" .. itemID)
-        local q    = liveQ or (meta and meta[2]) or e.q
+        local name = liveName or (m and m[1]) or e.name or ("item:" .. itemID)
+        local q    = liveQ or (m and m[2]) or e.q
         local stack = ""
         if maxc and maxc > 1 then
             stack = (minc == maxc) and ("  x" .. maxc) or ("  x" .. minc .. "-" .. maxc)
@@ -752,6 +743,48 @@ local function AddSkinLoot(tip, npcID)
             tip:AddDoubleLine("  " .. hex .. name .. "|r" .. stack, "|cffc8b088" .. pct .. "%|r")
         end
     end
+end
+
+local function AddSkinLoot(tip, npcID)
+    local KN = addon.Knowledge
+    local skins, loot, head
+    if KN and KN.LearnedLoot then skins, loot = KN:LearnedLoot(npcID) end
+    local shown
+    if loot then
+        head = "Skins into (seen " .. skins .. " times):"
+        shown = "learned from " .. skins .. " skins"
+    else
+        local idx = npcID and addon.SkinLoot and addon.SkinLoot[npcID]
+        loot = idx and addon.SkinLootTables and addon.SkinLootTables[idx]
+        if not loot then return nil end
+        head = addon.SkinLootSource and ("Skins into (" .. addon.SkinLootSource .. " data):")
+            or "Skins into:"
+        shown = (addon.SkinLootSource or "PB's") .. " data"
+    end
+    RenderLoot(tip, head, loot, addon.SkinItems)
+    return shown
+end
+
+-- An ore vein's or herb's loot, by node name (Phase 3b-4), the same way:
+-- what you and your friends gathered once there are 10 gathers
+-- (Knowledge.lua LearnedLoot), else the Classic list (Data/Forever
+-- Gather.lua NodeLoot). Returns what it showed, or nil.
+local NODE_HEAD = { Mining = "Mines into", Herbalism = "Gathers into" }
+local function AddNodeLoot(tip, nodeName, prof)
+    local KN = addon.Knowledge
+    local n, loot, head, shown
+    if KN and KN.LearnedLoot then n, loot = KN:LearnedLoot(nodeName, "node") end
+    local word = NODE_HEAD[prof] or "Gathers into"
+    if loot then
+        head, shown = word .. " (seen " .. n .. " times):", "learned from " .. n .. " gathers"
+    else
+        local idx = addon.NodeLoot and addon.NodeLoot[nodeName]
+        loot = idx and addon.NodeLootTables and addon.NodeLootTables[idx]
+        if not loot then return nil end
+        head = word .. " (" .. (addon.SkinLootSource or "PB's") .. " data):"
+        shown = (addon.SkinLootSource or "PB's") .. " data"
+    end
+    RenderLoot(tip, head, loot, addon.NodeItems)
     return shown
 end
 
@@ -771,6 +804,15 @@ local function PlayerGatherSkill(prof)
     local pd = profs[prof]
     if not pd and prof == "Mining" then pd = profs["Smelting"] end
     return pd and pd.skillLevel or nil
+end
+
+-- Loot lists (skinning, ore veins, herbs) show for professions you have
+-- learned; "Unlearned too" in Settings shows them for the others as well.
+-- "Gathering loot" off hides them all.
+local function ShowLootFor(prof)
+    local st = addon.db.settings
+    if st.gatherYieldTooltip == false then return false end
+    return PlayerGatherSkill(prof) ~= nil or st.gatherLootUnlearned == true
 end
 
 -- Colour the "Requires" line by gather difficulty vs your skill: red below the
@@ -884,12 +926,10 @@ local function AddUnitGatherLines(tip, data)
     if yours then tip:AddLine(yours) end
     -- Skinning only: mining yields ore and herbalism yields herb, which the
     -- "Requires" line already implies, so a yield line there is just noise.
-    -- Gated to actual skinners: what a mob yields is only useful if you can
-    -- skin it, so a non-skinner never sees the line even with "show for
-    -- unlearned" on (that governs the Requires line, not this).
+    -- Gated to actual skinners unless "Unlearned too" is on: "show for
+    -- unlearned" governs the Requires line, not this.
     local loot
-    if prof == "Skinning" and addon.db.settings.gatherYieldTooltip ~= false
-       and PlayerGatherSkill("Skinning") then
+    if prof == "Skinning" and ShowLootFor("Skinning") then
         loot = AddSkinLoot(tip, npcID)
     end
     tip:Show()
@@ -964,9 +1004,26 @@ function TSF:HookNodeTooltip()
         end
         if not reqDone then tip:AddLine(requires) end
         if yours and not yourDone then tip:AddLine(yours) end
+        -- the loot list, once: the client's rebuild wipes it with our
+        -- other lines, so its heading marks whether it is still there
+        local loot
+        if ShowLootFor(prof) then
+            local word = NODE_HEAD[prof] or "Gathers into"
+            local present = false
+            for i = 2, tip:NumLines() do
+                local fs = _G[tname .. "TextLeft" .. i]
+                local txt = fs and fs:GetText()
+                if txt and not IsSecret(txt) and txt:sub(1, #word) == word then present = true; break end
+            end
+            if present then
+                loot = addon.db.lastGather and addon.db.lastGather.name == nodeName and addon.db.lastGather.loot
+            else
+                loot = AddNodeLoot(tip, nodeName, prof)
+            end
+        end
         tip:Show()
         NoteGather({ kind = "node", name = nodeName, shown = requires, yours = yours,
-                     why = "node table", gameLine = gameLine })
+                     why = "node table", gameLine = gameLine, loot = loot })
     end
 
     local acc = 0
@@ -5079,7 +5136,18 @@ function TSF:BuildSettingsPanel(parent)
     yRight = yRight - 26
     local unlearnedCB = MakeCheckbox("Show for unlearned professions", "gatherShowUnlearned", yRight, COL_RIGHT + 20)
     yRight = yRight - 26
-    local yieldCB = MakeCheckbox("Skinning loot", "gatherYieldTooltip", yRight, COL_RIGHT + 20)
+    -- WoW: Forever has ore vein and herb loot too (Data/Forever/Gather.lua)
+    local yieldCB = MakeCheckbox(addon.NodeLoot and "Gathering loot" or "Skinning loot",
+        "gatherYieldTooltip", yRight, COL_RIGHT + 20)
+    -- on the same row: the column has no room left for another
+    local lootUnlearnedCB = MakeCheckbox("Unlearned too", "gatherLootUnlearned", yRight, COL_RIGHT + 170)
+    lootUnlearnedCB:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Unlearned too", 1, 1, 1)
+        GameTooltip:AddLine("Also show the loot list for gathering professions you have not learned.", nil, nil, nil, true)
+        GameTooltip:Show()
+    end)
+    lootUnlearnedCB:SetScript("OnLeave", function() GameTooltip:Hide() end)
     yRight = yRight - 24
     groupBg:SetHeight(groupTop - yRight)
 
@@ -5094,7 +5162,16 @@ function TSF:BuildSettingsPanel(parent)
             unlearnedCB:Disable(); unlearnedCB:SetAlpha(0.4)
             yieldCB:Disable(); yieldCB:SetAlpha(0.4)
         end
+        if settings.gatherSkillTooltip and settings.gatherYieldTooltip ~= false then
+            lootUnlearnedCB:Enable(); lootUnlearnedCB:SetAlpha(1)
+        else
+            lootUnlearnedCB:Disable(); lootUnlearnedCB:SetAlpha(0.4)
+        end
     end
+    yieldCB:SetScript("OnClick", function(self)
+        settings.gatherYieldTooltip = self:GetChecked()
+        UpdateGatherSub()
+    end)
     gatherCB:SetScript("OnClick", function(self)
         settings.gatherSkillTooltip = self:GetChecked()
         UpdateGatherSub()

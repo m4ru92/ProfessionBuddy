@@ -2109,7 +2109,7 @@ passed("T80 trainer learn level -- read from the rank, recipe names only")
 -- answer, a KNOW_DATA is dropped without an error, and a rev-8 SYNC_DATA
 -- does not make it ask.
 do
-    assert(addon.COMM_REV == 11, "T81: COMM_REV is " .. tostring(addon.COMM_REV))
+    assert(addon.COMM_REV == 12, "T81: COMM_REV is " .. tostring(addon.COMM_REV))
     assert(addon.Knowledge == nil, "T81: Knowledge loaded on TBC Anniversary")
     addon.db.contacts["Knowy-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 }
     clearSent()
