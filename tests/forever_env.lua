@@ -115,6 +115,8 @@ function F:GetText() return self._text or "" end
 function F:AddLine(text) local l = rawget(self, "_lines"); if l then l[#l + 1] = text end end
 function F:AddDoubleLine(left, right) local l = rawget(self, "_lines"); if l then l[#l + 1] = tostring(left) .. " | " .. tostring(right) end end
 function F:SetText(t) self._text = t end
+-- A font string keeps its text, so a harness can read a label back
+function F:CreateFontString(name) return CreateFrame("FontString", name, self) end
 function F:GetWidth() return 100 end
 function F:GetHeight() return 100 end
 function F:GetVerticalScroll() return 0 end
@@ -238,7 +240,10 @@ end
 SOUNDKIT = setmetatable({}, { __index = function() return 0 end })
 
 -- ------------------------------------------------------------ client
-WOW_PROJECT_ID = 1
+-- Forever reports WOW_PROJECT_CAMELOT (18) since build 70245 (Patch 1.60.1
+-- API changes); retail (interface 17000 and up) reports 1.
+WOW_PROJECT_CAMELOT = 18
+WOW_PROJECT_ID = ((rawget(_G, "BUILD_INTERFACE") or 16001) >= 17000) and 1 or 18
 WOW_PROJECT_MAINLINE = 1
 WOW_PROJECT_CLASSIC = 2
 BUILD_INTERFACE = rawget(_G, "BUILD_INTERFACE") or 16001

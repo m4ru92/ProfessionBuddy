@@ -3538,10 +3538,26 @@ function TSF:HasRod(reqMask, charKey)
     return false
 end
 
--- Append a "Tool: Runed X Rod" line to `tip` for enchants that require a rod
--- (green if the viewed character owns a sufficient rod, red + "(missing)" if
--- not). No-op for recipes with no rod requirement. The rod is a static property
--- resolved from the recipe DB by spellID (locale-stable) with a name fallback.
+-- Does `charKey` have any of `items` in its bags or bank?
+function TSF:HasAnyItem(items, charKey)
+    local charData = DS and DS:GetCharacter(charKey)
+    local inv = charData and charData.inventory
+    local bags = inv and inv.bags or {}
+    local bank = inv and inv.bank or {}
+    for _, itemID in ipairs(items) do
+        if ((bags[itemID] or 0) + (bank[itemID] or 0)) > 0 then return true end
+    end
+    return false
+end
+
+-- Append the recipe's tool lines to `tip`: "Tool: Runed X Rod" for an
+-- enchant's rod, then one "Tool: <name>" line per other tool it needs
+-- (Blacksmith Hammer, Arclight Spanner, Philosopher's Stone, a specific item
+-- such as a Jeweler's Kit; data: ProfBuddy.RecipeTools and ToolCategories,
+-- Data/Tools.lua and Data/Forever/Tools.lua). Green if the viewed character
+-- has one in its bags or bank, red + "(missing)" if not. No-op for a recipe
+-- that needs no tool. The static entry is resolved by spellID (locale-
+-- stable) with a name fallback.
 function TSF:AppendRodLine(tip, recipe)
     if not (recipe and RDB) then return end
     -- Resolve the static entry: by spellID first (locale-stable), then by name
@@ -3552,17 +3568,35 @@ function TSF:AppendRodLine(tip, recipe)
         local byName = RDB:GetRecipeByName(recipe.name)
         if byName then info = byName end
     end
+    local charKey = state._viewCharKey or addon:PlayerKey()
+    local lines = {}
     local rodName = info and info.rod
-    if not rodName then return end
     local reg = addon.EnchantingRods
-    local rod = reg and reg.byName and reg.byName[rodName]
-    if not rod then return end
-    local have = self:HasRod(rod.mask, state._viewCharKey or addon:PlayerKey())
+    local rod = rodName and reg and reg.byName and reg.byName[rodName]
+    if rod then
+        lines[#lines + 1] = { rodName, self:HasRod(rod.mask, charKey) }
+    end
+    local spellID = (info and info.spellID) or recipe.spellID
+    local need = spellID and addon.RecipeTools and addon.RecipeTools[spellID]
+    for _, t in ipairs(need or {}) do
+        if t > 0 then
+            local cat = addon.ToolCategories and addon.ToolCategories[t]
+            if cat then lines[#lines + 1] = { cat.name, self:HasAnyItem(cat.items, charKey) } end
+        else
+            local itemID = -t
+            local name = (addon.ToolItemNames and addon.ToolItemNames[itemID]) or GetItemInfo(itemID)
+                or ("item:" .. itemID)
+            lines[#lines + 1] = { name, self:HasAnyItem({ itemID }, charKey) }
+        end
+    end
+    if #lines == 0 then return end
     tip:AddLine(" ")
-    if have then
-        tip:AddLine("Tool: " .. rodName, 0.4, 1, 0.4)
-    else
-        tip:AddLine("Tool: " .. rodName .. " (missing)", 1, 0.4, 0.4)
+    for _, l in ipairs(lines) do
+        if l[2] then
+            tip:AddLine("Tool: " .. l[1], 0.4, 1, 0.4)
+        else
+            tip:AddLine("Tool: " .. l[1] .. " (missing)", 1, 0.4, 0.4)
+        end
     end
 end
 
@@ -4973,7 +5007,11 @@ function TSF:BuildSettingsPanel(parent)
     -- tooltip or alt headings, because it governs BOTH the recipe browser and
     -- the "Used in" tooltip. Distinct from "Show opposite faction alts", which
     -- is about characters, not about which recipes exist for your side.
-    local factionCB = MakeCheckbox("Hide opposite-faction recipes", "hideOppositeFactionRecipes", yLeft)
+    -- On WoW: Forever every recipe serves both factions, so the setting hides
+    -- the other faction's trainers and vendors on the Source line instead
+    -- (Knowledge.lua); the label says so there
+    local factionCB = MakeCheckbox(addon.Knowledge and "Hide opposite-faction trainers and vendors"
+        or "Hide opposite-faction recipes", "hideOppositeFactionRecipes", yLeft)
     factionCB:SetScript("OnClick", function(self)
         settings.hideOppositeFactionRecipes = self:GetChecked()
         -- Re-filter an open browser immediately. Guarded: RefreshRecipeList

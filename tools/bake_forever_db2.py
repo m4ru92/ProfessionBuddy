@@ -16,6 +16,10 @@ teachItems lists the items that teach a recipe (Pattern, Plans, Recipe
 and so on), so PB can tell which recipe a vendor's or a bag's item
 teaches (Knowledge.lua).
 
+Data/Forever/Tools.lua lists every other tool a recipe needs (Blacksmith
+Hammer, Arclight Spanner, Philosopher's Stone, Flint and Tinder and so on),
+from SpellTotems, with the items that satisfy each (tool_tables).
+
 rod names the Enchanting rod a recipe needs, as on TBC Anniversary: a
 required totem category (SpellTotems) of type 3 (TotemCategory). The rods
 themselves (ProfBuddy.EnchantingRods, written at the end of
@@ -293,6 +297,78 @@ def build(csvdir):
     return final, report, rods, random
 
 
+def tool_tables(csvdir, spells):
+    """Every tool the recipes in `spells` require, other than Enchanting
+    rods (those are the recipe's `rod` field). Returns (recipe_tools, cats,
+    item_names):
+      recipe_tools  spell -> [ category ID, or -item ID for one specific item ]
+      cats          category ID -> { name, items = [ item IDs that satisfy it ] }
+      item_names    item ID -> name, for the specific items
+    An item satisfies a required category when its own category has the same
+    type and covers every bit of the required mask: Alchemist's Stones count
+    as a Philosopher's Stone, a Gnomish Army Knife as a hammer or a spanner.
+    Shared with tools/bake_tbc_tools.py."""
+    totem = {I(r["ID"]): (r["Name_lang"], I(r["TotemCategoryType"]), I(r["TotemCategoryMask"]))
+             for r in read(csvdir, "TotemCategory")}
+    names, carriers = {}, []
+    for r in read(csvdir, "ItemSparse"):
+        names[I(r["ID"])] = r.get("Display_lang") or ""
+        t = totem.get(I(r.get("TotemCategoryID")))
+        if t:
+            carriers.append((I(r["ID"]), t[1], t[2]))
+    recipe_tools, used_cats, used_items = {}, set(), set()
+    for r in read(csvdir, "SpellTotems"):
+        spell = I(r["SpellID"])
+        if spell not in spells:
+            continue
+        need = []
+        for col in ("RequiredTotemCategoryID_0", "RequiredTotemCategoryID_1"):
+            cid = I(r.get(col))
+            if cid and cid in totem and totem[cid][1] != ROD_TYPE and cid not in need:
+                need.append(cid); used_cats.add(cid)
+        for col in ("Totem_0", "Totem_1"):
+            iid = I(r.get(col))
+            if iid and -iid not in need:
+                need.append(-iid); used_items.add(iid)
+        if need:
+            recipe_tools[spell] = need
+    cats = {}
+    for cid in used_cats:
+        name, typ, mask = totem[cid]
+        ok = sorted(i for i, t, m in carriers if t == typ and (m & mask) == mask)
+        cats[cid] = {"name": name, "items": ok}
+    return recipe_tools, cats, {i: names.get(i) or ("item:%d" % i) for i in used_items}
+
+
+def emit_tools(recipe_tools, cats, item_names, build_id, path_label, source):
+    """Lua source for a Tools.lua file."""
+    L = ["-" * 70,
+         "-- ProfessionBuddy  --  %s" % path_label,
+         "-- Tools a recipe requires, other than Enchanting rods (the recipe's",
+         "-- `rod` field). From %s," % source,
+         "-- build %s." % build_id,
+         "--   RecipeTools[spellID]  = { category ID, or -item ID for one item }",
+         "--   ToolCategories[ID]    = { name, items = { items that satisfy it } }",
+         "--   ToolItemNames[itemID] = name of a specific required item",
+         "--",
+         "-- GENERATED. Do not hand-edit.",
+         "-" * 70,
+         "ProfBuddy = ProfBuddy or {}",
+         "ProfBuddy.ToolCategories = {"]
+    for cid in sorted(cats):
+        c = cats[cid]
+        L.append("    [%d] = { name = %s, items = { %s } }," % (
+            cid, lua_str(c["name"]), ", ".join(str(i) for i in c["items"])))
+    L += ["}", "ProfBuddy.ToolItemNames = {"]
+    for iid in sorted(item_names):
+        L.append("    [%d] = %s," % (iid, lua_str(item_names[iid])))
+    L += ["}", "ProfBuddy.RecipeTools = {"]
+    for spell in sorted(recipe_tools):
+        L.append("    [%d] = { %s }," % (spell, ", ".join(str(x) for x in recipe_tools[spell])))
+    L.append("}")
+    return "\n".join(L) + "\n"
+
+
 def lua_str(s):
     return '"' + str(s).replace("\\", "\\\\").replace('"', '\\"') + '"'
 
@@ -446,6 +522,12 @@ def main():
     with open(os.path.join(a.out, "RandomStats.lua"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(emit_random(random, a.build))
     print("RandomStats.lua  %4d items" % len(random))
+    spells = {rec["spell"] for recs in final.values() for rec in recs}
+    rt, cats, inames = tool_tables(a.csvdir, spells)
+    with open(os.path.join(a.out, "Tools.lua"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(emit_tools(rt, cats, inames, a.build, "Data/Forever/Tools.lua",
+                            "WoW: Forever's SpellTotems, TotemCategory and ItemSparse"))
+    print("Tools.lua        %4d recipes need a tool" % len(rt))
     print("\n%d recipes in %d files -> %s" % (total, len(files), a.out))
     for k in sorted(report):
         print("  %-66s %5d" % (k, report[k]))

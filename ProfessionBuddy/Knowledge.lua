@@ -241,16 +241,24 @@ end
 -- Display
 ----------------------------------------------------------------------
 
-local function ForFaction(npc, faction)
-    return not faction or not npc.faction or npc.faction == faction or npc.faction == "Neutral"
+-- Does `npc` (keyed by its NPC ID, `key`) serve `faction`? The side from
+-- the game data first (Data/Forever/NpcFactions.lua: its faction's
+-- reaction to each side), else the faction PB saw when it was met. With
+-- no faction (the checkbox off) every NPC shows.
+local SIDE_OF = { Alliance = "A", Horde = "H" }
+local function ForFaction(npc, faction, key)
+    if not faction then return true end
+    local side = addon.NpcSides and type(key) == "number" and addon.NpcSides[key]
+    if side then return side == "N" or side == SIDE_OF[faction] end
+    return not npc.faction or npc.faction == faction or npc.faction == "Neutral"
 end
 
 -- The NPCs of `faction` (plus neutral ones) in a teachers or vendors
 -- table, the current zone first, then the most recently seen.
 local function Sorted(list, faction)
     local out = {}
-    for _, npc in pairs(list or {}) do
-        if ForFaction(npc, faction) then out[#out + 1] = npc end
+    for key, npc in pairs(list or {}) do
+        if ForFaction(npc, faction, key) then out[#out + 1] = npc end
     end
     local here = GetRealZoneText()
     table.sort(out, function(a, b)

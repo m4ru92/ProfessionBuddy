@@ -2252,8 +2252,27 @@ do
 end
 passed("T87 /pb bug -- the last gathering tooltip: what, what PB showed, why, could you gather it; none when nothing recorded")
 
+-- T88: tool requirements on TBC Anniversary (Data/Tools.lua, baked from the
+-- client's SpellTotems by tools/bake_tbc_tools.py): every tool but the
+-- Enchanting rod, with the items that satisfy it.
+do
+    dofile(BASE .. "/Data/Tools.lua")
+    local RT, TC = addon.RecipeTools, addon.ToolCategories
+    assert(TC[13] and TC[13].name == "Blacksmith Hammer" and TC[13].items[1] == 5956, "T88: hammer")
+    local stones = {}
+    for _, i in ipairs(TC[12].items) do stones[i] = true end
+    assert(TC[12].name == "Philosopher's Stone" and stones[9149] and stones[13503] and stones[35748],
+           "T88: Alchemist's Stones count as a Philosopher's Stone")
+    assert(RT[12260] and RT[12260][1] == 13, "T88: Rough Copper Vest needs a hammer")
+    assert(RT[25278] and RT[25278][1] == -20815 and addon.ToolItemNames[20815] == "Jeweler's Kit", "T88: Jeweler's Kit")
+    local n = 0
+    for _ in pairs(RT) do n = n + 1 end
+    assert(n == 804, "T88: " .. n .. " recipes need a tool")
+end
+passed("T88 TBC tools -- hammer, spanner, micro-adjustor, Philosopher's Stone (Alchemist's Stones count), Jeweler's Kit; 804 recipes")
+
 leaveGuild()
-print("ALL 87 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 88 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2269,6 +2288,6 @@ print("ALL 87 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data; "
     .. pass .. " of them print a PASS line above)")
 

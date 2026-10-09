@@ -33,6 +33,7 @@ Data/Smelting.lua
 Data/Poisons.lua
 Data/GatherMobs.lua
 Data/RandomEnchant.lua
+Data/Tools.lua
 MaterialCalc.lua
 UI/Main.lua
 UI/CharacterPanel.lua

@@ -34,6 +34,8 @@ Data/Forever/Skinning.lua
 Data/Forever/Tailoring.lua
 Data/Forever/Gather.lua
 Data/Forever/RandomStats.lua
+Data/Forever/Tools.lua
+Data/Forever/NpcFactions.lua
 Knowledge.lua
 MaterialCalc.lua
 UI/Main.lua

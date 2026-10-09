@@ -2554,8 +2554,8 @@ do
     TSF:AppendRodLine(tip, { spellID = 7457, name = "Enchant Bracer - Minor Stamina" })
     EXPECT(lines[2] and lines[2].t == "Tool: Runed Copper Rod" and lines[2].g == 1, "owned rod: " .. tostring(lines[2] and lines[2].t))
     lines = {}
-    TSF:AppendRodLine(tip, { spellID = 1229737, name = "Basic Campfire" })
-    EXPECT(#lines == 0, "a rod line on a recipe without one")
+    TSF:AppendRodLine(tip, { spellID = 2881, name = "Light Leather" })
+    EXPECT(#lines == 0, "a tool line on a recipe that needs none")
     bags[6218], bags[6339], bags[16207] = keep[1], keep[2], keep[3]
 end
 print("  PASS F45 Enchanting rods on Forever: Copper to Arcanite with cumulative masks, the recipe's rod on its tooltip, green when owned (a higher rod counts), red (missing) without")
@@ -2589,4 +2589,190 @@ do
 end
 print("  PASS F46 random stats on Forever: 17 items from the bake, the game's own <Random additional stats> wording, never doubled")
 
-print("ALL FOREVER TESTS PASS (46)")
+-- F47: every other tool, on Forever as on TBC Anniversary (Data/Forever/
+-- Tools.lua from SpellTotems): Blacksmith Hammer, Arclight Spanner,
+-- Gyromatic Micro-Adjustor, Philosopher's Stone, and specific items (Flint
+-- and Tinder for a campfire). Any item whose tool category covers the
+-- required one counts (the Gnomish Army Knife is a hammer and a spanner).
+do
+    local TSF, RDB = ProfBuddy.TradeSkillFrame, ProfBuddy.RecipeDB
+    local RT, TC = ProfBuddy.RecipeTools, ProfBuddy.ToolCategories
+    local n = 0
+    for _ in pairs(RT or {}) do n = n + 1 end
+    EXPECT(n > 600, "only " .. n .. " recipes need a tool")
+    EXPECT(TC[162] and TC[162].name == "Blacksmith Hammer" and TC[14].name == "Arclight Spanner", "tool categories")
+    local function has(list, x) for _, v in ipairs(list) do if v == x then return true end end end
+    EXPECT(has(TC[162].items, 5956) and has(TC[162].items, 260811) and has(TC[14].items, 260811)
+           and not has(TC[15].items, 6219), "which items satisfy a tool")
+    EXPECT(RT[1229737] and RT[1229737][1] == -4471 and ProfBuddy.ToolItemNames[4471] == "Flint and Tinder", "campfire tool")
+    local cop = RDB.data.Blacksmithing["Copper Chain Belt"] or RDB.data.Blacksmithing["Rough Copper Vest"]
+    EXPECT(cop and RT[cop.spellID] and RT[cop.spellID][1] == 162, "a Blacksmithing recipe without its hammer")
+    local lines = {}
+    local tip = { AddLine = function(_, t, r, g) lines[#lines + 1] = { t = t, r = r, g = g } end }
+    local char = ProfBuddy.DataStore:GetCharacter(ProfBuddy:PlayerKey())
+    local bags = char.inventory.bags
+    local keep = { bags[5956], bags[260811], bags[4471] }
+    bags[5956], bags[260811], bags[4471] = nil, nil, nil
+    TSF:AppendRodLine(tip, { spellID = cop.spellID, name = "x" })
+    EXPECT(lines[1].t == " " and lines[2].t == "Tool: Blacksmith Hammer (missing)" and lines[2].r == 1, "missing hammer: " .. tostring(lines[2] and lines[2].t))
+    lines = {}
+    char.inventory.bank = char.inventory.bank or {}
+    local bankKeep = char.inventory.bank[5956]
+    char.inventory.bank[5956] = 1          -- a hammer in the bank counts
+    TSF:AppendRodLine(tip, { spellID = cop.spellID, name = "x" })
+    EXPECT(lines[2].t == "Tool: Blacksmith Hammer" and lines[2].g == 1, "hammer in the bank")
+    char.inventory.bank[5956] = bankKeep
+    lines = {}
+    bags[260811] = 1     -- a Gnomish Army Knife covers the hammer
+    TSF:AppendRodLine(tip, { spellID = cop.spellID, name = "x" })
+    EXPECT(lines[2].t == "Tool: Blacksmith Hammer" and lines[2].g == 1, "army knife as hammer")
+    lines = {}
+    TSF:AppendRodLine(tip, { spellID = 1229737, name = "Basic Campfire" })
+    EXPECT(lines[2] and lines[2].t == "Tool: Flint and Tinder (missing)", "campfire: " .. tostring(lines[2] and lines[2].t))
+    lines = {}
+    bags[4471] = 1
+    TSF:AppendRodLine(tip, { spellID = 1229737, name = "Basic Campfire" })
+    EXPECT(lines[2].t == "Tool: Flint and Tinder", "campfire with flint")
+    bags[5956], bags[260811], bags[4471] = keep[1], keep[2], keep[3]
+end
+print("  PASS F47 every tool on Forever: hammer, spanner, micro-adjustor, Philosopher's Stone and specific items, red (missing) or green, an item covering the category counts")
+
+-- F48: "Hide opposite-faction trainers and vendors" (WoW: Forever's label
+-- for hideOppositeFactionRecipes). The side an NPC serves comes from the
+-- game data (Data/Forever/NpcFactions.lua: its VMaNGOS faction read in
+-- Forever's FactionTemplate), else the faction PB saw when it was met.
+do
+    local KN = ProfBuddy.Knowledge
+    local SIDES = ProfBuddy.NpcSides
+    local n = 0
+    for _ in pairs(SIDES or {}) do n = n + 1 end
+    EXPECT(n > 1400 and SIDES[3008] == "H" and SIDES[3955] == "A" and SIDES[2843] == "N", "NPC side data: " .. n)
+    local spell = ProfBuddy.RecipeDB.data.Leatherworking["Handstitched Leather Pants"].spellID
+    local realK = ProfBuddyDB.knowledge
+    ProfBuddyDB.knowledge = { [spell] = { seenBy = { ["*"] = true }, teachers = {
+        [3008] = { name = "Mak", zone = "Thunder Bluff" },                       -- no recorded faction
+        [3955] = { name = "Shandrina", zone = "Ashenvale", faction = "Horde" },  -- recorded wrongly
+        [2843] = { name = "Jutak", zone = "Stranglethorn Vale", faction = "Horde" },
+        [999901] = { name = "Newcomer", zone = "Somewhere", faction = "Horde" }, -- not in the data
+    } } }
+    local function shown(faction)   -- every trainer, as the Source tooltip lists them
+        return table.concat(KN:TooltipLines(spell, faction) or {}, " / ")
+    end
+    local a, h, all = shown("Alliance"), shown("Horde"), shown(nil)
+    EXPECT(not a:find("Mak", 1, true) and a:find("Shandrina", 1, true) and a:find("Jutak", 1, true)
+           and not a:find("Newcomer", 1, true), "Alliance sees: " .. a)
+    EXPECT(h:find("Mak", 1, true) and not h:find("Shandrina", 1, true) and h:find("Jutak", 1, true)
+           and h:find("Newcomer", 1, true), "Horde sees: " .. h)
+    EXPECT(all:find("Mak", 1, true) and all:find("Shandrina", 1, true), "checkbox off hides someone: " .. all)
+    ProfBuddyDB.knowledge = realK
+    -- the Settings label says what it does on Forever
+    local label
+    for _, f in ipairs(FRAMES) do
+        if rawget(f, "_text") == "Hide opposite-faction trainers and vendors" then label = true end
+        if rawget(f, "_text") == "Hide opposite-faction recipes" then label = "old" end
+    end
+    EXPECT(label == true, "Settings label: " .. tostring(label))
+end
+print("  PASS F48 opposite-faction trainers and vendors: the side from the game data (Mak Horde, Shandrina Alliance, Jutak both), else what PB saw; Forever's Settings label")
+
+-- F49: the 2026-10-09 review fixes. Numbered message ids start from the
+-- clock, not 1, so a /reload cannot merge with a partial a peer holds;
+-- _lastHeard is swept; a shared record with nothing in it is not stored
+-- (it would only mark a recipe seen); a secret sender is dropped before
+-- anything parses it; while addon chat is restricted an unacked order
+-- message queues quietly and goes out when the restriction lifts; the
+-- recipe list waits while the profession data is changing and keeps only
+-- the open profession's recipes; the client reports WOW_PROJECT_CAMELOT.
+do
+    local Comm, KN = ProfBuddy.Comm, ProfBuddy.Knowledge
+    local AS = LibStub("AceSerializer-3.0")
+    EXPECT(WOW_PROJECT_ID == 18 and WOW_PROJECT_CAMELOT == 18 and ProfBuddyDB, "Forever's project id")
+
+    -- message ids from the clock
+    local CTL = ChatThrottleLib
+    local realCTL = CTL.SendAddonMessage
+    local wire = {}
+    CTL.SendAddonMessage = function(_, prio, prefix, text) wire[#wire + 1] = text end
+    Comm._chunkSeq = nil
+    local big = { names = {} }
+    for i = 1, 60 do big.names[i] = "Recipe number " .. i end
+    Comm:Send("SYNC_DATA", big, "WHISPER", "Pal Friend", "BULK")
+    CTL.SendAddonMessage = realCTL
+    local id = wire[1] and tonumber(wire[1]:match("^\005(%d+):"))
+    EXPECT(id == time() % 9999 + 1 and id ~= 1, "first id after a reload: " .. tostring(id))
+
+    -- _lastHeard swept
+    Comm._lastHeard = { ["Old Friend-Forever"] = time() - 700, ["New Friend-Forever"] = time() }
+    Comm:SweepSessionTables()
+    EXPECT(Comm._lastHeard["Old Friend-Forever"] == nil and Comm._lastHeard["New Friend-Forever"], "_lastHeard not swept")
+
+    -- empty shared records
+    local leather = ProfBuddy.RecipeDB.data.Leatherworking["Handstitched Leather Pants"].spellID
+    local boots = ProfBuddy.RecipeDB.data.Leatherworking["Handstitched Leather Boots"].spellID
+    local clean = Comm:SanitizeKnowledge({ at = 10, npcs = {}, r = { [leather] = { a = 10 }, [boots] = { a = 10, l = 15 } } })
+    EXPECT(clean and clean.records[leather] == nil and clean.records[boots] and clean.records[boots].learnLevel == 15,
+           "empty shared record kept")
+
+    -- a secret sender
+    local SECRET = newproxy(true)
+    getmetatable(SECRET).__index = function() error("secret indexed") end
+    issecretvalue = function(v) return rawequal(v, SECRET) end
+    local realType = type
+    type = function(v) if rawequal(v, SECRET) then return "string" end return realType(v) end
+    local okS, errS = pcall(Comm.OnMessageReceived, Comm, "PBuddy", AS:Serialize({ _type = "SYNC_REQ" }), "WHISPER", SECRET)
+    type = realType
+    issecretvalue = nil
+    EXPECT(okS, "secret sender: " .. tostring(errS))
+
+    -- addon chat restricted: no "offline", and the queue goes out when it lifts
+    local realR = rawget(_G, "C_RestrictedActions")
+    local restricted = true
+    C_RestrictedActions = { IsAddOnRestrictionActive = function(t) return t == 5 and restricted end }
+    local realWhisper = Comm.SendWhisper
+    local sent = {}
+    Comm.SendWhisper = function(_, t, d, target) sent[#sent + 1] = { t = t, to = target } end
+    PRINTS = {}
+    Comm._lastHeard = {}
+    ProfBuddyDB.orderOutbox = {}
+    local PAL = "Pal Friend-Forever"
+    Comm:SendOrderMessage("ORDER_UPDATE", { token = "tok-1", id = "Me-Forever-1" }, PAL, "update")
+    FLUSH()
+    EXPECT(not PRINTED("is offline") and ProfBuddyDB.orderOutbox["tok-1"], "restricted: offline printed or nothing queued")
+    restricted = false
+    sent = {}
+    Comm:OnRestrictionChanged(5, 0)
+    local resent = false
+    for _, m in ipairs(sent) do if m.t == "ORDER_UPDATE" and m.to == PAL then resent = true end end
+    EXPECT(resent, "queued order message not sent when the restriction lifted")
+    Comm.SendWhisper = realWhisper
+    ProfBuddyDB.orderOutbox = {}
+    FLUSH()
+    C_RestrictedActions = realR
+
+    -- the recipe list: waits while the data changes, keeps the open profession's recipes
+    local SRC = ProfBuddy.Source
+    C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH()
+    TS.changing = true
+    EXPECT(SRC:OpenInfo() == nil and #SRC:ReadOpenWindow(false).rows == 0, "read while the data source was changing")
+    TS.changing = false
+    local n = #SRC:ReadOpenWindow(false).rows
+    local realIDs = C_TradeSkillUI.GetAllRecipeIDs
+    C_TradeSkillUI.GetAllRecipeIDs = function()
+        local ids = realIDs()
+        ids[#ids + 1] = 1229737        -- Cooking's Basic Campfire, mixed in
+        return ids
+    end
+    local rows = SRC:ReadOpenWindow(false).rows
+    local foreign = false
+    for _, r in ipairs(rows) do if r.recipeID == 1229737 then foreign = true end end
+    EXPECT(#rows == n and not foreign, "a Cooking recipe in the Leatherworking list")
+    -- an API that answers no for everything: no filtering at all
+    local realIn = C_TradeSkillUI.IsRecipeInSkillLine
+    C_TradeSkillUI.IsRecipeInSkillLine = function() return false end
+    EXPECT(#SRC:ReadOpenWindow(false).rows == n + 1, "a no-for-everything API emptied the list")
+    C_TradeSkillUI.IsRecipeInSkillLine = realIn
+    C_TradeSkillUI.GetAllRecipeIDs = realIDs
+end
+print("  PASS F49 review fixes: numbered ids from the clock, _lastHeard swept, empty shared records dropped, secret senders dropped, restricted chat queues quietly and resends, list read waits for the data and keeps its own profession's recipes, project id 18")
+
+print("ALL FOREVER TESTS PASS (49)")

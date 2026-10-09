@@ -63,7 +63,7 @@ KNOWN_FIELDS = set(REQUIRED_FIELDS) | {
 FOREVER_OPTIONAL_FIELDS = {"skillReq", "skillRange"}
 
 # Files in Data/ that are not recipe registrations.
-NON_RECIPE_FILES = {"GatherMobs.lua", "RandomEnchant.lua",
+NON_RECIPE_FILES = {"GatherMobs.lua", "RandomEnchant.lua", "Tools.lua", "NpcFactions.lua",
                     "Gather.lua", "RandomStats.lua"}   # the last two: Data/Forever
 
 PLACEHOLDER_RE = re.compile(r"^\s*$|todo|tbd|placeholder|^unknown$|\bxxx\b|fixme",

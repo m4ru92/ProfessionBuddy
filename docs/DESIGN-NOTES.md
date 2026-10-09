@@ -152,6 +152,32 @@ additional stats>" on Forever. The same bake reads Forever's Enchanting rods
 (SpellTotems, TotemCategory type 3, ItemSparse TotemCategoryID): Copper to
 Arcanite, the same items and cumulative masks as TBC's first five.
 
+## Tools (both clients)
+
+Every tool a recipe needs other than its Enchanting rod (Blacksmith Hammer,
+Arclight Spanner, Gyromatic Micro-Adjustor, Philosopher's Stone, and single
+items such as a Jeweler's Kit or Flint and Tinder) comes from the client's
+SpellTotems: `Data/Tools.lua` (TBC Anniversary, `tools/bake_tbc_tools.py`)
+and `Data/Forever/Tools.lua` (`tools/bake_forever_db2.py`), through one
+rule (`tool_tables`). An item satisfies a required tool category when its
+own category has the same type and covers every bit of the required mask,
+so Alchemist's Stones count as a Philosopher's Stone and a Gnomish Army
+Knife as a hammer or a spanner. The bake lists the satisfying items per
+category; PB only checks the viewed character's bags and bank. TBC
+Anniversary: 804 recipes; Forever: 647.
+
+## Which side a trainer or vendor serves (WoW: Forever)
+
+On Forever every recipe serves both factions, so "Hide opposite-faction
+recipes" hides the other side's trainers and vendors on the Source line
+instead, and says so ("Hide opposite-faction trainers and vendors"). The
+side comes from `Data/Forever/NpcFactions.lua`: each Classic trainer's and
+vendor's faction from VMaNGOS, read in Forever's own FactionTemplate
+(EnemyGroup bit 2 = hostile to Alliance, 4 = to Horde; the Enemies_ and
+Friend_ lists name single factions and win). An NPC not listed (new on
+Forever) goes by the faction PB saw when it was met. `tools/gather_db.py
+--regen --source classic` writes it; run it again after a Forever rebake.
+
 ## Static skill requirements (crafting)
 
 Static `skillReq` values are treated as authoritative (cross-checked vs cmangos

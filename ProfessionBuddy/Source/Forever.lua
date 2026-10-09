@@ -130,12 +130,40 @@ end
 function Source:OpenInfo()
     local T = C_TradeSkillUI
     if not (T and T.IsTradeSkillReady and T.IsTradeSkillReady()) then return nil end
+    -- Mid-swap from one profession to another the list can hold both
+    -- (Blizzard's own window yields here too; other Forever addons saw an
+    -- Alchemy window list Cooking's recipes)
+    if T.IsDataSourceChanging and T.IsDataSourceChanging() == true then return nil end
     local info = T.GetBaseProfessionInfo and T.GetBaseProfessionInfo()
     if not info or not info.professionID or info.professionID == 0
        or not info.professionName or info.professionName == "" then
         return nil
     end
     return info
+end
+
+-- A test for "does this recipe belong to the open profession", the way
+-- Blizzard's own list filters (IsRecipeInSkillLine against the child
+-- profession, else the base one). If it would turn away every recipe the
+-- game lists, the API is not answering as expected, so nothing is filtered.
+function Source:RecipeFilter()
+    local T = C_TradeSkillUI
+    local keep = function() return true end
+    if not (T and T.IsRecipeInSkillLine) then return keep end
+    local child = T.GetChildProfessionInfo and T.GetChildProfessionInfo()
+    local base = T.GetBaseProfessionInfo and T.GetBaseProfessionInfo()
+    local id = (type(child) == "table" and type(child.professionID) == "number" and child.professionID ~= 0
+                and child.professionID)
+        or (type(base) == "table" and type(base.professionID) == "number" and base.professionID ~= 0
+            and base.professionID)
+    if not id then return keep end
+    local ids = T.GetAllRecipeIDs() or {}
+    local any = false
+    for _, recipeID in ipairs(ids) do
+        if T.IsRecipeInSkillLine(recipeID, id) == true then any = true; break end
+    end
+    if not any then return keep end
+    return function(recipeID) return T.IsRecipeInSkillLine(recipeID, id) == true end
 end
 
 -- Is a profession open or opening? The profession is set when
@@ -278,10 +306,11 @@ function Source:ReadOpenWindow(isCraft)
     local T = C_TradeSkillUI
     local categoryName = {}
     local seen = {}
+    local inLine = self:RecipeFilter()
     for _, recipeID in ipairs(T.GetAllRecipeIDs() or {}) do
         local info = T.GetRecipeInfo(recipeID)
         if info and info.learned and not info.isDummyRecipe
-           and info.name and not seen[info.name] then
+           and info.name and not seen[info.name] and inLine(recipeID) then
             seen[info.name] = true
 
             local schematic = T.GetRecipeSchematic(recipeID, false)

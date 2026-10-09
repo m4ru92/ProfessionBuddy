@@ -170,6 +170,13 @@ function Comm:Init()
             Comm:OnChunk(prefix, text, channel, sender)
         end)
     end
+    -- Only where the client has addon restrictions: registering an event the
+    -- client does not know is a Lua error
+    if C_RestrictedActions and C_RestrictedActions.IsAddOnRestrictionActive then
+        addon:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", function(_, rtype, state)
+            Comm:OnRestrictionChanged(rtype, state)
+        end)
+    end
 
     -- Auto-sync: broadcast HELLO when joining a group
     addon:RegisterEvent("GROUP_ROSTER_UPDATE", function()
@@ -276,7 +283,9 @@ end
 function Comm:SendNumbered(text, channel, target, prio)
     local total = math.ceil(#text / CHUNK_DATA)
     if total > CHUNK_MAX or not ChatThrottleLib then return end
-    self._chunkSeq = (self._chunkSeq or 0) % 9999 + 1
+    -- seeded from the clock (Comm:Init), so a /reload does not restart at
+    -- id 1 and merge into a partial message a peer still holds from before
+    self._chunkSeq = (self._chunkSeq or time() % 9999) % 9999 + 1
     local head = CHUNK_MARK .. self._chunkSeq .. ":"
     for n = 1, total do
         ChatThrottleLib:SendAddonMessage(prio, PREFIX,
@@ -703,6 +712,10 @@ local ALLOWED_DIST = {
 }
 
 function Comm:OnMessageReceived(prefix, message, distribution, sender)
+    -- WoW: Forever can hand chat values over as secrets (in an instance);
+    -- comparing or parsing one is a Lua error. OnChunk has the same guard.
+    if type(issecretvalue) == "function"
+       and (issecretvalue(prefix) or issecretvalue(message) or issecretvalue(sender)) then return end
     if prefix ~= PREFIX then return end
 
     -- Canonical Name-Realm: the same spelling contacts, orders and characters
@@ -899,7 +912,10 @@ function Comm:SendOrderMessage(msgType, data, target, label, isResend)
             -- "offline" for a friend who was talking to us). Heard from them
             -- lately: queue for the retry quietly.
             local heard = self._lastHeard and self._lastHeard[normFullKey(target) or target]
-            local online = heard ~= nil and (time() - heard) < RECENTLY_HEARD
+            -- While the game restricts addon chat (WoW: Forever, in an
+            -- instance) nothing can arrive, so silence proves nothing either
+            local online = (heard ~= nil and (time() - heard) < RECENTLY_HEARD)
+                or Comm:ChatRestricted()
             if not isResend and not warned and not online then
                 warned = true
                 print("|cff00ccffProfessionBuddy:|r " .. shortName(target) ..
@@ -982,6 +998,28 @@ function Comm:HandleOrderAck(sender, data, distribution)
         o.deliveryState = (data.rejected == true) and "rejected" or "delivered"
         if addon.OrdersPanel and addon.OrdersPanel.RefreshAll then addon.OrdersPanel:RefreshAll() end
     end
+end
+
+-- WoW: Forever restricts addon chat in some places (C_RestrictedActions,
+-- type Chat = 5). Messages sent then are lost, so an order update with no
+-- ack queues quietly, and when the restriction lifts every queued order
+-- message goes out again. TBC Anniversary has no such restriction.
+local CHAT_RESTRICTION = 5
+function Comm:ChatRestricted()
+    local R = C_RestrictedActions
+    if not (R and R.IsAddOnRestrictionActive) then return false end
+    local t = (Enum and Enum.AddOnRestrictionType and Enum.AddOnRestrictionType.Chat) or CHAT_RESTRICTION
+    return R.IsAddOnRestrictionActive(t) == true
+end
+
+function Comm:OnRestrictionChanged(rtype, state)
+    local chat = (Enum and Enum.AddOnRestrictionType and Enum.AddOnRestrictionType.Chat) or CHAT_RESTRICTION
+    if rtype ~= chat or state ~= 0 then return end   -- 0 = Inactive: lifted
+    local targets = {}
+    for _, entry in pairs(addon.db.orderOutbox or {}) do
+        if type(entry) == "table" and entry.target then targets[entry.target] = true end
+    end
+    for target in pairs(targets) do self:FlushOutbox(target) end
 end
 
 -- Re-send any order messages queued for a player. Called when we next
@@ -2201,7 +2239,10 @@ function Comm:SanitizeKnowledge(data)
                     end
                 end
             end
-            records[id] = out
+            -- a record with nothing in it would only mark the recipe seen
+            if out.learnLevel or out.items or out.teachers or out.vendors then
+                records[id] = out
+            end
         end
     end
     -- One loot field (s by NPC ID, g by node name), rebuilt the same way.
@@ -2714,6 +2755,7 @@ end
 function Comm:SweepSessionTables()
     local now = time()
     sweepByAge(lastServed, SESSION_TTL, now)
+    sweepByAge(self._lastHeard, SESSION_TTL, now)
     sweepByAge(self._guildSyncAt, SESSION_TTL, now)
     sweepByAge(self._helloAckAt, SESSION_TTL, now)
     sweepByAge(self._helloPullAt, SESSION_TTL, now)

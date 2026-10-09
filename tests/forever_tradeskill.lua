@@ -75,6 +75,16 @@ function T.CloseTradeSkill()
 end
 
 function T.IsTradeSkillReady() return TS.open ~= nil and TS.ready end
+-- True while the game swaps one profession's list for another's
+-- (TRADE_SKILL_DATA_SOURCE_CHANGING .. _CHANGED); a test sets TS.changing.
+function T.IsDataSourceChanging() return TS.changing == true end
+-- Forever has one tier: the child profession is the base one.
+function T.GetChildProfessionInfo() return T.GetBaseProfessionInfo() end
+function T.IsRecipeInSkillLine(id, skillLine)
+    local e = byRecipe[id]
+    local prof = e and FX.professions[e.prof]
+    return prof ~= nil and prof.skillLine == skillLine
+end
 function T.IsTradeSkillLinked() return TS.linked end
 function T.IsTradeSkillGuild() return false end
 
