@@ -142,6 +142,16 @@ There are 13 items across BS/LW/Eng/JC (the Wild Leather set, Gemmed Copper
 Gauntlets, Dark Iron Boots, Green Lens, Cogspinner Goggles, Heavy Silver Ring,
 Aquamarine/Sapphire Signet).
 
+WoW: Forever has no random-property fields; an item rolls random stats when
+the client gives it an item bonus tree (ItemXBonusTree). `tools/bake_forever_db2.py`
+writes those crafted items to `Data/Forever/RandomStats.lua` (17: the Wild
+Leather set, Gemmed Copper Gauntlets, Dark Iron Boots, Green Lens, and 8 new
+Engineering belts and goggles). The line is the game's own
+`ITEM_RANDOM_ENCHANT`: "<Random enchantment>" on TBC Anniversary, "<Random
+additional stats>" on Forever. The same bake reads Forever's Enchanting rods
+(SpellTotems, TotemCategory type 3, ItemSparse TotemCategoryID): Copper to
+Arcanite, the same items and cumulative masks as TBC's first five.
+
 ## Static skill requirements (crafting)
 
 Static `skillReq` values are treated as authoritative (cross-checked vs cmangos

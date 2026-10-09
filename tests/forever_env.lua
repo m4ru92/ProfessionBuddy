@@ -289,6 +289,9 @@ function GetTime() return 1000 end
 function time() return 5000 end
 function date() return "2026-09-24" end
 function GetLocale() return "enUS" end
+-- Forever's own wording (GlobalStrings, build 1.60.1.70205); TBC
+-- Anniversary's is "<Random enchantment>"
+ITEM_RANDOM_ENCHANT = "<Random additional stats>"
 function GetRealmName() return "Realm" end
 -- securecallfunction(f, ...) calls f (CallbackHandler, and so AceComm's
 -- delivery, goes through it)

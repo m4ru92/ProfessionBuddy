@@ -366,7 +366,10 @@ for prof, recipes in pairs(RDB.data) do
         EXPECT(r.sources and METHODS[r.sources[1].method], prof .. "/" .. name .. " source")
     end
 end
-EXPECT(nProf == 13 and nRec == 2347, "expected 13 professions / 2347 recipes, got " .. nProf .. " / " .. nRec)
+EXPECT(nProf == 13 and nRec == 2345, "expected 13 professions / 2345 recipes, got " .. nProf .. " / " .. nRec)
+-- Tanning and Gardening open the Skinning and Herbalism windows; they are
+-- not recipes (the game does not list them)
+EXPECT(RDB.data.Skinning.Tanning == nil and RDB.data.Herbalism.Gardening == nil, "a profession window spell baked as a recipe")
 EXPECT(not RDB.data.Smelting and not RDB.data.Jewelcrafting, "TBC data loaded on Forever")
 EXPECT(RDB.spellToRecipe[2881] and RDB.spellToRecipe[2881].recipeName == "Light Leather", "spell index")
 C_TradeSkillUI.OpenTradeSkill(165)
@@ -403,7 +406,7 @@ end)
 ll.skillRange[1], ll.skillReq, st.searchText = keepOrange, keepReq, ""
 TSF:RefreshRecipeList()
 EXPECT(ok3, "a known recipe with an unknown learn level errored: " .. tostring(err3))
-print("  PASS F19 Forever data: 13 professions, 2347 recipes, well-formed, no TBC data; Missing list uses captured learn levels; unknown learn level (" .. unknownLearn .. ") shows without error")
+print("  PASS F19 Forever data: 13 professions, 2345 recipes, well-formed, no TBC data; Missing list uses captured learn levels; unknown learn level (" .. unknownLearn .. ") shows without error")
 
 -- F20: Phase 4b, the trainer scan (Knowledge.lua), fed m4ru's real Thunder
 -- Bluff captures (tests/forever_trainer.lua). A profession trainer's every
@@ -2520,4 +2523,70 @@ do
 end
 print("  PASS F44 node loot on the wire: asked with g, sent only when asked, known node names under their own profession, caps")
 
-print("ALL FOREVER TESTS PASS (44)")
+-- F45: Enchanting rods on WoW: Forever, as on TBC Anniversary. The bake
+-- reads each recipe's required rod (SpellTotems, totem category type 3) and
+-- the rods themselves (ItemSparse TotemCategoryID): Copper to Arcanite,
+-- cumulative masks. The tooltip says "Tool: Runed Copper Rod", green with a
+-- good enough rod in the bags or bank, red "(missing)" without.
+do
+    local RDB, TSF = ProfBuddy.RecipeDB, ProfBuddy.TradeSkillFrame
+    local rods = ProfBuddy.EnchantingRods
+    EXPECT(rods and #rods.list == 5 and rods.byName["Runed Copper Rod"].itemID == 6218
+           and rods.byName["Runed Copper Rod"].mask == 1 and rods.byName["Runed Arcanite Rod"].mask == 31,
+           "Forever rod list")
+    local n = 0
+    for _, r in pairs(RDB.data.Enchanting) do
+        if r.rod then n = n + 1; EXPECT(rods.byName[r.rod], "unknown rod " .. tostring(r.rod)) end
+    end
+    EXPECT(n > 200, "only " .. n .. " recipes name a rod")
+    EXPECT(RDB:GetRecipeBySpell(7457).rod == "Runed Copper Rod", "Minor Stamina's rod")
+    local lines = {}
+    local tip = { AddLine = function(_, t, r, g, b) lines[#lines + 1] = { t = t, r = r, g = g } end }
+    local char = ProfBuddy.DataStore:GetCharacter(ProfBuddy:PlayerKey())
+    char.inventory = char.inventory or { bags = {}, bank = {} }
+    local bags = char.inventory.bags
+    local keep = { bags[6218], bags[6339], bags[16207] }
+    bags[6218], bags[6339], bags[16207] = nil, nil, nil
+    TSF:AppendRodLine(tip, { spellID = 7457, name = "Enchant Bracer - Minor Stamina" })
+    EXPECT(lines[2] and lines[2].t == "Tool: Runed Copper Rod (missing)" and lines[2].r == 1, "missing rod: " .. tostring(lines[2] and lines[2].t))
+    lines = {}
+    bags[16207] = 1      -- a higher rod satisfies a lower one
+    TSF:AppendRodLine(tip, { spellID = 7457, name = "Enchant Bracer - Minor Stamina" })
+    EXPECT(lines[2] and lines[2].t == "Tool: Runed Copper Rod" and lines[2].g == 1, "owned rod: " .. tostring(lines[2] and lines[2].t))
+    lines = {}
+    TSF:AppendRodLine(tip, { spellID = 1229737, name = "Basic Campfire" })
+    EXPECT(#lines == 0, "a rod line on a recipe without one")
+    bags[6218], bags[6339], bags[16207] = keep[1], keep[2], keep[3]
+end
+print("  PASS F45 Enchanting rods on Forever: Copper to Arcanite with cumulative masks, the recipe's rod on its tooltip, green when owned (a higher rod counts), red (missing) without")
+
+-- F46: the random-stats line on WoW: Forever, as on TBC Anniversary. The
+-- bake lists the crafted items with an item bonus tree (17: 9 carried over
+-- from Classic, 8 new Engineering belts and goggles); the line uses the
+-- game's own ITEM_RANDOM_ENCHANT, "<Random additional stats>", and never
+-- doubles a line the game already shows.
+do
+    local TSF = ProfBuddy.TradeSkillFrame
+    local R = ProfBuddy.RandomEnchantItems
+    local n = 0
+    for _ in pairs(R or {}) do n = n + 1 end
+    EXPECT(n == 17 and R[8211] and R[20039] and R[280311] and not R[2318], "random-stats list: " .. n)
+    local tl = {}
+    for i = 1, 5 do
+        local fs = _G["PBRandTipTextLeft" .. i] or CreateFrame("Frame", "PBRandTipTextLeft" .. i)
+        rawset(fs, "GetText", function() return tl[i] end)
+    end
+    local tip = { GetName = function() return "PBRandTip" end, NumLines = function() return #tl end,
+                  AddLine = function(_, t) tl[#tl + 1] = t end }
+    tl = { "Wild Leather Vest" }
+    TSF:AppendRandomEnchantLine(tip, 8211)
+    EXPECT(tl[2] == "<Random additional stats>", "line: " .. tostring(tl[2]))
+    TSF:AppendRandomEnchantLine(tip, 8211)
+    EXPECT(#tl == 2, "the line was doubled")
+    tl = { "Light Leather" }
+    TSF:AppendRandomEnchantLine(tip, 2318)
+    EXPECT(#tl == 1, "a line on an item without random stats")
+end
+print("  PASS F46 random stats on Forever: 17 items from the bake, the game's own <Random additional stats> wording, never doubled")
+
+print("ALL FOREVER TESTS PASS (46)")

@@ -16,6 +16,21 @@ teachItems lists the items that teach a recipe (Pattern, Plans, Recipe
 and so on), so PB can tell which recipe a vendor's or a bag's item
 teaches (Knowledge.lua).
 
+rod names the Enchanting rod a recipe needs, as on TBC Anniversary: a
+required totem category (SpellTotems) of type 3 (TotemCategory). The rods
+themselves (ProfBuddy.EnchantingRods, written at the end of
+Enchanting.lua) are the items carrying those categories (ItemSparse
+TotemCategoryID), with the category's cumulative mask.
+
+Data/Forever/RandomStats.lua lists the crafted items that roll random
+stats ("<Random additional stats>"): Forever gives them an item bonus tree
+(ItemXBonusTree). TBC Anniversary's Data/RandomEnchant.lua is the same
+list from cmangos.
+
+  --check   compare the build baked into Data/Forever with the newest
+            Forever (1.60.x) build on wago.tools. Run it at release prep.
+            Exits 0 = up to date, 10 = a newer build exists (rebake).
+
 Learn level (orange), first match wins:
   1. learned automatically with the profession (SkillLineAbility
      AcquireMethod 1 or 2): the ability's MinSkillLineRank, at least 1.
@@ -33,6 +48,9 @@ Yellow and grey come from SkillLineAbility; green = floor((yellow + grey) / 2),
 verified against all 2,115 TBCCA recipes.
 
 Rows left out, each counted in the report:
+  - a spell that makes no item and takes no reagents: Tanning and
+    Gardening open the Skinning and Herbalism windows; they are not
+    recipes and the game does not list them
   - no spell name (retired or placeholder, including the 27 Adaptive recipes
     stripped in build 70009)
   - the profession's own rank spells (a row named after the profession)
@@ -48,7 +66,7 @@ Rows left out, each counted in the report:
     a trainer; a Forever ID (1,000,000 and up) over a Classic ID over a
     Season of Discovery ID; the lower ID.
 """
-import argparse, csv, json, math, os, sys, urllib.request
+import argparse, csv, json, math, os, re, sys, urllib.request
 from collections import defaultdict, Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -56,11 +74,13 @@ REPO = os.path.normpath(os.path.join(HERE, ".."))
 INPUTS = os.path.join(HERE, "forever")
 OUT_DIR = os.path.join(REPO, "ProfessionBuddy", "Data", "Forever")
 TABLES = ["SkillLineAbility", "SkillLine", "SpellName", "SpellEffect", "SpellReagents",
+          "SpellTotems", "TotemCategory", "ItemXBonusTree",
           "TradeSkillCategory", "ItemSparse", "Item", "ItemEffect", "ItemXItemEffect"]
 
 # skill lines that are test/prototype content, not shipped professions
 EXCLUDE_SKILL_LINES = {2933, 3012}
 SOD_IDS = range(400000, 500000)
+ROD_TYPE = 3   # TotemCategoryType of the Runed X Rods
 csv.field_size_limit(10_000_000)
 
 
@@ -144,6 +164,23 @@ def build(csvdir):
             if iid > 0 and n > 0:
                 reagents[I(r["SpellID"])].append((iid, n))
 
+    # Enchanting rods: totem categories of type 3, cumulative masks
+    totem = {I(r["ID"]): (r["Name_lang"], I(r["TotemCategoryType"]), I(r["TotemCategoryMask"]))
+             for r in read(csvdir, "TotemCategory")}
+    rod_of = {}
+    for r in read(csvdir, "SpellTotems"):
+        for col in ("RequiredTotemCategoryID_0", "RequiredTotemCategoryID_1"):
+            t = totem.get(I(r.get(col)))
+            if t and t[1] == ROD_TYPE:
+                rod_of[I(r["SpellID"])] = t[0]
+    rods = []
+    for r in read(csvdir, "ItemSparse"):
+        t = totem.get(I(r.get("TotemCategoryID")))
+        if t and t[1] == ROD_TYPE:
+            rods.append((t[2], t[0], I(r["ID"])))
+    rods.sort()
+    bonus_items = {I(r["ItemID"]) for r in read(csvdir, "ItemXBonusTree")}
+
     created = {}
     for r in read(csvdir, "SpellEffect"):
         if I(r["Effect"]) == 24 and I(r.get("EffectItemType")):
@@ -171,6 +208,12 @@ def build(csvdir):
             continue
         if spell in game_unknown:
             report["dropped: crafted item unknown to the game (harvest)"] += 1
+            continue
+        if not out and not reagents.get(spell):
+            # Tanning (Skinning) and Gardening (Herbalism): the spells that
+            # open the profession window, not recipes; the game does not
+            # list them, so PB would show them as never learned
+            report["dropped: no item and no reagents (opens a profession window)"] += 1
             continue
 
         yellow, grey = I(r["TrivialSkillLineRankLow"]), I(r["TrivialSkillLineRankHigh"])
@@ -221,6 +264,7 @@ def build(csvdir):
             "category": cats.get(cat),
             "sources": sources,
             "captured": bool(cap),
+            "rod": rod_of.get(spell),
             "reagents": [(iid, n, items.get(iid, ("", 0))[0]) for iid, n in reagents.get(spell, [])],
         })
 
@@ -241,14 +285,19 @@ def build(csvdir):
             kept.append(group[0])
             report["dropped: second recipe of the same name"] += len(group) - 1
         final[prof] = sorted(kept, key=lambda x: x["name"])
-    return final, report
+    random = sorted({(rec["itemID"], rec["name"]) for recs in final.values() for rec in recs
+                     if rec["itemID"] in bonus_items})
+    for recs in final.values():
+        report["tool: an Enchanting rod"] += sum(1 for rec in recs if rec["rod"])
+    report["random stats: crafted items with an item bonus tree"] = len(random)
+    return final, report, rods, random
 
 
 def lua_str(s):
     return '"' + str(s).replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
-def emit(prof, recs, build_id):
+def emit(prof, recs, build_id, rods=()):
     L = ["-" * 70,
          "-- ProfessionBuddy  --  Data/Forever/%s.lua" % prof.replace(" ", ""),
          "-- %s recipe data for WoW: Forever, build %s." % (prof, build_id),
@@ -276,6 +325,8 @@ def emit(prof, recs, build_id):
             L.append("        category   = %s," % lua_str(r["category"]))
         if r["teachItems"]:
             L.append("        teachItems = { %s }," % ", ".join(str(i) for i in r["teachItems"]))
+        if r.get("rod"):
+            L.append("        rod        = %s," % lua_str(r["rod"]))
         src = []
         for s in r["sources"]:
             parts = ['method = %s' % lua_str(s["method"]), 'faction = "Both"']
@@ -289,29 +340,112 @@ def emit(prof, recs, build_id):
                 L.append("            { itemID = %d, count = %d, name = %s }," % (iid, n, lua_str(nm or ("item:%d" % iid))))
             L.append("        },")
         L.append("    },")
-    L += ["}", "", "ProfBuddy.RecipeDB:RegisterProfession(%s, recipes)" % lua_str(prof)]
+    L += ["}", ""]
+    if prof == "Enchanting" and rods:
+        L += ["-- Enchanting rods (the `rod` field above), from the items carrying a",
+              "-- rod totem category. mask is CUMULATIVE: a rod satisfies a",
+              "-- requirement when rod.mask >= the required rod's mask.",
+              "ProfBuddy.EnchantingRods = {",
+              "    list = {"]
+        for mask, name, item in rods:
+            L.append("        { name = %s, itemID = %d, mask = %d }," % (lua_str(name), item, mask))
+        L += ["    },", "    byName = {},", "}",
+              "for _, r in ipairs(ProfBuddy.EnchantingRods.list) do",
+              "    ProfBuddy.EnchantingRods.byName[r.name] = r",
+              "end", ""]
+    L += ["ProfBuddy.RecipeDB:RegisterProfession(%s, recipes)" % lua_str(prof)]
     return "\n".join(L) + "\n"
+
+
+def emit_random(random, build_id):
+    L = ["-" * 70,
+         "-- ProfessionBuddy  --  Data/Forever/RandomStats.lua",
+         "-- Crafted items that roll random stats on WoW: Forever, build %s." % build_id,
+         "-- The game shows \"<Random additional stats>\" (ITEM_RANDOM_ENCHANT) only",
+         "-- on the trade-skill result, so PB appends it for these items, as it",
+         "-- does on TBC Anniversary (Data/RandomEnchant.lua). An item rolls",
+         "-- random stats when Forever gives it an item bonus tree (ItemXBonusTree).",
+         "--",
+         "-- GENERATED by tools/bake_forever_db2.py. Do not hand-edit.",
+         "-" * 70,
+         "ProfBuddy = ProfBuddy or {}",
+         "ProfBuddy.RandomEnchantItems = {"]
+    for item, name in random:
+        L.append("    [%d] = true, -- %s" % (item, name))
+    L.append("}")
+    return "\n".join(L) + "\n"
+
+
+def baked_build(out_dir=OUT_DIR):
+    """The build the Data/Forever files say they were baked from."""
+    path = os.path.join(out_dir, "Alchemy.lua")
+    if not os.path.isfile(path):
+        return None
+    for line in open(path, encoding="utf-8"):
+        m = re.search(r"build (\d+\.\d+\.\d+\.\d+)", line)
+        if m:
+            return m.group(1)
+    return None
+
+
+def pick_latest_forever(builds):
+    """The newest Forever build (version 1.60 or later in the 1.x line)
+    in a wago.tools /api/builds payload, whatever product carries it."""
+    best = None
+    for rows in builds.values():
+        for b in rows or []:
+            v = str(b.get("version", ""))
+            parts = v.split(".")
+            if len(parts) == 4 and parts[0] == "1" and parts[1].isdigit() and int(parts[1]) >= 60:
+                key = tuple(int(x) for x in parts)
+                if best is None or key > best[0]:
+                    best = (key, v)
+    return best and best[1]
+
+
+def check():
+    req = urllib.request.Request("https://wago.tools/api/builds", headers={"User-Agent": "ProfessionBuddy-bake"})
+    latest = pick_latest_forever(json.loads(urllib.request.urlopen(req, timeout=60).read().decode()))
+    baked = baked_build()
+    print("Forever recipe data: baked=%s  latest build=%s" % (baked, latest))
+    if not latest:
+        print("ERROR: no Forever build found on wago.tools", file=sys.stderr)
+        sys.exit(1)
+    if baked == latest:
+        print("UP TO DATE -- no Forever rebake needed for release.")
+        sys.exit(0)
+    print("NEWER Forever build available (%s -> %s). Rebake with --fetch --build %s, "
+          "diff, and re-validate before the CurseForge release." % (baked, latest, latest))
+    sys.exit(10)
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("csvdir")
+    ap.add_argument("csvdir", nargs="?")
     ap.add_argument("--build", default="1.60.1.70009")
     ap.add_argument("--fetch", action="store_true", help="download the tables into csvdir first")
     ap.add_argument("--out", default=OUT_DIR)
+    ap.add_argument("--check", action="store_true", help="is the baked build the newest? (release prep)")
     a = ap.parse_args()
+    if a.check:
+        check()
+    if not a.csvdir:
+        ap.error("csvdir is required unless --check")
     if a.fetch:
         fetch(a.csvdir, a.build)
-    final, report = build(a.csvdir)
+    final, report, rods, random = build(a.csvdir)
     os.makedirs(a.out, exist_ok=True)
     files, total = [], 0
     for prof in sorted(final):
         fn = prof.replace(" ", "") + ".lua"
         with open(os.path.join(a.out, fn), "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(emit(prof, final[prof], a.build))
+            fh.write(emit(prof, final[prof], a.build, rods))
         files.append(fn)
         total += len(final[prof])
         print("%-16s %4d recipes" % (prof, len(final[prof])))
+    with open(os.path.join(a.out, "RandomStats.lua"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(emit_random(random, a.build))
+    print("RandomStats.lua  %4d items" % len(random))
     print("\n%d recipes in %d files -> %s" % (total, len(files), a.out))
     for k in sorted(report):
         print("  %-66s %5d" % (k, report[k]))

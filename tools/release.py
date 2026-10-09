@@ -26,7 +26,11 @@ Usage:
 
 Gates that run before anything is zipped (skip them with --skip-checks):
   tests/run_all.py     both Lua harnesses, on the 5.1 interpreter
-  tools/lint_data.py   the static recipe-DB linter
+  tools/lint_data.py   the static recipe-DB linter (Data/ and Data/Forever/)
+
+Before a real upload (not --dry-run), also:
+  tools/gather_db.py --check          gathering data is the newest cmangos / VMaNGOS
+  tools/bake_forever_db2.py --check   Forever recipe data is the newest client build
   Core.lua             refuses to build while a dev addon.BUILD stamp is set
   LICENSE              the addon folder's copy is refreshed from the root copy
 
@@ -432,6 +436,17 @@ def main():
     if args.dry_run:
         log("Dry run -- built + verified v%s, skipping upload." % tocv)
         return
+
+    # ---- data freshness: only before a real upload, since the Forever
+    # client ships a new build every few days and a dry run must not fail on
+    # that. Exit 10 from either tool means newer data exists: rebake first.
+    if args.skip_checks:
+        log("Data freshness gates: SKIPPED (--skip-checks)")
+    else:
+        run_gate(os.path.join(tools_dir(), "gather_db.py"), ["--check", "--addon-dir", addon_dir],
+                 "tools/gather_db.py --check (cmangos TBC + VMaNGOS gathering data)")
+        run_gate(os.path.join(tools_dir(), "bake_forever_db2.py"), ["--check"],
+                 "tools/bake_forever_db2.py --check (Forever recipe data build)")
 
     # ---- upload ----
     if not token: die("CF_API_TOKEN not set")

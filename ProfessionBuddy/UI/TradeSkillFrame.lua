@@ -1077,8 +1077,9 @@ function TSF:HookItemTooltip()
     HookItemTooltip(function(tip)
         -- Random-enchant line for ANY item tooltip (chat link, bags, AH, etc.):
         -- 2.5.x omits "<Random enchantment>" from a bare item link/ID, so append
-        -- it for known random-property crafted items. Idempotent, and independent
-        -- of the Used-in setting below.
+        -- it for known random-property crafted items ("<Random additional
+        -- stats>" on WoW: Forever). Idempotent: never doubles the game's own
+        -- line. Independent of the Used-in setting below.
         local reLink = TooltipItemLink(tip)
         local reID = reLink and addon:ItemIDFromLink(reLink)
         if reID then self:AppendRandomEnchantLine(tip, reID) end
@@ -3409,6 +3410,11 @@ end
 -- "<Random enchantment>" line via the trade-skill result path, not from an item
 -- ID or link -- so append it for known random items. Idempotent: skips if a
 -- random line is already present. Data: ProfBuddy.RandomEnchantItems.
+-- The game's own wording (GlobalStrings ITEM_RANDOM_ENCHANT): "<Random
+-- enchantment>" on TBC Anniversary, "<Random additional stats>" on WoW:
+-- Forever, whose list is Data/Forever/RandomStats.lua.
+local RANDOM_LINE = (type(ITEM_RANDOM_ENCHANT) == "string" and ITEM_RANDOM_ENCHANT ~= "")
+    and ITEM_RANDOM_ENCHANT or "<Random enchantment>"
 function TSF:AppendRandomEnchantLine(tip, itemID)
     if not (itemID and addon.RandomEnchantItems and addon.RandomEnchantItems[itemID]) then return end
     local name = tip:GetName()
@@ -3416,10 +3422,13 @@ function TSF:AppendRandomEnchantLine(tip, itemID)
         for i = 1, tip:NumLines() do
             local fs = _G[name .. "TextLeft" .. i]
             local t = fs and fs:GetText()
-            if t and t:lower():find("random enchant", 1, true) then return end
+            if t and not IsSecret(t)
+               and (t == RANDOM_LINE or t:lower():find("random enchant", 1, true)) then
+                return
+            end
         end
     end
-    tip:AddLine("<Random enchantment>", 0, 1, 0)
+    tip:AddLine(RANDOM_LINE, 0, 1, 0)
 end
 
 function TSF:ShowEmbeddedTooltip(recipe)

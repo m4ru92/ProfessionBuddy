@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """ProfessionBuddy static recipe-DB linter.
 
-Loads every ProfessionBuddy/Data/*.lua through a real Lua interpreter (lupa)
+Loads every ProfessionBuddy/Data/*.lua, then every Data/Forever/*.lua in a
+second pass with Forever's rules, through a real Lua interpreter (lupa)
 with a stub ProfBuddy.RecipeDB that captures RegisterProfession(prof, recipes),
 then applies the schema/consistency checks that RecipeDB.lua + its consumers
 (MaterialCalc, TradeSkillFrame, Scanner) actually depend on.
@@ -53,10 +54,17 @@ REQUIRED_FIELDS = ["spellID", "itemID", "skillReq", "sources",
 KNOWN_FIELDS = set(REQUIRED_FIELDS) | {
     "subcategory", "yield", "rod", "source", "sourceDetail", "name", "note",
     "reqLevel",
+    # WoW: Forever (tools/bake_forever_db2.py): the items that teach a
+    # recipe, and where its learn level came from
+    "teachItems", "learnFrom",
 }
+# WoW: Forever: a recipe whose learn level is not known yet has no skillReq,
+# and one with no skill-up range in DB2 has no skillRange.
+FOREVER_OPTIONAL_FIELDS = {"skillReq", "skillRange"}
 
 # Files in Data/ that are not recipe registrations.
-NON_RECIPE_FILES = {"GatherMobs.lua", "RandomEnchant.lua"}
+NON_RECIPE_FILES = {"GatherMobs.lua", "RandomEnchant.lua",
+                    "Gather.lua", "RandomStats.lua"}   # the last two: Data/Forever
 
 PLACEHOLDER_RE = re.compile(r"^\s*$|todo|tbd|placeholder|^unknown$|\bxxx\b|fixme",
                             re.IGNORECASE)
@@ -146,7 +154,7 @@ def load_data(data_dir):
 
 
 # ------------------------------------------------- duplicate keys (text pass)
-TOP_KEY_RE = re.compile(r'^    \["([^"]*)"\]\s*=\s*\{')
+TOP_KEY_RE = re.compile(r'^    \["((?:[^"\\]|\\.)*)"\]\s*=\s*\{')   # a name may hold \" (Goblin "Boom" Box)
 
 
 def dup_keys(path):
@@ -210,9 +218,23 @@ def main():
     if not os.path.isdir(os.path.join(a.addon_dir, "Data")):
         print("ERROR: no Data/ under " + a.addon_dir, file=sys.stderr)
         sys.exit(2)
-    data_dir = os.path.join(a.addon_dir, "Data")
+    blocking = lint_dir(os.path.join(a.addon_dir, "Data"), forever=False)
+    forever_dir = os.path.join(a.addon_dir, "Data", "Forever")
+    if os.path.isdir(forever_dir):
+        print("\n" + "=" * 70 + "\nWoW: Forever data (Data/Forever)\n" + "=" * 70)
+        blocking += lint_dir(forever_dir, forever=True)
+    return blocking
+
+
+def lint_dir(data_dir, forever):
+    """Lint one data folder; return the number of blocking rows. forever:
+    Data/Forever's rules, where a recipe may have no learn level yet
+    (skillReq absent, skillRange[1] false, or no skillRange at all), and the
+    TBC id band and TBC presence anchors do not apply."""
     data, origin, files = load_data(data_dir)
     rep = Report()
+    required = [f for f in REQUIRED_FIELDS
+                if not (forever and f in FOREVER_OPTIONAL_FIELDS)]
 
     print("Data/ files: %d  (%s)" % (len(files), ", ".join(files)))
     print("Professions registered: %d" % len(data))
@@ -263,7 +285,7 @@ def main():
             if not isinstance(r, dict):
                 bad_types.append("%s / %r: record is not a table" % (prof, name))
                 continue
-            for f in REQUIRED_FIELDS:
+            for f in required:
                 if f not in r:
                     missing_field[f].append("%s / %r" % (prof, name))
             for f in r:
@@ -275,11 +297,13 @@ def main():
                 bad_itemid.append("%s / %r: itemID MISSING" % (prof, name))
             elif not isint(iid):
                 bad_itemid.append("%s / %r: itemID not an integer (%r)" % (prof, name, iid))
-            elif iid <= 0 and prof != "Enchanting":
+            elif iid <= 0 and prof != "Enchanting" and not (forever and r.get("reagents")):
+                # Forever: an Engineering tinker applies to an item like an
+                # enchant, so it makes no item but has reagents
                 bad_itemid.append("%s / %r: itemID = %d (only Enchanting may produce "
                                   "no item)" % (prof, name, int(iid)))
     rows = []
-    for f in REQUIRED_FIELDS:
+    for f in required:
         lst = missing_field[f]
         if lst:
             rows.append("field %r missing on %d record(s): %s%s"
@@ -356,19 +380,30 @@ def main():
 
     # ------------------------------------------------------- 7. skill ranges
     bad_shape, nonmono, zeros, orange_one, req_mismatch = [], [], [], [], []
+    learn_above = []
     for prof in sorted(data):
         for name, r in sorted(data[prof].items()):
             sr = r.get("skillRange")
             if sr is None:
                 continue
-            if not isinstance(sr, list) or len(sr) != 4 or not all(isint(x) for x in sr):
+            # Forever: orange is false while the learn level is unknown
+            unknown_orange = forever and isinstance(sr, list) and len(sr) == 4 and sr[0] is False
+            if not isinstance(sr, list) or len(sr) != 4 or \
+                    not all(isint(x) for x in (sr[1:] if unknown_orange else sr)):
                 bad_shape.append("%s / %r: skillRange is not a 4-integer array (%r)"
                                  % (prof, name, sr))
                 continue
-            o, y, g, gr = [int(x) for x in sr]
-            if not (o <= y <= g <= gr):
+            y, g, gr = [int(x) for x in sr[1:]]
+            o = y if unknown_orange else int(sr[0])
+            if not (y <= g <= gr):
                 nonmono.append("%s / %r: skillRange {%d,%d,%d,%d} not monotonic "
                                "(orange<=yellow<=green<=grey)" % (prof, name, o, y, g, gr))
+            elif o > y:
+                (learn_above if forever else nonmono).append(
+                    "%s / %r: skillRange {%d,%d,%d,%d} not monotonic "
+                    "(orange<=yellow<=green<=grey)" % (prof, name, o, y, g, gr))
+            if unknown_orange:
+                continue
             if 0 in (o, y, g, gr):
                 zeros.append("%s / %r: skillRange {%d,%d,%d,%d} has a zero threshold "
                              "(SkillRangeDetailed prints 'Orange: 0 ...')"
@@ -385,6 +420,11 @@ def main():
                                         % (prof, name, int(sreq), o))
     rep.add("skillRange malformed shape", bad_shape)
     rep.add("skillRange NOT monotonic (orange<=yellow<=green<=grey)", nonmono)
+    if forever:
+        rep.add("learn level above the yellow threshold", learn_above,
+                "Forever's own values: the learn level comes from the recipe item's "
+                "required skill or a trainer capture, the yellow from DB2",
+                fatal=False)
     rep.add("skillRange contains a zero threshold", zeros)
     rep.add("skillRange orange stuck at 1 while skillReq > 1", orange_one)
     rep.add("skillReq differs from skillRange[1]", req_mismatch,
@@ -531,7 +571,10 @@ def main():
                                 "its own reagent (MaterialCalc expands one bogus extra "
                                 "layer before the seen[] guard stops it)"
                                 % (prof, name, int(iid), int(iid)))
-    rep.add("Recipe lists its own output as a reagent", rows)
+    rep.add("Recipe lists its own output as a reagent", rows,
+            "Forever's DB2 has one: The Mortar: Reloaded consumes the mortar it "
+            "makes (a recharge)" if forever else None,
+            fatal=not forever)
 
     rows, jar = [], Counter()
     for prof in sorted(data):
@@ -569,8 +612,9 @@ def main():
                 if isinstance(gi, (int, float)) and gi > TBC_MAX_ITEMID:
                     rows.append("%s / %r: reagent itemID %d outside the 2.5.x id band"
                                 % (prof, name, int(gi)))
-    rep.add("IDs outside the 2.5.x band (VERIFY in client, not asserted)", rows,
-            None, fatal=False)
+    if not forever:
+        rep.add("IDs outside the 2.5.x band (VERIFY in client, not asserted)", rows,
+                None, fatal=False)
 
     # ------------------------------------------------ 11. counts + skill bands
     print("\n== Recipe counts per profession ==")
@@ -598,7 +642,7 @@ def main():
     print("   %-16s %5d" % ("TOTAL", sum(len(v) for v in data.values())))
 
     rows = []
-    for prof, names in sorted(ANCHORS.items()):
+    for prof, names in sorted(({} if forever else ANCHORS).items()):
         if prof not in data:
             rows.append("profession %r is not registered at all" % prof)
             continue
@@ -607,8 +651,9 @@ def main():
             if n not in have:
                 near = [h for h in have if n.split()[-1].lower() in h.lower()][:3]
                 rows.append("%s: anchor %r not present (near: %s)" % (prof, n, near or "none"))
-    rep.add("Presence anchors not found (VERIFY, reviewer-knowledge list, not authoritative)",
-            rows, None, fatal=False)
+    if not forever:
+        rep.add("Presence anchors not found (VERIFY, reviewer-knowledge list, not authoritative)",
+                rows, None, fatal=False)
 
     return rep.dump()
 
