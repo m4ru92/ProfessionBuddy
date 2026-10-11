@@ -83,11 +83,13 @@ UISpecialFrames = {}
 -- Ace stubs: identity "serialization" so payload tables pass through
 local AceComm = {
     RegisterComm = function(target, prefix) end,
-    SendCommMessage = function(self, prefix, text, channel, target, prio)
+    SendCommMessage = function(self, prefix, text, channel, target, prio, callbackFn)
         -- prio is recorded: it is the ChatThrottleLib pipe, and a payload sent
         -- on the wrong one head-of-line blocks order traffic behind a full sync.
+        -- callbackFn is what AceComm calls as each chunk leaves the queue.
         table.insert(sent, { msgType = text._type, payload = text,
-                             channel = channel, target = target, prio = prio })
+                             channel = channel, target = target, prio = prio,
+                             onChunk = callbackFn })
     end,
 }
 local AceSerializer = {
@@ -2381,8 +2383,36 @@ do
 end
 passed("T89 board-post alerts -- known (default), alts, any and off; re-broadcasts, friends and the sound")
 
+-- T90: a whisper's chunks can leave ChatThrottleLib's queue long after
+-- SendWhisper queued them. Each chunk that leaves re-stamps the whisper, so
+-- the server's "no player named" line for a late chunk is still ours.
+do
+    Comm._recentWhispers = nil
+    clearSent()
+    local line = "No player named 'Latechunk' is currently playing."
+    local t0 = os.time()
+    local realTime = time
+    time = function() return t0 end
+    Comm:SendWhisper("SYNC_DATA", { _type = "SYNC_DATA" }, "Latechunk-TestRealm", "BULK")
+    local msg = firstOfType("SYNC_DATA")
+    assert(msg and type(msg.onChunk) == "function", "T90: the whisper passed no chunk callback")
+    -- 25 s later, still queued: the line is not ours yet
+    time = function() return t0 + 25 end
+    assert(Comm:OnSystemMessage(line) == false, "T90: a line 25 s after queueing was hidden with no chunk sent")
+    -- the last chunk leaves now, and the server answers it
+    msg.onChunk(nil, true, 0)
+    time = function() return t0 + 26 end
+    assert(Comm:OnSystemMessage(line) == true, "T90: the line for a chunk that left late was shown")
+    time = function() return t0 + 37 end
+    assert(Comm:OnSystemMessage(line) == false, "T90: a line 11 s after the last chunk was hidden")
+    time = realTime
+    Comm._recentWhispers = nil
+    clearSent()
+end
+passed("T90 late chunks -- each chunk that leaves re-stamps the whisper, so its offline line is hidden")
+
 leaveGuild()
-print("ALL 89 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 90 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2398,6 +2428,6 @@ print("ALL 89 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden; "
     .. pass .. " of them print a PASS line above)")
 

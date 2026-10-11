@@ -263,7 +263,8 @@ end
 -- ~80 chunks and would otherwise head-of-line block everything behind it),
 -- "ALERT" for order traffic, "NORMAL" for the rest. Distinct priorities get
 -- separate rings and an equal share of the byte budget.
-function Comm:Send(msgType, data, channel, target, prio)
+-- onChunk, optional: called as each chunk leaves ChatThrottleLib's queue.
+function Comm:Send(msgType, data, channel, target, prio, onChunk)
     if not self._ready then return end
 
     data = data or {}
@@ -272,15 +273,15 @@ function Comm:Send(msgType, data, channel, target, prio)
 
     local serialized = AceSerializer:Serialize(data)
     if addon.Source and addon.Source.NUMBERED_CHUNKS and #serialized > 255 then
-        self:SendNumbered(serialized, channel, target, prio or "NORMAL")
+        self:SendNumbered(serialized, channel, target, prio or "NORMAL", onChunk)
     else
-        AceComm:SendCommMessage(PREFIX, serialized, channel, target, prio or "NORMAL")
+        AceComm:SendCommMessage(PREFIX, serialized, channel, target, prio or "NORMAL", onChunk)
     end
 end
 
 -- A long message as numbered chunks, through ChatThrottleLib on the same
 -- queue AceComm uses, so the lanes and the bandwidth share are unchanged.
-function Comm:SendNumbered(text, channel, target, prio)
+function Comm:SendNumbered(text, channel, target, prio, onChunk)
     local total = math.ceil(#text / CHUNK_DATA)
     if total > CHUNK_MAX or not ChatThrottleLib then return end
     -- seeded from the clock (Comm:Init), so a /reload does not restart at
@@ -290,7 +291,7 @@ function Comm:SendNumbered(text, channel, target, prio)
     for n = 1, total do
         ChatThrottleLib:SendAddonMessage(prio, PREFIX,
             head .. n .. ":" .. total .. ":" .. text:sub((n - 1) * CHUNK_DATA + 1, n * CHUNK_DATA),
-            channel, target, PREFIX)
+            channel, target, PREFIX, onChunk)
     end
 end
 
@@ -393,15 +394,23 @@ function Comm:SendWhisper(msgType, data, target, prio)
     -- attributed to an addon whisper rather than something the user typed.
     self._recentWhispers = self._recentWhispers or {}
     self._recentWhispers[name] = time()
+    -- A long message waits in ChatThrottleLib's queue and leaves a chunk at a
+    -- time, so its last chunks can go out well after this call. The server
+    -- answers each chunk, so stamp again as each one leaves: the
+    -- WHISPER_MEMORY window then counts from the chunk the line answers
+    -- (m4ru 2026-10-11: a full sync to two offline contacts on Forever put a
+    -- dozen "No player named" lines in chat).
+    local whispers = self._recentWhispers
+    local function onChunk() whispers[name] = time() end
     -- WoW: Forever: "First Surname" reaches a player on any connected realm,
     -- and "First Surname-Realm" is the "FirstName-SecondName" form the game
     -- reads as a surname, so a realm is never sent there.
     if addon.Source and addon.Source.REALM_TOKEN then
-        self:Send(msgType, data, "WHISPER", name, prio)
+        self:Send(msgType, data, "WHISPER", name, prio, onChunk)
     elseif realm ~= "" and addon:NormRealm(realm) ~= addon:NormRealm(GetRealmName()) then
-        self:Send(msgType, data, "WHISPER", name .. "-" .. realm, prio)
+        self:Send(msgType, data, "WHISPER", name .. "-" .. realm, prio, onChunk)
     else
-        self:Send(msgType, data, "WHISPER", name, prio)
+        self:Send(msgType, data, "WHISPER", name, prio, onChunk)
     end
 end
 

@@ -2787,4 +2787,39 @@ do
 end
 print("  PASS F49 review fixes: numbered ids from the clock, _lastHeard swept, empty shared records dropped, secret senders dropped, restricted chat queues quietly and resends, list read waits for the data and keeps its own profession's recipes, project id 18")
 
-print("ALL FOREVER TESTS PASS (49)")
+-- F50: on WoW: Forever a long whisper goes out as numbered chunks through
+-- ChatThrottleLib. Each chunk carries the whisper's callback, so a chunk that
+-- leaves late re-stamps it and the "no player named" line it draws is hidden.
+do
+    local Comm = ProfBuddy.Comm
+    local CTL = ChatThrottleLib
+    local wire = {}
+    local realCTL = CTL.SendAddonMessage
+    CTL.SendAddonMessage = function(_, prio, prefix, text, chattype, target, queue, callbackFn, callbackArg)
+        wire[#wire + 1] = { target = target, cb = callbackFn, arg = callbackArg }
+    end
+    -- the test client stubs unknown globals with a table; the game has the string
+    ERR_CHAT_PLAYER_NOT_FOUND_S = "No player named '%s' is currently playing."
+    Comm._recentWhispers = nil
+    local big = { names = {} }
+    for i = 1, 200 do big.names[i] = "Recipe number " .. i end
+    local t0 = os.time()
+    local realTime = time
+    time = function() return t0 end
+    Comm:SendWhisper("SYNC_DATA", big, "Owl Milk-Forever", "BULK")
+    EXPECT(#wire > 10, "long whisper: " .. #wire .. " chunks")
+    for i, w in ipairs(wire) do
+        EXPECT(w.target == "Owl Milk" and type(w.cb) == "function", "chunk " .. i .. " has no callback")
+    end
+    local line = "No player named 'Owl Milk' is currently playing."
+    time = function() return t0 + 30 end
+    EXPECT(Comm:OnSystemMessage(line) == false, "a line 30 s after queueing was hidden with no chunk sent")
+    wire[#wire].cb(wire[#wire].arg, true, 0)          -- the last chunk leaves now
+    EXPECT(Comm:OnSystemMessage(line) == true, "the line for the last chunk was shown")
+    time = realTime
+    Comm._recentWhispers = nil
+    CTL.SendAddonMessage = realCTL
+end
+print("  PASS F50 a long whisper's numbered chunks each re-stamp it as they leave, so a late chunk's offline line is hidden")
+
+print("ALL FOREVER TESTS PASS (50)")
