@@ -607,6 +607,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         orderChatMessages   = true,
         orderSoundOnRequest = false,
         boardAlert          = "known", -- new guild board posts: "known" | "alts" | "any" | "off"
+        minimapIcon         = { hide = false }, -- LibDBIcon's table: hide, minimapPos
         shareData           = true,  -- master switch for AceComm data sharing
         orderHistoryLimit   = 50,    -- keep the most recent N terminal orders per character (hard-pruned)
         orderHistorySortOldest = false, -- History sort: false = newest-closed first

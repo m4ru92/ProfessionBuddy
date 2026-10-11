@@ -66,20 +66,32 @@ FALLBACK = {}
 -- Globals a file tests for before creating them (libraries, the saved
 -- variable) must read nil.
 local NOT_YET = { LibStub = true, ChatThrottleLib = true, ProfBuddyDB = true, ProfBuddy = true, ElvUI = true,
-                  ProfessionsFrame = true }
+                  ProfessionsFrame = true,
+                  GetMinimapShape = true }   -- defined only by minimap-shape addons
 setmetatable(_G, { __index = function(_, k)
     if REMOVED[k] or NOT_YET[k] then return nil end
     FALLBACK[k] = true
     local v = NEW(); rawset(_G, k, v); return v
 end })
 
+-- The minimap's addon compartment (Blizzard_Minimap, mainline family:
+-- WoW: Forever and retail). LibDBIcon checks for it when it loads.
+AddonCompartmentFrame = { registeredAddons = {} }
+function AddonCompartmentFrame:RegisterAddon(data) table.insert(self.registeredAddons, data) end
+function AddonCompartmentFrame:UpdateDisplay() end
+
 -- ------------------------------------------------------------ frames
 FRAMES = {}
 REGISTERED = {}
 HOOKED = {}
 local F = {}
+-- Plain data fields code reads on a frame before it ever sets them; a game
+-- frame answers nil for those (LibDBIcon reads compartmentData and
+-- minimapPos before it sets them).
+local FRAME_NIL_FIELDS = { compartmentData = true, minimapPos = true }
 F.__index = function(t, k)
     local m = rawget(F, k); if m then return m end
+    if FRAME_NIL_FIELDS[k] then return nil end
     local v = NEW(); rawset(t, k, v); return v
 end
 local TOOLTIP_SCRIPTS_GONE = { OnTooltipSetItem = true, OnTooltipSetUnit = true, OnTooltipSetSpell = true }

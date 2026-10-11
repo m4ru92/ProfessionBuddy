@@ -2411,8 +2411,46 @@ do
 end
 passed("T90 late chunks -- each chunk that leaves re-stamps the whisper, so its offline line is hidden")
 
+-- T91: TBC Anniversary loads the launcher: its toc lists UI/Launcher.lua
+-- after the profession window, and libs.xml loads LibDataBroker-1.1 and then
+-- LibDBIcon-1.0 after CallbackHandler (both need it). TBC has no addon
+-- compartment; LibDBIcon skips it there (F51 covers the Forever side).
+do
+    local function read(path)
+        local f = assert(io.open(BASE .. "/" .. path, "r"), "T91: missing " .. path)
+        local t = f:read("*a"); f:close(); return t
+    end
+    local toc = read("ProfessionBuddy_TBC.toc")
+    local tsf, lau = toc:find("UI/TradeSkillFrame.lua", 1, true), toc:find("UI/Launcher.lua", 1, true)
+    assert(lau and tsf and lau > tsf, "T91: the TBC toc does not load UI/Launcher.lua after the profession window")
+    local libs = read("Libs/libs.xml")
+    local cbh = libs:find("CallbackHandler-1.0", 1, true)
+    local ldb = libs:find("LibDataBroker-1.1\\LibDataBroker-1.1.lua", 1, true)
+    local dbi = libs:find("LibDBIcon-1.0\\LibDBIcon-1.0.lua", 1, true)
+    assert(cbh and ldb and dbi and cbh < ldb and ldb < dbi, "T91: libs.xml library order")
+    read("Libs/LibDataBroker-1.1/LibDataBroker-1.1.lua")
+    local dbiSrc = read("Libs/LibDBIcon-1.0/LibDBIcon-1.0.lua")
+    assert(dbiSrc:find("if AddonCompartmentFrame then", 1, true), "T91: LibDBIcon no longer checks for the compartment")
+    -- the TBC icon: with no Knowledge module (Forever toc only) the launcher
+    -- takes Basic Campfire's icon
+    assert(not addon.Knowledge, "T91: the TBC harness loaded the Forever Knowledge module")
+    local made
+    local fakeLDB = { NewDataObject = function(_, name, o) made = o; return o end }
+    local realLibStub = LibStub
+    LibStub = function(name, silent)
+        if name == "LibDataBroker-1.1" then return fakeLDB end
+        if name == "LibDBIcon-1.0" then return nil end
+        return realLibStub(name, silent)
+    end
+    dofile(BASE .. "/UI/Launcher.lua")
+    addon.Launcher:Init()
+    LibStub = realLibStub
+    assert(made and made.icon == "Interface\\Icons\\Spell_Fire_Fire", "T91: TBC icon " .. tostring(made and made.icon))
+end
+passed("T91 TBC launcher files -- toc lists UI/Launcher.lua, libs.xml loads LibDataBroker then LibDBIcon, Basic Campfire icon")
+
 leaveGuild()
-print("ALL 90 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 91 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2428,6 +2466,6 @@ print("ALL 90 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files; "
     .. pass .. " of them print a PASS line above)")
 

@@ -72,7 +72,7 @@ The build is a manually assembled zip: a single `ProfessionBuddy/` folder at the
 
 ## License
 
-[MIT](LICENSE). Bundled libraries under `Libs/` (LibStub, CallbackHandler-1.0, ChatThrottleLib, and Ace3: AceComm-3.0 and AceSerializer-3.0) retain their own permissive licenses.
+[MIT](LICENSE). Bundled libraries under `Libs/` (LibStub, CallbackHandler-1.0, ChatThrottleLib, and Ace3: AceComm-3.0 and AceSerializer-3.0) retain their own permissive licenses. LibDataBroker-1.1 and LibDBIcon-1.0 (the minimap button) keep their authors' own terms; see [LICENSE](LICENSE).
 
 ## Credits
 

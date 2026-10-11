@@ -18,6 +18,7 @@ FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
 EXPECT(PRINTED("does not support this game client."), "no retail line")
 EXPECT(not PRINTED("loaded.  /pb"), "modules started on retail")
+EXPECT(not LibStub("LibDBIcon-1.0"):IsRegistered("ProfessionBuddy"), "a minimap button on retail")
 EXPECT(ProfBuddyDB == nil or ProfBuddyDB.characters == nil, "saved variables initialised on retail")
 print("  PASS R1 retail (interface 120100): says it does not support the client, starts nothing")
 

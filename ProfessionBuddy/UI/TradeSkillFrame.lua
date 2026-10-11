@@ -5086,6 +5086,20 @@ function TSF:BuildSettingsPanel(parent)
 
     friendGroupBg:SetHeight(friendGroupTop - yLeft)
 
+    -- UI/Launcher.lua: the minimap button lives in LibDBIcon's own table
+    -- (settings.minimapIcon.hide), so this box reads and writes through the
+    -- Launcher instead of a plain setting key.
+    yLeft = yLeft - 10
+    local minimapCB = MakeCheckbox("Show minimap button", "minimapShownBox", yLeft)
+    minimapCB:SetScript("OnClick", function(cb)
+        if addon.Launcher then addon.Launcher:SetMinimapShown(cb:GetChecked() and true or false) end
+    end)
+    local function SyncMinimapCB()
+        minimapCB:SetChecked(not addon.Launcher or addon.Launcher:IsMinimapShown())
+    end
+    SyncMinimapCB()
+    self.minimapCB = minimapCB
+
     -- ════════════════════════════════════════════════════════════
     -- RIGHT COLUMN
     -- ════════════════════════════════════════════════════════════
@@ -5370,6 +5384,7 @@ function TSF:BuildSettingsPanel(parent)
         UpdateTooltipGroup()
         UpdateGatherSub()
         SyncBoardAlertDD()
+        SyncMinimapCB()
         -- Belt-and-suspenders: hide content that shouldn't be visible
         if TSF.craftBar then TSF.craftBar:Hide() end
         if TSF.listPanel then TSF.listPanel:Hide() end

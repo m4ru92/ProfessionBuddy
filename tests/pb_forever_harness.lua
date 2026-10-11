@@ -2822,4 +2822,58 @@ do
 end
 print("  PASS F50 a long whisper's numbered chunks each re-stamp it as they leave, so a late chunk's offline line is hidden")
 
-print("ALL FOREVER TESTS PASS (50)")
+-- F51: launchers. A LibDataBroker launcher and a LibDBIcon minimap button,
+-- shown by default; left click runs /pb, right click /pb config; the
+-- Settings box hides and shows the button and saves it; WoW: Forever's addon
+-- compartment lists PB and its click does the same.
+do
+    local S = ProfBuddy.db.settings
+    local LDB = LibStub("LibDataBroker-1.1")
+    local icon = LibStub("LibDBIcon-1.0")
+    local obj = LDB:GetDataObjectByName("ProfessionBuddy")
+    EXPECT(obj and obj.type == "launcher" and obj.icon == "Interface\\Icons\\INV_Camelot_Camping_WelcomingCampfire", "no launcher object")
+    EXPECT(icon:IsRegistered("ProfessionBuddy"), "no minimap button")
+    local btn = icon:GetMinimapButton("ProfessionBuddy")
+    EXPECT(type(S.minimapIcon) == "table" and not S.minimapIcon.hide, "minimap button not on by default")
+    EXPECT(btn and btn:IsShown(), "minimap button hidden by default")
+    local ran = {}
+    local realSlash = SlashCmdList.PROFBUDDY
+    SlashCmdList.PROFBUDDY = function(msg) ran[#ran + 1] = msg end
+    obj.OnClick(btn, "LeftButton")
+    obj.OnClick(btn, "RightButton")
+    EXPECT(ran[1] == "" and ran[2] == "config", "clicks ran: " .. table.concat(ran, ","))
+    local lines = {}
+    obj.OnTooltipShow({ AddLine = function(_, t) lines[#lines + 1] = t end })
+    EXPECT(lines[1] == "ProfessionBuddy" and lines[2]:find("Left-click", 1, true)
+           and lines[3]:find("Right-click: Settings", 1, true), "tooltip lines")
+    -- compartment: one entry, its click does what the button does
+    local entry
+    for _, d in ipairs(AddonCompartmentFrame.registeredAddons) do
+        if d.text == "ProfessionBuddy" then entry = d end
+    end
+    EXPECT(entry and entry.icon == obj.icon, "no addon compartment entry")
+    ran = {}
+    entry.func(nil, { buttonName = "RightButton" }, nil)
+    EXPECT(ran[1] == "config", "compartment right click ran: " .. tostring(ran[1]))
+    SlashCmdList.PROFBUDDY = realSlash
+    -- the Settings box
+    local TSF = ProfBuddy.TradeSkillFrame
+    TSF:OpenSettings("main")
+    local cb = TSF.minimapCB
+    EXPECT(cb, "no Show minimap button box")
+    rawset(cb, "GetChecked", function() return false end)
+    cb:GetScript("OnClick")(cb)
+    EXPECT(S.minimapIcon.hide == true and not btn:IsShown(), "unticking did not hide the button")
+    rawset(cb, "GetChecked", function() return true end)
+    cb:GetScript("OnClick")(cb)
+    EXPECT(S.minimapIcon.hide == false and btn:IsShown(), "ticking did not show the button")
+    TSF:CloseSettings()
+    -- saved settings from before this build: no table, button shown
+    S.minimapIcon = nil
+    EXPECT(ProfBuddy.Launcher:IsMinimapShown(), "an upgraded install reads as hidden")
+    ProfBuddy.Launcher:SetMinimapShown(true)
+    EXPECT(type(S.minimapIcon) == "table" and S.minimapIcon.hide == false, "an upgraded install did not save shown")
+end
+print("  PASS F51 launchers: data broker launcher, minimap button shown by default, left /pb, right Settings, Settings box hides and shows it, addon compartment entry")
+
+print("ALL FOREVER TESTS PASS (51)")
