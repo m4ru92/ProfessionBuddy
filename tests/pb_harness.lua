@@ -2271,8 +2271,118 @@ do
 end
 passed("T88 TBC tools -- hammer, spanner, micro-adjustor, Philosopher's Stone (Alchemist's Stones count), Jeweler's Kit; 804 recipes")
 
+-- T89: board-post alerts. A guildmate's NEW board post prints one chat line
+-- when the boardAlert filter matches: "known" (default) = a recipe this
+-- character knows, "alts" = this character or a local alt, "any" = every post,
+-- "off" = none. Friends' synced recipes never count, a login re-broadcast of a
+-- post already on the board never alerts, and the sound follows "Sound on new
+-- request".
+do
+    StaticPopupDialogs = StaticPopupDialogs or {}   -- OrdersPanel defines its popups at load
+    dofile(BASE .. "/UI/OrdersPanel.lua")
+    local OP = addon.OrdersPanel
+    OP.UpdateBadge = function() end
+    OP.RefreshAll = function() end
+    local lines, sounds = {}, 0
+    local realPrint, realSound = print, PlaySound
+    print = function(msg) lines[#lines + 1] = tostring(msg) end
+    PlaySound = function() sounds = sounds + 1 end
+    SOUNDKIT = SOUNDKIT or { TELL_MESSAGE = 0 }
+
+    local chars = addon.db.characters
+    local meProfs = chars[ME].professions
+    local savedTailoring = meProfs.Tailoring
+    meProfs.Tailoring = { skillLevel = 300, recipes = { ["Bolt of Runecloth"] = {} } }
+    chars["Altchar-TestRealm"] = { faction = "Alliance", professions = {
+        Blacksmithing = { skillLevel = 200, recipes = { ["Copper Chain Belt"] = {} } } } }
+    chars["Pal-TestRealm"] = { isRemote = true, faction = "Alliance", professions = {
+        Alchemy = { skillLevel = 300, recipes = { ["Major Healing Potion"] = {} } } } }
+
+    local seq = 500
+    local function post(name, prof)
+        seq = seq + 1
+        Comm._lastOpenAt = nil
+        local m = boardOpen("Buddy-TestRealm-" .. seq, "Buddy-TestRealm", 2)
+        m.order.item = { id = 1, name = name, profession = prof }
+        recvOn("Buddy", m, "GUILD")
+        return "Buddy-TestRealm-" .. seq
+    end
+    local function take() local l = lines; lines = {}; return l end
+
+    addon.db.orderBoard = {}
+    joinGuild("Buddy")
+    local st = addon.db.settings
+    st.orderSoundOnRequest = false
+    assert(st.boardAlert == "known", "T89: default is not \"known\"")
+
+    -- known: my recipe alerts, case-insensitive; an alt's, a friend's or a
+    -- free-text post does not.
+    local id1 = post("bolt of runecloth", "Tailoring")
+    local l = take()
+    assert(#l == 1 and l[1]:find("Buddy posted on the guild board: 2x bolt of runecloth (you know this recipe)", 1, true),
+        "T89: known recipe line wrong: " .. tostring(l[1]))
+    post("Copper Chain Belt", "Blacksmithing")
+    post("Major Healing Potion", "Alchemy")
+    post("anything shiny", nil)
+    assert(#take() == 0, "T89: \"known\" alerted on a post this character does not know")
+    -- no profession on the post: every crafting profession is checked
+    post("Bolt of Runecloth", nil)
+    assert(#take() == 1, "T89: a no-profession post of a known recipe did not alert")
+    -- re-broadcast of a post already held: no alert
+    Comm._lastOpenAt = nil
+    local again = boardOpen(id1, "Buddy-TestRealm", 2)
+    again.order.item = { id = 1, name = "bolt of runecloth", profession = "Tailoring" }
+    recvOn("Buddy", again, "GUILD")
+    assert(#take() == 0, "T89: a login re-broadcast alerted again")
+
+    -- alts: an alt's recipe alerts and names the alt; a friend's does not.
+    st.boardAlert = "alts"
+    post("Copper Chain Belt", "Blacksmithing")
+    l = take()
+    assert(#l == 1 and l[1]:find("(Altchar knows this recipe)", 1, true), "T89: alt line wrong: " .. tostring(l[1]))
+    post("Major Healing Potion", "Alchemy")
+    assert(#take() == 0, "T89: a friend's synced recipe counted as an alt's")
+    -- an opposite-faction alt counts only with showCrossFactionAlts
+    chars["Altchar-TestRealm"].faction = "Horde"
+    st.showCrossFactionAlts = false
+    post("Copper Chain Belt", "Blacksmithing")
+    assert(#take() == 0, "T89: an opposite-faction alt counted with the setting off")
+    st.showCrossFactionAlts = true
+    post("Copper Chain Belt", "Blacksmithing")
+    assert(#take() == 1, "T89: an opposite-faction alt ignored with the setting on")
+    st.showCrossFactionAlts = nil
+    chars["Altchar-TestRealm"].faction = "Alliance"
+
+    -- any: every new post, no suffix when nobody knows it; sound when on.
+    st.boardAlert = "any"
+    st.orderSoundOnRequest = true
+    post("anything shiny", nil)
+    l = take()
+    assert(#l == 1 and l[1]:find("2x anything shiny$"), "T89: any-post line wrong: " .. tostring(l[1]))
+    assert(sounds == 1, "T89: the sound did not follow Sound on new request")
+    -- order chat messages off does not silence it (its own setting)
+    st.orderChatMessages = false
+    post("anything else", nil)
+    assert(#take() == 1, "T89: Order chat messages silenced the board alert")
+    st.orderChatMessages = true
+    st.orderSoundOnRequest = false
+
+    -- off: nothing, but the post is still on the board.
+    st.boardAlert = "off"
+    local idOff = post("Bolt of Runecloth", "Tailoring")
+    assert(#take() == 0 and sounds == 2, "T89: \"off\" still alerted")
+    assert(addon.db.orderBoard[idOff], "T89: \"off\" dropped the post from the board")
+
+    st.boardAlert = "known"
+    print, PlaySound = realPrint, realSound
+    meProfs.Tailoring = savedTailoring
+    chars["Altchar-TestRealm"], chars["Pal-TestRealm"] = nil, nil
+    addon.db.orderBoard = {}
+end
+passed("T89 board-post alerts -- known (default), alts, any and off; re-broadcasts, friends and the sound")
+
 leaveGuild()
-print("ALL 88 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 89 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2288,6 +2398,6 @@ print("ALL 88 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts; "
     .. pass .. " of them print a PASS line above)")
 

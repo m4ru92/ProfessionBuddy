@@ -1414,7 +1414,13 @@ function Comm:HandleOrderOpen(sender, data, distribution)
         -- post look new (and does not dodge the board TTL sweep).
         postedAt          = (prev and tonumber(prev.postedAt)) or now,
     }
-    self:NotifyOrders()
+    -- Alert only on a post new to this board, never on the login re-broadcast
+    -- of one we already hold.
+    if prev then
+        self:NotifyOrders()
+    else
+        self:NotifyOrders("boardPost", board[id])
+    end
 end
 
 -- Crafter -> requester: claim an open order off the board.

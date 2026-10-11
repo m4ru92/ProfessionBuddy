@@ -941,7 +941,19 @@ rawset(TSF.foreverAltsCB, "GetChecked", function() return true end)
 TSF.foreverAltsCB:GetScript("OnClick")(TSF.foreverAltsCB)
 EXPECT(S.foreverAltsSeparate == true, "alts box does not save")
 S.foreverRecipes, S.foreverAltsSeparate = "all", false
-print("  PASS F25 first-open prompt (Escape asks again next session); Learn as you go lists only seen recipes and the counts follow; separate alts count their own sightings, pre-4d records stay everyone's; Settings title-line controls")
+-- the board-post alert dropdown shows the setting and saves a choice
+EXPECT(S.boardAlert == "known" and TSF.boardAlertDD
+       and TSF.boardAlertDD.selectedValue == "Only recipes I know", "board alert dropdown does not show the default")
+for _, o in ipairs(TSF.boardAlertDD.optionBtns) do
+    if o.value == "Recipes I or my alts know" then o:GetScript("OnClick")(o) end
+end
+EXPECT(S.boardAlert == "alts", "board alert dropdown does not save: " .. tostring(S.boardAlert))
+for _, o in ipairs(TSF.boardAlertDD.optionBtns) do
+    if o.value == "Off" then o:GetScript("OnClick")(o) end
+end
+EXPECT(S.boardAlert == "off", "board alert Off does not save")
+S.boardAlert = "known"
+print("  PASS F25 first-open prompt (Escape asks again next session); Learn as you go lists only seen recipes and the counts follow; separate alts count their own sightings, pre-4d records stay everyone's; Settings title-line controls; the board-post alert dropdown")
 
 -- F26: Phase 4e, sharing sightings (COMM_REV 8). After a rev-8 peer's
 -- SYNC_DATA, PB asks once a session (KNOW_REQ, whisper, BULK) with our

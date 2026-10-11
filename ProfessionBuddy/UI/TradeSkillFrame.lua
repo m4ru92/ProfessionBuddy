@@ -5312,10 +5312,37 @@ function TSF:BuildSettingsPanel(parent)
     local notifGroupTop = yRight + 4
     yRight = yRight - 6
 
+    -- Two checkboxes on one row: the column has room for one more row only,
+    -- and the board alert dropdown takes it.
     MakeCheckbox("Order chat messages", "orderChatMessages", yRight, COL_RIGHT)
-    yRight = yRight - 26
-    MakeCheckbox("Sound on new request", "orderSoundOnRequest", yRight, COL_RIGHT)
-    yRight = yRight - 26
+    MakeCheckbox("Sound on new request", "orderSoundOnRequest", yRight, COL_RIGHT + 170)
+    yRight = yRight - 28
+
+    -- A guildmate's new guild board post (Comm.lua HandleOrderOpen).
+    local BOARD_ALERT_LABELS = {
+        known = "Only recipes I know",
+        alts  = "Recipes I or my alts know",
+        any   = "Any post",
+        off   = "Off",
+    }
+    local BOARD_ALERT_ORDER = { "known", "alts", "any", "off" }
+    local boardAlertOpts = {}
+    for i, k in ipairs(BOARD_ALERT_ORDER) do boardAlertOpts[i] = BOARD_ALERT_LABELS[k] end
+    local boardAlertDD = CreateDropdown(panel, 330, boardAlertOpts,
+        BOARD_ALERT_LABELS[settings.boardAlert] or BOARD_ALERT_LABELS.known,
+        function(val)
+            for k, label in pairs(BOARD_ALERT_LABELS) do
+                if label == val then settings.boardAlert = k end
+            end
+        end,
+        "Board-post alerts: ")
+    boardAlertDD:SetPoint("TOPLEFT", panel, "TOPLEFT", COL_RIGHT + 2, yRight)
+    self.boardAlertDD = boardAlertDD
+    local function SyncBoardAlertDD()
+        boardAlertDD:SetValue(BOARD_ALERT_LABELS[settings.boardAlert] or BOARD_ALERT_LABELS.known)
+    end
+    SyncBoardAlertDD()
+    yRight = yRight - 24        -- 28 + 24 = the two 26px rows this replaced
 
     local notifNote = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     notifNote:SetPoint("TOPLEFT", COL_RIGHT + 4, yRight)
@@ -5342,6 +5369,7 @@ function TSF:BuildSettingsPanel(parent)
         otherSlider:SetValue(settings.tooltipMaxOther or 5)
         UpdateTooltipGroup()
         UpdateGatherSub()
+        SyncBoardAlertDD()
         -- Belt-and-suspenders: hide content that shouldn't be visible
         if TSF.craftBar then TSF.craftBar:Hide() end
         if TSF.listPanel then TSF.listPanel:Hide() end

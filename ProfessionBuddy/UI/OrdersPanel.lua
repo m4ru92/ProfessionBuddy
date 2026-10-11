@@ -1221,6 +1221,60 @@ function OP:ClaimBlockReason(entry)
     return nil
 end
 
+-- Board-post alerts: which of your characters knows the recipe a guildmate
+-- just posted. Returns the current character's key first, then an alt's; nil
+-- when none does. A post with no profession is checked against every crafting
+-- profession. Alts follow showCrossFactionAlts, as in Find a crafter.
+function OP:BoardPostKnownBy(entry, includeAlts)
+    local name = entry and entry.item and entry.item.name
+    if type(name) ~= "string" or name == "" then return nil end
+    local prof = entry.item.profession
+    if prof == "" then prof = nil end
+    local function knows(char)
+        if type(char) ~= "table" or type(char.professions) ~= "table" then return false end
+        if prof then
+            local pd = char.professions[prof]
+            return type(pd) == "table" and tableHasName(pd.recipes, name)
+        end
+        for pn, pd in pairs(char.professions) do
+            if not addon.CLASS_PROFS[pn] and type(pd) == "table"
+               and tableHasName(pd.recipes, name) then return true end
+        end
+        return false
+    end
+    local chars = addon.db.characters or {}
+    local me = addon:PlayerKey()
+    local DS = addon.DataStore
+    if knows(DS and DS:GetCharacter(me) or chars[me]) then return me end
+    if not includeAlts then return nil end
+    local myFaction = UnitFactionGroup("player")
+    local crossFaction = addon.db.settings and addon.db.settings.showCrossFactionAlts
+    for key, char in pairs(chars) do
+        if type(char) == "table" and not char.isRemote
+           and not addon:SameKey(key, me)
+           and (crossFaction or char.faction == myFaction)
+           and knows(char) then
+            return key
+        end
+    end
+    return nil
+end
+
+-- Whether a NEW board post should alert, by the boardAlert setting:
+-- "known" (default), "alts", "any" or "off". Returns the chat line's
+-- suffix ("" for an "any" post nobody knows), or nil for no alert.
+function OP:BoardAlertSuffix(entry)
+    local mode = addon.db.settings and addon.db.settings.boardAlert or "known"
+    if mode == "off" then return nil end
+    local who = self:BoardPostKnownBy(entry, mode ~= "known")
+    if who then
+        if addon:SameKey(who, addon:PlayerKey()) then return " (you know this recipe)" end
+        return " (" .. addon:ShortName(who) .. " knows this recipe)"
+    end
+    if mode == "any" then return "" end
+    return nil
+end
+
 -- ClaimBlockReason walks the character's recipe table and the whole static
 -- profession table whenever the posted name is not an exact recipe key, which is
 -- the normal case for free-text posts. Cache the answer per board entry for the
@@ -2314,8 +2368,9 @@ function OP:LoginSummary()
 end
 
 -- Backend integration point. kind: "newRequest" | "claimAccepted" | "assigned" |
--- "accepted" | "declined" | "crafted" | "cancelled" | "completed". order is the
--- record the counterparty just acted on.
+-- "accepted" | "declined" | "crafted" | "cancelled" | "completed" |
+-- "boardPost". order is the record the counterparty just acted on (for
+-- "boardPost", the new board entry).
 local NOTIFY_TEXT = {
     newRequest = function(o) return addon:ShortName(o.requester) .. " requested " .. o.quantity .. "x " .. o.item.name end,
     -- The handoff for a claim WE made. "requested" reads backwards there.
@@ -2334,6 +2389,20 @@ local NOTIFY_TEXT = {
 -- passes { fromClaim = true } (or sets it on the order) for the ORDER_NEW that
 -- hands a claim back to the claimer, which is not an unsolicited request.
 function OP:NotifyOrderEvent(kind, order, info)
+    -- A guildmate's new board post: its own setting, not orderChatMessages.
+    if kind == "boardPost" then
+        local suffix = order and self:BoardAlertSuffix(order)
+        if suffix then
+            print("|cff00ccffProfessionBuddy:|r " .. addon:ShortName(order.requester or "?")
+                .. " posted on the guild board: " .. (order.quantity or 1) .. "x "
+                .. ((order.item and order.item.name) or "?") .. suffix)
+            local s = addon.db and addon.db.settings or {}
+            if s.orderSoundOnRequest then PlaySound(SOUNDKIT.TELL_MESSAGE) end
+        end
+        self:UpdateBadge()
+        self:RefreshAll()
+        return
+    end
     if kind == "newRequest" and order
        and ((info and info.fromClaim) or order.fromClaim) then
         kind = "claimAccepted"

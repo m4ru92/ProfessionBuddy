@@ -606,6 +606,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         includeRemoteInCalc = false,
         orderChatMessages   = true,
         orderSoundOnRequest = false,
+        boardAlert          = "known", -- new guild board posts: "known" | "alts" | "any" | "off"
         shareData           = true,  -- master switch for AceComm data sharing
         orderHistoryLimit   = 50,    -- keep the most recent N terminal orders per character (hard-pruned)
         orderHistorySortOldest = false, -- History sort: false = newest-closed first
@@ -683,6 +684,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.orderSoundOnRequest == nil then
         ProfBuddyDB.settings.orderSoundOnRequest = false
+    end
+    if ProfBuddyDB.settings.boardAlert == nil then
+        ProfBuddyDB.settings.boardAlert = "known"
     end
     if ProfBuddyDB.settings.shareData == nil then
         ProfBuddyDB.settings.shareData = true
