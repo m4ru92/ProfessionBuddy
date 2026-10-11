@@ -504,8 +504,7 @@ function TSF:Init()
                 C_Timer.After(0.05, function()
                     self:UpdateCraftableCounts()
                     -- Refresh skill bar in case we leveled up
-                    local rank, maxRank
-                    _, rank, maxRank = addon.Source:GetOpenSkillLine(state.isCraftWindow)
+                    local _, rank, maxRank = addon.Source:GetOpenSkillLine(state.isCraftWindow)
                     if rank and rank ~= state.skillLevel then
                         state.skillLevel = rank
                         state.maxSkill = maxRank or state.maxSkill

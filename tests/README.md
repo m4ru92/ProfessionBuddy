@@ -90,6 +90,23 @@ and consistency rules the addon's consumers depend on. It exits non-zero on any
 blocking finding; sections it marks `[informational]` do not fail the run.
 `tools/release.py` runs it alongside the harnesses.
 
+## Global writes
+
+`python tools/check_globals.py` (needs `pip install luaparser`) parses every
+`.lua` file the three tocs load, `Libs/` excluded, and lists each write to a
+global variable. PB owns four globals: `ProfBuddy`, `ProfBuddyDB`,
+`SLASH_PROFBUDDY1` and `SLASH_PROFBUDDY2`. Any other global write fails the
+run with its file and line. The usual cause is a missing `local`, and a stray
+global can taint Blizzard code that reads the same name. `tools/release.py`
+runs it alongside the harnesses.
+
+## On GitHub
+
+`.github/workflows/checks.yml` runs the harnesses, the data linter, the
+global-write check and a `tools/release.py --dry-run` on every push and pull
+request. The result shows beside the commit on GitHub (a green tick or a red
+X) and under the repo's Actions tab, where each failed step shows its output.
+
 ## When you touch Comm.lua / Orders.lua
 
 Re-run both harnesses. They catch the class of bug where a file-local

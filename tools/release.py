@@ -25,8 +25,12 @@ Usage:
   python tools/release.py --list-game-versions            # print every version
 
 Gates that run before anything is zipped (skip them with --skip-checks):
-  tests/run_all.py     both Lua harnesses, on the 5.1 interpreter
-  tools/lint_data.py   the static recipe-DB linter (Data/ and Data/Forever/)
+  tests/run_all.py         the Lua harnesses, on the 5.1 interpreter
+  tools/lint_data.py       the static recipe-DB linter (Data/ and Data/Forever/)
+  tools/check_globals.py   PB writes no global it does not own (needs luaparser)
+
+The same gates and a dry run also run on GitHub on every push
+(.github/workflows/checks.yml).
 
 Before a real upload (not --dry-run), also:
   tools/gather_db.py --check          gathering data is the newest cmangos / VMaNGOS
@@ -383,7 +387,7 @@ def main():
     ap.add_argument("--changelog-type", default="markdown", choices=["text", "html", "markdown"])
     ap.add_argument("--list-game-versions", action="store_true", help="print matching CF game versions and exit")
     ap.add_argument("--skip-checks", action="store_true",
-                    help="skip the harness and data-linter gates (emergencies only)")
+                    help="skip the harness, data-linter and global-write gates (emergencies only)")
     args = ap.parse_args()
 
     token = os.environ.get("CF_API_TOKEN")
@@ -419,6 +423,8 @@ def main():
                  "tests/run_all.py (Lua harnesses)")
         run_gate(os.path.join(tools_dir(), "lint_data.py"),
                  ["--addon-dir", addon_dir], "tools/lint_data.py (recipe data)")
+        run_gate(os.path.join(tools_dir(), "check_globals.py"),
+                 ["--addon-dir", addon_dir], "tools/check_globals.py (global writes)")
 
     out_zip = args.out or os.path.normpath(os.path.join(addon_dir, "..", ADDON_NAME + ".zip"))
     n = build_zip(addon_dir, out_zip, root)

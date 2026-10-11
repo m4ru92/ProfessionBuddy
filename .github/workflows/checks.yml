@@ -1,0 +1,40 @@
+# Runs ProfessionBuddy's checks on every push and pull request. A broken
+# push shows a red X beside the commit on GitHub instead of turning up at
+# release time. Nothing here uploads anything or needs a token.
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      # lupa runs the harnesses on a real Lua 5.1 (the game's version);
+      # luaparser reads the addon for the global-write check.
+      - name: Install the test tools
+        run: pip install lupa==2.8 luaparser==3.3.0 multimethod==2.1
+
+      - name: Lua harnesses (tests/run_all.py)
+        run: python tests/run_all.py
+
+      - name: Recipe data lint (tools/lint_data.py)
+        run: python tools/lint_data.py
+
+      - name: Global writes (tools/check_globals.py)
+        run: python tools/check_globals.py
+
+      # The release zip build and its in-zip checks, without the upload.
+      # --skip-checks only skips the two gates already run above.
+      - name: Release zip dry run (tools/release.py)
+        run: python tools/release.py --dry-run --skip-checks --out "$RUNNER_TEMP/ProfessionBuddy.zip"
