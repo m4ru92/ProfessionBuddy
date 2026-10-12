@@ -262,12 +262,15 @@ BUILD_INTERFACE = rawget(_G, "BUILD_INTERFACE") or 16001
 function GetBuildInfo() return "1.60.1", "69977", "Sep 22 2026", BUILD_INTERFACE end
 function PlaySound() end
 function InCombatLockdown() return false end
--- Post-hook a global function, as the client does.
-function hooksecurefunc(name, fn)
+-- Post-hook a function, as the client does: hooksecurefunc("Global", fn)
+-- or hooksecurefunc(table, "key", fn).
+function hooksecurefunc(a, b, c)
+    local tbl, name, fn = _G, a, b
+    if type(a) == "table" then tbl, name, fn = a, b, c end
     if type(name) ~= "string" then return end
-    local orig = rawget(_G, name)
+    local orig = rawget(tbl, name)
     if type(orig) ~= "function" then return end
-    rawset(_G, name, function(...)
+    rawset(tbl, name, function(...)
         local r = { orig(...) }
         fn(...)
         return unpack(r)
@@ -349,6 +352,7 @@ C_Container = { GetContainerNumSlots = rec("C_Container.GetContainerNumSlots", 0
 C_AddOns = { IsAddOnLoaded = rec("C_AddOns.IsAddOnLoaded", false), GetAddOnMetadata = rec("C_AddOns.GetAddOnMetadata") }
 C_GuildInfo = { GuildRoster = rec("C_GuildInfo.GuildRoster") }
 C_ChatInfo = { SendAddonMessage = rec("C_ChatInfo.SendAddonMessage", 0),
+               SendChatMessage = rec("C_ChatInfo.SendChatMessage"),
                RegisterAddonMessagePrefix = rec("C_ChatInfo.RegisterAddonMessagePrefix", true),
                IsAddonMessagePrefixRegistered = rec("C_ChatInfo.IsAddonMessagePrefixRegistered", false) }
 ChatFrameUtil = { InsertLink = rec("ChatFrameUtil.InsertLink"),

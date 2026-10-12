@@ -115,7 +115,11 @@ local UI_REFRESH_COALESCE = 1     -- max one panel repaint per second from inbou
 local REFLEX_FLOOR      = 5       -- min seconds between reflex refusal replies to one sender
 local GUILD_SYNC_COOLDOWN = 15    -- min seconds between guild pulls from one guildmate
 local OFFLINE_BACKOFF   = 300     -- skip a contact this long after "no player named"
-local WHISPER_MEMORY    = 10      -- a system line must follow our whisper this closely
+-- A "No player named" line must follow our whisper this closely. On WoW:
+-- Forever the server answers an addon whisper to a logged-out player 97 to
+-- 128 s late (m4ru's /pbt comm trace 2026-10-12; a typed whisper is
+-- answered at once), so the window is five minutes, not ten seconds.
+local WHISPER_MEMORY    = 300
 -- Trust-timing race: trust is LIVE (guild roster / group membership), so a real
 -- guildmate's message can arrive a beat before our roster has populated. Hold it
 -- briefly and replay it once trust resolves, tightly bounded so a not-yet-trusted
@@ -236,6 +240,18 @@ function Comm:Init()
         addon:RegisterEvent("CHAT_MSG_SYSTEM", function(_, text)
             Comm:OnSystemMessage(text)
         end)
+    end
+    -- Both clients' chat box sends through C_ChatInfo.SendChatMessage; TBC
+    -- Anniversary may also keep the old global for other addons.
+    local function onSend(_, chatType, _, target) Comm:NotePlayerWhisper(chatType, target) end
+    if hooksecurefunc then
+        local CI = C_ChatInfo
+        if CI and type(CI.SendChatMessage) == "function" then
+            hooksecurefunc(CI, "SendChatMessage", onSend)
+        end
+        if type(SendChatMessage) == "function" and not (CI and SendChatMessage == CI.SendChatMessage) then
+            hooksecurefunc("SendChatMessage", onSend)
+        end
     end
 
     -- Housekeeping tickers. NewTicker is absent from the test harnesses (and from
@@ -774,6 +790,14 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
         if rev then contact.lastCommRev = sanInt(rev, 0, 1000, 0) end
         -- They are demonstrably online, so lift any offline back-off.
         contact.offlineUntil = nil
+        -- Auto-sync pushes go only to contacts heard from this session
+        -- (SendIncrementalUpdate). The first time we hear one, push to
+        -- them, so an online contact still gets our data straight away.
+        self._heardContact = self._heardContact or {}
+        if not self._heardContact[sender] then
+            self._heardContact[sender] = true
+            if contact.autoSync then self:QueueIncrementalUpdate() end
+        end
     end
 
     -- Dispatch under pcall so a malformed payload (even from a trusted
@@ -2514,10 +2538,15 @@ function Comm:SendIncrementalUpdate()
 
     for contactKey, contact in pairs(addon.db.contacts) do
         -- Skip a contact the server just told us is not logged in; any message
-        -- from them clears the back-off immediately.
+        -- from them clears the back-off immediately. Push only to a contact
+        -- heard from this session: an offline one gets the login SYNC_REQ
+        -- and nothing else, instead of a full sync of a dozen chunks that the
+        -- server answers with a dozen "No player named" lines (m4ru
+        -- 2026-10-12).
         local offline = contact.offlineUntil and contact.offlineUntil > now
-        if contact.autoSync and not offline then
-            local key = normFullKey(contactKey) or contactKey
+        local key = normFullKey(contactKey) or contactKey
+        local heard = self._heardContact and self._heardContact[key]
+        if contact.autoSync and not offline and heard then
             local rev = tonumber(contact.lastCommRev) or 0
             local st = self._pushState[key]
             if not st or not st.epoch or not st.inv then
@@ -2694,8 +2723,9 @@ function Comm:OnSystemMessage(text)
     if not who then return false end
 
     local short = addon:ShortName(who)
+    local now = time()
     local at = self._recentWhispers and short and self._recentWhispers[short]
-    if not at or (time() - at) > WHISPER_MEMORY then return false end
+    if not at or (now - at) > WHISPER_MEMORY then return false end
     -- The whisper stays remembered for its whole window: one long message
     -- is several whispers (a 1.2 KB SYNC_DATA is 6 chunks) and the server
     -- answers each, and every chat frame showing system lines asks this
@@ -2704,8 +2734,25 @@ function Comm:OnSystemMessage(text)
 
     local key = normFullKey(who)
     local contact = key and addon.db.contacts and addon.db.contacts[key]
-    if contact then contact.offlineUntil = time() + OFFLINE_BACKOFF end
+    if contact then contact.offlineUntil = now + OFFLINE_BACKOFF end
+    -- The player whispered this name too inside the window: the line may
+    -- answer them, so it shows. Five minutes is long enough to swallow
+    -- the answer to something they typed otherwise.
+    local mine = self._playerWhispers and self._playerWhispers[short]
+    if mine and (now - mine) <= WHISPER_MEMORY then return false end
     return true
+end
+
+-- The player's own whispers (typed, or sent by another addon), so the
+-- offline filter never hides the answer to one. A post-hook: it only
+-- reads the arguments, after the game has sent the message.
+function Comm:NotePlayerWhisper(chatType, target)
+    if type(issecretvalue) == "function" and (issecretvalue(chatType) or issecretvalue(target)) then return end
+    if chatType ~= "WHISPER" or type(target) ~= "string" then return end
+    local short = addon:ShortName(target)
+    if not short then return end
+    self._playerWhispers = self._playerWhispers or {}
+    self._playerWhispers[short] = time()
 end
 
 ----------------------------------------------------------------------
@@ -2721,7 +2768,8 @@ function Comm:ForgetPeer(key)
     for _, name in ipairs({ "_pushState", "_recvState", "_guildSyncAt", "_resyncAt",
                             "_helloAckAt", "_helloPullAt", "_reflexAt",
                             "_pendingReq", "_lastOpenAt",
-                            "_knowAsked", "_knowPending", "_knowServed" }) do
+                            "_knowAsked", "_knowPending", "_knowServed",
+                            "_heardContact" }) do
         if self[name] then self[name][k] = nil end
     end
     -- and what they shared with us (WoW: Forever)
@@ -2780,7 +2828,8 @@ function Comm:SweepSessionTables()
     sweepByAge(self._pendingReq, PENDING_REQ_TTL, now)
     sweepByAge(self._knowPending, PENDING_REQ_TTL, now)
     sweepByAge(self._knowServed, SESSION_TTL, now)
-    sweepByAge(self._recentWhispers, WHISPER_MEMORY * 6, now)
+    sweepByAge(self._recentWhispers, WHISPER_MEMORY, now)
+    sweepByAge(self._playerWhispers, WHISPER_MEMORY, now)
 
     -- An ack slot whose timer never ran (a cancelled timer, a reload mid-flight).
     for token, p in pairs(pendingOrderAck) do

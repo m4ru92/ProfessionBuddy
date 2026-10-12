@@ -2812,8 +2812,8 @@ do
         EXPECT(w.target == "Owl Milk" and type(w.cb) == "function", "chunk " .. i .. " has no callback")
     end
     local line = "No player named 'Owl Milk' is currently playing."
-    time = function() return t0 + 30 end
-    EXPECT(Comm:OnSystemMessage(line) == false, "a line 30 s after queueing was hidden with no chunk sent")
+    time = function() return t0 + 310 end
+    EXPECT(Comm:OnSystemMessage(line) == false, "a line 310 s after queueing was hidden with no chunk sent")
     wire[#wire].cb(wire[#wire].arg, true, 0)          -- the last chunk leaves now
     EXPECT(Comm:OnSystemMessage(line) == true, "the line for the last chunk was shown")
     time = realTime
@@ -2876,4 +2876,26 @@ do
 end
 print("  PASS F51 launchers: data broker launcher, minimap button shown by default, left /pb, right Settings, Settings box hides and shows it, addon compartment entry")
 
-print("ALL FOREVER TESTS PASS (51)")
+-- F52: the chat box's whispers (C_ChatInfo.SendChatMessage, post-hooked
+-- at load) are the player's own, so the offline line for that name shows
+-- even while PB whispered it too; PB's own still hides for five minutes.
+do
+    local Comm = ProfBuddy.Comm
+    ERR_CHAT_PLAYER_NOT_FOUND_S = "No player named '%s' is currently playing."
+    Comm._recentWhispers, Comm._playerWhispers = nil, nil
+    local realCTL = ChatThrottleLib.SendAddonMessage
+    ChatThrottleLib.SendAddonMessage = function() end
+    Comm:SendWhisper("SYNC_REQ", {}, "Owl Milk-Forever")
+    local line = "No player named 'Owl Milk' is currently playing."
+    EXPECT(Comm:OnSystemMessage(line) == true, "PB's own whisper: the line was shown")
+    C_ChatInfo.SendChatMessage("test", "WHISPER", nil, "Owl Milk")
+    EXPECT(Comm._playerWhispers and Comm._playerWhispers["Owl Milk"], "the chat box whisper was not noted")
+    EXPECT(Comm:OnSystemMessage(line) == false, "the line answering the player's own whisper was hidden")
+    C_ChatInfo.SendChatMessage("hello", "SAY")
+    EXPECT(not Comm._playerWhispers["Hello"], "a /say was noted as a whisper")
+    Comm._recentWhispers, Comm._playerWhispers = nil, nil
+    ChatThrottleLib.SendAddonMessage = realCTL
+end
+print("  PASS F52 the player's own whispers keep their offline line, PB's hide for five minutes")
+
+print("ALL FOREVER TESTS PASS (52)")

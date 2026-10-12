@@ -578,6 +578,18 @@ Comm._pushState = nil
 addon.db.contacts["Deltapal-TestRealm"] = { trusted = true, autoSync = true, lastSync = 0, lastCommRev = 7 }
 clearSent()
 DS:SetInventory("bags", { [111] = 5 })
+-- Pushes go only to a contact heard from this session (m4ru 2026-10-12): an
+-- offline contact gets the login SYNC_REQ and no full sync.
+Comm._heardContact = nil
+Comm:SendIncrementalUpdate()
+assert(#sentOfType("SYNC_DATA") == 0 and #sentOfType("INCR") == 0, "T19: pushed to a contact not heard from this session")
+local nTimers = #timers
+recv("Deltapal", { _type = "ORDER_ACK" })          -- any PB message from them
+assert(Comm._heardContact and Comm._heardContact["Deltapal-TestRealm"], "T19: hearing a contact was not noted")
+assert(#timers == nTimers + 1, "T19: hearing an auto-sync contact the first time did not queue a push")
+recv("Deltapal", { _type = "ORDER_ACK" })
+assert(#timers == nTimers + 1, "T19: hearing the same contact again queued another push")
+clearSent()
 Comm:SendIncrementalUpdate()                       -- first push = full baseline
 assert(#sentOfType("SYNC_DATA") == 1 and #sentOfType("INCR") == 0, "T19: baseline should be a full sync")
 assert(sentOfType("SYNC_DATA")[1].payload.epoch ~= nil, "T19: baseline SYNC_DATA missing epoch stamp")
@@ -1031,6 +1043,7 @@ do
     for _, c in pairs(addon.db.contacts) do c.autoSync = false end
     Comm._pushState = nil
     addon.db.contacts[pk] = { trusted = true, autoSync = true, lastSync = 0, lastCommRev = 7 }
+    recv("Priopal", { _type = "ORDER_ACK" })        -- heard this session
     DS:SetInventory("bags", { [777] = 1 })
     Comm:SendIncrementalUpdate()                    -- full baseline
     clearSent()
@@ -1081,6 +1094,9 @@ do
     for _, c in pairs(addon.db.contacts) do c.autoSync = false end
     Comm._pushState = nil
     addon.db.contacts["Offliner-TestRealm"] = { trusted = true, autoSync = true, lastSync = 0 }
+    -- heard earlier this session, logged out since
+    Comm._heardContact = Comm._heardContact or {}
+    Comm._heardContact["Offliner-TestRealm"] = true
     clearSent()
     DS:SetInventory("bags", { [888] = 1 })
     Comm:SendIncrementalUpdate()
@@ -1103,7 +1119,7 @@ passed("T43 offline back-off -- OnSystemMessage marks the contact, the next push
 do
     local FK = "Forgetful-TestRealm"
     local SESSION = { "_pushState", "_recvState", "_guildSyncAt", "_resyncAt",
-                      "_helloAckAt", "_pendingReq", "_lastOpenAt" }
+                      "_helloAckAt", "_pendingReq", "_lastOpenAt", "_heardContact" }
     joinGuild("Guildie", "Buddy", "Forgetful")
     addon.db.contacts[FK] = { trusted = true, autoSync = true, lastSync = 0, lastCommRev = 7 }
     Comm:_ResetServeCooldown()
@@ -2207,7 +2223,8 @@ passed("T85 an unacked order message says offline only when the peer has been si
 -- ── T86: every "no player named" line for our own whisper is hidden ──────
 -- A long message is several whispers and the server answers each one; the
 -- line also reaches the filter once per chat frame. All of them are ours
--- for WHISPER_MEMORY (10 s); a line after that, or for a name we did not
+-- for WHISPER_MEMORY (300 s since 2026-10-12: Forever answers addon
+-- whispers 97-128 s late); a line after that, or for a name we did not
 -- whisper, is the player's own and shows.
 do
     Comm._recentWhispers = nil
@@ -2218,8 +2235,10 @@ do
     end
     assert(Comm:OnSystemMessage("No player named 'Stranger' is currently playing.") == false,
         "T86: a line for a name we never whispered was hidden")
-    Comm._recentWhispers["Offliner"] = time() - 11
-    assert(Comm:OnSystemMessage(line) == false, "T86: a line 11 s after our whisper was hidden")
+    Comm._recentWhispers["Offliner"] = time() - 128
+    assert(Comm:OnSystemMessage(line) == true, "T86: a line 128 s after our whisper (Forever's measured delay) was shown")
+    Comm._recentWhispers["Offliner"] = time() - 301
+    assert(Comm:OnSystemMessage(line) == false, "T86: a line 301 s after our whisper was hidden")
     Comm._recentWhispers = nil
     clearSent()
 end
@@ -2396,15 +2415,15 @@ do
     Comm:SendWhisper("SYNC_DATA", { _type = "SYNC_DATA" }, "Latechunk-TestRealm", "BULK")
     local msg = firstOfType("SYNC_DATA")
     assert(msg and type(msg.onChunk) == "function", "T90: the whisper passed no chunk callback")
-    -- 25 s later, still queued: the line is not ours yet
-    time = function() return t0 + 25 end
-    assert(Comm:OnSystemMessage(line) == false, "T90: a line 25 s after queueing was hidden with no chunk sent")
+    -- 305 s later, still queued: the line is not ours yet
+    time = function() return t0 + 305 end
+    assert(Comm:OnSystemMessage(line) == false, "T90: a line 305 s after queueing was hidden with no chunk sent")
     -- the last chunk leaves now, and the server answers it
     msg.onChunk(nil, true, 0)
-    time = function() return t0 + 26 end
+    time = function() return t0 + 306 end
     assert(Comm:OnSystemMessage(line) == true, "T90: the line for a chunk that left late was shown")
-    time = function() return t0 + 37 end
-    assert(Comm:OnSystemMessage(line) == false, "T90: a line 11 s after the last chunk was hidden")
+    time = function() return t0 + 606 end
+    assert(Comm:OnSystemMessage(line) == false, "T90: a line 301 s after the last chunk was hidden")
     time = realTime
     Comm._recentWhispers = nil
     clearSent()
@@ -2449,8 +2468,31 @@ do
 end
 passed("T91 TBC launcher files -- toc lists UI/Launcher.lua, libs.xml loads LibDataBroker then LibDBIcon, Basic Campfire icon")
 
+-- T92: the player's own whispers. A "No player named" line shows when the
+-- player whispered that name inside the window, even if PB did too, and
+-- the back-off still starts; PB's alone hides for five minutes.
+do
+    addon.db.contacts["Quietpal-TestRealm"] = { trusted = true, autoSync = true, lastSync = 0 }
+    Comm._recentWhispers, Comm._playerWhispers = nil, nil
+    local line = "No player named 'Quietpal' is currently playing."
+    Comm:SendWhisper("SYNC_REQ", {}, "Quietpal-TestRealm")
+    assert(Comm:OnSystemMessage(line) == true, "T92: PB's own whisper: the line was shown")
+    Comm:NotePlayerWhisper("WHISPER", "Quietpal")
+    addon.db.contacts["Quietpal-TestRealm"].offlineUntil = nil
+    assert(Comm:OnSystemMessage(line) == false, "T92: the answer to the player's own whisper was hidden")
+    assert(addon.db.contacts["Quietpal-TestRealm"].offlineUntil, "T92: the back-off did not start")
+    Comm._playerWhispers["Quietpal"] = time() - 301
+    assert(Comm:OnSystemMessage(line) == true, "T92: a 301 s old player whisper still kept PB's line visible")
+    Comm:NotePlayerWhisper("SAY", "Quietpal")
+    assert(Comm._playerWhispers["Quietpal"] == time() - 301, "T92: a /say was noted as a whisper")
+    Comm._recentWhispers, Comm._playerWhispers = nil, nil
+    addon.db.contacts["Quietpal-TestRealm"] = nil
+    clearSent()
+end
+passed("T92 the player's own whispers -- their offline line shows, PB's hides for five minutes")
+
 leaveGuild()
-print("ALL 91 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 92 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2466,6 +2508,6 @@ print("ALL 91 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers; "
     .. pass .. " of them print a PASS line above)")
 

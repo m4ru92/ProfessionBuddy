@@ -516,8 +516,23 @@ Router:group(D1.key, D2.key)
 D1.addon.db.contacts[D2.key] = { trusted = true, autoSync = true,  lastSync = 0, lastCommRev = 7 }
 D2.addon.db.contacts[D1.key] = { trusted = true, autoSync = false, lastSync = 0, lastCommRev = 7 }
 
--- Baseline: first push is a full SYNC_DATA (establishes the epoch both sides).
+-- D1 pushes only to a contact it has heard from this session: nothing goes
+-- to Deltatwo until Deltatwo says something. Any PB message counts; a bare
+-- ORDER_ACK here, so the serve cooldown stays free for the gap resync below.
 D1.ds:SetInventory("bags", { [100] = 10 })
+local q0 = #Router.queue
+fireIncr(D1)
+local pushed = false
+for i = q0 + 1, #Router.queue do
+    local m = Router.queue[i]
+    if m.payload and m.payload._type == "SYNC_DATA" then pushed = true end
+end
+check(not pushed, "GP11: pushed to a contact not heard from this session")
+Router:pump()
+D2.addon.Comm:SendWhisper("ORDER_ACK", {}, D1.key)
+Router:pump()
+
+-- Baseline: first push is a full SYNC_DATA (establishes the epoch both sides).
 fireIncr(D1); Router:pump()
 check(D2.addon.db.characters[D1.key] and D2.addon.db.characters[D1.key].inventory.bags[100] == 10,
     "GP11: baseline full sync did not reach Deltatwo")
