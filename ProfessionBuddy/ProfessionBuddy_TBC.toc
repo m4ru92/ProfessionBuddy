@@ -19,6 +19,7 @@ DataStore.lua
 Scanner.lua
 Comm.lua
 Orders.lua
+BattleNet.lua
 RecipeDB.lua
 Data/Tailoring.lua
 Data/Blacksmithing.lua

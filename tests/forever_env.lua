@@ -139,6 +139,10 @@ function F:GetNumPoints() return rawget(self, "_points") or 0 end
 function F:NumLines() return 0 end
 function F:IsMouseOver() return false end
 function F:GetChecked() return false end
+-- _disabled is stored as true/false: an unset field reads as a stub table here
+function F:Disable() rawset(self, "_disabled", true) end
+function F:Enable() rawset(self, "_disabled", false) end
+function F:IsEnabled() return rawget(self, "_disabled") ~= true end
 function F:GetValue() return 0 end
 function F:GetMinMaxValues() return 0, 0 end
 function F:GetParent() return self._parent end

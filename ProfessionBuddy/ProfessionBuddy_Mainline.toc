@@ -18,6 +18,7 @@ DataStore.lua
 Scanner.lua
 Comm.lua
 Orders.lua
+BattleNet.lua
 RecipeDB.lua
 Data/Forever/Alchemy.lua
 Data/Forever/Blacksmithing.lua

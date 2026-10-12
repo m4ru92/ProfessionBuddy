@@ -329,6 +329,31 @@ function FP:CreateContent(parent)
         self:Refresh()
     end)
 
+    -- Battle.net auto-add picker (BattleNet.lua). Greyed out on WoW: Forever
+    -- until its friend list reaches addons (2.0.1).
+    local bnBtn = CreateFrame("Button", nil, addBar, "UIPanelButtonTemplate")
+    bnBtn:SetSize(90, 22)
+    bnBtn:SetPoint("RIGHT", addBar, "RIGHT", -4, 0)
+    bnBtn:SetText("Battle.net")
+    local BNm = addon.BattleNet
+    local bnTitle, bnText
+    if BNm and BNm:Available() then
+        bnBtn:SetScript("OnClick", function() BNm:ToggleWindow() end)
+        bnTitle, bnText = "Battle.net friends", "Pick Battle.net friends whose characters PB adds as contacts."
+    else
+        bnBtn:Disable()
+        if bnBtn.SetMotionScriptsWhileDisabled then bnBtn:SetMotionScriptsWhileDisabled(true) end
+        bnTitle, bnText = "Battle.net auto-add", "Coming soon. The WoW: Forever beta does not give addons the Battle.net friend list yet."
+    end
+    bnBtn:SetScript("OnEnter", function(btn)
+        GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+        GameTooltip:SetText(bnTitle, 1, 1, 1)
+        GameTooltip:AddLine(bnText, nil, nil, nil, true)
+        GameTooltip:Show()
+    end)
+    bnBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.bnetBtn = bnBtn
+
     addBox:SetScript("OnEnterPressed", function()
         addBtn:Click()
     end)

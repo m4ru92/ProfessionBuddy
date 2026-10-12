@@ -613,6 +613,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         orderHistorySortOldest = false, -- History sort: false = newest-closed first
         orderExpiryDays     = 14,    -- auto-expire pending orders older than N days (0 = off)
         autoAddParty        = false, -- add party members as contacts automatically
+        bnetAutoAdd         = false, -- BattleNet.lua: add picked Battle.net friends as contacts
+        bnetTrust           = false, -- ...and trust them
     }
     -- Migrate old single-slider setting
     if ProfBuddyDB.settings.tooltipMaxRecipes then
@@ -695,6 +697,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.autoAddParty == nil then
         ProfBuddyDB.settings.autoAddParty = false
     end
+    if ProfBuddyDB.settings.bnetAutoAdd == nil then ProfBuddyDB.settings.bnetAutoAdd = false end
+    if ProfBuddyDB.settings.bnetTrust == nil then ProfBuddyDB.settings.bnetTrust = false end
 
     -- Trust migration: `trusted` now gates serving full data (see Comm.lua).
     -- Earlier builds auto-created a contact for every group-mate ever seen, so a

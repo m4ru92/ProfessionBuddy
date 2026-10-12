@@ -2898,4 +2898,65 @@ do
 end
 print("  PASS F52 the player's own whispers keep their offline line, PB's hide for five minutes")
 
-print("ALL FOREVER TESTS PASS (52)")
+-- F53: Battle.net auto-add on WoW: Forever: the Friends tab button is
+-- greyed out and its tooltip says coming soon, and nothing scans. Then the
+-- picker window's own logic, with the client check forced on.
+do
+    local BN, S = ProfBuddy.BattleNet, ProfBuddy.db.settings
+    local FP = ProfBuddy.FriendsPanel
+    EXPECT(not BN:Available(), "Battle.net auto-add is on on Forever")
+    if not FP.bnetBtn then FP:Toggle() end           -- the tab builds on first show
+    local btn = FP.bnetBtn
+    EXPECT(btn and not btn:IsEnabled(), "the Battle.net button is not greyed out on Forever")
+    local tipLines = {}
+    local realAdd, realSet = GameTooltip.AddLine, GameTooltip.SetText
+    rawset(GameTooltip, "SetText", function(_, t) tipLines[#tipLines + 1] = t end)
+    rawset(GameTooltip, "AddLine", function(_, t) tipLines[#tipLines + 1] = t end)
+    btn:GetScript("OnEnter")(btn)
+    rawset(GameTooltip, "SetText", realSet); rawset(GameTooltip, "AddLine", realAdd)
+    EXPECT(tipLines[2] and tipLines[2]:find("Coming soon", 1, true), "tooltip: " .. tostring(tipLines[2]))
+    BNConnected = function() return true end
+    local list = {
+        { tag = "Zed#1", games = {} },
+        { tag = "Ann#2", games = { { clientProgram = "WoW", isOnline = true, wowProjectID = WOW_PROJECT_ID,
+            isInCurrentRegion = true, characterName = "Ann Wren", realmName = "Forever", factionName = "Horde" } } },
+    }
+    BNGetNumFriends = function() return #list end
+    C_BattleNet = {
+        GetFriendAccountInfo = function(i) return { battleTag = list[i].tag } end,
+        GetFriendNumGameAccounts = function(i) return #list[i].games end,
+        GetFriendGameAccountInfo = function(i, j) return list[i].games[j] end,
+    }
+    S.bnetAutoAdd, S.bnetPicks = true, { ["Ann#2"] = true }
+    BN:Scan()
+    EXPECT(not ProfBuddy.db.contacts["Ann Wren-Forever"], "Forever scanned while greyed out")
+    BN:ToggleWindow()
+    EXPECT(not BN.window, "the picker opened on Forever")
+    -- the window, forced on
+    BN.Available = function() return true end
+    S.bnetAutoAdd, S.bnetPicks = false, {}
+    BN:ToggleWindow()
+    local w = BN.window
+    EXPECT(w and w:IsShown(), "the picker did not open")
+    EXPECT(w.rows[1].label:GetText() == "Ann" and w.rows[2].label:GetText() == "Zed",
+           "friends in this game first, then by name; BattleTag cut at #")
+    EXPECT(w.rows[1].status:GetText():find("Ann Wren", 1, true), "no 'playing' line for a friend in game")
+    EXPECT(not w.trust:IsEnabled(), "Also trust them usable with auto-add off")
+    rawset(w.auto, "GetChecked", function() return true end)
+    w.auto:GetScript("OnClick")(w.auto)
+    EXPECT(S.bnetAutoAdd == true and w.trust:IsEnabled(), "auto-add box did not save or enable trust")
+    rawset(w.rows[2], "GetChecked", function() return true end)
+    w.rows[2]:GetScript("OnClick")(w.rows[2])
+    EXPECT(S.bnetPicks["Zed#1"] == true, "ticking a friend did not save the pick")
+    rawset(w.rows[1], "GetChecked", function() return true end)
+    w.rows[1]:GetScript("OnClick")(w.rows[1])
+    EXPECT(ProfBuddy.db.contacts["Ann Wren-Forever"], "ticking a friend in game did not add them")
+    ProfBuddy.db.contacts["Ann Wren-Forever"] = nil
+    w:Hide()
+    BN.Available = nil
+    S.bnetAutoAdd, S.bnetTrust, S.bnetPicks = false, false, {}
+    BNConnected, BNGetNumFriends, C_BattleNet = nil, nil, nil
+end
+print("  PASS F53 Battle.net on Forever: button greyed with a coming-soon tooltip, no scan; picker lists, ticks and adds")
+
+print("ALL FOREVER TESTS PASS (53)")

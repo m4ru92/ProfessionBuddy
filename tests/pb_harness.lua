@@ -2491,8 +2491,101 @@ do
 end
 passed("T92 the player's own whispers -- their offline line shows, PB's hides for five minutes")
 
+-- T93: Battle.net auto-add on TBC Anniversary (BattleNet.lua). Picked
+-- friends' characters online in this game, region and faction become
+-- contacts, untrusted unless "Also trust them"; a friend dropped from
+-- Battle.net takes those contacts along, never a manual one, and never on
+-- an empty read or while Battle.net is down.
+do
+    dofile(BASE .. "/BattleNet.lua")
+    local BN = addon.BattleNet
+    assert(BN:Available(), "T93: Battle.net auto-add is off on TBC Anniversary")
+    WOW_PROJECT_ID = 5
+    local connected = true
+    BNConnected = function() return connected end
+    local list
+    local function game(name, realm, over)
+        local g = { clientProgram = "WoW", isOnline = true, wowProjectID = 5, isInCurrentRegion = true,
+                    characterName = name, realmName = realm, factionName = "Alliance" }
+        for k, v in pairs(over or {}) do g[k] = v end
+        return g
+    end
+    BNGetNumFriends = function() return #list, #list, 0, 0 end
+    C_BattleNet = {
+        GetFriendAccountInfo = function(i) return list[i] and { battleTag = list[i].tag, accountName = "never read" } end,
+        GetFriendNumGameAccounts = function(i) return #list[i].games end,
+        GetFriendGameAccountInfo = function(i, j) return list[i].games[j] end,
+    }
+    local saved = addon.db.contacts
+    addon.db.contacts = { ["Manual-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 } }
+    local C = addon.db.contacts
+    local s = addon.db.settings
+    s.bnetAutoAdd, s.bnetTrust, s.bnetPicks = false, false, {}
+    list = {
+        { tag = "Picked#1", games = {
+            game("Pala", "Test Realm"),                                   -- added
+            game("Retailer", "Test Realm", { wowProjectID = 1 }),         -- other game
+            game("Abroad", "Test Realm", { isInCurrentRegion = false }),  -- other region
+            game("Nomad", nil),                                           -- no realm
+            game("Redside", "Test Realm", { factionName = "Horde" }),     -- other faction
+            game("Gone", "Test Realm", { isOnline = false }),             -- offline
+            game("Manual", "Test Realm"),                                 -- already a manual contact
+            game("Me", "Test Realm"),                                     -- ourselves
+            { clientProgram = "App", isOnline = true } } },
+        { tag = "NotPicked#2", games = { game("Other", "Test Realm") } },
+    }
+    s.bnetPicks["Picked#1"] = true
+    BN:Scan()
+    assert(not C["Pala-TestRealm"], "T93: added with auto-add off")
+    BN:SetAutoAdd(true)
+    local p = C["Pala-TestRealm"]
+    assert(p and p.bnet == "Picked#1" and p.trusted == false and p.autoSync == false,
+           "T93: a picked friend's character was not added untrusted")
+    for _, k in ipairs({ "Retailer", "Abroad", "Redside", "Gone", "Other" }) do
+        assert(not C[k .. "-TestRealm"], "T93: added " .. k)
+    end
+    local n = 0
+    for _ in pairs(C) do n = n + 1 end
+    assert(n == 2, "T93: " .. n .. " contacts, want Manual + Pala (no realm, no self)")
+    assert(C["Manual-TestRealm"].bnet == nil and C["Manual-TestRealm"].trusted == true, "T93: a manual contact was changed")
+    -- trust: covers existing Battle.net contacts and new ones, never manual ones
+    BN:SetTrust(true)
+    assert(C["Pala-TestRealm"].trusted == true, "T93: Also trust them did not trust an existing contact")
+    clearSent()
+    table.insert(list[1].games, game("Priest", "Test Realm"))
+    BN:Scan()
+    assert(C["Priest-TestRealm"] and C["Priest-TestRealm"].trusted == true, "T93: a new contact was not trusted")
+    assert(#sentOfType("SYNC_REQ") == 1, "T93: a trusted add did not sync once")
+    BN:SetTrust(false)
+    assert(C["Pala-TestRealm"].trusted == false and C["Manual-TestRealm"].trusted == true, "T93: untrust touched the wrong contacts")
+    -- unpicking stops new adds, removes nothing
+    BN:SetPicked("Picked#1", false)
+    table.insert(list[1].games, game("Rogue", "Test Realm"))
+    BN:Scan()
+    assert(C["Pala-TestRealm"] and not C["Rogue-TestRealm"], "T93: unpicking removed a contact or still added one")
+    -- an empty read or Battle.net down removes nothing
+    local full = list
+    list = {}
+    BN:Scan()
+    assert(C["Pala-TestRealm"], "T93: an empty friend list removed contacts")
+    list = { full[2] }
+    connected = false
+    BN:Scan()
+    assert(C["Pala-TestRealm"], "T93: removed contacts while Battle.net was down")
+    -- the friend leaves Battle.net: their contacts go, the manual one stays
+    connected = true
+    BN:Scan()
+    assert(not C["Pala-TestRealm"] and not C["Priest-TestRealm"], "T93: a removed friend's contacts stayed")
+    assert(C["Manual-TestRealm"], "T93: a manual contact was removed")
+    s.bnetAutoAdd, s.bnetTrust, s.bnetPicks = false, false, {}
+    addon.db.contacts = saved
+    BNConnected, BNGetNumFriends, C_BattleNet = nil, nil, nil
+    clearSent()
+end
+passed("T93 Battle.net auto-add -- picked friends in this game, region and faction; trust; removal guards")
+
 leaveGuild()
-print("ALL 92 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 93 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2508,6 +2601,6 @@ print("ALL 92 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add; "
     .. pass .. " of them print a PASS line above)")
 
