@@ -4953,10 +4953,26 @@ function TSF:BuildSettingsPanel(parent)
     -- Checkbox factory (supports x offset for columns)
     local checkboxes = {}
     local COL_LEFT = 14
-    local COL_RIGHT = 370
+    local COL_RIGHT = 358
+    local GROUP_W = 336
+
+    -- Both columns scroll together inside one scroll frame; the title line
+    -- above and the hint below stay put. The bar shows only when the
+    -- columns are taller than the view, and Settings opens at the top.
+    local SCROLL_TOP, SCROLL_BAR = -40, 28
+    local sf = CreateFrame("ScrollFrame", nil, panel, "UIPanelScrollFrameTemplate")
+    sf.scrollBarHideable = true
+    sf:SetPoint("TOPLEFT", 0, SCROLL_TOP)
+    sf:SetPoint("BOTTOMRIGHT", -SCROLL_BAR, 30)
+    local content = CreateFrame("Frame", nil, sf)
+    content:SetSize(FRAME_W - 20 - SCROLL_BAR, 1)
+    sf:SetScrollChild(content)
+    -- an open dropdown list would stay behind while its button scrolls away
+    sf:HookScript("OnVerticalScroll", function() CloseAllDropdowns() end)
+    self.settingsScroll = sf
 
     local function MakeCheckbox(label, settingKey, y, xOff)
-        local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+        local cb = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
         cb:SetSize(24, 24)
         cb:SetPoint("TOPLEFT", xOff or COL_LEFT, y)
         cb:SetChecked(settings[settingKey])
@@ -4978,7 +4994,7 @@ function TSF:BuildSettingsPanel(parent)
     -- ════════════════════════════════════════════════════════════
     -- LEFT COLUMN
     -- ════════════════════════════════════════════════════════════
-    local yLeft = -46
+    local yLeft = -46 - SCROLL_TOP      -- the old panel offset, now inside the scroll frame
 
     local replCB = MakeCheckbox("Replace default profession window", "replaceTradeSkill", yLeft)
     replCB:SetScript("OnClick", function(self)
@@ -5019,18 +5035,32 @@ function TSF:BuildSettingsPanel(parent)
         -- it reads the setting on the next hover.
         if TSF.scrollBar then TSF:RefreshRecipeList() end
     end)
+    yLeft = yLeft - 30
+
+    -- UI/Launcher.lua: the minimap button lives in LibDBIcon's own table
+    -- (settings.minimapIcon.hide), so this box reads and writes through the
+    -- Launcher instead of a plain setting key.
+    local minimapCB = MakeCheckbox("Show minimap button", "minimapShownBox", yLeft)
+    minimapCB:SetScript("OnClick", function(cb)
+        if addon.Launcher then addon.Launcher:SetMinimapShown(cb:GetChecked() and true or false) end
+    end)
+    local function SyncMinimapCB()
+        minimapCB:SetChecked(not addon.Launcher or addon.Launcher:IsMinimapShown())
+    end
+    SyncMinimapCB()
+    self.minimapCB = minimapCB
     yLeft = yLeft - 40
 
     -- ── Alt Information section ────────────────────────────────
-    local altHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local altHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     altHeader:SetPoint("TOPLEFT", COL_LEFT, yLeft)
     altHeader:SetText("Alt Information")
     altHeader:SetTextColor(1, 0.82, 0)
     yLeft = yLeft - 20
 
-    local altGroupBg = CreateFrame("Frame", nil, panel, "BackdropTemplate")
+    local altGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
     altGroupBg:SetPoint("TOPLEFT", COL_LEFT - 4, yLeft + 4)
-    altGroupBg:SetSize(340, 1) -- height set below
+    altGroupBg:SetSize(GROUP_W, 1) -- height set below
     altGroupBg:SetBackdrop({
         bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = nil,
@@ -5054,15 +5084,15 @@ function TSF:BuildSettingsPanel(parent)
     -- ── Friend Data section ──────────────────────────────────
     yLeft = yLeft - 20
 
-    local friendHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local friendHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     friendHeader:SetPoint("TOPLEFT", COL_LEFT, yLeft)
     friendHeader:SetText("Friend Data")
     friendHeader:SetTextColor(1, 0.82, 0)
     yLeft = yLeft - 20
 
-    local friendGroupBg = CreateFrame("Frame", nil, panel, "BackdropTemplate")
+    local friendGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
     friendGroupBg:SetPoint("TOPLEFT", COL_LEFT - 4, yLeft + 4)
-    friendGroupBg:SetSize(340, 1)
+    friendGroupBg:SetSize(GROUP_W, 1)
     friendGroupBg:SetBackdrop({
         bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = nil,
@@ -5086,35 +5116,21 @@ function TSF:BuildSettingsPanel(parent)
 
     friendGroupBg:SetHeight(friendGroupTop - yLeft)
 
-    -- UI/Launcher.lua: the minimap button lives in LibDBIcon's own table
-    -- (settings.minimapIcon.hide), so this box reads and writes through the
-    -- Launcher instead of a plain setting key.
-    yLeft = yLeft - 10
-    local minimapCB = MakeCheckbox("Show minimap button", "minimapShownBox", yLeft)
-    minimapCB:SetScript("OnClick", function(cb)
-        if addon.Launcher then addon.Launcher:SetMinimapShown(cb:GetChecked() and true or false) end
-    end)
-    local function SyncMinimapCB()
-        minimapCB:SetChecked(not addon.Launcher or addon.Launcher:IsMinimapShown())
-    end
-    SyncMinimapCB()
-    self.minimapCB = minimapCB
-
     -- ════════════════════════════════════════════════════════════
     -- RIGHT COLUMN
     -- ════════════════════════════════════════════════════════════
-    local yRight = -46
+    local yRight = -46 - SCROLL_TOP
 
     -- ── Item Tooltips section ──────────────────────────────────
-    local sectionHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local sectionHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     sectionHeader:SetPoint("TOPLEFT", COL_RIGHT, yRight)
     sectionHeader:SetText("Item Tooltips")
     sectionHeader:SetTextColor(1, 0.82, 0)
     yRight = yRight - 20
 
-    local groupBg = CreateFrame("Frame", nil, panel, "BackdropTemplate")
+    local groupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
     groupBg:SetPoint("TOPLEFT", COL_RIGHT - 4, yRight + 4)
-    groupBg:SetSize(340, 1) -- height set below
+    groupBg:SetSize(GROUP_W, 1) -- height set below
     groupBg:SetBackdrop({
         bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = nil,
@@ -5137,11 +5153,11 @@ function TSF:BuildSettingsPanel(parent)
     local SLIDER_W = 290
 
     -- Slider 1: your professions (1-15 numeric, 16 = "All")
-    local ownLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    local ownLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     ownLabel:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight)
     ownLabel:SetTextColor(0.9, 0.9, 0.9)
 
-    local ownSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+    local ownSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
     ownSlider:SetSize(SLIDER_W, 16)
     ownSlider:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight - 18)
     ownSlider:SetMinMaxValues(0, 16)
@@ -5154,11 +5170,11 @@ function TSF:BuildSettingsPanel(parent)
     yRight = yRight - 44
 
     -- Slider 2: alt professions (1-15 numeric, 16 = "All")
-    local altLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    local altLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     altLabel:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight)
     altLabel:SetTextColor(0.9, 0.9, 0.9)
 
-    local altSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+    local altSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
     altSlider:SetSize(SLIDER_W, 16)
     altSlider:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight - 18)
     altSlider:SetMinMaxValues(0, 16)
@@ -5171,11 +5187,11 @@ function TSF:BuildSettingsPanel(parent)
     yRight = yRight - 44
 
     -- Slider 3: other professions (1-20)
-    local otherLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    local otherLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     otherLabel:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight)
     otherLabel:SetTextColor(0.9, 0.9, 0.9)
 
-    local otherSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+    local otherSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
     otherSlider:SetSize(SLIDER_W, 16)
     otherSlider:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight - 18)
     otherSlider:SetMinMaxValues(0, 20)
@@ -5308,15 +5324,15 @@ function TSF:BuildSettingsPanel(parent)
     -- checkboxes above), so the column doesn't run off the panel bottom.
     yRight = yRight - 22
 
-    local notifHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local notifHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     notifHeader:SetPoint("TOPLEFT", COL_RIGHT, yRight)
     notifHeader:SetText("Crafting Order Notifications")
     notifHeader:SetTextColor(1, 0.82, 0)
     yRight = yRight - 20
 
-    local notifGroupBg = CreateFrame("Frame", nil, panel, "BackdropTemplate")
+    local notifGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
     notifGroupBg:SetPoint("TOPLEFT", COL_RIGHT - 4, yRight + 4)
-    notifGroupBg:SetSize(340, 1)
+    notifGroupBg:SetSize(GROUP_W, 1)
     notifGroupBg:SetBackdrop({
         bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = nil,
@@ -5342,7 +5358,7 @@ function TSF:BuildSettingsPanel(parent)
     local BOARD_ALERT_ORDER = { "known", "alts", "any", "off" }
     local boardAlertOpts = {}
     for i, k in ipairs(BOARD_ALERT_ORDER) do boardAlertOpts[i] = BOARD_ALERT_LABELS[k] end
-    local boardAlertDD = CreateDropdown(panel, 330, boardAlertOpts,
+    local boardAlertDD = CreateDropdown(content, 326, boardAlertOpts,
         BOARD_ALERT_LABELS[settings.boardAlert] or BOARD_ALERT_LABELS.known,
         function(val)
             for k, label in pairs(BOARD_ALERT_LABELS) do
@@ -5350,7 +5366,7 @@ function TSF:BuildSettingsPanel(parent)
             end
         end,
         "Board-post alerts: ")
-    boardAlertDD:SetPoint("TOPLEFT", panel, "TOPLEFT", COL_RIGHT + 2, yRight)
+    boardAlertDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_RIGHT + 2, yRight)
     self.boardAlertDD = boardAlertDD
     local function SyncBoardAlertDD()
         boardAlertDD:SetValue(BOARD_ALERT_LABELS[settings.boardAlert] or BOARD_ALERT_LABELS.known)
@@ -5358,12 +5374,14 @@ function TSF:BuildSettingsPanel(parent)
     SyncBoardAlertDD()
     yRight = yRight - 24        -- 28 + 24 = the two 26px rows this replaced
 
-    local notifNote = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    local notifNote = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     notifNote:SetPoint("TOPLEFT", COL_RIGHT + 4, yRight)
     notifNote:SetText("|cff888888The Orders tab count badge is always shown.|r")
     yRight = yRight - 16
 
     notifGroupBg:SetHeight(notifGroupTop - yRight)
+
+    content:SetHeight(math.max(-yLeft, -yRight) + 8)
 
     -- Hint at the bottom
     local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -5385,6 +5403,7 @@ function TSF:BuildSettingsPanel(parent)
         UpdateGatherSub()
         SyncBoardAlertDD()
         SyncMinimapCB()
+        sf:SetVerticalScroll(0)
         -- Belt-and-suspenders: hide content that shouldn't be visible
         if TSF.craftBar then TSF.craftBar:Hide() end
         if TSF.listPanel then TSF.listPanel:Hide() end

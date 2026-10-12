@@ -133,7 +133,15 @@ function F:GetWidth() return 100 end
 function F:GetHeight() return 100 end
 function F:GetVerticalScroll() return 0 end
 function F:GetVerticalScrollRange() return 0 end
-function F:SetPoint(...) rawset(self, "_points", (rawget(self, "_points") or 0) + 1) end
+function F:SetPoint(...)
+    rawset(self, "_points", (rawget(self, "_points") or 0) + 1)
+    rawset(self, "_lastPoint", { ... })
+end
+-- sizes and scroll state, recorded for layout checks (getters stay fixed)
+function F:SetSize(w, h) rawset(self, "_size", { w, h }) end
+function F:SetHeight(h) local sz = rawget(self, "_size") or {}; sz[2] = h; rawset(self, "_size", sz) end
+function F:SetScrollChild(c) rawset(self, "_child", c) end
+function F:SetVerticalScroll(v) rawset(self, "_scroll", v) end
 function F:ClearAllPoints() rawset(self, "_points", 0) end
 function F:GetNumPoints() return rawget(self, "_points") or 0 end
 function F:NumLines() return 0 end

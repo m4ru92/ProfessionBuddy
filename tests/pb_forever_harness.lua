@@ -2959,4 +2959,45 @@ do
 end
 print("  PASS F53 Battle.net on Forever: button greyed with a coming-soon tooltip, no scan; picker lists, ticks and adds")
 
-print("ALL FOREVER TESTS PASS (53)")
+-- F54: Settings scroll. Both columns sit in one scroll frame (bar hidden
+-- when nothing to scroll), Settings opens at the top, nothing runs past the
+-- scroll area's right edge, and "Show minimap button" sits in the top
+-- section, right under the faction box.
+do
+    local TSF = ProfBuddy.TradeSkillFrame
+    TSF:OpenSettings("main")
+    local sf = TSF.settingsScroll
+    EXPECT(sf and rawget(sf, "scrollBarHideable") == true, "no hideable settings scroll frame")
+    local content = rawget(sf, "_child")
+    EXPECT(content and content:GetParent() == sf, "no scroll child")
+    local byKey = {}
+    for _, cb in ipairs(TSF.settingsCheckboxes) do
+        EXPECT(cb:GetParent() == content, "a setting box is outside the scroll area: " .. tostring(cb.settingKey))
+        byKey[cb.settingKey] = cb
+    end
+    local function y(f) local p = rawget(f, "_lastPoint"); return p and p[3] end
+    local fy, my, ay = y(byKey.hideOppositeFactionRecipes), y(byKey.minimapShownBox), y(byKey.showAltInDetail)
+    EXPECT(my == fy - 30 and my > ay, "minimap box not right under the faction box: " .. tostring(fy) .. " " .. tostring(my) .. " " .. tostring(ay))
+    -- right edge and bottom
+    local cw, ch = rawget(content, "_size")[1], rawget(content, "_size")[2]
+    for _, f in ipairs(FRAMES) do
+        if f:GetParent() == content then
+            local p, sz = rawget(f, "_lastPoint"), rawget(f, "_size")
+            if p and sz and sz[1] then
+                local x = (type(p[2]) == "table") and p[4] or p[2]
+                local py = (type(p[2]) == "table") and p[5] or p[3]
+                EXPECT(x + sz[1] <= cw, "a frame runs past the right edge: x " .. x .. " + " .. sz[1] .. " > " .. cw)
+                EXPECT(-py <= ch, "a frame starts below the content height")
+            end
+        end
+    end
+    -- opens at the top
+    sf:SetVerticalScroll(120)
+    TSF.settingsPanel:Hide()
+    TSF.settingsPanel:Show()
+    EXPECT(rawget(sf, "_scroll") == 0, "Settings did not reopen at the top")
+    TSF:CloseSettings()
+end
+print("  PASS F54 Settings scroll: columns in one scroll frame, opens at the top, fits the width; minimap box in the top section")
+
+print("ALL FOREVER TESTS PASS (54)")
