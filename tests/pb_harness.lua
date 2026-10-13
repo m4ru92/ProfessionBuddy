@@ -2584,8 +2584,96 @@ do
 end
 passed("T93 Battle.net auto-add -- picked friends in this game, region and faction; trust; removal guards")
 
+-- T94: the 2026-10-13 fix wave, TBC side. Typed names: spaces around the
+-- hyphen and a realm in any case land on the game's spelling (ours, a
+-- connected realm, or one PB already knows); an unknown realm keeps the
+-- typed one. /pb sync within their 30 s serve cooldown says so instead of
+-- waiting for "didn't respond". "Also trust them" trusts and ticks Auto-sync
+-- on every Battle.net contact and syncs the online ones once; untrusting
+-- clears both.
+do
+    StaticPopupDialogs = StaticPopupDialogs or {}
+    if not (addon.FriendsPanel and addon.FriendsPanel.ContactKeyFromInput) then
+        dofile(BASE .. "/UI/FriendsPanel.lua")
+    end
+    local K = addon.FriendsPanel.ContactKeyFromInput
+    assert(K("Spheal - Test Realm") == "Spheal-TestRealm", "T94: spaces around the hyphen")
+    assert(K("  Spheal -TestRealm ") == "Spheal-TestRealm", "T94: a space before the hyphen")
+    assert(K("spheal-test realm") == "Spheal-TestRealm", "T94: our realm in lower case")
+    assert(Comm:NormalizeContactKey("spheal - testrealm") == "Spheal-TestRealm", "T94: /pb sync input")
+    GetAutoCompleteRealms = function() return { "Old Blanchy" } end
+    assert(K("Bob-old blanchy") == "Bob-OldBlanchy", "T94: a connected realm in lower case")
+    GetAutoCompleteRealms = nil
+    addon.db.characters["Ann-KelThuzad"] = { isRemote = true, professions = {} }
+    assert(K("ann-kel'thuzad") == "Ann-KelThuzad", "T94: a realm PB knows, typed in lower case")
+    addon.db.characters["Ann-KelThuzad"] = nil
+    assert(K("Bob-Otherplace") == "Bob-Otherplace", "T94: an unknown realm changed")
+
+    -- /pb sync inside their serve cooldown
+    addon.db.contacts["Syncpal-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 }
+    Comm._servedUsAt, Comm._pendingSync = nil, nil
+    Comm:_ResetServeCooldown()
+    clearSent()
+    Comm:RequestSync("Syncpal", true)
+    assert(#sentOfType("SYNC_REQ") == 1, "T94: the first /pb sync was not sent")
+    recv("Syncpal", { _type = "SYNC_DATA", professions = {}, inventory = { bags = {}, bank = {} } })
+    assert(Comm._servedUsAt and Comm._servedUsAt["Syncpal-TestRealm"], "T94: their answer was not noted")
+    clearSent()
+    local lines, realPrint = {}, print
+    print = function(m) lines[#lines + 1] = tostring(m) end
+    Comm:RequestSync("Syncpal", true)
+    print = realPrint
+    assert(#sentOfType("SYNC_REQ") == 0, "T94: a request inside their cooldown went out")
+    assert(lines[1] and lines[1]:find("you can sync again in 30 s", 1, true), "T94: message: " .. tostring(lines[1]))
+    Comm._servedUsAt["Syncpal-TestRealm"] = time() - 31
+    Comm._pendingSync = nil
+    Comm:RequestSync("Syncpal", true)
+    assert(#sentOfType("SYNC_REQ") == 1, "T94: a request after the cooldown was held back")
+    addon.db.contacts["Syncpal-TestRealm"] = nil
+    Comm._servedUsAt, Comm._pendingSync = nil, nil
+
+    -- Battle.net trust
+    local BN = addon.BattleNet
+    WOW_PROJECT_ID = 5
+    BNConnected = function() return true end
+    local list = { { tag = "Pal#1", games = { { clientProgram = "WoW", isOnline = true, wowProjectID = 5,
+        isInCurrentRegion = true, characterName = "Pala", realmName = "Test Realm", factionName = "Alliance" } } } }
+    BNGetNumFriends = function() return #list end
+    C_BattleNet = {
+        GetFriendAccountInfo = function(i) return { battleTag = list[i].tag } end,
+        GetFriendNumGameAccounts = function(i) return #list[i].games end,
+        GetFriendGameAccountInfo = function(i, j) return list[i].games[j] end,
+    }
+    local saved = addon.db.contacts
+    addon.db.contacts = {
+        ["Pala-TestRealm"] = { trusted = false, autoSync = false, lastSync = 0, bnet = "Pal#1" },
+        ["Offalt-TestRealm"] = { trusted = false, autoSync = false, lastSync = 0, bnet = "Pal#1" },
+        ["Manual-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 },
+    }
+    local C = addon.db.contacts
+    clearSent()
+    BN:SetTrust(true)
+    assert(C["Pala-TestRealm"].trusted and C["Pala-TestRealm"].autoSync
+           and C["Offalt-TestRealm"].trusted and C["Offalt-TestRealm"].autoSync, "T94: trust did not tick Auto-sync")
+    local reqs = sentOfType("SYNC_REQ")
+    assert(#reqs == 1 and reqs[1].target == "Pala", "T94: trust should sync only the online one once")
+    assert(C["Manual-TestRealm"].autoSync == false, "T94: a manual contact's Auto-sync changed")
+    BN:SetTrust(false)
+    assert(not C["Pala-TestRealm"].trusted and not C["Pala-TestRealm"].autoSync, "T94: untrust left Auto-sync on")
+    addon.db.settings.bnetTrust, addon.db.settings.bnetAutoAdd = true, true
+    addon.db.settings.bnetPicks = { ["Pal#1"] = true }
+    list[1].games[1].characterName = "Newalt"
+    BN:Scan()
+    assert(C["Newalt-TestRealm"] and C["Newalt-TestRealm"].autoSync == true, "T94: a trusted add did not tick Auto-sync")
+    addon.db.settings.bnetTrust, addon.db.settings.bnetAutoAdd, addon.db.settings.bnetPicks = false, false, {}
+    addon.db.contacts = saved
+    BNConnected, BNGetNumFriends, C_BattleNet = nil, nil, nil
+    clearSent()
+end
+passed("T94 fix wave -- typed names and realm case, /pb sync cooldown message, Battle.net trust syncs and ticks Auto-sync")
+
 leaveGuild()
-print("ALL 93 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 94 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2601,6 +2689,6 @@ print("ALL 93 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave; "
     .. pass .. " of them print a PASS line above)")
 

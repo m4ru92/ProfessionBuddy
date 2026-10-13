@@ -96,6 +96,7 @@ local function capitalized(word)
 end
 
 local function contactKeyFromInput(text)
+    text = addon:CleanNameInput(text)
     local name, realm = text:match("^([^-]+)%-?(.*)$")
     if not name then return nil end
     local firstName, surname = name:match("^(%S+) (%S+)$")
@@ -111,7 +112,7 @@ local function contactKeyFromInput(text)
         -- Raceway, Drak'thul), high bytes passed through for localized realms.
         local rchars = select(2, realm:gsub("[^\128-\191]", ""))
         if rchars > 32 or realm:find("[^%a '%-\128-\255]") then return nil end
-        name = name .. "-" .. realm
+        name = name .. "-" .. addon:CanonicalRealm(realm)
     end
     return addon:NormKey(name)
 end

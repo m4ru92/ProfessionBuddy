@@ -51,6 +51,49 @@ function addon:NormRealm(realm)
     return ((realm or ""):gsub("[%s%-']", ""))
 end
 
+-- A typed "Name-Realm": spaces around the hyphen dropped ("Bob - Realm"
+-- was refused as not a name, m4ru 2026-10-13), the ends trimmed.
+function addon:CleanNameInput(text)
+    if type(text) ~= "string" then return text end
+    return (strtrim(text):gsub("%s*%-%s*", "-"))
+end
+
+-- A typed realm in the spelling the game uses: matched, ignoring case,
+-- against our realm, our connected realms and the realms PB already knows
+-- (characters, contacts). "spheal-dreamscythe" otherwise keyed
+-- "Spheal-dreamscythe", which never matches the game's "Dreamscythe".
+-- Unknown realms keep the typed spelling.
+function addon:CanonicalRealm(realm)
+    local want = addon:NormRealm(realm)
+    local low = want:lower()
+    local function try(r)
+        if type(r) == "string" and r ~= "" then
+            local n = addon:NormRealm(r)
+            if n:lower() == low then return n end
+        end
+    end
+    local hit = try(GetRealmName())
+    if hit then return hit end
+    local getRealms = GetAutoCompleteRealms or (C_AutoComplete and C_AutoComplete.GetAutoCompleteRealms)
+    if getRealms then
+        local ok, list = pcall(getRealms)
+        if ok and type(list) == "table" then
+            for _, r in ipairs(list) do
+                hit = try(r)
+                if hit then return hit end
+            end
+        end
+    end
+    local db = addon.db
+    for _, tbl in ipairs({ db and db.characters, db and db.contacts }) do
+        for key in pairs(tbl or {}) do
+            hit = try(type(key) == "string" and key:match("%-(.+)$"))
+            if hit then return hit end
+        end
+    end
+    return want
+end
+
 -- "Name" -> "Name-<our realm>"; "Name-Any Realm" -> "Name-AnyRealm".
 -- Anything that is not a string returns nil.
 -- On WoW: Forever (Source.REALM_TOKEN) the realm half is that one fixed

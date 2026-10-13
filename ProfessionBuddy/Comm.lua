@@ -132,6 +132,11 @@ local TRUST_PENDING_PER     = 2   -- max messages held per such sender (newest k
 -- Knowledge sharing (WoW: Forever). One KNOW_DATA over any of these caps is
 -- dropped whole: an honest client never gets near them (2,347 recipes exist).
 local KNOW_MIN_REV        = 8
+-- Ask a friend for their sightings again after this long, the next time
+-- any of their messages arrives: skins and gathers keep counting during a
+-- session (m4ru 2026-10-13: Greater Plainstrider passed 10 skins after the
+-- one exchange and his friend never saw it).
+local KNOW_REASK          = 900
 local MAX_KNOW_RECIPES    = 3000
 local MAX_KNOW_NPCS       = 600
 local MAX_KNOW_PER_RECIPE = 12    -- trainers, or vendors, on one recipe
@@ -835,6 +840,10 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
         -- Any message from a trusted peer proves they're online -- deliver any
         -- order messages we had queued for them while offline.
         self:FlushOutbox(sender)
+        -- A peer asked for sightings before: ask again once KNOW_REASK has
+        -- passed, so skins and gathers counted since then arrive.
+        local asked = self._knowAsked and self._knowAsked[sender]
+        if asked and (time() - asked) >= KNOW_REASK then self:RequestKnowledge(sender) end
     end)
     if not done and self:DebugEnabled() then
         print("|cff00ccffProfessionBuddy:|r comm error handling " .. msgType
@@ -1797,6 +1806,7 @@ end
 -- "Bob-Realm", failing the trust gate, so the sync data would be silently dropped.
 function Comm:NormalizeContactKey(key)
     if type(key) ~= "string" or key == "" then return nil end
+    key = addon:CleanNameInput(key)
     local name, realm = key:match("^([^-]+)%-?(.*)$")
     if not name then return nil end
     -- Capitalize each word ("first surname" on WoW: Forever); ASCII only,
@@ -1808,7 +1818,7 @@ function Comm:NormalizeContactKey(key)
     -- to ours, so a contact typed as "Bob-Old Blanchy" is stored under the same
     -- key the reply arrives from ("Bob-OldBlanchy").
     if realm == "" then return addon:NormKey(name) end
-    return addon:NormKey(name .. "-" .. realm)
+    return addon:NormKey(name .. "-" .. addon:CanonicalRealm(realm))
 end
 
 function Comm:RequestSync(target, isManual)
@@ -1821,6 +1831,17 @@ function Comm:RequestSync(target, isManual)
 
     target = self:NormalizeContactKey(target)
     if not target then return end
+
+    -- They answered us less than SERVE_COOLDOWN ago, so they will not
+    -- answer again yet: say so, instead of a "didn't respond" 35 s later
+    -- (m4ru 2026-10-13, two /pb sync 5 s apart).
+    local served = isManual and self._servedUsAt and self._servedUsAt[target]
+    if served and (time() - served) < SERVE_COOLDOWN then
+        local ago = time() - served
+        print("|cff00ccffProfessionBuddy:|r Synced with " .. target .. " " .. ago
+            .. " s ago; you can sync again in " .. (SERVE_COOLDOWN - ago) .. " s.")
+        return
+    end
 
     -- Ensure contact entry exists; requesting a sync is a deliberate local
     -- action, so it marks the contact trusted (we are willing to serve their
@@ -2027,6 +2048,12 @@ function Comm:HandleSyncData(sender, data, distribution)
     -- character record (16 professions x 2000 recipes, 5000 bag and 5000 bank
     -- entries) into our SavedVariables unasked.
     if not self:AcceptsPush(sender) then return end
+    -- An answer to our own request starts their serve cooldown for us
+    -- (RequestSync reads it).
+    if self._pendingReq and self._pendingReq[sender] then
+        self._servedUsAt = self._servedUsAt or {}
+        self._servedUsAt[sender] = time()
+    end
     if self._pendingReq then self._pendingReq[sender] = nil end
 
     -- Was this the reply to a manual sync we initiated? If so, clear the
@@ -2162,8 +2189,8 @@ function Comm:RequestKnowledge(peer)
     peer = normFullKey(peer)
     if not peer then return end
     self._knowAsked = self._knowAsked or {}
-    if self._knowAsked[peer] then return end
     local now = time()
+    if self._knowAsked[peer] and (now - self._knowAsked[peer]) < KNOW_REASK then return end
     self._knowAsked[peer] = now
     self._knowPending = self._knowPending or {}
     self._knowPending[peer] = now
@@ -2769,7 +2796,7 @@ function Comm:ForgetPeer(key)
                             "_helloAckAt", "_helloPullAt", "_reflexAt",
                             "_pendingReq", "_lastOpenAt",
                             "_knowAsked", "_knowPending", "_knowServed",
-                            "_heardContact" }) do
+                            "_heardContact", "_servedUsAt" }) do
         if self[name] then self[name][k] = nil end
     end
     -- and what they shared with us (WoW: Forever)
@@ -2828,6 +2855,7 @@ function Comm:SweepSessionTables()
     sweepByAge(self._pendingReq, PENDING_REQ_TTL, now)
     sweepByAge(self._knowPending, PENDING_REQ_TTL, now)
     sweepByAge(self._knowServed, SESSION_TTL, now)
+    sweepByAge(self._servedUsAt, SESSION_TTL, now)
     sweepByAge(self._recentWhispers, WHISPER_MEMORY, now)
     sweepByAge(self._playerWhispers, WHISPER_MEMORY, now)
 

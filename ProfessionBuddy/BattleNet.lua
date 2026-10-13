@@ -5,7 +5,8 @@
 -- BattleTag, because TBC Anniversary does not report Blizzard favorites:
 -- isFavorite read 0 of 32 there). When a picked friend is online on a
 -- character in this game, region and faction, that character becomes a
--- PB contact, untrusted unless "Also trust them" is on. Removing the
+-- PB contact, untrusted unless "Also trust them" is on (then trusted, with
+-- Auto-sync ticked, and synced once). Removing the
 -- Battle.net friend removes the contacts added this way, never a manual
 -- one, and never while Battle.net is down or the list reads empty.
 -- TBC Anniversary only for now: the WoW: Forever beta gives addons an
@@ -96,8 +97,8 @@ function BN:Scan()
             for _, c in ipairs(f.chars) do
                 local key = sameFaction(c.faction) and addon:NormKey(c.name .. "-" .. c.realm)
                 if key and not addon:SameKey(key, me) and not contacts[key] then
-                    contacts[key] = { autoSync = false, lastSync = 0,
-                                      trusted = s.bnetTrust and true or false, bnet = f.tag }
+                    local trust = s.bnetTrust and true or false
+                    contacts[key] = { autoSync = trust, lastSync = 0, trusted = trust, bnet = f.tag }
                     changed = true
                     print(PREFIX .. "Added " .. key .. " (Battle.net friend " .. f.name .. ").")
                     -- Trusted: sync once, as a manual add does.
@@ -135,12 +136,30 @@ function BN:SetAutoAdd(on)
     if on then self:Scan() end
 end
 
--- "Also trust them" covers every contact added from Battle.net, now and later.
+-- "Also trust them" covers every contact added from Battle.net, now and
+-- later: trusted with Auto-sync ticked, or neither (an untrusted contact is
+-- never pushed to). Ticking it syncs once with each one online right now,
+-- as a manual add does (m4ru 2026-10-13).
 function BN:SetTrust(on)
     local s = self:Settings()
     s.bnetTrust = on and true or false
-    for _, c in pairs(addon.db.contacts or {}) do
-        if type(c) == "table" and c.bnet then c.trusted = s.bnetTrust end
+    local online = {}
+    if s.bnetTrust and self:Available() and type(BNConnected) == "function" and BNConnected() then
+        for _, f in ipairs((self:Friends())) do
+            for _, c in ipairs(f.chars) do
+                local key = addon:NormKey(c.name .. "-" .. c.realm)
+                if key then online[key] = true end
+            end
+        end
+    end
+    for key, c in pairs(addon.db.contacts or {}) do
+        if type(c) == "table" and c.bnet then
+            c.trusted = s.bnetTrust
+            c.autoSync = s.bnetTrust
+            if s.bnetTrust and online[key] and addon.Comm and addon.Comm._ready then
+                addon.Comm:RequestSync(key)
+            end
+        end
     end
     if addon.FriendsPanel and addon.FriendsPanel.Refresh then addon.FriendsPanel:Refresh() end
 end
@@ -235,7 +254,8 @@ function BN:BuildWindow()
     trust:SetScript("OnClick", function(cb) BN:SetTrust(cb:GetChecked() and true or false) end)
     tooltip(trust, "Also trust them",
         "Contacts added from Battle.net are trusted, as if you had added them yourself: "
-        .. "they can sync your professions, bags and bank.")
+        .. "they can sync your professions, bags and bank. Their Auto-sync is ticked, "
+        .. "and the ones online now sync once.")
     f.trust = trust
 
     local hint = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")

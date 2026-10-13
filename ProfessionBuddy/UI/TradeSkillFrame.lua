@@ -2533,6 +2533,9 @@ function TSF:BuildRecipeList(parent)
                     self:AppendRandomEnchantLine(GameTooltip, entry.itemID)
                 elseif entry.itemID and entry.itemID ~= 0 then
                     GameTooltip:SetItemByID(entry.itemID)
+                    -- A friend's recipes and the Missing list carry no item
+                    -- link: the tools go here too (a wand's rod, a hammer).
+                    self:AppendRodLine(GameTooltip, entry)
                     self:AppendRandomEnchantLine(GameTooltip, entry.itemID)
                 else
                     -- Item-less recipe (e.g. an enchant): itemID is 0 and there's
@@ -3463,6 +3466,8 @@ function TSF:ShowEmbeddedTooltip(recipe)
         return
     elseif itemID and itemID ~= 0 then
         tip:SetItemByID(itemID)
+        -- no link: a friend's recipe or a Missing one; its tools still count
+        self:AppendRodLine(tip, recipe)
         self:AppendRandomEnchantLine(tip, itemID)
         tip:Show()
         return

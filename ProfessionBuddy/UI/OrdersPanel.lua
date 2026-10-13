@@ -1647,7 +1647,11 @@ function OP:BuildBoard(host)
     self.boardGuildlessMsg = guildlessMsg
 
     self.boardCtx = { collapsed = { mine = false, avail = false } }
-    self:BuildBoardList(listHost, self.boardCtx, 8)
+    -- 7 rows of ROW_HEIGHT fit the list: the 450 px window less its title
+    -- bar (42), bottom margin (10), the Direct/Guild Board bar (26) and the
+    -- composer and filter above the list (104) leaves 268 px. 8 rows (288)
+    -- drew the last one below the window (m4ru 2026-10-13).
+    self:BuildBoardList(listHost, self.boardCtx, 7)
 
     self.boardCtx.rebuild = function(force)
         local ctx = self.boardCtx

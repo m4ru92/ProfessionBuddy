@@ -3000,4 +3000,48 @@ do
 end
 print("  PASS F54 Settings scroll: columns in one scroll frame, opens at the top, fits the width; minimap box in the top section")
 
-print("ALL FOREVER TESTS PASS (54)")
+-- F55: the 2026-10-13 fix wave, Forever side. A crafted item seen without
+-- an item link (a friend's recipe, the Missing list) shows its tool line;
+-- the Guild Board list has 7 rows (8 drew one below the window); a friend
+-- asked for sightings is asked again once 15 minutes have passed.
+do
+    local TSF = ProfBuddy.TradeSkillFrame
+    TSF:EnsureFrame()
+    local tip = TSF.embeddedTip
+    rawset(tip, "_lines", {})
+    TSF:ShowEmbeddedTooltip({ name = "Greater Magic Wand", itemID = 11288, spellID = 14807 })
+    local rod = false
+    for _, l in ipairs(rawget(tip, "_lines")) do
+        if tostring(l):find("Tool: Runed Copper Rod", 1, true) then rod = true end
+    end
+    EXPECT(rod, "no rod line on a wand with no item link")
+
+    local OP = ProfBuddy.OrdersPanel
+    if not OP.boardCtx then OP:Toggle() end
+    EXPECT(OP.boardCtx and #OP.boardCtx.rows == 7, "board rows: " .. tostring(OP.boardCtx and #OP.boardCtx.rows))
+
+    local Comm = ProfBuddy.Comm
+    local AS = LibStub("AceSerializer-3.0")
+    local peer = "Reask Pal-Forever"
+    ProfBuddy.db.contacts[peer] = { trusted = true, autoSync = false, lastSync = 0, lastCommRev = 12 }
+    local kinds = {}
+    local realW = Comm.SendWhisper
+    Comm.SendWhisper = function(_, t) kinds[#kinds + 1] = t end
+    local function knowReqs() local n = 0; for _, t in ipairs(kinds) do if t == "KNOW_REQ" then n = n + 1 end end; return n end
+    local function hear() Comm:OnMessageReceived("PBuddy", AS:Serialize({ _type = "ORDER_ACK", _commrev = 12 }), "WHISPER", "Reask Pal") end
+    Comm._knowAsked = Comm._knowAsked or {}
+    Comm._knowAsked[peer] = time() - 100
+    hear()
+    EXPECT(knowReqs() == 0, "asked again after 100 s")
+    Comm._knowAsked[peer] = time() - 901
+    hear()
+    EXPECT(knowReqs() == 1, "not asked again after 15 minutes")
+    hear()
+    EXPECT(knowReqs() == 1, "asked twice in a row")
+    Comm.SendWhisper = realW
+    Comm._knowAsked[peer], Comm._knowPending[peer] = nil, nil
+    ProfBuddy.db.contacts[peer] = nil
+end
+print("  PASS F55 fix wave: tool line without an item link, 7 board rows, sightings asked again after 15 minutes")
+
+print("ALL FOREVER TESTS PASS (55)")
