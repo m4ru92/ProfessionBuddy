@@ -366,7 +366,8 @@ for prof, recipes in pairs(RDB.data) do
         EXPECT(r.sources and METHODS[r.sources[1].method], prof .. "/" .. name .. " source")
     end
 end
-EXPECT(nProf == 13 and nRec == 2345, "expected 13 professions / 2345 recipes, got " .. nProf .. " / " .. nRec)
+-- 14 with Comprehension (the mage's scroll skill, 7 entries) since 2026-10-13
+EXPECT(nProf == 14 and nRec == 2352, "expected 14 professions / 2352 recipes, got " .. nProf .. " / " .. nRec)
 -- Tanning and Gardening open the Skinning and Herbalism windows; they are
 -- not recipes (the game does not list them)
 EXPECT(RDB.data.Skinning.Tanning == nil and RDB.data.Herbalism.Gardening == nil, "a profession window spell baked as a recipe")
@@ -406,7 +407,7 @@ end)
 ll.skillRange[1], ll.skillReq, st.searchText = keepOrange, keepReq, ""
 TSF:RefreshRecipeList()
 EXPECT(ok3, "a known recipe with an unknown learn level errored: " .. tostring(err3))
-print("  PASS F19 Forever data: 13 professions, 2345 recipes, well-formed, no TBC data; Missing list uses captured learn levels; unknown learn level (" .. unknownLearn .. ") shows without error")
+print("  PASS F19 Forever data: 14 professions, 2352 recipes, well-formed, no TBC data; Missing list uses captured learn levels; unknown learn level (" .. unknownLearn .. ") shows without error")
 
 -- F20: Phase 4b, the trainer scan (Knowledge.lua), fed m4ru's real Thunder
 -- Bluff captures (tests/forever_trainer.lua). A profession trainer's every
@@ -3044,4 +3045,79 @@ do
 end
 print("  PASS F55 fix wave: tool line without an item link, 7 board rows, sightings asked again after 15 minutes")
 
-print("ALL FOREVER TESTS PASS (55)")
+-- F56: Comprehension (the WoW: Forever mage's scroll skill), the seventh
+-- profession slot, and the Guild Board's right-hand controls.
+do
+    local RDB, TSF, SC = ProfBuddy.RecipeDB, ProfBuddy.TradeSkillFrame, ProfBuddy.Scanner
+    local C = RDB.data.Comprehension
+    EXPECT(C and C.Study and not C.Study.ability and C.Study.reagents[1].name == "Light Feather", "Study is not a recipe")
+    local abilities = 0
+    for name, e in pairs(C) do
+        if e.ability then
+            abilities = abilities + 1
+            EXPECT(e.category == "Abilities" and e.itemID == 0, name .. " is not a plain ability")
+        end
+    end
+    EXPECT(abilities == 6, "abilities: " .. abilities)
+    EXPECT(C["Comprehend Scroll"] and C["Comprehend Scroll (15-30)"] and C["Comprehend Scroll (250-300)"],
+           "Comprehend Scroll ranks are not named by their skill band")
+    EXPECT(ProfBuddy:ProfessionForClass("Comprehension", "MAGE")
+           and not ProfBuddy:ProfessionForClass("Comprehension", "WARRIOR"), "Comprehension is not mage-only")
+    EXPECT(not ProfBuddy.CRAFTABLE_PROFS.Comprehension, "Comprehension would sync to others")
+
+    -- the seventh slot (Forever: two primaries and up to five secondaries)
+    local realGP, realGPI = GetProfessions, GetProfessionInfo
+    local slots = { "Leatherworking", "Skinning", "Cooking", "First Aid", "Fishing", false, "Comprehension" }
+    GetProfessions = function() return 1, 2, 3, 4, 5, nil, 7 end
+    GetProfessionInfo = function(i)
+        local n = slots[i]
+        if not n then return nil end
+        return n, 0, 10, 300, 1, 0, 0
+    end
+    local lines = ProfBuddy.Source:ReadProfessionSkills()
+    EXPECT(#lines == 6 and lines[6].name == "Comprehension", "the seventh profession slot was not read")
+
+    -- known abilities come from the spellbook into the saved record
+    local realSB = C_SpellBook
+    C_SpellBook = { IsSpellKnown = function(id) return id == 1296017 or id == 1309973 end }
+    SC:ScanProfessions()
+    local rec = ProfBuddy.DataStore:GetProfession(nil, "Comprehension")
+    EXPECT(rec and rec.recipes["Comprehend Scroll"] and rec.recipes["Comprehend Scroll"].ability
+           and rec.recipes["Comprehend Scroll (15-30)"], "known abilities not saved")
+    local unknown = RDB:GetAllUnknownRecipes(nil, "Comprehension")
+    EXPECT(not unknown["Comprehend Scroll"] and not unknown["Comprehend Scroll (15-30)"]
+           and unknown.Research and unknown.Study and unknown["Comprehend Scroll (50-75)"],
+           "Missing should list the unknown ones only")
+
+    -- a live window lists a known ability, with no index (never crafted)
+    RDB.data.Leatherworking["Test Ability"] = { spellID = 999001, itemID = 0, ability = true,
+        category = "Abilities", sources = { { method = "trainer" } } }
+    C_SpellBook.IsSpellKnown = function(id) return id == 999001 end
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+    local a = TSF.state.allRecipes["Test Ability"]
+    EXPECT(a and a.ability and a.index == nil and a.category == "Abilities", "a known ability is not in the Known list")
+    RDB.data.Leatherworking["Test Ability"] = nil
+    C_SpellBook = realSB
+    GetProfessions, GetProfessionInfo = realGP, realGPI
+    local char = ProfBuddy.DataStore:GetCharacter()
+    char.professions.Comprehension = nil
+    SC:ScanProfessions()
+
+    -- the Guild Board's right-hand controls sit flush with the list's scroll bar
+    local OP = ProfBuddy.OrdersPanel
+    if not OP.postComposer then OP:Toggle() end
+    local comp = OP.postComposer
+    local function x(f) local p = rawget(f, "_lastPoint"); return p and ((type(p[2]) == "table") and p[4] or p[2]) end
+    EXPECT(x(OP.findBtn) == 0 and x(comp.postBtn) == 0, "Find a crafter / Post not flush right")
+    EXPECT(x(comp.qty) == -2 and x(comp.note) == -2 and x(OP.boardFilterBox) == -2, "count, note or filter not flush right")
+
+    -- the Friends tab draws up to 7 profession icons a row (it drew 4)
+    local FP = ProfBuddy.FriendsPanel
+    if not FP.rows then FP:Toggle() end
+    EXPECT(FP.rows and FP.rows[1] and #FP.rows[1].profIcons == 7, "Friends rows do not hold 7 profession icons")
+end
+print("  PASS F56 Comprehension (mage-only data, abilities saved and listed, never crafted), seventh profession slot, board controls flush right, 7 Friends icons")
+
+print("ALL FOREVER TESTS PASS (56)")

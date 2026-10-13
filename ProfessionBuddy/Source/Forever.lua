@@ -107,6 +107,7 @@ local SKILL_LINE = {
     ["Enchanting"]     = 333, ["Engineering"]   = 202, ["First Aid"] = 129,
     ["Fishing"]        = 356, ["Herbalism"]     = 182, ["Leatherworking"] = 165,
     ["Mining"]         = 186, ["Skinning"]      = 393, ["Tailoring"] = 197,
+    ["Comprehension"]  = 3012,
 }
 
 -- Enum.TradeskillRelativeDifficulty: Optimal 0, Medium 1, Easy 2, Trivial 3.
@@ -219,8 +220,11 @@ end
 local function ProfessionLines()
     local rows = {}
     if not (GetProfessions and GetProfessionInfo) then return rows end
+    -- Forever's own profession window reads seven slots: two primaries and
+    -- up to five secondaries (Camelot ProfessionsMixin:RefreshRightTabs).
+    -- With six, a mage's Comprehension or a rogue's last secondary was cut.
     local slots = { GetProfessions() }
-    for i = 1, 6 do
+    for i = 1, 7 do
         local slot = slots[i]
         if slot then
             local name, _, rank, maxRank = GetProfessionInfo(slot)

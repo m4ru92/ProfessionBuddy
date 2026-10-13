@@ -796,7 +796,8 @@ function OP:CreateContent(parent)
     -- sub-view (History is Direct-only, so the two never share the corner).
     local findBtn = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
     findBtn:SetSize(104, 20)
-    findBtn:SetPoint("RIGHT", -16, 0)
+    -- flush right, over the Guild Board list's scroll bar (m4ru 2026-10-13)
+    findBtn:SetPoint("RIGHT", 0, 0)
     findBtn:SetText("Find a crafter")
     findBtn:SetNormalFontObject(GameFontNormalSmall)
     findBtn:SetHighlightFontObject(GameFontHighlightSmall)
@@ -1451,7 +1452,9 @@ function OP:BuildPostComposer(host)
     -- Row 1: quantity (narrow, right) then item name filling the rest
     local qty = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
     qty:SetSize(40, 20)
-    qty:SetPoint("TOPRIGHT", -18, -4)
+    -- The right-hand controls line up with the list's scroll bar below
+    -- (the host's right edge); an edit box's border sits 2 px outside it.
+    qty:SetPoint("TOPRIGHT", -2, -4)
     qty:SetAutoFocus(false); qty:SetNumeric(true); qty:SetMaxLetters(4); qty:SetText("1")
     qty:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
 
@@ -1506,7 +1509,7 @@ function OP:BuildPostComposer(host)
     local note = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
     note:SetHeight(20)
     note:SetPoint("TOPLEFT", 12, -52)
-    note:SetPoint("TOPRIGHT", -18, -52)
+    note:SetPoint("TOPRIGHT", -2, -52)
     note:SetAutoFocus(false); note:SetMaxLetters(256)
     note:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
 
@@ -1534,7 +1537,7 @@ function OP:BuildPostComposer(host)
     -- Row 2: Post button (right), profession + mat-resp dropdowns (left)
     local postBtn = CreateFrame("Button", nil, composer, "UIPanelButtonTemplate")
     postBtn:SetSize(64, 20)
-    postBtn:SetPoint("TOPRIGHT", -16, -28)
+    postBtn:SetPoint("TOPRIGHT", 0, -28)
     postBtn:SetText("Post")
     postBtn:SetNormalFontObject(GameFontNormalSmall)
     postBtn:SetHighlightFontObject(GameFontHighlightSmall)
@@ -1593,6 +1596,7 @@ function OP:BuildPostComposer(host)
         OP:RefreshAll()
     end)
 
+    composer.qty, composer.note, composer.postBtn = qty, note, postBtn   -- layout checks
     self.postComposer = composer
 end
 
@@ -1604,7 +1608,7 @@ function OP:BuildBoard(host)
     local filterBox = CreateFrame("EditBox", nil, host, "InputBoxTemplate")
     filterBox:SetHeight(18)
     filterBox:SetPoint("TOPLEFT", host, "TOPLEFT", 16, -82)
-    filterBox:SetPoint("TOPRIGHT", host, "TOPRIGHT", -20, -82)
+    filterBox:SetPoint("TOPRIGHT", host, "TOPRIGHT", -2, -82)
     filterBox:SetAutoFocus(false)
     filterBox:SetMaxLetters(60)
     filterBox:SetScript("OnEscapePressed", function(eb) eb:SetText(""); eb:ClearFocus() end)

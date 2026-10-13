@@ -106,6 +106,9 @@ local CRAFTING_PROFS = {
     ["Enchanting"] = true, ["Engineering"] = true, ["Jewelcrafting"] = true,
     ["Leatherworking"] = true, ["Tailoring"] = true, ["First Aid"] = true,
     ["Poisons"] = true,
+    -- WoW: Forever, mage only (Core CLASS_PROFS): Study makes a Bundle of
+    -- Scrolls; the rest are abilities (RecipeDB KnownAbilities)
+    ["Comprehension"] = true,
 }
 
 local GATHERING_PROFS = {
@@ -238,7 +241,7 @@ function Scanner:ScanProfessions()
             local existing = DS:GetProfession(nil, canon) or {}
             existing.skillLevel = line.rank
             existing.maxSkill   = line.maxRank
-            existing.recipes    = existing.recipes or {}
+            existing.recipes    = addon.RecipeDB:AddKnownAbilities(canon, existing.recipes or {})
             DS:SetProfessionData(canon, existing)
         end
     end
@@ -327,7 +330,7 @@ function Scanner:ScanCurrentTradeSkill()
     DS:SetProfessionData(profName, {
         skillLevel = rank,
         maxSkill   = maxRank,
-        recipes    = recipes,
+        recipes    = addon.RecipeDB:AddKnownAbilities(profName, recipes),
     })
 
     -- Before 1.1.5 a non-enUS rogue's Poisons was stored under the localized
@@ -400,7 +403,7 @@ function Scanner:ScanCurrentCraft()
     DS:SetProfessionData(profName, {
         skillLevel = rank,
         maxSkill   = maxRank,
-        recipes    = recipes,
+        recipes    = addon.RecipeDB:AddKnownAbilities(profName, recipes),
     })
 end
 

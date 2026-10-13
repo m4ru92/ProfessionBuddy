@@ -1983,6 +1983,8 @@ local PROF_ICONS = {
     ["Skinning"]        = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01",
     ["Fishing"]         = "Interface\\Icons\\Trade_Fishing",
     ["Poisons"]         = "Interface\\Icons\\Trade_BrewPoison",
+    -- WoW: Forever's own icon for the skill line (SkillLine 3012)
+    ["Comprehension"]   = "Interface\\Icons\\Spell_Holy_MindSooth",
 }
 
 -- Profession sort order: crafting primary first (alpha), gathering primary
@@ -1994,6 +1996,7 @@ local PROF_ORDER = {
     ["Herbalism"] = 20,
     ["Mining"] = 21, ["Find Minerals"] = 21.5, ["Skinning"] = 22,
     ["Cooking"] = 30, ["First Aid"] = 31, ["Fishing"] = 32,
+    ["Comprehension"] = 33,
 }
 
 -- All possible profession tabs, pre-built to avoid taint.
@@ -2005,6 +2008,7 @@ local ALL_TAB_PROFS = {
     "Find Minerals", "First Aid", "Fishing",
     "Jewelcrafting", "Leatherworking", "Mining", "Skinning", "Tailoring",
     "Poisons",   -- appended last so every other tab keeps its ProfBuddyProfTab<n> name
+    "Comprehension",   -- WoW: Forever mages; last for the same reason
 }
 
 -- Professions that have a browsable recipe window in the static DB.
@@ -6229,6 +6233,19 @@ local function scrapeRecipes(isCraft)
             category = row.category,
         }
         table.insert(state.recipeOrder, row.name)
+    end
+    -- Abilities (WoW: Forever, Comprehension) are never in the window:
+    -- list the ones this character knows, under their own category. No
+    -- index, so they can never be crafted.
+    local prof = addon.Scanner and addon.Scanner:Canonicalize(state.profName) or state.profName
+    for name, e in pairs(RDB and RDB.KnownAbilities and RDB:KnownAbilities(prof) or {}) do
+        if not state.allRecipes[name] then
+            state.allRecipes[name] = {
+                spellID = e.spellID, itemID = 0, numAvail = 0, reagents = {},
+                category = e.category, difficulty = "trivial", ability = true,
+            }
+            table.insert(state.recipeOrder, name)
+        end
     end
     return win.itemsPending
 end

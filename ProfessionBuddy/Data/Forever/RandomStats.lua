@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------
 -- ProfessionBuddy  --  Data/Forever/RandomStats.lua
--- Crafted items that roll random stats on WoW: Forever, build 1.60.1.70334.
+-- Crafted items that roll random stats on WoW: Forever, build 1.60.1.70338.
 -- The game shows "<Random additional stats>" (ITEM_RANDOM_ENCHANT) only
 -- on the trade-skill result, so PB appends it for these items, as it
 -- does on TBC Anniversary (Data/RandomEnchant.lua). An item rolls

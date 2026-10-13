@@ -57,6 +57,9 @@ KNOWN_FIELDS = set(REQUIRED_FIELDS) | {
     # WoW: Forever (tools/bake_forever_db2.py): the items that teach a
     # recipe, and where its learn level came from
     "teachItems", "learnFrom",
+    # WoW: Forever: a learnable ability, never crafted (Comprehension's
+    # Comprehend Scroll ranks and Research): no item and no reagents
+    "ability",
 }
 # WoW: Forever: a recipe whose learn level is not known yet has no skillReq,
 # and one with no skill-up range in DB2 has no skillRange.
@@ -285,8 +288,9 @@ def lint_dir(data_dir, forever):
             if not isinstance(r, dict):
                 bad_types.append("%s / %r: record is not a table" % (prof, name))
                 continue
+            ability = forever and r.get("ability") is True
             for f in required:
-                if f not in r:
+                if f not in r and not (ability and f == "reagents"):
                     missing_field[f].append("%s / %r" % (prof, name))
             for f in r:
                 if f not in KNOWN_FIELDS:
@@ -297,7 +301,7 @@ def lint_dir(data_dir, forever):
                 bad_itemid.append("%s / %r: itemID MISSING" % (prof, name))
             elif not isint(iid):
                 bad_itemid.append("%s / %r: itemID not an integer (%r)" % (prof, name, iid))
-            elif iid <= 0 and prof != "Enchanting" and not (forever and r.get("reagents")):
+            elif iid <= 0 and prof != "Enchanting" and not (forever and r.get("reagents")) and not ability:
                 # Forever: an Engineering tinker applies to an item like an
                 # enchant, so it makes no item but has reagents
                 bad_itemid.append("%s / %r: itemID = %d (only Enchanting may produce "
@@ -540,7 +544,8 @@ def lint_dir(data_dir, forever):
             iid = r.get("itemID")
             stub = (isinstance(iid, (int, float)) and iid == 0
                     and prof != "Enchanting"
-                    and not r.get("reagents"))
+                    and not r.get("reagents")
+                    and r.get("ability") is not True)
             if stub:
                 rows.append("%s / %r: STUB (itemID=0, no reagents, skillRange=%r)"
                             % (prof, name, r.get("skillRange")))

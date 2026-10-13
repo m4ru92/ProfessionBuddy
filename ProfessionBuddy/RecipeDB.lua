@@ -149,6 +149,36 @@ end
 -- The unknown recipes the Missing list and the character panel show: all
 -- of them, or on WoW: Forever with Learn as you go only the ones seen
 -- (Knowledge.lua, which only the Mainline toc loads).
+-- WoW: Forever abilities (Data/Forever, ability = true): learnable, never
+-- crafted, so no profession window lists them (Comprehension's Comprehend
+-- Scroll ranks and Research). Known ones are read from the spellbook.
+-- Returns name -> static entry for those this character knows.
+local function SpellKnown(id)
+    if C_SpellBook and C_SpellBook.IsSpellKnown then return C_SpellBook.IsSpellKnown(id) == true end
+    if IsPlayerSpell then return IsPlayerSpell(id) == true end
+    return false
+end
+
+function RDB:KnownAbilities(profName)
+    local out = {}
+    for name, e in pairs(self.data[profName] or {}) do
+        if e.ability and e.spellID and SpellKnown(e.spellID) then out[name] = e end
+    end
+    return out
+end
+
+-- The saved record of a profession gains the abilities this character
+-- knows, so the Missing list leaves them out and the Known list and other
+-- characters' views show them. Adds only.
+function RDB:AddKnownAbilities(profName, recipes)
+    for name, e in pairs(self:KnownAbilities(profName)) do
+        if not recipes[name] then
+            recipes[name] = { spellID = e.spellID, itemID = 0, reagents = {}, ability = true }
+        end
+    end
+    return recipes
+end
+
 function RDB:GetUnknownRecipes(charKey, profName)
     local unknown = self:GetAllUnknownRecipes(charKey, profName)
     local KN = addon.Knowledge

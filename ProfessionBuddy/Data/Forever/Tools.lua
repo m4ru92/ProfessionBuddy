@@ -2,7 +2,7 @@
 -- ProfessionBuddy  --  Data/Forever/Tools.lua
 -- Tools a recipe requires, other than Enchanting rods (the recipe's
 -- `rod` field). From WoW: Forever's SpellTotems, TotemCategory and ItemSparse,
--- build 1.60.1.70334.
+-- build 1.60.1.70338.
 --   RecipeTools[spellID]  = { category ID, or -item ID for one item }
 --   ToolCategories[ID]    = { name, items = { items that satisfy it } }
 --   ToolItemNames[itemID] = name of a specific required item

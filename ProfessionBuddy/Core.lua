@@ -26,6 +26,8 @@ addon.CRAFTABLE_PROFS = {
 -- never in CRAFTABLE_PROFS (which feeds the panels, orders and guild sync).
 addon.CLASS_PROFS = {
     ["Poisons"] = "ROGUE",
+    -- WoW: Forever: the mage's scroll skill (any mage trainer, level 6)
+    ["Comprehension"] = "MAGE",
 }
 
 -- Can a character of classFile have this profession? classFile nil means the

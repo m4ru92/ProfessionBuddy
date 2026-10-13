@@ -15,6 +15,8 @@ local VISIBLE_ROWS = 14
 ----------------------------------------------------------------------
 -- Profession icon paths for the summary column
 ----------------------------------------------------------------------
+local MAX_FRIEND_PROF_ICONS = 7
+
 local PROF_ICONS = {
     ["Alchemy"]         = "Interface\\Icons\\Trade_Alchemy",
     ["Blacksmithing"]   = "Interface\\Icons\\Trade_BlackSmithing",
@@ -509,9 +511,12 @@ function FP:CreateRow(parent, index)
     name:SetJustifyH("LEFT")
     row.nameText = name
 
-    -- Profession icons (up to 4 small icons)
+    -- Profession icons: up to 7 (2 primaries and up to 5 secondaries, the
+    -- most a WoW: Forever character has). 4 dropped the fifth one
+    -- alphabetically (Shreks Swamp's Herbalism, m4ru 2026-10-13); 7 end
+    -- at 286 px, before Last Sync at 294.
     row.profIcons = {}
-    for i = 1, 4 do
+    for i = 1, MAX_FRIEND_PROF_ICONS do
         local icon = row:CreateTexture(nil, "ARTWORK")
         icon:SetSize(16, 16)
         icon:SetPoint("LEFT", 150 + (i - 1) * 20, 0)
@@ -745,7 +750,7 @@ function FP:UpdateRows()
                 end
                 table.sort(profNames)
                 for _, pn in ipairs(profNames) do
-                    if profIdx <= 4 and PROF_ICONS[pn] then
+                    if profIdx <= MAX_FRIEND_PROF_ICONS and PROF_ICONS[pn] then
                         row.profIcons[profIdx]:SetTexture(PROF_ICONS[pn])
                         row.profIcons[profIdx]:Show()
                         profIdx = profIdx + 1
