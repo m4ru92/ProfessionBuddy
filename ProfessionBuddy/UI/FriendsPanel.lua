@@ -342,7 +342,7 @@ function FP:CreateContent(parent)
     local bnTitle, bnText
     if BNm and BNm:Available() then
         bnBtn:SetScript("OnClick", function() BNm:ToggleWindow() end)
-        bnTitle, bnText = "Battle.net friends", "Pick Battle.net friends whose characters PB adds as contacts."
+        bnTitle, bnText = "Battle.net friends", "Add friends via Battle.net. Friends must also be using ProfessionBuddy."
     else
         bnBtn:Disable()
         if bnBtn.SetMotionScriptsWhileDisabled then bnBtn:SetMotionScriptsWhileDisabled(true) end

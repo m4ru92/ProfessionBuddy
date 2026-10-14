@@ -294,6 +294,17 @@ function BN:BuildWindow()
     closeBtn:SetText("Close")
     closeBtn:SetScript("OnClick", function() f:Hide() end)
 
+    -- A full sync arrives in chunks, so a just-added contact's professions
+    -- show up a little later; say so before it looks broken (m4ru 2026-10-14).
+    local wait = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    wait:SetPoint("BOTTOMLEFT", 16, 14)
+    wait:SetPoint("RIGHT", closeBtn, "LEFT", -10, 0)
+    wait:SetHeight(22)
+    wait:SetJustifyH("LEFT")
+    wait:SetJustifyV("MIDDLE")
+    wait:SetText("|cff888888A new contact's data can take a minute or two to arrive.|r")
+    f.waitNote = wait
+
     f:SetScript("OnShow", function() BN:RefreshWindow() end)
     tinsert(UISpecialFrames, "PBBattleNetFrame")
     self.window = f

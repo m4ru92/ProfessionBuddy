@@ -2939,6 +2939,9 @@ do
     BN:ToggleWindow()
     local w = BN.window
     EXPECT(w and w:IsShown(), "the picker did not open")
+    local note = rawget(w, "waitNote")       -- an unset frame field reads as a stub
+    EXPECT(note and tostring(note:GetText()):find("minute or two", 1, true),
+           "no note that a new contact's data takes a while")
     EXPECT(w.rows[1].label:GetText() == "Ann" and w.rows[2].label:GetText() == "Zed",
            "friends in this game first, then by name; BattleTag cut at #")
     EXPECT(w.rows[1].status:GetText():find("Ann Wren", 1, true), "no 'playing' line for a friend in game")

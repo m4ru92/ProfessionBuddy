@@ -616,7 +616,7 @@ local open2 = RQ.orders:CreateOpen({
 -- The poster now spaces its OWN sends past that same cooldown, so clear its
 -- send stamp too or this post would sit in a deferred timer instead of going out.
 X1.comm._lastOpenAt, X2.comm._lastOpenAt = nil, nil
-RQ.comm._lastOpenSendAt = nil
+RQ.comm._openSlots = nil
 RQ.comm:BroadcastOpenOrder(open2)
 Router:pump()
 -- (a) a non-guild stranger's claim is dropped at the trust gate
@@ -693,5 +693,63 @@ check(RQ2.addon.db.orders[open3.id].status == "completed"
     "GP12: the claimed order did not complete on both sides")
 ok("GP12 multi-word realm -- claim race, winner sees itself as crafter, full lifecycle")
 
+-- ── GP13: a guildmate who joins after a post still gets it ─────────
+-- The post goes to the guild once, and again only at the poster's next login.
+-- Here the joiner's HELLO first reaches a poster whose roster predates the
+-- join (held as a stranger), and is replayed when the poster's roster updates.
+Router:ungroupAll()
+local P = makeInstance("Poster", "GhostRealm")
+local W = makeInstance("Watcher", "GhostRealm")
+local J = makeInstance("Joiner", "GhostRealm")
+J.ds:EnsureCharacter()
+Router:guild(P.key, W.key)
+P.comm._guildHelloDone, W.comm._guildHelloDone = true, true
+local bag = P.orders:CreateOpen({
+    item = { id = 4238, name = "Linen Bag", profession = "Tailoring" }, quantity = 1 })
+P.comm:BroadcastOpenOrder(bag)
+Router:pump()
+check(W.addon.db.orderBoard[bag.id], "GP13: setup -- the watcher did not get the post")
+P.comm:RebuildGuildSet()
+
+local posterSends = {}
+local enqueue = Router.enqueue
+Router.enqueue = function(self, fromName, prefix, payload, channel, target)
+    if fromName == P.key and type(payload) == "table" and payload._type == "ORDER_OPEN" then
+        table.insert(posterSends, { channel = channel, target = target })
+    end
+    return enqueue(self, fromName, prefix, payload, channel, target)
+end
+
+Router:guild(P.key, W.key, J.key)
+J.fire("GUILD_ROSTER_UPDATE")
+J.runDeferred()
+Router:pump()
+check(J.addon.db.orderBoard[bag.id] == nil,
+    "GP13: setup -- the joiner got the post before the poster knew them")
+P.fire("GUILD_ROSTER_UPDATE")
+P.runDeferred()
+Router:pump()
+check(J.addon.db.orderBoard[bag.id], "GP13: the joiner never got the post made before they joined")
+check(#posterSends == 1 and posterSends[1].channel == "WHISPER" and posterSends[1].target == "Joiner",
+    "GP13: the post was not whispered to the joiner alone (" .. #posterSends .. " sends)")
+ok("GP13 late joiner -- a guild HELLO gets the poster's open posts by whisper, also after a held HELLO")
+
+-- ── GP14: a profession learned mid-session reaches the guild ────────
+check(P.addon.db.characters[J.key] and not P.addon.db.characters[J.key].professions.Tailoring,
+    "GP14: setup -- the poster already lists Tailoring for the joiner")
+posterSends = {}
+J.ds:SetProfessionData("Tailoring", { skillLevel = 1, maxSkill = 75, recipes = {} })
+J.comm._lastGuildHelloAt = os.time() - 31
+J.fire("SKILL_LINES_CHANGED")
+J.runTimers()
+Router:pump()
+P.runDeferred()
+Router:pump()
+check(P.addon.db.characters[J.key].professions.Tailoring,
+    "GP14: the learned profession did not reach the guildmate's record")
+check(#posterSends == 0, "GP14: the posts were re-sent inside a minute")
+Router.enqueue = enqueue
+ok("GP14 learned profession -- re-announced to the guild; posts not re-sent inside the floor")
+
 print("ALL GHOST HARNESS TESTS PASS (" .. pass ..
-    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 auto-push, GP7 order loop, GP8 board race, GP9 board lifecycle, GP10 board anti-spoof, GP11 delta+recovery, GP12 multi-word realm board run)")
+    " groups: GP1 hello, GP2 sync, GP3 stranger, GP4 spoof, GP5 guild, GP6 auto-push, GP7 order loop, GP8 board race, GP9 board lifecycle, GP10 board anti-spoof, GP11 delta+recovery, GP12 multi-word realm board run, GP13 late joiner gets the board, GP14 learned profession reaches the guild)")

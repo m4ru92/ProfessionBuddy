@@ -111,6 +111,9 @@ local PENDING_REQ_TTL   = 120     -- how long an outstanding SYNC_REQ stays hono
 local RESYNC_THROTTLE   = 30      -- min seconds between gap-triggered SYNC_REQs per peer
 local HELLO_ACK_FLOOR   = 60      -- min seconds between HELLO_ACKs to one sender
 local HELLO_PULL_FLOOR  = 60      -- min seconds between post-HELLO pulls from one sender
+local GUILD_HELLO_FLOOR = 30      -- min seconds between our own guild HELLOs
+local PROF_HELLO_DELAY  = 3       -- wait for the profession scan before comparing the list
+local BOARD_RESEND_FLOOR = 60     -- min seconds between re-sending our posts to one guildmate
 local UI_REFRESH_COALESCE = 1     -- max one panel repaint per second from inbound data
 local REFLEX_FLOOR      = 5       -- min seconds between reflex refusal replies to one sender
 local GUILD_SYNC_COOLDOWN = 15    -- min seconds between guild pulls from one guildmate
@@ -231,6 +234,7 @@ function Comm:Init()
     for _, event in ipairs({ "BAG_UPDATE", "SKILL_LINES_CHANGED", addon.Source.EVENT.TRADE_UPDATE }) do
         addon:RegisterEvent(event, function()
             self:QueueIncrementalUpdate()
+            if event ~= "BAG_UPDATE" then self:QueueProfessionCheck() end
         end)
     end
 
@@ -1304,44 +1308,95 @@ local BOARD_POST_COOLDOWN     = 5    -- seconds between accepted NEW posts per s
 local BOARD_SEND_SPACING      = BOARD_POST_COOLDOWN + 1  -- our own sends, spaced past it
 local VALID_MATRESP = { requester = true, crafter = true, split = true }
 
--- Requester -> guild: announce an open order to the board.
+-- Seconds until our next board post may go to `target` (nil = the guild).
 -- Receivers drop a second NEW post from the same sender inside
--- BOARD_POST_COOLDOWN, with no queue and no retry, so two posts composed back to
--- back left the second invisible to the whole guild until our next login
--- re-broadcast. Space our own sends the way RunOrderMaintenance spaces the login
--- burst, keeping them in order. Deferred sends are tracked by order id so a
--- close can cancel one instead of racing it.
-function Comm:BroadcastOpenOrder(order)
+-- BOARD_POST_COOLDOWN, so every post a receiver gets from us is spaced past it.
+-- A guild send reaches everyone, so it waits for every pending slot, and a
+-- whisper waits for the last guild send and for that guildmate's own slot.
+local GUILD_SLOT = "*guild"
+function Comm:NextOpenSlot(target)
+    local now = time()
+    local slots = self._openSlots or {}
+    self._openSlots = slots
+    for k, at in pairs(slots) do
+        if at + BOARD_SEND_SPACING <= now then slots[k] = nil end
+    end
+    local base = slots[GUILD_SLOT]
+    if target then
+        local mine = slots[target]
+        if mine and (not base or mine > base) then base = mine end
+    else
+        for _, at in pairs(slots) do
+            if not base or at > base then base = at end
+        end
+    end
+    local at = base and math.max(now, base + BOARD_SEND_SPACING) or now
+    slots[target or GUILD_SLOT] = at
+    return at - now
+end
+
+-- Requester -> guild, or to one guildmate when `target` is given: announce an
+-- open order to the board. Posts go out in order, spaced by NextOpenSlot.
+-- Deferred sends are tracked by order id so a close can cancel every pending
+-- send of that post instead of racing it.
+function Comm:BroadcastOpenOrder(order, target)
     if not self._ready or type(order) ~= "table" then return end
     if not IsInGuild() then return end
 
     local id = order.id
-    local now = time()
-    local last = self._lastOpenSendAt or 0
-    local wait = 0
-    if (now - last) < BOARD_SEND_SPACING then
-        wait = BOARD_SEND_SPACING - (now - last)
-    end
-    self._lastOpenSendAt = now + wait
+    local wait = self:NextOpenSlot(target)
 
     local function doSend()
         -- Re-checked at fire time: we may have left the guild or reloaded while
-        -- this one waited.
+        -- this one waited, or the guildmate may have left it.
         if not self._ready or not IsInGuild() then return end
-        self:Send("ORDER_OPEN", { order = wireOrder(order) }, "GUILD", nil, "ALERT")
+        if target then
+            if not self:IsGuildMember(target) then return end
+            self:SendWhisper("ORDER_OPEN", { order = wireOrder(order) }, target, "ALERT")
+        else
+            self:Send("ORDER_OPEN", { order = wireOrder(order) }, "GUILD", nil, "ALERT")
+        end
     end
 
     if wait <= 0 then
         doSend()
         return
     end
-    self._deferredOpens = self._deferredOpens or {}
-    self._deferredOpens[id] = true
+    local pending = self._deferredOpens or {}
+    self._deferredOpens = pending
+    local set = pending[id] or {}
+    pending[id] = set
+    local token = {}
+    set[token] = true
     C_Timer.After(wait, function()
-        if not (self._deferredOpens and self._deferredOpens[id]) then return end
-        self._deferredOpens[id] = nil
+        local s = self._deferredOpens and self._deferredOpens[id]
+        if not (s and s[token]) then return end
+        s[token] = nil
+        if next(s) == nil then self._deferredOpens[id] = nil end
         doSend()
     end)
+end
+
+-- A guildmate just announced themselves (login, reload, joining the guild).
+-- Our posts reach the guild once when posted and again at our own login, so
+-- anyone who was not online for either has never seen them. Whisper them our
+-- open posts. A post they already hold is a no-op on their side.
+function Comm:SendOpenPostsTo(targetKey)
+    local Orders = addon.Orders
+    if not (self._ready and Orders and Orders.GetMyOpen) then return end
+    local key = normFullKey(targetKey)
+    if not key or addon:SameKey(key, addon:PlayerKey()) then return end
+    if not self:IsGuildMember(key) then return end
+    local mine = Orders:GetMyOpen()
+    if #mine == 0 then return end
+    self._postsSentAt = self._postsSentAt or {}
+    local now = time()
+    local last = self._postsSentAt[key]
+    if last and (now - last) < BOARD_RESEND_FLOOR then return end
+    self._postsSentAt[key] = now
+    for _, order in ipairs(mine) do
+        self:BroadcastOpenOrder(order, key)
+    end
 end
 
 -- Requester -> guild (broadcast) or a single crafter (whisper): an open order is
@@ -1560,6 +1615,16 @@ local function sharedProfessions(charData)
     return out
 end
 
+-- The shared profession names, sorted and joined: what a guild HELLO announces.
+local function professionNames()
+    local charData = DS and DS:GetCharacter(addon:PlayerKey())
+    if not charData then return "" end
+    local names = {}
+    for profName in pairs(sharedProfessions(charData)) do names[#names + 1] = profName end
+    table.sort(names)
+    return table.concat(names, ",")
+end
+
 ----------------------------------------------------------------------
 -- HELLO: lightweight broadcast on group join
 ----------------------------------------------------------------------
@@ -1609,13 +1674,44 @@ function Comm:BroadcastGuildHello()
     -- (PLAYER_ENTERING_WORLD) can both call this; don't broadcast twice in
     -- quick succession. Only stamp the time when we actually send.
     local now = time()
-    if self._lastGuildHelloAt and (now - self._lastGuildHelloAt) < 30 then return end
+    if self._lastGuildHelloAt and (now - self._lastGuildHelloAt) < GUILD_HELLO_FLOOR then return end
 
     local payload = self:BuildHelloPayload()
     if not payload then return end
 
     self._lastGuildHelloAt = now
+    self._helloProfNames = professionNames()
     self:Send("HELLO", payload, "GUILD")
+end
+
+-- Guildmates learn our professions only from the guild HELLO, sent once a
+-- session. A profession learned later never reached them until our next login,
+-- so announce again when the list we share changes. Skill-ups do not count.
+function Comm:QueueProfessionCheck()
+    if not self._ready or self._profCheckTimer then return end
+    self._profCheckTimer = C_Timer.NewTimer(PROF_HELLO_DELAY, function()
+        self._profCheckTimer = nil
+        self:CheckProfessionList()
+    end)
+end
+
+function Comm:CheckProfessionList()
+    if not self._ready or not IsInGuild() then return end
+    -- No guild HELLO this session yet: the login one will carry the list.
+    if self._helloProfNames == nil then return end
+    if professionNames() == self._helloProfNames then return end
+    local wait = GUILD_HELLO_FLOOR - (time() - (self._lastGuildHelloAt or 0))
+    if wait > 0 then
+        if not self._profHelloRetry then
+            self._profHelloRetry = true
+            C_Timer.After(wait + 1, function()
+                self._profHelloRetry = nil
+                self:CheckProfessionList()
+            end)
+        end
+        return
+    end
+    self:BroadcastGuildHello()
 end
 
 function Comm:SendHelloAck(target)
@@ -1666,6 +1762,7 @@ function Comm:HandleHello(sender, data, distribution)
     end
 
     self:PullAfterHello(sender)
+    if distribution == "GUILD" then self:SendOpenPostsTo(sender) end
 end
 
 function Comm:HandleHelloAck(sender, data, distribution)
@@ -2796,7 +2893,7 @@ function Comm:ForgetPeer(key)
                             "_helloAckAt", "_helloPullAt", "_reflexAt",
                             "_pendingReq", "_lastOpenAt",
                             "_knowAsked", "_knowPending", "_knowServed",
-                            "_heardContact", "_servedUsAt" }) do
+                            "_heardContact", "_servedUsAt", "_postsSentAt" }) do
         if self[name] then self[name][k] = nil end
     end
     -- and what they shared with us (WoW: Forever)
@@ -2852,6 +2949,7 @@ function Comm:SweepSessionTables()
     sweepByAge(self._reflexAt, SESSION_TTL, now)
     sweepByAge(self._resyncAt, SESSION_TTL, now)
     sweepByAge(self._lastOpenAt, SESSION_TTL, now)
+    sweepByAge(self._postsSentAt, SESSION_TTL, now)
     sweepByAge(self._pendingReq, PENDING_REQ_TTL, now)
     sweepByAge(self._knowPending, PENDING_REQ_TTL, now)
     sweepByAge(self._knowServed, SESSION_TTL, now)

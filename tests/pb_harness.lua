@@ -1624,7 +1624,7 @@ passed("T62 lastCommRev -- NaN defaults to 0, a huge value clamps to 1000, absen
 -- ── T63: our own board posts are spaced, and a close cancels ─────
 do
     addon.db.orderBoard = {}
-    Comm._lastOpenSendAt, Comm._deferredOpens = nil, nil
+    Comm._openSlots, Comm._deferredOpens = nil, nil
     clearSent(); clearDeferred()
     local p1 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
     local p2 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
@@ -1639,7 +1639,7 @@ do
     assert(opens[1].payload.order.id == p1.id and opens[2].payload.order.id == p2.id,
         "T63: the deferred sends went out of order")
     -- A close for a post still waiting cancels that send instead of racing it.
-    Comm._lastOpenSendAt = nil
+    Comm._openSlots = nil
     clearSent(); clearDeferred()
     local p3 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
     local p4 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
@@ -2672,8 +2672,177 @@ do
 end
 passed("T94 fix wave -- typed names and realm case, /pb sync cooldown message, Battle.net trust syncs and ticks Auto-sync")
 
+-- ── T95: our open posts reach a guildmate who announces themselves ──
+do
+    local savedGuild = { unpack(state.guildMembers) }
+    local savedOrders = addon.db.orders
+    addon.db.orders = {}
+    addon.db.orderBoard = {}
+    joinGuild("Postpal", "Lateguy", "Thirdguy")
+    Comm._openSlots, Comm._deferredOpens, Comm._postsSentAt = nil, nil, nil
+    clearSent(); clearDeferred()
+    local HELLO = { _type = "HELLO", professions = {} }
+
+    -- No open posts: a guild HELLO sends none.
+    recvOn("Lateguy", HELLO, "GUILD")
+    runDeferred()
+    assert(#sentOfType("ORDER_OPEN") == 0, "T95: posts sent with none open")
+
+    -- Two open posts: a guild HELLO whispers both to that guildmate, in order,
+    -- the second spaced past the receiver's per-sender cooldown.
+    local p1 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
+    local p2 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
+    Comm._openSlots, Comm._postsSentAt = nil, nil
+    clearSent(); clearDeferred()
+    recvOn("Lateguy", HELLO, "GUILD")
+    local opens = sentOfType("ORDER_OPEN")
+    assert(#opens == 1, "T95: want 1 post sent at once, got " .. #opens)
+    assert(opens[1].channel == "WHISPER" and opens[1].target == "Lateguy",
+        "T95: the post went to " .. tostring(opens[1].channel) .. " " .. tostring(opens[1].target))
+    assert(opens[1].payload.order.id == p1.id, "T95: the oldest post did not go first")
+    runDeferred()
+    opens = sentOfType("ORDER_OPEN")
+    assert(#opens == 2 and opens[2].payload.order.id == p2.id and opens[2].target == "Lateguy",
+        "T95: the second post was not sent after the spacing")
+
+    -- A second HELLO inside a minute re-sends nothing.
+    clearSent(); clearDeferred()
+    recvOn("Lateguy", HELLO, "GUILD")
+    runDeferred()
+    assert(#sentOfType("ORDER_OPEN") == 0, "T95: posts re-sent inside the floor")
+
+    -- A HELLO that is not on the guild channel sends none.
+    clearSent(); clearDeferred()
+    recvOn("Thirdguy", HELLO, "WHISPER")
+    runDeferred()
+    assert(#sentOfType("ORDER_OPEN") == 0, "T95: a whispered HELLO pulled our posts")
+
+    -- A guild send reaches everyone, so a whisper waits for it.
+    Comm._openSlots = nil
+    clearSent(); clearDeferred()
+    Comm:BroadcastOpenOrder(p1)
+    Comm:BroadcastOpenOrder(p2, "Thirdguy-TestRealm")
+    assert(#sentOfType("ORDER_OPEN") == 1 and #deferred == 1,
+        "T95: a whisper went out inside the cooldown of a guild send")
+    -- Whispers to two guildmates do not wait for each other; a guild send
+    -- waits for both.
+    Comm._openSlots, Comm._deferredOpens = nil, nil
+    clearSent(); clearDeferred()
+    Comm:BroadcastOpenOrder(p1, "Thirdguy-TestRealm")
+    Comm:BroadcastOpenOrder(p2, "Postpal-TestRealm")
+    assert(#sentOfType("ORDER_OPEN") == 2 and #deferred == 0,
+        "T95: a whisper to one guildmate waited for another's")
+    Comm:BroadcastOpenOrder(p2)
+    assert(#sentOfType("ORDER_OPEN") == 2 and #deferred == 1,
+        "T95: a guild send did not wait for the whispers")
+
+    -- A close cancels every pending send of that post.
+    Comm._openSlots, Comm._deferredOpens = nil, nil
+    clearSent(); clearDeferred()
+    Comm:BroadcastOpenOrder(p1)
+    Comm:BroadcastOpenOrder(p2, "Thirdguy-TestRealm")
+    Comm:BroadcastOpenOrder(p2, "Postpal-TestRealm")
+    Comm:BroadcastOrderClosed(p2.id, "cancelled")
+    runDeferred()
+    for _, s in ipairs(sentOfType("ORDER_OPEN")) do
+        assert(s.payload.order.id ~= p2.id, "T95: a cancelled post was sent after its close")
+    end
+
+    -- A guildmate who left before their whisper fired is not sent it.
+    Comm._openSlots, Comm._deferredOpens = nil, nil
+    clearSent(); clearDeferred()
+    Comm:BroadcastOpenOrder(p1, "Thirdguy-TestRealm")
+    Comm:BroadcastOpenOrder(p2, "Thirdguy-TestRealm")
+    joinGuild("Postpal", "Lateguy")
+    runDeferred()
+    assert(#sentOfType("ORDER_OPEN") == 1, "T95: a post was whispered to a former guildmate")
+
+    Comm._openSlots, Comm._deferredOpens, Comm._postsSentAt = nil, nil, nil
+    clearSent(); clearDeferred()
+    addon.db.orders = savedOrders
+    addon.db.orderBoard = {}
+    joinGuild(unpack(savedGuild))
+end
+passed("T95 board re-send -- a guild HELLO gets our open posts by whisper, spaced, floored and cancellable")
+
+-- ── T96: a learned profession is announced to the guild again ───────
+do
+    local savedGuild = { unpack(state.guildMembers) }
+    joinGuild("Postpal")
+    local char = DS:GetCharacter(ME)
+    local savedProfs = {}
+    for k, v in pairs(char.professions) do savedProfs[k] = v end
+    -- Earlier tests left Alchemy, First Aid and others here; start from one.
+    for k in pairs(char.professions) do
+        if k ~= "Tailoring" then char.professions[k] = nil end
+    end
+    Comm._helloProfNames, Comm._lastGuildHelloAt = nil, nil
+    Comm._profHelloRetry, Comm._profCheckTimer = nil, nil
+    clearSent(); clearDeferred()
+    local function learn(prof, rank)
+        DS:SetProfessionData(prof, { skillLevel = rank or 1, maxSkill = 75, recipes = {} })
+        fire("SKILL_LINES_CHANGED")
+        local t = Comm._profCheckTimer
+        assert(t, "T96: SKILL_LINES_CHANGED did not queue the profession check")
+        t.fn()
+    end
+
+    -- No guild HELLO this session yet: the login one carries the list.
+    learn("Leatherworking")
+    assert(#sentOfType("HELLO") == 0, "T96: announced before the login HELLO")
+
+    -- After it, a learned profession re-announces on the guild channel.
+    Comm:BroadcastGuildHello()
+    assert(#sentOfType("HELLO") == 1, "T96: setup -- the guild HELLO did not go out")
+    clearSent()
+    Comm._lastGuildHelloAt = time() - 31
+    learn("Alchemy")
+    local h = sentOfType("HELLO")
+    assert(#h == 1 and h[1].channel == "GUILD" and h[1].payload.professions.Alchemy,
+        "T96: a learned profession was not announced to the guild")
+
+    -- A skill-up alone is not announced.
+    clearSent()
+    Comm._lastGuildHelloAt = time() - 31
+    learn("Alchemy", 40)
+    assert(#sentOfType("HELLO") == 0, "T96: a skill-up re-announced")
+
+    -- A class-only profession is never shared, so it is not announced.
+    learn("Poisons")
+    assert(#sentOfType("HELLO") == 0, "T96: Poisons was announced")
+
+    -- Inside the 30 s floor: one retry waits, and a second change adds none.
+    clearSent(); clearDeferred()
+    Comm._lastGuildHelloAt = time()
+    learn("Cooking")
+    learn("First Aid")
+    assert(#sentOfType("HELLO") == 0 and #deferred == 1,
+        "T96: want 0 HELLO and 1 retry inside the floor, got "
+        .. #sentOfType("HELLO") .. " and " .. #deferred)
+    Comm._lastGuildHelloAt = time() - 31
+    runDeferred()
+    h = sentOfType("HELLO")
+    assert(#h == 1 and h[1].payload.professions.Cooking and h[1].payload.professions["First Aid"],
+        "T96: the retry did not announce both professions")
+
+    -- The trade-skill event queues the check too; a bag change does not.
+    Comm._profCheckTimer = nil
+    fire("BAG_UPDATE")
+    assert(Comm._profCheckTimer == nil, "T96: a bag change queued the profession check")
+    fire(addon.Source.EVENT.TRADE_UPDATE)
+    assert(Comm._profCheckTimer ~= nil, "T96: the trade-skill event did not queue the check")
+
+    for k in pairs(char.professions) do char.professions[k] = nil end
+    for k, v in pairs(savedProfs) do char.professions[k] = v end
+    Comm._helloProfNames, Comm._lastGuildHelloAt = nil, nil
+    Comm._profHelloRetry, Comm._profCheckTimer = nil, nil
+    clearSent(); clearDeferred()
+    joinGuild(unpack(savedGuild))
+end
+passed("T96 profession re-announce -- learned professions re-send the guild HELLO, floored; skill-ups do not")
+
 leaveGuild()
-print("ALL 94 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 96 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2689,6 +2858,6 @@ print("ALL 94 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild; "
     .. pass .. " of them print a PASS line above)")
 
