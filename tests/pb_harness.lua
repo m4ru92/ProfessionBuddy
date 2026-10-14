@@ -126,7 +126,9 @@ function GetTime() return clock end
 function GetLocale() return "enUS" end
 -- Profession names self-map (enUS) except spell 2842, named as a deDE client
 -- names it, so the localized Poisons path is exercised (T76).
-function GetSpellInfo(id) if id == 2842 then return "Gifte" end return nil end
+-- SPELL_NAMES names other spells for a test that needs them (T97).
+SPELL_NAMES = {}
+function GetSpellInfo(id) if id == 2842 then return "Gifte" end return SPELL_NAMES[id] end
 
 function IsTradeSkillLinked() return sim.linked end
 function CraftIsPetTraining() return sim.pet end
@@ -2841,8 +2843,106 @@ do
 end
 passed("T96 profession re-announce -- learned professions re-send the guild HELLO, floored; skill-ups do not")
 
+-- ── T97: an unlearned profession is removed from the player's record ──
+do
+    local Scanner = addon.Scanner
+    local char = DS:GetCharacter(ME)
+    local savedProfs = char.professions
+    local function prof(n) return { skillLevel = n, maxSkill = 375, recipes = { ["R" .. n] = { spellID = n } } } end
+    char.professions = { Tailoring = prof(305), Mining = prof(120), Smelting = prof(110),
+        ["First Aid"] = prof(225), Poisons = prof(150), Leatherworking = prof(90) }
+    for id, n in pairs({ [2259] = "Alchemy", [2018] = "Blacksmithing", [2550] = "Cooking",
+        [7411] = "Enchanting", [4036] = "Engineering", [3273] = "First Aid", [7620] = "Fishing",
+        [9134] = "Herbalism", [25229] = "Jewelcrafting", [2108] = "Leatherworking", [2575] = "Mining",
+        [8613] = "Skinning", [3908] = "Tailoring", [2656] = "Smelting" }) do SPELL_NAMES[id] = n end
+    sim.collapsedHeaders = {}
+    sim.skillLines = {
+        { "Professions", true },
+        { "Tailoring", false, 306, 375 },
+        { "Mining", false, 120, 375 },
+        { "Secondary Skills", true },
+        { "First Aid", false, 225, 300 },
+        { "Weapon Skills", true },
+        { "Swords", false, 350, 350 },
+    }
+    -- Leatherworking is gone from the skill lines: removed, and the guild is
+    -- told (the profession re-announce from T96).
+    joinGuild("Postpal")
+    Comm._helloProfNames = "First Aid,Leatherworking,Mining,Smelting,Tailoring"
+    Comm._lastGuildHelloAt = time() - 31
+    Comm._profCheckTimer, Comm._profHelloRetry = nil, nil
+    Scanner._skillTimer, Scanner._skillEventMuteUntil = nil, nil
+    clearSent()
+    fire("SKILL_LINES_CHANGED")
+    Scanner._skillTimer.fn()
+    local p = char.professions
+    assert(p.Leatherworking == nil, "T97: the unlearned profession is still stored")
+    assert(p.Tailoring and p.Tailoring.skillLevel == 306 and p.Tailoring.recipes.R305,
+        "T97: a learned profession lost its rank or recipes")
+    assert(p.Smelting and p["First Aid"], "T97: Smelting (Mining is known) or First Aid was removed")
+    assert(p.Poisons, "T97: a class skill was removed")
+    Comm._profCheckTimer.fn()
+    local h = sentOfType("HELLO")
+    assert(#h == 1 and h[1].payload.professions.Leatherworking == nil and h[1].payload.professions.Tailoring,
+        "T97: the guild was not told the profession is gone")
+
+    -- Mining unlearned: Smelting, its window, goes with it.
+    sim.skillLines = { { "Professions", true }, { "Tailoring", false, 306, 375 },
+        { "First Aid", false, 225, 300 }, { "Swords", false, 350, 350 } }
+    Scanner:ScanProfessions()
+    assert(p.Mining == nil and p.Smelting == nil, "T97: Mining or Smelting survived unlearning Mining")
+
+    -- A read with no lines has not loaded yet: nothing is removed.
+    sim.skillLines = {}
+    Scanner:ScanProfessions()
+    assert(p.Tailoring and p["First Aid"], "T97: an empty skill list removed professions")
+
+    -- A profession this client cannot name from its spell is kept.
+    SPELL_NAMES[3908] = nil
+    sim.skillLines = { { "Swords", false, 350, 350 } }
+    Scanner:ScanProfessions()
+    assert(p.Tailoring, "T97: a profession whose skill-line name is unknown was removed")
+    assert(p["First Aid"] == nil, "T97: First Aid survived unlearning it")
+
+    for id in pairs(SPELL_NAMES) do SPELL_NAMES[id] = nil end
+    char.professions = savedProfs
+    sim.skillLines = {}
+    Comm._helloProfNames, Comm._lastGuildHelloAt = nil, nil
+    Comm._profCheckTimer, Comm._profHelloRetry = nil, nil
+    clearSent(); clearDeferred()
+    leaveGuild()
+end
+passed("T97 unlearned professions -- removed from the player's record, Smelting with Mining, class skills and unreadable lists kept")
+
+-- ── T98: a HELLO that leaves a profession out removes it ─────────────
+do
+    joinGuild("Dropper")
+    local K = "Dropper-TestRealm"
+    local function hello(list) recv("Dropper", { _type = "HELLO", professions = list }) end
+    local s = { skillLevel = 200, maxSkill = 300 }
+    hello({ Tailoring = s, Mining = s })
+    local rec = addon.db.characters[K]
+    assert(rec and rec.professions.Tailoring and rec.professions.Mining, "T98: setup -- HELLO not stored")
+    rec.professions.Tailoring.recipes = { ["Bolt of Runecloth"] = { isKnown = true } }
+    hello({ Tailoring = s })
+    assert(rec.professions.Mining == nil, "T98: a profession left out of the HELLO was kept")
+    assert(rec.professions.Tailoring.recipes["Bolt of Runecloth"], "T98: a listed profession lost its recipes")
+    -- An empty list is a character not scanned yet: nothing is removed.
+    hello({})
+    assert(rec.professions.Tailoring, "T98: an empty HELLO removed professions")
+    -- A list cut at the cap is not the whole list: nothing is removed.
+    local many = {}
+    for i = 1, 13 do many["Prof" .. i] = s end
+    hello(many)
+    assert(rec.professions.Tailoring, "T98: a HELLO cut at the cap removed professions")
+    addon.db.characters[K] = nil
+    clearSent(); clearDeferred()
+    leaveGuild()
+end
+passed("T98 HELLO removes unlearned professions -- not on an empty list or one cut at the cap")
+
 leaveGuild()
-print("ALL 96 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 98 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2858,6 +2958,6 @@ print("ALL 96 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions; "
     .. pass .. " of them print a PASS line above)")
 

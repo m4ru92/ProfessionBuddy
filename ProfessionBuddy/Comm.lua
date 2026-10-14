@@ -1804,11 +1804,13 @@ function Comm:StoreLightweight(sender, data)
     -- (a full SYNC_DATA will populate recipes later)
     if type(data.professions) == "table" then
         local nProfs = 0
+        local listed = {}
         for rawProfName, summary in pairs(data.professions) do
             local profName = sanStr(rawProfName, 40)
             if profName and type(summary) == "table" then
                 nProfs = nProfs + 1
                 if nProfs > MAX_PROFESSIONS then break end
+                listed[profName] = true
                 if not char.professions[profName] then
                     char.professions[profName] = {
                         skillLevel = sanInt(summary.skillLevel, 0, 500, 0),
@@ -1819,6 +1821,14 @@ function Comm:StoreLightweight(sender, data)
                     char.professions[profName].skillLevel = sanInt(summary.skillLevel, 0, 500, char.professions[profName].skillLevel or 0)
                     char.professions[profName].maxSkill = sanInt(summary.maxSkill, 1, 500, char.professions[profName].maxSkill or 375)
                 end
+            end
+        end
+        -- A HELLO lists every profession the sender shares, so one it leaves
+        -- out was unlearned. An empty list (a character not scanned yet) or one
+        -- cut at the cap is not the whole list, and removes nothing.
+        if nProfs >= 1 and nProfs <= MAX_PROFESSIONS then
+            for profName in pairs(char.professions) do
+                if not listed[profName] then char.professions[profName] = nil end
             end
         end
     end

@@ -232,21 +232,54 @@ function Scanner:ScanProfessions()
     -- headers first and re-collapsing the user's by name afterwards (see
     -- Source/Classic.lua). Those expands and collapses raise
     -- SKILL_LINES_CHANGED, which is why the mute brackets this call.
-    for _, line in ipairs(addon.Source:ReadProfessionSkills()) do
+    local lines = addon.Source:ReadProfessionSkills()
+    local seen, unsure = {}, false
+    for _, line in ipairs(lines) do
         local name = line.name
         local isProfession = self:IsCraftingProfession(name) or self:IsGatheringProfession(name)
         if isProfession then
             -- Store under the English key, not the localized skill-line name
             local canon = self:Canonicalize(name)
+            seen[canon] = true
             local existing = DS:GetProfession(nil, canon) or {}
             existing.skillLevel = line.rank
             existing.maxSkill   = line.maxRank
             existing.recipes    = addon.RecipeDB:AddKnownAbilities(canon, existing.recipes or {})
             DS:SetProfessionData(canon, existing)
+        elseif addon.Source.flavor ~= "classic" then
+            -- Forever reads profession slots only, so a line we cannot name
+            -- means the name map failed, not that it is a weapon skill.
+            unsure = true
         end
     end
+    if #lines > 0 and not unsure then self:DropUnlearned(seen) end
 
     self._skillEventMuteUntil = Now() + SKILL_MUTE
+end
+
+-- Remove the professions the skill lines no longer list (unlearned). Only
+-- after a read that returned lines at all: the Classic list always holds
+-- weapon skills, so an empty read means it has not loaded. Class skills are
+-- never unlearned. Smelting is Mining's window and has no line of its own.
+-- A profession whose skill-line name this client cannot work out is kept,
+-- or every scan would delete what its window scan stored.
+function Scanner:DropUnlearned(seen)
+    local char = DS:GetCharacter()
+    if not (char and char.professions) then return end
+    local drop = {}
+    for profName in pairs(char.professions) do
+        local known = CRAFTING_PROFS[profName] or GATHERING_PROFS[profName] or profName == "Smelting"
+        local line = (profName == "Smelting") and "Mining" or profName
+        local nameable = PROF_SPELLS[line] and GetSpellInfo(PROF_SPELLS[line])
+        if known and nameable and not addon.CLASS_PROFS[profName] and not seen[line] then
+            drop[#drop + 1] = profName
+        end
+    end
+    table.sort(drop)
+    for _, profName in ipairs(drop) do
+        char.professions[profName] = nil
+        print("|cff00ccffProfessionBuddy:|r Removed " .. profName .. ": no longer learned.")
+    end
 end
 
 function Scanner:IsCraftingProfession(name)

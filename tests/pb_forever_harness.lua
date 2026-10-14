@@ -3123,4 +3123,42 @@ do
 end
 print("  PASS F56 Comprehension (mage-only data, abilities saved and listed, never crafted), seventh profession slot, board controls flush right, 7 Friends icons")
 
-print("ALL FOREVER TESTS PASS (56)")
+-- F57: an unlearned profession leaves the player's record on Forever too.
+-- GetProfessions lists professions only, so an unnamed slot stops the
+-- removal (the name map failed), and an empty read removes nothing.
+do
+    local SC = ProfBuddy.Scanner
+    local char = ProfBuddy.DataStore:GetCharacter()
+    local saved = char.professions
+    local function prof(n) return { skillLevel = n, maxSkill = 300, recipes = { ["R" .. n] = { spellID = n } } } end
+    char.professions = { Leatherworking = prof(100), Skinning = prof(90), Tailoring = prof(80),
+        Comprehension = prof(10) }
+    local realGP, realGPI, realSI = GetProfessions, GetProfessionInfo, C_Spell.GetSpellInfo
+    local names = { [2108] = "Leatherworking", [8613] = "Skinning", [3908] = "Tailoring", [2550] = "Cooking" }
+    C_Spell.GetSpellInfo = function(id) return names[id] and { name = names[id] } or nil end
+    local slots = {}
+    GetProfessions = function() local r = {} for i = 1, #slots do r[i] = i end return unpack(r) end
+    GetProfessionInfo = function(i) return slots[i], 0, 100, 300, 1, 0, 0 end
+
+    slots = { "Leatherworking", "Skinning" }
+    SC:ScanProfessions()
+    local p = char.professions
+    EXPECT(p.Tailoring == nil, "an unlearned profession is still stored on Forever")
+    EXPECT(p.Leatherworking and p.Leatherworking.recipes.R100 and p.Skinning, "a learned profession was touched")
+    EXPECT(p.Comprehension, "Comprehension (a class skill) was removed")
+
+    p.Cooking = prof(50)
+    slots = { "Leatherworking", "Kochkunst" }
+    SC:ScanProfessions()
+    EXPECT(p.Cooking and p.Skinning, "a slot PB could not name still removed professions")
+
+    slots = {}
+    SC:ScanProfessions()
+    EXPECT(p.Leatherworking and p.Cooking, "an empty profession read removed professions")
+
+    GetProfessions, GetProfessionInfo, C_Spell.GetSpellInfo = realGP, realGPI, realSI
+    char.professions = saved
+end
+print("  PASS F57 unlearned professions removed on Forever; class skills, unnamed slots and empty reads keep them")
+
+print("ALL FOREVER TESTS PASS (57)")
