@@ -675,10 +675,16 @@ function FP:Refresh()
     end
     self._dirty = false
 
-    -- Build sorted list of contact keys
+    -- Build sorted list of contact keys. An opposite-faction contact is
+    -- listed only with "Show opposite faction friends" on.
     self.contactKeys = {}
+    local hidden = 0
     for key, _ in pairs(addon.db.contacts or {}) do
-        table.insert(self.contactKeys, key)
+        if addon:ShowsFaction(addon.db.characters and addon.db.characters[key], key) then
+            table.insert(self.contactKeys, key)
+        else
+            hidden = hidden + 1
+        end
     end
 
     -- Sort: favorites first, then auto-sync, then alphabetical
@@ -702,6 +708,9 @@ function FP:Refresh()
 
     -- Empty list: say so, and take the lone scroll bar off the blank area.
     local hasContacts = #self.contactKeys > 0
+    self.empty:SetText(hidden > 0
+        and "Your contacts are all of the other faction. Settings, Friend Data: Show opposite faction friends."
+        or "No contacts yet. Type a name above and click Add.")
     self.empty:SetShown(not hasContacts)
     self.scrollBar:SetShown(hasContacts)
 

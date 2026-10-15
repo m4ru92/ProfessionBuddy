@@ -169,6 +169,20 @@ function addon:FavoriteContacts()
     return self.db.favorites.contacts
 end
 
+-- May this character's data be shown here? Your current character always,
+-- one whose faction PB does not know yet (a contact never synced), and one
+-- of your own faction. An opposite-faction alt follows "Show opposite
+-- faction alts", an opposite-faction friend or guildmate "Show opposite
+-- faction friends": neither can trade, mail or craft for you.
+function addon:ShowsFaction(charData, key)
+    if key and addon:SameKey(key, addon:PlayerKey()) then return true end
+    local faction = type(charData) == "table" and charData.faction
+    if not faction or faction == UnitFactionGroup("player") then return true end
+    local s = (addon.db and addon.db.settings) or {}
+    if charData.isRemote then return s.showCrossFactionFriends == true end
+    return s.showCrossFactionAlts == true
+end
+
 function addon:IsFavorite(key)
     key = self:NormKey(key)
     return key ~= nil and self:FavoriteContacts()[key] == true
@@ -641,6 +655,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
+        showCrossFactionFriends = false,
         hideOppositeFactionRecipes = true, -- hide recipes only the other faction can obtain
         replaceTradeSkill   = true,
         rememberWindowState = true,

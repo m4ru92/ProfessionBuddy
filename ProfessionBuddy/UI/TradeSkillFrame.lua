@@ -1097,8 +1097,6 @@ function TSF:HookItemTooltip()
         -- Build alt-aware sorted list
         local currentKey = addon:PlayerKey()
         local currentChar = DS and DS:GetCharacter(currentKey)
-        local currentFaction = currentChar and currentChar.faction
-        local showCrossFaction = addon.db.settings.showCrossFactionAlts
         local allChars = DS and DS:GetAllCharacters() or {}
 
         local currentProfs = {}
@@ -1153,7 +1151,7 @@ function TSF:HookItemTooltip()
                    and not addon.CLASS_PROFS[info.profName] then
                     for charKey, charData in pairs(allChars) do
                         if not addon:SameKey(charKey, currentKey)
-                           and (showCrossFaction or charData.faction == currentFaction)
+                           and addon:ShowsFaction(charData, charKey)
                            and charData.professions then
                             local pd = charData.professions[info.profName]
                             local knows = (pd and pd.recipes and pd.recipes[info.recipeName]) and true or false
@@ -1329,9 +1327,6 @@ function TSF:HookItemTooltip()
         local recipeName = recipeInfo.recipeName
         local profName = recipeInfo.profName
         local currentKey = addon:PlayerKey()
-        local currentChar = DS:GetCharacter(currentKey)
-        local currentFaction = currentChar and currentChar.faction
-        local showCrossFaction = addon.db.settings.showCrossFactionAlts
         local allChars = DS:GetAllCharacters()
 
         local showRemote = addon.db.settings.showRemoteInTooltips
@@ -1347,7 +1342,7 @@ function TSF:HookItemTooltip()
                 or (charData.isRemote and showRemote)
                 or (not charData.isRemote and showAlts)
             if typeOK
-               and (isCurrent or showCrossFaction or charData.faction == currentFaction)
+               and (isCurrent or addon:ShowsFaction(charData, charKey))
                and (isCurrent or not addon.CLASS_PROFS[profName])
                and charData.professions then
                 local profData = charData.professions[profName]
@@ -3618,7 +3613,6 @@ function TSF:ShowAltMaterials(recipe)
     local currentFaction = currentChar and currentChar.faction
     local allChars = DS:GetAllCharacters()
 
-    local showCrossFaction = addon.db.settings.showCrossFactionAlts
     local showRemoteInDetail = addon.db.settings.showRemoteInDetail
     local showAltInDetail = addon.db.settings.showAltInDetail
 
@@ -3630,7 +3624,7 @@ function TSF:ShowAltMaterials(recipe)
                          or (not charData.isRemote and showAltInDetail)
         if not addon:SameKey(charKey, currentKey)
            and typeEnabled
-           and (showCrossFaction or charData.faction == currentFaction) then
+           and addon:ShowsFaction(charData, charKey) then
             local bags = charData.inventory and charData.inventory.bags or {}
             local bankItems = charData.inventory and charData.inventory.bank or {}
             local parts = {}
@@ -3861,9 +3855,6 @@ function TSF:BuildCalcPanel()
                     local owners = DS:WhoHasItem(r.itemID)
                     if next(owners) then
                         local ck = addon:PlayerKey()
-                        local cd = DS:GetCharacter(ck)
-                        local currentFaction = cd and cd.faction
-                        local showCross = addon.db.settings.showCrossFactionAlts
                         GameTooltip:AddLine(" ")
                         GameTooltip:AddLine("Held by:", 1, 0.82, 0)
                         for charKey, count in pairs(owners) do
@@ -3874,7 +3865,7 @@ function TSF:BuildCalcPanel()
                                 or (charData and charData.isRemote and showRemote)
                                 or (charData and not charData.isRemote and showAlt)
                             if charData and typeOK
-                               and (isCurrent or showCross or charData.faction == currentFaction) then
+                               and (isCurrent or addon:ShowsFaction(charData, charKey)) then
                                 local cc = addon:ClassColor(charData.class or "WARRIOR")
                                 GameTooltip:AddDoubleLine(
                                     cc .. addon:ShortName(charKey) .. "|r",
@@ -5121,6 +5112,15 @@ function TSF:BuildSettingsPanel(parent)
     -- auto-trusting strangers from a battleground contradicts the contact
     -- model the sync trust tiers are built on.
     MakeCheckbox("Auto-add party members", "autoAddParty", yLeft)
+    yLeft = yLeft - 26
+    -- Friends and guildmates of the other faction (addon:ShowsFaction): off
+    -- hides them everywhere, Friends tab included. Their data stays.
+    local crossFriendsCB = MakeCheckbox("Show opposite faction friends", "showCrossFactionFriends", yLeft)
+    crossFriendsCB:SetScript("OnClick", function(self)
+        settings.showCrossFactionFriends = self:GetChecked() and true or false
+        if addon.FriendsPanel and addon.FriendsPanel.Refresh then addon.FriendsPanel:Refresh() end
+    end)
+    TSF.crossFriendsCB = crossFriendsCB
     yLeft = yLeft - 14
 
     friendGroupBg:SetHeight(friendGroupTop - yLeft)

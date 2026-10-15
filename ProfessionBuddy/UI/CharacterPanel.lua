@@ -870,15 +870,12 @@ end
 function CP:RefreshSearchResults(characters)
     local query = self._searchText
     local currentKey = addon:PlayerKey()
-    local currentChar = DS:GetCharacter(currentKey)
-    local currentFaction = currentChar and currentChar.faction
-    local showCrossFaction = addon.db.settings.showCrossFactionAlts
     local profAliases = { Smelting = "Mining" }
 
     -- ── INVENTORY SEARCH ──
     local invResults = {}
     for charKey, charData in pairs(characters) do
-        if not showCrossFaction and charData.faction ~= currentFaction then
+        if not addon:ShowsFaction(charData, charKey) then
             -- skip
         elseif charData.inventory then
             local bags = charData.inventory.bags or {}
@@ -940,7 +937,7 @@ function CP:RefreshSearchResults(characters)
 
     -- Search through all characters' known recipes by recipe name
     for charKey, charData in pairs(characters) do
-        if not showCrossFaction and charData.faction ~= currentFaction then
+        if not addon:ShowsFaction(charData, charKey) then
             -- skip
         elseif charData.professions then
             for profName, profData in pairs(charData.professions) do
@@ -971,7 +968,7 @@ function CP:RefreshSearchResults(characters)
                     if itemName and itemLower:find(query, 1, true)
                        and not recipeName:lower():find(query, 1, true) then
                         for charKey, charData in pairs(characters) do
-                            if (showCrossFaction or charData.faction == currentFaction) and charData.professions then
+                            if addon:ShowsFaction(charData, charKey) and charData.professions then
                                 local profsToCheck = { profName }
                                 if profAliases[profName] then
                                     table.insert(profsToCheck, profAliases[profName])

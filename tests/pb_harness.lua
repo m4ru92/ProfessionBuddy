@@ -2941,8 +2941,68 @@ do
 end
 passed("T98 HELLO removes unlearned professions -- not on an empty list or one cut at the cap")
 
+-- ── T99: opposite-faction friends have their own setting ─────────
+do
+    local S = addon.db.settings
+    local chars = addon.db.characters
+    local saved = { alts = S.showCrossFactionAlts, friends = S.showCrossFactionFriends,
+        calcAlts = S.includeAltsInCalc, calcRemote = S.includeRemoteInCalc }
+    local function inv(id) return { bags = { [id] = 1 }, bank = {} } end
+    chars["Hordealt-TestRealm"] = { faction = "Horde", professions = {}, inventory = inv(901) }
+    chars["Hordepal-TestRealm"] = { faction = "Horde", isRemote = true, professions = {}, inventory = inv(902) }
+    chars["Allypal-TestRealm"]  = { faction = "Alliance", isRemote = true, professions = {}, inventory = inv(903) }
+    chars["Nofac-TestRealm"]    = { isRemote = true, professions = {}, inventory = inv(904) }
+    addon.db.contacts["Hordepal-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 }
+    addon.db.contacts["Allypal-TestRealm"]  = { trusted = true, autoSync = false, lastSync = 0 }
+    addon.db.contacts["Nofac-TestRealm"]    = { trusted = true, autoSync = false, lastSync = 0 }
+    local function shows(k) return addon:ShowsFaction(chars[k], k) end
+
+    S.showCrossFactionAlts, S.showCrossFactionFriends = false, false
+    assert(addon.db.settings.showCrossFactionFriends == false, "T99: no default for the friends setting")
+    assert(not shows("Hordealt-TestRealm") and not shows("Hordepal-TestRealm"),
+        "T99: an opposite-faction alt or friend shows with both settings off")
+    assert(shows("Allypal-TestRealm") and shows("Nofac-TestRealm") and shows(ME),
+        "T99: a same-faction friend, a friend of unknown faction or the player was hidden")
+    S.showCrossFactionAlts = true
+    assert(shows("Hordealt-TestRealm") and not shows("Hordepal-TestRealm"),
+        "T99: the alts setting still governs friends")
+    S.showCrossFactionAlts, S.showCrossFactionFriends = false, true
+    assert(not shows("Hordealt-TestRealm") and shows("Hordepal-TestRealm"),
+        "T99: the friends setting does not govern friends alone")
+
+    -- the material calculator follows each setting for its own kind
+    S.includeAltsInCalc, S.includeRemoteInCalc = true, true
+    S.showCrossFactionAlts, S.showCrossFactionFriends = false, false
+    local c = DS:GetCalcItemCounts()
+    assert(not c[901] and not c[902] and c[903] and c[904], "T99: calculator counts with both off")
+    S.showCrossFactionFriends = true
+    c = DS:GetCalcItemCounts()
+    assert(not c[901] and c[902], "T99: calculator ignores the friends setting")
+
+    -- the mail picker lists an opposite-faction contact only with it on
+    if not (addon.MailHelper and addon.MailHelper.ContactKeys) then
+        dofile(BASE .. "/UI/MailHelper.lua")
+    end
+    local function listed(k)
+        for _, key in ipairs(addon.MailHelper.ContactKeys()) do if key == k then return true end end
+        return false
+    end
+    S.showCrossFactionFriends = false
+    assert(not listed("Hordepal-TestRealm") and listed("Allypal-TestRealm"), "T99: mail picker with the setting off")
+    S.showCrossFactionFriends = true
+    assert(listed("Hordepal-TestRealm"), "T99: mail picker with the setting on")
+
+    for _, k in ipairs({ "Hordealt-TestRealm", "Hordepal-TestRealm", "Allypal-TestRealm", "Nofac-TestRealm" }) do
+        chars[k] = nil
+        addon.db.contacts[k] = nil
+    end
+    S.showCrossFactionAlts, S.showCrossFactionFriends = saved.alts, saved.friends
+    S.includeAltsInCalc, S.includeRemoteInCalc = saved.calcAlts, saved.calcRemote
+end
+passed("T99 opposite-faction friends -- their own setting, separate from alts; calculator and mail picker follow it")
+
 leaveGuild()
-print("ALL 98 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 99 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2958,6 +3018,6 @@ print("ALL 98 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting; "
     .. pass .. " of them print a PASS line above)")
 

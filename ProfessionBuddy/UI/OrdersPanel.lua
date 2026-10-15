@@ -1248,12 +1248,10 @@ function OP:BoardPostKnownBy(entry, includeAlts)
     local DS = addon.DataStore
     if knows(DS and DS:GetCharacter(me) or chars[me]) then return me end
     if not includeAlts then return nil end
-    local myFaction = UnitFactionGroup("player")
-    local crossFaction = addon.db.settings and addon.db.settings.showCrossFactionAlts
     for key, char in pairs(chars) do
         if type(char) == "table" and not char.isRemote
            and not addon:SameKey(key, me)
-           and (crossFaction or char.faction == myFaction)
+           and addon:ShowsFaction(char, key)
            and knows(char) then
             return key
         end
@@ -1806,15 +1804,13 @@ function OP:FindCrafters(query)
     query = strtrim(query or ""):lower()
     if #query < 2 then return out, false end
     local guildSet = guildRosterSet()            -- one roster pass for the search
-    -- Honor showCrossFactionAlts like the calculator and character views do: an
-    -- opposite-faction character cannot craft or trade to you, so it is hidden
-    -- unless the setting is on. Your current character is always eligible.
-    local myFaction = UnitFactionGroup("player")
-    local crossFaction = addon.db.settings and addon.db.settings.showCrossFactionAlts
+    -- The faction settings apply as in the calculator and character views
+    -- (addon:ShowsFaction): an opposite-faction character cannot craft or
+    -- trade to you. Your current character is always eligible.
     local relCache, colorCache = {}, {}
     for charKey, char in pairs(addon.db.characters or {}) do
         if type(char) == "table" and char.professions
-           and (crossFaction or char.faction == myFaction or addon:SameKey(charKey, addon:PlayerKey())) then
+           and addon:ShowsFaction(char, charKey) then
             local rel = relCache[charKey]
             if rel == nil then
                 rel = relationOf(charKey, guildSet)

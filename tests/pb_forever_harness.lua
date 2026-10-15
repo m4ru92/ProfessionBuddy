@@ -3161,4 +3161,52 @@ do
 end
 print("  PASS F57 unlearned professions removed on Forever; class skills, unnamed slots and empty reads keep them")
 
-print("ALL FOREVER TESTS PASS (57)")
+-- F58: the Friends tab lists an opposite-faction contact only with
+-- "Show opposite faction friends" on (Settings, Friend Data); off by default.
+do
+    local S = ProfBuddy.db.settings
+    local FP = ProfBuddy.FriendsPanel
+    local chars, contacts = ProfBuddy.db.characters, ProfBuddy.db.contacts
+    local savedContacts = {}
+    for k, v in pairs(contacts) do savedContacts[k] = v end
+    for k in pairs(contacts) do contacts[k] = nil end
+    chars["Ally Pal-Forever"] = { faction = "Alliance", isRemote = true, professions = {} }
+    chars["Horde Pal-Forever"] = { faction = "Horde", isRemote = true, professions = {} }
+    contacts["Ally Pal-Forever"] = { trusted = true, autoSync = false, lastSync = 0 }
+    contacts["Horde Pal-Forever"] = { trusted = true, autoSync = false, lastSync = 0 }
+    contacts["Never Synced-Forever"] = { trusted = true, autoSync = false, lastSync = 0 }
+    EXPECT(S.showCrossFactionFriends == false, "the friends setting is not off by default")
+    if not FP.rows then FP:Toggle() end
+    -- a hidden tab defers its rebuild to OnShow, so show it for the test
+    local realVis = rawget(FP.parent, "IsVisible")
+    rawset(FP.parent, "IsVisible", function() return true end)
+    FP:Refresh()
+    local function listed(k) for _, key in ipairs(FP.contactKeys) do if key == k then return true end end return false end
+    EXPECT(not listed("Ally Pal-Forever") and listed("Horde Pal-Forever") and listed("Never Synced-Forever"),
+           "the Friends tab lists an opposite-faction contact with the setting off")
+
+    TSF:OpenSettings("main")
+    local cb = TSF.crossFriendsCB
+    EXPECT(cb, "no Show opposite faction friends box in Settings")
+    rawset(cb, "GetChecked", function() return true end)
+    cb:GetScript("OnClick")(cb)
+    EXPECT(S.showCrossFactionFriends == true, "the box did not save the setting")
+    FP:Refresh()
+    EXPECT(listed("Ally Pal-Forever"), "the Friends tab still hides the contact with the setting on")
+
+    -- every contact hidden: the empty line says why, not "No contacts yet"
+    S.showCrossFactionFriends = false
+    contacts["Horde Pal-Forever"], contacts["Never Synced-Forever"] = nil, nil
+    FP:Refresh()
+    EXPECT(#FP.contactKeys == 0 and tostring(FP.empty:GetText()):find("other faction", 1, true),
+           "the empty line does not say the contacts are hidden")
+
+    for k in pairs(contacts) do contacts[k] = nil end
+    for k, v in pairs(savedContacts) do contacts[k] = v end
+    chars["Ally Pal-Forever"], chars["Horde Pal-Forever"] = nil, nil
+    FP:Refresh()
+    rawset(FP.parent, "IsVisible", realVis)
+end
+print("  PASS F58 opposite-faction friends: hidden from the Friends tab by default, shown with the Settings box, empty line explains")
+
+print("ALL FOREVER TESTS PASS (58)")
