@@ -3209,4 +3209,100 @@ do
 end
 print("  PASS F58 opposite-faction friends: hidden from the Friends tab by default, shown with the Settings box, empty line explains")
 
-print("ALL FOREVER TESTS PASS (58)")
+-- F59: search by material, the Learnable now view, and Share.
+do
+    local st = TSF.state
+    TSF:CloseSettings()                    -- F58 left Settings open over the list
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+    EXPECT(st.profName == "Leatherworking", "setup: Leatherworking did not open")
+    local function rows()
+        local out = {}
+        for _, r in ipairs(st.recipes) do if not r.isHeader then out[r.name] = r end end
+        return out
+    end
+    local function pickView(prefix)
+        for _, b in ipairs(TSF.viewDropdown.optionBtns) do
+            if b:IsShown() ~= false and type(b.value) == "string" and b.value:find("^" .. prefix) then
+                b:GetScript("OnClick")(b)
+                return b.value
+            end
+        end
+    end
+
+    -- b: the Search box matches a material's name. Light Leather is made
+    -- from Ruined Leather Scraps; its own name does not hold that text.
+    pickView("Known")
+    TSF.searchBox:SetText("ruined leather")
+    st.searchText = "ruined leather"
+    TSF:RefreshRecipeList()
+    local found = rows()
+    EXPECT(found["Light Leather"], "a recipe was not found by its material's name")
+    for name in pairs(found) do
+        local r = found[name]
+        local hit = name:lower():find("ruined leather", 1, true)
+        for _, rg in ipairs(r.reagents or {}) do
+            if (rg.name or ""):lower():find("ruined leather", 1, true) then hit = true end
+        end
+        EXPECT(hit, name .. " matched neither by name nor by material")
+    end
+    st.searchText = ""
+    TSF.searchBox:SetText("")
+
+    -- c: Learnable now is the Missing list cut to what the skill allows.
+    local realSkill = st.skillLevel
+    st.skillLevel = 75
+    pickView("Missing")
+    local want, n = {}, 0
+    for name, r in pairs(rows()) do
+        if r.skillReq and r.skillReq <= 75 and (not r.reqLevel or r.reqLevel <= UnitLevel("player")) then
+            want[name] = true
+            n = n + 1
+        end
+    end
+    EXPECT(n > 0, "setup: nothing in Missing is learnable at 75")
+    local label = pickView("Learnable now")
+    EXPECT(st.showTab == "learnable", "the Learnable now view did not select")
+    EXPECT(label == "Learnable now (" .. n .. ")", "label " .. tostring(label) .. ", want " .. n)
+    local got, m = rows(), 0
+    for name, r in pairs(got) do
+        m = m + 1
+        EXPECT(want[name] and not r.isKnown, name .. " is not a learnable missing recipe")
+    end
+    EXPECT(m == n, "Learnable now lists " .. m .. ", want " .. n)
+    EXPECT(not TSF.diffDropdown:IsShown() and TSF.sourceDropdown:IsShown(),
+           "Learnable now shows Skill Up or hides Source")
+    st.skillLevel = realSkill
+    pickView("Known")
+
+    -- f: Share opens the chat box on the channel with the recipe's link.
+    local opened = {}
+    local realOpen = ChatFrameUtil.OpenChat
+    ChatFrameUtil.OpenChat = function(text) opened[#opened + 1] = text end
+    local realLink = C_Spell.GetSpellLink
+    C_Spell.GetSpellLink = function(id) return "|cff71d5ff|Hspell:" .. id .. "|h[Spell " .. id .. "]|h|r" end
+    st.selected = "Light Leather"
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.shareBtn, "no Share button in the detail panel")
+    TSF:ShowShareMenu(TSF.shareBtn)
+    local menu = TSF._shareMenu
+    EXPECT(menu and menu:IsShown(), "the Share menu did not open")
+    local byLabel = {}
+    for _, b in ipairs(menu.buttons) do byLabel[b.text:GetText()] = b end
+    EXPECT(byLabel.Guild and not byLabel.Guild:IsEnabled(), "Guild is usable outside a guild")
+    EXPECT(byLabel.Say and byLabel.Say:IsEnabled(), "Say is not usable")
+    byLabel.Say:GetScript("OnClick")(byLabel.Say)
+    EXPECT(#opened == 1 and opened[1]:find("^/s |c") and opened[1]:find("|H", 1, true),
+           "Share did not open the chat box with /s and a link: " .. tostring(opened[1]))
+    -- a bare "item:123" is not a link: nothing opens until a real one exists
+    opened = {}
+    C_Spell.GetSpellLink = function() return nil end
+    local ok = TSF:RecipeChatLink({ itemLink = "item:2318", spellID = 1 })
+    EXPECT(ok == nil, "a bare item string counted as a link")
+    ChatFrameUtil.OpenChat, C_Spell.GetSpellLink = realOpen, realLink
+    menu:Hide()
+end
+print("  PASS F59 search matches materials, Learnable now lists exactly the learnable missing recipes, Share opens the chat box with the link")
+
+print("ALL FOREVER TESTS PASS (59)")

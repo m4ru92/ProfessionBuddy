@@ -406,6 +406,29 @@ local function ViewLevel()
     return (c and c.level) or UnitLevel("player") or 0
 end
 
+-- The Search box matches a recipe's name or any of its materials' names,
+-- so "Copper Bar" also lists every recipe that uses one. A material whose
+-- name is not stored yet is read from the item cache.
+local function MatchesSearch(recipe, text)
+    if recipe.name:lower():find(text, 1, true) then return true end
+    for _, rg in ipairs(recipe.reagents or {}) do
+        local name = rg.name
+        if not name and rg.itemID and GetItemInfo then name = GetItemInfo(rg.itemID) end
+        if type(name) == "string" and name:lower():find(text, 1, true) then return true end
+    end
+    return false
+end
+
+-- An unlearned recipe the viewed character can learn now: its learn level
+-- is at or below the profession skill, and its character level (poisons) at
+-- or below theirs. A recipe with no known learn level never counts. The
+-- summary's "Learnable Now" and the "Learnable now" view both ask this.
+local function LearnableNow(name, info)
+    local req = LearnLevelFor(name, info.skillReq, info.spellID)
+    return req ~= nil and req <= (state.skillLevel or 0)
+        and (not info.reqLevel or info.reqLevel <= ViewLevel())
+end
+
 ----------------------------------------------------------------------
 -- Init + default window suppression (v6: ShowUIPanel hook)
 ----------------------------------------------------------------------
@@ -1837,7 +1860,7 @@ function TSF:BuildHeader(parent)
 
     local searchPlaceholder = search:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     searchPlaceholder:SetPoint("LEFT", 4, 0)
-    searchPlaceholder:SetText("Search...")
+    searchPlaceholder:SetText("Search recipes or materials...")
     searchPlaceholder:SetTextColor(0.4, 0.4, 0.4)
     self.searchPlaceholder = searchPlaceholder
 
@@ -2345,8 +2368,8 @@ function TSF:BuildToolbar(parent)
     self.sourceDropdown:SetPoint("LEFT", self.diffDropdown, "RIGHT", 4, 0)
 
     -- View dropdown (right-aligned)
-    self.viewDropdown = CreateDropdown(parent, 150,
-        {"Known", "Missing", "All"}, "Known",
+    self.viewDropdown = CreateDropdown(parent, 160,
+        {"Known", "Missing", "Learnable now", "All"}, "Known",
         function(val)
             local base = val:match("^(%a+)") or val
             state.showTab = base:lower()
@@ -2385,11 +2408,12 @@ function TSF:UpdateViewDropdown(unknown)
         knownCount = knownCount + 1
     end
 
-    local missingCount = 0
+    local missingCount, learnableCount = 0, 0
     unknown = unknown or self:GetUnknownForView()
     if unknown then
-        for _ in pairs(unknown) do
+        for name, info in pairs(unknown) do
             missingCount = missingCount + 1
+            if LearnableNow(name, info) then learnableCount = learnableCount + 1 end
         end
     end
 
@@ -2406,6 +2430,7 @@ function TSF:UpdateViewDropdown(unknown)
     local opts = {
         "Known (" .. knownCount .. ")",
         "Missing (" .. missingCount .. ")",
+        "Learnable now (" .. learnableCount .. ")",
         "All (" .. totalCount .. ")",
     }
     self.viewDropdown:SetOptions(opts)
@@ -2414,8 +2439,10 @@ function TSF:UpdateViewDropdown(unknown)
         self.viewDropdown:SetValue(opts[1])
     elseif state.showTab == "missing" then
         self.viewDropdown:SetValue(opts[2])
-    else
+    elseif state.showTab == "learnable" then
         self.viewDropdown:SetValue(opts[3])
+    else
+        self.viewDropdown:SetValue(opts[4])
     end
 end
 
@@ -2894,9 +2921,24 @@ function TSF:BuildDetailPanel(parent)
     detIcon:Hide()
     self.detIcon = detIcon
 
+    -- Share: opens the chat box on a channel with the recipe's link typed.
+    local shareBtn = CreateFrame("Button", nil, sc, "UIPanelButtonTemplate")
+    shareBtn:SetSize(56, 20)
+    shareBtn:SetPoint("TOPRIGHT", sc, "TOPRIGHT", -10, -12)
+    shareBtn:SetText("Share")
+    shareBtn:SetScript("OnClick", function(btn) TSF:ShowShareMenu(btn) end)
+    shareBtn:SetScript("OnEnter", function(btn)
+        GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Share", 1, 1, 1)
+        GameTooltip:AddLine("Open the chat box on a channel with this recipe's link typed.", nil, nil, nil, true)
+        GameTooltip:Show()
+    end)
+    shareBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.shareBtn = shareBtn
+
     local detName = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     detName:SetPoint("LEFT", detIcon, "RIGHT", 6, 0)
-    detName:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
+    detName:SetPoint("RIGHT", shareBtn, "LEFT", -6, 0)
     detName:SetJustifyH("LEFT")
     self.detName = detName
 
@@ -4395,6 +4437,117 @@ end
 
 -- The selected recipe's entry: from the shown list, else from the whole
 -- view when a filter or search hides it (state.entries).
+-- The chat link for a recipe, the same one shift-click inserts: the crafted
+-- item's link, else the recipe's spell link (an enchant). Only a real link
+-- counts; a bare "item:123" string is not one. nil while the item cache has
+-- not loaded it yet.
+function TSF:RecipeChatLink(recipe)
+    if not recipe then return nil end
+    local function real(l) return type(l) == "string" and l:find("|H", 1, true) and l or nil end
+    local link = real(recipe.itemLink)
+    if not link and recipe.itemID and recipe.itemID ~= 0 then
+        link = real(select(2, GetItemInfo(recipe.itemID)))
+        if not link and C_Item and C_Item.RequestLoadItemDataByID then
+            C_Item.RequestLoadItemDataByID(recipe.itemID)
+        end
+    end
+    if not link and recipe.spellID and GetSpellLink then
+        link = real(GetSpellLink(recipe.spellID))
+    end
+    return link
+end
+
+-- Each channel: label, the slash command the chat box parses, and when it
+-- is usable. The chat box switches channel itself when its text starts
+-- with the command; the player presses Enter, PB never sends.
+local SHARE_CHANNELS = {
+    { label = "Guild", cmd = "/g ",    ok = function() return IsInGuild() end },
+    { label = "Party", cmd = "/p ",    ok = function() return IsInGroup() end },
+    { label = "Raid",  cmd = "/raid ", ok = function() return IsInRaid() end },
+    { label = "Say",   cmd = "/s ",    ok = function() return true end },
+}
+TSF.SHARE_CHANNELS = SHARE_CHANNELS
+
+function TSF:ShareTo(channel)
+    local link = self:RecipeChatLink(self:GetSelectedRecipe())
+    if not link then
+        print("|cff00ccffProfessionBuddy:|r This recipe's link is still loading; try again in a moment.")
+        return
+    end
+    local open = (ChatFrameUtil and ChatFrameUtil.OpenChat) or ChatFrame_OpenChat
+    if open then open(channel.cmd .. link) end
+end
+
+function TSF:ShowShareMenu(anchorBtn)
+    local m = self._shareMenu
+    if not m then
+        m = CreateFrame("Frame", "ProfBuddyShareMenu", UIParent, "BackdropTemplate")
+        m:SetFrameStrata("FULLSCREEN_DIALOG")
+        m:SetBackdrop({
+            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            edgeSize = 12,
+            insets   = { left = 3, right = 3, top = 3, bottom = 3 },
+        })
+        m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
+        m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+        m:EnableMouse(true)
+        m:SetClampedToScreen(true)
+        m:Hide()
+        m.title = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        m.title:SetPoint("TOPLEFT", 8, -7)
+        m.title:SetTextColor(1, 0.82, 0)
+        m.title:SetText("Share to")
+        m.buttons = {}
+        local catcher = CreateFrame("Button", nil, UIParent)
+        catcher:SetAllPoints(UIParent)
+        catcher:SetFrameStrata("DIALOG")
+        catcher:RegisterForClicks("AnyUp")
+        catcher:Hide()
+        catcher:SetScript("OnClick", function() m:Hide() end)
+        m:SetScript("OnShow", function() catcher:Show() end)
+        m:SetScript("OnHide", function() catcher:Hide() end)
+        table.insert(UISpecialFrames, "ProfBuddyShareMenu")
+        self._shareMenu = m
+    end
+    local ROW_H = 18
+    for i, ch in ipairs(SHARE_CHANNELS) do
+        local b = m.buttons[i]
+        if not b then
+            b = CreateFrame("Button", nil, m)
+            b:SetHeight(ROW_H)
+            local hl = b:CreateTexture(nil, "HIGHLIGHT")
+            hl:SetAllPoints()
+            hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+            b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            b.text:SetPoint("LEFT", 8, 0)
+            b.text:SetJustifyH("LEFT")
+            b:SetPoint("TOPLEFT", m, "TOPLEFT", 4, -24 - (i - 1) * ROW_H)
+            b:SetPoint("RIGHT", m, "RIGHT", -4, 0)
+            m.buttons[i] = b
+        end
+        local usable = ch.ok() and true or false
+        b.text:SetText(ch.label)
+        if usable then
+            b.text:SetTextColor(1, 1, 1)
+            b:Enable()
+        else
+            b.text:SetTextColor(0.5, 0.5, 0.5)
+            b:Disable()
+        end
+        b:SetScript("OnClick", function()
+            m:Hide()
+            TSF:ShareTo(ch)
+        end)
+        b:Show()
+    end
+    m:SetWidth(110)
+    m:SetHeight(24 + #SHARE_CHANNELS * ROW_H + 8)
+    m:ClearAllPoints()
+    m:SetPoint("TOPRIGHT", anchorBtn, "BOTTOMRIGHT", 0, -2)
+    m:Show()
+end
+
 function TSF:GetSelectedRecipe()
     if not state.selected then return nil end
     for _, r in ipairs(state.recipes) do
@@ -5443,10 +5596,15 @@ function TSF:RestoreContentPanels()
     if self.viewDropdown then self.viewDropdown:Show() end
 end
 
--- Skill Up shows in the Known and All views, Source in Missing and All.
+-- Skill Up shows in the Known and All views, Source in Missing, Learnable
+-- now and All.
 function TSF:UpdateFilterVisibility()
     if self.diffDropdown then
-        if state.showTab == "missing" then self.diffDropdown:Hide() else self.diffDropdown:Show() end
+        if state.showTab == "missing" or state.showTab == "learnable" then
+            self.diffDropdown:Hide()
+        else
+            self.diffDropdown:Show()
+        end
     end
     if self.sourceDropdown then
         if state.showTab == "known" then self.sourceDropdown:Hide() else self.sourceDropdown:Show() end
@@ -5588,10 +5746,7 @@ function TSF:UpdateBottomBar(unknown)
                     end
                 end
             end
-            -- The same learn level the recipe's row shows.
-            local req = LearnLevelFor(name, info.skillReq, info.spellID)
-            if req and req <= (state.skillLevel or 0)
-               and (not info.reqLevel or info.reqLevel <= ViewLevel()) then
+            if LearnableNow(name, info) then
                 learnableNow = learnableNow + 1
             end
         end
@@ -5696,7 +5851,9 @@ end
 function TSF:LoadRecipes(unknown)
     local rawList = {}
     local showKnown  = (state.showTab == "known" or state.showTab == "all")
-    local showMissing = (state.showTab == "missing" or state.showTab == "all")
+    -- "Learnable now" is the Missing list cut to LearnableNow.
+    local learnableOnly = (state.showTab == "learnable")
+    local showMissing = (state.showTab == "missing" or state.showTab == "all" or learnableOnly)
 
     -- Known recipes (from scanner)
     if showKnown then
@@ -5747,23 +5904,25 @@ function TSF:LoadRecipes(unknown)
         local idx = 1000
         for name, info in pairs(unknown) do
             idx = idx + 1
-            table.insert(rawList, {
-                name         = name,
-                difficulty   = "medium",
-                itemID       = info.itemID,
-                skillReq     = LearnLevelFor(name, info.skillReq, info.spellID),
-                reqLevel     = info.reqLevel,
-                skillRange   = info.skillRange,
-                spellID      = info.spellID,
-                source       = info.source,
-                sourceDetail = info.sourceDetail,
-                sources      = info.sources,
-                reagents     = info.reagents,
-                category     = info.category or GetItemCategory(info.itemID),
-                subcategory  = info.subcategory,
-                gameOrder    = idx,
-                isKnown      = false,
-            })
+            if not learnableOnly or LearnableNow(name, info) then
+                table.insert(rawList, {
+                    name         = name,
+                    difficulty   = "medium",
+                    itemID       = info.itemID,
+                    skillReq     = LearnLevelFor(name, info.skillReq, info.spellID),
+                    reqLevel     = info.reqLevel,
+                    skillRange   = info.skillRange,
+                    spellID      = info.spellID,
+                    source       = info.source,
+                    sourceDetail = info.sourceDetail,
+                    sources      = info.sources,
+                    reagents     = info.reagents,
+                    category     = info.category or GetItemCategory(info.itemID),
+                    subcategory  = info.subcategory,
+                    gameOrder    = idx,
+                    isKnown      = false,
+                })
+            end
         end
     end
 
@@ -5809,7 +5968,8 @@ function TSF:LoadRecipes(unknown)
     end
     if self.listPanel and self.listPanel:IsShown() then self:UpdateFilterVisibility() end
     -- A filter counts only in the views that show its dropdown.
-    local useDiff = state.showTab ~= "missing" and state.filterDiff ~= "All"
+    local useDiff = state.showTab ~= "missing" and state.showTab ~= "learnable"
+        and state.filterDiff ~= "All"
     local useSrc  = state.showTab ~= "known" and (state.filterSource or "All") ~= "All"
 
     -- Filter
@@ -5826,7 +5986,7 @@ function TSF:LoadRecipes(unknown)
         local passCat    = true
 
         if state.searchText ~= "" then
-            passSearch = r.name:lower():find(state.searchText, 1, true) ~= nil
+            passSearch = MatchesSearch(r, state.searchText)
         end
         if state.filterCat ~= "All" then
             passCat = (r.category == state.filterCat)
