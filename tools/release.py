@@ -15,14 +15,22 @@ Usage:
   # build + verify only, no upload (safe to run anytime):
   python tools/release.py --dry-run
 
-  # real release to CurseForge (needs a token + project id):
+  # real release to CurseForge (needs a token):
   export CF_API_TOKEN=xxxxxxxx
-  python tools/release.py --project-id 123456 --game-version 2.5.6 \
-      --release-type release --changelog-file CHANGELOG-1.1.0.md
+  python tools/release.py --release-type release
 
   # discover the CurseForge game-version id for a flavor:
   python tools/release.py --list-game-versions --game-version 2.5.6
   python tools/release.py --list-game-versions            # print every version
+
+One upload covers both clients: TBC Classic Anniversary (2.5.6) and WoW:
+Forever (1.60.1), unless --game-version names others (repeat it for more
+than one).
+
+The CurseForge changelog is the section of CHANGELOG.md for the version the
+tocs carry ("## 2.0.0 - <date>"). A section with a "<!-- more -->" line
+uploads only the part above it, plus a link to the full changelog. Every run
+checks that the section exists, the dry run included.
 
 Gates that run before anything is zipped (skip them with --skip-checks):
   tests/run_all.py         the Lua harnesses, on the 5.1 interpreter
@@ -50,7 +58,16 @@ CF_HOST = "https://wow.curseforge.com"
 # ProfessionBuddy's CurseForge numeric project id (public, from the project's
 # "About Project" box). Override with --project-id / CF_PROJECT_ID if needed.
 CF_PROJECT_ID_DEFAULT = "1631296"
-DEFAULT_GAME_VERSION = "2.5.6"  # TBC Classic Anniversary current build
+# One upload, both clients. Each name maps to its CurseForge version type, so
+# a name two flavors share still resolves to the right one.
+DEFAULT_GAME_VERSIONS = ("2.5.6", "1.60.1")
+GAME_VERSION_TYPES = {
+    "2.5.6": 73246,   # TBC Classic Anniversary
+    "1.60.1": 88568,  # WoW Forever
+}
+CHANGELOG_FILE = "CHANGELOG.md"
+CHANGELOG_MORE = "<!-- more -->"
+CHANGELOG_URL = "https://github.com/m4ru92/ProfessionBuddy/blob/main/CHANGELOG.md"
 # Fixed zip entry timestamp. Any constant works; this is the DOS epoch, the
 # oldest value the zip format can store (T-1).
 ZIP_DATE = (1980, 1, 1, 0, 0, 0)
@@ -338,6 +355,48 @@ def resolve_game_versions(token, wanted_name):
     return versions, matches
 
 
+def game_version_ids(token, names):
+    """CurseForge ids for each version name. A name several flavors share is
+    narrowed to its known version type; one that stays ambiguous, or matches
+    nothing, stops the release."""
+    versions = cf_get("/api/game/versions", token)
+    ids = []
+    for name in names:
+        matches = [v for v in versions if v.get("name") == name]
+        want = GAME_VERSION_TYPES.get(name)
+        if want is not None and len(matches) > 1:
+            matches = [v for v in matches if v.get("gameVersionTypeID") == want]
+        if len(matches) != 1:
+            die("game version %r matched %d CurseForge versions (try --list-game-versions)"
+                % (name, len(matches)))
+        ids.append(matches[0]["id"])
+    return ids
+
+
+def changelog_section(path, version):
+    """The CurseForge changelog for `version`: its section of CHANGELOG.md
+    under a "# ProfessionBuddy <version>" title, cut at the "<!-- more -->"
+    line when the section has one, with a link to the full changelog."""
+    if not os.path.isfile(path):
+        die("%s is missing" % path)
+    lines = open(path, encoding="utf-8").read().replace("\r\n", "\n").split("\n")
+    head = re.compile(r"^## \[?%s\]?(\s|$)" % re.escape(version))
+    start = next((i for i, l in enumerate(lines) if head.match(l)), None)
+    if start is None:
+        die("%s has no section for %s; add \"## %s - <date>\" first" % (path, version, version))
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    body = lines[start + 1:end]
+    cut = CHANGELOG_MORE in [l.strip() for l in body]
+    if cut:
+        body = body[:[l.strip() for l in body].index(CHANGELOG_MORE)]
+    text = "\n".join(body).strip()
+    if not text:
+        die("the %s section of %s is empty" % (version, path))
+    if cut:
+        text += "\n\nFull changelog: [CHANGELOG.md](%s)" % CHANGELOG_URL
+    return "# %s %s\n\n%s\n" % (ADDON_NAME, version, text)
+
+
 def multipart(fields, file_field, filename, file_bytes):
     boundary = "----PBRelease7f3a9c2b1d"
     body = io.BytesIO()
@@ -378,12 +437,18 @@ def main():
     ap.add_argument("--project-id", default=os.environ.get("CF_PROJECT_ID", CF_PROJECT_ID_DEFAULT))
     # No default here on purpose: with --list-game-versions, omitting it is the
     # documented way to print every version. The upload path falls back to
-    # DEFAULT_GAME_VERSION (T-2).
-    ap.add_argument("--game-version", default=None,
-                    help="e.g. 2.5.6 (default for an upload: %s)" % DEFAULT_GAME_VERSION)
+    # DEFAULT_GAME_VERSIONS (T-2).
+    ap.add_argument("--game-version", action="append", default=None,
+                    help="e.g. 2.5.6; repeat for more (default for an upload: %s)"
+                    % ", ".join(DEFAULT_GAME_VERSIONS))
     ap.add_argument("--release-type", default="release", choices=["release", "beta", "alpha"])
-    ap.add_argument("--changelog-file", default=None)
+    ap.add_argument("--changelog-file", default=None,
+                    help="upload this whole file instead of the CHANGELOG.md section")
     ap.add_argument("--changelog", default=None)
+    ap.add_argument("--print-changelog", action="store_true",
+                    help="print the CurseForge changelog text this run would upload")
+    ap.add_argument("--allow-older-forever-data", action="store_true",
+                    help="upload although a newer Forever build exists than Data/Forever was baked from")
     ap.add_argument("--changelog-type", default="markdown", choices=["text", "html", "markdown"])
     ap.add_argument("--list-game-versions", action="store_true", help="print matching CF game versions and exit")
     ap.add_argument("--skip-checks", action="store_true",
@@ -394,9 +459,10 @@ def main():
 
     if args.list_game_versions:
         if not token: die("CF_API_TOKEN not set")
-        allv, matches = resolve_game_versions(token, args.game_version)
-        if args.game_version:
-            log("Matches for %r:" % args.game_version)
+        wanted = args.game_version[0] if args.game_version else None
+        allv, matches = resolve_game_versions(token, wanted)
+        if wanted:
+            log("Matches for %r:" % wanted)
             for v in matches: log("  id=%s  name=%s  typeID=%s  slug=%s" % (v.get("id"), v.get("name"), v.get("gameVersionTypeID"), v.get("slug")))
         else:
             for v in allv[:80]: log("  id=%s  name=%s  slug=%s" % (v.get("id"), v.get("name"), v.get("slug")))
@@ -415,6 +481,18 @@ def main():
 
     assert_no_build_stamp(addon_dir)
     sync_license(root, addon_dir)
+
+    # The CurseForge changelog, checked on every run so a missing section
+    # fails the dry run (and CI) instead of the upload.
+    changelog = args.changelog
+    if args.changelog_file:
+        changelog = open(args.changelog_file, encoding="utf-8").read()
+    if not changelog:
+        changelog = changelog_section(os.path.join(root, CHANGELOG_FILE), tocv)
+        log("Changelog: %s section %s (%d characters for CurseForge)"
+            % (CHANGELOG_FILE, tocv, len(changelog)))
+    if args.print_changelog:
+        log("----- CurseForge changelog -----\n" + changelog + "----- end -----")
 
     if args.skip_checks:
         log("Gates: SKIPPED (--skip-checks)")
@@ -451,24 +529,25 @@ def main():
     else:
         run_gate(os.path.join(tools_dir(), "gather_db.py"), ["--check", "--addon-dir", addon_dir],
                  "tools/gather_db.py --check (cmangos TBC + VMaNGOS gathering data)")
-        run_gate(os.path.join(tools_dir(), "bake_forever_db2.py"), ["--check"],
-                 "tools/bake_forever_db2.py --check (Forever recipe data build)")
+        forever = os.path.join(tools_dir(), "bake_forever_db2.py")
+        if args.allow_older_forever_data:
+            log("Gate: tools/bake_forever_db2.py --check (Forever recipe data build)")
+            rc = subprocess.call([sys.executable, forever, "--check"], cwd=repo_root())
+            if rc == 10:
+                log("WARNING: shipping Forever data older than the newest build "
+                    "(--allow-older-forever-data)")
+            elif rc != 0:
+                die("tools/bake_forever_db2.py --check failed (exit %d)" % rc)
+        else:
+            run_gate(forever, ["--check"],
+                     "tools/bake_forever_db2.py --check (Forever recipe data build)")
 
     # ---- upload ----
     if not token: die("CF_API_TOKEN not set")
     if not args.project_id: die("--project-id (or CF_PROJECT_ID) required")
-    game_version = args.game_version or DEFAULT_GAME_VERSION
-    changelog = args.changelog
-    if args.changelog_file:
-        changelog = open(args.changelog_file, encoding="utf-8").read()
-    if not changelog:
-        die("provide --changelog or --changelog-file")
-
-    _, matches = resolve_game_versions(token, game_version)
-    if not matches:
-        die("no CurseForge game version named %r (try --list-game-versions)" % game_version)
-    gv_ids = [m["id"] for m in matches]
-    log("Game version %s -> CF ids %s" % (game_version, gv_ids))
+    names = args.game_version or list(DEFAULT_GAME_VERSIONS)
+    gv_ids = game_version_ids(token, names)
+    log("Game versions %s -> CF ids %s" % (", ".join(names), gv_ids))
 
     metadata = {
         "changelog": changelog,

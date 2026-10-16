@@ -2,7 +2,7 @@
 ## Title: ProfessionBuddy
 ## Notes: Cross-character profession management for WoW: Forever.
 ## Author: m4ru
-## Version: 1.1.5
+## Version: 2.0.0
 ## SavedVariables: ProfBuddyDB
 ## DefaultState: enabled
 ## X-Curse-Project-ID: 1631296
