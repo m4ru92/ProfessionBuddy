@@ -15,6 +15,8 @@ local VISIBLE_ROWS = 14
 ----------------------------------------------------------------------
 -- Profession icon paths for the summary column
 ----------------------------------------------------------------------
+local MAX_FRIEND_PROF_ICONS = 7
+
 local PROF_ICONS = {
     ["Alchemy"]         = "Interface\\Icons\\Trade_Alchemy",
     ["Blacksmithing"]   = "Interface\\Icons\\Trade_BlackSmithing",
@@ -78,25 +80,46 @@ end
 -- UTF-8 note: a name is up to 12 characters, which is up to 24 BYTES, so the
 -- length is counted in characters (every byte that is not a continuation byte
 -- \128-\191 starts one) or a Cyrillic / Hangul name is refused out of hand.
+-- WoW: Forever (Source.FULL_NAMES) also takes "First Surname": two words,
+-- one space, each capitalized. Blizzard has not published the surname
+-- rules, so that half is looser: 2 to 24 characters, letters and
+-- apostrophes. First names on Forever are not unique, only the full name.
+local function nameWordOK(word, maxChars, extra)
+    local chars = select(2, word:gsub("[^\128-\191]", ""))
+    return chars >= 2 and chars <= (maxChars or 12)
+        and not word:find("[^%a" .. (extra or "") .. "\128-\255]")
+end
+local function capitalized(word)
+    local first = word:sub(1, 1)
+    if first:match("%l") then                       -- ASCII only; leave UTF-8 alone
+        return first:upper() .. word:sub(2)
+    end
+    return word
+end
+
 local function contactKeyFromInput(text)
+    text = addon:CleanNameInput(text)
     local name, realm = text:match("^([^-]+)%-?(.*)$")
     if not name then return nil end
-    local chars = select(2, name:gsub("[^\128-\191]", ""))
-    if chars < 2 or chars > 12 then return nil end
-    if name:find("[^%a\128-\255]") then return nil end
-    local first = name:sub(1, 1)
-    if first:match("%l") then                       -- ASCII only; leave UTF-8 alone
-        name = first:upper() .. name:sub(2)
+    local firstName, surname = name:match("^(%S+) (%S+)$")
+    if firstName and addon.Source and addon.Source.FULL_NAMES then
+        if not (nameWordOK(firstName) and nameWordOK(surname, 24, "'")) then return nil end
+        name = capitalized(firstName) .. " " .. capitalized(surname)
+    else
+        if not nameWordOK(name) then return nil end
+        name = capitalized(name)
     end
     if realm ~= "" then
         -- Letters, spaces, apostrophes and hyphens only (Kel'Thuzad, Mirage
         -- Raceway, Drak'thul), high bytes passed through for localized realms.
         local rchars = select(2, realm:gsub("[^\128-\191]", ""))
         if rchars > 32 or realm:find("[^%a '%-\128-\255]") then return nil end
-        name = name .. "-" .. realm
+        name = name .. "-" .. addon:CanonicalRealm(realm)
     end
     return addon:NormKey(name)
 end
+-- The harness checks the typed-name rules through this.
+FP.ContactKeyFromInput = contactKeyFromInput
 
 ----------------------------------------------------------------------
 -- Lightweight popup menu for picking a profession to order from.
@@ -267,7 +290,8 @@ function FP:CreateContent(parent)
             -- back: capped first so one bad paste cannot flood the chat frame,
             -- then pipe-escaped so a typed colour code prints as text.
             print("|cff00ccffProfessionBuddy:|r " .. (typed:sub(1, 40):gsub("|", "||"))
-                .. " is not a character name. Use Name or Name-Realm.")
+                .. " is not a character name. Use " .. ((addon.Source and addon.Source.FULL_NAMES)
+                    and "First Surname." or "Name or Name-Realm."))
             return
         end
 
@@ -307,6 +331,31 @@ function FP:CreateContent(parent)
 
         self:Refresh()
     end)
+
+    -- Battle.net auto-add picker (BattleNet.lua). Greyed out on WoW: Forever
+    -- until its friend list reaches addons (2.0.1).
+    local bnBtn = CreateFrame("Button", nil, addBar, "UIPanelButtonTemplate")
+    bnBtn:SetSize(90, 22)
+    bnBtn:SetPoint("RIGHT", addBar, "RIGHT", -4, 0)
+    bnBtn:SetText("Battle.net")
+    local BNm = addon.BattleNet
+    local bnTitle, bnText
+    if BNm and BNm:Available() then
+        bnBtn:SetScript("OnClick", function() BNm:ToggleWindow() end)
+        bnTitle, bnText = "Battle.net friends", "Add friends via Battle.net. Friends must also be using ProfessionBuddy."
+    else
+        bnBtn:Disable()
+        if bnBtn.SetMotionScriptsWhileDisabled then bnBtn:SetMotionScriptsWhileDisabled(true) end
+        bnTitle, bnText = "Battle.net auto-add", "Coming soon. The WoW: Forever beta does not give addons the Battle.net friend list yet."
+    end
+    bnBtn:SetScript("OnEnter", function(btn)
+        GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+        GameTooltip:SetText(bnTitle, 1, 1, 1)
+        GameTooltip:AddLine(bnText, nil, nil, nil, true)
+        GameTooltip:Show()
+    end)
+    bnBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.bnetBtn = bnBtn
 
     addBox:SetScript("OnEnterPressed", function()
         addBtn:Click()
@@ -462,9 +511,12 @@ function FP:CreateRow(parent, index)
     name:SetJustifyH("LEFT")
     row.nameText = name
 
-    -- Profession icons (up to 4 small icons)
+    -- Profession icons: up to 7 (2 primaries and up to 5 secondaries, the
+    -- most a WoW: Forever character has). 4 dropped the fifth one
+    -- alphabetically (Shreks Swamp's Herbalism, m4ru 2026-10-13); 7 end
+    -- at 286 px, before Last Sync at 294.
     row.profIcons = {}
-    for i = 1, 4 do
+    for i = 1, MAX_FRIEND_PROF_ICONS do
         local icon = row:CreateTexture(nil, "ARTWORK")
         icon:SetSize(16, 16)
         icon:SetPoint("LEFT", 150 + (i - 1) * 20, 0)
@@ -623,10 +675,16 @@ function FP:Refresh()
     end
     self._dirty = false
 
-    -- Build sorted list of contact keys
+    -- Build sorted list of contact keys. An opposite-faction contact is
+    -- listed only with "Show opposite faction friends" on.
     self.contactKeys = {}
+    local hidden = 0
     for key, _ in pairs(addon.db.contacts or {}) do
-        table.insert(self.contactKeys, key)
+        if addon:ShowsFaction(addon.db.characters and addon.db.characters[key], key) then
+            table.insert(self.contactKeys, key)
+        else
+            hidden = hidden + 1
+        end
     end
 
     -- Sort: favorites first, then auto-sync, then alphabetical
@@ -650,6 +708,9 @@ function FP:Refresh()
 
     -- Empty list: say so, and take the lone scroll bar off the blank area.
     local hasContacts = #self.contactKeys > 0
+    self.empty:SetText(hidden > 0
+        and "Your contacts are all of the other faction. Settings, Friend Data: Show opposite faction friends."
+        or "No contacts yet. Type a name above and click Add.")
     self.empty:SetShown(not hasContacts)
     self.scrollBar:SetShown(hasContacts)
 
@@ -698,7 +759,7 @@ function FP:UpdateRows()
                 end
                 table.sort(profNames)
                 for _, pn in ipairs(profNames) do
-                    if profIdx <= 4 and PROF_ICONS[pn] then
+                    if profIdx <= MAX_FRIEND_PROF_ICONS and PROF_ICONS[pn] then
                         row.profIcons[profIdx]:SetTexture(PROF_ICONS[pn])
                         row.profIcons[profIdx]:Show()
                         profIdx = profIdx + 1

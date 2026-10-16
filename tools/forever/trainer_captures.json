@@ -1,0 +1,880 @@
+{
+"_about": "m4ru's trainer captures on WoW: Forever (ForeverProbe 1.9.x, GetTrainerServiceSkillReq), Thunder Bluff, build 70009, 2026-09-24 and 2026-09-25. rank = the skill the trainer requires. Lowest rank kept when two trainers teach the same recipe.",
+"captures": {
+"2153": {
+"rank": 15,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2160": {
+"rank": 35,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2161": {
+"rank": 50,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2162": {
+"rank": 40,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2329": {
+"rank": 15,
+"npc": "Kray",
+"npcID": 11047,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2331": {
+"rank": 25,
+"npc": "Kray",
+"npcID": 11047,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2332": {
+"rank": 40,
+"npc": "Kray",
+"npcID": 11047,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2334": {
+"rank": 50,
+"npc": "Kray",
+"npcID": 11047,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2368": {
+"rank": 50,
+"npc": "Komin Winterhoof",
+"npcID": 3013,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2385": {
+"rank": 10,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2386": {
+"rank": 40,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2392": {
+"rank": 25,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2393": {
+"rank": 1,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2394": {
+"rank": 25,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2395": {
+"rank": 40,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2396": {
+"rank": 40,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2397": {
+"rank": 35,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2402": {
+"rank": 55,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2539": {
+"rank": 10,
+"npc": "Aska Mistrunner",
+"npcID": 3026,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2541": {
+"rank": 50,
+"npc": "Aska Mistrunner",
+"npcID": 3026,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2544": {
+"rank": 75,
+"npc": "Aska Mistrunner",
+"npcID": 3026,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2546": {
+"rank": 80,
+"npc": "Aska Mistrunner",
+"npcID": 3026,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2576": {
+"rank": 50,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2658": {
+"rank": 75,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2659": {
+"rank": 65,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2661": {
+"rank": 30,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2662": {
+"rank": 15,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2665": {
+"rank": 40,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2666": {
+"rank": 45,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2737": {
+"rank": 15,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2738": {
+"rank": 20,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2739": {
+"rank": 25,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"2964": {
+"rank": 55,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3102": {
+"rank": 50,
+"npc": "Aska Mistrunner",
+"npcID": 3026,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3116": {
+"rank": 40,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3170": {
+"rank": 15,
+"npc": "Kray",
+"npcID": 11047,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3274": {
+"rank": 50,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3276": {
+"rank": 40,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3277": {
+"rank": 80,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3278": {
+"rank": 115,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3293": {
+"rank": 30,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3294": {
+"rank": 45,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3304": {
+"rank": 65,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3307": {
+"rank": 125,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3308": {
+"rank": 155,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3319": {
+"rank": 20,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3320": {
+"rank": 25,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3323": {
+"rank": 35,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3324": {
+"rank": 35,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3326": {
+"rank": 50,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3564": {
+"rank": 125,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3569": {
+"rank": 165,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3570": {
+"rank": 125,
+"npc": "Komin Winterhoof",
+"npcID": 3013,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3753": {
+"rank": 25,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3755": {
+"rank": 5,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3756": {
+"rank": 40,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3759": {
+"rank": 50,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3816": {
+"rank": 30,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3840": {
+"rank": 25,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3841": {
+"rank": 35,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3842": {
+"rank": 45,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"3914": {
+"rank": 25,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"6499": {
+"rank": 50,
+"npc": "Aska Mistrunner",
+"npcID": 3026,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"6500": {
+"rank": 125,
+"npc": "Aska Mistrunner",
+"npcID": 3026,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7408": {
+"rank": 40,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7420": {
+"rank": 15,
+"npc": "Mot Dawnstrider",
+"npcID": 11071,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7426": {
+"rank": 40,
+"npc": "Mot Dawnstrider",
+"npcID": 11071,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7454": {
+"rank": 45,
+"npc": "Mot Dawnstrider",
+"npcID": 11071,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7457": {
+"rank": 50,
+"npc": "Mot Dawnstrider",
+"npcID": 11071,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7623": {
+"rank": 25,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7624": {
+"rank": 25,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7731": {
+"rank": 50,
+"npc": "Kah Mistrunner",
+"npcID": 3028,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7748": {
+"rank": 60,
+"npc": "Mot Dawnstrider",
+"npcID": 11071,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7771": {
+"rank": 70,
+"npc": "Mot Dawnstrider",
+"npcID": 11071,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7928": {
+"rank": 150,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"7934": {
+"rank": 80,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"8465": {
+"rank": 25,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"8617": {
+"rank": 50,
+"npc": "Mooranta",
+"npcID": 7089,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"8618": {
+"rank": 125,
+"npc": "Mooranta",
+"npcID": 7089,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"8776": {
+"rank": 15,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"8880": {
+"rank": 25,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"9060": {
+"rank": 25,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"9062": {
+"rank": 25,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"9065": {
+"rank": 45,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"9983": {
+"rank": 25,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"10097": {
+"rank": 175,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"10098": {
+"rank": 230,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"10248": {
+"rank": 200,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"10768": {
+"rank": 200,
+"npc": "Mooranta",
+"npcID": 7089,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"11993": {
+"rank": 200,
+"npc": "Komin Winterhoof",
+"npcID": 3013,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"12045": {
+"rank": 20,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"12046": {
+"rank": 50,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"14293": {
+"rank": 10,
+"npc": "Mot Dawnstrider",
+"npcID": 11071,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"14807": {
+"rank": 70,
+"npc": "Mot Dawnstrider",
+"npcID": 11071,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"16153": {
+"rank": 250,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"21175": {
+"rank": 200,
+"npc": "Aska Mistrunner",
+"npcID": 3026,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1229432": {
+"rank": 20,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1229504": {
+"rank": 20,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1229517": {
+"rank": 20,
+"npc": "Mooranta",
+"npcID": 7089,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1229705": {
+"rank": 20,
+"npc": "Komin Winterhoof",
+"npcID": 3013,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1229737": {
+"rank": 20,
+"npc": "Aska Mistrunner",
+"npcID": 3026,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1229745": {
+"rank": 20,
+"npc": "Kah Mistrunner",
+"npcID": 3028,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1230117": {
+"rank": 20,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1230161": {
+"rank": 20,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1230171": {
+"rank": 20,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1230564": {
+"rank": 20,
+"npc": "Kray",
+"npcID": 11047,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1230643": {
+"rank": 20,
+"npc": "Mot Dawnstrider",
+"npcID": 11071,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1244431": {
+"rank": 1,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1244432": {
+"rank": 55,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1244433": {
+"rank": 110,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1249630": {
+"rank": 40,
+"npc": "Kray",
+"npcID": 11047,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1249633": {
+"rank": 40,
+"npc": "Kray",
+"npcID": 11047,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1249637": {
+"rank": 275,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1252229": {
+"rank": 35,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1252230": {
+"rank": 35,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1252231": {
+"rank": 35,
+"npc": "Thrag Stonehoof",
+"npcID": 10278,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1255143": {
+"rank": 35,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1255144": {
+"rank": 35,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1255145": {
+"rank": 35,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1255146": {
+"rank": 35,
+"npc": "Mak",
+"npcID": 3008,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1257368": {
+"rank": 35,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1257369": {
+"rank": 35,
+"npc": "Vhan",
+"npcID": 11051,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1259342": {
+"rank": 90,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1259347": {
+"rank": 120,
+"npc": "Pand Stonebinder",
+"npcID": 2798,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+},
+"1306126": {
+"rank": 300,
+"npc": "Brek Stonehoof",
+"npcID": 3001,
+"zone": "Thunder Bluff",
+"date": "2026-09-24"
+}
+}
+}

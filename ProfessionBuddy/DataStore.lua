@@ -178,12 +178,10 @@ end
 ----------------------------------------------------------------------
 
 -- Returns { [itemID] = totalCount } respecting includeAltsInCalc,
--- showCrossFactionAlts, and includeRemoteInCalc settings.
+-- includeRemoteInCalc and the faction settings (addon:ShowsFaction).
 function DS:GetCalcItemCounts()
     local settings = addon.db.settings
     local myKey = addon:PlayerKey()
-    local myFaction = UnitFactionGroup("player")
-    local crossFaction = settings.showCrossFactionAlts
     local includeAlts = settings.includeAltsInCalc
     local includeRemote = settings.includeRemoteInCalc
 
@@ -195,7 +193,7 @@ function DS:GetCalcItemCounts()
         local typeOK = isCurrent
             or (char.isRemote and includeRemote)
             or (not char.isRemote and includeAlts)
-        if typeOK and (isCurrent or crossFaction or char.faction == myFaction) then
+        if typeOK and (isCurrent or addon:ShowsFaction(char, key)) then
             local inv = char.inventory
             for id, count in pairs(inv and inv.bags or {}) do
                 totals[id] = (totals[id] or 0) + count

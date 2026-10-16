@@ -9,10 +9,15 @@
 local addon = ProfBuddy
 local MH = addon:NewModule("MailHelper")
 
--- Contact keys, favorites first, then alphabetical by short name.
+-- Contact keys, favorites first, then alphabetical by short name. Mail never
+-- crosses factions, so an opposite-faction contact follows the setting.
 local function contactKeys()
     local keys = {}
-    for key in pairs(addon.db and addon.db.contacts or {}) do keys[#keys + 1] = key end
+    for key in pairs(addon.db and addon.db.contacts or {}) do
+        if addon:ShowsFaction(addon.db.characters and addon.db.characters[key], key) then
+            keys[#keys + 1] = key
+        end
+    end
     table.sort(keys, function(a, b)
         local af = addon:IsFavorite(a) and 1 or 0
         local bf = addon:IsFavorite(b) and 1 or 0
@@ -21,6 +26,9 @@ local function contactKeys()
     end)
     return keys
 end
+
+-- The harness checks the faction filter through this.
+MH.ContactKeys = contactKeys
 
 local function fillTo(shortName)
     if not SendMailNameEditBox then return end

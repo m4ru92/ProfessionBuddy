@@ -796,7 +796,8 @@ function OP:CreateContent(parent)
     -- sub-view (History is Direct-only, so the two never share the corner).
     local findBtn = CreateFrame("Button", nil, topBar, "UIPanelButtonTemplate")
     findBtn:SetSize(104, 20)
-    findBtn:SetPoint("RIGHT", -16, 0)
+    -- flush right, over the Guild Board list's scroll bar (m4ru 2026-10-13)
+    findBtn:SetPoint("RIGHT", 0, 0)
     findBtn:SetText("Find a crafter")
     findBtn:SetNormalFontObject(GameFontNormalSmall)
     findBtn:SetHighlightFontObject(GameFontHighlightSmall)
@@ -1221,6 +1222,58 @@ function OP:ClaimBlockReason(entry)
     return nil
 end
 
+-- Board-post alerts: which of your characters knows the recipe a guildmate
+-- just posted. Returns the current character's key first, then an alt's; nil
+-- when none does. A post with no profession is checked against every crafting
+-- profession. Alts follow showCrossFactionAlts, as in Find a crafter.
+function OP:BoardPostKnownBy(entry, includeAlts)
+    local name = entry and entry.item and entry.item.name
+    if type(name) ~= "string" or name == "" then return nil end
+    local prof = entry.item.profession
+    if prof == "" then prof = nil end
+    local function knows(char)
+        if type(char) ~= "table" or type(char.professions) ~= "table" then return false end
+        if prof then
+            local pd = char.professions[prof]
+            return type(pd) == "table" and tableHasName(pd.recipes, name)
+        end
+        for pn, pd in pairs(char.professions) do
+            if not addon.CLASS_PROFS[pn] and type(pd) == "table"
+               and tableHasName(pd.recipes, name) then return true end
+        end
+        return false
+    end
+    local chars = addon.db.characters or {}
+    local me = addon:PlayerKey()
+    local DS = addon.DataStore
+    if knows(DS and DS:GetCharacter(me) or chars[me]) then return me end
+    if not includeAlts then return nil end
+    for key, char in pairs(chars) do
+        if type(char) == "table" and not char.isRemote
+           and not addon:SameKey(key, me)
+           and addon:ShowsFaction(char, key)
+           and knows(char) then
+            return key
+        end
+    end
+    return nil
+end
+
+-- Whether a NEW board post should alert, by the boardAlert setting:
+-- "known" (default), "alts", "any" or "off". Returns the chat line's
+-- suffix ("" for an "any" post nobody knows), or nil for no alert.
+function OP:BoardAlertSuffix(entry)
+    local mode = addon.db.settings and addon.db.settings.boardAlert or "known"
+    if mode == "off" then return nil end
+    local who = self:BoardPostKnownBy(entry, mode ~= "known")
+    if who then
+        if addon:SameKey(who, addon:PlayerKey()) then return " (you know this recipe)" end
+        return " (" .. addon:ShortName(who) .. " knows this recipe)"
+    end
+    if mode == "any" then return "" end
+    return nil
+end
+
 -- ClaimBlockReason walks the character's recipe table and the whole static
 -- profession table whenever the posted name is not an exact recipe key, which is
 -- the normal case for free-text posts. Cache the answer per board entry for the
@@ -1397,7 +1450,9 @@ function OP:BuildPostComposer(host)
     -- Row 1: quantity (narrow, right) then item name filling the rest
     local qty = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
     qty:SetSize(40, 20)
-    qty:SetPoint("TOPRIGHT", -18, -4)
+    -- The right-hand controls line up with the list's scroll bar below
+    -- (the host's right edge); an edit box's border sits 2 px outside it.
+    qty:SetPoint("TOPRIGHT", -2, -4)
     qty:SetAutoFocus(false); qty:SetNumeric(true); qty:SetMaxLetters(4); qty:SetText("1")
     qty:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
 
@@ -1452,7 +1507,7 @@ function OP:BuildPostComposer(host)
     local note = CreateFrame("EditBox", nil, composer, "InputBoxTemplate")
     note:SetHeight(20)
     note:SetPoint("TOPLEFT", 12, -52)
-    note:SetPoint("TOPRIGHT", -18, -52)
+    note:SetPoint("TOPRIGHT", -2, -52)
     note:SetAutoFocus(false); note:SetMaxLetters(256)
     note:SetScript("OnEscapePressed", function(eb) eb:ClearFocus() end)
 
@@ -1480,7 +1535,7 @@ function OP:BuildPostComposer(host)
     -- Row 2: Post button (right), profession + mat-resp dropdowns (left)
     local postBtn = CreateFrame("Button", nil, composer, "UIPanelButtonTemplate")
     postBtn:SetSize(64, 20)
-    postBtn:SetPoint("TOPRIGHT", -16, -28)
+    postBtn:SetPoint("TOPRIGHT", 0, -28)
     postBtn:SetText("Post")
     postBtn:SetNormalFontObject(GameFontNormalSmall)
     postBtn:SetHighlightFontObject(GameFontHighlightSmall)
@@ -1539,6 +1594,7 @@ function OP:BuildPostComposer(host)
         OP:RefreshAll()
     end)
 
+    composer.qty, composer.note, composer.postBtn = qty, note, postBtn   -- layout checks
     self.postComposer = composer
 end
 
@@ -1550,7 +1606,7 @@ function OP:BuildBoard(host)
     local filterBox = CreateFrame("EditBox", nil, host, "InputBoxTemplate")
     filterBox:SetHeight(18)
     filterBox:SetPoint("TOPLEFT", host, "TOPLEFT", 16, -82)
-    filterBox:SetPoint("TOPRIGHT", host, "TOPRIGHT", -20, -82)
+    filterBox:SetPoint("TOPRIGHT", host, "TOPRIGHT", -2, -82)
     filterBox:SetAutoFocus(false)
     filterBox:SetMaxLetters(60)
     filterBox:SetScript("OnEscapePressed", function(eb) eb:SetText(""); eb:ClearFocus() end)
@@ -1593,7 +1649,11 @@ function OP:BuildBoard(host)
     self.boardGuildlessMsg = guildlessMsg
 
     self.boardCtx = { collapsed = { mine = false, avail = false } }
-    self:BuildBoardList(listHost, self.boardCtx, 8)
+    -- 7 rows of ROW_HEIGHT fit the list: the 450 px window less its title
+    -- bar (42), bottom margin (10), the Direct/Guild Board bar (26) and the
+    -- composer and filter above the list (104) leaves 268 px. 8 rows (288)
+    -- drew the last one below the window (m4ru 2026-10-13).
+    self:BuildBoardList(listHost, self.boardCtx, 7)
 
     self.boardCtx.rebuild = function(force)
         local ctx = self.boardCtx
@@ -1744,15 +1804,13 @@ function OP:FindCrafters(query)
     query = strtrim(query or ""):lower()
     if #query < 2 then return out, false end
     local guildSet = guildRosterSet()            -- one roster pass for the search
-    -- Honor showCrossFactionAlts like the calculator and character views do: an
-    -- opposite-faction character cannot craft or trade to you, so it is hidden
-    -- unless the setting is on. Your current character is always eligible.
-    local myFaction = UnitFactionGroup("player")
-    local crossFaction = addon.db.settings and addon.db.settings.showCrossFactionAlts
+    -- The faction settings apply as in the calculator and character views
+    -- (addon:ShowsFaction): an opposite-faction character cannot craft or
+    -- trade to you. Your current character is always eligible.
     local relCache, colorCache = {}, {}
     for charKey, char in pairs(addon.db.characters or {}) do
         if type(char) == "table" and char.professions
-           and (crossFaction or char.faction == myFaction or addon:SameKey(charKey, addon:PlayerKey())) then
+           and addon:ShowsFaction(char, charKey) then
             local rel = relCache[charKey]
             if rel == nil then
                 rel = relationOf(charKey, guildSet)
@@ -2314,8 +2372,9 @@ function OP:LoginSummary()
 end
 
 -- Backend integration point. kind: "newRequest" | "claimAccepted" | "assigned" |
--- "accepted" | "declined" | "crafted" | "cancelled" | "completed". order is the
--- record the counterparty just acted on.
+-- "accepted" | "declined" | "crafted" | "cancelled" | "completed" |
+-- "boardPost". order is the record the counterparty just acted on (for
+-- "boardPost", the new board entry).
 local NOTIFY_TEXT = {
     newRequest = function(o) return addon:ShortName(o.requester) .. " requested " .. o.quantity .. "x " .. o.item.name end,
     -- The handoff for a claim WE made. "requested" reads backwards there.
@@ -2334,6 +2393,20 @@ local NOTIFY_TEXT = {
 -- passes { fromClaim = true } (or sets it on the order) for the ORDER_NEW that
 -- hands a claim back to the claimer, which is not an unsolicited request.
 function OP:NotifyOrderEvent(kind, order, info)
+    -- A guildmate's new board post: its own setting, not orderChatMessages.
+    if kind == "boardPost" then
+        local suffix = order and self:BoardAlertSuffix(order)
+        if suffix then
+            print("|cff00ccffProfessionBuddy:|r " .. addon:ShortName(order.requester or "?")
+                .. " posted on the guild board: " .. (order.quantity or 1) .. "x "
+                .. ((order.item and order.item.name) or "?") .. suffix)
+            local s = addon.db and addon.db.settings or {}
+            if s.orderSoundOnRequest then PlaySound(SOUNDKIT.TELL_MESSAGE) end
+        end
+        self:UpdateBadge()
+        self:RefreshAll()
+        return
+    end
     if kind == "newRequest" and order
        and ((info and info.fromClaim) or order.fromClaim) then
         kind = "claimAccepted"

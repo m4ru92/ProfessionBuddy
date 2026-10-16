@@ -92,6 +92,31 @@ detects `creature_template` columns dynamically so a schema shift between DB
 versions can't misalign the parse, validates known-good anchors, and preserves
 the node tables.
 
+## Gather data generation, WoW: Forever (Data/Forever/Gather.lua)
+
+Forever uses Classic NPC IDs, and its tooltip never says which live mobs
+are skinnable, so `tools/gather_db.py --regen --source classic` bakes
+`SkinnableMobs` and the skinning loot from VMaNGOS (`db_latest`, the
+`db-sqlite-<hash>.zip` asset), read at patch 10 (1.12): the newest row at
+or below that patch for creatures and items, and loot rows whose
+patch range includes it. A mob is skinnable if it has skinning loot rows;
+Classic has no mineable or herbable mobs. VMaNGOS was picked over
+cmangos' Classic DB after a check against Wowhead Classic (2026-10-03):
+of 20 sampled mobs only VMaNGOS lists, Wowhead shows skinning on 17; of
+20 only cmangos-classic lists, on 1. Anchors: the mobs checked in game on
+Forever (3130, 3247, 4129 skinnable; 3113 not) plus two Wowhead calls.
+The file names its source (`SkinLootSource = "Classic"`), which the loot
+heading shows. On a corpse the game's own "Skinnable" line overrides the
+list. `--check` covers both sources.
+
+Node loot (Phase 3b-4) comes from the same build: for each node name in
+`MiningNodes` / `HerbNodes`, the `gameobject_loot_template` of the
+type-3 game object entry with that name that has the most world spawns
+(one name has several entries: Copper Vein has three loot tables, the
+main one 1,622 spawns). A chance under 0.5% shows as 1%. Anchors: Copper
+Vein holds Copper Ore, Peacebloom its herb, Mithril Deposit Mithril Ore,
+Black Lotus itself.
+
 **Minimap is an incidental surface.** The Anniversary client routes
 minimap node-blip tooltips through `GameTooltip`, so the node hook appends to
 them too when it can. This is a bonus, not a designed surface: it can be
@@ -116,6 +141,42 @@ or `RandomSuffix` (validated: 20964 Aquamarine Signet, RandomProperty 3482).
 There are 13 items across BS/LW/Eng/JC (the Wild Leather set, Gemmed Copper
 Gauntlets, Dark Iron Boots, Green Lens, Cogspinner Goggles, Heavy Silver Ring,
 Aquamarine/Sapphire Signet).
+
+WoW: Forever has no random-property fields; an item rolls random stats when
+the client gives it an item bonus tree (ItemXBonusTree). `tools/bake_forever_db2.py`
+writes those crafted items to `Data/Forever/RandomStats.lua` (17: the Wild
+Leather set, Gemmed Copper Gauntlets, Dark Iron Boots, Green Lens, and 8 new
+Engineering belts and goggles). The line is the game's own
+`ITEM_RANDOM_ENCHANT`: "<Random enchantment>" on TBC Anniversary, "<Random
+additional stats>" on Forever. The same bake reads Forever's Enchanting rods
+(SpellTotems, TotemCategory type 3, ItemSparse TotemCategoryID): Copper to
+Arcanite, the same items and cumulative masks as TBC's first five.
+
+## Tools (both clients)
+
+Every tool a recipe needs other than its Enchanting rod (Blacksmith Hammer,
+Arclight Spanner, Gyromatic Micro-Adjustor, Philosopher's Stone, and single
+items such as a Jeweler's Kit or Flint and Tinder) comes from the client's
+SpellTotems: `Data/Tools.lua` (TBC Anniversary, `tools/bake_tbc_tools.py`)
+and `Data/Forever/Tools.lua` (`tools/bake_forever_db2.py`), through one
+rule (`tool_tables`). An item satisfies a required tool category when its
+own category has the same type and covers every bit of the required mask,
+so Alchemist's Stones count as a Philosopher's Stone and a Gnomish Army
+Knife as a hammer or a spanner. The bake lists the satisfying items per
+category; PB only checks the viewed character's bags and bank. TBC
+Anniversary: 804 recipes; Forever: 647.
+
+## Which side a trainer or vendor serves (WoW: Forever)
+
+On Forever every recipe serves both factions, so "Hide opposite-faction
+recipes" hides the other side's trainers and vendors on the Source line
+instead, and says so ("Hide opposite-faction trainers and vendors"). The
+side comes from `Data/Forever/NpcFactions.lua`: each Classic trainer's and
+vendor's faction from VMaNGOS, read in Forever's own FactionTemplate
+(EnemyGroup bit 2 = hostile to Alliance, 4 = to Horde; the Enemies_ and
+Friend_ lists name single factions and win). An NPC not listed (new on
+Forever) goes by the faction PB saw when it was met. `tools/gather_db.py
+--regen --source classic` writes it; run it again after a Forever rebake.
 
 ## Static skill requirements (crafting)
 

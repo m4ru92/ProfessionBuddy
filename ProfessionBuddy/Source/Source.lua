@@ -40,6 +40,41 @@
 --   Source:CloseWindow(isCraft)
 --   Source:IsSessionOpen(isCraft)      is that channel's backend session
 --       open right now (it can be open with no window showing)
+--
+-- Optional, for a flavor that differs from Classic. Absent means the
+-- Classic behaviour, so Source/Classic.lua sets none of them:
+--
+--   Source.MINING_IS_SMELTING     false: Mining is its own profession,
+--                                 never filed under Smelting
+--   Source.LIST_ARRIVES_LATE      true: the recipe list is not readable at
+--                                 TRADE_SHOW, only at the next TRADE_UPDATE
+--   Source.GATHERING_HAS_RECIPES  true: Herbalism gets a profession tab
+--   Source.TRACK_BY_SPELL_ID      true: a finished cast is matched to the
+--                                 craft by spell ID, not spell name
+--   Source.ENCHANT_BY_CRAFT       true: an enchant is cast through Craft,
+--                                 not the secure macro button
+--   Source.HAS_REAGENT_BAG        true: the bag scan includes the equipped
+--                                 reagent bag (NUM_TOTAL_EQUIPPED_BAG_SLOTS)
+--   Source.TOOLTIP_DATA           true: item tooltips are extended through
+--                                 TooltipDataProcessor, not OnTooltipSetItem
+--   Source.REALM_TOKEN            a string: every character key's realm half
+--                                 is this token (names are unique across
+--                                 realms), and whispers carry no realm
+--   Source.NUMBERED_CHUNKS        true: a long addon message goes out as
+--                                 numbered chunks joined by number
+--                                 (Comm.lua), not AceComm's ordered ones
+--   Source.FULL_NAMES             true: characters are "First Surname"; our
+--                                 own name joins UnitFullName's two values
+--                                 (addon:PlayerName) and a typed contact may
+--                                 hold a space
+--   Source:BankBags()             the containers that make up the character's
+--                                 bank, for a client whose bank is not
+--                                 Classic's bag -1 plus bank bags 5 to 11
+--   Source:TabSkillLine(profName) the skill line a profession tab opens,
+--                                 or nil for a tab that stays a /cast macro
+--   Source:OpenProfession(skillLine)
+--   ReadOpenWindow may also set win.itemsPending (reagent names still
+--   loading) and give each row a category name.
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy

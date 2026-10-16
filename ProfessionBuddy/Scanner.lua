@@ -38,6 +38,10 @@ local BAG_THROTTLE = 0.25
 -- one trailing timer the same way BAG_UPDATE is.
 local SKILL_THROTTLE = 0.5
 local SKILL_MUTE     = 1
+-- A profession list whose reagent names are still loading is not stored;
+-- it is read again this often, this many times at most.
+local PENDING_RESCAN_DELAY = 0.5
+local PENDING_RESCAN_MAX   = 6
 local function Now()
     return (GetTime and GetTime()) or time()
 end
@@ -102,6 +106,9 @@ local CRAFTING_PROFS = {
     ["Enchanting"] = true, ["Engineering"] = true, ["Jewelcrafting"] = true,
     ["Leatherworking"] = true, ["Tailoring"] = true, ["First Aid"] = true,
     ["Poisons"] = true,
+    -- WoW: Forever, mage only (Core CLASS_PROFS): Study makes a Bundle of
+    -- Scrolls; the rest are abilities (RecipeDB KnownAbilities)
+    ["Comprehension"] = true,
 }
 
 local GATHERING_PROFS = {
@@ -181,9 +188,13 @@ function Scanner:Init()
     -- what we stored, so without this it pushed stale professions forever.
     addon:RegisterEvent("SKILL_LINES_CHANGED", function() self:QueueProfessionScan() end)
 
-    -- Trainer events
-    addon:RegisterEvent("TRAINER_SHOW",      function() self:ScanTrainer() end)
-    addon:RegisterEvent("TRAINER_UPDATE",    function() self:ScanTrainer() end)
+    -- Trainer events. The scan reads GetTrainerServiceInfo in the Classic
+    -- return order; WoW: Forever returns a different order, so it runs only
+    -- with the Classic source loaded. Forever's trainer scan is Knowledge.lua.
+    if addon.Source.flavor == "classic" then
+        addon:RegisterEvent("TRAINER_SHOW",      function() self:ScanTrainer() end)
+        addon:RegisterEvent("TRAINER_UPDATE",    function() self:ScanTrainer() end)
+    end
 
     -- Level-up
     addon:RegisterEvent("PLAYER_LEVEL_UP",   function() DS:EnsureCharacter() end)
@@ -221,21 +232,54 @@ function Scanner:ScanProfessions()
     -- headers first and re-collapsing the user's by name afterwards (see
     -- Source/Classic.lua). Those expands and collapses raise
     -- SKILL_LINES_CHANGED, which is why the mute brackets this call.
-    for _, line in ipairs(addon.Source:ReadProfessionSkills()) do
+    local lines = addon.Source:ReadProfessionSkills()
+    local seen, unsure = {}, false
+    for _, line in ipairs(lines) do
         local name = line.name
         local isProfession = self:IsCraftingProfession(name) or self:IsGatheringProfession(name)
         if isProfession then
             -- Store under the English key, not the localized skill-line name
             local canon = self:Canonicalize(name)
+            seen[canon] = true
             local existing = DS:GetProfession(nil, canon) or {}
             existing.skillLevel = line.rank
             existing.maxSkill   = line.maxRank
-            existing.recipes    = existing.recipes or {}
+            existing.recipes    = addon.RecipeDB:AddKnownAbilities(canon, existing.recipes or {})
             DS:SetProfessionData(canon, existing)
+        elseif addon.Source.flavor ~= "classic" then
+            -- Forever reads profession slots only, so a line we cannot name
+            -- means the name map failed, not that it is a weapon skill.
+            unsure = true
         end
     end
+    if #lines > 0 and not unsure then self:DropUnlearned(seen) end
 
     self._skillEventMuteUntil = Now() + SKILL_MUTE
+end
+
+-- Remove the professions the skill lines no longer list (unlearned). Only
+-- after a read that returned lines at all: the Classic list always holds
+-- weapon skills, so an empty read means it has not loaded. Class skills are
+-- never unlearned. Smelting is Mining's window and has no line of its own.
+-- A profession whose skill-line name this client cannot work out is kept,
+-- or every scan would delete what its window scan stored.
+function Scanner:DropUnlearned(seen)
+    local char = DS:GetCharacter()
+    if not (char and char.professions) then return end
+    local drop = {}
+    for profName in pairs(char.professions) do
+        local known = CRAFTING_PROFS[profName] or GATHERING_PROFS[profName] or profName == "Smelting"
+        local line = (profName == "Smelting") and "Mining" or profName
+        local nameable = PROF_SPELLS[line] and GetSpellInfo(PROF_SPELLS[line])
+        if known and nameable and not addon.CLASS_PROFS[profName] and not seen[line] then
+            drop[#drop + 1] = profName
+        end
+    end
+    table.sort(drop)
+    for _, profName in ipairs(drop) do
+        char.professions[profName] = nil
+        print("|cff00ccffProfessionBuddy:|r Removed " .. profName .. ": no longer learned.")
+    end
 end
 
 function Scanner:IsCraftingProfession(name)
@@ -269,6 +313,13 @@ function Scanner:ScanCurrentTradeSkill()
     local partial = false
     if win.nameFilter and win.nameFilter ~= "" then partial = true end
     if win.collapsedHeader then partial = true end   -- rows under it are not in the list
+    -- Reagent names still loading from the item cache: storing now would
+    -- store the placeholders, so try again shortly instead.
+    if win.itemsPending then
+        self:QueuePendingRescan()
+        return
+    end
+    self._pendingRescans = 0
 
     local recipes = {}
     -- difficulty: "optimal", "medium", "easy", "trivial" (headers already excluded)
@@ -307,12 +358,12 @@ function Scanner:ScanCurrentTradeSkill()
     -- spellIDs (smelting recipes resolve straight to "Smelting", so the
     -- old Mining->Smelting string hack is only a last-resort fallback).
     local profName = self:ProfessionFromRecipes(recipes) or self:Canonicalize(rawName)
-    if profName == "Mining" then profName = "Smelting" end
+    if profName == "Mining" and Source.MINING_IS_SMELTING ~= false then profName = "Smelting" end
 
     DS:SetProfessionData(profName, {
         skillLevel = rank,
         maxSkill   = maxRank,
-        recipes    = recipes,
+        recipes    = addon.RecipeDB:AddKnownAbilities(profName, recipes),
     })
 
     -- Before 1.1.5 a non-enUS rogue's Poisons was stored under the localized
@@ -323,6 +374,19 @@ function Scanner:ScanCurrentTradeSkill()
         local char = DS:GetCharacter()
         if char and char.professions then char.professions[rawName] = nil end
     end
+end
+
+-- A few tries, half a second apart; the Source has already asked the
+-- client for the missing items.
+function Scanner:QueuePendingRescan()
+    if self._pendingRescanArmed then return end
+    self._pendingRescans = (self._pendingRescans or 0) + 1
+    if self._pendingRescans > PENDING_RESCAN_MAX then return end
+    self._pendingRescanArmed = true
+    C_Timer.After(PENDING_RESCAN_DELAY, function()
+        self._pendingRescanArmed = false
+        self:ScanCurrentTradeSkill()
+    end)
 end
 
 ----------------------------------------------------------------------
@@ -372,7 +436,7 @@ function Scanner:ScanCurrentCraft()
     DS:SetProfessionData(profName, {
         skillLevel = rank,
         maxSkill   = maxRank,
-        recipes    = recipes,
+        recipes    = addon.RecipeDB:AddKnownAbilities(profName, recipes),
     })
 end
 
@@ -390,7 +454,9 @@ function Scanner:ReconcileSkillReq(recipes)
     local newCorrections = 0
     for name, info in pairs(recipes) do
         local tv = info.skillReq
-        if type(tv) == "number" and tv > 0 and ov[name] ~= tv then
+        -- Only a recipe PB has data for: a header row or a profession rank
+        -- ("Journeyman Tailoring") carries a skill requirement too.
+        if type(tv) == "number" and tv > 0 and ov[name] ~= tv and RDB.nameToRecipe[name] then
             local static = RDB:StaticSkillReq(name)
             if static ~= tv then
                 ov[name] = tv
@@ -414,15 +480,15 @@ function Scanner:ScanTrainer()
         local name, _, category = GetTrainerServiceInfo(i)
         -- category: "available", "unavailable", "used" (already known)
         if name and category ~= "used" then
-            -- GetTrainerServiceSkillReq can return a non-numeric requirement
-            -- (a profession name on spec trainers) AND can return multiple
-            -- values (nil plus an extra on header rows). Read ONE value into a
-            -- local first: tonumber() on the raw multi-return would take the
-            -- extra as a base and error. Anything non-numeric then becomes 0.
-            local reqRaw = GetTrainerServiceSkillReq(i)
+            -- GetTrainerServiceSkillReq returns skill, rank, hasReq (Blizzard's
+            -- own trainer window reads it that way): the first value is the
+            -- skill NAME and the learn level is the second. Read the rank into
+            -- a local first: tonumber() on the raw multi-return would take the
+            -- next value as a base. Anything non-numeric then becomes 0.
+            local _, rank = GetTrainerServiceSkillReq(i)
             available[name] = {
                 category  = category,       -- "available" or "unavailable"
-                skillReq  = tonumber(reqRaw) or 0,
+                skillReq  = tonumber(rank) or 0,
             }
 
             -- Is this a PROFESSION trainer? skillReqOverrides is keyed by bare
@@ -481,8 +547,12 @@ function Scanner:ScanInventory()
 
     local items = {}
 
-    -- Backpack (bag 0) + 4 regular bags
-    for bag = 0, 4 do
+    -- Backpack (bag 0) + 4 regular bags, plus the reagent bag where the
+    -- client has one (WoW: Forever: bag 5, counted in Blizzard's
+    -- NUM_TOTAL_EQUIPPED_BAG_SLOTS). On TBCCA bag 5 is the first BANK bag.
+    local lastBag = 4
+    if addon.Source.HAS_REAGENT_BAG then lastBag = NUM_TOTAL_EQUIPPED_BAG_SLOTS or 4 end
+    for bag = 0, lastBag do
         local slots = GetContainerNumSlots(bag)
         for slot = 1, slots do
             local link = GetContainerItemLink(bag, slot)
@@ -498,6 +568,12 @@ function Scanner:ScanInventory()
     end
 
     DS:SetInventory("bags", items)
+
+    -- While the bank is open, a bag change may be a bank bag's: those fire
+    -- BAG_UPDATE, not PLAYERBANKSLOTS_CHANGED (TBC Anniversary bank bags 5-11,
+    -- and every tab of WoW: Forever's tab bank). ScanBank does nothing while
+    -- the bank is shut.
+    self:ScanBank()
 end
 
 function Scanner:ScanBank()
@@ -507,8 +583,10 @@ function Scanner:ScanBank()
 
     local items = {}
 
-    -- Bank container (bag -1) + bank bags (5-11)
-    local bankBags = { -1, 5, 6, 7, 8, 9, 10, 11 }
+    -- Bank container (bag -1) + bank bags (5-11), unless the client's bank
+    -- is laid out differently (WoW: Forever's tab bank)
+    local bankBags = addon.Source.BankBags and addon.Source:BankBags()
+        or { -1, 5, 6, 7, 8, 9, 10, 11 }
     for _, bag in ipairs(bankBags) do
         local slots = GetContainerNumSlots(bag)
         for slot = 1, slots do

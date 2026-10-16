@@ -83,11 +83,13 @@ UISpecialFrames = {}
 -- Ace stubs: identity "serialization" so payload tables pass through
 local AceComm = {
     RegisterComm = function(target, prefix) end,
-    SendCommMessage = function(self, prefix, text, channel, target, prio)
+    SendCommMessage = function(self, prefix, text, channel, target, prio, callbackFn)
         -- prio is recorded: it is the ChatThrottleLib pipe, and a payload sent
         -- on the wrong one head-of-line blocks order traffic behind a full sync.
+        -- callbackFn is what AceComm calls as each chunk leaves the queue.
         table.insert(sent, { msgType = text._type, payload = text,
-                             channel = channel, target = target, prio = prio })
+                             channel = channel, target = target, prio = prio,
+                             onChunk = callbackFn })
     end,
 }
 local AceSerializer = {
@@ -124,7 +126,9 @@ function GetTime() return clock end
 function GetLocale() return "enUS" end
 -- Profession names self-map (enUS) except spell 2842, named as a deDE client
 -- names it, so the localized Poisons path is exercised (T76).
-function GetSpellInfo(id) if id == 2842 then return "Gifte" end return nil end
+-- SPELL_NAMES names other spells for a test that needs them (T97).
+SPELL_NAMES = {}
+function GetSpellInfo(id) if id == 2842 then return "Gifte" end return SPELL_NAMES[id] end
 
 function IsTradeSkillLinked() return sim.linked end
 function CraftIsPetTraining() return sim.pet end
@@ -576,6 +580,18 @@ Comm._pushState = nil
 addon.db.contacts["Deltapal-TestRealm"] = { trusted = true, autoSync = true, lastSync = 0, lastCommRev = 7 }
 clearSent()
 DS:SetInventory("bags", { [111] = 5 })
+-- Pushes go only to a contact heard from this session (m4ru 2026-10-12): an
+-- offline contact gets the login SYNC_REQ and no full sync.
+Comm._heardContact = nil
+Comm:SendIncrementalUpdate()
+assert(#sentOfType("SYNC_DATA") == 0 and #sentOfType("INCR") == 0, "T19: pushed to a contact not heard from this session")
+local nTimers = #timers
+recv("Deltapal", { _type = "ORDER_ACK" })          -- any PB message from them
+assert(Comm._heardContact and Comm._heardContact["Deltapal-TestRealm"], "T19: hearing a contact was not noted")
+assert(#timers == nTimers + 1, "T19: hearing an auto-sync contact the first time did not queue a push")
+recv("Deltapal", { _type = "ORDER_ACK" })
+assert(#timers == nTimers + 1, "T19: hearing the same contact again queued another push")
+clearSent()
 Comm:SendIncrementalUpdate()                       -- first push = full baseline
 assert(#sentOfType("SYNC_DATA") == 1 and #sentOfType("INCR") == 0, "T19: baseline should be a full sync")
 assert(sentOfType("SYNC_DATA")[1].payload.epoch ~= nil, "T19: baseline SYNC_DATA missing epoch stamp")
@@ -1029,6 +1045,7 @@ do
     for _, c in pairs(addon.db.contacts) do c.autoSync = false end
     Comm._pushState = nil
     addon.db.contacts[pk] = { trusted = true, autoSync = true, lastSync = 0, lastCommRev = 7 }
+    recv("Priopal", { _type = "ORDER_ACK" })        -- heard this session
     DS:SetInventory("bags", { [777] = 1 })
     Comm:SendIncrementalUpdate()                    -- full baseline
     clearSent()
@@ -1079,6 +1096,9 @@ do
     for _, c in pairs(addon.db.contacts) do c.autoSync = false end
     Comm._pushState = nil
     addon.db.contacts["Offliner-TestRealm"] = { trusted = true, autoSync = true, lastSync = 0 }
+    -- heard earlier this session, logged out since
+    Comm._heardContact = Comm._heardContact or {}
+    Comm._heardContact["Offliner-TestRealm"] = true
     clearSent()
     DS:SetInventory("bags", { [888] = 1 })
     Comm:SendIncrementalUpdate()
@@ -1101,7 +1121,7 @@ passed("T43 offline back-off -- OnSystemMessage marks the contact, the next push
 do
     local FK = "Forgetful-TestRealm"
     local SESSION = { "_pushState", "_recvState", "_guildSyncAt", "_resyncAt",
-                      "_helloAckAt", "_pendingReq", "_lastOpenAt" }
+                      "_helloAckAt", "_pendingReq", "_lastOpenAt", "_heardContact" }
     joinGuild("Guildie", "Buddy", "Forgetful")
     addon.db.contacts[FK] = { trusted = true, autoSync = true, lastSync = 0, lastCommRev = 7 }
     Comm:_ResetServeCooldown()
@@ -1217,6 +1237,24 @@ do
         "T48: a scan with the bank shut wiped the stored bank")
 end
 passed("T48 bank gate -- PLAYERBANKSLOTS_CHANGED outside BANKFRAME_OPENED cannot wipe the bank")
+
+-- ── T82: a bank BAG's change reaches the stored bank while it is open ──
+-- m4ru 2026-09-29: Bolt of Silk Cloth sat in his bank while PB's copy had
+-- none. An item moved into a bank bag (5-11) fires BAG_UPDATE, not
+-- PLAYERBANKSLOTS_CHANGED, and BAG_UPDATE rescanned the carried bags only.
+do
+    sim.bags = { [-1] = { slots = 1, [1] = { link = "|Hitem:2589:0|h[Linen Cloth]|h", count = 5 } } }
+    fire("BANKFRAME_OPENED")
+    sim.bags[6] = { slots = 1, [1] = { link = "|Hitem:4305:0|h[Bolt of Silk Cloth]|h", count = 16 } }
+    Scanner:ScanInventory()                         -- what BAG_UPDATE runs (throttle: T49)
+    assert(DS:GetCharacter(ME).inventory.bank[4305] == 16, "T82: a bank bag's item did not reach the stored bank")
+    assert(DS:GetCharacter(ME).inventory.bank[2589] == 5, "T82: the main bank slots were lost")
+    fire("BANKFRAME_CLOSED")
+    sim.bags = {}
+    Scanner:ScanInventory()
+    assert(DS:GetCharacter(ME).inventory.bank[4305] == 16, "T82: a bag scan with the bank shut wiped the bank")
+end
+passed("T82 bank bags -- a bag scan rescans the bank while it is open, never while shut")
 
 -- ── T49: BAG_UPDATE throttles to leading plus one trailing scan ──
 do
@@ -1588,7 +1626,7 @@ passed("T62 lastCommRev -- NaN defaults to 0, a huge value clamps to 1000, absen
 -- ── T63: our own board posts are spaced, and a close cancels ─────
 do
     addon.db.orderBoard = {}
-    Comm._lastOpenSendAt, Comm._deferredOpens = nil, nil
+    Comm._openSlots, Comm._deferredOpens = nil, nil
     clearSent(); clearDeferred()
     local p1 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
     local p2 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
@@ -1603,7 +1641,7 @@ do
     assert(opens[1].payload.order.id == p1.id and opens[2].payload.order.id == p2.id,
         "T63: the deferred sends went out of order")
     -- A close for a post still waiting cancels that send instead of racing it.
-    Comm._lastOpenSendAt = nil
+    Comm._openSlots = nil
     clearSent(); clearDeferred()
     local p3 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
     local p4 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
@@ -1700,11 +1738,12 @@ end
 passed("T66 reflex floor -- one refusal reply per sender per 5 s across claim, update and new")
 
 -- ── T67: trainer scan tolerates non-numeric and multi-return skill reqs ──
--- Regression guard for two real ScanTrainer crashes. A specialization trainer
--- returns a profession NAME where a skill level is expected; a header row
--- returns nil PLUS an extra value. Neither may reach the numeric compare, and
--- the raw multi-return must never be forwarded whole into tonumber (the extra
--- would be taken as a base and error). ScanTrainer must simply not throw.
+-- Regression guard for two real ScanTrainer crashes. GetTrainerServiceSkillReq
+-- returns skill, rank, hasReq: a row can carry a skill name with no rank, and
+-- a header row returns nil PLUS an extra value. Neither may reach the numeric
+-- compare, and the raw multi-return must never be forwarded whole into
+-- tonumber (the next value would be taken as a base and error). ScanTrainer
+-- must simply not throw.
 do
     local sNum, sInfo, sReq = GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq
     GetNumTrainerServices    = function() return 3 end
@@ -1715,8 +1754,8 @@ do
     end
     GetTrainerServiceSkillReq = function(i)
         if i == 1 then return nil, 3 end            -- header: multi-return, nil first
-        if i == 2 then return "Blacksmithing" end   -- spec trainer: a profession name
-        return 285                                  -- a normal numeric requirement
+        if i == 2 then return "Blacksmithing" end   -- a skill name with no rank
+        return "Mining", 285, true                  -- a normal requirement
     end
     local ok, err = pcall(function() ProfBuddy.Scanner:ScanTrainer() end)
     GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq = sNum, sInfo, sReq
@@ -1851,6 +1890,8 @@ do
     assert(type(addon.SkinLootTables) == "table", "T73: SkinLootTables should load")
     assert(type(addon.SkinItems) == "table", "T73: SkinItems should load")
     assert(type(addon.SkinnableMobs) == "table", "T73: SkinnableMobs should load")
+    -- no source label: TBC Anniversary's heading stays a plain "Skins into:"
+    assert(addon.SkinLootSource == nil, "T73: TBC loot names a source")
     local n = 0
     for npc, idx in pairs(addon.SkinLoot) do
         n = n + 1
@@ -2001,12 +2042,15 @@ do
         if i == 1 then return "Deadly Poison III", "", "available" end
         return "Sinister Strike", "Rank 9", "available"
     end
-    GetTrainerServiceSkillReq = function(i) return (i == 2) and 5 or 0 end
+    GetTrainerServiceSkillReq = function(i)
+        if i == 2 then return "Swords", 5, true end
+        return nil, 0, false
+    end
     Scanner:ScanTrainer()
     assert(ov["Sinister Strike"] == nil, "T78: a rogue class trainer wrote a class spell into skillReqOverrides")
     GetNumTrainerServices = function() return 1 end
     GetTrainerServiceInfo = function() return "Smelt Bronze", "", "available" end
-    GetTrainerServiceSkillReq = function() return 70 end
+    GetTrainerServiceSkillReq = function() return "Mining", 70, true end
     Scanner:ScanTrainer()
     GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq = sNum, sInfo, sReq
     assert(ov["Smelt Bronze"] == 70, "T78: a profession trainer stopped reconciling")
@@ -2048,8 +2092,917 @@ do
 end
 passed("T79 Poisons stays local -- not in HELLO, SYNC_DATA or the full-push signature")
 
+-- ── T80: the trainer's learn level is the SECOND value of the skill req ─────
+-- GetTrainerServiceSkillReq returns skill, rank, hasReq (Blizzard's own trainer
+-- window, classic_anniversary branch). Reading the first value took the skill
+-- NAME, which tonumber() made 0, so no trainer correction was ever recorded.
+-- Only recipe names are written: a header row and a profession rank carry a
+-- skill requirement too.
+do
+    local sNum, sInfo, sReq = GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq
+    local ov = addon.db.skillReqOverrides
+    ov["Smelt Bronze"], ov["Mining"], ov["Journeyman Mining"] = nil, nil, nil
+    GetNumTrainerServices = function() return 3 end
+    GetTrainerServiceInfo = function(i)
+        if i == 1 then return "Mining", "", "header" end
+        if i == 2 then return "Journeyman Mining", "", "available" end
+        return "Smelt Bronze", "", "available"
+    end
+    GetTrainerServiceSkillReq = function(i)
+        if i == 1 then return nil, 3 end
+        if i == 2 then return "Mining", 50, true end
+        return "Mining", 70, true
+    end
+    Scanner:ScanTrainer()
+    GetNumTrainerServices, GetTrainerServiceInfo, GetTrainerServiceSkillReq = sNum, sInfo, sReq
+    assert(RDB:StaticSkillReq("Smelt Bronze") ~= 70, "T80: the static value already matches, so this proves nothing")
+    assert(ov["Smelt Bronze"] == 70, "T80: the trainer's rank was not recorded as the learn level")
+    assert(ov["Mining"] == nil, "T80: a header row was written")
+    assert(ov["Journeyman Mining"] == nil, "T80: a profession rank was written")
+    ov["Smelt Bronze"] = nil
+end
+passed("T80 trainer learn level -- read from the rank, recipe names only")
+
+-- ── T81: TBC Anniversary ignores WoW: Forever knowledge sharing ──────────
+-- COMM_REV 8 adds KNOW_REQ / KNOW_DATA for Forever (Knowledge.lua). This
+-- client has no knowledge store: a KNOW_REQ from a trusted contact gets no
+-- answer, a KNOW_DATA is dropped without an error, and a rev-8 SYNC_DATA
+-- does not make it ask.
+do
+    assert(addon.COMM_REV == 12, "T81: COMM_REV is " .. tostring(addon.COMM_REV))
+    assert(addon.Knowledge == nil, "T81: Knowledge loaded on TBC Anniversary")
+    addon.db.contacts["Knowy-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 }
+    clearSent()
+    recv("Knowy-TestRealm", { _type = "KNOW_REQ", since = 0, profs = { "Tailoring" } })
+    assert(#sentOfType("KNOW_DATA") == 0, "T81: TBC Anniversary answered a KNOW_REQ")
+    recv("Knowy-TestRealm", { _type = "KNOW_DATA", at = 1, npcs = {}, r = {} })
+    recv("Knowy-TestRealm", { _type = "SYNC_DATA", _commrev = 8, class = "MAGE", level = 70,
+                              faction = "Horde", professions = {}, partial = true })
+    assert(#sentOfType("KNOW_REQ") == 0, "T81: TBC Anniversary asked for knowledge")
+    assert(addon.db.knowledgeShared == nil, "T81: TBC Anniversary stored shared knowledge")
+    addon.db.contacts["Knowy-TestRealm"] = nil
+    DS:RemoveRemoteCharacter("Knowy-TestRealm")
+end
+passed("T81 TBC Anniversary ignores KNOW_REQ / KNOW_DATA and never asks (COMM_REV 8)")
+
+-- ── T83: TBC Anniversary keeps AceComm's chunks ──────────────────────────
+-- COMM_REV 9 numbers the chunks of a long message on WoW: Forever only
+-- (Source.NUMBERED_CHUNKS). Here a long payload still goes to AceComm whole.
+do
+    assert(addon.Source.NUMBERED_CHUNKS == nil, "T83: numbered chunks on TBC Anniversary")
+    clearSent()
+    addon.Comm:Send("SYNC_DATA", { note = string.rep("x", 2000) }, "WHISPER", "Buddy", "BULK")
+    local s = sentOfType("SYNC_DATA")
+    assert(#s == 1 and #s[1].payload.note == 2000 and s[1].prio == "BULK", "T83: long send did not go to AceComm whole")
+    clearSent()
+end
+passed("T83 TBC Anniversary sends a long message through AceComm as before (COMM_REV 9 is Forever only)")
+
+-- ── T84: a board post from a name with an accent is kept ─────────────────
+-- %w is ASCII only in the game's Lua (m4ru's /run on both clients printed
+-- nil for "Marü"), so the id check dropped every post from such a name.
+-- Bytes 128-255 now pass; "|" and control bytes still do not.
+do
+    addon.db.orderBoard = {}
+    joinGuild("Mar\195\188", "Buddy")
+    Comm._lastOpenAt = nil
+    recvOn("Mar\195\188", boardOpen("Mar\195\188-TestRealm-5", "Mar\195\188-TestRealm"), "GUILD")
+    assert(addon.db.orderBoard["Mar\195\188-TestRealm-5"], "T84: a post from an accented name was dropped")
+    Comm._lastOpenAt = nil
+    recvOn("Buddy", boardOpen("Buddy-TestRealm-6|cffff0000", "Buddy-TestRealm"), "GUILD")
+    Comm._lastOpenAt = nil
+    recvOn("Buddy", boardOpen("Buddy-TestRealm\0017", "Buddy-TestRealm"), "GUILD")
+    assert(boardCount("Buddy-TestRealm") == 0, "T84: an id with an escape code or a control byte was kept")
+    addon.db.orderBoard = {}
+    leaveGuild()
+end
+passed("T84 board ids -- a post from a name with an accent is kept; escape codes and control bytes still refused")
+
+-- ── T85: "offline" only for a peer we have not heard from lately ─────────
+-- m4ru 2026-09-30: two cancels 0.3 s apart, the peer answered one (the
+-- refusal floor), and PB said the peer was offline while they were talking
+-- to us. An unacked order message now queues quietly when the peer spoke in
+-- the last minute, and warns as before when they did not.
+do
+    addon.db.contacts["Buddy-TestRealm"] = addon.db.contacts["Buddy-TestRealm"] or { trusted = true, autoSync = false, lastSync = 0 }
+    addon.db.orderOutbox = {}
+    local said = {}
+    local realPrint = print
+    print = function(...) said[#said + 1] = table.concat({ ... }, " ") end
+    addon.db.orders["t85-order"] = { id = "t85-order", status = "cancelled", requester = ME, crafter = "Buddy-TestRealm" }
+    local function unacked(token)
+        clearSent()
+        addon.db.orders["t85-order"].lastSentToken = token
+        addon.db.orders["t85-order"].deliveryState = nil
+        Comm:SendOrderMessage("ORDER_UPDATE", { token = token, id = "t85-order" }, "Buddy-TestRealm", "cancelled update")
+        local h = timers[#timers]
+        assert(h and not h.cancelled, "T85: no ack timer for " .. token)
+        h.fn()
+    end
+    Comm._lastHeard = { ["Buddy-TestRealm"] = time() - 10 }
+    unacked("t85a")
+    assert(#said == 0, "T85: offline line for a peer heard 10 s ago: " .. tostring(said[1]))
+    assert(addon.db.orderOutbox["t85a"], "T85: the update was not queued for the retry")
+    assert(addon.db.orders["t85-order"].deliveryState ~= "queued", "T85: marked queued (offline) for a peer heard 10 s ago")
+    Comm._lastHeard = { ["Buddy-TestRealm"] = time() - 120 }
+    unacked("t85b")
+    assert(#said == 1 and said[1]:find("is offline", 1, true), "T85: no offline line for a peer silent 2 minutes")
+    assert(addon.db.orders["t85-order"].deliveryState == "queued", "T85: not marked queued for a silent peer")
+    Comm._lastHeard = nil
+    unacked("t85c")
+    assert(#said == 2, "T85: no offline line for a peer never heard")
+    print = realPrint
+    -- the door stamps the sender
+    Comm._lastHeard = nil
+    recv("Buddy-TestRealm", { _type = "HELLO", professions = {} })
+    assert(Comm._lastHeard and Comm._lastHeard["Buddy-TestRealm"], "T85: a trusted message did not stamp the sender")
+    addon.db.orderOutbox = {}
+    addon.db.orders["t85-order"] = nil
+    clearSent()
+end
+passed("T85 an unacked order message says offline only when the peer has been silent for a minute")
+
+-- ── T86: every "no player named" line for our own whisper is hidden ──────
+-- A long message is several whispers and the server answers each one; the
+-- line also reaches the filter once per chat frame. All of them are ours
+-- for WHISPER_MEMORY (300 s since 2026-10-12: Forever answers addon
+-- whispers 97-128 s late); a line after that, or for a name we did not
+-- whisper, is the player's own and shows.
+do
+    Comm._recentWhispers = nil
+    local line = "No player named 'Offliner' is currently playing."
+    Comm:SendWhisper("SYNC_DATA", { _type = "SYNC_DATA" }, "Offliner-TestRealm", "BULK")
+    for i = 1, 6 do
+        assert(Comm:OnSystemMessage(line) == true, "T86: line " .. i .. " of one push was shown")
+    end
+    assert(Comm:OnSystemMessage("No player named 'Stranger' is currently playing.") == false,
+        "T86: a line for a name we never whispered was hidden")
+    Comm._recentWhispers["Offliner"] = time() - 128
+    assert(Comm:OnSystemMessage(line) == true, "T86: a line 128 s after our whisper (Forever's measured delay) was shown")
+    Comm._recentWhispers["Offliner"] = time() - 301
+    assert(Comm:OnSystemMessage(line) == false, "T86: a line 301 s after our whisper was hidden")
+    Comm._recentWhispers = nil
+    clearSent()
+end
+passed("T86 offline lines -- every line answering one push is hidden, the player's own still show")
+
+-- T87: /pb bug carries the last gathering tooltip (ProfBuddyDB.lastGather):
+-- what was hovered, what PB showed and why, and asks whether you could
+-- gather it. No section when there is none.
+do
+    GetBuildInfo = GetBuildInfo or function() return "2.5.6", "69110", "", 20506 end
+    UnitRace = UnitRace or function() return "Human" end
+    date = date or function(fmt, t) return os.date(fmt, t) end
+    addon.db.lastGather = nil
+    local text = addon.BuildBugReport()
+    assert(text:find("Professions:", 1, true) and not text:find("Last gathering tooltip", 1, true),
+           "T87: a gathering section with nothing recorded")
+    addon.db.lastGather = { kind = "corpse", name = "Thunder Lizard", npcID = 3130, level = 10,
+        shown = "Requires Skinning (1)", yours = "Your Skinning: 87", why = "mob list",
+        loot = "TBC data", zone = "The Barrens", at = 1000 }
+    text = addon.BuildBugReport()
+    -- where and when on their own line (the mob line wrapped mid-date)
+    assert(text:find("  Mob: Thunder Lizard (NPC 3130, level 10, corpse)\n  Where: The Barrens, ", 1, true), "T87: mob line\n" .. text)
+    assert(text:find("  PB showed: Requires Skinning (1), Your Skinning: 87, loot from TBC data", 1, true), "T87: shown line")
+    assert(text:find("  Why: mob list\n", 1, true) and text:find("Could you gather it (yes / no)?", 1, true), "T87: why line")
+    assert(text:find("Could you gather it", 1, true) < text:find("What happened:", 1, true), "T87: section order")
+    addon.db.lastGather = { kind = "node", name = "Tin Vein", shown = "Requires Mining (65)", why = "node table",
+        gameLine = "Requires Mining" }
+    text = addon.BuildBugReport()
+    assert(text:find("  Node: Tin Vein\n  PB showed", 1, true) and text:find("PB showed: Requires Mining (65), skill not learned", 1, true)
+           and text:find("Why: node table; the game's line: Requires Mining", 1, true), "T87: node lines\n" .. text)
+    addon.db.lastGather = nil
+end
+passed("T87 /pb bug -- the last gathering tooltip: what, what PB showed, why, could you gather it; none when nothing recorded")
+
+-- T88: tool requirements on TBC Anniversary (Data/Tools.lua, baked from the
+-- client's SpellTotems by tools/bake_tbc_tools.py): every tool but the
+-- Enchanting rod, with the items that satisfy it.
+do
+    dofile(BASE .. "/Data/Tools.lua")
+    local RT, TC = addon.RecipeTools, addon.ToolCategories
+    assert(TC[13] and TC[13].name == "Blacksmith Hammer" and TC[13].items[1] == 5956, "T88: hammer")
+    local stones = {}
+    for _, i in ipairs(TC[12].items) do stones[i] = true end
+    assert(TC[12].name == "Philosopher's Stone" and stones[9149] and stones[13503] and stones[35748],
+           "T88: Alchemist's Stones count as a Philosopher's Stone")
+    assert(RT[12260] and RT[12260][1] == 13, "T88: Rough Copper Vest needs a hammer")
+    assert(RT[25278] and RT[25278][1] == -20815 and addon.ToolItemNames[20815] == "Jeweler's Kit", "T88: Jeweler's Kit")
+    local n = 0
+    for _ in pairs(RT) do n = n + 1 end
+    assert(n == 804, "T88: " .. n .. " recipes need a tool")
+end
+passed("T88 TBC tools -- hammer, spanner, micro-adjustor, Philosopher's Stone (Alchemist's Stones count), Jeweler's Kit; 804 recipes")
+
+-- T89: board-post alerts. A guildmate's NEW board post prints one chat line
+-- when the boardAlert filter matches: "known" (default) = a recipe this
+-- character knows, "alts" = this character or a local alt, "any" = every post,
+-- "off" = none. Friends' synced recipes never count, a login re-broadcast of a
+-- post already on the board never alerts, and the sound follows "Sound on new
+-- request".
+do
+    StaticPopupDialogs = StaticPopupDialogs or {}   -- OrdersPanel defines its popups at load
+    dofile(BASE .. "/UI/OrdersPanel.lua")
+    local OP = addon.OrdersPanel
+    OP.UpdateBadge = function() end
+    OP.RefreshAll = function() end
+    local lines, sounds = {}, 0
+    local realPrint, realSound = print, PlaySound
+    print = function(msg) lines[#lines + 1] = tostring(msg) end
+    PlaySound = function() sounds = sounds + 1 end
+    SOUNDKIT = SOUNDKIT or { TELL_MESSAGE = 0 }
+
+    local chars = addon.db.characters
+    local meProfs = chars[ME].professions
+    local savedTailoring = meProfs.Tailoring
+    meProfs.Tailoring = { skillLevel = 300, recipes = { ["Bolt of Runecloth"] = {} } }
+    chars["Altchar-TestRealm"] = { faction = "Alliance", professions = {
+        Blacksmithing = { skillLevel = 200, recipes = { ["Copper Chain Belt"] = {} } } } }
+    chars["Pal-TestRealm"] = { isRemote = true, faction = "Alliance", professions = {
+        Alchemy = { skillLevel = 300, recipes = { ["Major Healing Potion"] = {} } } } }
+
+    local seq = 500
+    local function post(name, prof)
+        seq = seq + 1
+        Comm._lastOpenAt = nil
+        local m = boardOpen("Buddy-TestRealm-" .. seq, "Buddy-TestRealm", 2)
+        m.order.item = { id = 1, name = name, profession = prof }
+        recvOn("Buddy", m, "GUILD")
+        return "Buddy-TestRealm-" .. seq
+    end
+    local function take() local l = lines; lines = {}; return l end
+
+    addon.db.orderBoard = {}
+    joinGuild("Buddy")
+    local st = addon.db.settings
+    st.orderSoundOnRequest = false
+    assert(st.boardAlert == "known", "T89: default is not \"known\"")
+
+    -- known: my recipe alerts, case-insensitive; an alt's, a friend's or a
+    -- free-text post does not.
+    local id1 = post("bolt of runecloth", "Tailoring")
+    local l = take()
+    assert(#l == 1 and l[1]:find("Buddy posted on the guild board: 2x bolt of runecloth (you know this recipe)", 1, true),
+        "T89: known recipe line wrong: " .. tostring(l[1]))
+    post("Copper Chain Belt", "Blacksmithing")
+    post("Major Healing Potion", "Alchemy")
+    post("anything shiny", nil)
+    assert(#take() == 0, "T89: \"known\" alerted on a post this character does not know")
+    -- no profession on the post: every crafting profession is checked
+    post("Bolt of Runecloth", nil)
+    assert(#take() == 1, "T89: a no-profession post of a known recipe did not alert")
+    -- re-broadcast of a post already held: no alert
+    Comm._lastOpenAt = nil
+    local again = boardOpen(id1, "Buddy-TestRealm", 2)
+    again.order.item = { id = 1, name = "bolt of runecloth", profession = "Tailoring" }
+    recvOn("Buddy", again, "GUILD")
+    assert(#take() == 0, "T89: a login re-broadcast alerted again")
+
+    -- alts: an alt's recipe alerts and names the alt; a friend's does not.
+    st.boardAlert = "alts"
+    post("Copper Chain Belt", "Blacksmithing")
+    l = take()
+    assert(#l == 1 and l[1]:find("(Altchar knows this recipe)", 1, true), "T89: alt line wrong: " .. tostring(l[1]))
+    post("Major Healing Potion", "Alchemy")
+    assert(#take() == 0, "T89: a friend's synced recipe counted as an alt's")
+    -- an opposite-faction alt counts only with showCrossFactionAlts
+    chars["Altchar-TestRealm"].faction = "Horde"
+    st.showCrossFactionAlts = false
+    post("Copper Chain Belt", "Blacksmithing")
+    assert(#take() == 0, "T89: an opposite-faction alt counted with the setting off")
+    st.showCrossFactionAlts = true
+    post("Copper Chain Belt", "Blacksmithing")
+    assert(#take() == 1, "T89: an opposite-faction alt ignored with the setting on")
+    st.showCrossFactionAlts = nil
+    chars["Altchar-TestRealm"].faction = "Alliance"
+
+    -- any: every new post, no suffix when nobody knows it; sound when on.
+    st.boardAlert = "any"
+    st.orderSoundOnRequest = true
+    post("anything shiny", nil)
+    l = take()
+    assert(#l == 1 and l[1]:find("2x anything shiny$"), "T89: any-post line wrong: " .. tostring(l[1]))
+    assert(sounds == 1, "T89: the sound did not follow Sound on new request")
+    -- order chat messages off does not silence it (its own setting)
+    st.orderChatMessages = false
+    post("anything else", nil)
+    assert(#take() == 1, "T89: Order chat messages silenced the board alert")
+    st.orderChatMessages = true
+    st.orderSoundOnRequest = false
+
+    -- off: nothing, but the post is still on the board.
+    st.boardAlert = "off"
+    local idOff = post("Bolt of Runecloth", "Tailoring")
+    assert(#take() == 0 and sounds == 2, "T89: \"off\" still alerted")
+    assert(addon.db.orderBoard[idOff], "T89: \"off\" dropped the post from the board")
+
+    st.boardAlert = "known"
+    print, PlaySound = realPrint, realSound
+    meProfs.Tailoring = savedTailoring
+    chars["Altchar-TestRealm"], chars["Pal-TestRealm"] = nil, nil
+    addon.db.orderBoard = {}
+end
+passed("T89 board-post alerts -- known (default), alts, any and off; re-broadcasts, friends and the sound")
+
+-- T90: a whisper's chunks can leave ChatThrottleLib's queue long after
+-- SendWhisper queued them. Each chunk that leaves re-stamps the whisper, so
+-- the server's "no player named" line for a late chunk is still ours.
+do
+    Comm._recentWhispers = nil
+    clearSent()
+    local line = "No player named 'Latechunk' is currently playing."
+    local t0 = os.time()
+    local realTime = time
+    time = function() return t0 end
+    Comm:SendWhisper("SYNC_DATA", { _type = "SYNC_DATA" }, "Latechunk-TestRealm", "BULK")
+    local msg = firstOfType("SYNC_DATA")
+    assert(msg and type(msg.onChunk) == "function", "T90: the whisper passed no chunk callback")
+    -- 305 s later, still queued: the line is not ours yet
+    time = function() return t0 + 305 end
+    assert(Comm:OnSystemMessage(line) == false, "T90: a line 305 s after queueing was hidden with no chunk sent")
+    -- the last chunk leaves now, and the server answers it
+    msg.onChunk(nil, true, 0)
+    time = function() return t0 + 306 end
+    assert(Comm:OnSystemMessage(line) == true, "T90: the line for a chunk that left late was shown")
+    time = function() return t0 + 606 end
+    assert(Comm:OnSystemMessage(line) == false, "T90: a line 301 s after the last chunk was hidden")
+    time = realTime
+    Comm._recentWhispers = nil
+    clearSent()
+end
+passed("T90 late chunks -- each chunk that leaves re-stamps the whisper, so its offline line is hidden")
+
+-- T91: TBC Anniversary loads the launcher: its toc lists UI/Launcher.lua
+-- after the profession window, and libs.xml loads LibDataBroker-1.1 and then
+-- LibDBIcon-1.0 after CallbackHandler (both need it). TBC has no addon
+-- compartment; LibDBIcon skips it there (F51 covers the Forever side).
+do
+    local function read(path)
+        local f = assert(io.open(BASE .. "/" .. path, "r"), "T91: missing " .. path)
+        local t = f:read("*a"); f:close(); return t
+    end
+    local toc = read("ProfessionBuddy_TBC.toc")
+    local tsf, lau = toc:find("UI/TradeSkillFrame.lua", 1, true), toc:find("UI/Launcher.lua", 1, true)
+    assert(lau and tsf and lau > tsf, "T91: the TBC toc does not load UI/Launcher.lua after the profession window")
+    local libs = read("Libs/libs.xml")
+    local cbh = libs:find("CallbackHandler-1.0", 1, true)
+    local ldb = libs:find("LibDataBroker-1.1\\LibDataBroker-1.1.lua", 1, true)
+    local dbi = libs:find("LibDBIcon-1.0\\LibDBIcon-1.0.lua", 1, true)
+    assert(cbh and ldb and dbi and cbh < ldb and ldb < dbi, "T91: libs.xml library order")
+    read("Libs/LibDataBroker-1.1/LibDataBroker-1.1.lua")
+    local dbiSrc = read("Libs/LibDBIcon-1.0/LibDBIcon-1.0.lua")
+    assert(dbiSrc:find("if AddonCompartmentFrame then", 1, true), "T91: LibDBIcon no longer checks for the compartment")
+    -- the TBC icon: with no Knowledge module (Forever toc only) the launcher
+    -- takes Basic Campfire's icon
+    assert(not addon.Knowledge, "T91: the TBC harness loaded the Forever Knowledge module")
+    local made
+    local fakeLDB = { NewDataObject = function(_, name, o) made = o; return o end }
+    local realLibStub = LibStub
+    LibStub = function(name, silent)
+        if name == "LibDataBroker-1.1" then return fakeLDB end
+        if name == "LibDBIcon-1.0" then return nil end
+        return realLibStub(name, silent)
+    end
+    dofile(BASE .. "/UI/Launcher.lua")
+    addon.Launcher:Init()
+    LibStub = realLibStub
+    assert(made and made.icon == "Interface\\Icons\\Spell_Fire_Fire", "T91: TBC icon " .. tostring(made and made.icon))
+end
+passed("T91 TBC launcher files -- toc lists UI/Launcher.lua, libs.xml loads LibDataBroker then LibDBIcon, Basic Campfire icon")
+
+-- T92: the player's own whispers. A "No player named" line shows when the
+-- player whispered that name inside the window, even if PB did too, and
+-- the back-off still starts; PB's alone hides for five minutes.
+do
+    addon.db.contacts["Quietpal-TestRealm"] = { trusted = true, autoSync = true, lastSync = 0 }
+    Comm._recentWhispers, Comm._playerWhispers = nil, nil
+    local line = "No player named 'Quietpal' is currently playing."
+    Comm:SendWhisper("SYNC_REQ", {}, "Quietpal-TestRealm")
+    assert(Comm:OnSystemMessage(line) == true, "T92: PB's own whisper: the line was shown")
+    Comm:NotePlayerWhisper("WHISPER", "Quietpal")
+    addon.db.contacts["Quietpal-TestRealm"].offlineUntil = nil
+    assert(Comm:OnSystemMessage(line) == false, "T92: the answer to the player's own whisper was hidden")
+    assert(addon.db.contacts["Quietpal-TestRealm"].offlineUntil, "T92: the back-off did not start")
+    Comm._playerWhispers["Quietpal"] = time() - 301
+    assert(Comm:OnSystemMessage(line) == true, "T92: a 301 s old player whisper still kept PB's line visible")
+    Comm:NotePlayerWhisper("SAY", "Quietpal")
+    assert(Comm._playerWhispers["Quietpal"] == time() - 301, "T92: a /say was noted as a whisper")
+    Comm._recentWhispers, Comm._playerWhispers = nil, nil
+    addon.db.contacts["Quietpal-TestRealm"] = nil
+    clearSent()
+end
+passed("T92 the player's own whispers -- their offline line shows, PB's hides for five minutes")
+
+-- T93: Battle.net auto-add on TBC Anniversary (BattleNet.lua). Picked
+-- friends' characters online in this game, region and faction become
+-- contacts, untrusted unless "Also trust them"; a friend dropped from
+-- Battle.net takes those contacts along, never a manual one, and never on
+-- an empty read or while Battle.net is down.
+do
+    dofile(BASE .. "/BattleNet.lua")
+    local BN = addon.BattleNet
+    assert(BN:Available(), "T93: Battle.net auto-add is off on TBC Anniversary")
+    WOW_PROJECT_ID = 5
+    local connected = true
+    BNConnected = function() return connected end
+    local list
+    local function game(name, realm, over)
+        local g = { clientProgram = "WoW", isOnline = true, wowProjectID = 5, isInCurrentRegion = true,
+                    characterName = name, realmName = realm, factionName = "Alliance" }
+        for k, v in pairs(over or {}) do g[k] = v end
+        return g
+    end
+    BNGetNumFriends = function() return #list, #list, 0, 0 end
+    C_BattleNet = {
+        GetFriendAccountInfo = function(i) return list[i] and { battleTag = list[i].tag, accountName = "never read" } end,
+        GetFriendNumGameAccounts = function(i) return #list[i].games end,
+        GetFriendGameAccountInfo = function(i, j) return list[i].games[j] end,
+    }
+    local saved = addon.db.contacts
+    addon.db.contacts = { ["Manual-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 } }
+    local C = addon.db.contacts
+    local s = addon.db.settings
+    s.bnetAutoAdd, s.bnetTrust, s.bnetPicks = false, false, {}
+    list = {
+        { tag = "Picked#1", games = {
+            game("Pala", "Test Realm"),                                   -- added
+            game("Retailer", "Test Realm", { wowProjectID = 1 }),         -- other game
+            game("Abroad", "Test Realm", { isInCurrentRegion = false }),  -- other region
+            game("Nomad", nil),                                           -- no realm
+            game("Redside", "Test Realm", { factionName = "Horde" }),     -- other faction
+            game("Gone", "Test Realm", { isOnline = false }),             -- offline
+            game("Manual", "Test Realm"),                                 -- already a manual contact
+            game("Me", "Test Realm"),                                     -- ourselves
+            { clientProgram = "App", isOnline = true } } },
+        { tag = "NotPicked#2", games = { game("Other", "Test Realm") } },
+    }
+    s.bnetPicks["Picked#1"] = true
+    BN:Scan()
+    assert(not C["Pala-TestRealm"], "T93: added with auto-add off")
+    BN:SetAutoAdd(true)
+    local p = C["Pala-TestRealm"]
+    assert(p and p.bnet == "Picked#1" and p.trusted == false and p.autoSync == false,
+           "T93: a picked friend's character was not added untrusted")
+    for _, k in ipairs({ "Retailer", "Abroad", "Redside", "Gone", "Other" }) do
+        assert(not C[k .. "-TestRealm"], "T93: added " .. k)
+    end
+    local n = 0
+    for _ in pairs(C) do n = n + 1 end
+    assert(n == 2, "T93: " .. n .. " contacts, want Manual + Pala (no realm, no self)")
+    assert(C["Manual-TestRealm"].bnet == nil and C["Manual-TestRealm"].trusted == true, "T93: a manual contact was changed")
+    -- trust: covers existing Battle.net contacts and new ones, never manual ones
+    BN:SetTrust(true)
+    assert(C["Pala-TestRealm"].trusted == true, "T93: Also trust them did not trust an existing contact")
+    clearSent()
+    table.insert(list[1].games, game("Priest", "Test Realm"))
+    BN:Scan()
+    assert(C["Priest-TestRealm"] and C["Priest-TestRealm"].trusted == true, "T93: a new contact was not trusted")
+    assert(#sentOfType("SYNC_REQ") == 1, "T93: a trusted add did not sync once")
+    BN:SetTrust(false)
+    assert(C["Pala-TestRealm"].trusted == false and C["Manual-TestRealm"].trusted == true, "T93: untrust touched the wrong contacts")
+    -- unpicking stops new adds, removes nothing
+    BN:SetPicked("Picked#1", false)
+    table.insert(list[1].games, game("Rogue", "Test Realm"))
+    BN:Scan()
+    assert(C["Pala-TestRealm"] and not C["Rogue-TestRealm"], "T93: unpicking removed a contact or still added one")
+    -- an empty read or Battle.net down removes nothing
+    local full = list
+    list = {}
+    BN:Scan()
+    assert(C["Pala-TestRealm"], "T93: an empty friend list removed contacts")
+    list = { full[2] }
+    connected = false
+    BN:Scan()
+    assert(C["Pala-TestRealm"], "T93: removed contacts while Battle.net was down")
+    -- the friend leaves Battle.net: their contacts go, the manual one stays
+    connected = true
+    BN:Scan()
+    assert(not C["Pala-TestRealm"] and not C["Priest-TestRealm"], "T93: a removed friend's contacts stayed")
+    assert(C["Manual-TestRealm"], "T93: a manual contact was removed")
+    s.bnetAutoAdd, s.bnetTrust, s.bnetPicks = false, false, {}
+    addon.db.contacts = saved
+    BNConnected, BNGetNumFriends, C_BattleNet = nil, nil, nil
+    clearSent()
+end
+passed("T93 Battle.net auto-add -- picked friends in this game, region and faction; trust; removal guards")
+
+-- T94: the 2026-10-13 fix wave, TBC side. Typed names: spaces around the
+-- hyphen and a realm in any case land on the game's spelling (ours, a
+-- connected realm, or one PB already knows); an unknown realm keeps the
+-- typed one. /pb sync within their 30 s serve cooldown says so instead of
+-- waiting for "didn't respond". "Also trust them" trusts and ticks Auto-sync
+-- on every Battle.net contact and syncs the online ones once; untrusting
+-- clears both.
+do
+    StaticPopupDialogs = StaticPopupDialogs or {}
+    if not (addon.FriendsPanel and addon.FriendsPanel.ContactKeyFromInput) then
+        dofile(BASE .. "/UI/FriendsPanel.lua")
+    end
+    local K = addon.FriendsPanel.ContactKeyFromInput
+    assert(K("Spheal - Test Realm") == "Spheal-TestRealm", "T94: spaces around the hyphen")
+    assert(K("  Spheal -TestRealm ") == "Spheal-TestRealm", "T94: a space before the hyphen")
+    assert(K("spheal-test realm") == "Spheal-TestRealm", "T94: our realm in lower case")
+    assert(Comm:NormalizeContactKey("spheal - testrealm") == "Spheal-TestRealm", "T94: /pb sync input")
+    GetAutoCompleteRealms = function() return { "Old Blanchy" } end
+    assert(K("Bob-old blanchy") == "Bob-OldBlanchy", "T94: a connected realm in lower case")
+    GetAutoCompleteRealms = nil
+    addon.db.characters["Ann-KelThuzad"] = { isRemote = true, professions = {} }
+    assert(K("ann-kel'thuzad") == "Ann-KelThuzad", "T94: a realm PB knows, typed in lower case")
+    addon.db.characters["Ann-KelThuzad"] = nil
+    assert(K("Bob-Otherplace") == "Bob-Otherplace", "T94: an unknown realm changed")
+
+    -- /pb sync inside their serve cooldown
+    addon.db.contacts["Syncpal-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 }
+    Comm._servedUsAt, Comm._pendingSync = nil, nil
+    Comm:_ResetServeCooldown()
+    clearSent()
+    Comm:RequestSync("Syncpal", true)
+    assert(#sentOfType("SYNC_REQ") == 1, "T94: the first /pb sync was not sent")
+    recv("Syncpal", { _type = "SYNC_DATA", professions = {}, inventory = { bags = {}, bank = {} } })
+    assert(Comm._servedUsAt and Comm._servedUsAt["Syncpal-TestRealm"], "T94: their answer was not noted")
+    clearSent()
+    local lines, realPrint = {}, print
+    print = function(m) lines[#lines + 1] = tostring(m) end
+    Comm:RequestSync("Syncpal", true)
+    print = realPrint
+    assert(#sentOfType("SYNC_REQ") == 0, "T94: a request inside their cooldown went out")
+    assert(lines[1] and lines[1]:find("you can sync again in 30 s", 1, true), "T94: message: " .. tostring(lines[1]))
+    Comm._servedUsAt["Syncpal-TestRealm"] = time() - 31
+    Comm._pendingSync = nil
+    Comm:RequestSync("Syncpal", true)
+    assert(#sentOfType("SYNC_REQ") == 1, "T94: a request after the cooldown was held back")
+    addon.db.contacts["Syncpal-TestRealm"] = nil
+    Comm._servedUsAt, Comm._pendingSync = nil, nil
+
+    -- Battle.net trust
+    local BN = addon.BattleNet
+    WOW_PROJECT_ID = 5
+    BNConnected = function() return true end
+    local list = { { tag = "Pal#1", games = { { clientProgram = "WoW", isOnline = true, wowProjectID = 5,
+        isInCurrentRegion = true, characterName = "Pala", realmName = "Test Realm", factionName = "Alliance" } } } }
+    BNGetNumFriends = function() return #list end
+    C_BattleNet = {
+        GetFriendAccountInfo = function(i) return { battleTag = list[i].tag } end,
+        GetFriendNumGameAccounts = function(i) return #list[i].games end,
+        GetFriendGameAccountInfo = function(i, j) return list[i].games[j] end,
+    }
+    local saved = addon.db.contacts
+    addon.db.contacts = {
+        ["Pala-TestRealm"] = { trusted = false, autoSync = false, lastSync = 0, bnet = "Pal#1" },
+        ["Offalt-TestRealm"] = { trusted = false, autoSync = false, lastSync = 0, bnet = "Pal#1" },
+        ["Manual-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 },
+    }
+    local C = addon.db.contacts
+    clearSent()
+    BN:SetTrust(true)
+    assert(C["Pala-TestRealm"].trusted and C["Pala-TestRealm"].autoSync
+           and C["Offalt-TestRealm"].trusted and C["Offalt-TestRealm"].autoSync, "T94: trust did not tick Auto-sync")
+    local reqs = sentOfType("SYNC_REQ")
+    assert(#reqs == 1 and reqs[1].target == "Pala", "T94: trust should sync only the online one once")
+    assert(C["Manual-TestRealm"].autoSync == false, "T94: a manual contact's Auto-sync changed")
+    BN:SetTrust(false)
+    assert(not C["Pala-TestRealm"].trusted and not C["Pala-TestRealm"].autoSync, "T94: untrust left Auto-sync on")
+    addon.db.settings.bnetTrust, addon.db.settings.bnetAutoAdd = true, true
+    addon.db.settings.bnetPicks = { ["Pal#1"] = true }
+    list[1].games[1].characterName = "Newalt"
+    BN:Scan()
+    assert(C["Newalt-TestRealm"] and C["Newalt-TestRealm"].autoSync == true, "T94: a trusted add did not tick Auto-sync")
+    addon.db.settings.bnetTrust, addon.db.settings.bnetAutoAdd, addon.db.settings.bnetPicks = false, false, {}
+    addon.db.contacts = saved
+    BNConnected, BNGetNumFriends, C_BattleNet = nil, nil, nil
+    clearSent()
+end
+passed("T94 fix wave -- typed names and realm case, /pb sync cooldown message, Battle.net trust syncs and ticks Auto-sync")
+
+-- ── T95: our open posts reach a guildmate who announces themselves ──
+do
+    local savedGuild = { unpack(state.guildMembers) }
+    local savedOrders = addon.db.orders
+    addon.db.orders = {}
+    addon.db.orderBoard = {}
+    joinGuild("Postpal", "Lateguy", "Thirdguy")
+    Comm._openSlots, Comm._deferredOpens, Comm._postsSentAt = nil, nil, nil
+    clearSent(); clearDeferred()
+    local HELLO = { _type = "HELLO", professions = {} }
+
+    -- No open posts: a guild HELLO sends none.
+    recvOn("Lateguy", HELLO, "GUILD")
+    runDeferred()
+    assert(#sentOfType("ORDER_OPEN") == 0, "T95: posts sent with none open")
+
+    -- Two open posts: a guild HELLO whispers both to that guildmate, in order,
+    -- the second spaced past the receiver's per-sender cooldown.
+    local p1 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
+    local p2 = Orders:CreateOpen({ item = ITEM, quantity = 1 })
+    Comm._openSlots, Comm._postsSentAt = nil, nil
+    clearSent(); clearDeferred()
+    recvOn("Lateguy", HELLO, "GUILD")
+    local opens = sentOfType("ORDER_OPEN")
+    assert(#opens == 1, "T95: want 1 post sent at once, got " .. #opens)
+    assert(opens[1].channel == "WHISPER" and opens[1].target == "Lateguy",
+        "T95: the post went to " .. tostring(opens[1].channel) .. " " .. tostring(opens[1].target))
+    assert(opens[1].payload.order.id == p1.id, "T95: the oldest post did not go first")
+    runDeferred()
+    opens = sentOfType("ORDER_OPEN")
+    assert(#opens == 2 and opens[2].payload.order.id == p2.id and opens[2].target == "Lateguy",
+        "T95: the second post was not sent after the spacing")
+
+    -- A second HELLO inside a minute re-sends nothing.
+    clearSent(); clearDeferred()
+    recvOn("Lateguy", HELLO, "GUILD")
+    runDeferred()
+    assert(#sentOfType("ORDER_OPEN") == 0, "T95: posts re-sent inside the floor")
+
+    -- A HELLO that is not on the guild channel sends none.
+    clearSent(); clearDeferred()
+    recvOn("Thirdguy", HELLO, "WHISPER")
+    runDeferred()
+    assert(#sentOfType("ORDER_OPEN") == 0, "T95: a whispered HELLO pulled our posts")
+
+    -- A guild send reaches everyone, so a whisper waits for it.
+    Comm._openSlots = nil
+    clearSent(); clearDeferred()
+    Comm:BroadcastOpenOrder(p1)
+    Comm:BroadcastOpenOrder(p2, "Thirdguy-TestRealm")
+    assert(#sentOfType("ORDER_OPEN") == 1 and #deferred == 1,
+        "T95: a whisper went out inside the cooldown of a guild send")
+    -- Whispers to two guildmates do not wait for each other; a guild send
+    -- waits for both.
+    Comm._openSlots, Comm._deferredOpens = nil, nil
+    clearSent(); clearDeferred()
+    Comm:BroadcastOpenOrder(p1, "Thirdguy-TestRealm")
+    Comm:BroadcastOpenOrder(p2, "Postpal-TestRealm")
+    assert(#sentOfType("ORDER_OPEN") == 2 and #deferred == 0,
+        "T95: a whisper to one guildmate waited for another's")
+    Comm:BroadcastOpenOrder(p2)
+    assert(#sentOfType("ORDER_OPEN") == 2 and #deferred == 1,
+        "T95: a guild send did not wait for the whispers")
+
+    -- A close cancels every pending send of that post.
+    Comm._openSlots, Comm._deferredOpens = nil, nil
+    clearSent(); clearDeferred()
+    Comm:BroadcastOpenOrder(p1)
+    Comm:BroadcastOpenOrder(p2, "Thirdguy-TestRealm")
+    Comm:BroadcastOpenOrder(p2, "Postpal-TestRealm")
+    Comm:BroadcastOrderClosed(p2.id, "cancelled")
+    runDeferred()
+    for _, s in ipairs(sentOfType("ORDER_OPEN")) do
+        assert(s.payload.order.id ~= p2.id, "T95: a cancelled post was sent after its close")
+    end
+
+    -- A guildmate who left before their whisper fired is not sent it.
+    Comm._openSlots, Comm._deferredOpens = nil, nil
+    clearSent(); clearDeferred()
+    Comm:BroadcastOpenOrder(p1, "Thirdguy-TestRealm")
+    Comm:BroadcastOpenOrder(p2, "Thirdguy-TestRealm")
+    joinGuild("Postpal", "Lateguy")
+    runDeferred()
+    assert(#sentOfType("ORDER_OPEN") == 1, "T95: a post was whispered to a former guildmate")
+
+    Comm._openSlots, Comm._deferredOpens, Comm._postsSentAt = nil, nil, nil
+    clearSent(); clearDeferred()
+    addon.db.orders = savedOrders
+    addon.db.orderBoard = {}
+    joinGuild(unpack(savedGuild))
+end
+passed("T95 board re-send -- a guild HELLO gets our open posts by whisper, spaced, floored and cancellable")
+
+-- ── T96: a learned profession is announced to the guild again ───────
+do
+    local savedGuild = { unpack(state.guildMembers) }
+    joinGuild("Postpal")
+    local char = DS:GetCharacter(ME)
+    local savedProfs = {}
+    for k, v in pairs(char.professions) do savedProfs[k] = v end
+    -- Earlier tests left Alchemy, First Aid and others here; start from one.
+    for k in pairs(char.professions) do
+        if k ~= "Tailoring" then char.professions[k] = nil end
+    end
+    Comm._helloProfNames, Comm._lastGuildHelloAt = nil, nil
+    Comm._profHelloRetry, Comm._profCheckTimer = nil, nil
+    clearSent(); clearDeferred()
+    local function learn(prof, rank)
+        DS:SetProfessionData(prof, { skillLevel = rank or 1, maxSkill = 75, recipes = {} })
+        fire("SKILL_LINES_CHANGED")
+        local t = Comm._profCheckTimer
+        assert(t, "T96: SKILL_LINES_CHANGED did not queue the profession check")
+        t.fn()
+    end
+
+    -- No guild HELLO this session yet: the login one carries the list.
+    learn("Leatherworking")
+    assert(#sentOfType("HELLO") == 0, "T96: announced before the login HELLO")
+
+    -- After it, a learned profession re-announces on the guild channel.
+    Comm:BroadcastGuildHello()
+    assert(#sentOfType("HELLO") == 1, "T96: setup -- the guild HELLO did not go out")
+    clearSent()
+    Comm._lastGuildHelloAt = time() - 31
+    learn("Alchemy")
+    local h = sentOfType("HELLO")
+    assert(#h == 1 and h[1].channel == "GUILD" and h[1].payload.professions.Alchemy,
+        "T96: a learned profession was not announced to the guild")
+
+    -- A skill-up alone is not announced.
+    clearSent()
+    Comm._lastGuildHelloAt = time() - 31
+    learn("Alchemy", 40)
+    assert(#sentOfType("HELLO") == 0, "T96: a skill-up re-announced")
+
+    -- A class-only profession is never shared, so it is not announced.
+    learn("Poisons")
+    assert(#sentOfType("HELLO") == 0, "T96: Poisons was announced")
+
+    -- Inside the 30 s floor: one retry waits, and a second change adds none.
+    clearSent(); clearDeferred()
+    Comm._lastGuildHelloAt = time()
+    learn("Cooking")
+    learn("First Aid")
+    assert(#sentOfType("HELLO") == 0 and #deferred == 1,
+        "T96: want 0 HELLO and 1 retry inside the floor, got "
+        .. #sentOfType("HELLO") .. " and " .. #deferred)
+    Comm._lastGuildHelloAt = time() - 31
+    runDeferred()
+    h = sentOfType("HELLO")
+    assert(#h == 1 and h[1].payload.professions.Cooking and h[1].payload.professions["First Aid"],
+        "T96: the retry did not announce both professions")
+
+    -- The trade-skill event queues the check too; a bag change does not.
+    Comm._profCheckTimer = nil
+    fire("BAG_UPDATE")
+    assert(Comm._profCheckTimer == nil, "T96: a bag change queued the profession check")
+    fire(addon.Source.EVENT.TRADE_UPDATE)
+    assert(Comm._profCheckTimer ~= nil, "T96: the trade-skill event did not queue the check")
+
+    for k in pairs(char.professions) do char.professions[k] = nil end
+    for k, v in pairs(savedProfs) do char.professions[k] = v end
+    Comm._helloProfNames, Comm._lastGuildHelloAt = nil, nil
+    Comm._profHelloRetry, Comm._profCheckTimer = nil, nil
+    clearSent(); clearDeferred()
+    joinGuild(unpack(savedGuild))
+end
+passed("T96 profession re-announce -- learned professions re-send the guild HELLO, floored; skill-ups do not")
+
+-- ── T97: an unlearned profession is removed from the player's record ──
+do
+    local Scanner = addon.Scanner
+    local char = DS:GetCharacter(ME)
+    local savedProfs = char.professions
+    local function prof(n) return { skillLevel = n, maxSkill = 375, recipes = { ["R" .. n] = { spellID = n } } } end
+    char.professions = { Tailoring = prof(305), Mining = prof(120), Smelting = prof(110),
+        ["First Aid"] = prof(225), Poisons = prof(150), Leatherworking = prof(90) }
+    for id, n in pairs({ [2259] = "Alchemy", [2018] = "Blacksmithing", [2550] = "Cooking",
+        [7411] = "Enchanting", [4036] = "Engineering", [3273] = "First Aid", [7620] = "Fishing",
+        [9134] = "Herbalism", [25229] = "Jewelcrafting", [2108] = "Leatherworking", [2575] = "Mining",
+        [8613] = "Skinning", [3908] = "Tailoring", [2656] = "Smelting" }) do SPELL_NAMES[id] = n end
+    sim.collapsedHeaders = {}
+    sim.skillLines = {
+        { "Professions", true },
+        { "Tailoring", false, 306, 375 },
+        { "Mining", false, 120, 375 },
+        { "Secondary Skills", true },
+        { "First Aid", false, 225, 300 },
+        { "Weapon Skills", true },
+        { "Swords", false, 350, 350 },
+    }
+    -- Leatherworking is gone from the skill lines: removed, and the guild is
+    -- told (the profession re-announce from T96).
+    joinGuild("Postpal")
+    Comm._helloProfNames = "First Aid,Leatherworking,Mining,Smelting,Tailoring"
+    Comm._lastGuildHelloAt = time() - 31
+    Comm._profCheckTimer, Comm._profHelloRetry = nil, nil
+    Scanner._skillTimer, Scanner._skillEventMuteUntil = nil, nil
+    clearSent()
+    fire("SKILL_LINES_CHANGED")
+    Scanner._skillTimer.fn()
+    local p = char.professions
+    assert(p.Leatherworking == nil, "T97: the unlearned profession is still stored")
+    assert(p.Tailoring and p.Tailoring.skillLevel == 306 and p.Tailoring.recipes.R305,
+        "T97: a learned profession lost its rank or recipes")
+    assert(p.Smelting and p["First Aid"], "T97: Smelting (Mining is known) or First Aid was removed")
+    assert(p.Poisons, "T97: a class skill was removed")
+    Comm._profCheckTimer.fn()
+    local h = sentOfType("HELLO")
+    assert(#h == 1 and h[1].payload.professions.Leatherworking == nil and h[1].payload.professions.Tailoring,
+        "T97: the guild was not told the profession is gone")
+
+    -- Mining unlearned: Smelting, its window, goes with it.
+    sim.skillLines = { { "Professions", true }, { "Tailoring", false, 306, 375 },
+        { "First Aid", false, 225, 300 }, { "Swords", false, 350, 350 } }
+    Scanner:ScanProfessions()
+    assert(p.Mining == nil and p.Smelting == nil, "T97: Mining or Smelting survived unlearning Mining")
+
+    -- A read with no lines has not loaded yet: nothing is removed.
+    sim.skillLines = {}
+    Scanner:ScanProfessions()
+    assert(p.Tailoring and p["First Aid"], "T97: an empty skill list removed professions")
+
+    -- A profession this client cannot name from its spell is kept.
+    SPELL_NAMES[3908] = nil
+    sim.skillLines = { { "Swords", false, 350, 350 } }
+    Scanner:ScanProfessions()
+    assert(p.Tailoring, "T97: a profession whose skill-line name is unknown was removed")
+    assert(p["First Aid"] == nil, "T97: First Aid survived unlearning it")
+
+    for id in pairs(SPELL_NAMES) do SPELL_NAMES[id] = nil end
+    char.professions = savedProfs
+    sim.skillLines = {}
+    Comm._helloProfNames, Comm._lastGuildHelloAt = nil, nil
+    Comm._profCheckTimer, Comm._profHelloRetry = nil, nil
+    clearSent(); clearDeferred()
+    leaveGuild()
+end
+passed("T97 unlearned professions -- removed from the player's record, Smelting with Mining, class skills and unreadable lists kept")
+
+-- ── T98: a HELLO that leaves a profession out removes it ─────────────
+do
+    joinGuild("Dropper")
+    local K = "Dropper-TestRealm"
+    local function hello(list) recv("Dropper", { _type = "HELLO", professions = list }) end
+    local s = { skillLevel = 200, maxSkill = 300 }
+    hello({ Tailoring = s, Mining = s })
+    local rec = addon.db.characters[K]
+    assert(rec and rec.professions.Tailoring and rec.professions.Mining, "T98: setup -- HELLO not stored")
+    rec.professions.Tailoring.recipes = { ["Bolt of Runecloth"] = { isKnown = true } }
+    hello({ Tailoring = s })
+    assert(rec.professions.Mining == nil, "T98: a profession left out of the HELLO was kept")
+    assert(rec.professions.Tailoring.recipes["Bolt of Runecloth"], "T98: a listed profession lost its recipes")
+    -- An empty list is a character not scanned yet: nothing is removed.
+    hello({})
+    assert(rec.professions.Tailoring, "T98: an empty HELLO removed professions")
+    -- A list cut at the cap is not the whole list: nothing is removed.
+    local many = {}
+    for i = 1, 13 do many["Prof" .. i] = s end
+    hello(many)
+    assert(rec.professions.Tailoring, "T98: a HELLO cut at the cap removed professions")
+    addon.db.characters[K] = nil
+    clearSent(); clearDeferred()
+    leaveGuild()
+end
+passed("T98 HELLO removes unlearned professions -- not on an empty list or one cut at the cap")
+
+-- ── T99: opposite-faction friends have their own setting ─────────
+do
+    local S = addon.db.settings
+    local chars = addon.db.characters
+    local saved = { alts = S.showCrossFactionAlts, friends = S.showCrossFactionFriends,
+        calcAlts = S.includeAltsInCalc, calcRemote = S.includeRemoteInCalc }
+    local function inv(id) return { bags = { [id] = 1 }, bank = {} } end
+    chars["Hordealt-TestRealm"] = { faction = "Horde", professions = {}, inventory = inv(901) }
+    chars["Hordepal-TestRealm"] = { faction = "Horde", isRemote = true, professions = {}, inventory = inv(902) }
+    chars["Allypal-TestRealm"]  = { faction = "Alliance", isRemote = true, professions = {}, inventory = inv(903) }
+    chars["Nofac-TestRealm"]    = { isRemote = true, professions = {}, inventory = inv(904) }
+    addon.db.contacts["Hordepal-TestRealm"] = { trusted = true, autoSync = false, lastSync = 0 }
+    addon.db.contacts["Allypal-TestRealm"]  = { trusted = true, autoSync = false, lastSync = 0 }
+    addon.db.contacts["Nofac-TestRealm"]    = { trusted = true, autoSync = false, lastSync = 0 }
+    local function shows(k) return addon:ShowsFaction(chars[k], k) end
+
+    S.showCrossFactionAlts, S.showCrossFactionFriends = false, false
+    assert(addon.db.settings.showCrossFactionFriends == false, "T99: no default for the friends setting")
+    assert(not shows("Hordealt-TestRealm") and not shows("Hordepal-TestRealm"),
+        "T99: an opposite-faction alt or friend shows with both settings off")
+    assert(shows("Allypal-TestRealm") and shows("Nofac-TestRealm") and shows(ME),
+        "T99: a same-faction friend, a friend of unknown faction or the player was hidden")
+    S.showCrossFactionAlts = true
+    assert(shows("Hordealt-TestRealm") and not shows("Hordepal-TestRealm"),
+        "T99: the alts setting still governs friends")
+    S.showCrossFactionAlts, S.showCrossFactionFriends = false, true
+    assert(not shows("Hordealt-TestRealm") and shows("Hordepal-TestRealm"),
+        "T99: the friends setting does not govern friends alone")
+
+    -- the material calculator follows each setting for its own kind
+    S.includeAltsInCalc, S.includeRemoteInCalc = true, true
+    S.showCrossFactionAlts, S.showCrossFactionFriends = false, false
+    local c = DS:GetCalcItemCounts()
+    assert(not c[901] and not c[902] and c[903] and c[904], "T99: calculator counts with both off")
+    S.showCrossFactionFriends = true
+    c = DS:GetCalcItemCounts()
+    assert(not c[901] and c[902], "T99: calculator ignores the friends setting")
+
+    -- the mail picker lists an opposite-faction contact only with it on
+    if not (addon.MailHelper and addon.MailHelper.ContactKeys) then
+        dofile(BASE .. "/UI/MailHelper.lua")
+    end
+    local function listed(k)
+        for _, key in ipairs(addon.MailHelper.ContactKeys()) do if key == k then return true end end
+        return false
+    end
+    S.showCrossFactionFriends = false
+    assert(not listed("Hordepal-TestRealm") and listed("Allypal-TestRealm"), "T99: mail picker with the setting off")
+    S.showCrossFactionFriends = true
+    assert(listed("Hordepal-TestRealm"), "T99: mail picker with the setting on")
+
+    for _, k in ipairs({ "Hordealt-TestRealm", "Hordepal-TestRealm", "Allypal-TestRealm", "Nofac-TestRealm" }) do
+        chars[k] = nil
+        addon.db.contacts[k] = nil
+    end
+    S.showCrossFactionAlts, S.showCrossFactionFriends = saved.alts, saved.friends
+    S.includeAltsInCalc, S.includeRemoteInCalc = saved.calcAlts, saved.calcRemote
+end
+passed("T99 opposite-faction friends -- their own setting, separate from alts; calculator and mail picker follow it")
+
 leaveGuild()
-print("ALL 79 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 99 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -2061,6 +3014,10 @@ print("ALL 79 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " favorites data layer, T70 the item favorites data layer and T71 the order"
     .. " source relation, T72 the order origin stamp, T73 the skinning loot data"
     .. " and T74 the recipe faction visibility rule, T75-T79 Poisons data, localized storage,"
-    .. " class gating, the class-trainer guard and Poisons never leaving the client; "
+    .. " class gating, the class-trainer guard and Poisons never leaving the client,"
+    .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
+    .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
+    .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting; "
     .. pass .. " of them print a PASS line above)")
 

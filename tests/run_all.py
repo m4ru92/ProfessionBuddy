@@ -23,8 +23,12 @@ REPO = os.path.normpath(os.path.join(HERE, ".."))
 ADDON = "ProfessionBuddy"
 
 HARNESSES = [
-    ("pb_harness.lua", "ALL 79 HARNESS TESTS PASS"),
+    ("pb_harness.lua", "ALL 99 HARNESS TESTS PASS"),
     ("pb_ghost_harness.lua", "ALL GHOST HARNESS TESTS PASS"),
+    ("pb_forever_harness.lua", "ALL FOREVER TESTS PASS (59)"),
+    ("pb_forever_replaceoff_harness.lua", "ALL FOREVER REPLACE-OFF TESTS PASS (3)"),
+    ("pb_otherclient_harness.lua", "ALL OTHER-CLIENT TESTS PASS (2)"),
+    ("pb_forever_pair.lua", "FOREVER PAIR TEST PASS"),   # driven by forever_pair.py
 ]
 
 
@@ -96,7 +100,13 @@ def main():
             continue
         if not args.quiet:
             print("\n---- %s ----" % fn)
-        ok, detail = run(LuaRuntime, path, expect, args.quiet)
+        if fn == "pb_forever_pair.lua":
+            sys.dont_write_bytecode = True     # no tests/__pycache__ in the repo
+            sys.path.insert(0, HERE)
+            from forever_pair import run_pair
+            ok, detail = run_pair(LuaRuntime, args.quiet)
+        else:
+            ok, detail = run(LuaRuntime, path, expect, args.quiet)
         if ok:
             print("PASS  %-22s %s" % (fn, detail))
         else:

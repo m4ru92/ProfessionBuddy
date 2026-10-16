@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "1.1.5"
+addon.version = "2.0.0"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -26,6 +26,8 @@ addon.CRAFTABLE_PROFS = {
 -- never in CRAFTABLE_PROFS (which feeds the panels, orders and guild sync).
 addon.CLASS_PROFS = {
     ["Poisons"] = "ROGUE",
+    -- WoW: Forever: the mage's scroll skill (any mage trainer, level 6)
+    ["Comprehension"] = "MAGE",
 }
 
 -- Can a character of classFile have this profession? classFile nil means the
@@ -51,19 +53,96 @@ function addon:NormRealm(realm)
     return ((realm or ""):gsub("[%s%-']", ""))
 end
 
+-- A typed "Name-Realm": spaces around the hyphen dropped ("Bob - Realm"
+-- was refused as not a name, m4ru 2026-10-13), the ends trimmed.
+function addon:CleanNameInput(text)
+    if type(text) ~= "string" then return text end
+    return (strtrim(text):gsub("%s*%-%s*", "-"))
+end
+
+-- A typed realm in the spelling the game uses: matched, ignoring case,
+-- against our realm, our connected realms and the realms PB already knows
+-- (characters, contacts). "spheal-dreamscythe" otherwise keyed
+-- "Spheal-dreamscythe", which never matches the game's "Dreamscythe".
+-- Unknown realms keep the typed spelling.
+function addon:CanonicalRealm(realm)
+    local want = addon:NormRealm(realm)
+    local low = want:lower()
+    local function try(r)
+        if type(r) == "string" and r ~= "" then
+            local n = addon:NormRealm(r)
+            if n:lower() == low then return n end
+        end
+    end
+    local hit = try(GetRealmName())
+    if hit then return hit end
+    local getRealms = GetAutoCompleteRealms or (C_AutoComplete and C_AutoComplete.GetAutoCompleteRealms)
+    if getRealms then
+        local ok, list = pcall(getRealms)
+        if ok and type(list) == "table" then
+            for _, r in ipairs(list) do
+                hit = try(r)
+                if hit then return hit end
+            end
+        end
+    end
+    local db = addon.db
+    for _, tbl in ipairs({ db and db.characters, db and db.contacts }) do
+        for key in pairs(tbl or {}) do
+            hit = try(type(key) == "string" and key:match("%-(.+)$"))
+            if hit then return hit end
+        end
+    end
+    return want
+end
+
 -- "Name" -> "Name-<our realm>"; "Name-Any Realm" -> "Name-AnyRealm".
 -- Anything that is not a string returns nil.
+-- On WoW: Forever (Source.REALM_TOKEN) the realm half is that one fixed
+-- token whatever the key carried: names there are unique across realms
+-- and arrive with no realm, so filling in OUR realm named a player on a
+-- connected realm differently from how their own PB names itself (m4ru's
+-- two-client session, 2026-09-30: every order to a friend on Classic
+-- Beta PvP 2 was refused).
 function addon:NormKey(key)
     if type(key) ~= "string" then return nil end
     local name, realm = key:match("^([^-]+)%-?(.*)$")
     if not name then return nil end
+    local token = addon.Source and addon.Source.REALM_TOKEN
+    if token then return name .. "-" .. token end
     if realm == "" then realm = GetRealmName() end
     return name .. "-" .. addon:NormRealm(realm)
 end
 
+-- WoW: Forever characters have a surname, and everyone else knows them as
+-- "First Surname": the guild roster, addon message senders and
+-- GetUnitName(unit, true). UnitName("player") gives the first name only,
+-- and UnitFullName("player") hands the surname back where the realm used
+-- to be (m4ru's client 2026-09-28; GuildOS, WoWForeverRace and CraftBoard
+-- found the same on build 1.60.1.70009). So there our own name is the two
+-- joined with a space (Source.FULL_NAMES). Elsewhere it is UnitName, as
+-- before.
+function addon:PlayerName()
+    if addon.Source and addon.Source.FULL_NAMES and UnitFullName then
+        local first, surname = UnitFullName("player")
+        if type(issecretvalue) == "function" and issecretvalue(surname) then surname = nil end
+        if type(first) == "string" and first ~= "" and type(surname) == "string" and surname ~= "" then
+            return first .. " " .. surname
+        end
+    end
+    return UnitName("player")
+end
+
+-- How a character name is typed, for usage lines and errors.
+function addon:NameHint()
+    if addon.Source and addon.Source.FULL_NAMES then return "First Surname" end
+    return "PlayerName-Realm"
+end
+
 -- Shorthand for the player's canonical key, used everywhere.
 function addon:PlayerKey()
-    return UnitName("player") .. "-" .. addon:NormRealm(GetRealmName())
+    local token = addon.Source and addon.Source.REALM_TOKEN
+    return addon:PlayerName() .. "-" .. (token or addon:NormRealm(GetRealmName()))
 end
 
 -- Display half of a key. Non-strings pass straight through so callers keep
@@ -88,6 +167,20 @@ function addon:FavoriteContacts()
     self.db.favorites = self.db.favorites or {}
     self.db.favorites.contacts = self.db.favorites.contacts or {}
     return self.db.favorites.contacts
+end
+
+-- May this character's data be shown here? Your current character always,
+-- one whose faction PB does not know yet (a contact never synced), and one
+-- of your own faction. An opposite-faction alt follows "Show opposite
+-- faction alts", an opposite-faction friend or guildmate "Show opposite
+-- faction friends": neither can trade, mail or craft for you.
+function addon:ShowsFaction(charData, key)
+    if key and addon:SameKey(key, addon:PlayerKey()) then return true end
+    local faction = type(charData) == "table" and charData.faction
+    if not faction or faction == UnitFactionGroup("player") then return true end
+    local s = (addon.db and addon.db.settings) or {}
+    if charData.isRemote then return s.showCrossFactionFriends == true end
+    return s.showCrossFactionAlts == true
 end
 
 function addon:IsFavorite(key)
@@ -306,6 +399,203 @@ local function migrateToSchema2(db)
 end
 
 ----------------------------------------------------------------------
+-- WoW: Forever: saved keys lose their realm (Source.REALM_TOKEN). Every
+-- character, contact, favorite, order and board name, outbox target,
+-- knowledge sighting and shared-knowledge peer is re-keyed through NormKey,
+-- which there puts the fixed token in the realm half. Two keys that become
+-- one merge: a local character beats a synced copy, otherwise the newest
+-- wins (as in schema 2); contacts keep trust and auto-sync if either had
+-- them; shared knowledge keeps the newest. Order and post ids keep their
+-- text (they compare through NormKey). Before anything moves, the tables
+-- are copied to db.realmKeyBackup, kept until the player clears it
+-- (/pb realmkeys). Nothing to move means no backup and no message.
+----------------------------------------------------------------------
+local REALM_KEY_TABLES = { "characters", "contacts", "favorites", "orders", "orderBoard",
+                           "orderOutbox", "knowledge", "knowledgeShared" }
+
+local function deepCopy(v)
+    if type(v) ~= "table" then return v end
+    local t = {}
+    for k, x in pairs(v) do t[k] = deepCopy(x) end
+    return t
+end
+
+-- Re-key a plain key -> value table; merge(new, old) picks what stays
+-- when two keys land on one. "*" (knowledge seenBy: everyone) is no key.
+local function rekeyWith(tbl, merge)
+    if type(tbl) ~= "table" then return 0 end
+    local moves = {}
+    for oldKey, v in pairs(tbl) do
+        local newKey = oldKey ~= "*" and addon:NormKey(oldKey)
+        if newKey and newKey ~= oldKey then moves[#moves + 1] = { old = oldKey, new = newKey, v = v } end
+    end
+    for _, m in ipairs(moves) do tbl[m.old] = nil end
+    for _, m in ipairs(moves) do tbl[m.new] = merge(m.v, tbl[m.new]) end
+    return #moves
+end
+
+local function mergeContact(a, b)
+    if type(b) ~= "table" then return a end
+    if type(a) ~= "table" then return b end
+    local keep, other = a, b
+    if (tonumber(b.lastSync) or 0) > (tonumber(a.lastSync) or 0) then keep, other = b, a end
+    keep.trusted = (a.trusted or b.trusted) or nil
+    keep.autoSync = (a.autoSync or b.autoSync) and true or false
+    for k, v in pairs(other) do if keep[k] == nil then keep[k] = v end end
+    return keep
+end
+
+local function mergeShared(a, b)
+    if type(b) ~= "table" then return a end
+    if type(a) ~= "table" then return b end
+    return ((tonumber(a.at) or 0) >= (tonumber(b.at) or 0)) and a or b
+end
+
+-- How many saved names would change, without changing any.
+local function countRealmKeys(db)
+    local n = 0
+    local function keys(tbl)
+        for k in pairs(type(tbl) == "table" and tbl or {}) do
+            if type(k) == "string" and addon:NormKey(k) ~= k then n = n + 1 end
+        end
+    end
+    local function field(v) if type(v) == "string" and addon:NormKey(v) ~= v then n = n + 1 end end
+    local function orderFields(o)
+        if type(o) ~= "table" then return end
+        field(o.requester); field(o.crafter); field(o.lastSentBy)
+    end
+    keys(db.characters); keys(db.contacts); keys(db.knowledgeShared)
+    keys(type(db.favorites) == "table" and db.favorites.contacts)
+    for _, o in pairs(db.orders or {}) do orderFields(o) end
+    for _, p in pairs(db.orderBoard or {}) do orderFields(p) end
+    for _, e in pairs(db.orderOutbox or {}) do
+        if type(e) == "table" then
+            field(e.target)
+            if type(e.data) == "table" then orderFields(e.data.order) end
+        end
+    end
+    for _, e in pairs(db.knowledge or {}) do
+        if type(e) == "table" and type(e.seenBy) == "table" then
+            for k in pairs(e.seenBy) do if k ~= "*" and addon:NormKey(k) ~= k then n = n + 1 end end
+        end
+    end
+    return n
+end
+
+function addon:MigrateForeverRealms()
+    local db = ProfBuddyDB
+    if not (db and addon.Source and addon.Source.REALM_TOKEN) then return end
+    if db.realmKeysRestored then return end      -- the player put the old names back
+    local changes = countRealmKeys(db)
+    if changes == 0 then return end
+    if not db.realmKeyBackup then
+        local backup = { at = time() }
+        for _, name in ipairs(REALM_KEY_TABLES) do backup[name] = deepCopy(db[name]) end
+        db.realmKeyBackup = backup
+    end
+    local before = 0
+    for _ in pairs(db.characters or {}) do before = before + 1 end
+    for _ in pairs(db.contacts or {}) do before = before + 1 end
+    rekeyByCharacter(db.characters)
+    rekeyWith(db.contacts, mergeContact)
+    rekeyWith(db.knowledgeShared, mergeShared)
+    if type(db.favorites) == "table" then
+        rekeyWith(db.favorites.contacts, function(a, b) return a or b end)
+    end
+    for _, o in pairs(db.orders or {}) do rekeyOrderFields(o) end
+    for _, p in pairs(db.orderBoard or {}) do rekeyOrderFields(p) end
+    for _, e in pairs(db.orderOutbox or {}) do
+        if type(e) == "table" then
+            e.target = addon:NormKey(e.target) or e.target
+            if type(e.data) == "table" then rekeyOrderFields(e.data.order) end
+        end
+    end
+    for _, e in pairs(db.knowledge or {}) do
+        if type(e) == "table" and type(e.seenBy) == "table" then
+            rekeyWith(e.seenBy, function(a, b) return a or b end)
+        end
+    end
+    local after = 0
+    for _ in pairs(db.characters or {}) do after = after + 1 end
+    for _ in pairs(db.contacts or {}) do after = after + 1 end
+    print(string.format("|cff00ccffProfessionBuddy:|r WoW: Forever player names no longer carry a realm: "
+        .. "%d saved name%s updated, %d duplicate%s merged. The old data is backed up: "
+        .. "/pb realmkeys to restore or clear it.",
+        changes, changes == 1 and "" or "s", before - after, (before - after) == 1 and "" or "s"))
+end
+
+-- /pb realmkeys [restore|clear]
+function addon:RealmKeysCommand(sub)
+    local db = ProfBuddyDB
+    local backup = db and db.realmKeyBackup
+    if sub == "restore" then
+        if not backup then print("|cff00ccffProfessionBuddy:|r No realm-name backup to restore."); return end
+        for _, name in ipairs(REALM_KEY_TABLES) do db[name] = backup[name] end
+        db.realmKeyBackup = nil
+        db.realmKeysRestored = true
+        print("|cff00ccffProfessionBuddy:|r The saved data from before the realm-name change is back. "
+            .. "This build still names Forever players without a realm, so go back to the previous build. "
+            .. "/reload to finish.")
+    elseif sub == "clear" then
+        if not backup then print("|cff00ccffProfessionBuddy:|r No realm-name backup to clear."); return end
+        db.realmKeyBackup = nil
+        print("|cff00ccffProfessionBuddy:|r Realm-name backup deleted.")
+    elseif backup then
+        print("|cff00ccffProfessionBuddy:|r A backup of your saved data from before the realm-name change is kept "
+            .. "(" .. date("%Y-%m-%d %H:%M", backup.at or 0) .. "). "
+            .. "/pb realmkeys clear deletes it; /pb realmkeys restore puts it back.")
+    else
+        print("|cff00ccffProfessionBuddy:|r No realm-name backup is kept.")
+    end
+end
+
+----------------------------------------------------------------------
+-- WoW: Forever: move this character's own records from its first-name key
+-- ("Maru-Realm", what PB used before it knew about surnames) to its full
+-- key ("Maru Hunt-Realm"). Only the logged-in character, whose two keys we
+-- know for certain, so another player who shares the first name is never
+-- touched; each alt moves when it logs in. Runs at load and again at login
+-- (the surname may not be readable yet at load), and does nothing once the
+-- old key is gone.
+----------------------------------------------------------------------
+function addon:MigrateToFullName()
+    local db = ProfBuddyDB
+    if not (db and addon.Source and addon.Source.FULL_NAMES) then return end
+    local newKey = addon:PlayerKey()
+    local oldKey = addon:NormKey(UnitName("player"))
+    if not (newKey and oldKey) or newKey == oldKey then return end
+
+    local chars = db.characters
+    local old = chars and chars[oldKey]
+    if type(old) == "table" and not old.isRemote then
+        chars[oldKey] = nil
+        local new = chars[newKey]
+        -- A record made under the new key this very load has no professions
+        -- yet; the old one holds the character's data.
+        if type(new) ~= "table" or next(new.professions or {}) == nil then
+            chars[newKey] = old
+        end
+    end
+    local function move(o)
+        if type(o) ~= "table" then return end
+        if o.requester == oldKey then o.requester = newKey end
+        if o.crafter == oldKey then o.crafter = newKey end
+        if o.lastSentBy == oldKey then o.lastSentBy = newKey end
+    end
+    for _, o in pairs(db.orders or {}) do move(o) end
+    for _, post in pairs(db.orderBoard or {}) do move(post) end
+    for _, entry in pairs(db.orderOutbox or {}) do
+        if type(entry) == "table" and type(entry.data) == "table" then move(entry.data.order) end
+    end
+    for _, e in pairs(db.knowledge or {}) do
+        if type(e) == "table" and type(e.seenBy) == "table" and e.seenBy[oldKey] then
+            e.seenBy[oldKey] = nil
+            e.seenBy[newKey] = true
+        end
+    end
+end
+
+----------------------------------------------------------------------
 -- Event frame
 ----------------------------------------------------------------------
 local frame = CreateFrame("Frame", "ProfBuddyEventFrame")
@@ -331,6 +621,17 @@ end)
 addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if loadedName ~= "ProfessionBuddy" then return end
 
+    -- ProfessionBuddy_Mainline.toc is for WoW: Forever (interface 16xxx).
+    -- Retail reads the same toc family but is not supported: say so once,
+    -- then stop before any module starts.
+    local tocVersion = GetBuildInfo and select(4, GetBuildInfo())
+    if WOW_PROJECT_ID and WOW_PROJECT_MAINLINE and WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+       and tocVersion and (tocVersion < 16000 or tocVersion >= 17000) then
+        frame:UnregisterAllEvents()
+        print("|cff00ccffProfessionBuddy|r does not support this game client.")
+        return
+    end
+
     -- Init saved variables
     ProfBuddyDB = ProfBuddyDB or {}
     ProfBuddyDB.characters = ProfBuddyDB.characters or {}
@@ -346,6 +647,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         gatherSkillTooltip  = true,  -- required skin/mine/herb skill on mob + node tooltips
         gatherShowUnlearned = true,  -- show gather info for professions you have not learned
         gatherYieldTooltip  = true,  -- "Yields: Leather/Scale" line on skinnable mob tooltips
+        gatherLootUnlearned = false, -- that loot (and node loot) for professions you have not learned
         skillReqNotify      = false, -- dev-only: chat alert when a trainer learn-level correction is found
         tooltipMaxOwn       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)
@@ -353,6 +655,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
+        showCrossFactionFriends = false,
         hideOppositeFactionRecipes = true, -- hide recipes only the other faction can obtain
         replaceTradeSkill   = true,
         rememberWindowState = true,
@@ -363,11 +666,15 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         includeRemoteInCalc = false,
         orderChatMessages   = true,
         orderSoundOnRequest = false,
+        boardAlert          = "known", -- new guild board posts: "known" | "alts" | "any" | "off"
+        minimapIcon         = { hide = false }, -- LibDBIcon's table: hide, minimapPos
         shareData           = true,  -- master switch for AceComm data sharing
         orderHistoryLimit   = 50,    -- keep the most recent N terminal orders per character (hard-pruned)
         orderHistorySortOldest = false, -- History sort: false = newest-closed first
         orderExpiryDays     = 14,    -- auto-expire pending orders older than N days (0 = off)
         autoAddParty        = false, -- add party members as contacts automatically
+        bnetAutoAdd         = false, -- BattleNet.lua: add picked Battle.net friends as contacts
+        bnetTrust           = false, -- ...and trust them
     }
     -- Migrate old single-slider setting
     if ProfBuddyDB.settings.tooltipMaxRecipes then
@@ -441,12 +748,17 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.orderSoundOnRequest == nil then
         ProfBuddyDB.settings.orderSoundOnRequest = false
     end
+    if ProfBuddyDB.settings.boardAlert == nil then
+        ProfBuddyDB.settings.boardAlert = "known"
+    end
     if ProfBuddyDB.settings.shareData == nil then
         ProfBuddyDB.settings.shareData = true
     end
     if ProfBuddyDB.settings.autoAddParty == nil then
         ProfBuddyDB.settings.autoAddParty = false
     end
+    if ProfBuddyDB.settings.bnetAutoAdd == nil then ProfBuddyDB.settings.bnetAutoAdd = false end
+    if ProfBuddyDB.settings.bnetTrust == nil then ProfBuddyDB.settings.bnetTrust = false end
 
     -- Trust migration: `trusted` now gates serving full data (see Comm.lua).
     -- Earlier builds auto-created a contact for every group-mate ever seen, so a
@@ -467,6 +779,10 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         migrateToSchema2(ProfBuddyDB)
         ProfBuddyDB.schemaVersion = 2
     end
+    -- WoW: Forever: saved names lose their realm, then surnames
+    -- (again at PLAYER_LOGIN below).
+    addon:MigrateForeverRealms()
+    addon:MigrateToFullName()
 
     -- Init modules in declared order. A module that errors here must not
     -- take the rest of the addon down with it.
@@ -482,6 +798,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
 
     print("|cff00ccffProfessionBuddy|r v" .. addon.version .. " loaded.  /pb  or  /profbuddy")
 end)
+
+-- The surname may not be readable at ADDON_LOADED; by login it is.
+addon:RegisterEvent("PLAYER_LOGIN", function() addon:MigrateToFullName() end)
 
 -- Full scan on login / reload only. Zoning, instance entry and every other
 -- loading screen fire this event too, and a rescan on each one is wasted work.
@@ -545,7 +864,10 @@ SlashCmdList["PROFBUDDY"] = function(msg)
     local rawMsg = strtrim(msg or "")   -- original case, for name args
     msg = rawMsg:lower()
 
-    if msg == "scan" then
+    if msg == "realmkeys" or msg:sub(1, 10) == "realmkeys " then
+        addon:RealmKeysCommand(strtrim(msg:sub(10)))
+
+    elseif msg == "scan" then
         addon.Scanner:ScanProfessions()
         addon.Scanner:ScanInventory()
         print("|cff00ccffProfessionBuddy:|r Manual scan complete.")
@@ -562,7 +884,7 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         local key = addon:NormKey(strtrim(rawMsg:sub(7)))
         local rec = key and addon.db.characters[key]
         if not key then
-            print("|cff00ccffProfessionBuddy:|r Usage: /pb forget PlayerName-Realm")
+            print("|cff00ccffProfessionBuddy:|r Usage: /pb forget " .. addon:NameHint())
         elseif not rec then
             print("|cff00ccffProfessionBuddy:|r No stored character " .. key .. ".")
         else
@@ -624,7 +946,7 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         -- the contact as "bob-Realm" while replies arrive from "Bob-Realm".
         local target = strtrim(rawMsg:sub(5))
         if target == "" then
-            print("|cff00ccffProfessionBuddy:|r Usage: /pb sync PlayerName-Realm")
+            print("|cff00ccffProfessionBuddy:|r Usage: /pb sync " .. addon:NameHint())
         elseif addon.Comm then
             addon.Comm:RequestSync(target, true)
         end
@@ -692,6 +1014,44 @@ end
 ----------------------------------------------------------------------
 local BUG_URL = "https://github.com/m4ru92/ProfessionBuddy/issues"
 
+-- The last gathering tooltip PB added lines to (ProfBuddyDB.lastGather,
+-- written by UI/TradeSkillFrame.lua), so a wrong skill or loot value can
+-- be reported with what PB showed and why. Empty when there is none.
+local function GatherSection()
+    local g = addon.db and addon.db.lastGather
+    if type(g) ~= "table" or not g.name then return {} end
+    local what
+    if g.kind == "node" then
+        what = "Node: " .. g.name
+    else
+        local bits = {}
+        if g.npcID then bits[#bits + 1] = "NPC " .. g.npcID end
+        if g.level then bits[#bits + 1] = "level " .. g.level end
+        bits[#bits + 1] = g.kind
+        what = "Mob: " .. g.name .. " (" .. table.concat(bits, ", ") .. ")"
+    end
+    -- where and when on a line of their own: on the mob line they wrapped
+    -- mid-date (m4ru, 2026-10-04)
+    local where = {}
+    if g.zone and g.zone ~= "" then where[#where + 1] = g.zone end
+    if g.at then where[#where + 1] = date("%Y-%m-%d %H:%M", g.at) end
+    local shown = "PB showed: " .. (g.shown or "?") .. ", " .. (g.yours or "skill not learned")
+    if g.loot then shown = shown .. ", loot from " .. g.loot end
+    local out = {
+        "Last gathering tooltip (filled in by PB; check it is the one you mean):",
+        "  " .. what,
+    }
+    if #where > 0 then out[#out + 1] = "  Where: " .. table.concat(where, ", ") end
+    for _, line in ipairs({
+        "  " .. shown,
+        "  Why: " .. (g.why or "?") .. (g.gameLine and ("; the game's line: " .. g.gameLine) or ""),
+        "Could you gather it (yes / no)?",
+        "",
+        "",
+    }) do out[#out + 1] = line end
+    return out
+end
+
 local function BuildBugReport()
     local wv, wb, _, wtoc = GetBuildInfo()
 
@@ -711,7 +1071,7 @@ local function BuildBugReport()
     end
 
     local _, class = UnitClass("player")
-    return table.concat({
+    local lines = {
         "== ProfessionBuddy Bug Report ==",
         "PB version: " .. (addon.version or "?"),
         "WoW: " .. (wv or "?") .. " (" .. (wb or "?") .. ") interface " .. (wtoc or "?"),
@@ -720,6 +1080,9 @@ local function BuildBugReport()
             .. " " .. (class or "?") .. " (" .. (UnitFactionGroup("player") or "?") .. ")",
         "Professions: " .. profStr,
         "",
+    }
+    for _, line in ipairs(GatherSection()) do lines[#lines + 1] = line end
+    for _, line in ipairs({
         "What happened:",
         "",
         "",
@@ -735,15 +1098,17 @@ local function BuildBugReport()
         "",
         "ProfessionBuddy Lua errors (if applicable -- paste from BugSack / BugGrabber):",
         "",
-    }, "\n")
+    }) do lines[#lines + 1] = line end
+    return table.concat(lines, "\n")
 end
+addon.BuildBugReport = BuildBugReport
 
 function addon:ShowBugReport()
     local f = addon.bugFrame
     if not f then
         f = CreateFrame("Frame", "PBBugReportFrame", UIParent, "BackdropTemplate")
         addon.bugFrame = f
-        f:SetSize(480, 440)
+        f:SetSize(480, 540)   -- room for the gathering section
         f:SetPoint("CENTER")
         f:SetFrameStrata("DIALOG")
         f:SetBackdrop({
@@ -772,9 +1137,10 @@ function addon:ShowBugReport()
         local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
         close:SetPoint("TOPRIGHT", -4, -4)
 
-        -- Bordered box holding a multiline editbox. No ScrollFrame: HighlightText
-        -- copies the whole buffer regardless of what's scrolled into view, and a
-        -- plain multiline editbox scrolls to the cursor while editing.
+        -- Bordered box holding a multiline editbox in a scroll frame. The
+        -- scroll frame clips: a bare editbox drew its text and selection past
+        -- the box's bottom once the report outgrew it (m4ru, 2026-10-04).
+        -- HighlightText still copies the whole buffer, scrolled or not.
         local box = CreateFrame("Frame", nil, f, "BackdropTemplate")
         box:SetPoint("TOPLEFT", 14, -80)
         box:SetPoint("BOTTOMRIGHT", -14, 46)
@@ -786,14 +1152,29 @@ function addon:ShowBugReport()
         box:SetBackdropColor(0, 0, 0, 0.5)
         box:SetBackdropBorderColor(0.3, 0.3, 0.35, 0.9)
 
-        local eb = CreateFrame("EditBox", nil, box)
+        -- UIPanelScrollFrameTemplate, as the recipe detail panel uses on both
+        -- clients; its bar sits inside the box's right edge.
+        local sf = CreateFrame("ScrollFrame", nil, box, "UIPanelScrollFrameTemplate")
+        sf:SetPoint("TOPLEFT", 8, -8)
+        sf:SetPoint("BOTTOMRIGHT", -28, 8)
+        f.sf = sf
+
+        local eb = CreateFrame("EditBox", nil, sf)
         eb:SetMultiLine(true)
         eb:SetFontObject(ChatFontNormal)
         eb:SetAutoFocus(false)
-        eb:SetPoint("TOPLEFT", 8, -8)
-        eb:SetPoint("BOTTOMRIGHT", -8, 8)
+        eb:SetWidth(416)   -- the box's 452 less its insets and the scroll bar
         eb:SetJustifyH("LEFT")
         eb:SetScript("OnEscapePressed", function() f:Hide() end)
+        -- keep the cursor in view while typing (Blizzard's helpers, both clients)
+        if ScrollingEdit_OnCursorChanged and ScrollingEdit_OnUpdate then
+            eb:SetScript("OnCursorChanged", ScrollingEdit_OnCursorChanged)
+            eb:SetScript("OnUpdate", function(self, elapsed) ScrollingEdit_OnUpdate(self, elapsed, sf) end)
+        end
+        sf:SetScrollChild(eb)
+        -- a click below the text still lands in the editbox
+        box:EnableMouse(true)
+        box:SetScript("OnMouseDown", function() eb:SetFocus() end)
         f.eb = eb
 
         local selBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
@@ -813,6 +1194,9 @@ function addon:ShowBugReport()
 
     f.eb:SetText(BuildBugReport())
     f:Show()
+    -- open at the top: the cursor would sit at the end of the text
+    f.eb:SetCursorPosition(0)
+    f.sf:SetVerticalScroll(0)
     f.eb:SetFocus()
     f.eb:HighlightText()
 end

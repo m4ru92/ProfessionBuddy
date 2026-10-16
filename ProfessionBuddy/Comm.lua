@@ -11,9 +11,20 @@
 --   SYNC_REQ   -> request full data from a player
 --   SYNC_DATA  -> full character payload (professions, recipes, inventory)
 --   INCR       -> incremental inventory/profession update (debounced)
+--   KNOW_REQ   -> WoW: Forever: ask a peer for the trainers, vendors and
+--                 learn levels they have seen, and the skinning, ore vein
+--                 and herb loot they recorded (Knowledge.lua)
+--   KNOW_DATA  -> their own sightings, for their professions and ours,
+--                 newer than the last ones they sent us
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+
+-- WoW: Forever (modern API) moved these off the global table; TBC
+-- Anniversary still has the globals, so on TBCCA each line is a no-op.
+local ChatFrame_AddMessageEventFilter = ChatFrame_AddMessageEventFilter
+    or (ChatFrameUtil and ChatFrameUtil.AddMessageEventFilter)
+local GuildRoster = GuildRoster or (C_GuildInfo and C_GuildInfo.GuildRoster)
 local Comm = addon:NewModule("Comm")
 
 -- Comm wire revision. Bump by 1 on ANY wire-format / payload-shape / trust-gate
@@ -37,7 +48,27 @@ local Comm = addon:NewModule("Comm")
 -- before. `_from` and `_ver` were REMOVED from every message: a self-reported
 -- identity on the wire is exactly what a future handler must never trust, and
 -- nothing ever read either field.
-local COMM_REV = 7
+-- rev 8 = WoW: Forever knowledge sharing (Phase 4e, FOREVER-phase4e-scope.md):
+-- KNOW_REQ / KNOW_DATA, whisper only. Sent only to a peer whose SYNC_DATA
+-- carried rev >= 8, and only by a client with Knowledge.lua (Forever), so a
+-- TBC Anniversary client and an older one never see either.
+-- rev 9 = WoW: Forever numbered chunks (Source.NUMBERED_CHUNKS): a message
+-- over 255 bytes goes out as "\005<id>:<n>:<total>:<data>" chunks, joined
+-- by number, because Forever delivers a burst of chunks out of order.
+-- Payloads are unchanged, and TBC Anniversary still uses AceComm's chunks.
+-- rev 10 = WoW: Forever names carry no realm (Source.REALM_TOKEN): every
+-- character key in a payload (order requester and crafter, board post and
+-- order ids) has the fixed token as its realm half, and a rev-9 Forever
+-- peer would refuse those orders. TBC Anniversary keys are unchanged.
+-- rev 11 = WoW: Forever skinning loot learned as you skin (Phase 3b-3):
+-- KNOW_REQ gains `s` (send your skinning loot) and names the peer's own
+-- professions as well as ours; KNOW_DATA gains `s`, the loot per NPC ID.
+-- A rev-10 peer ignores both fields and answers as before.
+-- rev 12 = WoW: Forever ore vein and herb loot learned as you gather
+-- (Phase 3b-4): KNOW_REQ gains `g` (send your node loot); KNOW_DATA gains
+-- `g`, the loot per node name with its profession. A rev-11 peer ignores
+-- both and answers as before.
+local COMM_REV = 12
 addon.COMM_REV = COMM_REV
 
 local AceComm
@@ -45,6 +76,18 @@ local AceSerializer
 
 local PREFIX = "PBuddy"
 local DS     -- DataStore, set in Init
+
+-- Numbered chunks (WoW: Forever, rev 9). AceComm acts only on control
+-- bytes \001-\004 and ignores \005, so these never reach its joiner.
+-- The header is at most 16 bytes ("\005" plus three 4-digit numbers and
+-- three colons), which leaves 238 of the 255 for data.
+local CHUNK_MARK   = "\005"
+local CHUNK_DATA   = 238
+local CHUNK_MAX    = 1000   -- chunks in one message (~238 KB; KNOW_DATA tops out near 150 KB)
+local CHUNK_HELD   = 1200   -- chunks held unfinished for one sender
+local CHUNK_IDLE   = 60     -- seconds without a chunk before a partial message is dropped
+local CHUNK_PER_SENDER = 4  -- unfinished messages held for one sender
+local CHUNK_SENDERS    = 16 -- senders with unfinished messages
 
 -- Debounce timer for incremental updates
 local incrTimer = nil
@@ -68,11 +111,18 @@ local PENDING_REQ_TTL   = 120     -- how long an outstanding SYNC_REQ stays hono
 local RESYNC_THROTTLE   = 30      -- min seconds between gap-triggered SYNC_REQs per peer
 local HELLO_ACK_FLOOR   = 60      -- min seconds between HELLO_ACKs to one sender
 local HELLO_PULL_FLOOR  = 60      -- min seconds between post-HELLO pulls from one sender
+local GUILD_HELLO_FLOOR = 30      -- min seconds between our own guild HELLOs
+local PROF_HELLO_DELAY  = 3       -- wait for the profession scan before comparing the list
+local BOARD_RESEND_FLOOR = 60     -- min seconds between re-sending our posts to one guildmate
 local UI_REFRESH_COALESCE = 1     -- max one panel repaint per second from inbound data
 local REFLEX_FLOOR      = 5       -- min seconds between reflex refusal replies to one sender
 local GUILD_SYNC_COOLDOWN = 15    -- min seconds between guild pulls from one guildmate
 local OFFLINE_BACKOFF   = 300     -- skip a contact this long after "no player named"
-local WHISPER_MEMORY    = 10      -- a system line must follow our whisper this closely
+-- A "No player named" line must follow our whisper this closely. On WoW:
+-- Forever the server answers an addon whisper to a logged-out player 97 to
+-- 128 s late (m4ru's /pbt comm trace 2026-10-12; a typed whisper is
+-- answered at once), so the window is five minutes, not ten seconds.
+local WHISPER_MEMORY    = 300
 -- Trust-timing race: trust is LIVE (guild roster / group membership), so a real
 -- guildmate's message can arrive a beat before our roster has populated. Hold it
 -- briefly and replay it once trust resolves, tightly bounded so a not-yet-trusted
@@ -81,6 +131,26 @@ local WHISPER_MEMORY    = 10      -- a system line must follow our whisper this 
 local TRUST_PENDING_TTL     = 60  -- seconds a held message stays replayable
 local TRUST_PENDING_SENDERS = 16  -- max distinct not-yet-trusted senders held at once
 local TRUST_PENDING_PER     = 2   -- max messages held per such sender (newest kept)
+
+-- Knowledge sharing (WoW: Forever). One KNOW_DATA over any of these caps is
+-- dropped whole: an honest client never gets near them (2,347 recipes exist).
+local KNOW_MIN_REV        = 8
+-- Ask a friend for their sightings again after this long, the next time
+-- any of their messages arrives: skins and gathers keep counting during a
+-- session (m4ru 2026-10-13: Greater Plainstrider passed 10 skins after the
+-- one exchange and his friend never saw it).
+local KNOW_REASK          = 900
+local MAX_KNOW_RECIPES    = 3000
+local MAX_KNOW_NPCS       = 600
+local MAX_KNOW_PER_RECIPE = 12    -- trainers, or vendors, on one recipe
+local MAX_KNOW_PROFS      = 16
+local LOOT_MIN_REV        = 11
+local NODE_LOOT_MIN_REV   = 12
+local MAX_KNOW_NODES      = 200   -- ore veins and herbs with loot (PB knows 51)
+local MAX_KNOW_SKIN_MOBS  = 1500  -- mobs with skinning loot (Classic has ~900 skinnable)
+local MAX_KNOW_SKIN_ITEMS = 12    -- items on one mob
+local MAX_KNOW_SKINS      = 10^6  -- skins of one mob
+local MAX_KNOW_STACK      = 200   -- items in one loot slot
 
 ----------------------------------------------------------------------
 -- Init
@@ -107,6 +177,18 @@ function Comm:Init()
         Comm:OnMessageReceived(prefix, message, distribution, sender)
     end
     AceComm.RegisterComm(self._commTarget, PREFIX)
+    if addon.Source and addon.Source.NUMBERED_CHUNKS then
+        addon:RegisterEvent("CHAT_MSG_ADDON", function(_, prefix, text, channel, sender)
+            Comm:OnChunk(prefix, text, channel, sender)
+        end)
+    end
+    -- Only where the client has addon restrictions: registering an event the
+    -- client does not know is a Lua error
+    if C_RestrictedActions and C_RestrictedActions.IsAddOnRestrictionActive then
+        addon:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", function(_, rtype, state)
+            Comm:OnRestrictionChanged(rtype, state)
+        end)
+    end
 
     -- Auto-sync: broadcast HELLO when joining a group
     addon:RegisterEvent("GROUP_ROSTER_UPDATE", function()
@@ -147,9 +229,12 @@ function Comm:Init()
     -- Debounced incremental updates on inventory/profession changes. A learned
     -- recipe, a skill-up or a started cooldown moves no items, so BAG_UPDATE
     -- alone left peers holding stale profession data indefinitely.
-    for _, event in ipairs({ "BAG_UPDATE", "SKILL_LINES_CHANGED", "TRADE_SKILL_UPDATE" }) do
+    -- The trade-skill update event comes from the Source: WoW: Forever has
+    -- no TRADE_SKILL_UPDATE, and registering an unknown event is an error.
+    for _, event in ipairs({ "BAG_UPDATE", "SKILL_LINES_CHANGED", addon.Source.EVENT.TRADE_UPDATE }) do
         addon:RegisterEvent(event, function()
             self:QueueIncrementalUpdate()
+            if event ~= "BAG_UPDATE" then self:QueueProfessionCheck() end
         end)
     end
 
@@ -164,6 +249,18 @@ function Comm:Init()
         addon:RegisterEvent("CHAT_MSG_SYSTEM", function(_, text)
             Comm:OnSystemMessage(text)
         end)
+    end
+    -- Both clients' chat box sends through C_ChatInfo.SendChatMessage; TBC
+    -- Anniversary may also keep the old global for other addons.
+    local function onSend(_, chatType, _, target) Comm:NotePlayerWhisper(chatType, target) end
+    if hooksecurefunc then
+        local CI = C_ChatInfo
+        if CI and type(CI.SendChatMessage) == "function" then
+            hooksecurefunc(CI, "SendChatMessage", onSend)
+        end
+        if type(SendChatMessage) == "function" and not (CI and SendChatMessage == CI.SendChatMessage) then
+            hooksecurefunc("SendChatMessage", onSend)
+        end
     end
 
     -- Housekeeping tickers. NewTicker is absent from the test harnesses (and from
@@ -191,7 +288,8 @@ end
 -- ~80 chunks and would otherwise head-of-line block everything behind it),
 -- "ALERT" for order traffic, "NORMAL" for the rest. Distinct priorities get
 -- separate rings and an equal share of the byte budget.
-function Comm:Send(msgType, data, channel, target, prio)
+-- onChunk, optional: called as each chunk leaves ChatThrottleLib's queue.
+function Comm:Send(msgType, data, channel, target, prio, onChunk)
     if not self._ready then return end
 
     data = data or {}
@@ -199,7 +297,109 @@ function Comm:Send(msgType, data, channel, target, prio)
     data._commrev = COMM_REV
 
     local serialized = AceSerializer:Serialize(data)
-    AceComm:SendCommMessage(PREFIX, serialized, channel, target, prio or "NORMAL")
+    if addon.Source and addon.Source.NUMBERED_CHUNKS and #serialized > 255 then
+        self:SendNumbered(serialized, channel, target, prio or "NORMAL", onChunk)
+    else
+        AceComm:SendCommMessage(PREFIX, serialized, channel, target, prio or "NORMAL", onChunk)
+    end
+end
+
+-- A long message as numbered chunks, through ChatThrottleLib on the same
+-- queue AceComm uses, so the lanes and the bandwidth share are unchanged.
+function Comm:SendNumbered(text, channel, target, prio, onChunk)
+    local total = math.ceil(#text / CHUNK_DATA)
+    if total > CHUNK_MAX or not ChatThrottleLib then return end
+    -- seeded from the clock (Comm:Init), so a /reload does not restart at
+    -- id 1 and merge into a partial message a peer still holds from before
+    self._chunkSeq = (self._chunkSeq or time() % 9999) % 9999 + 1
+    local head = CHUNK_MARK .. self._chunkSeq .. ":"
+    for n = 1, total do
+        ChatThrottleLib:SendAddonMessage(prio, PREFIX,
+            head .. n .. ":" .. total .. ":" .. text:sub((n - 1) * CHUNK_DATA + 1, n * CHUNK_DATA),
+            channel, target, PREFIX, onChunk)
+    end
+end
+
+-- One numbered chunk off CHAT_MSG_ADDON. Chunks are kept per sender and
+-- channel, keyed by message id, and the message goes to OnMessageReceived
+-- (the same door AceComm uses, with its trust check) once every number is
+-- in, whatever the order. A duplicate is ignored. Held chunks are capped
+-- per message, per sender and in senders, and a partial message idle for
+-- CHUNK_IDLE seconds is dropped, so a stranger cannot grow this.
+function Comm:OnChunk(prefix, text, channel, sender)
+    if type(issecretvalue) == "function"
+       and (issecretvalue(prefix) or issecretvalue(text) or issecretvalue(sender)) then return end
+    if prefix ~= PREFIX or type(text) ~= "string" or type(sender) ~= "string" then return end
+    -- anything else (AceComm's own messages) fails this match
+    local id, n, total, part = text:match("^\005(%d+):(%d+):(%d+):(.*)$")
+    id, n, total = tonumber(id), tonumber(n), tonumber(total)
+    if not (id and n and total) or total < 1 or total > CHUNK_MAX or n < 1 or n > total
+       or #part > CHUNK_DATA then return end
+    -- the sender as AceComm names it, so both paths agree
+    if Ambiguate then sender = Ambiguate(sender, "none") end
+
+    local now = GetTime()
+    self:SweepChunks(now)
+    self._chunkIn = self._chunkIn or {}
+    local inbox = self._chunkIn
+    local key = sender .. "\t" .. tostring(channel)
+    local box = inbox[key]
+    if not box then
+        local senders = 0
+        for _ in pairs(inbox) do senders = senders + 1 end
+        if senders >= CHUNK_SENDERS then return end
+        box = { held = 0, msgs = {} }
+        inbox[key] = box
+    end
+    local msg = box.msgs[id]
+    if msg and msg.total ~= total then        -- an id reused for another message
+        box.held = box.held - msg.got
+        box.msgs[id], msg = nil, nil
+    end
+    if not msg then
+        local count, oldestId = 0, nil
+        for mid, m in pairs(box.msgs) do
+            count = count + 1
+            if not oldestId or m.at < box.msgs[oldestId].at then oldestId = mid end
+        end
+        if count >= CHUNK_PER_SENDER then
+            box.held = box.held - box.msgs[oldestId].got
+            box.msgs[oldestId] = nil
+        end
+        msg = { total = total, got = 0, parts = {}, at = now }
+        box.msgs[id] = msg
+    end
+    msg.at = now
+    if msg.parts[n] then return end
+    if box.held >= CHUNK_HELD then
+        box.held = box.held - msg.got
+        box.msgs[id] = nil
+        return
+    end
+    msg.parts[n] = part
+    msg.got = msg.got + 1
+    box.held = box.held + 1
+    if msg.got < total then return end
+
+    box.held = box.held - msg.got
+    box.msgs[id] = nil
+    if next(box.msgs) == nil then inbox[key] = nil end
+    self:OnMessageReceived(PREFIX, table.concat(msg.parts, "", 1, total), channel, sender)
+end
+
+-- Drop partial messages no chunk has reached for CHUNK_IDLE seconds.
+function Comm:SweepChunks(now)
+    local inbox = self._chunkIn
+    if not inbox then return end
+    for key, box in pairs(inbox) do
+        for id, m in pairs(box.msgs) do
+            if now - m.at > CHUNK_IDLE then
+                box.held = box.held - m.got
+                box.msgs[id] = nil
+            end
+        end
+        if next(box.msgs) == nil then inbox[key] = nil end
+    end
 end
 
 -- Canonical "Name-Realm" for every key compare in this file. Core owns the
@@ -219,10 +419,23 @@ function Comm:SendWhisper(msgType, data, target, prio)
     -- attributed to an addon whisper rather than something the user typed.
     self._recentWhispers = self._recentWhispers or {}
     self._recentWhispers[name] = time()
-    if realm ~= "" and addon:NormRealm(realm) ~= addon:NormRealm(GetRealmName()) then
-        self:Send(msgType, data, "WHISPER", name .. "-" .. realm, prio)
+    -- A long message waits in ChatThrottleLib's queue and leaves a chunk at a
+    -- time, so its last chunks can go out well after this call. The server
+    -- answers each chunk, so stamp again as each one leaves: the
+    -- WHISPER_MEMORY window then counts from the chunk the line answers
+    -- (m4ru 2026-10-11: a full sync to two offline contacts on Forever put a
+    -- dozen "No player named" lines in chat).
+    local whispers = self._recentWhispers
+    local function onChunk() whispers[name] = time() end
+    -- WoW: Forever: "First Surname" reaches a player on any connected realm,
+    -- and "First Surname-Realm" is the "FirstName-SecondName" form the game
+    -- reads as a surname, so a realm is never sent there.
+    if addon.Source and addon.Source.REALM_TOKEN then
+        self:Send(msgType, data, "WHISPER", name, prio, onChunk)
+    elseif realm ~= "" and addon:NormRealm(realm) ~= addon:NormRealm(GetRealmName()) then
+        self:Send(msgType, data, "WHISPER", name .. "-" .. realm, prio, onChunk)
     else
-        self:Send(msgType, data, "WHISPER", name, prio)
+        self:Send(msgType, data, "WHISPER", name, prio, onChunk)
     end
 end
 
@@ -525,12 +738,18 @@ local ALLOWED_DIST = {
     ORDER_UPDATE = WHISPER_ONLY,
     ORDER_ACK    = WHISPER_ONLY,
     ORDER_CLAIM  = WHISPER_ONLY,
+    KNOW_REQ     = WHISPER_ONLY,
+    KNOW_DATA    = WHISPER_ONLY,
     HELLO        = BROADCASTABLE,
     ORDER_OPEN   = BROADCASTABLE,
     ORDER_CLOSED = BROADCASTABLE,
 }
 
 function Comm:OnMessageReceived(prefix, message, distribution, sender)
+    -- WoW: Forever can hand chat values over as secrets (in an instance);
+    -- comparing or parsing one is a Lua error. OnChunk has the same guard.
+    if type(issecretvalue) == "function"
+       and (issecretvalue(prefix) or issecretvalue(message) or issecretvalue(sender)) then return end
     if prefix ~= PREFIX then return end
 
     -- Canonical Name-Realm: the same spelling contacts, orders and characters
@@ -561,6 +780,12 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
     local allowed = ALLOWED_DIST[msgType]
     if not (allowed and allowed[distribution]) then return end
 
+    -- When we last heard anything from this (trusted) sender: an order
+    -- message they did not ack is not proof they are offline if they
+    -- spoke a moment ago (SendOrderMessage).
+    self._lastHeard = self._lastHeard or {}
+    self._lastHeard[sender] = time()
+
     local contact = addon.db.contacts[sender]
     if contact then
         -- Remember the sender's protocol revision so we only send INCR deltas
@@ -574,6 +799,14 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
         if rev then contact.lastCommRev = sanInt(rev, 0, 1000, 0) end
         -- They are demonstrably online, so lift any offline back-off.
         contact.offlineUntil = nil
+        -- Auto-sync pushes go only to contacts heard from this session
+        -- (SendIncrementalUpdate). The first time we hear one, push to
+        -- them, so an online contact still gets our data straight away.
+        self._heardContact = self._heardContact or {}
+        if not self._heardContact[sender] then
+            self._heardContact[sender] = true
+            if contact.autoSync then self:QueueIncrementalUpdate() end
+        end
     end
 
     -- Dispatch under pcall so a malformed payload (even from a trusted
@@ -603,10 +836,18 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
             self:HandleOrderClaim(sender, data, distribution)
         elseif msgType == "ORDER_CLOSED" then
             self:HandleOrderClosed(sender, data, distribution)
+        elseif msgType == "KNOW_REQ" then
+            self:HandleKnowReq(sender, data, distribution)
+        elseif msgType == "KNOW_DATA" then
+            self:HandleKnowData(sender, data, distribution)
         end
         -- Any message from a trusted peer proves they're online -- deliver any
         -- order messages we had queued for them while offline.
         self:FlushOutbox(sender)
+        -- A peer asked for sightings before: ask again once KNOW_REASK has
+        -- passed, so skins and gathers counted since then arrive.
+        local asked = self._knowAsked and self._knowAsked[sender]
+        if asked and (time() - asked) >= KNOW_REASK then self:RequestKnowledge(sender) end
     end)
     if not done and self:DebugEnabled() then
         print("|cff00ccffProfessionBuddy:|r comm error handling " .. msgType
@@ -636,6 +877,7 @@ end
 -- for the better part of half a minute, and the 8 s timeout fired against
 -- perfectly healthy peers, printing "is offline" for a delivered order.
 local ORDER_ACK_TIMEOUT = 20         -- seconds to wait for a delivery ack
+local RECENTLY_HEARD    = 60         -- a peer heard from this recently is not called offline
 local PENDING_ACK_TTL   = 600        -- evict an ack slot whose timer never ran
 local pendingOrderAck = {}           -- token -> { target, at, timer = <C_Timer> }
 
@@ -710,7 +952,17 @@ function Comm:SendOrderMessage(msgType, data, target, label, isResend)
             addon.db.orderOutbox = addon.db.orderOutbox or {}
             local existing = addon.db.orderOutbox[token]
             local warned = (existing and existing.warned) or false
-            if not isResend and not warned then
+            -- No ack is not proof they are offline: a peer refuses an update
+            -- for an order it does not hold and answers only the first per
+            -- REFLEX_FLOOR (m4ru 2026-09-30: two cancels 0.3 s apart printed
+            -- "offline" for a friend who was talking to us). Heard from them
+            -- lately: queue for the retry quietly.
+            local heard = self._lastHeard and self._lastHeard[normFullKey(target) or target]
+            -- While the game restricts addon chat (WoW: Forever, in an
+            -- instance) nothing can arrive, so silence proves nothing either
+            local online = (heard ~= nil and (time() - heard) < RECENTLY_HEARD)
+                or Comm:ChatRestricted()
+            if not isResend and not warned and not online then
                 warned = true
                 print("|cff00ccffProfessionBuddy:|r " .. shortName(target) ..
                     " is offline -- order " .. (label or "update") ..
@@ -724,7 +976,7 @@ function Comm:SendOrderMessage(msgType, data, target, label, isResend)
             -- Delivery indicator: no ack in time -> they're offline, mark queued.
             local oid = data.id or (data.order and data.order.id)
             local o = oid and addon.db.orders and addon.db.orders[oid]
-            if o and o.lastSentToken == token then
+            if o and o.lastSentToken == token and not online then
                 o.deliveryState = "queued"
                 if addon.OrdersPanel and addon.OrdersPanel.RefreshAll then addon.OrdersPanel:RefreshAll() end
             end
@@ -792,6 +1044,28 @@ function Comm:HandleOrderAck(sender, data, distribution)
         o.deliveryState = (data.rejected == true) and "rejected" or "delivered"
         if addon.OrdersPanel and addon.OrdersPanel.RefreshAll then addon.OrdersPanel:RefreshAll() end
     end
+end
+
+-- WoW: Forever restricts addon chat in some places (C_RestrictedActions,
+-- type Chat = 5). Messages sent then are lost, so an order update with no
+-- ack queues quietly, and when the restriction lifts every queued order
+-- message goes out again. TBC Anniversary has no such restriction.
+local CHAT_RESTRICTION = 5
+function Comm:ChatRestricted()
+    local R = C_RestrictedActions
+    if not (R and R.IsAddOnRestrictionActive) then return false end
+    local t = (Enum and Enum.AddOnRestrictionType and Enum.AddOnRestrictionType.Chat) or CHAT_RESTRICTION
+    return R.IsAddOnRestrictionActive(t) == true
+end
+
+function Comm:OnRestrictionChanged(rtype, state)
+    local chat = (Enum and Enum.AddOnRestrictionType and Enum.AddOnRestrictionType.Chat) or CHAT_RESTRICTION
+    if rtype ~= chat or state ~= 0 then return end   -- 0 = Inactive: lifted
+    local targets = {}
+    for _, entry in pairs(addon.db.orderOutbox or {}) do
+        if type(entry) == "table" and entry.target then targets[entry.target] = true end
+    end
+    for target in pairs(targets) do self:FlushOutbox(target) end
 end
 
 -- Re-send any order messages queued for a player. Called when we next
@@ -1034,44 +1308,95 @@ local BOARD_POST_COOLDOWN     = 5    -- seconds between accepted NEW posts per s
 local BOARD_SEND_SPACING      = BOARD_POST_COOLDOWN + 1  -- our own sends, spaced past it
 local VALID_MATRESP = { requester = true, crafter = true, split = true }
 
--- Requester -> guild: announce an open order to the board.
+-- Seconds until our next board post may go to `target` (nil = the guild).
 -- Receivers drop a second NEW post from the same sender inside
--- BOARD_POST_COOLDOWN, with no queue and no retry, so two posts composed back to
--- back left the second invisible to the whole guild until our next login
--- re-broadcast. Space our own sends the way RunOrderMaintenance spaces the login
--- burst, keeping them in order. Deferred sends are tracked by order id so a
--- close can cancel one instead of racing it.
-function Comm:BroadcastOpenOrder(order)
+-- BOARD_POST_COOLDOWN, so every post a receiver gets from us is spaced past it.
+-- A guild send reaches everyone, so it waits for every pending slot, and a
+-- whisper waits for the last guild send and for that guildmate's own slot.
+local GUILD_SLOT = "*guild"
+function Comm:NextOpenSlot(target)
+    local now = time()
+    local slots = self._openSlots or {}
+    self._openSlots = slots
+    for k, at in pairs(slots) do
+        if at + BOARD_SEND_SPACING <= now then slots[k] = nil end
+    end
+    local base = slots[GUILD_SLOT]
+    if target then
+        local mine = slots[target]
+        if mine and (not base or mine > base) then base = mine end
+    else
+        for _, at in pairs(slots) do
+            if not base or at > base then base = at end
+        end
+    end
+    local at = base and math.max(now, base + BOARD_SEND_SPACING) or now
+    slots[target or GUILD_SLOT] = at
+    return at - now
+end
+
+-- Requester -> guild, or to one guildmate when `target` is given: announce an
+-- open order to the board. Posts go out in order, spaced by NextOpenSlot.
+-- Deferred sends are tracked by order id so a close can cancel every pending
+-- send of that post instead of racing it.
+function Comm:BroadcastOpenOrder(order, target)
     if not self._ready or type(order) ~= "table" then return end
     if not IsInGuild() then return end
 
     local id = order.id
-    local now = time()
-    local last = self._lastOpenSendAt or 0
-    local wait = 0
-    if (now - last) < BOARD_SEND_SPACING then
-        wait = BOARD_SEND_SPACING - (now - last)
-    end
-    self._lastOpenSendAt = now + wait
+    local wait = self:NextOpenSlot(target)
 
     local function doSend()
         -- Re-checked at fire time: we may have left the guild or reloaded while
-        -- this one waited.
+        -- this one waited, or the guildmate may have left it.
         if not self._ready or not IsInGuild() then return end
-        self:Send("ORDER_OPEN", { order = wireOrder(order) }, "GUILD", nil, "ALERT")
+        if target then
+            if not self:IsGuildMember(target) then return end
+            self:SendWhisper("ORDER_OPEN", { order = wireOrder(order) }, target, "ALERT")
+        else
+            self:Send("ORDER_OPEN", { order = wireOrder(order) }, "GUILD", nil, "ALERT")
+        end
     end
 
     if wait <= 0 then
         doSend()
         return
     end
-    self._deferredOpens = self._deferredOpens or {}
-    self._deferredOpens[id] = true
+    local pending = self._deferredOpens or {}
+    self._deferredOpens = pending
+    local set = pending[id] or {}
+    pending[id] = set
+    local token = {}
+    set[token] = true
     C_Timer.After(wait, function()
-        if not (self._deferredOpens and self._deferredOpens[id]) then return end
-        self._deferredOpens[id] = nil
+        local s = self._deferredOpens and self._deferredOpens[id]
+        if not (s and s[token]) then return end
+        s[token] = nil
+        if next(s) == nil then self._deferredOpens[id] = nil end
         doSend()
     end)
+end
+
+-- A guildmate just announced themselves (login, reload, joining the guild).
+-- Our posts reach the guild once when posted and again at our own login, so
+-- anyone who was not online for either has never seen them. Whisper them our
+-- open posts. A post they already hold is a no-op on their side.
+function Comm:SendOpenPostsTo(targetKey)
+    local Orders = addon.Orders
+    if not (self._ready and Orders and Orders.GetMyOpen) then return end
+    local key = normFullKey(targetKey)
+    if not key or addon:SameKey(key, addon:PlayerKey()) then return end
+    if not self:IsGuildMember(key) then return end
+    local mine = Orders:GetMyOpen()
+    if #mine == 0 then return end
+    self._postsSentAt = self._postsSentAt or {}
+    local now = time()
+    local last = self._postsSentAt[key]
+    if last and (now - last) < BOARD_RESEND_FLOOR then return end
+    self._postsSentAt[key] = now
+    for _, order in ipairs(mine) do
+        self:BroadcastOpenOrder(order, key)
+    end
 end
 
 -- Requester -> guild (broadcast) or a single crafter (whisper): an open order is
@@ -1130,7 +1455,11 @@ function Comm:HandleOrderOpen(sender, data, distribution)
     local id = o.id
     -- The id becomes a permanent SavedVariables key, so bound and charset-check
     -- it. A legacy id minted on a multi-word realm contains a space.
-    if #id == 0 or #id > 64 or not id:match("^[%w%-'_ ]+$") then return end
+    -- Bytes 128-255 are the parts of a UTF-8 letter ("Marü Hunt-...": %w is
+    -- ASCII only in the game's Lua, so this used to drop every post from a
+    -- name with an accent, on both clients). None of them is "|" or a
+    -- control byte, so escape codes still cannot get in.
+    if #id == 0 or #id > 64 or not id:match("^[%w%-'_ \128-\255]+$") then return end
     -- Bind the id to its poster. Order ids are "<requesterKey>-<seq>" and so are
     -- guessable, and the stored requester is forced to the sender: without this
     -- check a guildmate could post "Alice-Realm-3" and take ownership of Alice's
@@ -1182,7 +1511,13 @@ function Comm:HandleOrderOpen(sender, data, distribution)
         -- post look new (and does not dodge the board TTL sweep).
         postedAt          = (prev and tonumber(prev.postedAt)) or now,
     }
-    self:NotifyOrders()
+    -- Alert only on a post new to this board, never on the login re-broadcast
+    -- of one we already hold.
+    if prev then
+        self:NotifyOrders()
+    else
+        self:NotifyOrders("boardPost", board[id])
+    end
 end
 
 -- Crafter -> requester: claim an open order off the board.
@@ -1280,6 +1615,16 @@ local function sharedProfessions(charData)
     return out
 end
 
+-- The shared profession names, sorted and joined: what a guild HELLO announces.
+local function professionNames()
+    local charData = DS and DS:GetCharacter(addon:PlayerKey())
+    if not charData then return "" end
+    local names = {}
+    for profName in pairs(sharedProfessions(charData)) do names[#names + 1] = profName end
+    table.sort(names)
+    return table.concat(names, ",")
+end
+
 ----------------------------------------------------------------------
 -- HELLO: lightweight broadcast on group join
 ----------------------------------------------------------------------
@@ -1329,13 +1674,44 @@ function Comm:BroadcastGuildHello()
     -- (PLAYER_ENTERING_WORLD) can both call this; don't broadcast twice in
     -- quick succession. Only stamp the time when we actually send.
     local now = time()
-    if self._lastGuildHelloAt and (now - self._lastGuildHelloAt) < 30 then return end
+    if self._lastGuildHelloAt and (now - self._lastGuildHelloAt) < GUILD_HELLO_FLOOR then return end
 
     local payload = self:BuildHelloPayload()
     if not payload then return end
 
     self._lastGuildHelloAt = now
+    self._helloProfNames = professionNames()
     self:Send("HELLO", payload, "GUILD")
+end
+
+-- Guildmates learn our professions only from the guild HELLO, sent once a
+-- session. A profession learned later never reached them until our next login,
+-- so announce again when the list we share changes. Skill-ups do not count.
+function Comm:QueueProfessionCheck()
+    if not self._ready or self._profCheckTimer then return end
+    self._profCheckTimer = C_Timer.NewTimer(PROF_HELLO_DELAY, function()
+        self._profCheckTimer = nil
+        self:CheckProfessionList()
+    end)
+end
+
+function Comm:CheckProfessionList()
+    if not self._ready or not IsInGuild() then return end
+    -- No guild HELLO this session yet: the login one will carry the list.
+    if self._helloProfNames == nil then return end
+    if professionNames() == self._helloProfNames then return end
+    local wait = GUILD_HELLO_FLOOR - (time() - (self._lastGuildHelloAt or 0))
+    if wait > 0 then
+        if not self._profHelloRetry then
+            self._profHelloRetry = true
+            C_Timer.After(wait + 1, function()
+                self._profHelloRetry = nil
+                self:CheckProfessionList()
+            end)
+        end
+        return
+    end
+    self:BroadcastGuildHello()
 end
 
 function Comm:SendHelloAck(target)
@@ -1386,6 +1762,7 @@ function Comm:HandleHello(sender, data, distribution)
     end
 
     self:PullAfterHello(sender)
+    if distribution == "GUILD" then self:SendOpenPostsTo(sender) end
 end
 
 function Comm:HandleHelloAck(sender, data, distribution)
@@ -1427,11 +1804,13 @@ function Comm:StoreLightweight(sender, data)
     -- (a full SYNC_DATA will populate recipes later)
     if type(data.professions) == "table" then
         local nProfs = 0
+        local listed = {}
         for rawProfName, summary in pairs(data.professions) do
             local profName = sanStr(rawProfName, 40)
             if profName and type(summary) == "table" then
                 nProfs = nProfs + 1
                 if nProfs > MAX_PROFESSIONS then break end
+                listed[profName] = true
                 if not char.professions[profName] then
                     char.professions[profName] = {
                         skillLevel = sanInt(summary.skillLevel, 0, 500, 0),
@@ -1442,6 +1821,14 @@ function Comm:StoreLightweight(sender, data)
                     char.professions[profName].skillLevel = sanInt(summary.skillLevel, 0, 500, char.professions[profName].skillLevel or 0)
                     char.professions[profName].maxSkill = sanInt(summary.maxSkill, 1, 500, char.professions[profName].maxSkill or 375)
                 end
+            end
+        end
+        -- A HELLO lists every profession the sender shares, so one it leaves
+        -- out was unlearned. An empty list (a character not scanned yet) or one
+        -- cut at the cap is not the whole list, and removes nothing.
+        if nProfs >= 1 and nProfs <= MAX_PROFESSIONS then
+            for profName in pairs(char.professions) do
+                if not listed[profName] then char.professions[profName] = nil end
             end
         end
     end
@@ -1526,17 +1913,19 @@ end
 -- "Bob-Realm", failing the trust gate, so the sync data would be silently dropped.
 function Comm:NormalizeContactKey(key)
     if type(key) ~= "string" or key == "" then return nil end
+    key = addon:CleanNameInput(key)
     local name, realm = key:match("^([^-]+)%-?(.*)$")
     if not name then return nil end
-    local first = name:sub(1, 1)
-    if first:match("%l") then           -- ASCII only; leave UTF-8 names alone
-        name = first:upper() .. name:sub(2)
-    end
+    -- Capitalize each word ("first surname" on WoW: Forever); ASCII only,
+    -- UTF-8 letters are left alone.
+    name = name:gsub("(%S)(%S*)", function(a, rest)
+        return (a:match("%l") and a:upper() or a) .. rest
+    end)
     -- Core's NormKey owns the canonical spelling and defaults a missing realm
     -- to ours, so a contact typed as "Bob-Old Blanchy" is stored under the same
     -- key the reply arrives from ("Bob-OldBlanchy").
     if realm == "" then return addon:NormKey(name) end
-    return addon:NormKey(name .. "-" .. realm)
+    return addon:NormKey(name .. "-" .. addon:CanonicalRealm(realm))
 end
 
 function Comm:RequestSync(target, isManual)
@@ -1550,6 +1939,17 @@ function Comm:RequestSync(target, isManual)
     target = self:NormalizeContactKey(target)
     if not target then return end
 
+    -- They answered us less than SERVE_COOLDOWN ago, so they will not
+    -- answer again yet: say so, instead of a "didn't respond" 35 s later
+    -- (m4ru 2026-10-13, two /pb sync 5 s apart).
+    local served = isManual and self._servedUsAt and self._servedUsAt[target]
+    if served and (time() - served) < SERVE_COOLDOWN then
+        local ago = time() - served
+        print("|cff00ccffProfessionBuddy:|r Synced with " .. target .. " " .. ago
+            .. " s ago; you can sync again in " .. (SERVE_COOLDOWN - ago) .. " s.")
+        return
+    end
+
     -- Ensure contact entry exists; requesting a sync is a deliberate local
     -- action, so it marks the contact trusted (we are willing to serve their
     -- SYNC_REQ in return -- sharing is mutual).
@@ -1560,6 +1960,8 @@ function Comm:RequestSync(target, isManual)
         }
     end
     addon.db.contacts[target].trusted = true
+    -- A manual sync asks for their knowledge again too.
+    if isManual and self._knowAsked then self._knowAsked[target] = nil end
 
     -- Record the outstanding request: it is what lets a reply from a peer we
     -- have no other relationship with (a guildmate) be accepted at all.
@@ -1753,6 +2155,12 @@ function Comm:HandleSyncData(sender, data, distribution)
     -- character record (16 professions x 2000 recipes, 5000 bag and 5000 bank
     -- entries) into our SavedVariables unasked.
     if not self:AcceptsPush(sender) then return end
+    -- An answer to our own request starts their serve cooldown for us
+    -- (RequestSync reads it).
+    if self._pendingReq and self._pendingReq[sender] then
+        self._servedUsAt = self._servedUsAt or {}
+        self._servedUsAt[sender] = time()
+    end
     if self._pendingReq then self._pendingReq[sender] = nil end
 
     -- Was this the reply to a manual sync we initiated? If so, clear the
@@ -1866,7 +2274,189 @@ function Comm:HandleSyncData(sender, data, distribution)
         print("|cff00ccffProfessionBuddy:|r Synced data from " .. sender .. ".")
     end
 
+    -- A peer new enough to share knowledge: ask once this session.
+    if sanInt(data._commrev, 0, 1000, 0) >= KNOW_MIN_REV then
+        self:RequestKnowledge(sender)
+    end
+
     self:NotifyUIRefresh()
+end
+
+----------------------------------------------------------------------
+-- Knowledge sharing (WoW: Forever, Phase 4e; the store is Knowledge.lua)
+-- After a peer's SYNC_DATA we ask them once a session (KNOW_REQ) for the
+-- trainers, vendors, learn levels and recipe items they have seen, naming
+-- our professions and the newest record they already sent us. They answer
+-- with their OWN sightings only (KNOW_DATA). Both are whispers and ride
+-- the sync trust tiers: a guild-tier peer pays from the guild serve budget.
+----------------------------------------------------------------------
+function Comm:RequestKnowledge(peer)
+    local KN = addon.Knowledge
+    if not (KN and self._ready) then return end
+    peer = normFullKey(peer)
+    if not peer then return end
+    self._knowAsked = self._knowAsked or {}
+    local now = time()
+    if self._knowAsked[peer] and (now - self._knowAsked[peer]) < KNOW_REASK then return end
+    self._knowAsked[peer] = now
+    self._knowPending = self._knowPending or {}
+    self._knowPending[peer] = now
+    local since, profs = KN:RequestFor(peer)
+    self._knowAskedProfs = self._knowAskedProfs or {}
+    self._knowAskedProfs[peer] = profs
+    self:SendWhisper("KNOW_REQ", { since = since, profs = profs, s = true, g = true }, peer, "BULK")
+end
+
+function Comm:HandleKnowReq(sender, data, distribution)
+    local KN = addon.Knowledge
+    if not (KN and self:SharingEnabled()) then return end
+    local tier = self:TrustLevel(sender)
+    if not tier then return end
+    local now = time()
+    self._knowServed = self._knowServed or {}
+    local cooldown = (tier == "guild") and GUILD_SERVE_COOLDOWN or SERVE_COOLDOWN
+    if self._knowServed[sender] and (now - self._knowServed[sender]) < cooldown then return end
+    if tier == "guild" and not self:GuildServeBudget(now) then return end
+
+    local profs, n = {}, 0
+    if type(data.profs) == "table" then
+        for _, raw in ipairs(data.profs) do
+            n = n + 1
+            if n > MAX_KNOW_PROFS then break end
+            local name = sanStr(raw, 40)
+            if name then profs[name] = true end
+        end
+    end
+    local since = sanInt(data.since, 0, now + 86400, 0)
+    self._knowServed[sender] = now
+    if tier == "guild" then self:GuildServeBudget(now, true) end
+    local loot, nodes = data.s == true, data.g == true
+    self:SendWhisper("KNOW_DATA", KN:BuildShare(since, profs, MAX_KNOW_RECIPES, MAX_KNOW_PER_RECIPE,
+        loot and MAX_KNOW_SKIN_MOBS or nil, MAX_KNOW_SKIN_ITEMS, nodes and MAX_KNOW_NODES or nil),
+        sender, "BULK")
+end
+
+-- Only in answer to our own KNOW_REQ, and only from a peer still trusted
+-- (the dispatcher already dropped anyone else).
+function Comm:HandleKnowData(sender, data, distribution)
+    local KN = addon.Knowledge
+    if not KN then return end
+    local due = self._knowPending and self._knowPending[sender]
+    if not due or (time() - due) > PENDING_REQ_TTL then return end
+    self._knowPending[sender] = nil
+    local profs = self._knowAskedProfs and self._knowAskedProfs[sender]
+    if self._knowAskedProfs then self._knowAskedProfs[sender] = nil end
+    local clean = self:SanitizeKnowledge(data)
+    if not clean then return end
+    -- an older peer never sends that loot, so asking again stays a full ask
+    local rev = sanInt(data._commrev, 0, 1000, 0)
+    KN:StoreShared(sender, clean, { profs = profs, loot = rev >= LOOT_MIN_REV,
+        nodes = rev >= NODE_LOOT_MIN_REV })
+    self:NotifyUIRefresh()
+end
+
+local function cleanNpc(n)
+    local fac = sanFaction(n[5])
+    if fac == "Unknown" then fac = nil end
+    return { id = sanID(n[1], 10^7), name = sanStr(n[2], 48) or "?", zone = sanStr(n[3], 48),
+             subZone = sanStr(n[4], 48), faction = fac }
+end
+
+local function copyNpc(n)
+    return { name = n.name, zone = n.zone, subZone = n.subZone, faction = n.faction }
+end
+
+-- Rebuild one KNOW_DATA field by field. nil drops the whole message: the
+-- wrong shape, or over any cap. Inside it, a recipe PB does not know or a
+-- junk entry is skipped.
+function Comm:SanitizeKnowledge(data)
+    local RDB = addon.RecipeDB
+    if not (RDB and type(data.npcs) == "table" and type(data.r) == "table") then return nil end
+    local npcs, nN = {}, 0
+    for _ in pairs(data.npcs) do
+        nN = nN + 1
+        if nN > MAX_KNOW_NPCS then return nil end
+    end
+    for i, n in ipairs(data.npcs) do
+        if type(n) ~= "table" then return nil end
+        npcs[i] = cleanNpc(n)
+    end
+    local now, records, nR = time(), {}, 0
+    for rawID, rec in pairs(data.r) do
+        nR = nR + 1
+        if nR > MAX_KNOW_RECIPES then return nil end
+        local id = sanID(rawID, 10^7)
+        if id and type(rec) == "table" and RDB.spellToRecipe[id] then
+            local out = { at = sanInt(rec.a, 0, now + 86400, 0), learnLevel = sanID(rec.l, 450) }
+            if rec.i == true then out.items = true end
+            if type(rec.t) == "table" then
+                if #rec.t > MAX_KNOW_PER_RECIPE then return nil end
+                for _, idx in ipairs(rec.t) do
+                    local n = npcs[sanID(idx, MAX_KNOW_NPCS) or 0]
+                    if n then
+                        out.teachers = out.teachers or {}
+                        out.teachers[n.id or n.name] = copyNpc(n)
+                    end
+                end
+            end
+            if type(rec.v) == "table" then
+                if #rec.v > MAX_KNOW_PER_RECIPE then return nil end
+                for _, e in ipairs(rec.v) do
+                    local n = type(e) == "table" and npcs[sanID(e[1], MAX_KNOW_NPCS) or 0]
+                    if n then
+                        local v = copyNpc(n)
+                        v.itemID = sanID(e[2], 10^7)
+                        v.price = sanInt(e[3], 0, 10^9, 0)
+                        out.vendors = out.vendors or {}
+                        out.vendors[n.id or n.name] = v
+                    end
+                end
+            end
+            -- a record with nothing in it would only mark the recipe seen
+            if out.learnLevel or out.items or out.teachers or out.vendors then
+                records[id] = out
+            end
+        end
+    end
+    -- One loot field (s by NPC ID, g by node name), rebuilt the same way.
+    -- false drops the whole message; nil means the field was absent.
+    local function cleanLoot(field, maxKeys, keyOf)
+        if field == nil then return nil end
+        if type(field) ~= "table" then return false end
+        local out, nK = {}, 0
+        for rawKey, rec in pairs(field) do
+            nK = nK + 1
+            if nK > maxKeys then return false end
+            local key, prof = keyOf(rawKey, rec)
+            if key and type(rec) == "table" and type(rec.i) == "table" then
+                if #rec.i > MAX_KNOW_SKIN_ITEMS then return false end
+                local n = sanInt(rec.n, 0, MAX_KNOW_SKINS, 0)
+                local items = {}
+                for _, e in ipairs(rec.i) do
+                    local itemID = type(e) == "table" and sanID(e[1], 10^7)
+                    if itemID then
+                        local lo = sanInt(e[3], 1, MAX_KNOW_STACK, 1)
+                        items[itemID] = { c = sanInt(e[2], 0, n, 0), min = lo,
+                                          max = sanInt(e[4], lo, MAX_KNOW_STACK, lo) }
+                    end
+                end
+                if n > 0 then
+                    out[key] = { at = sanInt(rec.a, 0, now + 86400, 0), n = n, items = items, prof = prof }
+                end
+            end
+        end
+        return out
+    end
+    local loot = cleanLoot(data.s, MAX_KNOW_SKIN_MOBS, function(raw) return sanID(raw, 10^7) end)
+    -- a node name PB knows, under the profession whose table holds it
+    local nodeLoot = cleanLoot(data.g, MAX_KNOW_NODES, function(raw, rec)
+        if type(raw) ~= "string" or type(rec) ~= "table" then return nil end
+        if rec.p == "Mining" and addon.MiningNodes and addon.MiningNodes[raw] then return raw, "Mining" end
+        if rec.p == "Herbalism" and addon.HerbNodes and addon.HerbNodes[raw] then return raw, "Herbalism" end
+        return nil
+    end)
+    if loot == false or nodeLoot == false then return nil end
+    return { at = sanInt(data.at, 0, now + 86400, 0), records = records, loot = loot, nodeLoot = nodeLoot }
 end
 
 ----------------------------------------------------------------------
@@ -2082,10 +2672,15 @@ function Comm:SendIncrementalUpdate()
 
     for contactKey, contact in pairs(addon.db.contacts) do
         -- Skip a contact the server just told us is not logged in; any message
-        -- from them clears the back-off immediately.
+        -- from them clears the back-off immediately. Push only to a contact
+        -- heard from this session: an offline one gets the login SYNC_REQ
+        -- and nothing else, instead of a full sync of a dozen chunks that the
+        -- server answers with a dozen "No player named" lines (m4ru
+        -- 2026-10-12).
         local offline = contact.offlineUntil and contact.offlineUntil > now
-        if contact.autoSync and not offline then
-            local key = normFullKey(contactKey) or contactKey
+        local key = normFullKey(contactKey) or contactKey
+        local heard = self._heardContact and self._heardContact[key]
+        if contact.autoSync and not offline and heard then
             local rev = tonumber(contact.lastCommRev) or 0
             local st = self._pushState[key]
             if not st or not st.epoch or not st.inv then
@@ -2262,14 +2857,36 @@ function Comm:OnSystemMessage(text)
     if not who then return false end
 
     local short = addon:ShortName(who)
+    local now = time()
     local at = self._recentWhispers and short and self._recentWhispers[short]
-    if not at or (time() - at) > WHISPER_MEMORY then return false end
-    self._recentWhispers[short] = nil
+    if not at or (now - at) > WHISPER_MEMORY then return false end
+    -- The whisper stays remembered for its whole window: one long message
+    -- is several whispers (a 1.2 KB SYNC_DATA is 6 chunks) and the server
+    -- answers each, and every chat frame showing system lines asks this
+    -- filter again. Forgetting it after the first line let the rest through
+    -- (m4ru 2026-10-01: five "No player named" lines for one push).
 
     local key = normFullKey(who)
     local contact = key and addon.db.contacts and addon.db.contacts[key]
-    if contact then contact.offlineUntil = time() + OFFLINE_BACKOFF end
+    if contact then contact.offlineUntil = now + OFFLINE_BACKOFF end
+    -- The player whispered this name too inside the window: the line may
+    -- answer them, so it shows. Five minutes is long enough to swallow
+    -- the answer to something they typed otherwise.
+    local mine = self._playerWhispers and self._playerWhispers[short]
+    if mine and (now - mine) <= WHISPER_MEMORY then return false end
     return true
+end
+
+-- The player's own whispers (typed, or sent by another addon), so the
+-- offline filter never hides the answer to one. A post-hook: it only
+-- reads the arguments, after the game has sent the message.
+function Comm:NotePlayerWhisper(chatType, target)
+    if type(issecretvalue) == "function" and (issecretvalue(chatType) or issecretvalue(target)) then return end
+    if chatType ~= "WHISPER" or type(target) ~= "string" then return end
+    local short = addon:ShortName(target)
+    if not short then return end
+    self._playerWhispers = self._playerWhispers or {}
+    self._playerWhispers[short] = time()
 end
 
 ----------------------------------------------------------------------
@@ -2284,9 +2901,13 @@ function Comm:ForgetPeer(key)
     lastServed[k] = nil
     for _, name in ipairs({ "_pushState", "_recvState", "_guildSyncAt", "_resyncAt",
                             "_helloAckAt", "_helloPullAt", "_reflexAt",
-                            "_pendingReq", "_lastOpenAt" }) do
+                            "_pendingReq", "_lastOpenAt",
+                            "_knowAsked", "_knowPending", "_knowServed",
+                            "_heardContact", "_servedUsAt", "_postsSentAt" }) do
         if self[name] then self[name][k] = nil end
     end
+    -- and what they shared with us (WoW: Forever)
+    if addon.Knowledge then addon.Knowledge:ForgetPeer(k) end
     local pkey = normKey(k)
     if self._pendingSync and pkey then self._pendingSync[pkey] = nil end
     if self._recentWhispers then self._recentWhispers[addon:ShortName(k)] = nil end
@@ -2331,14 +2952,20 @@ end
 function Comm:SweepSessionTables()
     local now = time()
     sweepByAge(lastServed, SESSION_TTL, now)
+    sweepByAge(self._lastHeard, SESSION_TTL, now)
     sweepByAge(self._guildSyncAt, SESSION_TTL, now)
     sweepByAge(self._helloAckAt, SESSION_TTL, now)
     sweepByAge(self._helloPullAt, SESSION_TTL, now)
     sweepByAge(self._reflexAt, SESSION_TTL, now)
     sweepByAge(self._resyncAt, SESSION_TTL, now)
     sweepByAge(self._lastOpenAt, SESSION_TTL, now)
+    sweepByAge(self._postsSentAt, SESSION_TTL, now)
     sweepByAge(self._pendingReq, PENDING_REQ_TTL, now)
-    sweepByAge(self._recentWhispers, WHISPER_MEMORY * 6, now)
+    sweepByAge(self._knowPending, PENDING_REQ_TTL, now)
+    sweepByAge(self._knowServed, SESSION_TTL, now)
+    sweepByAge(self._servedUsAt, SESSION_TTL, now)
+    sweepByAge(self._recentWhispers, WHISPER_MEMORY, now)
+    sweepByAge(self._playerWhispers, WHISPER_MEMORY, now)
 
     -- An ack slot whose timer never ran (a cancelled timer, a reload mid-flight).
     for token, p in pairs(pendingOrderAck) do

@@ -18,7 +18,10 @@
 --                  taught by level with no skill requirement (rogue poisons).
 --                  Absent means no level gate.
 --   skillRange   = { orange, yellow, green, grey }, ascending. orange equals
---                  skillReq unless the recipe is not trainer-taught.
+--                  skillReq unless the recipe is not trainer-taught. On WoW:
+--                  Forever orange is false where the learn level is not
+--                  known yet (skillReq absent), and learnFrom names where a
+--                  known one came from (tools/bake_forever_db2.py).
 --   sources      = { { method = "trainer"|"vendor"|"drop"|"quest"|
 --                      "reputation"|"discovery"|"automatic"|"undetermined",
 --                      faction = "Alliance"|"Horde"|"Both",
@@ -31,6 +34,9 @@
 --                  sources[1] at RegisterProfession for readers not yet
 --                  migrated to sources[] (UI migration = source-overhaul Inc 3).
 --   category     = top-level grouping shown in the browser.
+--   teachItems   = optional, WoW: Forever: the item IDs that teach the recipe
+--                  (Pattern, Plans, Recipe and so on). Knowledge.lua matches a
+--                  vendor's or a bag's item to its recipe with it.
 --   subcategory  = optional grouping inside the category.
 --   reagents     = { { itemID = X, count = N, name = "Display Name" }, ... }
 --                  name is required: the material calculator shows ??? without it.
@@ -140,10 +146,50 @@ end
 ----------------------------------------------------------------------
 -- Query: what recipes does this character NOT know for a profession?
 ----------------------------------------------------------------------
+-- The unknown recipes the Missing list and the character panel show: all
+-- of them, or on WoW: Forever with Learn as you go only the ones seen
+-- (Knowledge.lua, which only the Mainline toc loads).
+-- WoW: Forever abilities (Data/Forever, ability = true): learnable, never
+-- crafted, so no profession window lists them (Comprehension's Comprehend
+-- Scroll ranks and Research). Known ones are read from the spellbook.
+-- Returns name -> static entry for those this character knows.
+local function SpellKnown(id)
+    if C_SpellBook and C_SpellBook.IsSpellKnown then return C_SpellBook.IsSpellKnown(id) == true end
+    if IsPlayerSpell then return IsPlayerSpell(id) == true end
+    return false
+end
+
+function RDB:KnownAbilities(profName)
+    local out = {}
+    for name, e in pairs(self.data[profName] or {}) do
+        if e.ability and e.spellID and SpellKnown(e.spellID) then out[name] = e end
+    end
+    return out
+end
+
+-- The saved record of a profession gains the abilities this character
+-- knows, so the Missing list leaves them out and the Known list and other
+-- characters' views show them. Adds only.
+function RDB:AddKnownAbilities(profName, recipes)
+    for name, e in pairs(self:KnownAbilities(profName)) do
+        if not recipes[name] then
+            recipes[name] = { spellID = e.spellID, itemID = 0, reagents = {}, ability = true }
+        end
+    end
+    return recipes
+end
+
+function RDB:GetUnknownRecipes(charKey, profName)
+    local unknown = self:GetAllUnknownRecipes(charKey, profName)
+    local KN = addon.Knowledge
+    if KN then return KN:FilterUnknown(unknown, charKey) end
+    return unknown
+end
+
 -- NOTE: the returned entries are the STATIC tables out of self.data, handed
 -- out by reference for cheapness. Read them; never write to one, or the edit
 -- is visible to every other reader for the rest of the session.
-function RDB:GetUnknownRecipes(charKey, profName)
+function RDB:GetAllUnknownRecipes(charKey, profName)
     local profData = addon.DataStore:GetProfession(charKey, profName)
 
     local allRecipes = self.data[profName]

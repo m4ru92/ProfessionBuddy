@@ -31,3 +31,14 @@ directory, each distributed under its own permissive license:
   - Ace3 (AceComm-3.0, AceSerializer-3.0)
 
 These libraries retain their original licenses and copyrights.
+
+It also embeds two launcher libraries that do not state a permissive
+license. The MIT license above does not cover them; they keep their
+authors' terms and copyrights:
+
+  - LibDataBroker-1.1 by tekkub (no license stated)
+    https://github.com/tekkub/libdatabroker-1-1
+  - LibDBIcon-1.0 by Funkeh (its toc states "All Rights Reserved")
+    https://www.wowace.com/projects/libdbicon-1-0
+
+Both are shipped unmodified, as published at those sources.

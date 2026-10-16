@@ -1,0 +1,6293 @@
+{
+"_about": "Classic Era inputs for the WoW: Forever learn-level formula. eraYellow and eraItemRank: Classic Era DB2 (SkillLineAbility.TrivialSkillLineRankLow; the teaching item's ItemSparse.RequiredSkillRank), wago.tools CSV export, read 2026-09-23. eraTrainer: the cMaNGOS classic-db trainer learn level (npc_trainer / npc_trainer_template reqskillvalue), dump read 2026-09-23. No TBC data.",
+"spells": {
+"2149": {
+"eraYellow": 40
+},
+"2152": {
+"eraYellow": 30
+},
+"2153": {
+"eraYellow": 45,
+"eraTrainer": 15
+},
+"2158": {
+"eraYellow": 120,
+"eraItemRank": 90
+},
+"2159": {
+"eraYellow": 105,
+"eraTrainer": 85
+},
+"2160": {
+"eraYellow": 70,
+"eraTrainer": 40
+},
+"2161": {
+"eraYellow": 85,
+"eraTrainer": 55
+},
+"2162": {
+"eraYellow": 90,
+"eraTrainer": 60
+},
+"2163": {
+"eraYellow": 90,
+"eraItemRank": 60
+},
+"2164": {
+"eraYellow": 105,
+"eraItemRank": 75
+},
+"2165": {
+"eraYellow": 115,
+"eraTrainer": 100
+},
+"2166": {
+"eraYellow": 145,
+"eraTrainer": 120
+},
+"2167": {
+"eraYellow": 125,
+"eraTrainer": 100
+},
+"2168": {
+"eraYellow": 135,
+"eraTrainer": 110
+},
+"2169": {
+"eraYellow": 125,
+"eraItemRank": 100
+},
+"2329": {
+"eraYellow": 55
+},
+"2330": {
+"eraYellow": 55
+},
+"2331": {
+"eraYellow": 65,
+"eraTrainer": 25
+},
+"2332": {
+"eraYellow": 70,
+"eraTrainer": 40
+},
+"2333": {
+"eraYellow": 165,
+"eraItemRank": 140
+},
+"2334": {
+"eraYellow": 80,
+"eraItemRank": 50,
+"eraTrainer": 50
+},
+"2335": {
+"eraYellow": 90,
+"eraItemRank": 60
+},
+"2337": {
+"eraYellow": 85,
+"eraTrainer": 55
+},
+"2365": {
+"eraItemRank": 70
+},
+"2385": {
+"eraYellow": 45,
+"eraTrainer": 10
+},
+"2386": {
+"eraYellow": 90,
+"eraTrainer": 65
+},
+"2387": {
+"eraYellow": 35
+},
+"2389": {
+"eraYellow": 65,
+"eraItemRank": 40
+},
+"2392": {
+"eraYellow": 65,
+"eraTrainer": 40
+},
+"2393": {
+"eraYellow": 35,
+"eraTrainer": 1
+},
+"2394": {
+"eraYellow": 65,
+"eraTrainer": 40
+},
+"2395": {
+"eraYellow": 95,
+"eraTrainer": 70
+},
+"2396": {
+"eraYellow": 95,
+"eraTrainer": 70
+},
+"2397": {
+"eraYellow": 85,
+"eraTrainer": 60
+},
+"2399": {
+"eraYellow": 110,
+"eraTrainer": 85
+},
+"2401": {
+"eraYellow": 120,
+"eraTrainer": 95
+},
+"2402": {
+"eraYellow": 100,
+"eraTrainer": 75
+},
+"2403": {
+"eraYellow": 130,
+"eraItemRank": 105
+},
+"2406": {
+"eraYellow": 110,
+"eraTrainer": 100
+},
+"2538": {
+"eraYellow": 45
+},
+"2539": {
+"eraYellow": 50,
+"eraTrainer": 10
+},
+"2540": {
+"eraYellow": 45
+},
+"2541": {
+"eraYellow": 90,
+"eraTrainer": 50
+},
+"2542": {
+"eraYellow": 90,
+"eraItemRank": 50
+},
+"2543": {
+"eraYellow": 115,
+"eraItemRank": 75
+},
+"2544": {
+"eraYellow": 115,
+"eraTrainer": 75
+},
+"2545": {
+"eraYellow": 125,
+"eraItemRank": 85
+},
+"2546": {
+"eraYellow": 120,
+"eraTrainer": 80
+},
+"2547": {
+"eraYellow": 135,
+"eraItemRank": 100
+},
+"2548": {
+"eraYellow": 130,
+"eraItemRank": 110
+},
+"2549": {
+"eraYellow": 140,
+"eraItemRank": 100
+},
+"2657": {
+"eraYellow": 25
+},
+"2658": {
+"eraYellow": 100,
+"eraTrainer": 75
+},
+"2659": {
+"eraYellow": 65,
+"eraTrainer": 65
+},
+"2660": {
+"eraYellow": 15
+},
+"2661": {
+"eraYellow": 75,
+"eraTrainer": 35
+},
+"2662": {
+"eraYellow": 50,
+"eraTrainer": 1
+},
+"2663": {
+"eraYellow": 20
+},
+"2664": {
+"eraYellow": 115,
+"eraTrainer": 90
+},
+"2665": {
+"eraYellow": 65,
+"eraTrainer": 65
+},
+"2666": {
+"eraYellow": 110,
+"eraTrainer": 70
+},
+"2667": {
+"eraYellow": 120,
+"eraItemRank": 80
+},
+"2668": {
+"eraYellow": 145,
+"eraTrainer": 105
+},
+"2670": {
+"eraYellow": 145,
+"eraTrainer": 105
+},
+"2671": {
+"eraYellow": 145,
+"eraItemRank": 100
+},
+"2672": {
+"eraYellow": 150,
+"eraTrainer": 120
+},
+"2673": {
+"eraYellow": 160,
+"eraItemRank": 130
+},
+"2674": {
+"eraYellow": 125,
+"eraTrainer": 125
+},
+"2675": {
+"eraYellow": 175,
+"eraTrainer": 145
+},
+"2737": {
+"eraYellow": 55,
+"eraTrainer": 15
+},
+"2738": {
+"eraYellow": 60,
+"eraTrainer": 20
+},
+"2739": {
+"eraYellow": 65,
+"eraTrainer": 25
+},
+"2740": {
+"eraYellow": 140,
+"eraTrainer": 110
+},
+"2741": {
+"eraYellow": 145,
+"eraTrainer": 115
+},
+"2742": {
+"eraYellow": 150,
+"eraTrainer": 120
+},
+"2795": {
+"eraYellow": 60,
+"eraItemRank": 25
+},
+"2835": {
+"eraYellow": 175,
+"eraTrainer": 130
+},
+"2837": {
+"eraYellow": 215,
+"eraTrainer": 170
+},
+"2881": {
+"eraYellow": 20
+},
+"2963": {
+"eraYellow": 25
+},
+"2964": {
+"eraYellow": 90,
+"eraTrainer": 75
+},
+"3115": {
+"eraYellow": 15
+},
+"3116": {
+"eraYellow": 65,
+"eraTrainer": 65
+},
+"3117": {
+"eraYellow": 125,
+"eraTrainer": 125
+},
+"3170": {
+"eraYellow": 60,
+"eraTrainer": 15
+},
+"3171": {
+"eraYellow": 120,
+"eraTrainer": 90
+},
+"3172": {
+"eraYellow": 135,
+"eraItemRank": 110
+},
+"3173": {
+"eraYellow": 145,
+"eraTrainer": 120
+},
+"3174": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"3175": {
+"eraYellow": 275,
+"eraItemRank": 250
+},
+"3176": {
+"eraYellow": 150,
+"eraTrainer": 125
+},
+"3177": {
+"eraYellow": 155,
+"eraTrainer": 130
+},
+"3188": {
+"eraYellow": 175,
+"eraItemRank": 150
+},
+"3230": {
+"eraYellow": 80,
+"eraItemRank": 50
+},
+"3275": {
+"eraYellow": 30
+},
+"3276": {
+"eraYellow": 50,
+"eraTrainer": 40
+},
+"3277": {
+"eraYellow": 80,
+"eraTrainer": 80
+},
+"3278": {
+"eraYellow": 115,
+"eraTrainer": 115
+},
+"3292": {
+"eraYellow": 135,
+"eraTrainer": 90
+},
+"3293": {
+"eraYellow": 75,
+"eraTrainer": 35
+},
+"3294": {
+"eraYellow": 110,
+"eraTrainer": 70
+},
+"3295": {
+"eraYellow": 155,
+"eraItemRank": 125
+},
+"3296": {
+"eraYellow": 160,
+"eraTrainer": 130
+},
+"3297": {
+"eraYellow": 175,
+"eraItemRank": 145
+},
+"3304": {
+"eraYellow": 50,
+"eraTrainer": 65
+},
+"3307": {
+"eraYellow": 130,
+"eraTrainer": 125
+},
+"3308": {
+"eraYellow": 170,
+"eraTrainer": 155
+},
+"3319": {
+"eraYellow": 60,
+"eraTrainer": 20
+},
+"3320": {
+"eraYellow": 45,
+"eraTrainer": 25
+},
+"3321": {
+"eraYellow": 75,
+"eraItemRank": 35
+},
+"3323": {
+"eraYellow": 80,
+"eraTrainer": 40
+},
+"3324": {
+"eraYellow": 85,
+"eraTrainer": 45
+},
+"3325": {
+"eraYellow": 100,
+"eraItemRank": 60
+},
+"3326": {
+"eraYellow": 75,
+"eraTrainer": 75
+},
+"3328": {
+"eraYellow": 140,
+"eraTrainer": 110
+},
+"3330": {
+"eraYellow": 155,
+"eraItemRank": 125
+},
+"3331": {
+"eraYellow": 160,
+"eraTrainer": 130
+},
+"3333": {
+"eraYellow": 165,
+"eraTrainer": 135
+},
+"3334": {
+"eraYellow": 175,
+"eraItemRank": 145
+},
+"3336": {
+"eraYellow": 180,
+"eraItemRank": 150
+},
+"3337": {
+"eraYellow": 125,
+"eraTrainer": 125
+},
+"3370": {
+"eraYellow": 120,
+"eraItemRank": 80
+},
+"3371": {
+"eraYellow": 100,
+"eraItemRank": 60
+},
+"3372": {
+"eraYellow": 130,
+"eraItemRank": 90
+},
+"3373": {
+"eraYellow": 160,
+"eraItemRank": 120
+},
+"3376": {
+"eraYellow": 170,
+"eraItemRank": 130
+},
+"3377": {
+"eraYellow": 150,
+"eraItemRank": 110
+},
+"3397": {
+"eraYellow": 150,
+"eraItemRank": 110
+},
+"3398": {
+"eraYellow": 175,
+"eraItemRank": 125
+},
+"3399": {
+"eraYellow": 190,
+"eraItemRank": 150
+},
+"3400": {
+"eraYellow": 215,
+"eraItemRank": 175
+},
+"3420": {
+"eraYellow": 125,
+"eraTrainer": 1
+},
+"3421": {
+"eraYellow": 275,
+"eraTrainer": 230
+},
+"3447": {
+"eraYellow": 135,
+"eraTrainer": 110
+},
+"3448": {
+"eraYellow": 185,
+"eraTrainer": 165
+},
+"3449": {
+"eraYellow": 190,
+"eraItemRank": 165
+},
+"3450": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"3451": {
+"eraYellow": 200,
+"eraItemRank": 180,
+"eraTrainer": 180
+},
+"3452": {
+"eraYellow": 180,
+"eraTrainer": 160
+},
+"3453": {
+"eraYellow": 215,
+"eraItemRank": 195
+},
+"3454": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"3491": {
+"eraYellow": 135,
+"eraTrainer": 100
+},
+"3492": {
+"eraYellow": 185,
+"eraItemRank": 160
+},
+"3493": {
+"eraYellow": 200,
+"eraItemRank": 175
+},
+"3494": {
+"eraYellow": 180,
+"eraItemRank": 155
+},
+"3495": {
+"eraYellow": 195,
+"eraItemRank": 170
+},
+"3496": {
+"eraYellow": 205,
+"eraItemRank": 180
+},
+"3497": {
+"eraYellow": 225,
+"eraItemRank": 200
+},
+"3498": {
+"eraYellow": 210,
+"eraItemRank": 185
+},
+"3500": {
+"eraYellow": 225,
+"eraItemRank": 200
+},
+"3501": {
+"eraYellow": 190,
+"eraTrainer": 165
+},
+"3502": {
+"eraYellow": 195,
+"eraTrainer": 170
+},
+"3503": {
+"eraYellow": 215,
+"eraItemRank": 190
+},
+"3504": {
+"eraYellow": 185,
+"eraItemRank": 160
+},
+"3505": {
+"eraYellow": 200,
+"eraItemRank": 175
+},
+"3506": {
+"eraYellow": 180,
+"eraTrainer": 155
+},
+"3507": {
+"eraYellow": 195,
+"eraItemRank": 170
+},
+"3508": {
+"eraYellow": 205,
+"eraTrainer": 180
+},
+"3511": {
+"eraYellow": 220,
+"eraItemRank": 195
+},
+"3513": {
+"eraYellow": 210,
+"eraItemRank": 185
+},
+"3515": {
+"eraYellow": 225,
+"eraItemRank": 200
+},
+"3569": {
+"eraYellow": 165,
+"eraTrainer": 165
+},
+"3753": {
+"eraYellow": 55,
+"eraTrainer": 25
+},
+"3755": {
+"eraYellow": 70,
+"eraTrainer": 45
+},
+"3756": {
+"eraYellow": 85,
+"eraTrainer": 55
+},
+"3757": {
+"eraYellow": 105,
+"eraTrainer": 80
+},
+"3758": {
+"eraYellow": 120,
+"eraItemRank": 95
+},
+"3759": {
+"eraYellow": 105,
+"eraTrainer": 75
+},
+"3760": {
+"eraYellow": 170,
+"eraTrainer": 150
+},
+"3761": {
+"eraYellow": 115,
+"eraTrainer": 85
+},
+"3762": {
+"eraYellow": 125,
+"eraItemRank": 100
+},
+"3763": {
+"eraYellow": 110,
+"eraTrainer": 80
+},
+"3764": {
+"eraYellow": 170,
+"eraTrainer": 145
+},
+"3765": {
+"eraYellow": 155,
+"eraItemRank": 120
+},
+"3766": {
+"eraYellow": 150,
+"eraTrainer": 125
+},
+"3767": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"3768": {
+"eraYellow": 155,
+"eraTrainer": 130
+},
+"3769": {
+"eraYellow": 165,
+"eraItemRank": 140
+},
+"3770": {
+"eraYellow": 160,
+"eraTrainer": 135
+},
+"3771": {
+"eraYellow": 170,
+"eraItemRank": 150
+},
+"3772": {
+"eraYellow": 175,
+"eraItemRank": 155
+},
+"3773": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"3774": {
+"eraYellow": 180,
+"eraTrainer": 160
+},
+"3775": {
+"eraYellow": 190,
+"eraItemRank": 170
+},
+"3776": {
+"eraYellow": 200,
+"eraTrainer": 180
+},
+"3777": {
+"eraYellow": 215,
+"eraItemRank": 195
+},
+"3778": {
+"eraYellow": 205,
+"eraItemRank": 185
+},
+"3779": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"3780": {
+"eraYellow": 170,
+"eraTrainer": 150
+},
+"3813": {
+"eraYellow": 170,
+"eraTrainer": 150
+},
+"3816": {
+"eraYellow": 55,
+"eraTrainer": 35
+},
+"3817": {
+"eraYellow": 115,
+"eraTrainer": 100
+},
+"3818": {
+"eraYellow": 160,
+"eraTrainer": 150
+},
+"3839": {
+"eraYellow": 135,
+"eraTrainer": 125
+},
+"3840": {
+"eraYellow": 60,
+"eraTrainer": 35
+},
+"3841": {
+"eraYellow": 85,
+"eraTrainer": 60
+},
+"3842": {
+"eraYellow": 95,
+"eraTrainer": 70
+},
+"3843": {
+"eraYellow": 110,
+"eraTrainer": 85
+},
+"3844": {
+"eraYellow": 125,
+"eraItemRank": 100
+},
+"3845": {
+"eraYellow": 105,
+"eraTrainer": 80
+},
+"3847": {
+"eraYellow": 120,
+"eraItemRank": 95
+},
+"3848": {
+"eraYellow": 135,
+"eraTrainer": 110
+},
+"3849": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"3850": {
+"eraYellow": 135,
+"eraTrainer": 110
+},
+"3851": {
+"eraYellow": 150,
+"eraItemRank": 125
+},
+"3852": {
+"eraYellow": 150,
+"eraTrainer": 130
+},
+"3854": {
+"eraYellow": 165,
+"eraItemRank": 145
+},
+"3855": {
+"eraYellow": 150,
+"eraTrainer": 125
+},
+"3856": {
+"eraYellow": 160,
+"eraItemRank": 140
+},
+"3857": {
+"eraYellow": 185,
+"eraItemRank": 165
+},
+"3858": {
+"eraYellow": 190,
+"eraItemRank": 170
+},
+"3859": {
+"eraYellow": 170,
+"eraTrainer": 150
+},
+"3860": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"3861": {
+"eraYellow": 205,
+"eraTrainer": 185
+},
+"3862": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"3863": {
+"eraYellow": 200,
+"eraItemRank": 180
+},
+"3864": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"3865": {
+"eraYellow": 180,
+"eraTrainer": 175
+},
+"3866": {
+"eraYellow": 135,
+"eraTrainer": 110
+},
+"3868": {
+"eraYellow": 150,
+"eraItemRank": 125
+},
+"3869": {
+"eraYellow": 145,
+"eraItemRank": 135
+},
+"3870": {
+"eraYellow": 165,
+"eraItemRank": 155
+},
+"3871": {
+"eraYellow": 180,
+"eraTrainer": 170
+},
+"3872": {
+"eraYellow": 195,
+"eraItemRank": 185
+},
+"3873": {
+"eraYellow": 210,
+"eraItemRank": 200
+},
+"3914": {
+"eraYellow": 55,
+"eraTrainer": 30
+},
+"3915": {
+"eraYellow": 35,
+"eraTrainer": 1
+},
+"3918": {
+"eraYellow": 20
+},
+"3919": {
+"eraYellow": 30
+},
+"3920": {
+"eraYellow": 30
+},
+"3922": {
+"eraYellow": 45,
+"eraTrainer": 30
+},
+"3923": {
+"eraYellow": 60,
+"eraTrainer": 30
+},
+"3924": {
+"eraYellow": 80,
+"eraTrainer": 50
+},
+"3925": {
+"eraYellow": 80,
+"eraTrainer": 50
+},
+"3926": {
+"eraYellow": 95,
+"eraTrainer": 65
+},
+"3928": {
+"eraYellow": 105,
+"eraItemRank": 75
+},
+"3929": {
+"eraYellow": 85,
+"eraTrainer": 75
+},
+"3930": {
+"eraYellow": 85,
+"eraTrainer": 75
+},
+"3931": {
+"eraYellow": 90,
+"eraTrainer": 75
+},
+"3932": {
+"eraYellow": 115,
+"eraTrainer": 85
+},
+"3933": {
+"eraYellow": 130,
+"eraItemRank": 100
+},
+"3934": {
+"eraYellow": 130,
+"eraTrainer": 100
+},
+"3936": {
+"eraYellow": 130,
+"eraTrainer": 105
+},
+"3937": {
+"eraYellow": 105,
+"eraTrainer": 105
+},
+"3938": {
+"eraYellow": 105,
+"eraTrainer": 105
+},
+"3939": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"3940": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"3941": {
+"eraYellow": 120,
+"eraTrainer": 120
+},
+"3942": {
+"eraYellow": 125,
+"eraTrainer": 125
+},
+"3944": {
+"eraYellow": 125,
+"eraItemRank": 125
+},
+"3945": {
+"eraYellow": 125,
+"eraTrainer": 125
+},
+"3946": {
+"eraYellow": 125,
+"eraTrainer": 125
+},
+"3947": {
+"eraYellow": 125,
+"eraTrainer": 125
+},
+"3949": {
+"eraYellow": 155,
+"eraTrainer": 130
+},
+"3950": {
+"eraYellow": 140,
+"eraTrainer": 140
+},
+"3952": {
+"eraYellow": 165,
+"eraItemRank": 140
+},
+"3953": {
+"eraYellow": 145,
+"eraTrainer": 145
+},
+"3954": {
+"eraYellow": 170,
+"eraItemRank": 145
+},
+"3955": {
+"eraYellow": 175,
+"eraTrainer": 150
+},
+"3956": {
+"eraYellow": 175,
+"eraTrainer": 150
+},
+"3957": {
+"eraYellow": 175,
+"eraItemRank": 155
+},
+"3958": {
+"eraYellow": 160,
+"eraTrainer": 160
+},
+"3959": {
+"eraYellow": 180,
+"eraItemRank": 160
+},
+"3960": {
+"eraYellow": 185,
+"eraItemRank": 165
+},
+"3961": {
+"eraYellow": 170,
+"eraTrainer": 170
+},
+"3962": {
+"eraYellow": 175,
+"eraTrainer": 175
+},
+"3963": {
+"eraYellow": 175,
+"eraTrainer": 175
+},
+"3965": {
+"eraYellow": 185,
+"eraTrainer": 185
+},
+"3966": {
+"eraYellow": 205,
+"eraItemRank": 185
+},
+"3967": {
+"eraYellow": 190,
+"eraTrainer": 190
+},
+"3968": {
+"eraYellow": 215,
+"eraItemRank": 195
+},
+"3969": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"3971": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"3972": {
+"eraYellow": 200,
+"eraItemRank": 200
+},
+"3973": {
+"eraYellow": 110,
+"eraTrainer": 90
+},
+"3977": {
+"eraYellow": 90,
+"eraTrainer": 60
+},
+"3978": {
+"eraYellow": 135,
+"eraTrainer": 110
+},
+"3979": {
+"eraYellow": 200,
+"eraItemRank": 180
+},
+"4036": {
+"eraYellow": 0
+},
+"4094": {
+"eraYellow": 215,
+"eraItemRank": 175,
+"eraTrainer": 175
+},
+"4096": {
+"eraYellow": 185,
+"eraItemRank": 165
+},
+"4097": {
+"eraYellow": 185,
+"eraItemRank": 165
+},
+"4508": {
+"eraYellow": 80,
+"eraItemRank": 50
+},
+"4942": {
+"eraYellow": 230,
+"eraItemRank": 215
+},
+"5244": {
+"eraYellow": 70,
+"eraItemRank": 40
+},
+"5763": {
+"eraYellow": 150,
+"eraTrainer": 100
+},
+"6412": {
+"eraYellow": 50,
+"eraItemRank": 10
+},
+"6413": {
+"eraYellow": 60,
+"eraItemRank": 20
+},
+"6414": {
+"eraYellow": 75,
+"eraItemRank": 35
+},
+"6415": {
+"eraYellow": 90,
+"eraItemRank": 50
+},
+"6416": {
+"eraYellow": 90,
+"eraItemRank": 50
+},
+"6417": {
+"eraYellow": 130,
+"eraItemRank": 90
+},
+"6418": {
+"eraYellow": 140,
+"eraItemRank": 100
+},
+"6419": {
+"eraYellow": 150,
+"eraItemRank": 110
+},
+"6458": {
+"eraYellow": 160,
+"eraTrainer": 135
+},
+"6499": {
+"eraYellow": 90,
+"eraTrainer": 50
+},
+"6500": {
+"eraYellow": 165,
+"eraTrainer": 125
+},
+"6501": {
+"eraYellow": 130,
+"eraItemRank": 90
+},
+"6510": {
+"eraYellow": 170,
+"eraTrainer": 150
+},
+"6517": {
+"eraYellow": 140,
+"eraTrainer": 110
+},
+"6518": {
+"eraYellow": 170,
+"eraItemRank": 140
+},
+"6521": {
+"eraYellow": 115,
+"eraTrainer": 90
+},
+"6617": {
+"eraYellow": 90,
+"eraItemRank": 60
+},
+"6618": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"6619": {
+"eraYellow": 150
+},
+"6624": {
+"eraYellow": 175,
+"eraItemRank": 150
+},
+"6661": {
+"eraYellow": 210,
+"eraTrainer": 190
+},
+"6686": {
+"eraYellow": 95,
+"eraItemRank": 70
+},
+"6688": {
+"eraYellow": 140,
+"eraItemRank": 115
+},
+"6690": {
+"eraYellow": 155,
+"eraTrainer": 135
+},
+"6692": {
+"eraYellow": 170,
+"eraItemRank": 150
+},
+"6693": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"6695": {
+"eraYellow": 205,
+"eraItemRank": 185
+},
+"6702": {
+"eraYellow": 120,
+"eraItemRank": 90
+},
+"6703": {
+"eraYellow": 125,
+"eraItemRank": 95
+},
+"6704": {
+"eraYellow": 190,
+"eraItemRank": 170
+},
+"6705": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"7126": {
+"eraYellow": 40
+},
+"7133": {
+"eraYellow": 130,
+"eraItemRank": 105
+},
+"7135": {
+"eraYellow": 140,
+"eraTrainer": 115
+},
+"7147": {
+"eraYellow": 180,
+"eraTrainer": 160
+},
+"7149": {
+"eraYellow": 190,
+"eraItemRank": 170
+},
+"7151": {
+"eraYellow": 195,
+"eraTrainer": 175
+},
+"7153": {
+"eraYellow": 205,
+"eraItemRank": 125
+},
+"7156": {
+"eraYellow": 210,
+"eraTrainer": 190
+},
+"7179": {
+"eraYellow": 120,
+"eraTrainer": 90
+},
+"7181": {
+"eraYellow": 175,
+"eraTrainer": 155
+},
+"7183": {
+"eraYellow": 55
+},
+"7213": {
+"eraYellow": 215,
+"eraItemRank": 175
+},
+"7221": {
+"eraYellow": 180,
+"eraItemRank": 150
+},
+"7222": {
+"eraYellow": 190,
+"eraItemRank": 165
+},
+"7223": {
+"eraYellow": 210,
+"eraTrainer": 185
+},
+"7224": {
+"eraYellow": 215,
+"eraItemRank": 190
+},
+"7255": {
+"eraYellow": 130,
+"eraItemRank": 100
+},
+"7256": {
+"eraYellow": 160,
+"eraItemRank": 135
+},
+"7257": {
+"eraYellow": 210,
+"eraItemRank": 165
+},
+"7258": {
+"eraYellow": 205,
+"eraItemRank": 190
+},
+"7259": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"7408": {
+"eraYellow": 105,
+"eraTrainer": 65
+},
+"7418": {
+"eraYellow": 70
+},
+"7420": {
+"eraYellow": 70,
+"eraTrainer": 15
+},
+"7421": {
+"eraYellow": 5
+},
+"7426": {
+"eraYellow": 90,
+"eraTrainer": 40
+},
+"7428": {
+"eraYellow": 80,
+"eraTrainer": 20
+},
+"7430": {
+"eraYellow": 70,
+"eraTrainer": 50
+},
+"7443": {
+"eraYellow": 80,
+"eraItemRank": 20
+},
+"7454": {
+"eraYellow": 95,
+"eraTrainer": 45
+},
+"7457": {
+"eraYellow": 100,
+"eraTrainer": 50
+},
+"7623": {
+"eraYellow": 55,
+"eraTrainer": 30
+},
+"7624": {
+"eraYellow": 55,
+"eraTrainer": 30
+},
+"7629": {
+"eraYellow": 80,
+"eraItemRank": 55
+},
+"7630": {
+"eraYellow": 80,
+"eraItemRank": 55
+},
+"7633": {
+"eraYellow": 95,
+"eraItemRank": 70
+},
+"7636": {
+"eraYellow": 115,
+"eraItemRank": 90
+},
+"7639": {
+"eraYellow": 125,
+"eraItemRank": 100
+},
+"7643": {
+"eraYellow": 140,
+"eraItemRank": 115
+},
+"7745": {
+"eraYellow": 130,
+"eraTrainer": 100
+},
+"7748": {
+"eraYellow": 105,
+"eraTrainer": 60
+},
+"7751": {
+"eraYellow": 45,
+"eraItemRank": 1
+},
+"7752": {
+"eraYellow": 45,
+"eraItemRank": 1
+},
+"7753": {
+"eraYellow": 90,
+"eraItemRank": 50
+},
+"7754": {
+"eraYellow": 90,
+"eraItemRank": 50
+},
+"7755": {
+"eraYellow": 140,
+"eraItemRank": 100
+},
+"7766": {
+"eraYellow": 105,
+"eraItemRank": 60
+},
+"7771": {
+"eraYellow": 110,
+"eraItemRank": 90,
+"eraTrainer": 70
+},
+"7776": {
+"eraYellow": 115,
+"eraItemRank": 80
+},
+"7779": {
+"eraYellow": 115,
+"eraTrainer": 80
+},
+"7782": {
+"eraYellow": 115,
+"eraItemRank": 80
+},
+"7786": {
+"eraYellow": 120,
+"eraItemRank": 90
+},
+"7788": {
+"eraYellow": 120,
+"eraTrainer": 90
+},
+"7793": {
+"eraYellow": 130,
+"eraItemRank": 100
+},
+"7795": {
+"eraYellow": 130,
+"eraTrainer": 100
+},
+"7817": {
+"eraYellow": 125,
+"eraTrainer": 95
+},
+"7818": {
+"eraYellow": 105,
+"eraTrainer": 100
+},
+"7827": {
+"eraYellow": 90,
+"eraItemRank": 50
+},
+"7828": {
+"eraYellow": 190,
+"eraItemRank": 175
+},
+"7836": {
+"eraYellow": 80,
+"eraTrainer": 80
+},
+"7837": {
+"eraYellow": 150,
+"eraTrainer": 130
+},
+"7841": {
+"eraYellow": 130,
+"eraTrainer": 100
+},
+"7845": {
+"eraYellow": 165,
+"eraTrainer": 140
+},
+"7857": {
+"eraYellow": 145,
+"eraTrainer": 120
+},
+"7859": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"7861": {
+"eraYellow": 150,
+"eraTrainer": 125
+},
+"7863": {
+"eraYellow": 150,
+"eraItemRank": 125,
+"eraTrainer": 125
+},
+"7867": {
+"eraYellow": 150,
+"eraItemRank": 125
+},
+"7892": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"7893": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"7928": {
+"eraYellow": 150,
+"eraTrainer": 150
+},
+"7929": {
+"eraYellow": 180,
+"eraItemRank": 180
+},
+"7934": {
+"eraYellow": 80,
+"eraTrainer": 80
+},
+"7935": {
+"eraYellow": 130,
+"eraItemRank": 130
+},
+"7953": {
+"eraYellow": 120,
+"eraItemRank": 90
+},
+"7954": {
+"eraYellow": 130,
+"eraItemRank": 105
+},
+"7955": {
+"eraYellow": 140,
+"eraItemRank": 115
+},
+"8238": {
+"eraYellow": 125,
+"eraItemRank": 85
+},
+"8240": {
+"eraYellow": 120,
+"eraItemRank": 90
+},
+"8243": {
+"eraYellow": 185,
+"eraItemRank": 185
+},
+"8322": {
+"eraYellow": 115,
+"eraItemRank": 90
+},
+"8334": {
+"eraYellow": 115,
+"eraTrainer": 100
+},
+"8339": {
+"eraYellow": 115,
+"eraItemRank": 100
+},
+"8366": {
+"eraYellow": 110,
+"eraItemRank": 70
+},
+"8367": {
+"eraYellow": 140,
+"eraItemRank": 100
+},
+"8368": {
+"eraYellow": 170,
+"eraItemRank": 140
+},
+"8465": {
+"eraYellow": 65,
+"eraTrainer": 40
+},
+"8467": {
+"eraYellow": 135,
+"eraTrainer": 110
+},
+"8483": {
+"eraYellow": 170,
+"eraTrainer": 160
+},
+"8489": {
+"eraYellow": 185,
+"eraTrainer": 175
+},
+"8604": {
+"eraYellow": 45,
+"eraItemRank": 1
+},
+"8607": {
+"eraYellow": 80,
+"eraItemRank": 40
+},
+"8681": {
+"eraYellow": 125
+},
+"8687": {
+"eraYellow": 165,
+"eraTrainer": 120
+},
+"8691": {
+"eraYellow": 205,
+"eraTrainer": 160
+},
+"8694": {
+"eraYellow": 215,
+"eraTrainer": 170
+},
+"8758": {
+"eraYellow": 160,
+"eraTrainer": 140
+},
+"8760": {
+"eraYellow": 155,
+"eraTrainer": 145
+},
+"8762": {
+"eraYellow": 170,
+"eraTrainer": 160
+},
+"8764": {
+"eraYellow": 190,
+"eraTrainer": 170
+},
+"8766": {
+"eraYellow": 195,
+"eraTrainer": 175
+},
+"8768": {
+"eraYellow": 150,
+"eraTrainer": 150
+},
+"8770": {
+"eraYellow": 210,
+"eraTrainer": 190
+},
+"8772": {
+"eraYellow": 195,
+"eraTrainer": 175
+},
+"8774": {
+"eraYellow": 200,
+"eraTrainer": 180
+},
+"8776": {
+"eraYellow": 50,
+"eraTrainer": 10
+},
+"8778": {
+"eraYellow": 160,
+"eraItemRank": 140
+},
+"8780": {
+"eraYellow": 165,
+"eraItemRank": 145
+},
+"8782": {
+"eraYellow": 170,
+"eraItemRank": 150
+},
+"8784": {
+"eraYellow": 185,
+"eraItemRank": 165
+},
+"8786": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"8789": {
+"eraYellow": 200,
+"eraItemRank": 180
+},
+"8791": {
+"eraYellow": 205,
+"eraTrainer": 185
+},
+"8793": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"8795": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"8797": {
+"eraYellow": 215,
+"eraItemRank": 195
+},
+"8799": {
+"eraYellow": 215,
+"eraTrainer": 195
+},
+"8802": {
+"eraYellow": 220,
+"eraItemRank": 205
+},
+"8804": {
+"eraYellow": 225,
+"eraTrainer": 210
+},
+"8880": {
+"eraYellow": 70,
+"eraTrainer": 30
+},
+"8895": {
+"eraYellow": 245,
+"eraItemRank": 130,
+"eraTrainer": 225
+},
+"9058": {
+"eraYellow": 40
+},
+"9059": {
+"eraYellow": 40
+},
+"9060": {
+"eraYellow": 60,
+"eraTrainer": 30
+},
+"9062": {
+"eraYellow": 60,
+"eraTrainer": 30
+},
+"9064": {
+"eraYellow": 65,
+"eraItemRank": 35
+},
+"9065": {
+"eraYellow": 100,
+"eraTrainer": 70
+},
+"9068": {
+"eraYellow": 125,
+"eraTrainer": 95
+},
+"9070": {
+"eraYellow": 125,
+"eraItemRank": 100
+},
+"9072": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"9074": {
+"eraYellow": 145,
+"eraTrainer": 120
+},
+"9145": {
+"eraYellow": 150,
+"eraTrainer": 125
+},
+"9146": {
+"eraYellow": 160,
+"eraItemRank": 135
+},
+"9147": {
+"eraYellow": 160,
+"eraItemRank": 135
+},
+"9148": {
+"eraYellow": 165,
+"eraItemRank": 140
+},
+"9149": {
+"eraYellow": 170,
+"eraItemRank": 145
+},
+"9193": {
+"eraYellow": 170,
+"eraTrainer": 150
+},
+"9194": {
+"eraYellow": 170,
+"eraTrainer": 150
+},
+"9195": {
+"eraYellow": 185,
+"eraItemRank": 165
+},
+"9196": {
+"eraYellow": 195,
+"eraTrainer": 175
+},
+"9197": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"9198": {
+"eraYellow": 200,
+"eraTrainer": 180
+},
+"9201": {
+"eraYellow": 205,
+"eraTrainer": 180
+},
+"9202": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"9206": {
+"eraYellow": 215,
+"eraTrainer": 195
+},
+"9207": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"9208": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"9269": {
+"eraYellow": 150,
+"eraItemRank": 125
+},
+"9271": {
+"eraYellow": 150,
+"eraTrainer": 150
+},
+"9273": {
+"eraYellow": 160,
+"eraItemRank": 165
+},
+"9513": {
+"eraYellow": 100,
+"eraItemRank": 60
+},
+"9811": {
+"eraYellow": 185,
+"eraItemRank": 160
+},
+"9813": {
+"eraYellow": 185,
+"eraItemRank": 160
+},
+"9814": {
+"eraYellow": 200,
+"eraItemRank": 175
+},
+"9818": {
+"eraYellow": 205,
+"eraItemRank": 180
+},
+"9820": {
+"eraYellow": 210,
+"eraItemRank": 185
+},
+"9916": {
+"eraYellow": 225,
+"eraTrainer": 200
+},
+"9918": {
+"eraYellow": 200,
+"eraTrainer": 200
+},
+"9920": {
+"eraYellow": 200,
+"eraTrainer": 200
+},
+"9921": {
+"eraYellow": 200,
+"eraTrainer": 200
+},
+"9926": {
+"eraYellow": 225,
+"eraTrainer": 205
+},
+"9928": {
+"eraYellow": 225,
+"eraTrainer": 205
+},
+"9931": {
+"eraYellow": 230,
+"eraTrainer": 205
+},
+"9933": {
+"eraYellow": 230,
+"eraItemRank": 210
+},
+"9935": {
+"eraYellow": 235,
+"eraTrainer": 215
+},
+"9937": {
+"eraYellow": 235,
+"eraItemRank": 215
+},
+"9939": {
+"eraYellow": 235,
+"eraItemRank": 215
+},
+"9942": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"9945": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"9950": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"9952": {
+"eraYellow": 245,
+"eraItemRank": 225
+},
+"9954": {
+"eraYellow": 245,
+"eraTrainer": 225
+},
+"9957": {
+"eraYellow": 250,
+"eraItemRank": 230
+},
+"9959": {
+"eraYellow": 250,
+"eraTrainer": 230
+},
+"9961": {
+"eraYellow": 250,
+"eraTrainer": 230
+},
+"9964": {
+"eraYellow": 255,
+"eraItemRank": 235
+},
+"9966": {
+"eraYellow": 255,
+"eraItemRank": 235
+},
+"9968": {
+"eraYellow": 255,
+"eraTrainer": 235
+},
+"9970": {
+"eraYellow": 255,
+"eraItemRank": 245
+},
+"9972": {
+"eraYellow": 260,
+"eraItemRank": 240
+},
+"9974": {
+"eraYellow": 265,
+"eraTrainer": 245
+},
+"9979": {
+"eraYellow": 265,
+"eraItemRank": 245
+},
+"9980": {
+"eraYellow": 265,
+"eraItemRank": 245
+},
+"9983": {
+"eraYellow": 70,
+"eraTrainer": 30
+},
+"9985": {
+"eraYellow": 155,
+"eraTrainer": 125
+},
+"9986": {
+"eraYellow": 160,
+"eraTrainer": 130
+},
+"9987": {
+"eraYellow": 165,
+"eraTrainer": 135
+},
+"9993": {
+"eraYellow": 235,
+"eraTrainer": 210
+},
+"9995": {
+"eraYellow": 245,
+"eraItemRank": 220
+},
+"9997": {
+"eraYellow": 250,
+"eraItemRank": 225
+},
+"10001": {
+"eraYellow": 255,
+"eraTrainer": 230
+},
+"10003": {
+"eraYellow": 260,
+"eraTrainer": 235
+},
+"10005": {
+"eraYellow": 265,
+"eraItemRank": 240
+},
+"10007": {
+"eraYellow": 270,
+"eraTrainer": 245
+},
+"10009": {
+"eraYellow": 270,
+"eraItemRank": 245
+},
+"10011": {
+"eraYellow": 275,
+"eraTrainer": 250
+},
+"10013": {
+"eraYellow": 280,
+"eraItemRank": 255
+},
+"10015": {
+"eraYellow": 285,
+"eraTrainer": 260
+},
+"10097": {
+"eraYellow": 175,
+"eraTrainer": 175
+},
+"10098": {
+"eraYellow": 230,
+"eraTrainer": 230
+},
+"10482": {
+"eraYellow": 200,
+"eraTrainer": 200
+},
+"10487": {
+"eraYellow": 220,
+"eraTrainer": 200
+},
+"10490": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"10499": {
+"eraYellow": 225,
+"eraTrainer": 205
+},
+"10507": {
+"eraYellow": 225,
+"eraTrainer": 205
+},
+"10509": {
+"eraYellow": 225,
+"eraItemRank": 205
+},
+"10511": {
+"eraYellow": 230,
+"eraTrainer": 210
+},
+"10516": {
+"eraYellow": 230,
+"eraItemRank": 210
+},
+"10518": {
+"eraYellow": 230,
+"eraTrainer": 210
+},
+"10520": {
+"eraYellow": 235,
+"eraItemRank": 215
+},
+"10525": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"10529": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"10531": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"10533": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"10542": {
+"eraYellow": 245,
+"eraItemRank": 225
+},
+"10544": {
+"eraYellow": 245,
+"eraItemRank": 225
+},
+"10546": {
+"eraYellow": 245,
+"eraItemRank": 225
+},
+"10548": {
+"eraYellow": 250,
+"eraTrainer": 235
+},
+"10550": {
+"eraYellow": 250,
+"eraItemRank": 230
+},
+"10552": {
+"eraYellow": 250,
+"eraTrainer": 230
+},
+"10554": {
+"eraYellow": 255,
+"eraItemRank": 235
+},
+"10556": {
+"eraYellow": 255,
+"eraTrainer": 235
+},
+"10558": {
+"eraYellow": 255,
+"eraTrainer": 235
+},
+"10560": {
+"eraYellow": 260,
+"eraItemRank": 240
+},
+"10562": {
+"eraYellow": 260,
+"eraItemRank": 240
+},
+"10564": {
+"eraYellow": 260,
+"eraItemRank": 240
+},
+"10566": {
+"eraYellow": 265,
+"eraItemRank": 245
+},
+"10568": {
+"eraYellow": 265,
+"eraItemRank": 245
+},
+"10570": {
+"eraYellow": 270,
+"eraItemRank": 250
+},
+"10572": {
+"eraYellow": 270,
+"eraItemRank": 250
+},
+"10574": {
+"eraYellow": 270,
+"eraItemRank": 250
+},
+"10619": {
+"eraYellow": 245,
+"eraTrainer": 225
+},
+"10621": {
+"eraYellow": 245,
+"eraTrainer": 225
+},
+"10630": {
+"eraYellow": 250,
+"eraTrainer": 230
+},
+"10632": {
+"eraYellow": 270,
+"eraTrainer": 250
+},
+"10647": {
+"eraYellow": 270,
+"eraTrainer": 250
+},
+"10650": {
+"eraYellow": 275,
+"eraTrainer": 255
+},
+"10840": {
+"eraYellow": 210,
+"eraItemRank": 210
+},
+"10841": {
+"eraYellow": 240,
+"eraTrainer": 240
+},
+"11341": {
+"eraYellow": 245,
+"eraTrainer": 200
+},
+"11342": {
+"eraYellow": 285,
+"eraTrainer": 240
+},
+"11343": {
+"eraYellow": 325,
+"eraTrainer": 280
+},
+"11357": {
+"eraYellow": 255,
+"eraTrainer": 210
+},
+"11358": {
+"eraYellow": 295,
+"eraTrainer": 250
+},
+"11400": {
+"eraYellow": 285,
+"eraTrainer": 240
+},
+"11447": {
+"eraYellow": 190
+},
+"11448": {
+"eraYellow": 220,
+"eraTrainer": 205
+},
+"11449": {
+"eraYellow": 205,
+"eraTrainer": 185
+},
+"11450": {
+"eraYellow": 215,
+"eraTrainer": 195
+},
+"11451": {
+"eraYellow": 220,
+"eraTrainer": 205
+},
+"11452": {
+"eraYellow": 225
+},
+"11453": {
+"eraYellow": 225,
+"eraItemRank": 210
+},
+"11454": {
+"eraYellow": 225,
+"eraItemRank": 200
+},
+"11456": {
+"eraYellow": 225,
+"eraItemRank": 210
+},
+"11457": {
+"eraYellow": 230,
+"eraTrainer": 215
+},
+"11458": {
+"eraYellow": 240,
+"eraItemRank": 225
+},
+"11459": {
+"eraYellow": 240,
+"eraItemRank": 225
+},
+"11460": {
+"eraYellow": 245,
+"eraTrainer": 230
+},
+"11461": {
+"eraYellow": 250,
+"eraTrainer": 235
+},
+"11464": {
+"eraYellow": 250,
+"eraItemRank": 235
+},
+"11465": {
+"eraYellow": 250,
+"eraTrainer": 235
+},
+"11466": {
+"eraYellow": 255,
+"eraItemRank": 240
+},
+"11467": {
+"eraYellow": 255,
+"eraTrainer": 240
+},
+"11468": {
+"eraYellow": 255,
+"eraItemRank": 240
+},
+"11472": {
+"eraYellow": 260,
+"eraItemRank": 245
+},
+"11473": {
+"eraYellow": 260,
+"eraItemRank": 245
+},
+"11476": {
+"eraYellow": 265,
+"eraItemRank": 250
+},
+"11477": {
+"eraYellow": 265,
+"eraItemRank": 250
+},
+"11478": {
+"eraYellow": 265,
+"eraTrainer": 250
+},
+"11479": {
+"eraYellow": 240,
+"eraItemRank": 225
+},
+"11480": {
+"eraYellow": 240,
+"eraItemRank": 225
+},
+"11643": {
+"eraYellow": 225,
+"eraItemRank": 205
+},
+"12044": {
+"eraYellow": 35,
+"eraTrainer": 1
+},
+"12045": {
+"eraYellow": 50,
+"eraTrainer": 20
+},
+"12046": {
+"eraYellow": 100,
+"eraTrainer": 75
+},
+"12047": {
+"eraYellow": 145,
+"eraItemRank": 120
+},
+"12048": {
+"eraYellow": 220,
+"eraTrainer": 205
+},
+"12049": {
+"eraYellow": 220,
+"eraTrainer": 205
+},
+"12050": {
+"eraYellow": 225,
+"eraTrainer": 210
+},
+"12052": {
+"eraYellow": 225,
+"eraTrainer": 210
+},
+"12053": {
+"eraYellow": 230,
+"eraTrainer": 215
+},
+"12055": {
+"eraYellow": 230,
+"eraTrainer": 215
+},
+"12056": {
+"eraYellow": 230,
+"eraItemRank": 215
+},
+"12059": {
+"eraYellow": 220,
+"eraItemRank": 215
+},
+"12060": {
+"eraYellow": 230,
+"eraItemRank": 215
+},
+"12061": {
+"eraYellow": 220,
+"eraTrainer": 215
+},
+"12062": {
+"eraYellow": 235,
+"eraItemRank": 220
+},
+"12063": {
+"eraYellow": 235,
+"eraItemRank": 220
+},
+"12064": {
+"eraYellow": 225,
+"eraItemRank": 220
+},
+"12065": {
+"eraYellow": 240,
+"eraTrainer": 225
+},
+"12066": {
+"eraYellow": 240,
+"eraItemRank": 225
+},
+"12067": {
+"eraYellow": 240,
+"eraTrainer": 225
+},
+"12068": {
+"eraYellow": 240,
+"eraItemRank": 225
+},
+"12069": {
+"eraYellow": 240,
+"eraTrainer": 225
+},
+"12070": {
+"eraYellow": 240,
+"eraTrainer": 225
+},
+"12071": {
+"eraYellow": 240,
+"eraTrainer": 225
+},
+"12072": {
+"eraYellow": 245,
+"eraTrainer": 230
+},
+"12073": {
+"eraYellow": 245,
+"eraTrainer": 230
+},
+"12074": {
+"eraYellow": 245,
+"eraTrainer": 230
+},
+"12075": {
+"eraYellow": 235,
+"eraItemRank": 230
+},
+"12076": {
+"eraYellow": 250,
+"eraTrainer": 235
+},
+"12077": {
+"eraYellow": 240,
+"eraTrainer": 235
+},
+"12078": {
+"eraYellow": 250,
+"eraItemRank": 235
+},
+"12079": {
+"eraYellow": 250,
+"eraTrainer": 235
+},
+"12080": {
+"eraYellow": 240,
+"eraItemRank": 235
+},
+"12081": {
+"eraYellow": 255,
+"eraItemRank": 240
+},
+"12082": {
+"eraYellow": 255,
+"eraTrainer": 240
+},
+"12083": {
+"eraYellow": 255,
+"eraItemRank": 240
+},
+"12084": {
+"eraYellow": 255,
+"eraItemRank": 240
+},
+"12085": {
+"eraYellow": 245,
+"eraItemRank": 240
+},
+"12086": {
+"eraYellow": 260,
+"eraItemRank": 245
+},
+"12087": {
+"eraYellow": 260,
+"eraItemRank": 245
+},
+"12088": {
+"eraYellow": 260,
+"eraTrainer": 245
+},
+"12089": {
+"eraYellow": 250,
+"eraItemRank": 245
+},
+"12090": {
+"eraYellow": 265,
+"eraItemRank": 250
+},
+"12091": {
+"eraYellow": 255,
+"eraItemRank": 250
+},
+"12092": {
+"eraYellow": 265,
+"eraTrainer": 250
+},
+"12093": {
+"eraYellow": 265,
+"eraItemRank": 250
+},
+"12259": {
+"eraYellow": 180,
+"eraItemRank": 155
+},
+"12260": {
+"eraYellow": 15
+},
+"12584": {
+"eraYellow": 150,
+"eraTrainer": 150
+},
+"12585": {
+"eraYellow": 175,
+"eraTrainer": 175
+},
+"12586": {
+"eraYellow": 175,
+"eraTrainer": 175
+},
+"12587": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"12589": {
+"eraYellow": 195,
+"eraTrainer": 195
+},
+"12590": {
+"eraYellow": 175,
+"eraTrainer": 175
+},
+"12591": {
+"eraYellow": 200,
+"eraTrainer": 200
+},
+"12594": {
+"eraYellow": 225,
+"eraTrainer": 205
+},
+"12595": {
+"eraYellow": 225,
+"eraTrainer": 205
+},
+"12596": {
+"eraYellow": 210,
+"eraTrainer": 210
+},
+"12597": {
+"eraYellow": 230,
+"eraItemRank": 210
+},
+"12599": {
+"eraYellow": 215,
+"eraTrainer": 215
+},
+"12603": {
+"eraYellow": 215,
+"eraTrainer": 215
+},
+"12607": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"12609": {
+"eraYellow": 220,
+"eraTrainer": 200
+},
+"12614": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"12615": {
+"eraYellow": 245,
+"eraItemRank": 225
+},
+"12616": {
+"eraYellow": 245,
+"eraItemRank": 225
+},
+"12617": {
+"eraYellow": 250,
+"eraItemRank": 230
+},
+"12618": {
+"eraYellow": 250,
+"eraTrainer": 230
+},
+"12619": {
+"eraYellow": 235,
+"eraTrainer": 235
+},
+"12620": {
+"eraYellow": 260,
+"eraItemRank": 240
+},
+"12621": {
+"eraYellow": 245,
+"eraTrainer": 245
+},
+"12622": {
+"eraYellow": 265,
+"eraTrainer": 245
+},
+"12624": {
+"eraYellow": 270,
+"eraItemRank": 250
+},
+"12715": {
+"eraYellow": 205,
+"eraTrainer": 205
+},
+"12716": {
+"eraYellow": 225,
+"eraItemRank": 205,
+"eraTrainer": 205
+},
+"12717": {
+"eraYellow": 225,
+"eraItemRank": 205,
+"eraTrainer": 205
+},
+"12718": {
+"eraYellow": 225,
+"eraItemRank": 205,
+"eraTrainer": 205
+},
+"12719": {
+"eraYellow": 210
+},
+"12720": {
+"eraYellow": 235
+},
+"12722": {
+"eraYellow": 240
+},
+"12754": {
+"eraYellow": 235,
+"eraItemRank": 205,
+"eraTrainer": 235
+},
+"12755": {
+"eraYellow": 230,
+"eraItemRank": 205,
+"eraTrainer": 230
+},
+"12758": {
+"eraYellow": 265,
+"eraItemRank": 205,
+"eraTrainer": 245
+},
+"12759": {
+"eraYellow": 260,
+"eraItemRank": 205,
+"eraTrainer": 240
+},
+"12760": {
+"eraYellow": 205,
+"eraItemRank": 205,
+"eraTrainer": 205
+},
+"12895": {
+"eraYellow": 205,
+"eraTrainer": 200
+},
+"12897": {
+"eraYellow": 230,
+"eraItemRank": 205,
+"eraTrainer": 210
+},
+"12899": {
+"eraYellow": 225,
+"eraItemRank": 205,
+"eraTrainer": 205
+},
+"12900": {
+"eraYellow": 205
+},
+"12902": {
+"eraYellow": 230,
+"eraItemRank": 205,
+"eraTrainer": 210
+},
+"12903": {
+"eraYellow": 235,
+"eraItemRank": 205,
+"eraTrainer": 215
+},
+"12904": {
+"eraYellow": 240
+},
+"12905": {
+"eraYellow": 245,
+"eraItemRank": 205,
+"eraTrainer": 225
+},
+"12906": {
+"eraYellow": 250,
+"eraItemRank": 205,
+"eraTrainer": 230
+},
+"12907": {
+"eraYellow": 255,
+"eraItemRank": 205,
+"eraTrainer": 235
+},
+"12908": {
+"eraYellow": 260,
+"eraItemRank": 205,
+"eraTrainer": 240
+},
+"13028": {
+"eraYellow": 215,
+"eraTrainer": 175
+},
+"13220": {
+"eraYellow": 185,
+"eraTrainer": 140
+},
+"13228": {
+"eraYellow": 225,
+"eraTrainer": 180
+},
+"13229": {
+"eraYellow": 265,
+"eraTrainer": 220
+},
+"13230": {
+"eraYellow": 305,
+"eraTrainer": 260
+},
+"13240": {
+"eraYellow": 0,
+"eraItemRank": 205,
+"eraTrainer": 205
+},
+"13378": {
+"eraYellow": 130,
+"eraTrainer": 105
+},
+"13380": {
+"eraYellow": 135,
+"eraItemRank": 110
+},
+"13419": {
+"eraYellow": 135,
+"eraItemRank": 110
+},
+"13421": {
+"eraYellow": 140,
+"eraTrainer": 115
+},
+"13464": {
+"eraYellow": 140,
+"eraItemRank": 115
+},
+"13485": {
+"eraYellow": 155,
+"eraTrainer": 130
+},
+"13501": {
+"eraYellow": 155,
+"eraTrainer": 130
+},
+"13503": {
+"eraYellow": 165,
+"eraTrainer": 140
+},
+"13522": {
+"eraYellow": 160,
+"eraItemRank": 135
+},
+"13529": {
+"eraYellow": 170,
+"eraTrainer": 145
+},
+"13536": {
+"eraYellow": 165,
+"eraItemRank": 140
+},
+"13538": {
+"eraYellow": 165,
+"eraTrainer": 140
+},
+"13607": {
+"eraYellow": 170,
+"eraTrainer": 145
+},
+"13612": {
+"eraYellow": 170,
+"eraItemRank": 145
+},
+"13617": {
+"eraYellow": 170,
+"eraItemRank": 145
+},
+"13620": {
+"eraYellow": 170,
+"eraItemRank": 145
+},
+"13622": {
+"eraYellow": 175,
+"eraTrainer": 150
+},
+"13626": {
+"eraYellow": 175,
+"eraTrainer": 150
+},
+"13628": {
+"eraYellow": 175,
+"eraTrainer": 150
+},
+"13631": {
+"eraYellow": 175,
+"eraTrainer": 155
+},
+"13635": {
+"eraYellow": 175,
+"eraTrainer": 155
+},
+"13637": {
+"eraYellow": 180,
+"eraTrainer": 160
+},
+"13640": {
+"eraYellow": 180,
+"eraTrainer": 160
+},
+"13642": {
+"eraYellow": 185,
+"eraTrainer": 165
+},
+"13644": {
+"eraYellow": 190,
+"eraTrainer": 170
+},
+"13646": {
+"eraYellow": 190,
+"eraItemRank": 170
+},
+"13648": {
+"eraYellow": 190,
+"eraTrainer": 170
+},
+"13653": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"13655": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"13657": {
+"eraYellow": 195,
+"eraTrainer": 175
+},
+"13659": {
+"eraYellow": 200,
+"eraTrainer": 180
+},
+"13661": {
+"eraYellow": 200,
+"eraTrainer": 180
+},
+"13663": {
+"eraYellow": 205,
+"eraTrainer": 185
+},
+"13687": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"13689": {
+"eraYellow": 215,
+"eraItemRank": 195
+},
+"13693": {
+"eraYellow": 215,
+"eraTrainer": 195
+},
+"13695": {
+"eraYellow": 220,
+"eraTrainer": 200
+},
+"13698": {
+"eraYellow": 220,
+"eraItemRank": 200
+},
+"13700": {
+"eraYellow": 220,
+"eraTrainer": 200
+},
+"13702": {
+"eraYellow": 220,
+"eraTrainer": 200
+},
+"13746": {
+"eraYellow": 225,
+"eraTrainer": 205
+},
+"13794": {
+"eraYellow": 225,
+"eraTrainer": 205
+},
+"13815": {
+"eraYellow": 230,
+"eraTrainer": 210
+},
+"13817": {
+"eraYellow": 230,
+"eraItemRank": 210
+},
+"13822": {
+"eraYellow": 230,
+"eraTrainer": 210
+},
+"13836": {
+"eraYellow": 235,
+"eraTrainer": 215
+},
+"13841": {
+"eraYellow": 235,
+"eraItemRank": 215
+},
+"13846": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"13858": {
+"eraYellow": 240,
+"eraTrainer": 220
+},
+"13868": {
+"eraYellow": 245,
+"eraItemRank": 225
+},
+"13882": {
+"eraYellow": 245,
+"eraItemRank": 225
+},
+"13887": {
+"eraYellow": 245,
+"eraTrainer": 225
+},
+"13890": {
+"eraYellow": 245,
+"eraTrainer": 225
+},
+"13898": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"13905": {
+"eraYellow": 250,
+"eraTrainer": 230
+},
+"13915": {
+"eraYellow": 250,
+"eraItemRank": 230
+},
+"13917": {
+"eraYellow": 250,
+"eraTrainer": 230
+},
+"13931": {
+"eraYellow": 255,
+"eraItemRank": 235
+},
+"13933": {
+"eraYellow": 255,
+"eraItemRank": 235
+},
+"13935": {
+"eraYellow": 255,
+"eraTrainer": 235
+},
+"13937": {
+"eraYellow": 260,
+"eraTrainer": 240
+},
+"13939": {
+"eraYellow": 260,
+"eraTrainer": 240
+},
+"13941": {
+"eraYellow": 265,
+"eraTrainer": 245
+},
+"13943": {
+"eraYellow": 265,
+"eraTrainer": 245
+},
+"13945": {
+"eraYellow": 265,
+"eraItemRank": 245
+},
+"13947": {
+"eraYellow": 270,
+"eraItemRank": 250
+},
+"13948": {
+"eraYellow": 270,
+"eraTrainer": 250
+},
+"14293": {
+"eraYellow": 75,
+"eraTrainer": 10
+},
+"14379": {
+"eraYellow": 155,
+"eraTrainer": 150
+},
+"14380": {
+"eraYellow": 205,
+"eraTrainer": 200
+},
+"14807": {
+"eraYellow": 110,
+"eraTrainer": 70
+},
+"14809": {
+"eraYellow": 175,
+"eraTrainer": 155
+},
+"14810": {
+"eraYellow": 195,
+"eraTrainer": 175
+},
+"14891": {
+"eraYellow": 230
+},
+"14930": {
+"eraYellow": 245,
+"eraTrainer": 225
+},
+"14932": {
+"eraYellow": 245,
+"eraTrainer": 225
+},
+"15255": {
+"eraYellow": 200,
+"eraTrainer": 200
+},
+"15292": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"15293": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"15294": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"15295": {
+"eraYellow": 300,
+"eraItemRank": 280
+},
+"15296": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"15596": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"15628": {
+"eraYellow": 205,
+"eraItemRank": 205
+},
+"15633": {
+"eraYellow": 205,
+"eraItemRank": 205
+},
+"15833": {
+"eraYellow": 245,
+"eraTrainer": 230
+},
+"15853": {
+"eraYellow": 165,
+"eraItemRank": 125
+},
+"15855": {
+"eraYellow": 215,
+"eraItemRank": 175
+},
+"15856": {
+"eraYellow": 215,
+"eraItemRank": 175
+},
+"15861": {
+"eraYellow": 215,
+"eraItemRank": 175
+},
+"15863": {
+"eraYellow": 215,
+"eraItemRank": 175
+},
+"15865": {
+"eraYellow": 215,
+"eraItemRank": 175
+},
+"15906": {
+"eraYellow": 240,
+"eraItemRank": 200
+},
+"15910": {
+"eraYellow": 240,
+"eraItemRank": 200
+},
+"15915": {
+"eraYellow": 265,
+"eraItemRank": 225
+},
+"15933": {
+"eraYellow": 265,
+"eraItemRank": 225
+},
+"15935": {
+"eraYellow": 45,
+"eraItemRank": 1
+},
+"15972": {
+"eraYellow": 205,
+"eraTrainer": 180
+},
+"15973": {
+"eraYellow": 215,
+"eraItemRank": 190
+},
+"16153": {
+"eraYellow": 250,
+"eraTrainer": 250
+},
+"16639": {
+"eraYellow": 255,
+"eraTrainer": 250
+},
+"16640": {
+"eraYellow": 255,
+"eraTrainer": 250
+},
+"16641": {
+"eraYellow": 255,
+"eraTrainer": 250
+},
+"16642": {
+"eraYellow": 270,
+"eraItemRank": 250
+},
+"16643": {
+"eraYellow": 270,
+"eraItemRank": 250
+},
+"16644": {
+"eraYellow": 275,
+"eraItemRank": 255
+},
+"16645": {
+"eraYellow": 280,
+"eraItemRank": 260
+},
+"16646": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"16647": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"16648": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"16649": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"16650": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"16651": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"16652": {
+"eraYellow": 300,
+"eraItemRank": 280
+},
+"16653": {
+"eraYellow": 300,
+"eraItemRank": 280
+},
+"16654": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"16655": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"16656": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"16657": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"16658": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"16659": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"16660": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"16661": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"16662": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16663": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16664": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16665": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16667": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"16724": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16725": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16726": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16728": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16729": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16730": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16731": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16732": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16741": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16742": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16744": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16745": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16746": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16960": {
+"eraYellow": 285,
+"eraItemRank": 260
+},
+"16965": {
+"eraYellow": 295,
+"eraItemRank": 270
+},
+"16967": {
+"eraYellow": 295,
+"eraItemRank": 270
+},
+"16969": {
+"eraYellow": 300,
+"eraItemRank": 275
+},
+"16970": {
+"eraYellow": 300,
+"eraItemRank": 275
+},
+"16971": {
+"eraYellow": 305,
+"eraItemRank": 280
+},
+"16973": {
+"eraYellow": 305,
+"eraItemRank": 280
+},
+"16978": {
+"eraYellow": 305,
+"eraItemRank": 280
+},
+"16980": {
+"eraYellow": 310,
+"eraItemRank": 285
+},
+"16983": {
+"eraYellow": 310,
+"eraItemRank": 285
+},
+"16984": {
+"eraYellow": 315,
+"eraItemRank": 290
+},
+"16985": {
+"eraYellow": 315,
+"eraItemRank": 290
+},
+"16986": {
+"eraYellow": 325,
+"eraItemRank": 300
+},
+"16987": {
+"eraYellow": 325,
+"eraItemRank": 300
+},
+"16988": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16990": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16991": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16992": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16993": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16994": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"16995": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"17180": {
+"eraYellow": 250,
+"eraTrainer": 250
+},
+"17181": {
+"eraYellow": 250,
+"eraTrainer": 250
+},
+"17187": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"17551": {
+"eraYellow": 250,
+"eraTrainer": 250
+},
+"17552": {
+"eraYellow": 270,
+"eraItemRank": 255
+},
+"17553": {
+"eraYellow": 275,
+"eraItemRank": 260
+},
+"17554": {
+"eraYellow": 280,
+"eraItemRank": 265
+},
+"17555": {
+"eraYellow": 285,
+"eraItemRank": 270
+},
+"17556": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"17557": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"17559": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"17560": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"17561": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"17562": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"17563": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"17564": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"17565": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"17566": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"17570": {
+"eraYellow": 295,
+"eraItemRank": 280
+},
+"17571": {
+"eraYellow": 295,
+"eraItemRank": 280
+},
+"17572": {
+"eraYellow": 300,
+"eraItemRank": 285
+},
+"17573": {
+"eraYellow": 300,
+"eraItemRank": 285
+},
+"17574": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"17575": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"17576": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"17577": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"17578": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"17579": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"17580": {
+"eraYellow": 310,
+"eraItemRank": 295
+},
+"17632": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"17634": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"17635": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"17636": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"17637": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"17638": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18238": {
+"eraYellow": 265,
+"eraItemRank": 225
+},
+"18239": {
+"eraYellow": 265,
+"eraItemRank": 225
+},
+"18240": {
+"eraYellow": 280,
+"eraItemRank": 240
+},
+"18241": {
+"eraYellow": 265,
+"eraItemRank": 225
+},
+"18242": {
+"eraYellow": 280,
+"eraItemRank": 240
+},
+"18243": {
+"eraYellow": 290,
+"eraItemRank": 250
+},
+"18244": {
+"eraYellow": 290,
+"eraItemRank": 250
+},
+"18245": {
+"eraYellow": 315,
+"eraItemRank": 275
+},
+"18246": {
+"eraYellow": 315,
+"eraItemRank": 275
+},
+"18247": {
+"eraYellow": 315,
+"eraItemRank": 275
+},
+"18401": {
+"eraYellow": 255,
+"eraTrainer": 250
+},
+"18402": {
+"eraYellow": 270,
+"eraTrainer": 255
+},
+"18403": {
+"eraYellow": 270,
+"eraItemRank": 255
+},
+"18404": {
+"eraYellow": 270,
+"eraItemRank": 255
+},
+"18405": {
+"eraYellow": 275,
+"eraItemRank": 260
+},
+"18406": {
+"eraYellow": 275,
+"eraItemRank": 260
+},
+"18407": {
+"eraYellow": 275,
+"eraItemRank": 260
+},
+"18408": {
+"eraYellow": 275,
+"eraItemRank": 260
+},
+"18409": {
+"eraYellow": 280,
+"eraItemRank": 265
+},
+"18410": {
+"eraYellow": 280,
+"eraItemRank": 265
+},
+"18411": {
+"eraYellow": 280,
+"eraItemRank": 265
+},
+"18412": {
+"eraYellow": 285,
+"eraItemRank": 270
+},
+"18413": {
+"eraYellow": 285,
+"eraItemRank": 270
+},
+"18414": {
+"eraYellow": 285,
+"eraItemRank": 270
+},
+"18415": {
+"eraYellow": 285,
+"eraItemRank": 270
+},
+"18416": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"18417": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"18418": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"18419": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"18420": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"18421": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"18422": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"18423": {
+"eraYellow": 295,
+"eraItemRank": 280
+},
+"18424": {
+"eraYellow": 295,
+"eraItemRank": 280
+},
+"18434": {
+"eraYellow": 295,
+"eraItemRank": 280
+},
+"18436": {
+"eraYellow": 300,
+"eraItemRank": 285
+},
+"18437": {
+"eraYellow": 300,
+"eraItemRank": 285
+},
+"18438": {
+"eraYellow": 300,
+"eraItemRank": 285
+},
+"18439": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"18440": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"18441": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"18442": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"18444": {
+"eraYellow": 310,
+"eraItemRank": 295
+},
+"18445": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18446": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18447": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18448": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18449": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18450": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18451": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18452": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18453": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18454": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18455": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18456": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18457": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18458": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"18560": {
+"eraYellow": 290,
+"eraItemRank": 250
+},
+"18629": {
+"eraYellow": 260,
+"eraTrainer": 260
+},
+"18630": {
+"eraYellow": 290,
+"eraTrainer": 290
+},
+"19047": {
+"eraYellow": 250,
+"eraTrainer": 250
+},
+"19048": {
+"eraYellow": 275,
+"eraItemRank": 255
+},
+"19049": {
+"eraYellow": 280,
+"eraItemRank": 260
+},
+"19050": {
+"eraYellow": 280,
+"eraItemRank": 260
+},
+"19051": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"19052": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"19053": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"19054": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19055": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"19058": {
+"eraYellow": 250,
+"eraTrainer": 250
+},
+"19059": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"19060": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"19061": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"19062": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"19063": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"19064": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"19065": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"19066": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"19067": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"19068": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"19070": {
+"eraYellow": 300,
+"eraItemRank": 280
+},
+"19071": {
+"eraYellow": 300,
+"eraItemRank": 280
+},
+"19072": {
+"eraYellow": 300,
+"eraItemRank": 280
+},
+"19073": {
+"eraYellow": 300,
+"eraItemRank": 280
+},
+"19074": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19075": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19076": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19077": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19078": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19079": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19080": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19081": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"19082": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"19083": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"19084": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"19085": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"19086": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"19087": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"19088": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"19089": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"19090": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"19091": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19092": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19093": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19094": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19095": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19097": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19098": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19100": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19101": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19102": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19103": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19104": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19106": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19107": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19435": {
+"eraYellow": 295
+},
+"19567": {
+"eraYellow": 270,
+"eraTrainer": 250
+},
+"19666": {
+"eraYellow": 100,
+"eraTrainer": 100
+},
+"19667": {
+"eraYellow": 150,
+"eraTrainer": 150
+},
+"19668": {
+"eraYellow": 200,
+"eraTrainer": 200
+},
+"19669": {
+"eraYellow": 275,
+"eraTrainer": 275
+},
+"19788": {
+"eraYellow": 250,
+"eraTrainer": 250
+},
+"19790": {
+"eraYellow": 280,
+"eraItemRank": 260,
+"eraTrainer": 260
+},
+"19791": {
+"eraYellow": 280,
+"eraItemRank": 260,
+"eraTrainer": 260
+},
+"19792": {
+"eraYellow": 280,
+"eraItemRank": 260
+},
+"19793": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"19794": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"19795": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"19796": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"19799": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19800": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19814": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"19815": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"19819": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"19825": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"19830": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19831": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"19833": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20008": {
+"eraYellow": 275,
+"eraItemRank": 255
+},
+"20009": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"20010": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"20011": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20012": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"20013": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"20014": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"20015": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"20016": {
+"eraYellow": 300,
+"eraItemRank": 280
+},
+"20017": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"20020": {
+"eraYellow": 280,
+"eraItemRank": 260
+},
+"20023": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"20024": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"20025": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20026": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"20028": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"20029": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"20030": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"20031": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20032": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20033": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"20034": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20035": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20036": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20051": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"20201": {
+"eraYellow": 275,
+"eraTrainer": 275
+},
+"20626": {
+"eraYellow": 265,
+"eraItemRank": 225
+},
+"20648": {
+"eraYellow": 100,
+"eraTrainer": 100
+},
+"20649": {
+"eraYellow": 150,
+"eraTrainer": 150
+},
+"20650": {
+"eraYellow": 200,
+"eraTrainer": 200
+},
+"20848": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"20849": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"20853": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"20854": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20855": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20872": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"20873": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20874": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"20876": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20890": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20897": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"20916": {
+"eraYellow": 215,
+"eraItemRank": 175
+},
+"21143": {
+"eraYellow": 45,
+"eraItemRank": 1
+},
+"21144": {
+"eraYellow": 75,
+"eraItemRank": 35
+},
+"21161": {
+"eraYellow": 325,
+"eraItemRank": 300
+},
+"21175": {
+"eraYellow": 240,
+"eraTrainer": 200
+},
+"21913": {
+"eraYellow": 215,
+"eraItemRank": 190
+},
+"21923": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"21931": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"21940": {
+"eraYellow": 190,
+"eraItemRank": 190
+},
+"21943": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"21945": {
+"eraYellow": 200,
+"eraItemRank": 190
+},
+"22331": {
+"eraYellow": 250,
+"eraTrainer": 250
+},
+"22430": {
+"eraYellow": 315
+},
+"22434": {
+"eraYellow": 320
+},
+"22480": {
+"eraYellow": 265,
+"eraItemRank": 225
+},
+"22704": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22711": {
+"eraYellow": 210,
+"eraItemRank": 200
+},
+"22727": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22732": {
+"eraYellow": 310,
+"eraItemRank": 300
+},
+"22749": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22750": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22757": {
+"eraYellow": 300,
+"eraItemRank": 300
+},
+"22759": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22761": {
+"eraYellow": 315,
+"eraItemRank": 275
+},
+"22793": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22795": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22797": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22808": {
+"eraYellow": 230,
+"eraTrainer": 215
+},
+"22813": {
+"eraYellow": 285
+},
+"22815": {
+"eraYellow": 285
+},
+"22866": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"22867": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"22868": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"22869": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"22870": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"22902": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"22921": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22922": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22923": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22926": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22927": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22928": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"22967": {
+"eraYellow": 310
+},
+"23066": {
+"eraYellow": 150,
+"eraItemRank": 150
+},
+"23067": {
+"eraYellow": 150,
+"eraItemRank": 150
+},
+"23068": {
+"eraYellow": 150,
+"eraItemRank": 150
+},
+"23069": {
+"eraYellow": 200,
+"eraItemRank": 200
+},
+"23070": {
+"eraYellow": 250,
+"eraTrainer": 250
+},
+"23071": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"23077": {
+"eraYellow": 280,
+"eraItemRank": 260
+},
+"23078": {
+"eraYellow": 285,
+"eraItemRank": 265
+},
+"23079": {
+"eraYellow": 285,
+"eraItemRank": 275
+},
+"23080": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"23081": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"23082": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23096": {
+"eraYellow": 275,
+"eraItemRank": 265
+},
+"23129": {
+"eraYellow": 260,
+"eraItemRank": 260
+},
+"23190": {
+"eraYellow": 150,
+"eraItemRank": 150
+},
+"23399": {
+"eraYellow": 175,
+"eraItemRank": 155
+},
+"23486": {
+"eraYellow": 285
+},
+"23489": {
+"eraYellow": 285
+},
+"23507": {
+"eraYellow": 250,
+"eraItemRank": 250
+},
+"23628": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"23629": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23632": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"23633": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23636": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23637": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23638": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23639": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23650": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23652": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23653": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23662": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"23663": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"23664": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"23665": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"23666": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"23667": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"23703": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"23704": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23705": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"23706": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23707": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23708": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23709": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23710": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23787": {
+"eraYellow": 300,
+"eraItemRank": 300
+},
+"23799": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"23800": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"23801": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"23802": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23803": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"23804": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24091": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"24092": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"24093": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"24121": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24122": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24123": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24124": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24125": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24136": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24137": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24138": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24139": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24140": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24141": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24266": {
+"eraYellow": 315
+},
+"24356": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24357": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24365": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"24366": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"24367": {
+"eraYellow": 300,
+"eraItemRank": 285
+},
+"24368": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"24399": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24418": {
+"eraYellow": 160,
+"eraItemRank": 150
+},
+"24654": {
+"eraYellow": 320,
+"eraTrainer": 300
+},
+"24655": {
+"eraYellow": 300,
+"eraTrainer": 280
+},
+"24703": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24801": {
+"eraYellow": 325
+},
+"24846": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24847": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24848": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24849": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24850": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24851": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24901": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"24902": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"24903": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"24912": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24913": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24914": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"24940": {
+"eraYellow": 125,
+"eraItemRank": 100
+},
+"25072": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25073": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25074": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25078": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25079": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25080": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25081": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25082": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25083": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25084": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25086": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"25124": {
+"eraYellow": 55,
+"eraItemRank": 45
+},
+"25125": {
+"eraYellow": 160,
+"eraItemRank": 150
+},
+"25126": {
+"eraYellow": 210,
+"eraItemRank": 200
+},
+"25127": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"25128": {
+"eraYellow": 285,
+"eraItemRank": 275
+},
+"25129": {
+"eraYellow": 310,
+"eraItemRank": 300
+},
+"25130": {
+"eraYellow": 310,
+"eraItemRank": 300
+},
+"25146": {
+"eraYellow": 301,
+"eraItemRank": 300
+},
+"25347": {
+"eraYellow": 300,
+"eraItemRank": 0
+},
+"25659": {
+"eraYellow": 325,
+"eraItemRank": 300
+},
+"25704": {
+"eraYellow": 120,
+"eraItemRank": 80
+},
+"25954": {
+"eraYellow": 215,
+"eraItemRank": 175
+},
+"26011": {
+"eraYellow": 320
+},
+"26085": {
+"eraYellow": 275,
+"eraItemRank": 260
+},
+"26086": {
+"eraYellow": 300,
+"eraItemRank": 285
+},
+"26087": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"26277": {
+"eraYellow": 265,
+"eraItemRank": 250
+},
+"26279": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"26403": {
+"eraYellow": 265,
+"eraItemRank": 250
+},
+"26407": {
+"eraYellow": 265,
+"eraItemRank": 250
+},
+"26416": {
+"eraYellow": 125,
+"eraItemRank": 125
+},
+"26417": {
+"eraYellow": 125,
+"eraItemRank": 125
+},
+"26418": {
+"eraYellow": 125,
+"eraItemRank": 125
+},
+"26420": {
+"eraYellow": 175,
+"eraItemRank": 175
+},
+"26421": {
+"eraYellow": 175,
+"eraItemRank": 175
+},
+"26422": {
+"eraYellow": 175,
+"eraItemRank": 175
+},
+"26423": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"26424": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"26425": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"26426": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"26427": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"26428": {
+"eraYellow": 275,
+"eraItemRank": 275
+},
+"26442": {
+"eraYellow": 245,
+"eraItemRank": 225
+},
+"26443": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"27585": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"27586": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"27587": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"27588": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"27589": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"27590": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"27658": {
+"eraYellow": 240,
+"eraItemRank": 225
+},
+"27659": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"27660": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"27724": {
+"eraYellow": 290,
+"eraItemRank": 275
+},
+"27725": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"27829": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"27830": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"27832": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"27837": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"28205": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"28207": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"28208": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"28209": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"28210": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"28219": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28220": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28221": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28222": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28223": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28224": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28242": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28243": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28244": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28327": {
+"eraYellow": 295,
+"eraItemRank": 275
+},
+"28461": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28462": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28463": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28472": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28473": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28474": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"28480": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"28481": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"28482": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"30021": {
+"eraYellow": 300,
+"eraItemRank": 300
+},
+"424641": {
+"eraYellow": 135,
+"eraItemRank": 135
+},
+"426607": {
+"eraYellow": 90,
+"eraItemRank": 90
+},
+"427061": {
+"eraYellow": 140,
+"eraItemRank": 150
+},
+"428424": {
+"eraYellow": 125,
+"eraItemRank": 125
+},
+"429348": {
+"eraYellow": 175
+},
+"429351": {
+"eraYellow": 150
+},
+"429354": {
+"eraYellow": 160
+},
+"429869": {
+"eraYellow": 160
+},
+"430397": {
+"eraYellow": 100,
+"eraItemRank": 100
+},
+"430409": {
+"eraYellow": 100,
+"eraItemRank": 100
+},
+"431362": {
+"eraYellow": 205,
+"eraItemRank": 205
+},
+"435481": {
+"eraYellow": 200,
+"eraItemRank": 225
+},
+"435610": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435819": {
+"eraYellow": 200,
+"eraItemRank": 200
+},
+"435827": {
+"eraYellow": 200,
+"eraItemRank": 200
+},
+"435841": {
+"eraYellow": 170,
+"eraItemRank": 150
+},
+"435848": {
+"eraYellow": 170,
+"eraItemRank": 150
+},
+"435903": {
+"eraYellow": 200,
+"eraItemRank": 225
+},
+"435904": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435906": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435908": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435910": {
+"eraYellow": 200,
+"eraItemRank": 200
+},
+"435949": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435951": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435953": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435956": {
+"eraYellow": 200,
+"eraItemRank": 200
+},
+"435958": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435960": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435964": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435966": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"435969": {
+"eraYellow": 200,
+"eraItemRank": 200
+},
+"435971": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"439085": {
+"eraYellow": 220,
+"eraItemRank": 205
+},
+"439086": {
+"eraYellow": 220
+},
+"439088": {
+"eraYellow": 220
+},
+"439091": {
+"eraYellow": 215,
+"eraItemRank": 195
+},
+"439093": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"439094": {
+"eraYellow": 205
+},
+"439097": {
+"eraYellow": 195,
+"eraItemRank": 175
+},
+"439098": {
+"eraYellow": 195
+},
+"439100": {
+"eraYellow": 190
+},
+"439102": {
+"eraYellow": 185,
+"eraItemRank": 165
+},
+"439105": {
+"eraYellow": 240,
+"eraItemRank": 220
+},
+"439108": {
+"eraYellow": 235,
+"eraItemRank": 215
+},
+"439110": {
+"eraYellow": 215,
+"eraItemRank": 195
+},
+"439112": {
+"eraYellow": 190,
+"eraItemRank": 170
+},
+"439114": {
+"eraYellow": 180
+},
+"439116": {
+"eraYellow": 230
+},
+"439118": {
+"eraYellow": 225,
+"eraItemRank": 205
+},
+"439120": {
+"eraYellow": 225,
+"eraItemRank": 205
+},
+"439122": {
+"eraYellow": 225,
+"eraItemRank": 200
+},
+"439124": {
+"eraYellow": 220,
+"eraItemRank": 195
+},
+"439126": {
+"eraYellow": 215,
+"eraItemRank": 190
+},
+"439128": {
+"eraYellow": 205,
+"eraItemRank": 180
+},
+"439130": {
+"eraYellow": 200,
+"eraItemRank": 175
+},
+"439132": {
+"eraYellow": 195,
+"eraItemRank": 170
+},
+"439134": {
+"eraYellow": 195
+},
+"439156": {
+"eraYellow": 225,
+"eraItemRank": 225
+},
+"439500": {
+"eraYellow": 300,
+"eraItemRank": 0
+},
+"439503": {
+"eraYellow": 300,
+"eraItemRank": 0
+},
+"439505": {
+"eraYellow": 300,
+"eraItemRank": 0
+},
+"439960": {
+"eraYellow": 210,
+"eraItemRank": 190
+},
+"446179": {
+"eraYellow": 250
+},
+"446183": {
+"eraYellow": 250
+},
+"446185": {
+"eraYellow": 250
+},
+"446186": {
+"eraYellow": 250
+},
+"446188": {
+"eraYellow": 250
+},
+"446189": {
+"eraYellow": 250
+},
+"446190": {
+"eraYellow": 250
+},
+"446191": {
+"eraYellow": 250
+},
+"446192": {
+"eraYellow": 250
+},
+"446193": {
+"eraYellow": 250
+},
+"446194": {
+"eraYellow": 250
+},
+"446195": {
+"eraYellow": 250
+},
+"446226": {
+"eraYellow": 250
+},
+"446236": {
+"eraYellow": 250
+},
+"446237": {
+"eraYellow": 250
+},
+"446238": {
+"eraYellow": 250
+},
+"446243": {
+"eraYellow": 250
+},
+"446851": {
+"eraYellow": 250
+},
+"448085": {
+"eraYellow": 250
+},
+"448624": {
+"eraYellow": 120,
+"eraItemRank": 120
+},
+"451706": {
+"eraYellow": 250
+},
+"458822": {
+"eraYellow": 295,
+"eraItemRank": 0
+},
+"460460": {
+"eraYellow": 325,
+"eraItemRank": 300
+},
+"461645": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"461647": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461649": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"461651": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"461653": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461655": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"461657": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461659": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461661": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"461663": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461665": {
+"eraYellow": 290,
+"eraItemRank": 270
+},
+"461667": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"461669": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461671": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461673": {
+"eraYellow": 305,
+"eraItemRank": 285
+},
+"461675": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461677": {
+"eraYellow": 300,
+"eraItemRank": 270
+},
+"461690": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461692": {
+"eraYellow": 285
+},
+"461706": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461708": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"461710": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461712": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461714": {
+"eraYellow": 315,
+"eraItemRank": 290
+},
+"461716": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461718": {
+"eraYellow": 310,
+"eraItemRank": 285
+},
+"461720": {
+"eraYellow": 280,
+"eraItemRank": 260
+},
+"461722": {
+"eraYellow": 310,
+"eraItemRank": 290
+},
+"461724": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461727": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"461730": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461733": {
+"eraYellow": 305,
+"eraItemRank": 280
+},
+"461735": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461737": {
+"eraYellow": 315,
+"eraItemRank": 295
+},
+"461739": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461743": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"461747": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"461750": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"461752": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"461754": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"462227": {
+"eraYellow": 320
+},
+"462282": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"463866": {
+"eraYellow": 305,
+"eraItemRank": 290
+},
+"463869": {
+"eraYellow": 285,
+"eraItemRank": 275
+},
+"463871": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"463972": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"470349": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"470359": {
+"eraYellow": 325,
+"eraItemRank": 300
+},
+"470370": {
+"eraYellow": 325,
+"eraItemRank": 300
+},
+"471400": {
+"eraYellow": 310,
+"eraItemRank": 300
+},
+"1213481": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213484": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213490": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213492": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213498": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213500": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213502": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213504": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213506": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213513": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213519": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213521": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213523": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213525": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213527": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213530": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213532": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213534": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213536": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213538": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213540": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213544": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213546": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213548": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213552": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213559": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213563": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213565": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213571": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213573": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213576": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213578": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213586": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213588": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213593": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213595": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213598": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213600": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213603": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213607": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213610": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213616": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213622": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213626": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213628": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213633": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213635": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213643": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213646": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213709": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213711": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213715": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213717": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213720": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213723": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213726": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213728": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213731": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213734": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213736": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213738": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213740": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213742": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213744": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1213746": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213748": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1213751": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1214137": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1214145": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1214168": {
+"eraYellow": 300,
+"eraItemRank": 0
+},
+"1214173": {
+"eraYellow": 315,
+"eraItemRank": 300
+},
+"1214257": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1214270": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1214274": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1214303": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1214306": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1214307": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1214309": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1215507": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1216005": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1216007": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1216010": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1216014": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1216016": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1216018": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1216020": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1216022": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1216024": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1217189": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1217203": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1217207": {
+"eraYellow": 320,
+"eraItemRank": 300
+},
+"1219577": {
+"eraYellow": 320
+},
+"1219578": {
+"eraYellow": 320
+},
+"1219579": {
+"eraYellow": 320
+},
+"1219580": {
+"eraYellow": 320
+},
+"1219581": {
+"eraYellow": 320
+},
+"1219587": {
+"eraYellow": 320
+},
+"1220623": {
+"eraYellow": 320
+},
+"1220624": {
+"eraYellow": 320
+},
+"1221012": {
+"eraYellow": 275,
+"eraItemRank": 250
+},
+"1223760": {
+"eraYellow": 315
+},
+"1223762": {
+"eraYellow": 315
+},
+"1223764": {
+"eraYellow": 315
+},
+"1223766": {
+"eraYellow": 315
+},
+"1223768": {
+"eraYellow": 315
+},
+"1223770": {
+"eraYellow": 315
+},
+"1223772": {
+"eraYellow": 315
+},
+"1223774": {
+"eraYellow": 320
+},
+"1223776": {
+"eraYellow": 320
+},
+"1223778": {
+"eraYellow": 320
+},
+"1223780": {
+"eraYellow": 320
+},
+"1223782": {
+"eraYellow": 320
+},
+"1223784": {
+"eraYellow": 320
+},
+"1223787": {
+"eraYellow": 320
+},
+"1223789": {
+"eraYellow": 320
+},
+"1223791": {
+"eraYellow": 320
+},
+"1224607": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224608": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224609": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224610": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1224611": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1224612": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1224613": {
+"eraYellow": 280,
+"eraItemRank": 270
+},
+"1224614": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1224615": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224616": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224617": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224618": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1224619": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1224620": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1224621": {
+"eraYellow": 280,
+"eraItemRank": 270
+},
+"1224622": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1224623": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224624": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224625": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224626": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1224627": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1224628": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1224629": {
+"eraYellow": 280,
+"eraItemRank": 270
+},
+"1224630": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1224631": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224632": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224633": {
+"eraYellow": 285,
+"eraItemRank": 280
+},
+"1224635": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1224636": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1224637": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1224638": {
+"eraYellow": 280,
+"eraItemRank": 270
+},
+"1224639": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1225758": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1225759": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1225760": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1225762": {
+"eraYellow": 290,
+"eraItemRank": 280
+},
+"1225763": {
+"eraYellow": 290,
+"eraItemRank": 280
+},
+"1226206": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1226207": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1226208": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1226209": {
+"eraYellow": 270,
+"eraItemRank": 260
+},
+"1226210": {
+"eraYellow": 280,
+"eraItemRank": 250
+},
+"1226211": {
+"eraYellow": 280,
+"eraItemRank": 250
+},
+"1226212": {
+"eraYellow": 280,
+"eraItemRank": 250
+},
+"1226213": {
+"eraYellow": 305,
+"eraItemRank": 300
+},
+"1226689": {
+"eraYellow": 280,
+"eraItemRank": 275
+},
+"1226690": {
+"eraYellow": 280,
+"eraItemRank": 275
+},
+"1227723": {
+"eraYellow": 260,
+"eraItemRank": 250
+},
+"1227724": {
+"eraYellow": 300,
+"eraItemRank": 290
+},
+"1228088": {
+"eraYellow": 255,
+"eraItemRank": 250
+},
+"1231128": {
+"eraYellow": 305,
+"eraItemRank": 280
+},
+"1231139": {
+"eraYellow": 305,
+"eraItemRank": 280
+},
+"1231164": {
+"eraYellow": 305,
+"eraItemRank": 280
+},
+"1231583": {
+"eraYellow": 270,
+"eraItemRank": 250
+},
+"1232172": {
+"eraYellow": 305,
+"eraItemRank": 280
+}
+}
+}
