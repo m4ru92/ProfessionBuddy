@@ -8,7 +8,7 @@
 dofile("tests/forever_env.lua")
 dofile("tests/forever_tradeskill.lua")
 
-local _, errs = LOAD_TOC("ProfessionBuddy_Mainline.toc")
+local _, errs = LOAD_TOC("ProfessionBuddy_Forever.toc")
 EXPECT(#errs == 0, "load errors: " .. table.concat(errs, " | "))
 -- saved data as a pre-realm-token build left it (W3)
 ProfBuddyDB = { settings = { replaceTradeSkill = false }, schemaVersion = 2,

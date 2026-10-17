@@ -93,7 +93,7 @@ blocking finding; sections it marks `[informational]` do not fail the run.
 ## Global writes
 
 `python tools/check_globals.py` (needs `pip install luaparser`) parses every
-`.lua` file the three tocs load, `Libs/` excluded, and lists each write to a
+`.lua` file the tocs load, `Libs/` excluded, and lists each write to a
 global variable. PB owns four globals: `ProfBuddy`, `ProfBuddyDB`,
 `SLASH_PROFBUDDY1` and `SLASH_PROFBUDDY2`. Any other global write fails the
 run with its file and line. The usual cause is a missing `local`, and a stray

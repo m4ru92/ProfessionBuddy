@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------
 -- WoW: Forever harness (Forever 2.0.0, Phases 0, 2a, 2b and 4a).
 --
--- Loads ProfessionBuddy_Mainline.toc into a modern-client stub
+-- Loads ProfessionBuddy_Forever.toc into a modern-client stub
 -- (tests/forever_env.lua) with a fake profession backend built from
 -- m4ru's 2026-09-22 harvest (tests/forever_tradeskill.lua), then checks
 -- that PB starts cleanly and that its own window reads Forever's
@@ -22,7 +22,7 @@ local function called(prefix)
 end
 
 -- F1: every Mainline file loads
-local files, errs = LOAD_TOC("ProfessionBuddy_Mainline.toc")
+local files, errs = LOAD_TOC("ProfessionBuddy_Forever.toc")
 EXPECT(#errs == 0, "load errors: " .. table.concat(errs, " | "))
 for _, f in ipairs(files) do
     EXPECT((not f:match("^Data/") or f:match("^Data/Forever/")) and f ~= "Source/Classic.lua",

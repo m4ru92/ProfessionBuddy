@@ -96,12 +96,16 @@ def default_addon_dir():
 
 # ---------------------------------------------------------------- version check
 # One zip serves several clients, each reading the toc named for it:
-# _TBC for TBC Classic Anniversary, _Mainline for WoW: Forever, and the
-# plain toc (a "not supported" stub) for every other client.
+# _TBC for TBC Classic Anniversary, _Forever for WoW: Forever, and the
+# plain toc (a "not supported" stub) for every other client. _Mainline is
+# a copy of _Forever and must stay identical: retail reads it (Core.lua then
+# says retail is not supported), Forever reads it when _Forever is absent,
+# and WowUp reads only _Forever on Forever.
 TOC_TBC = ADDON_NAME + "_TBC.toc"
 TOC_MAINLINE = ADDON_NAME + "_Mainline.toc"
+TOC_FOREVER = ADDON_NAME + "_Forever.toc"
 TOC_STUB = ADDON_NAME + ".toc"
-TOCS = (TOC_TBC, TOC_MAINLINE, TOC_STUB)
+TOCS = (TOC_TBC, TOC_MAINLINE, TOC_FOREVER, TOC_STUB)
 
 
 def toc_version(path):
@@ -124,6 +128,12 @@ def read_toc_version(addon_dir):
         versions[name] = v
     if len(set(versions.values())) != 1:
         die("toc versions disagree: " + ", ".join("%s=%s" % kv for kv in sorted(versions.items())))
+    with open(os.path.join(addon_dir, TOC_MAINLINE), "rb") as fh:
+        mainline = fh.read()
+    with open(os.path.join(addon_dir, TOC_FOREVER), "rb") as fh:
+        forever = fh.read()
+    if mainline.replace(b"\r\n", b"\n") != forever.replace(b"\r\n", b"\n"):
+        die("%s and %s differ: copy one over the other, they must match" % (TOC_FOREVER, TOC_MAINLINE))
     return versions[TOC_TBC]
 
 
@@ -300,10 +310,11 @@ def verify_zip(out_zip, addon_dir):
                     problems.append("%s lists %s, which is not in the zip" % (toc, rel))
         # 2b) Forever never loads TBC data or the Classic profession source,
         #     and TBC Anniversary never loads Forever data
-        for rel in toc_files(addon_dir, TOC_MAINLINE):
-            if (rel.startswith("Data/") and not rel.startswith("Data/Forever/")) \
-                    or rel == "Source/Classic.lua":
-                problems.append("%s must not load %s" % (TOC_MAINLINE, rel))
+        for toc in (TOC_FOREVER, TOC_MAINLINE):
+            for rel in toc_files(addon_dir, toc):
+                if (rel.startswith("Data/") and not rel.startswith("Data/Forever/")) \
+                        or rel == "Source/Classic.lua":
+                    problems.append("%s must not load %s" % (toc, rel))
         for rel in toc_files(addon_dir, TOC_TBC):
             if rel.startswith("Data/Forever/"):
                 problems.append("%s must not load %s" % (TOC_TBC, rel))
@@ -512,8 +523,8 @@ def main():
     if problems:
         for p in problems: log("  VERIFY FAIL: " + p)
         die("zip verification failed -- not releasing")
-    log("Verify: OK (top-level folder, all 3 tocs present with their files, the Forever "
-        "toc loads no TBC data, every .lua/.xml listed in a toc or under Libs/, LICENSE "
+    log("Verify: OK (top-level folder, all 4 tocs present with their files, the Forever "
+        "tocs load no TBC data, every .lua/.xml listed in a toc or under Libs/, LICENSE "
         "matches the root copy, lua syntax via %s)"
         % (lua_label or "no VM"))
 

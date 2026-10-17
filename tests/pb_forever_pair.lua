@@ -28,7 +28,7 @@ function GetUnitName(u, full)
     if u == "player" then return full and (NODE_NAME .. " " .. NODE_SURNAME) or NODE_NAME end
     return UnitName(u)
 end
-local files, errs = LOAD_TOC("ProfessionBuddy_Mainline.toc")
+local files, errs = LOAD_TOC("ProfessionBuddy_Forever.toc")
 EXPECT(#errs == 0, "load errors: " .. table.concat(errs, " | "))
 ProfBuddyDB = nil
 FIRE("ADDON_LOADED", "ProfessionBuddy")

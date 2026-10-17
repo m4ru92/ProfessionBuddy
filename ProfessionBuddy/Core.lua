@@ -621,9 +621,9 @@ end)
 addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if loadedName ~= "ProfessionBuddy" then return end
 
-    -- ProfessionBuddy_Mainline.toc is for WoW: Forever (interface 16xxx).
-    -- Retail reads the same toc family but is not supported: say so once,
-    -- then stop before any module starts.
+    -- WoW: Forever (interface 16xxx) loads ProfessionBuddy_Forever.toc.
+    -- Retail loads ProfessionBuddy_Mainline.toc, a byte-identical copy, but
+    -- is not supported: say so once, then stop before any module starts.
     local tocVersion = GetBuildInfo and select(4, GetBuildInfo())
     if WOW_PROJECT_ID and WOW_PROJECT_MAINLINE and WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
        and tocVersion and (tocVersion < 16000 or tocVersion >= 17000) then

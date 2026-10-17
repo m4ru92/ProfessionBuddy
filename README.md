@@ -114,7 +114,7 @@ Install [!BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber) and [Bu
 
 ## Build and packaging
 
-`tools/release.py` builds and checks the release zip: a single `ProfessionBuddy/` folder, the three tocs, and every file they load. It runs the Lua test harnesses, the recipe data linter, and a global-write check first, and the same checks run on GitHub on every push. There is no `.pkgmeta` packager config. Release notes for every version are in [CHANGELOG.md](CHANGELOG.md).
+`tools/release.py` builds and checks the release zip: a single `ProfessionBuddy/` folder, the four tocs, and every file they load. It runs the Lua test harnesses, the recipe data linter, and a global-write check first, and the same checks run on GitHub on every push. There is no `.pkgmeta` packager config. Release notes for every version are in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
