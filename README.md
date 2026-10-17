@@ -19,16 +19,51 @@
 
 ## Screenshots
 
+The screenshots are from WoW: Forever. TBC Classic Anniversary uses the same windows, without the Forever-only options.
+
+### Profession window
+
 |  |  |
 | :---: | :---: |
-| ![Main window](media/MainWindow.png) | ![Material Calculator](media/MaterialCalc.png) |
+| ![Profession window](media/MainWindow.png) | ![Material Calculator](media/MaterialCalc.png) |
 | Recipe browser with difficulty colors from client data | Material calculator: full reagent tree and shopping list |
-| ![Recipe detail](media/MainWindowEnchantingDetail.png) | ![Cross-character view](media/AltWindow.png) |
-| Recipe details, reagents, and required rod | Every character's professions in one view |
-| ![Friends](media/FriendWindow.png) | ![Crafting Orders](media/CraftingOrders.png) |
-| Friends' professions and materials, synced | Friend-to-friend crafting orders |
-| ![Browse a friend's recipes](media/FriendProfWindow_CraftingOrder.png) | ![Settings](media/Settings.png) |
-| Browse a friend's recipes and request a craft | Settings |
+| ![A missing recipe](media/MissingRecipe_TrainerLearnable.png) | ![Learnable now](media/MainWindow_LearnableNow_Trainer.png) |
+| A missing recipe with its learn level and trainer | Learnable now, filtered to trainer recipes |
+| ![Search by material](media/MainWindow_SearchByMaterial.png) | ![Share a recipe](media/MainWindow_ShareSelection.png) |
+| Search by material finds every recipe that uses it | Share a recipe's link to guild, party, raid, or say |
+
+### WoW: Forever
+
+![Show everything or Learn as you go](media/PlayStylePrompt.png)
+
+The first time a profession opens, ProfessionBuddy asks how to show the recipes you haven't learned.
+
+### Characters, friends, and guild
+
+|  |  |
+| :---: | :---: |
+| ![Characters](media/CharactersTab.png) | ![Friends](media/FriendsTab.png) |
+| Every character's professions in one view | Friends' professions and materials, synced |
+| ![Guild](media/GuildTab.png) | ![A friend's recipes](media/AltWindow.png) |
+| Guildmates' professions | Browse a friend's recipes, see the tool a recipe needs, and request a craft |
+
+### Orders
+
+|  |  |
+| :---: | :---: |
+| ![Crafting orders and history](media/OrdersHistory.png) | ![Guild board and Find a Crafter](media/OrdersTab_GuildBoard_FindACrafter.png) |
+| Friend-to-friend crafting orders and order history | Guild order board and Find a Crafter |
+
+### Tooltips
+
+|  |  |  |
+| :---: | :---: | :---: |
+| ![Mining tooltip](media/MiningTooltip.png) | ![Herbalism tooltip](media/HerbalismTooltip.png) | ![Skinning tooltip](media/SkinningTooltip.png) |
+| Ore vein: skill needed and loot you gathered | Herb: skill needed and Classic loot data | Skinnable mob: skill needed and Classic loot data |
+
+### Settings
+
+![Settings](media/Settings.png)
 
 ## Features
 
