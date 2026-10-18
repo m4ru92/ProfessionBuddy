@@ -3305,4 +3305,38 @@ do
 end
 print("  PASS F59 search matches materials, Learnable now lists exactly the learnable missing recipes, Share opens the chat box with the link")
 
-print("ALL FOREVER TESTS PASS (59)")
+-- F60: Find a Crafter's "Recipe or item name" sits inside the search box as
+-- placeholder text, not as a label beside the box that ran under the Sync
+-- guild recipes button. It shows while the box is empty (the panel focuses
+-- the box on open) and hides while there is text.
+do
+    local OP = ProfBuddy.OrdersPanel
+    OP:ToggleFind()
+    local box = OP.findBox
+    EXPECT(OP.findFrame:IsShown(), "Find a Crafter did not open")
+    local found = {}
+    for _, fr in ipairs(FRAMES) do
+        if rawget(fr, "_text") == "Recipe or item name" then found[#found + 1] = fr end
+    end
+    EXPECT(#found == 1, "expected one Recipe or item name text, found " .. #found)
+    local ph = found[1]
+    EXPECT(rawget(ph, "_parent") == box, "the placeholder is not on the search box")
+    local pt = rawget(ph, "_lastPoint")
+    EXPECT(pt and pt[1] == "LEFT" and pt[2] == box and pt[3] == "LEFT",
+           "the placeholder is not anchored inside the box")
+    for _, fr in ipairs(FRAMES) do
+        local p = rawget(fr, "_lastPoint")
+        EXPECT(not (p and p[2] == box and p[3] == "RIGHT"), "something is still anchored right of the box")
+    end
+    EXPECT(ph:IsShown(), "placeholder hidden on an empty box")
+    local onChanged = box:GetScript("OnTextChanged")
+    box:SetText("copper"); onChanged(box)
+    EXPECT(not ph:IsShown(), "placeholder still shown with text in the box")
+    box:SetText(""); onChanged(box)
+    EXPECT(ph:IsShown(), "placeholder did not come back when the box was cleared")
+    OP:ToggleFind()
+    EXPECT(not OP.findFrame:IsShown(), "Find a Crafter did not close")
+end
+print("  PASS F60 Find a Crafter shows Recipe or item name inside the box while it is empty")
+
+print("ALL FOREVER TESTS PASS (60)")

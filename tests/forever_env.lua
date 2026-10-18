@@ -122,7 +122,9 @@ function F:GetName() return self._name end
 function F:SetAttribute(k, v) self._attr[k] = v end
 function F:GetAttribute(k) return self._attr[k] end
 function F:GetFrameLevel() return 1 end
-function F:GetText() return self._text or "" end
+-- rawget: an unset field reads as a stub table here, and a new edit box or
+-- font string answers "" in game
+function F:GetText() return rawget(self, "_text") or "" end
 -- A tooltip line, kept in _lines so a harness can read what was added.
 function F:AddLine(text) local l = rawget(self, "_lines"); if l then l[#l + 1] = text end end
 function F:AddDoubleLine(left, right) local l = rawget(self, "_lines"); if l then l[#l + 1] = tostring(left) .. " | " .. tostring(right) end end

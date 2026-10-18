@@ -1959,15 +1959,23 @@ function OP:BuildFindPanel()
     box:SetPoint("TOPLEFT", 16, -30)
     box:SetAutoFocus(false)
     box:SetScript("OnEscapePressed", function(b) b:ClearFocus() end)
+
+    -- Placeholder inside the box. ToggleFind focuses the box on open, so it
+    -- stays up while the box is empty, focused or not (the main Search box
+    -- does the same); hiding it on focus would mean it never shows.
+    local ph = box:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    ph:SetPoint("LEFT", box, "LEFT", 4, 0)
+    ph:SetText("Recipe or item name")
+    local function updatePH() if box:GetText() ~= "" then ph:Hide() else ph:Show() end end
+    updatePH()
+    self.findPlaceholder = ph
+
     -- Debounced: a typed word runs one search, not one per letter.
     box:SetScript("OnTextChanged", function()
+        updatePH()
         debounce("findSearch", 0.25, function() OP:RefreshFind() end)
     end)
     self.findBox = box
-
-    local hint = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    hint:SetPoint("LEFT", box, "RIGHT", 8, 0)
-    hint:SetText("Recipe or item name")
 
     -- The discovery path: pull recipe lists from guildmates who have none here
     -- yet. Deliberately a button, because it costs both sides a payload each.
