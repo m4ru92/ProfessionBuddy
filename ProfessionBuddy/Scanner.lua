@@ -465,7 +465,7 @@ function Scanner:ReconcileSkillReq(recipes)
         end
     end
     if newCorrections > 0 and addon.db.settings and addon.db.settings.skillReqNotify then
-        print(string.format("|cff00ccffProfessionBuddy:|r reconciled %d trainer learn-level correction%s (/pb skillreq to view).",
+        print(string.format("|cff00ccffProfessionBuddy:|r Reconciled %d trainer learn-level correction%s (/pb skillreq to view).",
             newCorrections, newCorrections == 1 and "" or "s"))
     end
 end

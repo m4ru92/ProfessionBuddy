@@ -58,7 +58,7 @@ end
 local function ensureRemovePopup()
     if StaticPopupDialogs["PROFBUDDY_REMOVE_CONTACT"] then return end
     StaticPopupDialogs["PROFBUDDY_REMOVE_CONTACT"] = {
-        text = "Remove %s as a contact?\nTheir synced professions, recipes and inventory are deleted with them, and they can no longer pull yours.",
+        text = "Remove %s as a contact?\nTheir synced professions, recipes, and inventory are deleted with them, and they can no longer pull yours.",
         button1 = YES,
         button2 = NO,
         OnAccept = function(self, key)
@@ -709,7 +709,7 @@ function FP:Refresh()
     -- Empty list: say so, and take the lone scroll bar off the blank area.
     local hasContacts = #self.contactKeys > 0
     self.empty:SetText(hidden > 0
-        and "Your contacts are all of the other faction. Settings, Friend Data: Show opposite faction friends."
+        and "Your contacts are all of the other faction. Settings, Friend Data: Show opposite-faction friends."
         or "No contacts yet. Type a name above and click Add.")
     self.empty:SetShown(not hasContacts)
     self.scrollBar:SetShown(hasContacts)

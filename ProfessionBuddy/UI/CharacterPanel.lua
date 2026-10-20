@@ -237,7 +237,7 @@ function CP:CreateContent(parent)
 
     local placeholder = searchBox:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     placeholder:SetPoint("LEFT", 6, 0)
-    placeholder:SetText("|cff666666Search recipes / items...|r")
+    placeholder:SetText("|cff666666Search recipes or items...|r")
     self._searchPlaceholder = placeholder
 
     searchBox:SetScript("OnTextChanged", function(eb, userInput)
@@ -680,7 +680,7 @@ function CP:CreateProfessionRow(charKey, profName, profData, yOffset, isExpanded
     end
 
     if recipeCount > 0 then
-        local str = COLORS.white .. recipeCount .. " recipes|r"
+        local str = COLORS.white .. recipeCount .. (recipeCount == 1 and " recipe|r" or " recipes|r")
         if unknownCount > 0 then
             str = str .. "  " .. COLORS.orange .. unknownCount .. " missing|r"
         end

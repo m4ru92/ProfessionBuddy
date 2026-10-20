@@ -838,7 +838,7 @@ end
 local function ConfirmReset()
     if not StaticPopupDialogs["PROFBUDDY_CONFIRM_RESET"] then
         StaticPopupDialogs["PROFBUDDY_CONFIRM_RESET"] = {
-            text = "Erase all ProfessionBuddy data (characters, contacts, orders and settings) and reload the UI?",
+            text = "Erase all ProfessionBuddy data (characters, contacts, orders, and settings) and reload the UI?",
             button1 = YES,
             button2 = NO,
             OnAccept = function()
@@ -932,13 +932,13 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         if arg == "on" then s.shareData = true
         elseif arg == "off" then s.shareData = false
         else s.shareData = not s.shareData end
-        print("|cff00ccffProfessionBuddy:|r data sharing is now "
+        print("|cff00ccffProfessionBuddy:|r Data sharing is now "
             .. (s.shareData and "ON." or "OFF (no profession/inventory data sent to others)."))
 
     elseif msg == "debug" then
         local s = ProfBuddyDB.settings
         s.debugComm = not s.debugComm
-        print("|cff00ccffProfessionBuddy:|r comm debug is now "
+        print("|cff00ccffProfessionBuddy:|r Comm debug is now "
             .. (s.debugComm and "ON." or "OFF."))
 
     elseif msg:sub(1, 4) == "sync" then
@@ -978,7 +978,7 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         local ov = ProfBuddyDB.skillReqOverrides or {}
         local RDB = addon.RecipeDB
         local n = 0
-        print("|cff00ccffProfessionBuddy:|r trainer-scanned learn-level reconciliations:")
+        print("|cff00ccffProfessionBuddy:|r Trainer-scanned learn-level reconciliations:")
         for name, tv in pairs(ov) do
             n = n + 1
             local static = RDB and RDB:StaticSkillReq(name)
@@ -988,7 +988,7 @@ SlashCmdList["PROFBUDDY"] = function(msg)
                 print(string.format("  %s: trainer %d  (gap-fill; static had none)", name, tv))
             end
         end
-        if n == 0 then print("  (none yet -- visit profession trainers to build this up)") end
+        if n == 0 then print("  (none yet: visit profession trainers to build this up)") end
 
     else
         -- Default: open the /pb main window.
@@ -1057,7 +1057,7 @@ local function BuildBugReport()
 
     -- Known professions (name + skill) from THIS character's scanned data --
     -- highly relevant for a profession addon, and it's the user's own char.
-    local profStr = "(none scanned yet -- open your professions, then re-run)"
+    local profStr = "(none scanned yet: open your professions, then run it again)"
     local key = addon.PlayerKey and addon:PlayerKey()
     local ds = addon.DataStore
     local char = key and ds and ds.GetCharacter and ds:GetCharacter(key)
@@ -1096,7 +1096,7 @@ local function BuildBugReport()
         "",
         "Other addons possibly involved (optional):",
         "",
-        "ProfessionBuddy Lua errors (if applicable -- paste from BugSack / BugGrabber):",
+        "ProfessionBuddy Lua errors, if any (paste from BugSack or BugGrabber):",
         "",
     }) do lines[#lines + 1] = line end
     return table.concat(lines, "\n")
@@ -1126,7 +1126,7 @@ function addon:ShowBugReport()
 
         local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
         title:SetPoint("TOP", 0, -14)
-        title:SetText("ProfessionBuddy  \226\128\148  Bug Report")
+        title:SetText("ProfessionBuddy Bug Report")
 
         local instr = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         instr:SetPoint("TOPLEFT", 16, -40)

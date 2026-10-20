@@ -798,7 +798,7 @@ function OP:CreateContent(parent)
     findBtn:SetSize(104, 20)
     -- flush right, over the Guild Board list's scroll bar (m4ru 2026-10-13)
     findBtn:SetPoint("RIGHT", 0, 0)
-    findBtn:SetText("Find a crafter")
+    findBtn:SetText("Find a Crafter")
     findBtn:SetNormalFontObject(GameFontNormalSmall)
     findBtn:SetHighlightFontObject(GameFontHighlightSmall)
     findBtn:SetScript("OnClick", function() OP:ToggleFind() end)
@@ -828,7 +828,7 @@ function OP:CreateContent(parent)
             { text = "No incoming requests.",
               hint = "When a friend or guildmate requests a craft from you, it shows up here." },
             { text = "No outgoing orders.",
-              hint = "Open a friend's or guildmate's professions and hit Request Craft, or claim a post on the Guild Board." })
+              hint = "Open a friend's or guildmate's professions and click Request Craft, or claim a post on the Guild Board." })
         applyScrollRange(ctx)
         self:PaintList(ctx)
     end

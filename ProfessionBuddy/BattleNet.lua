@@ -245,7 +245,7 @@ function BN:BuildWindow()
         BN:RefreshWindow()
     end)
     tooltip(auto, "Auto-add picked friends",
-        "When a friend ticked below is online on a character in this game, region and faction, "
+        "When a friend ticked below is online on a character in this game, region, and faction, "
         .. "that character becomes a PB contact. Removing them as a Battle.net friend removes those contacts.")
     f.auto = auto
 
@@ -254,7 +254,7 @@ function BN:BuildWindow()
     trust:SetScript("OnClick", function(cb) BN:SetTrust(cb:GetChecked() and true or false) end)
     tooltip(trust, "Also trust them",
         "Contacts added from Battle.net are trusted, as if you had added them yourself: "
-        .. "they can sync your professions, bags and bank. Their Auto-sync is ticked, "
+        .. "they can sync your professions, bags, and bank. Their Auto-sync is ticked, "
         .. "and the ones online now sync once.")
     f.trust = trust
 

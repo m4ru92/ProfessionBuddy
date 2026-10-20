@@ -422,7 +422,7 @@ end
 -- An unlearned recipe the viewed character can learn now: its learn level
 -- is at or below the profession skill, and its character level (poisons) at
 -- or below theirs. A recipe with no known learn level never counts. The
--- summary's "Learnable Now" and the "Learnable now" view both ask this.
+-- summary's "Learnable now" count and the "Learnable now" view both ask this.
 local function LearnableNow(name, info)
     local req = LearnLevelFor(name, info.skillReq, info.spellID)
     return req ~= nil and req <= (state.skillLevel or 0)
@@ -1757,7 +1757,7 @@ function TSF:EnsureFrame()
     f:SetClampedToScreen(true)
     f:SetFrameStrata("HIGH")
     f:Hide()
-    f.TitleText:SetText("Profession Buddy")
+    f.TitleText:SetText("ProfessionBuddy")
 
     f:SetScript("OnMouseDown", function()
         CloseAllDropdowns()
@@ -1978,7 +1978,7 @@ function TSF:UpdateSkillBar()
     self.titleText:SetText(profName)
     self.skillBar:SetMinMaxValues(0, maxSkill)
     self.skillBar:SetValue(skill)
-    self.skillBarText:SetText(profName .. "  -  " .. skill .. " / " .. maxSkill)
+    self.skillBarText:SetText(profName .. " " .. skill .. "/" .. maxSkill)
     self:UpdateProfessionTabs()
 end
 
@@ -5229,7 +5229,7 @@ function TSF:BuildSettingsPanel(parent)
     yLeft = yLeft - 26
     MakeCheckbox("Include in material calculator", "includeAltsInCalc", yLeft)
     yLeft = yLeft - 26
-    MakeCheckbox("Show opposite faction alts", "showCrossFactionAlts", yLeft)
+    MakeCheckbox("Show opposite-faction alts", "showCrossFactionAlts", yLeft)
     yLeft = yLeft - 14
 
     altGroupBg:SetHeight(altGroupTop - yLeft)
@@ -5268,7 +5268,7 @@ function TSF:BuildSettingsPanel(parent)
     yLeft = yLeft - 26
     -- Friends and guildmates of the other faction (addon:ShowsFaction): off
     -- hides them everywhere, Friends tab included. Their data stays.
-    local crossFriendsCB = MakeCheckbox("Show opposite faction friends", "showCrossFactionFriends", yLeft)
+    local crossFriendsCB = MakeCheckbox("Show opposite-faction friends", "showCrossFactionFriends", yLeft)
     crossFriendsCB:SetScript("OnClick", function(self)
         settings.showCrossFactionFriends = self:GetChecked() and true or false
         if addon.FriendsPanel and addon.FriendsPanel.Refresh then addon.FriendsPanel:Refresh() end
@@ -5756,7 +5756,7 @@ function TSF:UpdateBottomBar(unknown)
         "|cff00ff00Known: " .. knownCount .. "|r    " ..
         "|cffff8800Missing: " .. missingCount .. "|r    " ..
         "|cffffff00From Trainer: " .. trainableCount .. "|r    " ..
-        "|cff44ddffLearnable Now: " .. learnableNow .. "|r"
+        "|cff44ddffLearnable now: " .. learnableNow .. "|r"
     )
 end
 
@@ -6599,7 +6599,7 @@ function TSF:OpenWithStatic(profName)
     if self.skillBar then
         self.skillBar:SetMinMaxValues(0, 1)
         self.skillBar:SetValue(0)
-        self.skillBarText:SetText(profName .. "  -  Not learned")
+        self.skillBarText:SetText(profName .. ": Not learned")
     end
     self:UpdateProfessionTabs()
 
@@ -6753,7 +6753,7 @@ function TSF:OpenWithCharacter(charKey, profName)
     if self.skillBar then
         self.skillBar:SetMinMaxValues(0, maxSkill)
         self.skillBar:SetValue(skill)
-        self.skillBarText:SetText(classColor .. shortName .. "|r  -  " .. profName .. "  " .. skill .. "/" .. maxSkill)
+        self.skillBarText:SetText(classColor .. shortName .. "|r: " .. profName .. " " .. skill .. "/" .. maxSkill)
     end
     self:UpdateProfessionTabs()
 

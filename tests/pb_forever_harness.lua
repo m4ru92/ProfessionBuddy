@@ -491,13 +491,13 @@ TRAINERS[90001] = { name = "Tester", tradeskill = true, services = {
 local keepSummary = TSF.summaryText
 TSF.summaryText = { SetText = function(self, t) self.t = t end, GetText = function(self) return self.t end }
 TSF:UpdateBottomBar()
-local learnBefore = tonumber(TSF.summaryText:GetText():match("Learnable Now: (%d+)"))
+local learnBefore = tonumber(TSF.summaryText:GetText():match("Learnable now: (%d+)"))
 TRAINER_OPEN(90001)
 FLUSH()
 TRAINER_CLOSE()
 EXPECT(K[unk.spellID].learnLevel == 1, "test trainer not recorded")
 TSF:UpdateBottomBar()
-local learnAfter = tonumber(TSF.summaryText:GetText():match("Learnable Now: (%d+)"))
+local learnAfter = tonumber(TSF.summaryText:GetText():match("Learnable now: (%d+)"))
 EXPECT(learnAfter == learnBefore + 1, "Learnable Now " .. tostring(learnBefore) .. " -> " .. tostring(learnAfter))
 TSF.summaryText = keepSummary
 st.showTab, st.searchText = "missing", unknownLearn:lower()
@@ -1934,7 +1934,7 @@ do
     issecretvalue = nil
     local after = 0
     for _ in pairs(ProfBuddyDB.skinLoot) do after = after + 1 end
-    EXPECT(okD and not PRINTED("skinning loot record failed") and after == before, "secret source: " .. tostring(errD))
+    EXPECT(okD and not PRINTED("Skinning loot record failed") and after == before, "secret source: " .. tostring(errD))
     for k, v in pairs(real) do _G[k] = v end
 end
 print("  PASS F36 skinning loot learned as you skin: a Skinning cast's loot window (after it or during it) is counted per mob, nothing else is, the corpse at the cast's start stands in for the loot source, a secret source records nothing")
@@ -2846,7 +2846,7 @@ do
     local lines = {}
     obj.OnTooltipShow({ AddLine = function(_, t) lines[#lines + 1] = t end })
     EXPECT(lines[1] == "ProfessionBuddy" and lines[2]:find("Left-click", 1, true)
-           and lines[3]:find("Right-click: Settings", 1, true), "tooltip lines")
+           and lines[3]:find("Right-click: open Settings", 1, true), "tooltip lines")
     -- compartment: one entry, its click does what the button does
     local entry
     for _, d in ipairs(AddonCompartmentFrame.registeredAddons) do
@@ -3339,4 +3339,40 @@ do
 end
 print("  PASS F60 Find a Crafter shows Recipe or item name inside the box while it is empty")
 
-print("ALL FOREVER TESTS PASS (60)")
+-- F61: 2.0.1 text pass. The Characters tab says "1 recipe", not "1 recipes",
+-- and the profession bar reads "<Profession> 75/150", "<Name>: <Profession>
+-- 113/150" for someone else's, and "<Profession>: Not learned", with no
+-- " - " or spaced slash.
+do
+    local CP = ProfBuddy.CharacterPanel
+    local r1 = CP:CreateProfessionRow("X-Forever", "Leatherworking",
+        { skillLevel = 10, maxSkill = 75, recipes = { a = {} } }, 0, false)
+    local t1 = rawget(r1.recipeText, "_text") or ""
+    EXPECT(t1:find("1 recipe|r", 1, true) and not t1:find("1 recipes", 1, true), "one recipe reads " .. t1)
+    local r2 = CP:CreateProfessionRow("X-Forever", "Tailoring",
+        { skillLevel = 10, maxSkill = 75, recipes = { a = {}, b = {} } }, 0, false)
+    local t2 = rawget(r2.recipeText, "_text") or ""
+    EXPECT(t2:find("2 recipes|r", 1, true), "two recipes read " .. t2)
+
+    local bar = TSF.skillBarText
+    TSF:UpdateSkillBar()
+    local own = bar:GetText()
+    EXPECT(own:match("^.+ %d+/%d+$") and not own:find(" - ", 1, true) and not own:find(" / ", 1, true),
+           "own profession bar reads " .. own)
+
+    ProfBuddyDB.characters["Barpal-Forever"] = { isRemote = true, class = "MAGE", faction = "Horde",
+        professions = { Tailoring = { skillLevel = 50, maxSkill = 75, recipes = { a = {} } } } }
+    TSF:OpenWithCharacter("Barpal-Forever", "Tailoring")
+    local other = bar:GetText()
+    EXPECT(other:find("|r: Tailoring 50/75", 1, true) and not other:find(" - ", 1, true),
+           "someone else's profession bar reads " .. other)
+
+    TSF:OpenWithStatic("Alchemy")
+    local unl = bar:GetText()
+    EXPECT(unl:find(": Not learned", 1, true) and not unl:find(" - ", 1, true),
+           "not-learned profession bar reads " .. unl)
+    ProfBuddyDB.characters["Barpal-Forever"] = nil
+end
+print("  PASS F61 Characters tab says 1 recipe; the profession bar reads Profession 75/150 with no dash")
+
+print("ALL FOREVER TESTS PASS (61)")
