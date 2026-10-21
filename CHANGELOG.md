@@ -4,7 +4,7 @@ Every ProfessionBuddy release, newest first. Each entry lists what is new, what 
 
 ## 2.0.0 - 2026-10-16
 
-ProfessionBuddy runs on WoW: Forever as well as TBC Classic Anniversary, from one download. Thanks to Blargle and Shrekcheeks, who assisted greatly in testing every build of this release in game.
+ProfessionBuddy runs on WoW: Forever as well as TBC Classic Anniversary, from one download. Major thanks to my friends Blargle and Shrekcheeks, who assisted greatly in testing every build of ProfessionBuddy with me in game on both clients.
 
 **Highlights**
 
