@@ -1,6 +1,7 @@
 ## Interface: 16001
 ## Title: ProfessionBuddy
 ## Notes: Cross-character profession management for WoW: Forever.
+## IconTexture: Interface\Icons\INV_Camelot_Camping_WelcomingCampfire
 ## Author: m4ru
 ## Version: 2.0.0
 ## SavedVariables: ProfBuddyDB
