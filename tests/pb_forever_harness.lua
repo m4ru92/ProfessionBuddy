@@ -2214,7 +2214,7 @@ do
     local onUpdate = GameTooltip._h.OnUpdate
     local left = {}
     for i = 1, 3 do
-        left[i] = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        left[i] = CreateFrame("Frame", "GameTooltipTextLeft" .. i)
         rawset(left[i], "SetText", function(self, t) self._text = t end)
         rawset(left[i], "GetText", function(self) return self._text end)
     end
@@ -3375,4 +3375,124 @@ do
 end
 print("  PASS F61 Characters tab says 1 recipe; the profession bar reads Profession 75/150 with no dash")
 
-print("ALL FOREVER TESTS PASS (61)")
+-- F62: Colorblind markers (2.0.1 item 10). With markers on, a recipe row
+-- puts Blizzard's [+++]/[++]/[+] before the name, a missing recipe's red
+-- learn tag reads [35 low], a gather line ends in its band's marker or
+-- (too low), and the Characters tab's expanded list marks names too. Auto follows
+-- the game's Colorblind Mode; Settings has the Auto / On / Off dropdown.
+do
+    local S = ProfBuddyDB.settings
+    EXPECT(S.colorblindMarkers == "auto", "colorblind default: " .. tostring(S.colorblindMarkers))
+    CVARS.colorblindMode = "1"
+    EXPECT(ProfBuddy:ColorblindMarkers(), "Auto missed the game's Colorblind Mode")
+
+    -- the missing Kodo Hide Bag row (F22): orange when learned, learn level 35 above your skill
+    -- F61 left a static Alchemy view up: reopen your own Leatherworking
+    TSF.frame:Hide()
+    C_TradeSkillUI.OpenTradeSkill(165)
+    FLUSH(); TS_LIST_READY(); FLUSH()
+    local st = TSF.state
+    EXPECT(st.profName == "Leatherworking" and not st._viewCharKey, "Leatherworking did not reopen: " .. tostring(st.profName))
+    st.showTab, st.searchText, st.selected, st.filterSource = "missing", "kodo hide bag", nil, "All"
+    TSF:RefreshRecipeList()
+    local names, rights = {}, {}
+    for i, row in ipairs(TSF.listRows) do
+        rawset(row.nameText, "SetText", function(_, t) names[i] = t end)
+        rawset(row.rightText, "SetText", function(_, t) rights[i] = t end)
+    end
+    local function kodo()
+        names, rights = {}, {}
+        TSF:UpdateListRows()
+        for i, t in pairs(names) do
+            if type(t) == "string" and t:find("Kodo Hide Bag", 1, true) then return t, rights[i] end
+        end
+    end
+    local n, r = kodo()
+    EXPECT(n == "[+++] Kodo Hide Bag", "marked missing row name: " .. tostring(n))
+    EXPECT(r == "|cffffff00Vendor|r |cffff4444[35 low]|r", "marked learn tag: " .. tostring(r))
+    S.colorblindMarkers = "off"
+    n, r = kodo()
+    EXPECT(n == "Kodo Hide Bag" and r == "|cffffff00Vendor|r |cffff4444[35]|r", "Off still marks: " .. tostring(n) .. " " .. tostring(r))
+    S.colorblindMarkers = "auto"
+
+    -- known rows: each name carries its own tier's marker
+    st.showTab, st.searchText = "known", ""
+    TSF:RefreshRecipeList()
+    names = {}
+    TSF:UpdateListRows()
+    local checked = 0
+    for i in ipairs(TSF.listRows) do
+        local e = st.recipes[i + (st.scrollOffset or 0)]
+        if e and not e.isHeader and e.isKnown and names[i] then
+            EXPECT(names[i] == ProfBuddy:DiffMarker(e.difficulty) .. e.name, "known row: " .. names[i])
+            checked = checked + 1
+        end
+    end
+    EXPECT(checked > 0, "no known rows to check")
+    for _, row in ipairs(TSF.listRows) do rawset(row.nameText, "SetText", nil); rawset(row.rightText, "SetText", nil) end
+
+    -- a gather line: Copper Vein needs Mining 1
+    local onUpdate = GameTooltip._h.OnUpdate
+    local left = {}
+    for i = 1, 3 do
+        left[i] = CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(left[i], "SetText", function(self, t) self._text = t end)
+    end
+    rawset(GameTooltip, "GetUnit", function() return nil end)
+    rawset(GameTooltip, "GetItem", function() return nil end)
+    rawset(GameTooltip, "NumLines", function() return 2 end)
+    local added = {}
+    rawset(GameTooltip, "AddLine", function(_, t) added[#added + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    left[1]._text, left[2]._text = "Copper Vein", "Requires Mining"
+    onUpdate(GameTooltip, 1)
+    local have = tonumber((added[1] or ""):match("Your Mining: (%d+)"))
+    EXPECT(have, "no Your Mining line: " .. tostring(added[1]))
+    local d = have - 1
+    local want = (d < 25 and " [+++]") or (d < 50 and " [++]") or (d < 100 and " [+]") or ""
+    EXPECT(left[2]._text:find("Requires Mining (1)" .. want .. "|r", 1, true), "marked vein line: " .. tostring(left[2]._text))
+    -- Small Thorium Vein needs 245: too low
+    left[1]._text, left[2]._text = "Small Thorium Vein", "Requires Mining"
+    added = {}
+    onUpdate(GameTooltip, 1)
+    EXPECT(left[2]._text:find("Requires Mining (245) (too low)|r", 1, true), "too-low vein line: " .. tostring(left[2]._text))
+    CVARS.colorblindMode = "0"
+    left[1]._text, left[2]._text = "Small Thorium Vein", "Requires Mining"
+    onUpdate(GameTooltip, 1)
+    EXPECT(left[2]._text:find("Requires Mining (245)|r", 1, true), "unmarked vein line: " .. tostring(left[2]._text))
+    rawset(GameTooltip, "NumLines", nil); rawset(GameTooltip, "GetItem", nil)
+
+    -- the Characters tab's expanded recipe list
+    CVARS.colorblindMode = "1"
+    local CP = ProfBuddy.CharacterPanel
+    CP:ReleaseAll()
+    CP:RenderExpandedRecipes("X-Forever", "Leatherworking",
+        { recipes = { ["Alpha"] = { difficulty = "optimal" }, ["Beta"] = { difficulty = "easy" },
+                      ["Gamma"] = { difficulty = "trivial" } } }, 0)
+    local got = {}
+    local pool = CP._pools.recipeRow
+    for i = 1, pool.n do got[#got + 1] = rawget(pool.objs[i].nameText, "_text") end
+    EXPECT(got[1] == "[+++] Alpha" and got[2] == "[+] Beta" and got[3] == "Gamma",
+           "expanded list: " .. table.concat(got, " | "))
+    CP:ReleaseAll()
+    CVARS.colorblindMode = "0"
+
+    -- Settings: the dropdown shows the saved choice and sets it
+    S.colorblindMarkers = "off"
+    TSF:OpenSettings("main")
+    local dd = TSF.colorblindDD
+    EXPECT(dd and rawget(dd.btnText, "_text") == "Colorblind markers: Off", "dropdown text: " .. tostring(dd and rawget(dd.btnText, "_text")))
+    local on
+    for _, b in ipairs(dd.optionBtns) do if b.value == "On" then on = b end end
+    EXPECT(on, "no On option")
+    on:GetScript("OnClick")(on)
+    EXPECT(S.colorblindMarkers == "on", "choosing On saved " .. tostring(S.colorblindMarkers))
+    local auto
+    for _, b in ipairs(dd.optionBtns) do if b.value == "Auto (game setting)" then auto = b end end
+    auto:GetScript("OnClick")(auto)
+    EXPECT(S.colorblindMarkers == "auto", "choosing Auto saved " .. tostring(S.colorblindMarkers))
+    TSF:CloseSettings()
+end
+print("  PASS F62 Colorblind markers: rows, learn tag, gather line and the Characters tab list marked; Auto follows the game; Settings dropdown")
+
+print("ALL FOREVER TESTS PASS (62)")

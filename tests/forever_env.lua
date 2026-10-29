@@ -265,6 +265,15 @@ function ToggleProfessionsBook()
 end
 SOUNDKIT = setmetatable({}, { __index = function() return 0 end })
 
+-- Game options through C_CVar. Without this the catch-all answers a truthy
+-- stub, which reads as every option ticked. Tests set CVARS.colorblindMode
+-- = "1" for the game's Colorblind Mode (Settings > Accessibility).
+CVARS = { colorblindMode = "0" }
+C_CVar = {
+    GetCVar = function(name) return CVARS[name] end,
+    GetCVarBool = function(name) return CVARS[name] == "1" end,
+}
+
 -- ------------------------------------------------------------ client
 -- Forever reports WOW_PROJECT_CAMELOT (18) since build 70245 (Patch 1.60.1
 -- API changes); retail (interface 17000 and up) reports 1.

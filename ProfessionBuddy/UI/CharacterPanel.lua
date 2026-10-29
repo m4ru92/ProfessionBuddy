@@ -847,7 +847,7 @@ function CP:RenderExpandedRecipes(charKey, profName, profData, yOffset)
         -- Recipe name
         recipeRow.nameText:ClearAllPoints()
         recipeRow.nameText:SetPoint("LEFT", xCursor, 0)
-        recipeRow.nameText:SetText(recipe.name)
+        recipeRow.nameText:SetText(addon:DiffMarker(recipe.difficulty) .. recipe.name)
         recipeRow.nameText:SetTextColor(dc.r, dc.g, dc.b)
 
         yOffset = yOffset - RECIPE_ROW_HEIGHT - 1

@@ -43,4 +43,9 @@ EXPECT(ct["Friend Surname-Forever"] and ct["Friend Surname-Forever"].trusted and
        "saved contact not moved at load")
 EXPECT(ProfBuddyDB.realmKeyBackup and ProfBuddyDB.realmKeyBackup.contacts["Friend Surname-ClassicBetaPvP2"], "no backup at load")
 print("  PASS W3 saved names lose their realm at load, with a backup")
-print("ALL FOREVER REPLACE-OFF TESTS PASS (3)")
+-- W4: settings saved before 2.0.1 have no Colorblind markers choice; PB
+-- gives them Auto at load and keeps the rest
+EXPECT(ProfBuddyDB.settings.colorblindMarkers == "auto" and ProfBuddyDB.settings.replaceTradeSkill == false,
+       "old settings: colorblindMarkers " .. tostring(ProfBuddyDB.settings.colorblindMarkers))
+print("  PASS W4 settings saved before 2.0.1 get Colorblind markers Auto at load")
+print("ALL FOREVER REPLACE-OFF TESTS PASS (4)")

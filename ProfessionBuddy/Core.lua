@@ -183,6 +183,33 @@ function addon:ShowsFaction(charData, key)
     return s.showCrossFactionAlts == true
 end
 
+-- Colorblind markers (Settings, "Colorblind markers"): text beside the
+-- colours that carry meaning on their own. "auto" follows the game's
+-- Colorblind Mode check box (CVar colorblindMode, Settings > Accessibility
+-- on both games), "on" shows them always, "off" never. Read on every draw,
+-- so a change to the game's check box shows at the next list refresh.
+function addon:ColorblindMarkers()
+    local s = self.db and self.db.settings
+    local mode = (s and s.colorblindMarkers) or "auto"
+    if mode == "on" then return true end
+    if mode == "off" then return false end
+    if C_CVar and C_CVar.GetCVarBool then
+        return C_CVar.GetCVarBool("colorblindMode") and true or false
+    end
+    if GetCVarBool then return GetCVarBool("colorblindMode") and true or false end
+    return false
+end
+
+-- Blizzard's own colorblind difficulty prefixes (TradeSkillTypePrefix in
+-- its Wrath and Mists trade skill windows). Grey gets none.
+addon.DIFF_MARKERS = { optimal = "[+++] ", medium = "[++] ", easy = "[+] " }
+
+-- The marker that goes before a recipe name for a difficulty tier, or "".
+function addon:DiffMarker(diff)
+    if not diff or not self:ColorblindMarkers() then return "" end
+    return self.DIFF_MARKERS[diff] or ""
+end
+
 function addon:IsFavorite(key)
     key = self:NormKey(key)
     return key ~= nil and self:FavoriteContacts()[key] == true
@@ -675,6 +702,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         autoAddParty        = false, -- add party members as contacts automatically
         bnetAutoAdd         = false, -- BattleNet.lua: add picked Battle.net friends as contacts
         bnetTrust           = false, -- ...and trust them
+        colorblindMarkers   = "auto", -- "auto" (follow the game's Colorblind Mode) | "on" | "off"
     }
     -- Migrate old single-slider setting
     if ProfBuddyDB.settings.tooltipMaxRecipes then
@@ -759,6 +787,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.bnetAutoAdd == nil then ProfBuddyDB.settings.bnetAutoAdd = false end
     if ProfBuddyDB.settings.bnetTrust == nil then ProfBuddyDB.settings.bnetTrust = false end
+    if ProfBuddyDB.settings.colorblindMarkers == nil then ProfBuddyDB.settings.colorblindMarkers = "auto" end
 
     -- Trust migration: `trusted` now gates serving full data (see Comm.lua).
     -- Earlier builds auto-created a contact for every group-mate ever seen, so a

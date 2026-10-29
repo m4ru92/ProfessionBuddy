@@ -193,6 +193,14 @@ function CollapseSkillHeader(i)
     if r and r[2] then sim.collapsedHeaders[r[1]] = true end
 end
 
+-- Game options (C_CVar exists on TBC Anniversary too). CVARS.colorblindMode
+-- = "1" is the game's Colorblind Mode (Settings > Accessibility).
+CVARS = { colorblindMode = "0" }
+C_CVar = {
+    GetCVar = function(name) return CVARS[name] end,
+    GetCVarBool = function(name) return CVARS[name] == "1" end,
+}
+
 C_Container = {
     GetContainerNumSlots = function(bag)
         local b = sim.bags[bag]
@@ -3001,8 +3009,30 @@ do
 end
 passed("T99 opposite-faction friends -- their own setting, separate from alts; calculator and mail picker follow it")
 
+-- T100: Colorblind markers. The setting starts at Auto, which follows the
+-- game's Colorblind Mode through C_CVar; On and Off ignore the game. The
+-- difficulty markers are Blizzard's own [+++]/[++]/[+], none for grey.
+do
+    local S = addon.db.settings
+    assert(S.colorblindMarkers == "auto", "T100: default is " .. tostring(S.colorblindMarkers))
+    CVARS.colorblindMode = "0"
+    assert(not addon:ColorblindMarkers() and addon:DiffMarker("optimal") == "", "T100: markers with the game's mode off")
+    CVARS.colorblindMode = "1"
+    assert(addon:ColorblindMarkers(), "T100: Auto missed the game's Colorblind Mode")
+    assert(addon:DiffMarker("optimal") == "[+++] " and addon:DiffMarker("medium") == "[++] "
+        and addon:DiffMarker("easy") == "[+] " and addon:DiffMarker("trivial") == ""
+        and addon:DiffMarker(nil) == "", "T100: marker text")
+    S.colorblindMarkers = "off"
+    assert(not addon:ColorblindMarkers() and addon:DiffMarker("optimal") == "", "T100: Off showed markers")
+    S.colorblindMarkers = "on"
+    CVARS.colorblindMode = "0"
+    assert(addon:ColorblindMarkers() and addon:DiffMarker("easy") == "[+] ", "T100: On hid markers")
+    S.colorblindMarkers = "auto"
+end
+passed("T100 Colorblind markers: Auto follows the game's Colorblind Mode, On and Off ignore it; Blizzard's [+++]/[++]/[+]")
+
 leaveGuild()
-print("ALL 99 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 100 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -3018,6 +3048,6 @@ print("ALL 99 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting, T100 Colorblind markers; "
     .. pass .. " of them print a PASS line above)")
 

@@ -849,6 +849,18 @@ local function GatherBandColor(have, req)
     return "ff808080"                        -- grey
 end
 
+-- The same bands as text, for Colorblind markers: Blizzard's [+++]/[++]/[+]
+-- for orange/yellow/green, nothing for grey, "(too low)" for red.
+local function GatherBandMarker(have, req)
+    if not addon:ColorblindMarkers() then return "" end
+    if not have or not req or have < req then return " (too low)" end
+    local d = have - req
+    if d < 25  then return " [+++]" end
+    if d < 50  then return " [++]" end
+    if d < 100 then return " [+]" end
+    return ""
+end
+
 -- Band-coloured "Requires <Prof> (N)" + (if learned) a grey "Your <Prof>: X".
 -- nil = show nothing (unlearned prof and "show for unlearned" off). reqStr
 -- overrides the number, e.g. "??" for a boss-level mob.
@@ -857,7 +869,7 @@ local function GatherLines(prof, req, reqStr)
     if not have and addon.db.settings.gatherShowUnlearned == false then return nil end
     reqStr = reqStr or tostring(req)
     local requires = "|c" .. GatherBandColor(have, req)
-        .. "Requires " .. prof .. " (" .. reqStr .. ")|r"
+        .. "Requires " .. prof .. " (" .. reqStr .. ")" .. GatherBandMarker(have, req) .. "|r"
     local yours = have and ("|cff808080Your " .. prof .. ": " .. have .. "|r") or nil
     return requires, yours
 end
@@ -2692,14 +2704,15 @@ function TSF:UpdateListRows()
                     row.nameText:SetPoint("LEFT", 4 + recipeIndent, 0)
                 end
 
-                local dc
+                local dc, rowDiff
                 if entry.isKnown then
-                    dc = DiffColor(entry.difficulty)
+                    rowDiff = entry.difficulty
+                    dc = DiffColor(rowDiff)
                 else
-                    local ld = LearnedDiff(entry, state.skillLevel)
-                    dc = ld and DiffColor(ld) or NO_DIFF_COLOR
+                    rowDiff = LearnedDiff(entry, state.skillLevel)
+                    dc = rowDiff and DiffColor(rowDiff) or NO_DIFF_COLOR
                 end
-                row.nameText:SetText(entry.name)
+                row.nameText:SetText(addon:DiffMarker(rowDiff) .. entry.name)
                 row.nameText:SetTextColor(dc.r, dc.g, dc.b)
 
                 if entry.isKnown then
@@ -2764,7 +2777,8 @@ function TSF:UpdateListRows()
                         if (state.skillLevel or 0) >= entryReq then
                             skillText = " |cff00ff00[" .. entryReq .. "]|r"
                         else
-                            skillText = " |cffff4444[" .. entryReq .. "]|r"
+                            skillText = " |cffff4444[" .. entryReq
+                                .. (addon:ColorblindMarkers() and " low" or "") .. "]|r"
                         end
                     end
                     row.rightText:SetText(c .. displaySrc .. "|r" .. skillText)
@@ -5202,7 +5216,33 @@ function TSF:BuildSettingsPanel(parent)
     end
     SyncMinimapCB()
     self.minimapCB = minimapCB
-    yLeft = yLeft - 40
+    yLeft = yLeft - 30
+
+    -- Colorblind markers: [+++]/[++]/[+] before recipe names, " low" in a
+    -- missing recipe's learn tag, and the same on gather tooltips
+    -- (addon:ColorblindMarkers in Core.lua). Auto follows the game's own
+    -- Colorblind Mode check box.
+    local CB_LABELS = { auto = "Auto (game setting)", on = "On", off = "Off" }
+    local CB_ORDER = { "auto", "on", "off" }
+    local cbOpts = {}
+    for i, k in ipairs(CB_ORDER) do cbOpts[i] = CB_LABELS[k] end
+    local colorblindDD = CreateDropdown(content, 322, cbOpts,
+        CB_LABELS[settings.colorblindMarkers] or CB_LABELS.auto,
+        function(val)
+            for k, label in pairs(CB_LABELS) do
+                if label == val then settings.colorblindMarkers = k end
+            end
+            -- Guarded like the faction box: the list may not exist yet.
+            if TSF.scrollBar then TSF:RefreshRecipeList() end
+        end,
+        "Colorblind markers: ")
+    colorblindDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    self.colorblindDD = colorblindDD
+    local function SyncColorblindDD()
+        colorblindDD:SetValue(CB_LABELS[settings.colorblindMarkers] or CB_LABELS.auto)
+    end
+    SyncColorblindDD()
+    yLeft = yLeft - 34
 
     -- ── Alt Information section ────────────────────────────────
     local altHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -5565,6 +5605,7 @@ function TSF:BuildSettingsPanel(parent)
         UpdateGatherSub()
         SyncBoardAlertDD()
         SyncMinimapCB()
+        SyncColorblindDD()
         sf:SetVerticalScroll(0)
         -- Belt-and-suspenders: hide content that shouldn't be visible
         if TSF.craftBar then TSF.craftBar:Hide() end
