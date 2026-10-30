@@ -703,6 +703,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         bnetAutoAdd         = false, -- BattleNet.lua: add picked Battle.net friends as contacts
         bnetTrust           = false, -- ...and trust them
         colorblindMarkers   = "auto", -- "auto" (follow the game's Colorblind Mode) | "on" | "off"
+        windowStyle         = "modern", -- UI/Theme.lua: "modern" | "classic" | "game" (Match the game); applies after /reload
     }
     -- Migrate old single-slider setting
     if ProfBuddyDB.settings.tooltipMaxRecipes then
@@ -788,6 +789,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.bnetAutoAdd == nil then ProfBuddyDB.settings.bnetAutoAdd = false end
     if ProfBuddyDB.settings.bnetTrust == nil then ProfBuddyDB.settings.bnetTrust = false end
     if ProfBuddyDB.settings.colorblindMarkers == nil then ProfBuddyDB.settings.colorblindMarkers = "auto" end
+    if ProfBuddyDB.settings.windowStyle == nil then ProfBuddyDB.settings.windowStyle = "modern" end
 
     -- Trust migration: `trusted` now gates serving full data (see Comm.lua).
     -- Earlier builds auto-created a contact for every group-mate ever seen, so a

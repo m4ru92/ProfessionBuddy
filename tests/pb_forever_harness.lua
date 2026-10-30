@@ -3495,4 +3495,40 @@ do
 end
 print("  PASS F62 Colorblind markers: rows, learn tag, gather line and the Characters tab list marked; Auto follows the game; Settings dropdown")
 
-print("ALL FOREVER TESTS PASS (62)")
+-- F63: Window style on WoW: Forever (feature/ui-themes phase 2). Match the
+-- game stays Modern here until Forever's own look exists; the Settings
+-- dropdown shows the saved style, saves a new one and offers a reload, and
+-- choosing the same style again offers nothing.
+do
+    local Theme = ProfBuddy.Theme
+    local S = ProfBuddy.db.settings
+    EXPECT(S.windowStyle == "modern", "default " .. tostring(S.windowStyle))
+    S.windowStyle = "game"; Theme._name = nil
+    EXPECT(Theme:Name() == "modern", "Match the game on Forever is " .. Theme:Name())
+    S.windowStyle = "classic"; Theme._name = nil
+    EXPECT(Theme:Name() == "classic", "Classic on Forever is " .. Theme:Name())
+    S.windowStyle = "modern"; Theme._name = nil
+    local shown = 0
+    local oldDialogs, oldShow = StaticPopupDialogs, StaticPopup_Show
+    StaticPopupDialogs, StaticPopup_Show = {}, function(n) if n == "PROFBUDDY_RELOAD_STYLE" then shown = shown + 1 end end
+    TSF:OpenSettings("main")
+    local dd = TSF.windowStyleDD
+    EXPECT(dd and rawget(dd.btnText, "_text") == "Window style: Modern", "dropdown text: " .. tostring(dd and rawget(dd.btnText, "_text")))
+    local function choose(label)
+        for _, b in ipairs(dd.optionBtns) do if b.value == label then b:GetScript("OnClick")(b); return end end
+        error("no option " .. label)
+    end
+    choose("Modern")
+    EXPECT(shown == 0 and S.windowStyle == "modern", "same style offered a reload")
+    choose("Classic")
+    EXPECT(S.windowStyle == "classic" and shown == 1, "Classic saved " .. tostring(S.windowStyle) .. ", offers " .. shown)
+    choose("Match the game")
+    EXPECT(S.windowStyle == "game" and shown == 2, "Match the game saved " .. tostring(S.windowStyle))
+    EXPECT(Theme:Name() == "modern", "the session look changed before a reload")
+    S.windowStyle = "modern"
+    TSF:CloseSettings()
+    StaticPopupDialogs, StaticPopup_Show = oldDialogs, oldShow
+end
+print("  PASS F63 Window style: Match the game is Modern on Forever; the dropdown saves the style and offers a reload")
+
+print("ALL FOREVER TESTS PASS (63)")

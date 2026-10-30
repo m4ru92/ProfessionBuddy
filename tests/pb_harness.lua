@@ -3046,7 +3046,7 @@ do
     for _, f in ipairs(files) do
         local fh = assert(io.open(BASE .. "/" .. f, "r"), "T101: no " .. f)
         local src = fh:read("*a"); fh:close()
-        for fn, role in src:gmatch('Theme:(%a+)%([^,]+, "([%w_]+)"') do
+        for fn, role in src:gmatch('Theme:(%a+)%([^,%)\n]+, "([%w_]+)"') do
             local kind = assert(KIND[fn], "T101: unknown Theme call " .. fn .. " in " .. f)
             assert(look[kind][role] ~= nil, "T101: " .. f .. " uses " .. kind .. " role " .. role .. ", missing from the Modern look")
             calls = calls + 1
@@ -3068,8 +3068,56 @@ do
 end
 passed("T101 Theme: all 151 panel colour and backdrop calls name a role the Modern look has; values pass through")
 
+-- T102: Window style (feature/ui-themes phase 2). The setting starts at
+-- Modern; Classic and Match the game pick the Classic look on TBC Classic
+-- Anniversary; the pick is read once and kept for the session; Classic has
+-- every role Modern has; a file fill sets the file, blend and vertex colour
+-- (alpha override included); changing the style offers a reload.
+do
+    local Theme = addon.Theme
+    local S = addon.db.settings
+    assert(S.windowStyle == "modern", "T102: default is " .. tostring(S.windowStyle))
+    assert(addon.Source.flavor == "classic", "T102: harness is not the TBC client")
+    local function pick(v) S.windowStyle = v; Theme._name = nil; return Theme:Name() end
+    assert(pick("modern") == "modern" and not Theme:IsClassic(), "T102: Modern")
+    assert(pick("classic") == "classic" and Theme:IsClassic(), "T102: Classic")
+    assert(pick("game") == "classic", "T102: Match the game on TBC Classic Anniversary is " .. Theme:Name())
+    assert(pick("bogus") == "modern", "T102: an unknown style falls back to Modern")
+    S.windowStyle = "classic"
+    assert(Theme:Name() == "modern", "T102: the session pick changed without a reload")
+    for kind, roles in pairs(Theme.STYLES.modern) do
+        for role in pairs(roles) do
+            assert(Theme.STYLES.classic[kind][role] ~= nil, "T102: Classic lacks " .. kind .. " role " .. role)
+        end
+    end
+    for kind, roles in pairs(Theme.STYLES.classic) do
+        for role in pairs(roles) do
+            assert(Theme.STYLES.modern[kind][role] ~= nil, "T102: Classic has a role Modern lacks: " .. kind .. " " .. role)
+        end
+    end
+    pick("classic")
+    local calls = {}
+    local tex = setmetatable({}, { __index = function(_, m) return function(_, ...) calls[m] = { ... } end end })
+    Theme:Fill(tex, "professionRowHover", 0)
+    assert(calls.SetTexture and calls.SetTexture[1] == "Interface\\QuestFrame\\UI-QuestTitleHighlight", "T102: file fill texture")
+    assert(calls.SetBlendMode and calls.SetBlendMode[1] == "ADD", "T102: file fill blend")
+    assert(calls.SetVertexColor and calls.SetVertexColor[4] == 0, "T102: file fill alpha override")
+    calls = {}
+    Theme:Fill(tex, "listBackground")
+    assert(calls.SetTexture[2] == "REPEAT" and calls.SetHorizTile and calls.SetVertTile, "T102: tiled fill")
+    local shown
+    local oldDialogs, oldShow = StaticPopupDialogs, StaticPopup_Show
+    StaticPopupDialogs, StaticPopup_Show = {}, function(n) shown = n end
+    Theme:OfferReload()
+    assert(shown == "PROFBUDDY_RELOAD_STYLE" and StaticPopupDialogs.PROFBUDDY_RELOAD_STYLE.button1 == "Reload",
+        "T102: reload offer")
+    StaticPopupDialogs, StaticPopup_Show = oldDialogs, oldShow
+    S.windowStyle = "modern"; Theme._name = nil
+end
+passed("T102 Window style: Modern by default; Classic and Match the game give Classic here; kept for the session; every role in both looks; reload offer")
+
 leaveGuild()
-print("ALL 101 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 102 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -3085,6 +3133,6 @@ print("ALL 101 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting, T100 Colorblind markers, T101 the theme roles; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting, T100 Colorblind markers, T101 the theme roles, T102 the window style; "
     .. pass .. " of them print a PASS line above)")
 

@@ -48,4 +48,7 @@ print("  PASS W3 saved names lose their realm at load, with a backup")
 EXPECT(ProfBuddyDB.settings.colorblindMarkers == "auto" and ProfBuddyDB.settings.replaceTradeSkill == false,
        "old settings: colorblindMarkers " .. tostring(ProfBuddyDB.settings.colorblindMarkers))
 print("  PASS W4 settings saved before 2.0.1 get Colorblind markers Auto at load")
-print("ALL FOREVER REPLACE-OFF TESTS PASS (4)")
+-- W5: settings saved before the window style existed get Modern at load
+EXPECT(ProfBuddyDB.settings.windowStyle == "modern", "old settings: windowStyle " .. tostring(ProfBuddyDB.settings.windowStyle))
+print("  PASS W5 settings saved before the window style get Modern at load")
+print("ALL FOREVER REPLACE-OFF TESTS PASS (5)")

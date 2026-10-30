@@ -1619,10 +1619,18 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
     btnText:SetPoint("RIGHT", -14, 0)
     btnText:SetJustifyH("LEFT")
 
-    local arrow = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    arrow:SetPoint("RIGHT", -4, 0)
-    arrow:SetText("v")
-    arrow:SetTextColor(0.6, 0.6, 0.6)
+    if Theme:IsClassic() then
+        -- Classic: the down arrow Blizzard's chat frame scroll button uses.
+        local arrow = btn:CreateTexture(nil, "OVERLAY")
+        arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+        arrow:SetSize(16, 16)
+        arrow:SetPoint("RIGHT", -1, 0)
+    else
+        local arrow = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        arrow:SetPoint("RIGHT", -4, 0)
+        arrow:SetText("v")
+        arrow:SetTextColor(0.6, 0.6, 0.6)
+    end
 
     local listFrame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     listFrame:SetWidth(width)
@@ -1898,15 +1906,33 @@ function TSF:BuildHeader(parent)
     local bar = CreateFrame("StatusBar", nil, parent)
     bar:SetSize(FRAME_W - 24, SKILL_BAR_H)
     bar:SetPoint("TOPLEFT", 12, -52)
-    bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
-    bar:SetStatusBarColor(0.2, 0.45, 0.85)
+    local textHost = bar
+    if Theme:IsClassic() then
+        -- Classic: Blizzard's TBC trade skill bar (TradeSkillRankFrame), the
+        -- character sheet's skill bar and border, filled blue at half alpha.
+        -- The border sits on a child frame, as Blizzard's does, and the text
+        -- sits on that frame so the border never covers it.
+        bar:SetStatusBarTexture("Interface\\PaperDollInfoFrame\\UI-Character-Skills-Bar")
+        bar:SetStatusBarColor(0, 0, 1, 0.5)
+        local borderFrame = CreateFrame("Frame", nil, bar)
+        borderFrame:SetAllPoints()
+        local border = borderFrame:CreateTexture(nil, "ARTWORK")
+        border:SetTexture("Interface\\PaperDollInfoFrame\\UI-Character-Skills-BarBorder")
+        -- Blizzard: a 268 x 15 bar in a 281 x 32 border, 5 to the left.
+        border:SetPoint("LEFT", bar, "LEFT", -5, 0)
+        border:SetSize(FRAME_W - 24 + 13, SKILL_BAR_H * 32 / 15)
+        textHost = borderFrame
+    else
+        bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+        bar:SetStatusBarColor(0.2, 0.45, 0.85)
+    end
     bar:SetMinMaxValues(0, 375)
 
     local barBg = bar:CreateTexture(nil, "BACKGROUND")
     barBg:SetAllPoints()
     Theme:Fill(barBg, "skillBarBackground")
 
-    local barText = bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local barText = textHost:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     barText:SetPoint("CENTER")
 
     self.skillBar = bar
@@ -2670,8 +2696,18 @@ function TSF:UpdateListRows()
                 else
                     row.nameText:SetTextColor(DIFF_COLORS.header.r, DIFF_COLORS.header.g, DIFF_COLORS.header.b)
                 end
-                row.nameText:SetText(arrow .. entry.name)
-                row.nameText:SetPoint("LEFT", indent, 0)
+                if Theme:IsClassic() then
+                    -- Classic: Blizzard's +/- expand buttons instead of text.
+                    row.icon:SetTexture(entry.isCollapsed and "Interface\\Buttons\\UI-PlusButton-Up"
+                        or "Interface\\Buttons\\UI-MinusButton-Up")
+                    row.icon:SetPoint("LEFT", indent, 0)
+                    row.icon:Show()
+                    row.nameText:SetText(entry.name)
+                    row.nameText:SetPoint("LEFT", row.icon, "RIGHT", 4, 0)
+                else
+                    row.nameText:SetText(arrow .. entry.name)
+                    row.nameText:SetPoint("LEFT", indent, 0)
+                end
                 row.rightText:SetText("|cff888888(" .. entry.count .. ")|r")
                 row.headerBg:Show()
             else
@@ -5199,6 +5235,27 @@ function TSF:BuildSettingsPanel(parent)
         colorblindDD:SetValue(CB_LABELS[settings.colorblindMarkers] or CB_LABELS.auto)
     end
     SyncColorblindDD()
+    yLeft = yLeft - 34
+
+    -- Window style (UI/Theme.lua). The windows are built once per session,
+    -- so a new style applies after a reload; changing it offers one.
+    local WS_LABELS = { classic = "Classic", modern = "Modern", game = "Match the game" }
+    local WS_ORDER = { "classic", "modern", "game" }
+    local wsOpts = {}
+    for i, k in ipairs(WS_ORDER) do wsOpts[i] = WS_LABELS[k] end
+    local styleDD = CreateDropdown(content, 322, wsOpts,
+        WS_LABELS[settings.windowStyle] or WS_LABELS.modern,
+        function(val)
+            for k, label in pairs(WS_LABELS) do
+                if label == val and settings.windowStyle ~= k then
+                    settings.windowStyle = k
+                    Theme:OfferReload()
+                end
+            end
+        end,
+        "Window style: ")
+    styleDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    self.windowStyleDD = styleDD
     yLeft = yLeft - 34
 
     -- ── Alt Information section ────────────────────────────────
