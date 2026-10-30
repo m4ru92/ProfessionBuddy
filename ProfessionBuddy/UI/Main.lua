@@ -4,6 +4,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 local UI = addon:NewModule("UI")
 
 local FRAME_WIDTH  = 600
@@ -116,12 +117,12 @@ function UI:AddTab(name, displayName, createFunc)
     -- Tab background textures
     local bgNormal = btn:CreateTexture(nil, "BACKGROUND")
     bgNormal:SetAllPoints()
-    bgNormal:SetColorTexture(0.15, 0.15, 0.15, 0.9)
+    Theme:Fill(bgNormal, "navTab")
     btn.bgNormal = bgNormal
 
     local bgSelected = btn:CreateTexture(nil, "BACKGROUND")
     bgSelected:SetAllPoints()
-    bgSelected:SetColorTexture(0.25, 0.25, 0.3, 1)
+    Theme:Fill(bgSelected, "navTabSelected")
     bgSelected:Hide()
     btn.bgSelected = bgSelected
 
@@ -130,7 +131,7 @@ function UI:AddTab(name, displayName, createFunc)
     border:SetHeight(1)
     border:SetPoint("BOTTOMLEFT")
     border:SetPoint("BOTTOMRIGHT")
-    border:SetColorTexture(0.4, 0.4, 0.4, 1)
+    Theme:Fill(border, "navTabBorder")
     btn.border = border
 
     -- Position

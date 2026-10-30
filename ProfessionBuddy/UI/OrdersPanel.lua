@@ -11,6 +11,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 local OP = addon:NewModule("OrdersPanel")
 
 local ROW_HEIGHT = 36
@@ -323,7 +324,7 @@ function OP:BuildList(parent, ctx, rowCount)
     sb:SetThumbTexture(thumb)
     local sbg = sb:CreateTexture(nil, "BACKGROUND")
     sbg:SetAllPoints()
-    sbg:SetColorTexture(0.05, 0.05, 0.05, 0.5)
+    Theme:Fill(sbg, "listBackground")
     sb:SetScript("OnValueChanged", function(_, value)
         ctx.scrollOffset = math.floor(value)
         self:PaintList(ctx)
@@ -357,15 +358,15 @@ function OP:CreateRow(parent, index, ctx)
     local bg = row:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     if index % 2 == 0 then
-        bg:SetColorTexture(0.12, 0.12, 0.12, 0.6)
+        Theme:Fill(bg, "rowEven")
     else
-        bg:SetColorTexture(0.08, 0.08, 0.08, 0.3)
+        Theme:Fill(bg, "rowOdd")
     end
     row.bg = bg
 
     local hbg = row:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints()
-    hbg:SetColorTexture(0.18, 0.18, 0.22, 0.95)
+    Theme:Fill(hbg, "orderRowSelected")
     hbg:Hide()
     row.headerBg = hbg
 
@@ -424,7 +425,7 @@ function OP:CreateRow(parent, index, ctx)
     -- the layout adapts to the panel width.
     local pillBg = row:CreateTexture(nil, "ARTWORK")
     pillBg:SetSize(72, 16)
-    pillBg:SetColorTexture(0.1, 0.1, 0.12, 0.9)
+    Theme:Fill(pillBg, "statusPill")
     pillBg:Hide()
     row.pillBg = pillBg
 
@@ -984,15 +985,15 @@ function OP:CreateBoardRow(parent, index, ctx)
     local bg = row:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     if index % 2 == 0 then
-        bg:SetColorTexture(0.12, 0.12, 0.12, 0.6)
+        Theme:Fill(bg, "rowEven")
     else
-        bg:SetColorTexture(0.08, 0.08, 0.08, 0.3)
+        Theme:Fill(bg, "rowOdd")
     end
     row.bg = bg
 
     local hbg = row:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints()
-    hbg:SetColorTexture(0.18, 0.18, 0.22, 0.95)
+    Theme:Fill(hbg, "orderRowSelected")
     hbg:Hide()
     row.headerBg = hbg
 
@@ -1131,7 +1132,7 @@ function OP:BuildBoardList(parent, ctx, rowCount)
     sb:SetThumbTexture(thumb)
     local sbg = sb:CreateTexture(nil, "BACKGROUND")
     sbg:SetAllPoints()
-    sbg:SetColorTexture(0.05, 0.05, 0.05, 0.5)
+    Theme:Fill(sbg, "listBackground")
     sb:SetScript("OnValueChanged", function(_, value)
         ctx.scrollOffset = math.floor(value)
         self:PaintBoardList(ctx)
@@ -1344,14 +1345,9 @@ local function ensureItemFavMenu()
     if OP._itemFavMenu then return OP._itemFavMenu end
     local m = CreateFrame("Frame", "ProfBuddyItemFavMenu", UIParent, "BackdropTemplate")
     m:SetFrameStrata("FULLSCREEN_DIALOG")
-    m:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12,
-        insets   = { left = 3, right = 3, top = 3, bottom = 3 },
-    })
-    m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
-    m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+    Theme:SetBackdrop(m, "menu")
+    Theme:BackdropColor(m, "menu")
+    Theme:BorderColor(m, "menu")
     m:EnableMouse(true)
     m:SetClampedToScreen(true)
     m:Hide()
@@ -1409,7 +1405,7 @@ local function showItemFavMenu(anchorBtn, itemBox, qtyBox, refreshStar)
             b = CreateFrame("Button", nil, m)
             b:SetHeight(ROW_H)
             local hl = b:CreateTexture(nil, "HIGHLIGHT")
-            hl:SetAllPoints(); hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+            hl:SetAllPoints(); Theme:Fill(hl, "menuHover")
             b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             b.text:SetPoint("LEFT", 8, 0); b.text:SetJustifyH("LEFT")
             m.buttons[i] = b
@@ -2025,8 +2021,8 @@ function OP:BuildFindPanel()
         row:SetPoint("RIGHT", -16, 0)
         local bg = row:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
-        if i % 2 == 0 then bg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
-        else bg:SetColorTexture(0.08, 0.08, 0.08, 0.3) end
+        if i % 2 == 0 then Theme:Fill(bg, "historyRowEven")
+        else Theme:Fill(bg, "rowOdd") end
         row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
         local rec = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         rec:SetPoint("TOPLEFT", 6, -4)

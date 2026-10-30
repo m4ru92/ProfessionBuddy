@@ -1140,13 +1140,9 @@ function addon:ShowBugReport()
         f:SetSize(480, 540)   -- room for the gathering section
         f:SetPoint("CENTER")
         f:SetFrameStrata("DIALOG")
-        f:SetBackdrop({
-            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 },
-        })
-        f:SetBackdropColor(0.06, 0.06, 0.08, 0.97)
-        f:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+        addon.Theme:SetBackdrop(f, "dialog")
+        addon.Theme:BackdropColor(f, "dialog")
+        addon.Theme:BorderColor(f, "dialog")
         f:EnableMouse(true)
         f:SetMovable(true)
         f:RegisterForDrag("LeftButton")
@@ -1173,13 +1169,9 @@ function addon:ShowBugReport()
         local box = CreateFrame("Frame", nil, f, "BackdropTemplate")
         box:SetPoint("TOPLEFT", 14, -80)
         box:SetPoint("BOTTOMRIGHT", -14, 46)
-        box:SetBackdrop({
-            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 },
-        })
-        box:SetBackdropColor(0, 0, 0, 0.5)
-        box:SetBackdropBorderColor(0.3, 0.3, 0.35, 0.9)
+        addon.Theme:SetBackdrop(box, "dialogBox")
+        addon.Theme:BackdropColor(box, "dialogBox")
+        addon.Theme:BorderColor(box, "dialogBox")
 
         -- UIPanelScrollFrameTemplate, as the recipe detail panel uses on both
         -- clients; its bar sits inside the box's right edge.

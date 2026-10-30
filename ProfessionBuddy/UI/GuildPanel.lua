@@ -16,6 +16,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 
 -- WoW: Forever moved GuildRoster to C_GuildInfo; TBC Anniversary keeps the global.
 local GuildRoster = GuildRoster or (C_GuildInfo and C_GuildInfo.GuildRoster)
@@ -215,7 +216,7 @@ function GP:CreateRow(parent)
 
         local hl = btn:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints()
-        hl:SetColorTexture(1, 1, 1, 0.25)
+        Theme:Fill(hl, "iconButtonHover")
         btn.hl = hl
 
         btn:SetScript("OnClick", function(self)
@@ -258,7 +259,7 @@ function GP:CreateRow(parent)
 
     local hl = row:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints()
-    hl:SetColorTexture(0.3, 0.3, 0.5, 0.15)
+    Theme:Fill(hl, "guildRowHover")
     row:EnableMouse(true)
 
     return row
@@ -349,7 +350,7 @@ function GP:CreateContent(parent)
     headerBar:SetHeight(18)
     local headerBg = headerBar:CreateTexture(nil, "BACKGROUND")
     headerBg:SetAllPoints()
-    headerBg:SetColorTexture(0.15, 0.15, 0.15, 0.8)
+    Theme:Fill(headerBg, "columnHeader")
     self.headerBar = headerBar
 
     self.headerBtns = {}
@@ -364,7 +365,7 @@ function GP:CreateContent(parent)
         btn.colLabel = c.label
         local hl = btn:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints()
-        hl:SetColorTexture(0.4, 0.4, 0.6, 0.25)
+        Theme:Fill(hl, "columnHeaderHover")
         btn:SetScript("OnClick", function() GP:SetSort(c.key) end)
         self.headerBtns[c.key] = btn
     end
@@ -397,7 +398,7 @@ function GP:CreateContent(parent)
     scrollBar:SetThumbTexture(thumbTex)
     local bgTex = scrollBar:CreateTexture(nil, "BACKGROUND")
     bgTex:SetAllPoints()
-    bgTex:SetColorTexture(0.05, 0.05, 0.05, 0.5)
+    Theme:Fill(bgTex, "listBackground")
     scrollBar:SetScript("OnValueChanged", function(_, value)
         self.scrollOffset = math.floor(value)
         self:UpdateRows()

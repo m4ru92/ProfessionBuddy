@@ -14,6 +14,7 @@
 Libs/libs.xml
 
 Core.lua
+UI/Theme.lua
 Source/Source.lua
 Source/Classic.lua
 DataStore.lua

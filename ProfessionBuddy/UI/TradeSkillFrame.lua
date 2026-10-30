@@ -15,6 +15,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 local TSF = addon:NewModule("TradeSkillFrame")
 
 -- WoW: Forever (modern API) moved these off the global table; TBC
@@ -1606,12 +1607,12 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
 
     local btnBg = btn:CreateTexture(nil, "BACKGROUND")
     btnBg:SetAllPoints()
-    btnBg:SetColorTexture(0.12, 0.12, 0.15, 1)
+    Theme:Fill(btnBg, "dropdownButton")
 
     local btnBorder = CreateFrame("Frame", nil, btn, "BackdropTemplate")
     btnBorder:SetAllPoints()
-    btnBorder:SetBackdrop({ edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 })
-    btnBorder:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    Theme:SetBackdrop(btnBorder, "dropdownButtonBorder")
+    Theme:BorderColor(btnBorder, "dropdownButton")
 
     local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     btnText:SetPoint("LEFT", 6, 0)
@@ -1627,14 +1628,9 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
     listFrame:SetWidth(width)
     listFrame:SetFrameStrata("TOOLTIP")
     listFrame:SetFrameLevel(200)
-    listFrame:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    listFrame:SetBackdropColor(0.08, 0.08, 0.1, 0.98)
-    listFrame:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+    Theme:SetBackdrop(listFrame, "dropdownList")
+    Theme:BackdropColor(listFrame, "dropdownList")
+    Theme:BorderColor(listFrame, "dropdownList")
     listFrame:Hide()
 
     container.btn = btn
@@ -1674,7 +1670,7 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
 
                 local optHighlight = optBtn:CreateTexture(nil, "HIGHLIGHT")
                 optHighlight:SetAllPoints()
-                optHighlight:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+                Theme:Fill(optHighlight, "menuHover")
 
                 local optText = optBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
                 optText:SetPoint("LEFT", 4, 0)
@@ -1908,7 +1904,7 @@ function TSF:BuildHeader(parent)
 
     local barBg = bar:CreateTexture(nil, "BACKGROUND")
     barBg:SetAllPoints()
-    barBg:SetColorTexture(0.08, 0.08, 0.08, 0.9)
+    Theme:Fill(barBg, "skillBarBackground")
 
     local barText = bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     barText:SetPoint("CENTER")
@@ -1953,13 +1949,13 @@ function TSF:BuildNavStrip(parent)
 
         local bg = btn:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
-        bg:SetColorTexture(0.15, 0.15, 0.15, 0.9)
+        Theme:Fill(bg, "navTab")
 
         local border = btn:CreateTexture(nil, "BORDER")
         border:SetHeight(1)
         border:SetPoint("BOTTOMLEFT")
         border:SetPoint("BOTTOMRIGHT")
-        border:SetColorTexture(0.4, 0.4, 0.4, 1)
+        Theme:Fill(border, "navTabBorder")
 
         if i == 1 then
             btn:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 8, -TAB_H - 2)
@@ -2105,13 +2101,13 @@ function TSF:BuildProfessionTabs(parent)
 
         local bg = tab:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
-        bg:SetColorTexture(0.12, 0.12, 0.15, 0.9)
+        Theme:Fill(bg, "professionTab")
         tab.bg = bg
 
         local border = CreateFrame("Frame", nil, tab, "BackdropTemplate")
         border:SetAllPoints()
         border:EnableMouse(false)  -- don't eat clicks meant for the button
-        border:SetBackdrop({ edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 })
+        Theme:SetBackdrop(border, "professionTabBorder")
         tab.border = border
 
         local icon = tab:CreateTexture(nil, "ARTWORK")
@@ -2150,7 +2146,7 @@ function TSF:BuildProfessionTabs(parent)
     -- Separator line between known and unknown profession tabs
     local sep = self.profTabContainer:CreateTexture(nil, "ARTWORK")
     sep:SetSize(2, 20)
-    sep:SetColorTexture(0.6, 0.6, 0.6, 0.8)
+    Theme:Fill(sep, "professionTabSeparator")
     sep:Hide()
     self.profTabSeparator = sep
 end
@@ -2233,11 +2229,11 @@ function TSF:UpdateProfessionTabs()
             and profName ~= "Find Minerals"
 
         if isActive then
-            tab.bg:SetColorTexture(0.2, 0.35, 0.55, 0.9)
-            tab.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+            Theme:Fill(tab.bg, "professionTabActive")
+            Theme:BorderColor(tab.border, "professionTabActive")
         else
-            tab.bg:SetColorTexture(0.12, 0.12, 0.15, 0.9)
-            tab.border:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.6)
+            Theme:Fill(tab.bg, "professionTab")
+            Theme:BorderColor(tab.border, "professionTab")
         end
         tab.icon:SetDesaturated(false)
         tab.icon:SetAlpha(1)
@@ -2262,13 +2258,13 @@ function TSF:UpdateProfessionTabs()
             local isActive = (profName == activeName)
 
             if isActive then
-                tab.bg:SetColorTexture(0.2, 0.35, 0.55, 0.9)
-                tab.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+                Theme:Fill(tab.bg, "professionTabActive")
+                Theme:BorderColor(tab.border, "professionTabActive")
                 tab.icon:SetDesaturated(false)
                 tab.icon:SetAlpha(1)
             else
-                tab.bg:SetColorTexture(0.08, 0.08, 0.1, 0.9)
-                tab.border:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.4)
+                Theme:Fill(tab.bg, "professionTabDim")
+                Theme:BorderColor(tab.border, "professionTabDim")
                 tab.icon:SetDesaturated(true)
                 tab.icon:SetAlpha(0.5)
             end
@@ -2279,8 +2275,9 @@ function TSF:UpdateProfessionTabs()
 end
 
 -- Lightweight highlight update for use during combat.
--- Only calls non-protected methods (SetColorTexture, SetBackdropBorderColor,
--- SetDesaturated, SetAlpha on sub-textures). No Hide/Show/SetPoint.
+-- Only calls non-protected methods (SetColorTexture and
+-- SetBackdropBorderColor through Theme, SetDesaturated, SetAlpha on
+-- sub-textures). No Hide/Show/SetPoint.
 function TSF:UpdateProfessionTabHighlight()
     local activeName = state.profName
     if activeName == "Smelting" then activeName = "Mining" end
@@ -2292,23 +2289,23 @@ function TSF:UpdateProfessionTabHighlight()
 
             if tab._isUnknown then
                 if isActive then
-                    tab.bg:SetColorTexture(0.2, 0.35, 0.55, 0.9)
-                    tab.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+                    Theme:Fill(tab.bg, "professionTabActive")
+                    Theme:BorderColor(tab.border, "professionTabActive")
                     tab.icon:SetDesaturated(false)
                     tab.icon:SetAlpha(1)
                 else
-                    tab.bg:SetColorTexture(0.08, 0.08, 0.1, 0.9)
-                    tab.border:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.4)
+                    Theme:Fill(tab.bg, "professionTabDim")
+                    Theme:BorderColor(tab.border, "professionTabDim")
                     tab.icon:SetDesaturated(true)
                     tab.icon:SetAlpha(0.5)
                 end
             else
                 if isActive then
-                    tab.bg:SetColorTexture(0.2, 0.35, 0.55, 0.9)
-                    tab.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+                    Theme:Fill(tab.bg, "professionTabActive")
+                    Theme:BorderColor(tab.border, "professionTabActive")
                 else
-                    tab.bg:SetColorTexture(0.12, 0.12, 0.15, 0.9)
-                    tab.border:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.6)
+                    Theme:Fill(tab.bg, "professionTab")
+                    Theme:BorderColor(tab.border, "professionTab")
                 end
             end
         end
@@ -2468,14 +2465,9 @@ function TSF:BuildRecipeList(parent)
     listPanel:SetPoint("TOPLEFT", 10, topOffset)
     listPanel:SetPoint("BOTTOMLEFT", 10, 30)
     listPanel:SetWidth(LIST_W)
-    listPanel:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    listPanel:SetBackdropColor(0.05, 0.05, 0.07, 0.95)
-    listPanel:SetBackdropBorderColor(0.35, 0.35, 0.4, 0.8)
+    Theme:SetBackdrop(listPanel, "pane")
+    Theme:BackdropColor(listPanel, "recipeListPane")
+    Theme:BorderColor(listPanel, "recipeListPane")
 
     self.listRows = {}
     for i = 1, VISIBLE_ROWS do
@@ -2485,17 +2477,17 @@ function TSF:BuildRecipeList(parent)
 
         local highlight = row:CreateTexture(nil, "HIGHLIGHT")
         highlight:SetAllPoints()
-        highlight:SetColorTexture(0.25, 0.3, 0.45, 0.35)
+        Theme:Fill(highlight, "recipeRowHover")
 
         local selectedBg = row:CreateTexture(nil, "BACKGROUND")
         selectedBg:SetAllPoints()
-        selectedBg:SetColorTexture(0.18, 0.22, 0.35, 0.7)
+        Theme:Fill(selectedBg, "recipeRowSelected")
         selectedBg:Hide()
         row.selectedBg = selectedBg
 
         local headerBg = row:CreateTexture(nil, "BACKGROUND")
         headerBg:SetAllPoints()
-        headerBg:SetColorTexture(0.2, 0.17, 0.05, 0.6)
+        Theme:Fill(headerBg, "recipeCategoryHeader")
         headerBg:Hide()
         row.headerBg = headerBg
 
@@ -2631,12 +2623,12 @@ function TSF:BuildRecipeList(parent)
 
     local thumb = scrollBar:CreateTexture(nil, "OVERLAY")
     thumb:SetSize(12, 24)
-    thumb:SetColorTexture(0.4, 0.4, 0.5, 0.8)
+    Theme:Fill(thumb, "scrollThumb")
     scrollBar:SetThumbTexture(thumb)
 
     local trackBg = scrollBar:CreateTexture(nil, "BACKGROUND")
     trackBg:SetAllPoints()
-    trackBg:SetColorTexture(0.08, 0.08, 0.1, 0.6)
+    Theme:Fill(trackBg, "scrollTrack")
 
     scrollBar:SetValue(0)
     scrollBar:SetScript("OnValueChanged", function(_, value)
@@ -2889,14 +2881,9 @@ function TSF:BuildDetailPanel(parent)
     local detail = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     detail:SetPoint("TOPLEFT", parent, "TOPLEFT", LIST_W + 18, topOffset)
     detail:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30 + CRAFT_BAR_H + 4)
-    detail:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    detail:SetBackdropColor(0.06, 0.06, 0.08, 0.95)
-    detail:SetBackdropBorderColor(0.35, 0.35, 0.4, 0.8)
+    Theme:SetBackdrop(detail, "pane")
+    Theme:BackdropColor(detail, "detailPane")
+    Theme:BorderColor(detail, "detailPane")
 
     local placeholder = detail:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     placeholder:SetPoint("CENTER")
@@ -2959,7 +2946,7 @@ function TSF:BuildDetailPanel(parent)
     local nameDivider = sc:CreateTexture(nil, "ARTWORK")
     nameDivider:SetSize(DETAIL_W - 40, 1)
     nameDivider:SetPoint("TOPLEFT", detIcon, "BOTTOMLEFT", 0, -4)
-    nameDivider:SetColorTexture(0.3, 0.3, 0.35, 0.6)
+    Theme:Fill(nameDivider, "divider")
     self.nameDivider = nameDivider
 
     local detDiff = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -3017,7 +3004,7 @@ function TSF:BuildDetailPanel(parent)
 
     local itemTooltipDivider = sc:CreateTexture(nil, "ARTWORK")
     itemTooltipDivider:SetSize(DETAIL_W - 40, 1)
-    itemTooltipDivider:SetColorTexture(0.3, 0.3, 0.35, 0.4)
+    Theme:Fill(itemTooltipDivider, "dividerFaint")
     self.itemTooltipDivider = itemTooltipDivider
 
     -- We use a real GameTooltip-style frame embedded in the panel
@@ -3034,7 +3021,7 @@ function TSF:BuildDetailPanel(parent)
     -- Reagents
     local reagentDivider = sc:CreateTexture(nil, "ARTWORK")
     reagentDivider:SetSize(DETAIL_W - 40, 1)
-    reagentDivider:SetColorTexture(0.3, 0.3, 0.35, 0.4)
+    Theme:Fill(reagentDivider, "dividerFaint")
     self.reagentDivider = reagentDivider
 
     local reagentHeader = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -3098,7 +3085,7 @@ function TSF:BuildDetailPanel(parent)
     -- Alt materials
     local altDivider = sc:CreateTexture(nil, "ARTWORK")
     altDivider:SetSize(DETAIL_W - 40, 1)
-    altDivider:SetColorTexture(0.3, 0.3, 0.35, 0.4)
+    Theme:Fill(altDivider, "dividerFaint")
     self.altDivider = altDivider
 
     local altHeader = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -3804,7 +3791,7 @@ function TSF:BuildCalcPanel()
     local divider = calc:CreateTexture(nil, "ARTWORK")
     divider:SetSize(CALC_W - 30, 1)
     divider:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -4)
-    divider:SetColorTexture(0.3, 0.3, 0.35, 0.6)
+    Theme:Fill(divider, "divider")
 
     -- Summary line
     local summary = calc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -3842,7 +3829,7 @@ function TSF:BuildCalcPanel()
     local colDiv = calc:CreateTexture(nil, "ARTWORK")
     colDiv:SetSize(CALC_W - 30, 1)
     colDiv:SetPoint("TOPLEFT", colHeaders, "BOTTOMLEFT", 0, -2)
-    colDiv:SetColorTexture(0.25, 0.25, 0.3, 0.5)
+    Theme:Fill(colDiv, "calcColumnDivider")
 
     -- Scroll frame for material rows
     local scrollParent = CreateFrame("Frame", nil, calc)
@@ -3895,7 +3882,7 @@ function TSF:BuildCalcPanel()
         local divLine = row:CreateTexture(nil, "ARTWORK")
         divLine:SetSize(CALC_W - 36, 1)
         divLine:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 2, 0)
-        divLine:SetColorTexture(0.4, 0.38, 0.3, 0.6)
+        Theme:Fill(divLine, "calcRowDivider")
         divLine:Hide()
         row.sectionDivider = divLine
 
@@ -4169,14 +4156,9 @@ function TSF:BuildCraftBar(parent)
     craftBar:SetHeight(CRAFT_BAR_H)
     craftBar:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, 30)
     craftBar:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30)
-    craftBar:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    craftBar:SetBackdropColor(0.08, 0.08, 0.1, 0.95)
-    craftBar:SetBackdropBorderColor(0.35, 0.35, 0.4, 0.8)
+    Theme:SetBackdrop(craftBar, "pane")
+    Theme:BackdropColor(craftBar, "craftBarPane")
+    Theme:BorderColor(craftBar, "craftBarPane")
 
     -- Layout: craft bar is DETAIL_W wide (~390px after borders)
     -- Row 1: [Craft]     [qty box] [Craft 1]  [Craft 5]
@@ -4208,14 +4190,9 @@ function TSF:BuildCraftBar(parent)
     local qtyBox = CreateFrame("EditBox", nil, craftBar, "BackdropTemplate")
     qtyBox:SetSize(BTN_W, BTN_H)
     qtyBox:SetPoint("TOPLEFT", craftBar, "TOPLEFT", x2, ROW1_Y)
-    qtyBox:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 8,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    qtyBox:SetBackdropColor(0.05, 0.05, 0.07, 0.9)
-    qtyBox:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    Theme:SetBackdrop(qtyBox, "input")
+    Theme:BackdropColor(qtyBox, "input")
+    Theme:BorderColor(qtyBox, "input")
     qtyBox:SetTextInsets(6, 6, 2, 2)
     qtyBox:SetFontObject(GameFontNormalSmall)
     qtyBox:SetAutoFocus(false)
@@ -4303,14 +4280,14 @@ function TSF:BuildCraftBar(parent)
     -- Outer (border color) then an inset fill, for a simple 1px border
     local ebBg = enchantBtn:CreateTexture(nil, "BACKGROUND")
     ebBg:SetAllPoints()
-    ebBg:SetColorTexture(0.4, 0.4, 0.45, 0.9)
+    Theme:Fill(ebBg, "enchantButtonEdge")
     local ebFill = enchantBtn:CreateTexture(nil, "BORDER")
     ebFill:SetPoint("TOPLEFT", 1, -1)
     ebFill:SetPoint("BOTTOMRIGHT", -1, 1)
-    ebFill:SetColorTexture(0.18, 0.18, 0.2, 1)
+    Theme:Fill(ebFill, "enchantButtonFill")
     local ebHi = enchantBtn:CreateTexture(nil, "HIGHLIGHT")
     ebHi:SetAllPoints()
-    ebHi:SetColorTexture(0.35, 0.35, 0.45, 0.4)
+    Theme:Fill(ebHi, "enchantButtonHover")
     local ebText = enchantBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     ebText:SetPoint("CENTER")
     ebText:SetText("Craft")
@@ -4497,14 +4474,9 @@ function TSF:ShowShareMenu(anchorBtn)
     if not m then
         m = CreateFrame("Frame", "ProfBuddyShareMenu", UIParent, "BackdropTemplate")
         m:SetFrameStrata("FULLSCREEN_DIALOG")
-        m:SetBackdrop({
-            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            edgeSize = 12,
-            insets   = { left = 3, right = 3, top = 3, bottom = 3 },
-        })
-        m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
-        m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+        Theme:SetBackdrop(m, "menu")
+        Theme:BackdropColor(m, "menu")
+        Theme:BorderColor(m, "menu")
         m:EnableMouse(true)
         m:SetClampedToScreen(true)
         m:Hide()
@@ -4532,7 +4504,7 @@ function TSF:ShowShareMenu(anchorBtn)
             b:SetHeight(ROW_H)
             local hl = b:CreateTexture(nil, "HIGHLIGHT")
             hl:SetAllPoints()
-            hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+            Theme:Fill(hl, "menuHover")
             b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             b.text:SetPoint("LEFT", 8, 0)
             b.text:SetJustifyH("LEFT")
@@ -4730,14 +4702,9 @@ function TSF:BuildComposer(parent)
     bar:SetHeight(CRAFT_BAR_H)
     bar:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, 30)
     bar:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30)
-    bar:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    bar:SetBackdropColor(0.08, 0.08, 0.1, 0.95)
-    bar:SetBackdropBorderColor(0.35, 0.35, 0.4, 0.8)
+    Theme:SetBackdrop(bar, "pane")
+    Theme:BackdropColor(bar, "craftBarPane")
+    Theme:BorderColor(bar, "craftBarPane")
 
     local BTN_H  = 22
     local BTN_W  = 88
@@ -4763,14 +4730,9 @@ function TSF:BuildComposer(parent)
     local qty = CreateFrame("EditBox", nil, bar, "BackdropTemplate")
     qty:SetSize(BTN_W, BTN_H)
     qty:SetPoint("TOPLEFT", bar, "TOPLEFT", x2, ROW1_Y)
-    qty:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 8,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    qty:SetBackdropColor(0.05, 0.05, 0.07, 0.9)
-    qty:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    Theme:SetBackdrop(qty, "input")
+    Theme:BackdropColor(qty, "input")
+    Theme:BorderColor(qty, "input")
     qty:SetTextInsets(6, 6, 2, 2)
     qty:SetFontObject(GameFontNormalSmall)
     qty:SetAutoFocus(false)
@@ -4801,14 +4763,9 @@ function TSF:BuildComposer(parent)
     local noteFrame = CreateFrame("Frame", nil, bar, "BackdropTemplate")
     noteFrame:SetPoint("TOPLEFT", bar, "TOPLEFT", x3, ROW1_Y)
     noteFrame:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -PAD, 4)
-    noteFrame:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 8,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    noteFrame:SetBackdropColor(0.05, 0.05, 0.07, 0.9)
-    noteFrame:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    Theme:SetBackdrop(noteFrame, "input")
+    Theme:BackdropColor(noteFrame, "input")
+    Theme:BorderColor(noteFrame, "input")
 
     local note = CreateFrame("EditBox", nil, noteFrame)
     note:SetMultiLine(true)
@@ -4988,7 +4945,7 @@ function TSF:BuildBottomBar(parent)
 
     local barBg = bar:CreateTexture(nil, "BACKGROUND")
     barBg:SetAllPoints()
-    barBg:SetColorTexture(0.08, 0.08, 0.1, 0.9)
+    Theme:Fill(barBg, "bottomBar")
 
     local summary = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     summary:SetPoint("LEFT", 8, 0)
@@ -5001,14 +4958,14 @@ function TSF:BuildBottomBar(parent)
 
     local calcBg = calcBtn:CreateTexture(nil, "BACKGROUND")
     calcBg:SetAllPoints()
-    calcBg:SetColorTexture(0.15, 0.15, 0.18, 0.9)
+    Theme:Fill(calcBg, "calcButton")
     calcBtn.bg = calcBg
 
     local calcBorder = CreateFrame("Frame", nil, calcBtn, "BackdropTemplate")
     calcBorder:SetAllPoints()
     calcBorder:EnableMouse(false)
-    calcBorder:SetBackdrop({ edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 })
-    calcBorder:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.6)
+    Theme:SetBackdrop(calcBorder, "calcButtonBorder")
+    Theme:BorderColor(calcBorder, "calcButton")
     calcBtn.border = calcBorder
 
     local calcText = calcBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -5022,12 +4979,12 @@ function TSF:BuildBottomBar(parent)
     end)
     calcBtn:SetScript("OnEnter", function(self)
         if not self._depressed then
-            self.bg:SetColorTexture(0.22, 0.22, 0.28, 0.9)
+            Theme:Fill(self.bg, "calcButtonHover")
         end
     end)
     calcBtn:SetScript("OnLeave", function(self)
         if not self._depressed then
-            self.bg:SetColorTexture(0.15, 0.15, 0.18, 0.9)
+            Theme:Fill(self.bg, "calcButton")
         end
     end)
 
@@ -5044,13 +5001,13 @@ function TSF:UpdateCalcBtnState()
 
     if isOpen then
         -- Depressed / active state
-        btn.bg:SetColorTexture(0.1, 0.25, 0.45, 0.9)
-        btn.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+        Theme:Fill(btn.bg, "calcButtonActive")
+        Theme:BorderColor(btn.border, "calcButtonActive")
         btn.label:SetTextColor(0.7, 0.85, 1)
     else
         -- Normal state
-        btn.bg:SetColorTexture(0.15, 0.15, 0.18, 0.9)
-        btn.border:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.6)
+        Theme:Fill(btn.bg, "calcButton")
+        Theme:BorderColor(btn.border, "calcButton")
         btn.label:SetTextColor(1, 0.82, 0)
     end
 end
@@ -5074,7 +5031,7 @@ function TSF:BuildSettingsPanel(parent)
     -- Solid background so nothing bleeds through
     local bg = panel:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.05, 0.05, 0.07, 1)
+    Theme:Fill(bg, "settingsBackground")
 
     -- Title
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -5087,7 +5044,7 @@ function TSF:BuildSettingsPanel(parent)
     divider:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
     divider:SetPoint("RIGHT", panel, "RIGHT", -16, 0)
     divider:SetHeight(1)
-    divider:SetColorTexture(0.3, 0.3, 0.35, 0.6)
+    Theme:Fill(divider, "divider")
 
     local settings = addon.db.settings
 
@@ -5254,12 +5211,8 @@ function TSF:BuildSettingsPanel(parent)
     local altGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
     altGroupBg:SetPoint("TOPLEFT", COL_LEFT - 4, yLeft + 4)
     altGroupBg:SetSize(GROUP_W, 1) -- height set below
-    altGroupBg:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = nil,
-        insets   = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    altGroupBg:SetBackdropColor(0.1, 0.1, 0.12, 0.6)
+    Theme:SetBackdrop(altGroupBg, "settingsGroup")
+    Theme:BackdropColor(altGroupBg, "settingsGroup")
     local altGroupTop = yLeft + 4
     yLeft = yLeft - 6
 
@@ -5286,12 +5239,8 @@ function TSF:BuildSettingsPanel(parent)
     local friendGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
     friendGroupBg:SetPoint("TOPLEFT", COL_LEFT - 4, yLeft + 4)
     friendGroupBg:SetSize(GROUP_W, 1)
-    friendGroupBg:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = nil,
-        insets   = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    friendGroupBg:SetBackdropColor(0.1, 0.1, 0.12, 0.6)
+    Theme:SetBackdrop(friendGroupBg, "settingsGroup")
+    Theme:BackdropColor(friendGroupBg, "settingsGroup")
     local friendGroupTop = yLeft + 4
     yLeft = yLeft - 6
 
@@ -5333,12 +5282,8 @@ function TSF:BuildSettingsPanel(parent)
     local groupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
     groupBg:SetPoint("TOPLEFT", COL_RIGHT - 4, yRight + 4)
     groupBg:SetSize(GROUP_W, 1) -- height set below
-    groupBg:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = nil,
-        insets   = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    groupBg:SetBackdropColor(0.1, 0.1, 0.12, 0.6)
+    Theme:SetBackdrop(groupBg, "settingsGroup")
+    Theme:BackdropColor(groupBg, "settingsGroup")
     local groupTop = yRight + 4
     yRight = yRight - 6
 
@@ -5535,12 +5480,8 @@ function TSF:BuildSettingsPanel(parent)
     local notifGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
     notifGroupBg:SetPoint("TOPLEFT", COL_RIGHT - 4, yRight + 4)
     notifGroupBg:SetSize(GROUP_W, 1)
-    notifGroupBg:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = nil,
-        insets   = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    notifGroupBg:SetBackdropColor(0.1, 0.1, 0.12, 0.6)
+    Theme:SetBackdrop(notifGroupBg, "settingsGroup")
+    Theme:BackdropColor(notifGroupBg, "settingsGroup")
     local notifGroupTop = yRight + 4
     yRight = yRight - 6
 

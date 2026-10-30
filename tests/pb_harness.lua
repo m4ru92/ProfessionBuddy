@@ -223,6 +223,7 @@ ERR_CHAT_PLAYER_NOT_FOUND_S = "No player named '%s' is currently playing."
 
 -- ── load the addon files ─────────────────────────────────────────
 dofile(BASE .. "/Core.lua")
+dofile(BASE .. "/UI/Theme.lua")
 dofile(BASE .. "/Source/Source.lua")
 dofile(BASE .. "/Source/Classic.lua")
 dofile(BASE .. "/DataStore.lua")
@@ -3031,8 +3032,44 @@ do
 end
 passed("T100 Colorblind markers: Auto follows the game's Colorblind Mode, On and Off ignore it; Blizzard's [+++]/[++]/[+]")
 
+-- T101: Theme (feature/ui-themes phase 1). Every panel colour and backdrop
+-- call in PB names a role; each role must exist in the Modern look, a
+-- missing one must fail loudly, and the helpers must pass the role's values
+-- through unchanged (alpha override, faction tint).
+do
+    local Theme = addon.Theme
+    local look = Theme:Style()
+    local KIND = { Fill = "fill", Tint = "tint", SetBackdrop = "backdrop", BackdropColor = "bg", BorderColor = "border" }
+    local files = { "Core.lua", "BattleNet.lua", "UI/Main.lua", "UI/CharacterPanel.lua", "UI/FriendsPanel.lua",
+                    "UI/GuildPanel.lua", "UI/OrdersPanel.lua", "UI/MailHelper.lua", "UI/TradeSkillFrame.lua" }
+    local calls = 0
+    for _, f in ipairs(files) do
+        local fh = assert(io.open(BASE .. "/" .. f, "r"), "T101: no " .. f)
+        local src = fh:read("*a"); fh:close()
+        for fn, role in src:gmatch('Theme:(%a+)%([^,]+, "([%w_]+)"') do
+            local kind = assert(KIND[fn], "T101: unknown Theme call " .. fn .. " in " .. f)
+            assert(look[kind][role] ~= nil, "T101: " .. f .. " uses " .. kind .. " role " .. role .. ", missing from the Modern look")
+            calls = calls + 1
+        end
+        assert(not src:find(":SetColorTexture%(%s*[%d.]+"), "T101: " .. f .. " still sets a colour by number")
+        assert(not src:find(":SetBackdrop%(%s*{"), "T101: " .. f .. " still builds its own backdrop")
+    end
+    assert(calls == 151, "T101: " .. calls .. " Theme calls, expected 151")
+    local got = {}
+    local tex = { SetColorTexture = function(_, r, g, b, a) got = { r, g, b, a } end }
+    Theme:Fill(tex, "menuHover")
+    assert(got[1] == 0.3 and got[2] == 0.3 and got[3] == 0.5 and got[4] == 0.5, "T101: Fill values")
+    Theme:Fill(tex, "professionRowHover", 0)
+    assert(got[4] == 0, "T101: Fill alpha override")
+    Theme:Tint(tex, "factionHeaderHover", { r = 1, g = 0.5, b = 0.25 })
+    assert(got[1] == 1 * 0.4 and got[2] == 0.5 * 0.4 and got[3] == 0.25 * 0.4 and got[4] == 0.9, "T101: Tint values")
+    local ok = pcall(Theme.Fill, Theme, tex, "noSuchRole")
+    assert(not ok, "T101: an unknown role drew nothing instead of failing")
+end
+passed("T101 Theme: all 151 panel colour and backdrop calls name a role the Modern look has; values pass through")
+
 leaveGuild()
-print("ALL 100 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 101 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -3048,6 +3085,6 @@ print("ALL 100 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting, T100 Colorblind markers; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting, T100 Colorblind markers, T101 the theme roles; "
     .. pass .. " of them print a PASS line above)")
 

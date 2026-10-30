@@ -5,6 +5,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 
 -- WoW: Forever (modern API) has no global item functions; TBC Anniversary
 -- does, so on TBCCA each line is a no-op.
@@ -45,7 +46,6 @@ local PROF_ICONS = {
 ----------------------------------------------------------------------
 local COLORS = {
     header    = { r = 1, g = 0.82, b = 0 },        -- gold
-    highlight = { r = 0.3, g = 0.3, b = 0.3, a = 0.5 },
     green     = "|cff00ff00",
     yellow    = "|cffffff00",
     orange    = "|cffff8800",
@@ -139,7 +139,7 @@ end
 function CP:AcquireDivider()
     local tex = self:Acquire("divider", function()
         local t = self.scrollChild:CreateTexture(nil, "ARTWORK")
-        t:SetColorTexture(0.4, 0.35, 0.1, 0.6)
+        Theme:Fill(t, "sectionDivider")
         return t
     end)
     tex:ClearAllPoints()
@@ -221,14 +221,9 @@ function CP:CreateContent(parent)
     local searchBox = CreateFrame("EditBox", nil, parent, "BackdropTemplate")
     searchBox:SetSize(180, 20)
     searchBox:SetPoint("TOP", 0, -5)
-    searchBox:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 8,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    searchBox:SetBackdropColor(0.05, 0.05, 0.07, 0.9)
-    searchBox:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    Theme:SetBackdrop(searchBox, "input")
+    Theme:BackdropColor(searchBox, "input")
+    Theme:BorderColor(searchBox, "input")
     searchBox:SetTextInsets(6, 6, 2, 2)
     searchBox:SetFontObject(GameFontNormalSmall)
     searchBox:SetAutoFocus(false)
@@ -495,11 +490,11 @@ function CP:CreateFactionHeader(faction, charCount, isCollapsed, yOffset)
         end)
         f:SetScript("OnEnter", function(b)
             local c = b._fc
-            b.bg:SetColorTexture(c.r * 0.4, c.g * 0.4, c.b * 0.4, 0.9)
+            Theme:Tint(b.bg, "factionHeaderHover", c)
         end)
         f:SetScript("OnLeave", function(b)
             local c = b._fc
-            b.bg:SetColorTexture(c.r * 0.3, c.g * 0.3, c.b * 0.3, 0.9)
+            Theme:Tint(b.bg, "factionHeader", c)
         end)
         return f
     end)
@@ -511,7 +506,7 @@ function CP:CreateFactionHeader(faction, charCount, isCollapsed, yOffset)
     local fc = FACTION_COLORS[faction] or FACTION_COLORS.Unknown
     row._faction = faction
     row._fc = fc
-    row.bg:SetColorTexture(fc.r * 0.3, fc.g * 0.3, fc.b * 0.3, 0.9)
+    Theme:Tint(row.bg, "factionHeader", fc)
 
     -- Collapse arrow + faction name + count
     local arrow = isCollapsed and "+ " or "- "
@@ -530,7 +525,7 @@ function CP:CreateCharacterRow(charKey, charData, isCurrent, yOffset)
 
         local bg = f:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
-        bg:SetColorTexture(0.15, 0.15, 0.15, 0.8)
+        Theme:Fill(bg, "characterRow")
 
         f.nameText = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         f.nameText:SetPoint("LEFT", 5, 0)
@@ -593,11 +588,11 @@ function CP:CreateProfessionRow(charKey, profName, profData, yOffset, isExpanded
         f.recipeText:SetPoint("LEFT", 260, 0)
 
         f:SetScript("OnEnter", function(b)
-            b.highlight:SetColorTexture(COLORS.highlight.r, COLORS.highlight.g, COLORS.highlight.b, COLORS.highlight.a)
+            Theme:Fill(b.highlight, "professionRowHover")
             self:ShowProfessionTooltip(b, b._charKey, b._profName, b._profData)
         end)
         f:SetScript("OnLeave", function(b)
-            b.highlight:SetColorTexture(COLORS.highlight.r, COLORS.highlight.g, COLORS.highlight.b, 0)
+            Theme:Fill(b.highlight, "professionRowHover", 0)
             GameTooltip:Hide()
         end)
         f:SetScript("OnClick", function(b)
@@ -637,7 +632,7 @@ function CP:CreateProfessionRow(charKey, profName, profData, yOffset, isExpanded
     row._charKey  = charKey
     row._profName = profName
     row._profData = profData
-    row.highlight:SetColorTexture(COLORS.highlight.r, COLORS.highlight.g, COLORS.highlight.b, 0)
+    Theme:Fill(row.highlight, "professionRowHover", 0)
 
     -- Profession icon
     local xCursor = 5
@@ -1074,11 +1069,11 @@ function CP:RefreshSearchResults(characters)
             end)
             f:SetScript("OnEnter", function(b)
                 local c = b._fc
-                b.bg:SetColorTexture(c.r * 0.4, c.g * 0.4, c.b * 0.4, 0.9)
+                Theme:Tint(b.bg, "factionHeaderHover", c)
             end)
             f:SetScript("OnLeave", function(b)
                 local c = b._fc
-                b.bg:SetColorTexture(c.r * 0.3, c.g * 0.3, c.b * 0.3, 0.9)
+                Theme:Tint(b.bg, "factionHeader", c)
             end)
             return f
         end)
@@ -1090,7 +1085,7 @@ function CP:RefreshSearchResults(characters)
         local fc = FACTION_COLORS[faction] or FACTION_COLORS.Unknown
         fRow._fc = fc
         fRow._collapseKey = collapseKey
-        fRow.bg:SetColorTexture(fc.r * 0.3, fc.g * 0.3, fc.b * 0.3, 0.9)
+        Theme:Tint(fRow.bg, "factionHeader", fc)
 
         local arrow = isCollapsed and "+ " or "- "
         fRow.nameText:SetText(arrow .. faction .. "  " .. COLORS.grey .. "(" .. count .. ")|r")
@@ -1105,7 +1100,7 @@ function CP:RefreshSearchResults(characters)
             local f = CreateFrame("Frame", nil, self.scrollChild)
             local bg = f:CreateTexture(nil, "BACKGROUND")
             bg:SetAllPoints()
-            bg:SetColorTexture(0.15, 0.15, 0.15, 0.8)
+            Theme:Fill(bg, "characterRow")
             f.nameText = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             f.nameText:SetPoint("LEFT", 5, 0)
             return f
