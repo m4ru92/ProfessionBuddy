@@ -128,7 +128,9 @@ STYLES.classic = {
         dropdownList = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 16, edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
         input = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8, insets = { left = 2, right = 2, top = 2, bottom = 2 } },
         menu = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 16, edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
-        pane = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
+        -- Edge 16, not Blizzard's 32: PB's panes keep their content 2 to 4 px
+        -- from the edge (20 recipe rows fill 402 of the list's 404 px).
+        pane = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 } },
         professionTabBorder = { edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 },
         -- Blizzard's classic options boxes (OptionsBoxTemplate): tooltip
         -- background and border, the border grey.
@@ -162,7 +164,7 @@ STYLES.classic = {
         recipeListPane = { 1, 1, 1, 1 },
     },
     fill = {
-        bottomBar = { 0.1, 0.08, 0.05, 0.9 },
+        bottomBar = { 0.25, 0.18, 0.08, 0.95 },   -- set apart from the panes above it
         calcButton = { 0.2, 0.15, 0.08, 0.9 },
         calcButtonActive = { 0.45, 0.33, 0.08, 0.95 },
         calcButtonHover = { 0.3, 0.22, 0.1, 0.9 },
@@ -190,7 +192,7 @@ STYLES.classic = {
         professionTab = { 0.18, 0.14, 0.08, 0.9 },
         professionTabActive = { 0.45, 0.33, 0.08, 0.95 },
         professionTabDim = { 0.1, 0.08, 0.05, 0.9 },
-        professionTabSeparator = { 0.6, 0.5, 0.25, 0.8 },
+        professionTabSeparator = { 0, 0, 0, 0 },   -- no line: the gap between the tab groups stays
         recipeCategoryHeader = { 0, 0, 0, 0 },
         recipeRowHover = { file = "Interface\\QuestFrame\\UI-QuestTitleHighlight", blend = "ADD", color = { 1, 1, 1, 0.6 } },
         recipeRowSelected = { file = "Interface\\Buttons\\UI-Listbox-Highlight2", blend = "ADD", color = { 0.9, 0.9, 0.9, 1 } },

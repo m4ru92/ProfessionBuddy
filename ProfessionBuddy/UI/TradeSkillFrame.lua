@@ -1596,6 +1596,43 @@ end
 -- open list on hide; the lists are UIParent children, not window children.
 addon.CloseAllDropdowns = CloseAllDropdowns
 
+-- A quantity box with a minus button on its left and a plus button on its
+-- right, as Blizzard's TBC trade skill window has (TradeSkillDecrementButton
+-- / TradeSkillIncrementButton). Classic uses Blizzard's own arrow buttons;
+-- Modern uses PB's button style with - and +. Steps by one, 1 to 999 (the
+-- order quantity cap). Returns the x offset and width left for the box.
+local QTY_MIN, QTY_MAX = 1, 999
+local function AddQtyStepButtons(parent, box, x, y, width, height)
+    local function step(delta)
+        local n = (tonumber(box:GetText()) or QTY_MIN) + delta
+        if n < QTY_MIN then n = QTY_MIN elseif n > QTY_MAX then n = QTY_MAX end
+        box:SetText(tostring(n))
+        box:ClearFocus()
+    end
+    local function make(isPlus)
+        local b
+        if Theme:IsClassic() then
+            b = CreateFrame("Button", nil, parent)
+            local name = isPlus and "NextPage" or "PrevPage"
+            b:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-" .. name .. "-Up")
+            b:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-" .. name .. "-Down")
+            b:SetDisabledTexture("Interface\\Buttons\\UI-SpellbookIcon-" .. name .. "-Disabled")
+            b:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+        else
+            b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+            b:SetText(isPlus and "+" or "-")
+            b:SetNormalFontObject(GameFontNormalSmall)
+        end
+        b:SetSize(height, height)
+        b:SetScript("OnClick", function() step(isPlus and 1 or -1) end)
+        return b
+    end
+    local minus, plus = make(false), make(true)
+    minus:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    plus:SetPoint("TOPLEFT", parent, "TOPLEFT", x + width - height, y)
+    return x + height + 2, width - 2 * height - 4, minus, plus
+end
+
 local function CreateDropdown(parent, width, options, defaultVal, onChange, prefix)
     local container = CreateFrame("Frame", nil, parent)
     container:SetSize(width, 20)
@@ -2710,6 +2747,7 @@ function TSF:UpdateListRows()
             row:Show()
 
             if entry.isHeader then
+                row._dc = nil
                 row.icon:Hide()
                 local arrow = entry.isCollapsed and "|cffcccccc+ |r" or "|cffcccccc- |r"
                 local indent = 4
@@ -2835,8 +2873,9 @@ function TSF:UpdateListRows()
                     row.rightText:SetText(c .. displaySrc .. "|r" .. skillText)
                 end
 
+                row._dc = dc
                 if entry.name == state.selected then
-                    row.selectedBg:Show()
+                    self:PaintSelected(row, true)
                 end
             end
         else
@@ -2845,16 +2884,39 @@ function TSF:UpdateListRows()
     end
 end
 
+-- Classic, as Blizzard's TBC trade skill window: the selected recipe's
+-- highlight bar takes the recipe's difficulty colour and its name turns
+-- white (Blizzard_TradeSkillUI TBC: TradeSkillHighlight:SetVertexColor,
+-- name:SetTextColor(HIGHLIGHT_FONT_COLOR)). Modern only shows the bar.
+function TSF:PaintSelected(row, selected)
+    if selected then
+        row.selectedBg:Show()
+    else
+        row.selectedBg:Hide()
+    end
+    if not Theme:IsClassic() or not row._dc then return end
+    local dc = row._dc
+    if selected then
+        row.selectedBg:SetVertexColor(dc.r, dc.g, dc.b, 1)
+        row.nameText:SetTextColor(1, 1, 1)
+    else
+        row.nameText:SetTextColor(dc.r, dc.g, dc.b)
+    end
+end
+
+-- The craft bar's quantity box and its - / + buttons show and hide together.
+function TSF:SetQtyShown(shown)
+    for _, w in ipairs({ self.qtyBox, self.qtyMinus, self.qtyPlus }) do
+        if shown then w:Show() else w:Hide() end
+    end
+end
+
 function TSF:UpdateListHighlights()
     for i = 1, VISIBLE_ROWS do
         local row = self.listRows[i]
         local dataIdx = i + state.scrollOffset
         local entry = state.recipes[dataIdx]
-        if entry and not entry.isHeader and entry.name == state.selected then
-            row.selectedBg:Show()
-        else
-            row.selectedBg:Hide()
-        end
+        self:PaintSelected(row, entry and not entry.isHeader and entry.name == state.selected)
     end
 end
 
@@ -4262,8 +4324,10 @@ function TSF:BuildCraftBar(parent)
     self.craftBtn = craftBtn
 
     local qtyBox = CreateFrame("EditBox", nil, craftBar, "BackdropTemplate")
-    qtyBox:SetSize(BTN_W, BTN_H)
-    qtyBox:SetPoint("TOPLEFT", craftBar, "TOPLEFT", x2, ROW1_Y)
+    local qtyX, qtyW
+    qtyX, qtyW, self.qtyMinus, self.qtyPlus = AddQtyStepButtons(craftBar, qtyBox, x2, ROW1_Y, BTN_W, BTN_H)
+    qtyBox:SetSize(qtyW, BTN_H)
+    qtyBox:SetPoint("TOPLEFT", craftBar, "TOPLEFT", qtyX, ROW1_Y)
     Theme:SetBackdrop(qtyBox, "input")
     Theme:BackdropColor(qtyBox, "input")
     Theme:BorderColor(qtyBox, "input")
@@ -4701,12 +4765,12 @@ function TSF:UpdateCraftBar()
                 btn:Hide()
             end
         end
-        if self.qtyBox then self.qtyBox:Hide() end
+        self:SetQtyShown(false)
     elseif itemLess and eb then
         -- Enchant: use the secure cast button; the normal craft buttons
         -- and qty box don't apply (enchants are one cast per target item).
         for _, btn in ipairs(self.craftBtns) do btn:Hide() end
-        if self.qtyBox then self.qtyBox:Hide() end
+        self:SetQtyShown(false)
         if InCombatLockdown() then
             -- The macrotext is a secure attribute and cannot be rewritten in
             -- combat, so leaving the button live would cast whatever enchant
@@ -4737,7 +4801,7 @@ function TSF:UpdateCraftBar()
                 btn:Disable()
             end
         end
-        if self.qtyBox then self.qtyBox:Show() end
+        self:SetQtyShown(true)
     end
 
     if self.craftNotLearned then
@@ -4802,8 +4866,10 @@ function TSF:BuildComposer(parent)
 
     -- ---- Row 1 col 2: quantity ----
     local qty = CreateFrame("EditBox", nil, bar, "BackdropTemplate")
-    qty:SetSize(BTN_W, BTN_H)
-    qty:SetPoint("TOPLEFT", bar, "TOPLEFT", x2, ROW1_Y)
+    local qtyX, qtyW
+    qtyX, qtyW, self.composerQtyMinus, self.composerQtyPlus = AddQtyStepButtons(bar, qty, x2, ROW1_Y, BTN_W, BTN_H)
+    qty:SetSize(qtyW, BTN_H)
+    qty:SetPoint("TOPLEFT", bar, "TOPLEFT", qtyX, ROW1_Y)
     Theme:SetBackdrop(qty, "input")
     Theme:BackdropColor(qty, "input")
     Theme:BorderColor(qty, "input")

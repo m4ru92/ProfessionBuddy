@@ -3531,4 +3531,53 @@ do
 end
 print("  PASS F63 Window style: Match the game is Modern on Forever; the dropdown saves the style and offers a reload")
 
-print("ALL FOREVER TESTS PASS (63)")
+-- F64: Quantity - and + (feature/ui-themes, Zorden 11). Both quantity boxes
+-- step by one between 1 and 999; the craft bar's buttons hide and show with
+-- its box. Classic selection (Zorden 9): the selected recipe's bar takes the
+-- recipe's difficulty colour and its name turns white, back to the colour
+-- when deselected; Modern leaves both alone.
+do
+    local box, minus, plus = TSF.qtyBox, TSF.qtyMinus, TSF.qtyPlus
+    EXPECT(minus and plus, "no craft quantity buttons")
+    box:SetText("1")
+    minus:GetScript("OnClick")(minus)
+    EXPECT(box:GetText() == "1", "minus went below 1: " .. box:GetText())
+    plus:GetScript("OnClick")(plus); plus:GetScript("OnClick")(plus)
+    EXPECT(box:GetText() == "3", "plus twice from 1 gave " .. box:GetText())
+    box:SetText("999")
+    plus:GetScript("OnClick")(plus)
+    EXPECT(box:GetText() == "999", "plus went past 999: " .. box:GetText())
+    minus:GetScript("OnClick")(minus)
+    EXPECT(box:GetText() == "998", "minus from 999 gave " .. box:GetText())
+    box:SetText("")
+    plus:GetScript("OnClick")(plus)
+    EXPECT(box:GetText() == "2", "plus on an empty box gave " .. box:GetText())
+    box:SetText("1")
+    TSF:SetQtyShown(false)
+    EXPECT(not box:IsShown() and not minus:IsShown() and not plus:IsShown(), "buttons stayed with the box hidden")
+    TSF:SetQtyShown(true)
+    EXPECT(box:IsShown() and minus:IsShown() and plus:IsShown(), "buttons did not come back with the box")
+    local cq, cplus = TSF.composerQty, TSF.composerQtyPlus
+    EXPECT(cq and cplus and TSF.composerQtyMinus, "no Request Craft quantity buttons")
+    cq:SetText("4"); cplus:GetScript("OnClick")(cplus)
+    EXPECT(cq:GetText() == "5", "Request Craft plus gave " .. cq:GetText())
+
+    local Theme = ProfBuddy.Theme
+    local got = {}
+    local row = { _dc = { r = 1, g = 0.5, b = 0.25 },
+        selectedBg = { Show = function() got.shown = true end, Hide = function() got.shown = false end,
+                       SetVertexColor = function(_, r, g, b, a) got.bar = { r, g, b, a } end },
+        nameText = { SetTextColor = function(_, r, g, b) got.text = { r, g, b } end } }
+    TSF:PaintSelected(row, true)
+    EXPECT(got.shown and not got.bar and not got.text, "Modern recoloured the selection")
+    Theme._name = "classic"
+    TSF:PaintSelected(row, true)
+    EXPECT(got.bar and got.bar[1] == 1 and got.bar[2] == 0.5 and got.bar[3] == 0.25, "Classic bar not in the difficulty colour")
+    EXPECT(got.text and got.text[1] == 1 and got.text[2] == 1 and got.text[3] == 1, "Classic selected name not white")
+    TSF:PaintSelected(row, false)
+    EXPECT(not got.shown and got.text[2] == 0.5, "Classic deselect did not restore the name colour")
+    Theme._name = nil
+end
+print("  PASS F64 Quantity - and +: 1 to 999 on both boxes, hidden with the box; Classic selection takes the difficulty colour, name white")
+
+print("ALL FOREVER TESTS PASS (64)")
