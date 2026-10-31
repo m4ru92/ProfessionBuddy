@@ -510,6 +510,7 @@ function CP:CreateFactionHeader(faction, charCount, isCollapsed, yOffset)
 
     -- Collapse arrow + faction name + count
     local arrow = isCollapsed and "+ " or "- "
+    if Theme:IsClassic() then arrow = Theme:ExpandIcon(isCollapsed) end
     row.nameText:SetText(arrow .. faction .. "  " .. COLORS.grey .. "(" .. charCount .. ")|r")
     row.nameText:SetTextColor(fc.r, fc.g, fc.b)
 
@@ -647,6 +648,7 @@ function CP:CreateProfessionRow(charKey, profName, profData, yOffset, isExpanded
 
     -- Expand/collapse arrow + profession name
     local arrow = isExpanded and "- " or "+ "
+    if Theme:IsClassic() then arrow = Theme:ExpandIcon(not isExpanded) end
     row.nameText:ClearAllPoints()
     row.nameText:SetPoint("LEFT", xCursor, 0)
     row.nameText:SetText(COLORS.grey .. arrow .. "|r" .. profName)
@@ -1088,6 +1090,7 @@ function CP:RefreshSearchResults(characters)
         Theme:Tint(fRow.bg, "factionHeader", fc)
 
         local arrow = isCollapsed and "+ " or "- "
+        if Theme:IsClassic() then arrow = Theme:ExpandIcon(isCollapsed) end
         fRow.nameText:SetText(arrow .. faction .. "  " .. COLORS.grey .. "(" .. count .. ")|r")
         fRow.nameText:SetTextColor(fc.r, fc.g, fc.b)
 

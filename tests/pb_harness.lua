@@ -3091,8 +3091,10 @@ do
         end
     end
     for kind, roles in pairs(Theme.STYLES.classic) do
+        -- backdropBorder is optional: a border colour for a backdrop role
+        local inModern = (kind == "backdropBorder") and Theme.STYLES.modern.backdrop or Theme.STYLES.modern[kind]
         for role in pairs(roles) do
-            assert(Theme.STYLES.modern[kind][role] ~= nil, "T102: Classic has a role Modern lacks: " .. kind .. " " .. role)
+            assert(inModern[role] ~= nil, "T102: Classic has a role Modern lacks: " .. kind .. " " .. role)
         end
     end
     pick("classic")
@@ -3112,6 +3114,18 @@ do
     assert(shown == "PROFBUDDY_RELOAD_STYLE" and StaticPopupDialogs.PROFBUDDY_RELOAD_STYLE.button1 == "Reload",
         "T102: reload offer")
     StaticPopupDialogs, StaticPopup_Show = oldDialogs, oldShow
+    -- Classic colours a settings box's border itself (Modern has no border
+    -- there), and draws text headers' expand marks as Blizzard's +/- buttons.
+    local seen = {}
+    local frame = { SetBackdrop = function(_, b) seen.backdrop = b end,
+                    SetBackdropBorderColor = function(_, r, g, b, a) seen.border = { r, g, b, a } end }
+    Theme:SetBackdrop(frame, "settingsGroup")
+    assert(seen.backdrop and seen.border and seen.border[1] == 0.4, "T102: Classic settings box border")
+    assert(Theme:ExpandIcon(true):find("UI%-PlusButton%-Up") and Theme:ExpandIcon(false):find("UI%-MinusButton%-Up"),
+        "T102: expand icons")
+    pick("modern"); seen = {}
+    Theme:SetBackdrop(frame, "settingsGroup")
+    assert(seen.backdrop and not seen.border, "T102: Modern coloured a settings box border")
     S.windowStyle = "modern"; Theme._name = nil
 end
 passed("T102 Window style: Modern by default; Classic and Match the game give Classic here; kept for the session; every role in both looks; reload offer")

@@ -84,7 +84,7 @@ STYLES.modern = {
         navTab = { 0.15, 0.15, 0.15, 0.9 },
         navTabBorder = { 0.4, 0.4, 0.4, 1 },
         navTabSelected = { 0.25, 0.25, 0.3, 1 },
-        orderRowSelected = { 0.18, 0.18, 0.22, 0.95 },
+        orderSectionHeader = { 0.18, 0.18, 0.22, 0.95 },
         professionRowHover = { 0.3, 0.3, 0.3, 0.5 },
         professionTab = { 0.12, 0.12, 0.15, 0.9 },
         professionTabActive = { 0.2, 0.35, 0.55, 0.9 },
@@ -119,7 +119,10 @@ STYLES.modern = {
 STYLES.classic = {
     backdrop = {
         calcButtonBorder = { edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 },
-        dialog = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 } },
+        -- Blizzard's BACKDROP_DIALOG_32_32 (Blizzard_SharedXML/Backdrop.lua),
+        -- as its own popups use: the /pb bug and Battle.net windows keep
+        -- 14 px or more between their edge and their content.
+        dialog = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileEdge = true, tileSize = 32, edgeSize = 32, insets = { left = 11, right = 12, top = 12, bottom = 11 } },
         dialogBox = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
         dropdownButtonBorder = { edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 },
         dropdownList = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 16, edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
@@ -127,7 +130,9 @@ STYLES.classic = {
         menu = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 16, edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
         pane = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
         professionTabBorder = { edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 },
-        settingsGroup = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = nil, tile = true, tileSize = 32, insets = { left = 4, right = 4, top = 4, bottom = 4 } },
+        -- Blizzard's classic options boxes (OptionsBoxTemplate): tooltip
+        -- background and border, the border grey.
+        settingsGroup = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 16, insets = { left = 5, right = 5, top = 5, bottom = 5 } },
     },
     bg = {
         craftBarPane = { 1, 1, 1, 0.9 },
@@ -138,7 +143,7 @@ STYLES.classic = {
         input = { 0, 0, 0, 0.8 },
         menu = { 1, 1, 1, 1 },
         recipeListPane = { 1, 1, 1, 0.9 },
-        settingsGroup = { 1, 1, 1, 0.6 },
+        settingsGroup = { 0.1, 0.1, 0.1, 0.5 },
     },
     border = {
         calcButton = { 0.7, 0.6, 0.3, 0.8 },
@@ -180,7 +185,7 @@ STYLES.classic = {
         navTab = { 0.2, 0.15, 0.08, 0.9 },
         navTabBorder = { 0.6, 0.5, 0.25, 1 },
         navTabSelected = { 0.45, 0.33, 0.08, 1 },
-        orderRowSelected = { file = "Interface\\Buttons\\UI-Listbox-Highlight2", blend = "ADD", color = { 1, 1, 1, 0.9 } },
+        orderSectionHeader = { 0.2, 0.16, 0.08, 0.85 },
         professionRowHover = { file = "Interface\\QuestFrame\\UI-QuestTitleHighlight", blend = "ADD", color = { 1, 1, 1, 0.5 } },
         professionTab = { 0.18, 0.14, 0.08, 0.9 },
         professionTabActive = { 0.45, 0.33, 0.08, 0.95 },
@@ -194,10 +199,15 @@ STYLES.classic = {
         scrollThumb = { 0.6, 0.5, 0.25, 0.9 },
         scrollTrack = { 0, 0, 0, 0.4 },
         sectionDivider = { 0.6, 0.5, 0.2, 0.6 },
-        settingsBackground = { file = "Interface\\FrameGeneral\\UI-Background-Rock", tile = true, color = { 0.45, 0.45, 0.45, 1 } },
-        -- Blizzard: TradeSkillRankFrameBackground:SetVertexColor(0, 0, 0.75, 0.5)
-        skillBarBackground = { 0, 0, 0.75, 0.5 },
+        settingsBackground = { 0.09, 0.08, 0.06, 1 },
+        -- Blizzard: TradeSkillRankFrameBackground is white at 0.2 alpha,
+        -- then SetVertexColor(0, 0, 0.75, 0.5): 0.2 x 0.5 = 0.1.
+        skillBarBackground = { 0, 0, 0.75, 0.1 },
         statusPill = { 0.2, 0.15, 0.08, 0.9 },
+    },
+    -- Border colour for a backdrop that no call colours itself.
+    backdropBorder = {
+        settingsGroup = { 0.4, 0.4, 0.4, 1 },
     },
     -- Faction colours carry meaning: same tint as Modern.
     tint = {
@@ -290,6 +300,16 @@ end
 
 function Theme:SetBackdrop(frame, role)
     frame:SetBackdrop(look("backdrop", role))
+    local edge = self:Style().backdropBorder
+    edge = edge and edge[role]
+    if edge then frame:SetBackdropBorderColor(edge[1], edge[2], edge[3], edge[4]) end
+end
+
+-- Classic: Blizzard's +/- expand button as an inline texture, for headers
+-- drawn as text.
+function Theme:ExpandIcon(collapsed)
+    return (collapsed and "|TInterface\\Buttons\\UI-PlusButton-Up:14:14|t "
+        or "|TInterface\\Buttons\\UI-MinusButton-Up:14:14|t ")
 end
 
 function Theme:BackdropColor(frame, role)

@@ -366,7 +366,7 @@ function OP:CreateRow(parent, index, ctx)
 
     local hbg = row:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints()
-    Theme:Fill(hbg, "orderRowSelected")
+    Theme:Fill(hbg, "orderSectionHeader")
     hbg:Hide()
     row.headerBg = hbg
 
@@ -634,7 +634,11 @@ function OP:PaintList(ctx)
             row._section = item.section
             local arrow = ctx.collapsed[item.section] and "+" or "-"
             local label = (item.section == "incoming") and "Incoming" or "Outgoing"
-            row.headerLabel:SetText(string.format("%s  %s (%d)", arrow, label, item.count))
+            if Theme:IsClassic() then
+                row.headerLabel:SetText(string.format("%s%s (%d)", Theme:ExpandIcon(ctx.collapsed[item.section]), label, item.count))
+            else
+                row.headerLabel:SetText(string.format("%s  %s (%d)", arrow, label, item.count))
+            end
             row.headerLabel:Show()
             -- History sections get a "Clear" button when non-empty.
             if ctx == self.histCtx and item.count > 0 then
@@ -993,7 +997,7 @@ function OP:CreateBoardRow(parent, index, ctx)
 
     local hbg = row:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints()
-    Theme:Fill(hbg, "orderRowSelected")
+    Theme:Fill(hbg, "orderSectionHeader")
     hbg:Hide()
     row.headerBg = hbg
 

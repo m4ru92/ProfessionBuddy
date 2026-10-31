@@ -1914,13 +1914,36 @@ function TSF:BuildHeader(parent)
         -- sits on that frame so the border never covers it.
         bar:SetStatusBarTexture("Interface\\PaperDollInfoFrame\\UI-Character-Skills-Bar")
         bar:SetStatusBarColor(0, 0, 1, 0.5)
+        -- Blizzard: a 268 x 15 bar in a 281 x 32 border that reaches 5 past
+        -- the bar on the left and 8 on the right. Scaled to this bar's
+        -- height, the bar is pulled in so the border stays inside the space
+        -- the bar would take, and the border is drawn as two ends and a
+        -- stretched middle so the ends keep their shape on a wide bar.
+        local k = SKILL_BAR_H / 15
+        local padL, padR = 5 * k, 8 * k
+        bar:SetSize(FRAME_W - 24 - padL - padR, SKILL_BAR_H)
+        bar:SetPoint("TOPLEFT", 12 + padL, -52)
         local borderFrame = CreateFrame("Frame", nil, bar)
         borderFrame:SetAllPoints()
-        local border = borderFrame:CreateTexture(nil, "ARTWORK")
-        border:SetTexture("Interface\\PaperDollInfoFrame\\UI-Character-Skills-BarBorder")
-        -- Blizzard: a 268 x 15 bar in a 281 x 32 border, 5 to the left.
-        border:SetPoint("LEFT", bar, "LEFT", -5, 0)
-        border:SetSize(FRAME_W - 24 + 13, SKILL_BAR_H * 32 / 15)
+        local FILE = "Interface\\PaperDollInfoFrame\\UI-Character-Skills-BarBorder"
+        local CAP = 16 / 281                  -- each end, as a share of the texture
+        local capW, borderH = 16 * k, 32 * k
+        local left = borderFrame:CreateTexture(nil, "ARTWORK")
+        left:SetTexture(FILE)
+        left:SetTexCoord(0, CAP, 0, 1)
+        left:SetSize(capW, borderH)
+        left:SetPoint("LEFT", bar, "LEFT", -padL, 0)
+        local right = borderFrame:CreateTexture(nil, "ARTWORK")
+        right:SetTexture(FILE)
+        right:SetTexCoord(1 - CAP, 1, 0, 1)
+        right:SetSize(capW, borderH)
+        right:SetPoint("RIGHT", bar, "RIGHT", padR, 0)
+        local mid = borderFrame:CreateTexture(nil, "ARTWORK")
+        mid:SetTexture(FILE)
+        mid:SetTexCoord(CAP, 1 - CAP, 0, 1)
+        mid:SetHeight(borderH)
+        mid:SetPoint("LEFT", left, "RIGHT")
+        mid:SetPoint("RIGHT", right, "LEFT")
         textHost = borderFrame
     else
         bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
@@ -3076,6 +3099,21 @@ function TSF:BuildDetailPanel(parent)
         rIcon:SetSize(18, 18)
         rIcon:SetPoint("LEFT", 0, 0)
         rFrame.icon = rIcon
+
+        if Theme:IsClassic() then
+            -- Classic: Blizzard's quest item slot (QuestItemTemplate), scaled
+            -- from its 39 px icon to this 18 px one: the item button frame
+            -- around the icon and the NameFrame banner behind the name.
+            local slot = rFrame:CreateTexture(nil, "BORDER")
+            slot:SetTexture("Interface\\Buttons\\UI-Quickslot2")
+            slot:SetSize(18 * 64 / 37, 18 * 64 / 37)
+            slot:SetPoint("CENTER", rIcon, "CENTER")
+            local banner = rFrame:CreateTexture(nil, "BACKGROUND")
+            banner:SetTexture("Interface\\QuestFrame\\UI-QuestItemNameFrame")
+            banner:SetPoint("LEFT", rIcon, "RIGHT", -10 * 18 / 39, 0)
+            banner:SetPoint("RIGHT", rFrame, "RIGHT", 0, 0)
+            banner:SetHeight(64 * 18 / 39)
+        end
 
         local rName = rFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         rName:SetPoint("LEFT", rIcon, "RIGHT", 4, 0)
@@ -5581,7 +5619,7 @@ function TSF:BuildSettingsPanel(parent)
 
     notifGroupBg:SetHeight(notifGroupTop - yRight)
 
-    content:SetHeight(math.max(-yLeft, -yRight) + 8)
+    content:SetHeight(math.max(-yLeft, -yRight) + 20)
 
     -- Hint at the bottom
     local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
