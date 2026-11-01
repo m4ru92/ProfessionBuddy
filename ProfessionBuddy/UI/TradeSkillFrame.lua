@@ -78,7 +78,7 @@ local DETAIL_W      = FRAME_W - LIST_W - 30
 local ROW_H         = 20
 local SKILL_BAR_H   = 22
 local VISIBLE_ROWS  = 20
-local CRAFT_BAR_H   = 56   -- two 22 px button rows with 6 px above and 4 below: clear of either look's border
+local CRAFT_BAR_H   = 58   -- two 22 px button rows with 6 px above and below: clear of either look's border
 
 -- Seconds the search box waits after the last keystroke before rebuilding.
 local SEARCH_DEBOUNCE = 0.3
@@ -3051,7 +3051,7 @@ function TSF:BuildDetailPanel(parent)
 
     local detail = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     detail:SetPoint("TOPLEFT", parent, "TOPLEFT", LIST_W + 18, topOffset)
-    detail:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30 + CRAFT_BAR_H + 4)
+    detail:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30 + CRAFT_BAR_H + 2)   -- 2 px gap above the craft bar
     Theme:SetBackdrop(detail, "pane")
     Theme:BackdropColor(detail, "detailPane")
     Theme:BorderColor(detail, "detailPane")

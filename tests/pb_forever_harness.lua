@@ -3607,17 +3607,21 @@ print("  PASS F65 Enchant Craft button: Blizzard's red button artwork, pressed a
 -- F66: Layout shared by both looks (phase 2e). The bottom bar spans the
 -- window's inner area (Blizzard's InsetBg), 3 px in for its border, at the
 -- same 6 px from the bottom as before; the craft and Request Craft bars are
--- 56 px tall so two 22 px button rows clear the border.
+-- 58 px tall so two 22 px button rows clear the border by 6 px above and
+-- below, and the detail pane ends 2 px above them where it did before (90).
 do
     local bar = TSF.bottomBar
     local p = bar and rawget(bar, "_lastPoint")
     EXPECT(p and p[1] == "BOTTOMRIGHT" and p[2] == TSF.frame.InsetBg and p[4] == -3 and p[5] == 2,
         "bottom bar is not on the window's inner area")
-    EXPECT(rawget(TSF.craftBar, "_size")[2] == 56 and rawget(TSF.composerBar, "_size")[2] == 56,
-        "craft bars are not 56 px tall")
+    EXPECT(rawget(TSF.craftBar, "_size")[2] == 58 and rawget(TSF.composerBar, "_size")[2] == 58,
+        "craft bars are not 58 px tall")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('detail:SetPoint%("BOTTOMRIGHT", parent, "BOTTOMRIGHT", %-10, 30 %+ CRAFT_BAR_H %+ 2%)'),
+        "the detail pane's bottom moved")
     local cp = rawget(TSF.craftBtn, "_lastPoint")
     EXPECT(cp and cp[5] == -6, "the craft bar's first row is not 6 px down: " .. tostring(cp and cp[5]))
 end
-print("  PASS F66 Bottom bar on the window's inner area; craft and Request Craft bars 56 px tall")
+print("  PASS F66 Bottom bar on the window's inner area; craft and Request Craft bars 58 px tall, detail pane bottom unchanged")
 
 print("ALL FOREVER TESTS PASS (66)")
