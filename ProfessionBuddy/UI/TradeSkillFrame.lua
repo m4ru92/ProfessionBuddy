@@ -3065,8 +3065,12 @@ function TSF:BuildDetailPanel(parent)
     -- ScrollFrame: wraps all detail content so it scrolls when
     -- the embedded tooltip + reagents exceed available height
     local scrollFrame = CreateFrame("ScrollFrame", nil, detail, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", 4, -4)
-    scrollFrame:SetPoint("BOTTOMRIGHT", -24, 4)
+    -- Classic's pane border (edge 16) is about 5.5 px wide, so its scroll
+    -- area sits 2 px further in: scrolled content and the scroll bar stop
+    -- short of the border. Modern's thinner border keeps 4 px.
+    local inset = Theme:IsClassic() and 6 or 4
+    scrollFrame:SetPoint("TOPLEFT", inset, -inset)
+    scrollFrame:SetPoint("BOTTOMRIGHT", -20 - inset, inset)
 
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollChild:SetWidth(DETAIL_W - 40)

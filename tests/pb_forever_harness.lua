@@ -3619,6 +3619,12 @@ do
     local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
     EXPECT(src:find('detail:SetPoint%("BOTTOMRIGHT", parent, "BOTTOMRIGHT", %-10, 30 %+ CRAFT_BAR_H %+ 2%)'),
         "the detail pane's bottom moved")
+    -- The detail pane's scroll area: 4 px in for Modern, 6 for Classic's
+    -- thicker border (the harness runs Modern).
+    local dsf = TSF.detScrollFrame
+    local dp = dsf and rawget(dsf, "_lastPoint")
+    EXPECT(dp and dp[1] == "BOTTOMRIGHT" and dp[2] == -24 and dp[3] == 4, "Modern detail scroll area moved")
+    EXPECT(src:find('local inset = Theme:IsClassic%(%) and 6 or 4'), "Classic detail scroll inset missing")
     local cp = rawget(TSF.craftBtn, "_lastPoint")
     EXPECT(cp and cp[5] == -6, "the craft bar's first row is not 6 px down: " .. tostring(cp and cp[5]))
 end
