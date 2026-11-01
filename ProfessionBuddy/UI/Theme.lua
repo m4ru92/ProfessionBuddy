@@ -29,7 +29,6 @@ STYLES.modern = {
         barPane = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 10, insets = { left = 2, right = 2, top = 2, bottom = 2 } },
         pane = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 10, insets = { left = 2, right = 2, top = 2, bottom = 2 } },
         professionTabBorder = { edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 },
-        settingsGroup = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = nil, insets = { left = 4, right = 4, top = 4, bottom = 4 } },
     },
     -- SetBackdropColor, by role
     bg = {
@@ -41,7 +40,6 @@ STYLES.modern = {
         input = { 0.05, 0.05, 0.07, 0.9 },
         menu = { 0.08, 0.08, 0.1, 0.97 },
         recipeListPane = { 0.05, 0.05, 0.07, 0.95 },
-        settingsGroup = { 0.1, 0.1, 0.12, 0.6 },
     },
     -- SetBackdropBorderColor, by role
     border = {
@@ -133,9 +131,6 @@ STYLES.classic = {
         -- from the edge (20 recipe rows fill 402 of the list's 404 px).
         pane = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 } },
         professionTabBorder = { edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 },
-        -- No border: Settings was laid out for borderless boxes, and its
-        -- check boxes sit 4 px inside each box's edge.
-        settingsGroup = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = nil, insets = { left = 4, right = 4, top = 4, bottom = 4 } },
     },
     bg = {
         craftBarPane = { 1, 1, 1, 0.9 },
@@ -146,7 +141,6 @@ STYLES.classic = {
         input = { 0, 0, 0, 0.8 },
         menu = { 1, 1, 1, 1 },
         recipeListPane = { 1, 1, 1, 0.9 },
-        settingsGroup = { 0.18, 0.16, 0.12, 0.6 },   -- a little lighter than the background
     },
     border = {
         calcButton = { 0.7, 0.6, 0.3, 0.8 },

@@ -78,7 +78,7 @@ local DETAIL_W      = FRAME_W - LIST_W - 30
 local ROW_H         = 20
 local SKILL_BAR_H   = 22
 local VISIBLE_ROWS  = 20
-local CRAFT_BAR_H   = 52
+local CRAFT_BAR_H   = 56   -- two 22 px button rows with 6 px above and 4 below: clear of either look's border
 
 -- Seconds the search box waits after the last keystroke before rebuilding.
 local SEARCH_DEBOUNCE = 0.3
@@ -4353,7 +4353,7 @@ function TSF:BuildCraftBar(parent)
     local BTN_W  = 88
     local GAP    = 4
     local PAD    = 8
-    local ROW1_Y = -4
+    local ROW1_Y = -6
     local ROW2_Y = ROW1_Y - BTN_H - 2
 
     local x1 = PAD
@@ -4888,7 +4888,7 @@ function TSF:BuildComposer(parent)
     local BTN_W  = 88
     local GAP    = 4
     local PAD    = 8
-    local ROW1_Y = -4
+    local ROW1_Y = -6
     local ROW2_Y = ROW1_Y - BTN_H - 2
 
     local x1 = PAD
@@ -5119,22 +5119,23 @@ end
 -- Bottom bar
 ----------------------------------------------------------------------
 function TSF:BuildBottomBar(parent)
+    -- The bar spans the window's inner area: Blizzard's InsetBg
+    -- (BasicFrameTemplateWithInset, Blizzard_UIPanelTemplates), which sits 4
+    -- px from the window's left edge and 6 from its right, less 3 px for the
+    -- inner border (its corners are 6 x 6). Its text and button keep the
+    -- places they had on the old 10-px-inset bar.
+    local inner = parent.InsetBg or parent
     local bar = CreateFrame("Frame", nil, parent)
-    bar:SetSize(FRAME_W - 20, 22)
-    bar:SetPoint("BOTTOMLEFT", 10, 6)
+    bar:SetHeight(22)
+    bar:SetPoint("BOTTOMLEFT", inner, "BOTTOMLEFT", 3, 2)
+    bar:SetPoint("BOTTOMRIGHT", inner, "BOTTOMRIGHT", -3, 2)
 
     local barBg = bar:CreateTexture(nil, "BACKGROUND")
-    if Theme:IsClassic() then
-        -- Classic: the bar's colour reaches the window's inner edges.
-        barBg:SetPoint("TOPLEFT", bar, "TOPLEFT", -6, 2)
-        barBg:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 6, -3)
-    else
-        barBg:SetAllPoints()
-    end
+    barBg:SetAllPoints()
     Theme:Fill(barBg, "bottomBar")
 
     local summary = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    summary:SetPoint("LEFT", 8, 0)
+    summary:SetPoint("LEFT", 11, 0)
     self.summaryText = summary
 
     -- Material Calculator toggle button (right side of bottom bar)
@@ -5143,7 +5144,7 @@ function TSF:BuildBottomBar(parent)
         -- calculator is open (UpdateCalcBtnState).
         local calcBtn = CreateFrame("Button", nil, bar, "UIPanelButtonTemplate")
         calcBtn:SetSize(120, 20)
-        calcBtn:SetPoint("RIGHT", -2, 0)
+        calcBtn:SetPoint("RIGHT", -3, 0)
         calcBtn:SetText("Material Calculator")
         calcBtn:SetNormalFontObject(GameFontNormalSmall)
         calcBtn:SetHighlightFontObject(GameFontHighlightSmall)
@@ -5157,7 +5158,7 @@ function TSF:BuildBottomBar(parent)
     end
     local calcBtn = CreateFrame("Button", nil, bar)
     calcBtn:SetSize(120, 18)
-    calcBtn:SetPoint("RIGHT", -4, 0)
+    calcBtn:SetPoint("RIGHT", -5, 0)
 
     local calcBg = calcBtn:CreateTexture(nil, "BACKGROUND")
     calcBg:SetAllPoints()
@@ -5286,7 +5287,6 @@ function TSF:BuildSettingsPanel(parent)
     local checkboxes = {}
     local COL_LEFT = 14
     local COL_RIGHT = 358
-    local GROUP_W = 336
 
     -- Both columns scroll together inside one scroll frame; the title line
     -- above and the hint below stay put. The bar shows only when the
@@ -5437,12 +5437,6 @@ function TSF:BuildSettingsPanel(parent)
     altHeader:SetTextColor(1, 0.82, 0)
     yLeft = yLeft - 20
 
-    local altGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
-    altGroupBg:SetPoint("TOPLEFT", COL_LEFT - 4, yLeft + 4)
-    altGroupBg:SetSize(GROUP_W, 1) -- height set below
-    Theme:SetBackdrop(altGroupBg, "settingsGroup")
-    Theme:BackdropColor(altGroupBg, "settingsGroup")
-    local altGroupTop = yLeft + 4
     yLeft = yLeft - 6
 
     MakeCheckbox("Show in detail panel", "showAltInDetail", yLeft)
@@ -5454,7 +5448,6 @@ function TSF:BuildSettingsPanel(parent)
     MakeCheckbox("Show opposite-faction alts", "showCrossFactionAlts", yLeft)
     yLeft = yLeft - 28   -- the 24 px check box and 4 px, matching the top
 
-    altGroupBg:SetHeight(altGroupTop - yLeft)
 
     -- ── Friend Data section ──────────────────────────────────
     yLeft = yLeft - 20
@@ -5465,12 +5458,6 @@ function TSF:BuildSettingsPanel(parent)
     friendHeader:SetTextColor(1, 0.82, 0)
     yLeft = yLeft - 20
 
-    local friendGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
-    friendGroupBg:SetPoint("TOPLEFT", COL_LEFT - 4, yLeft + 4)
-    friendGroupBg:SetSize(GROUP_W, 1)
-    Theme:SetBackdrop(friendGroupBg, "settingsGroup")
-    Theme:BackdropColor(friendGroupBg, "settingsGroup")
-    local friendGroupTop = yLeft + 4
     yLeft = yLeft - 6
 
     MakeCheckbox("Show in detail panel", "showRemoteInDetail", yLeft)
@@ -5494,7 +5481,6 @@ function TSF:BuildSettingsPanel(parent)
     TSF.crossFriendsCB = crossFriendsCB
     yLeft = yLeft - 28   -- the 24 px check box and 4 px, matching the top
 
-    friendGroupBg:SetHeight(friendGroupTop - yLeft)
 
     -- ════════════════════════════════════════════════════════════
     -- RIGHT COLUMN
@@ -5508,12 +5494,6 @@ function TSF:BuildSettingsPanel(parent)
     sectionHeader:SetTextColor(1, 0.82, 0)
     yRight = yRight - 20
 
-    local groupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
-    groupBg:SetPoint("TOPLEFT", COL_RIGHT - 4, yRight + 4)
-    groupBg:SetSize(GROUP_W, 1) -- height set below
-    Theme:SetBackdrop(groupBg, "settingsGroup")
-    Theme:BackdropColor(groupBg, "settingsGroup")
-    local groupTop = yRight + 4
     yRight = yRight - 6
 
     local usedInCB = MakeCheckbox("Show recipes used in", "tooltipShowUsedIn", yRight, COL_RIGHT)
@@ -5601,7 +5581,6 @@ function TSF:BuildSettingsPanel(parent)
     end)
     lootUnlearnedCB:SetScript("OnLeave", function() GameTooltip:Hide() end)
     yRight = yRight - 24
-    groupBg:SetHeight(groupTop - yRight)
 
     -- "Show for unlearned professions" and "Skinning yield" are SUB-options of
     -- "Gather skill on tooltips" -- disable/grey them when the parent is off
@@ -5706,12 +5685,6 @@ function TSF:BuildSettingsPanel(parent)
     notifHeader:SetTextColor(1, 0.82, 0)
     yRight = yRight - 20
 
-    local notifGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
-    notifGroupBg:SetPoint("TOPLEFT", COL_RIGHT - 4, yRight + 4)
-    notifGroupBg:SetSize(GROUP_W, 1)
-    Theme:SetBackdrop(notifGroupBg, "settingsGroup")
-    Theme:BackdropColor(notifGroupBg, "settingsGroup")
-    local notifGroupTop = yRight + 4
     yRight = yRight - 6
 
     -- Two checkboxes on one row: the column has room for one more row only,
@@ -5751,7 +5724,6 @@ function TSF:BuildSettingsPanel(parent)
     notifNote:SetText("|cff888888The Orders tab count badge is always shown.|r")
     yRight = yRight - 16
 
-    notifGroupBg:SetHeight(notifGroupTop - yRight)
 
     content:SetHeight(math.max(-yLeft, -yRight) + 20)
 

@@ -3054,7 +3054,7 @@ do
         assert(not src:find(":SetColorTexture%(%s*[%d.]+"), "T101: " .. f .. " still sets a colour by number")
         assert(not src:find(":SetBackdrop%(%s*{"), "T101: " .. f .. " still builds its own backdrop")
     end
-    assert(calls == 148, "T101: " .. calls .. " Theme calls, expected 148")
+    assert(calls == 140, "T101: " .. calls .. " Theme calls, expected 140")
     local got = {}
     local tex = { SetColorTexture = function(_, r, g, b, a) got = { r, g, b, a } end }
     Theme:Fill(tex, "menuHover")
@@ -3066,7 +3066,7 @@ do
     local ok = pcall(Theme.Fill, Theme, tex, "noSuchRole")
     assert(not ok, "T101: an unknown role drew nothing instead of failing")
 end
-passed("T101 Theme: all 148 panel colour and backdrop calls name a role the Modern look has; values pass through")
+passed("T101 Theme: all 140 panel colour and backdrop calls name a role the Modern look has; values pass through")
 
 -- T102: Window style (feature/ui-themes phase 2). The setting starts at
 -- Modern; Classic and Match the game pick the Classic look on TBC Classic
@@ -3112,11 +3112,12 @@ do
     assert(shown == "PROFBUDDY_RELOAD_STYLE" and StaticPopupDialogs.PROFBUDDY_RELOAD_STYLE.button1 == "Reload",
         "T102: reload offer")
     StaticPopupDialogs, StaticPopup_Show = oldDialogs, oldShow
-    -- Classic draws text headers' expand marks as Blizzard's +/- buttons,
-    -- and its settings boxes have no border (the layout has no room for one).
+    -- Classic draws text headers' expand marks as Blizzard's +/- buttons.
+    -- Settings has no group boxes in either look.
     assert(Theme:ExpandIcon(true):find("UI%-PlusButton%-Up") and Theme:ExpandIcon(false):find("UI%-MinusButton%-Up"),
         "T102: expand icons")
-    assert(Theme.STYLES.classic.backdrop.settingsGroup.edgeFile == nil, "T102: Classic settings box has a border")
+    assert(Theme.STYLES.classic.backdrop.settingsGroup == nil and Theme.STYLES.modern.backdrop.settingsGroup == nil,
+        "T102: a look still has Settings group boxes")
     assert(Theme.STYLES.classic.backdrop.barPane.edgeSize < Theme.STYLES.classic.backdrop.pane.edgeSize,
         "T102: Classic craft bar border is not the thinner one")
     local fh = assert(io.open(BASE .. "/UI/TradeSkillFrame.lua", "r"))

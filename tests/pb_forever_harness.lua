@@ -3604,4 +3604,20 @@ do
 end
 print("  PASS F65 Enchant Craft button: Blizzard's red button artwork, pressed and disabled states, secure template only")
 
-print("ALL FOREVER TESTS PASS (65)")
+-- F66: Layout shared by both looks (phase 2e). The bottom bar spans the
+-- window's inner area (Blizzard's InsetBg), 3 px in for its border, at the
+-- same 6 px from the bottom as before; the craft and Request Craft bars are
+-- 56 px tall so two 22 px button rows clear the border.
+do
+    local bar = TSF.bottomBar
+    local p = bar and rawget(bar, "_lastPoint")
+    EXPECT(p and p[1] == "BOTTOMRIGHT" and p[2] == TSF.frame.InsetBg and p[4] == -3 and p[5] == 2,
+        "bottom bar is not on the window's inner area")
+    EXPECT(rawget(TSF.craftBar, "_size")[2] == 56 and rawget(TSF.composerBar, "_size")[2] == 56,
+        "craft bars are not 56 px tall")
+    local cp = rawget(TSF.craftBtn, "_lastPoint")
+    EXPECT(cp and cp[5] == -6, "the craft bar's first row is not 6 px down: " .. tostring(cp and cp[5]))
+end
+print("  PASS F66 Bottom bar on the window's inner area; craft and Request Craft bars 56 px tall")
+
+print("ALL FOREVER TESTS PASS (66)")
