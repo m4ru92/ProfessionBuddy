@@ -1596,6 +1596,56 @@ end
 -- open list on hide; the lists are UIParent children, not window children.
 addon.CloseAllDropdowns = CloseAllDropdowns
 
+-- Blizzard's red panel button drawn by hand, for a button that cannot take
+-- UIPanelButtonTemplate. The enchant Craft button is secure, and the template
+-- on a secure button kills its cast (see the enchant button below), so it gets
+-- the template's own artwork instead: three slices of UI-Panel-Button-Up with
+-- the template's TexCoords (Blizzard_SharedXML SecureUIPanelTemplates.xml,
+-- the same on both clients), the -Down slices while pressed, -Disabled when it
+-- cannot be used, and UIPanelButtonHighlightTexture on hover. The returned
+-- function sets "up", "down" or "disabled".
+local PANEL_BTN = "Interface\\Buttons\\UI-Panel-Button-"
+local function DrawPanelButtonArt(btn, label)
+    local L = btn:CreateTexture(nil, "BACKGROUND")
+    L:SetSize(12, 22)
+    L:SetPoint("TOPLEFT"); L:SetPoint("BOTTOMLEFT")
+    local R = btn:CreateTexture(nil, "BACKGROUND")
+    R:SetSize(12, 22)
+    R:SetPoint("TOPRIGHT"); R:SetPoint("BOTTOMRIGHT")
+    local M = btn:CreateTexture(nil, "BACKGROUND")
+    M:SetPoint("TOPLEFT", L, "TOPRIGHT"); M:SetPoint("BOTTOMRIGHT", R, "BOTTOMLEFT")
+    local hi = btn:CreateTexture(nil, "HIGHLIGHT")
+    hi:SetTexture(PANEL_BTN .. "Highlight")
+    hi:SetTexCoord(0, 0.625, 0, 0.6875)
+    hi:SetBlendMode("ADD")
+    hi:SetAllPoints()
+    local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    text:SetPoint("CENTER")
+    text:SetText(label)
+    local current
+    local function look(state)
+        if state == current then return end
+        current = state
+        btn.lookState = state
+        local file = PANEL_BTN .. (state == "down" and "Down" or state == "disabled" and "Disabled" or "Up")
+        L:SetTexture(file); L:SetTexCoord(0, 0.09375, 0, 0.6875)
+        R:SetTexture(file); R:SetTexCoord(0.53125, 0.625, 0, 0.6875)
+        M:SetTexture(file); M:SetTexCoord(0.09375, 0.53125, 0, 0.6875)
+        if state == "disabled" then
+            text:SetTextColor(0.5, 0.5, 0.5)
+            hi:SetAlpha(0)
+        else
+            text:SetTextColor(1, 0.82, 0)
+            hi:SetAlpha(1)
+        end
+    end
+    -- Hooks only: the secure click handler stays untouched.
+    btn:HookScript("OnMouseDown", function() if current ~= "disabled" then look("down") end end)
+    btn:HookScript("OnMouseUp", function() if current ~= "disabled" then look("up") end end)
+    look("up")
+    return look
+end
+
 -- A quantity box with a minus button on its left and a plus button on its
 -- right, as Blizzard's TBC trade skill window has (TradeSkillDecrementButton
 -- / TradeSkillIncrementButton). Classic uses Blizzard's own arrow buttons;
@@ -4292,7 +4342,7 @@ function TSF:BuildCraftBar(parent)
     craftBar:SetHeight(CRAFT_BAR_H)
     craftBar:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, 30)
     craftBar:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30)
-    Theme:SetBackdrop(craftBar, "pane")
+    Theme:SetBackdrop(craftBar, "barPane")
     Theme:BackdropColor(craftBar, "craftBarPane")
     Theme:BorderColor(craftBar, "craftBarPane")
 
@@ -4408,27 +4458,15 @@ function TSF:BuildCraftBar(parent)
     -- the macrotext is set out of combat in UpdateCraftBar.
     -- SecureActionButtonTemplate ONLY -- combining with UIPanelButtonTemplate
     -- lets its OnClick override the secure click handler, which silently
-    -- kills the cast. So we style it by hand instead (like the prof tabs).
+    -- kills the cast. So it draws the template's own artwork by hand
+    -- (DrawPanelButtonArt) and matches the other Craft buttons.
     local enchantBtn = CreateFrame("Button", "ProfBuddyEnchantCraftBtn", parent,
         "SecureActionButtonTemplate")
     enchantBtn:SetSize(BTN_W, BTN_H)
     enchantBtn:SetPoint("TOPLEFT", craftBar, "TOPLEFT", x1, ROW1_Y)
     enchantBtn:SetFrameLevel(craftBar:GetFrameLevel() + 5)
 
-    -- Outer (border color) then an inset fill, for a simple 1px border
-    local ebBg = enchantBtn:CreateTexture(nil, "BACKGROUND")
-    ebBg:SetAllPoints()
-    Theme:Fill(ebBg, "enchantButtonEdge")
-    local ebFill = enchantBtn:CreateTexture(nil, "BORDER")
-    ebFill:SetPoint("TOPLEFT", 1, -1)
-    ebFill:SetPoint("BOTTOMRIGHT", -1, 1)
-    Theme:Fill(ebFill, "enchantButtonFill")
-    local ebHi = enchantBtn:CreateTexture(nil, "HIGHLIGHT")
-    ebHi:SetAllPoints()
-    Theme:Fill(ebHi, "enchantButtonHover")
-    local ebText = enchantBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    ebText:SetPoint("CENTER")
-    ebText:SetText("Craft")
+    enchantBtn.look = DrawPanelButtonArt(enchantBtn, "Craft")
 
     enchantBtn:SetAttribute("type", "macro")
     -- Secure casts fire on key-DOWN on the modern engine, so the down
@@ -4776,15 +4814,17 @@ function TSF:UpdateCraftBar()
             -- combat, so leaving the button live would cast whatever enchant
             -- was selected BEFORE combat onto the next item clicked. Disable
             -- it instead; PLAYER_REGEN_ENABLED re-runs this function.
-            eb:SetAlpha(0.4)
+            eb.look("disabled")
+            eb:SetAlpha(1)
             eb:EnableMouse(false)
         else
             eb:SetAttribute("macrotext", "/cast " .. recipe.name)
+            eb:SetAlpha(1)
             if canCraft then
-                eb:SetAlpha(1)
+                eb.look("up")
                 eb:EnableMouse(true)
             else
-                eb:SetAlpha(0.4)
+                eb.look("disabled")
                 eb:EnableMouse(false)
             end
         end
@@ -4840,7 +4880,7 @@ function TSF:BuildComposer(parent)
     bar:SetHeight(CRAFT_BAR_H)
     bar:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, 30)
     bar:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30)
-    Theme:SetBackdrop(bar, "pane")
+    Theme:SetBackdrop(bar, "barPane")
     Theme:BackdropColor(bar, "craftBarPane")
     Theme:BorderColor(bar, "craftBarPane")
 
@@ -5084,7 +5124,13 @@ function TSF:BuildBottomBar(parent)
     bar:SetPoint("BOTTOMLEFT", 10, 6)
 
     local barBg = bar:CreateTexture(nil, "BACKGROUND")
-    barBg:SetAllPoints()
+    if Theme:IsClassic() then
+        -- Classic: the bar's colour reaches the window's inner edges.
+        barBg:SetPoint("TOPLEFT", bar, "TOPLEFT", -6, 2)
+        barBg:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 6, -3)
+    else
+        barBg:SetAllPoints()
+    end
     Theme:Fill(barBg, "bottomBar")
 
     local summary = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -5092,6 +5138,23 @@ function TSF:BuildBottomBar(parent)
     self.summaryText = summary
 
     -- Material Calculator toggle button (right side of bottom bar)
+    if Theme:IsClassic() then
+        -- Classic: Blizzard's red button, its highlight locked on while the
+        -- calculator is open (UpdateCalcBtnState).
+        local calcBtn = CreateFrame("Button", nil, bar, "UIPanelButtonTemplate")
+        calcBtn:SetSize(120, 20)
+        calcBtn:SetPoint("RIGHT", -2, 0)
+        calcBtn:SetText("Material Calculator")
+        calcBtn:SetNormalFontObject(GameFontNormalSmall)
+        calcBtn:SetHighlightFontObject(GameFontHighlightSmall)
+        calcBtn:SetScript("OnClick", function()
+            self:ToggleCalcPanel()
+            self:UpdateCalcBtnState()
+        end)
+        self.calcBtn = calcBtn
+        self.bottomBar = bar
+        return
+    end
     local calcBtn = CreateFrame("Button", nil, bar)
     calcBtn:SetSize(120, 18)
     calcBtn:SetPoint("RIGHT", -4, 0)
@@ -5138,6 +5201,11 @@ function TSF:UpdateCalcBtnState()
 
     local isOpen = self.calcPanel and self.calcPanel:IsShown()
     btn._depressed = isOpen
+
+    if Theme:IsClassic() then
+        if isOpen then btn:LockHighlight() else btn:UnlockHighlight() end
+        return
+    end
 
     if isOpen then
         -- Depressed / active state
@@ -5384,7 +5452,7 @@ function TSF:BuildSettingsPanel(parent)
     MakeCheckbox("Include in material calculator", "includeAltsInCalc", yLeft)
     yLeft = yLeft - 26
     MakeCheckbox("Show opposite-faction alts", "showCrossFactionAlts", yLeft)
-    yLeft = yLeft - 14
+    yLeft = yLeft - 28   -- the 24 px check box and 4 px, matching the top
 
     altGroupBg:SetHeight(altGroupTop - yLeft)
 
@@ -5424,7 +5492,7 @@ function TSF:BuildSettingsPanel(parent)
         if addon.FriendsPanel and addon.FriendsPanel.Refresh then addon.FriendsPanel:Refresh() end
     end)
     TSF.crossFriendsCB = crossFriendsCB
-    yLeft = yLeft - 14
+    yLeft = yLeft - 28   -- the 24 px check box and 4 px, matching the top
 
     friendGroupBg:SetHeight(friendGroupTop - yLeft)
 

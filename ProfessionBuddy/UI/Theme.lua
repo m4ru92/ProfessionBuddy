@@ -26,6 +26,7 @@ STYLES.modern = {
         dropdownList = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 10, insets = { left = 2, right = 2, top = 2, bottom = 2 } },
         input = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8, insets = { left = 2, right = 2, top = 2, bottom = 2 } },
         menu = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
+        barPane = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 10, insets = { left = 2, right = 2, top = 2, bottom = 2 } },
         pane = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 10, insets = { left = 2, right = 2, top = 2, bottom = 2 } },
         professionTabBorder = { edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 },
         settingsGroup = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = nil, insets = { left = 4, right = 4, top = 4, bottom = 4 } },
@@ -73,9 +74,6 @@ STYLES.modern = {
         divider = { 0.3, 0.3, 0.35, 0.6 },
         dividerFaint = { 0.3, 0.3, 0.35, 0.4 },
         dropdownButton = { 0.12, 0.12, 0.15, 1 },
-        enchantButtonEdge = { 0.4, 0.4, 0.45, 0.9 },
-        enchantButtonFill = { 0.18, 0.18, 0.2, 1 },
-        enchantButtonHover = { 0.35, 0.35, 0.45, 0.4 },
         guildRowHover = { 0.3, 0.3, 0.5, 0.15 },
         historyRowEven = { 0.12, 0.12, 0.12, 0.5 },
         iconButtonHover = { 1, 1, 1, 0.25 },
@@ -128,13 +126,16 @@ STYLES.classic = {
         dropdownList = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 16, edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
         input = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8, insets = { left = 2, right = 2, top = 2, bottom = 2 } },
         menu = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 16, edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
+        -- The craft and Request Craft bars keep the thinner edge: their
+        -- buttons sit 4 px from it.
+        barPane = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } },
         -- Edge 16, not Blizzard's 32: PB's panes keep their content 2 to 4 px
         -- from the edge (20 recipe rows fill 402 of the list's 404 px).
         pane = { bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 } },
         professionTabBorder = { edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 },
-        -- Blizzard's classic options boxes (OptionsBoxTemplate): tooltip
-        -- background and border, the border grey.
-        settingsGroup = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 16, insets = { left = 5, right = 5, top = 5, bottom = 5 } },
+        -- No border: Settings was laid out for borderless boxes, and its
+        -- check boxes sit 4 px inside each box's edge.
+        settingsGroup = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = nil, insets = { left = 4, right = 4, top = 4, bottom = 4 } },
     },
     bg = {
         craftBarPane = { 1, 1, 1, 0.9 },
@@ -145,7 +146,7 @@ STYLES.classic = {
         input = { 0, 0, 0, 0.8 },
         menu = { 1, 1, 1, 1 },
         recipeListPane = { 1, 1, 1, 0.9 },
-        settingsGroup = { 0.1, 0.1, 0.1, 0.5 },
+        settingsGroup = { 0.18, 0.16, 0.12, 0.6 },   -- a little lighter than the background
     },
     border = {
         calcButton = { 0.7, 0.6, 0.3, 0.8 },
@@ -176,9 +177,6 @@ STYLES.classic = {
         divider = { 0.6, 0.5, 0.25, 0.6 },
         dividerFaint = { 0.6, 0.5, 0.25, 0.35 },
         dropdownButton = { 0.08, 0.07, 0.05, 1 },
-        enchantButtonEdge = { 0.6, 0.5, 0.25, 0.9 },
-        enchantButtonFill = { 0.2, 0.15, 0.08, 1 },
-        enchantButtonHover = { file = "Interface\\QuestFrame\\UI-QuestTitleHighlight", blend = "ADD", color = { 1, 1, 1, 0.6 } },
         guildRowHover = { file = "Interface\\QuestFrame\\UI-QuestTitleHighlight", blend = "ADD", color = { 1, 1, 1, 0.4 } },
         historyRowEven = { 1, 0.85, 0.5, 0.06 },
         iconButtonHover = { 1, 1, 1, 0.25 },
@@ -206,10 +204,6 @@ STYLES.classic = {
         -- then SetVertexColor(0, 0, 0.75, 0.5): 0.2 x 0.5 = 0.1.
         skillBarBackground = { 0, 0, 0.75, 0.1 },
         statusPill = { 0.2, 0.15, 0.08, 0.9 },
-    },
-    -- Border colour for a backdrop that no call colours itself.
-    backdropBorder = {
-        settingsGroup = { 0.4, 0.4, 0.4, 1 },
     },
     -- Faction colours carry meaning: same tint as Modern.
     tint = {
@@ -302,9 +296,6 @@ end
 
 function Theme:SetBackdrop(frame, role)
     frame:SetBackdrop(look("backdrop", role))
-    local edge = self:Style().backdropBorder
-    edge = edge and edge[role]
-    if edge then frame:SetBackdropBorderColor(edge[1], edge[2], edge[3], edge[4]) end
 end
 
 -- Classic: Blizzard's +/- expand button as an inline texture, for headers

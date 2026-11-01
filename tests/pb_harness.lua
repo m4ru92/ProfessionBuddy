@@ -3054,7 +3054,7 @@ do
         assert(not src:find(":SetColorTexture%(%s*[%d.]+"), "T101: " .. f .. " still sets a colour by number")
         assert(not src:find(":SetBackdrop%(%s*{"), "T101: " .. f .. " still builds its own backdrop")
     end
-    assert(calls == 151, "T101: " .. calls .. " Theme calls, expected 151")
+    assert(calls == 148, "T101: " .. calls .. " Theme calls, expected 148")
     local got = {}
     local tex = { SetColorTexture = function(_, r, g, b, a) got = { r, g, b, a } end }
     Theme:Fill(tex, "menuHover")
@@ -3066,7 +3066,7 @@ do
     local ok = pcall(Theme.Fill, Theme, tex, "noSuchRole")
     assert(not ok, "T101: an unknown role drew nothing instead of failing")
 end
-passed("T101 Theme: all 151 panel colour and backdrop calls name a role the Modern look has; values pass through")
+passed("T101 Theme: all 148 panel colour and backdrop calls name a role the Modern look has; values pass through")
 
 -- T102: Window style (feature/ui-themes phase 2). The setting starts at
 -- Modern; Classic and Match the game pick the Classic look on TBC Classic
@@ -3091,10 +3091,8 @@ do
         end
     end
     for kind, roles in pairs(Theme.STYLES.classic) do
-        -- backdropBorder is optional: a border colour for a backdrop role
-        local inModern = (kind == "backdropBorder") and Theme.STYLES.modern.backdrop or Theme.STYLES.modern[kind]
         for role in pairs(roles) do
-            assert(inModern[role] ~= nil, "T102: Classic has a role Modern lacks: " .. kind .. " " .. role)
+            assert(Theme.STYLES.modern[kind][role] ~= nil, "T102: Classic has a role Modern lacks: " .. kind .. " " .. role)
         end
     end
     pick("classic")
@@ -3114,18 +3112,17 @@ do
     assert(shown == "PROFBUDDY_RELOAD_STYLE" and StaticPopupDialogs.PROFBUDDY_RELOAD_STYLE.button1 == "Reload",
         "T102: reload offer")
     StaticPopupDialogs, StaticPopup_Show = oldDialogs, oldShow
-    -- Classic colours a settings box's border itself (Modern has no border
-    -- there), and draws text headers' expand marks as Blizzard's +/- buttons.
-    local seen = {}
-    local frame = { SetBackdrop = function(_, b) seen.backdrop = b end,
-                    SetBackdropBorderColor = function(_, r, g, b, a) seen.border = { r, g, b, a } end }
-    Theme:SetBackdrop(frame, "settingsGroup")
-    assert(seen.backdrop and seen.border and seen.border[1] == 0.4, "T102: Classic settings box border")
+    -- Classic draws text headers' expand marks as Blizzard's +/- buttons,
+    -- and its settings boxes have no border (the layout has no room for one).
     assert(Theme:ExpandIcon(true):find("UI%-PlusButton%-Up") and Theme:ExpandIcon(false):find("UI%-MinusButton%-Up"),
         "T102: expand icons")
-    pick("modern"); seen = {}
-    Theme:SetBackdrop(frame, "settingsGroup")
-    assert(seen.backdrop and not seen.border, "T102: Modern coloured a settings box border")
+    assert(Theme.STYLES.classic.backdrop.settingsGroup.edgeFile == nil, "T102: Classic settings box has a border")
+    assert(Theme.STYLES.classic.backdrop.barPane.edgeSize < Theme.STYLES.classic.backdrop.pane.edgeSize,
+        "T102: Classic craft bar border is not the thinner one")
+    local fh = assert(io.open(BASE .. "/UI/TradeSkillFrame.lua", "r"))
+    local tsf = fh:read("*a"); fh:close()
+    assert(tsf:find('Theme:SetBackdrop%(craftBar, "barPane"%)') and tsf:find('Theme:SetBackdrop%(bar, "barPane"%)'),
+        "T102: the craft and Request Craft bars do not use barPane")
     S.windowStyle = "modern"; Theme._name = nil
 end
 passed("T102 Window style: Modern by default; Classic and Match the game give Classic here; kept for the session; every role in both looks; reload offer")

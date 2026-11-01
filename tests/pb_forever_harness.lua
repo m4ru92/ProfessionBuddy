@@ -3580,4 +3580,28 @@ do
 end
 print("  PASS F64 Quantity - and +: 1 to 999 on both boxes, hidden with the box; Classic selection takes the difficulty colour, name white")
 
-print("ALL FOREVER TESTS PASS (64)")
+-- F65: The enchant Craft button wears Blizzard's red button artwork in both
+-- looks (drawn by hand: the template would kill its secure cast). It shows
+-- the pressed slices while held, the disabled ones when nothing can be
+-- crafted, and never takes UIPanelButtonTemplate.
+do
+    local eb = TSF.enchantCraftBtn
+    EXPECT(eb and eb.look, "no enchant button artwork")
+    EXPECT(eb.lookState == "up", "enchant button starts " .. tostring(eb.lookState))
+    eb.look("disabled")
+    EXPECT(eb.lookState == "disabled", "disabled look")
+    local down = eb._h and eb._h.OnMouseDown
+    EXPECT(down, "no pressed-state hook")
+    down(eb)
+    EXPECT(eb.lookState == "disabled", "a disabled button showed pressed")
+    eb.look("up"); down(eb)
+    EXPECT(eb.lookState == "down", "pressed look")
+    eb._h.OnMouseUp(eb)
+    EXPECT(eb.lookState == "up", "released look")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('CreateFrame%("Button", "ProfBuddyEnchantCraftBtn", parent,%s*"SecureActionButtonTemplate"%)'),
+        "the enchant button's template changed")
+end
+print("  PASS F65 Enchant Craft button: Blizzard's red button artwork, pressed and disabled states, secure template only")
+
+print("ALL FOREVER TESTS PASS (65)")
