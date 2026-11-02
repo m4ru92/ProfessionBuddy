@@ -2329,17 +2329,28 @@ end
 OP._badges = OP._badges or {}
 
 -- Create a small count badge anchored to a button's top-right corner.
+-- Classic: the tab art's ends are clear, so the button's corner lies outside
+-- the drawn tab. The count joins the tab's own label instead ("Orders (1)"),
+-- which the tab centres and colours as one. Modern keeps a separate badge in
+-- the corner.
+local function LabelBadge(button)
+    local base = button:GetText() or ""
+    return {
+        SetText = function(_, t) button:SetText(base .. " " .. t) end,
+        Show = function() end,
+        Hide = function() button:SetText(base) end,
+    }
+end
+
 function OP:CreateBadge(button)
-    local b = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    local label = Theme:IsClassic() and button:GetFontString()
-    if label then
-        -- Classic: the tab art's ends are clear, so the button's corner lies
-        -- outside the drawn tab; the badge follows the label instead.
-        b:SetPoint("LEFT", label, "RIGHT", 2, 0)
+    local b
+    if Theme:IsClassic() then
+        b = LabelBadge(button)
     else
+        b = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         b:SetPoint("TOPRIGHT", button, "TOPRIGHT", -3, -2)
+        b:SetTextColor(1, 0.85, 0.2)
     end
-    b:SetTextColor(1, 0.85, 0.2)
     b:Hide()
     table.insert(self._badges, b)
     self:UpdateBadge()

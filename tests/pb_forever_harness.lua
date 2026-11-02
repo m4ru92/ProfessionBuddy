@@ -3679,24 +3679,30 @@ do
     EXPECT(font == GameFontNormalSmall, "unselected tab label not gold")
     EXPECT(hlAlpha == 1, "an unselected tab does not light on hover")
 
-    -- Classic: the Orders badge follows the tab's label; Modern keeps the corner
+    -- Classic: the Orders count joins the tab's label ("Orders (1)", centred
+    -- as one); Modern keeps a separate badge in the corner.
     local OP = ProfBuddy.OrdersPanel
-    local function badgeAnchor()
-        local pt
-        local label = {}
-        local fake = { GetFontString = function() return label end,
-            CreateFontString = function() return recorder({ SetPoint = function(_, a, rel) pt = { a, rel } end }) end }
+    local function makeTab()
+        local tab = { text = "Orders" }
+        tab.GetText = function() return tab.text end
+        tab.SetText = function(_, t) tab.text = t end
+        tab.CreateFontString = function() return recorder({ SetPoint = function(_, a) tab.pt = a end }) end
         local n = #OP._badges
-        OP:CreateBadge(fake)
+        local b = OP:CreateBadge(tab)
         table.remove(OP._badges, n + 1)
-        return pt, label
+        return tab, b
     end
-    local pt, label = badgeAnchor()
-    EXPECT(pt[1] == "LEFT" and pt[2] == label, "Classic badge not beside the label")
+    local tab, b = makeTab()
+    b:SetText("(1)"); b:Show()
+    EXPECT(tab.text == "Orders (1)" and tab.pt == nil, "Classic count not in the label: " .. tab.text)
+    b:SetText("(3)")
+    EXPECT(tab.text == "Orders (3)", "Classic count did not update: " .. tab.text)
+    b:Hide()
+    EXPECT(tab.text == "Orders", "Classic label kept the count: " .. tab.text)
     Theme.NO_TEXTURES:Show()
     Theme._name = nil
-    pt = badgeAnchor()
-    EXPECT(pt[1] == "TOPRIGHT", "Modern badge moved")
+    tab = makeTab()
+    EXPECT(tab.pt == "TOPRIGHT" and tab.text == "Orders", "Modern badge moved")
 
     EXPECT(TSF.watermark == nil, "a watermark was built on Forever")
     local shown, texFile
