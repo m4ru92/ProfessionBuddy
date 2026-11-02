@@ -295,49 +295,69 @@ function Theme:SetBackdrop(frame, role)
     frame:SetBackdrop(look("backdrop", role))
 end
 
--- Classic: Blizzard's bottom tab (PanelTabButtonTemplate, Blizzard_SharedXML
--- Classic/SharedUIPanelTemplates.xml; its atlases exist on both clients):
--- left, middle and right pieces, a taller set for the selected tab, and the
--- unselected pieces added at 0.4 alpha on hover. Returns the unselected and
--- selected sets, each with Show and Hide.
-local function textureGroup(list)
+-- Classic: Blizzard's classic tab, as on its TBC Character window
+-- (CharacterFrameTabButtonTemplate in Blizzard_FrameXML Classic/
+-- CharacterFrameTemplates.xml, which the TBC client loads; the art exists on
+-- both clients): UI-Character-InActiveTab in three pieces (20 px, the
+-- middle, 20 px, all 32 tall), UI-Character-ActiveTab 4 px higher for the
+-- selected tab, and UI-Character-Tab-RealHighlight on hover. The art's ends
+-- are clear, so tabs set 15 px into each other sit side by side. The tab
+-- draws 4 levels above its window, as the template does, so the selected
+-- tab covers the window's bottom edge and joins the panel. Returns the
+-- unselected and selected sets; showing a set also gives the label the
+-- template's colour (gold, or white when selected) and height.
+local function textureGroup(list, onShow)
     return {
-        Show = function() for _, t in ipairs(list) do t:Show() end end,
+        Show = function()
+            for _, t in ipairs(list) do t:Show() end
+            if onShow then onShow() end
+        end,
         Hide = function() for _, t in ipairs(list) do t:Hide() end end,
     }
 end
 Theme.NO_TEXTURES = textureGroup({})
 
+local TAB_ART = "Interface\\PaperDollInfoFrame\\UI-Character-"
 function Theme:DrawClassicTab(btn)
-    local function set(prefix, leftX, layer, alpha)
-        local L = btn:CreateTexture(nil, layer)
-        L:SetAtlas("uiframe-" .. prefix .. "-left", true)
-        L:SetPoint("TOPLEFT", leftX, 0)
-        local R = btn:CreateTexture(nil, layer)
-        R:SetAtlas("uiframe-" .. prefix .. "-right", true)
-        R:SetPoint("TOPRIGHT", 8, 0)
-        local Mid = btn:CreateTexture(nil, layer)
-        Mid:SetAtlas("_uiframe-" .. prefix .. "-center", true)
-        Mid:SetHorizTile(true)
-        Mid:SetPoint("TOPLEFT", L, "TOPRIGHT")
-        Mid:SetPoint("TOPRIGHT", R, "TOPLEFT")
-        if alpha then
-            for _, t in ipairs({ L, Mid, R }) do
-                t:SetBlendMode("ADD")
-                t:SetAlpha(alpha)
-            end
-        end
+    local width = btn:GetWidth()
+    local function set(file, y)
+        local L = btn:CreateTexture(nil, "BACKGROUND")
+        L:SetTexture(TAB_ART .. file)
+        L:SetTexCoord(0, 0.15625, 0, 1)
+        L:SetSize(20, 32)
+        L:SetPoint("TOPLEFT", 0, y)
+        local Mid = btn:CreateTexture(nil, "BACKGROUND")
+        Mid:SetTexture(TAB_ART .. file)
+        Mid:SetTexCoord(0.15625, 0.84375, 0, 1)
+        Mid:SetSize(width - 40, 32)
+        Mid:SetPoint("LEFT", L, "RIGHT")
+        local R = btn:CreateTexture(nil, "BACKGROUND")
+        R:SetTexture(TAB_ART .. file)
+        R:SetTexCoord(0.84375, 1, 0, 1)
+        R:SetSize(20, 32)
+        R:SetPoint("LEFT", Mid, "RIGHT")
         return { L, Mid, R }
     end
-    local normal = set("tab", -3, "BACKGROUND")
-    local selected = set("activetab", -1, "BACKGROUND")
-    set("tab", -3, "HIGHLIGHT", 0.4)
-    local fs = btn:GetFontString()
-    if fs then
-        fs:ClearAllPoints()
-        fs:SetPoint("CENTER", 0, 2)
+    local normal = set("InActiveTab", 0)
+    local selected = set("ActiveTab", 4)
+    btn:SetHighlightTexture(TAB_ART .. "Tab-RealHighlight", "ADD")
+    local hl = btn:GetHighlightTexture()
+    if hl then
+        hl:ClearAllPoints()
+        hl:SetPoint("TOPLEFT", 3, 5)
+        hl:SetPoint("BOTTOMRIGHT", -3, 0)
     end
-    return textureGroup(normal), textureGroup(selected)
+    btn:SetFrameLevel(btn:GetFrameLevel() + 4)
+    local function label(isSelected)
+        btn:SetNormalFontObject(isSelected and GameFontHighlightSmall or GameFontNormalSmall)
+        local fs = btn:GetFontString()
+        if fs then
+            fs:ClearAllPoints()
+            fs:SetPoint("CENTER", 0, isSelected and 4 or 2)
+        end
+    end
+    return textureGroup(normal, function() label(false) end),
+           textureGroup(selected, function() label(true) end)
 end
 
 -- Classic: Blizzard's +/- expand button as an inline texture, for headers

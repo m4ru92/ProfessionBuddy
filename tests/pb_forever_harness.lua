@@ -3646,11 +3646,36 @@ do
     local tex = setmetatable({}, { __index = function(_, m) return function(_, ...) got[m] = { ... } end end })
     Theme:Fill(tex, "scrollThumb")
     EXPECT(got.SetTexCoord and got.SetTexCoord[1] == 0.20 and got.SetTexCoord[4] == 0.875, "knob TexCoords not set")
-    local btn = CreateFrame("Button")
-    btn:SetText("Characters")
+    -- A recording stand-in for the tab button and its textures
+    local files, points, font, hlFile = {}, {}, nil, nil
+    local function recorder(t)
+        return setmetatable(t or {}, { __index = function(_, m)
+            return function(self, a, b, c)
+                if m == "SetTexture" then files[#files + 1] = a end
+                if m == "SetPoint" and a == "TOPLEFT" and self._piece then points[#points + 1] = c end
+            end
+        end })
+    end
+    local btn = recorder({
+        GetWidth = function() return 90 end,
+        GetFrameLevel = function() return 1 end,
+        CreateTexture = function() return recorder({ _piece = true }) end,
+        SetHighlightTexture = function(_, f) hlFile = f end,
+        GetHighlightTexture = function() return recorder() end,
+        SetNormalFontObject = function(_, f) font = f end,
+        GetFontString = function() return recorder() end,
+    })
     local normal, selected = Theme:DrawClassicTab(btn)
     EXPECT(normal and selected and normal.Show and selected.Hide, "tab sets")
-    normal:Hide(); selected:Show(); Theme.NO_TEXTURES:Show()
+    EXPECT(files[1] == "Interface\\PaperDollInfoFrame\\UI-Character-InActiveTab"
+        and files[4] == "Interface\\PaperDollInfoFrame\\UI-Character-ActiveTab", "classic tab art")
+    EXPECT(points[1] == 0 and points[2] == 4, "selected tab not 4 px higher")
+    EXPECT(hlFile == "Interface\\PaperDollInfoFrame\\UI-Character-Tab-RealHighlight", "tab highlight")
+    selected:Show()
+    EXPECT(font == GameFontHighlightSmall, "selected tab label not white")
+    normal:Show()
+    EXPECT(font == GameFontNormalSmall, "unselected tab label not gold")
+    Theme.NO_TEXTURES:Show()
     Theme._name = nil
 
     EXPECT(TSF.watermark == nil, "a watermark was built on Forever")
@@ -3674,6 +3699,6 @@ do
     st.profName = keep
     TSF.watermark = nil
 end
-print("  PASS F67 Classic knob and clear track, Blizzard tab pieces, profession watermark (none on Forever)")
+print("  PASS F67 Classic knob and clear track, Blizzard's classic tab art (selected raised, white label), profession watermark (none on Forever)")
 
 print("ALL FOREVER TESTS PASS (67)")

@@ -2087,8 +2087,9 @@ function TSF:BuildNavStrip(parent)
             -- Classic: Blizzard's bottom tabs, as on the main window. None
             -- is ever selected here.
             btn:SetHeight(32)
-            local _, selected = Theme:DrawClassicTab(btn)
+            local normal, selected = Theme:DrawClassicTab(btn)
             selected:Hide()
+            normal:Show()
             if i == 1 then
                 btn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, 2)
             else
