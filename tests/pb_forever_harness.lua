@@ -3630,4 +3630,50 @@ do
 end
 print("  PASS F66 Bottom bar on the window's inner area; craft and Request Craft bars 58 px tall, detail pane bottom unchanged")
 
-print("ALL FOREVER TESTS PASS (66)")
+-- F67: Classic recipe list scroll bar, bottom tabs and watermark (Zorden 2,
+-- 5 and 8). The knob is Blizzard's classic one with its TexCoords on no
+-- track; Classic tabs draw Blizzard's tab pieces in an unselected and a
+-- selected set; the watermark shows the profession's icon (Smelting uses
+-- Mining's) and hides for anything else, and is never built on Forever.
+do
+    local Theme = ProfBuddy.Theme
+    local cl = Theme.STYLES.classic.fill
+    EXPECT(cl.scrollThumb.file == "Interface\\Buttons\\UI-ScrollBar-Knob" and cl.scrollThumb.coords[3] == 0.125,
+        "Classic knob")
+    EXPECT(cl.scrollTrack[4] == 0, "Classic track not clear")
+    Theme._name = "classic"
+    local got = {}
+    local tex = setmetatable({}, { __index = function(_, m) return function(_, ...) got[m] = { ... } end end })
+    Theme:Fill(tex, "scrollThumb")
+    EXPECT(got.SetTexCoord and got.SetTexCoord[1] == 0.20 and got.SetTexCoord[4] == 0.875, "knob TexCoords not set")
+    local btn = CreateFrame("Button")
+    btn:SetText("Characters")
+    local normal, selected = Theme:DrawClassicTab(btn)
+    EXPECT(normal and selected and normal.Show and selected.Hide, "tab sets")
+    normal:Hide(); selected:Show(); Theme.NO_TEXTURES:Show()
+    Theme._name = nil
+
+    EXPECT(TSF.watermark == nil, "a watermark was built on Forever")
+    local shown, texFile
+    TSF.watermark = { SetTexture = function(_, f) texFile = f end,
+                      Show = function() shown = true end, Hide = function() shown = false end }
+    local st = TSF.state
+    local keep = st.profName
+    st.profName = "Smelting"; TSF:UpdateWatermark()
+    EXPECT(shown and texFile == "Interface\\Icons\\Trade_Mining", "Smelting watermark: " .. tostring(texFile))
+    st.profName = "Tailoring"; TSF:UpdateWatermark()
+    EXPECT(shown and texFile == "Interface\\Icons\\Trade_Tailoring", "Tailoring watermark")
+    st.profName = "Nothing"; TSF:UpdateWatermark()
+    EXPECT(shown == false, "unknown profession kept a watermark")
+    st.profName = "Tailoring"; texFile = nil
+    TSF:UpdateSkillBar()
+    EXPECT(texFile == "Interface\\Icons\\Trade_Tailoring", "a profession switch did not update the watermark")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('if Theme:IsClassic%(%) and addon%.Source%.flavor == "classic" then%s+%-%- Classic on TBC Classic Anniversary: a watermark'),
+        "the watermark is not limited to Classic on TBC Classic Anniversary")
+    st.profName = keep
+    TSF.watermark = nil
+end
+print("  PASS F67 Classic knob and clear track, Blizzard tab pieces, profession watermark (none on Forever)")
+
+print("ALL FOREVER TESTS PASS (67)")

@@ -2083,20 +2083,33 @@ function TSF:BuildNavStrip(parent)
         btn:SetHighlightFontObject(GameFontHighlightSmall)
         btn:SetText(def.text)
 
-        local bg = btn:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        Theme:Fill(bg, "navTab")
-
-        local border = btn:CreateTexture(nil, "BORDER")
-        border:SetHeight(1)
-        border:SetPoint("BOTTOMLEFT")
-        border:SetPoint("BOTTOMRIGHT")
-        Theme:Fill(border, "navTabBorder")
-
-        if i == 1 then
-            btn:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 8, -TAB_H - 2)
+        if Theme:IsClassic() then
+            -- Classic: Blizzard's bottom tabs, as on the main window. None
+            -- is ever selected here.
+            btn:SetHeight(32)
+            local _, selected = Theme:DrawClassicTab(btn)
+            selected:Hide()
+            if i == 1 then
+                btn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, 2)
+            else
+                btn:SetPoint("LEFT", prev, "RIGHT", -15, 0)
+            end
         else
-            btn:SetPoint("LEFT", prev, "RIGHT", TAB_PAD, 0)
+            local bg = btn:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints()
+            Theme:Fill(bg, "navTab")
+
+            local border = btn:CreateTexture(nil, "BORDER")
+            border:SetHeight(1)
+            border:SetPoint("BOTTOMLEFT")
+            border:SetPoint("BOTTOMRIGHT")
+            Theme:Fill(border, "navTabBorder")
+
+            if i == 1 then
+                btn:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 8, -TAB_H - 2)
+            else
+                btn:SetPoint("LEFT", prev, "RIGHT", TAB_PAD, 0)
+            end
         end
 
         btn:SetScript("OnClick", def.toggle)
@@ -2124,6 +2137,7 @@ function TSF:UpdateSkillBar()
     self.skillBar:SetValue(skill)
     self.skillBarText:SetText(profName .. " " .. skill .. "/" .. maxSkill)
     self:UpdateProfessionTabs()
+    self:UpdateWatermark()
 end
 
 ----------------------------------------------------------------------
@@ -2148,6 +2162,23 @@ local PROF_ICONS = {
     -- WoW: Forever's own icon for the skill line (SkillLine 3012)
     ["Comprehension"]   = "Interface\\Icons\\Spell_Holy_MindSooth",
 }
+
+-- Classic on TBC Classic Anniversary: the profession's icon, large and faint,
+-- behind the detail pane (Zorden 8). WoW: Forever gets Blizzard's own
+-- profession art instead, with its own look (ui-themes phase 3).
+function TSF:UpdateWatermark()
+    local wm = self.watermark
+    if not wm then return end
+    local name = state.profName
+    if name == "Smelting" then name = "Mining" end
+    local icon = name and PROF_ICONS[name]
+    if icon then
+        wm:SetTexture(icon)
+        wm:Show()
+    else
+        wm:Hide()
+    end
+end
 
 -- Profession sort order: crafting primary first (alpha), gathering primary
 -- (alpha), then secondary (alpha). Smelting counts as gathering.
@@ -2766,6 +2797,37 @@ function TSF:BuildRecipeList(parent)
     trackBg:SetAllPoints()
     Theme:Fill(trackBg, "scrollTrack")
 
+    if Theme:IsClassic() then
+        -- Classic: Blizzard's classic scroll bar (UIPanelScrollBarTemplate,
+        -- SecureScrollTemplates.xml): the 18 x 24 knob (scrollThumb) and
+        -- 18 x 16 up and down buttons. It stays PB's own slider, since the
+        -- list draws its own rows; the buttons move it one row.
+        scrollBar:ClearAllPoints()
+        scrollBar:SetPoint("TOPRIGHT", listPanel, "TOPRIGHT", -6, -4 - 16)
+        scrollBar:SetPoint("BOTTOMRIGHT", listPanel, "BOTTOMRIGHT", -6, 4 + 16)
+        scrollBar:SetWidth(16)
+        thumb:SetSize(18, 24)
+        local function arrow(dir, delta)
+            local b = CreateFrame("Button", nil, listPanel)
+            b:SetSize(18, 16)
+            local base = "Interface\\Buttons\\UI-ScrollBar-Scroll" .. dir .. "Button-"
+            b:SetNormalTexture(base .. "Up")
+            b:SetPushedTexture(base .. "Down")
+            b:SetDisabledTexture(base .. "Disabled")
+            b:SetHighlightTexture(base .. "Highlight", "ADD")
+            for _, t in ipairs({ b:GetNormalTexture(), b:GetPushedTexture(),
+                                 b:GetDisabledTexture(), b:GetHighlightTexture() }) do
+                t:SetTexCoord(0.20, 0.80, 0.25, 0.75)
+            end
+            b:SetScript("OnClick", function() scrollBar:SetValue(scrollBar:GetValue() + delta) end)
+            return b
+        end
+        local up, down = arrow("Up", -1), arrow("Down", 1)
+        up:SetPoint("BOTTOM", scrollBar, "TOP")
+        down:SetPoint("TOP", scrollBar, "BOTTOM")
+        self.scrollUp, self.scrollDown = up, down
+    end
+
     scrollBar:SetValue(0)
     scrollBar:SetScript("OnValueChanged", function(_, value)
         state.scrollOffset = math.floor(value)
@@ -3061,6 +3123,17 @@ function TSF:BuildDetailPanel(parent)
     placeholder:SetText("Select a recipe")
     placeholder:SetTextColor(0.4, 0.4, 0.4)
     self.detPlaceholder = placeholder
+
+    if Theme:IsClassic() and addon.Source.flavor == "classic" then
+        -- Classic on TBC Classic Anniversary: a watermark (UpdateWatermark).
+        local wm = detail:CreateTexture(nil, "ARTWORK")
+        wm:SetSize(160, 160)
+        wm:SetPoint("BOTTOMRIGHT", detail, "BOTTOMRIGHT", -30, 12)
+        wm:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        wm:SetAlpha(0.07)
+        wm:Hide()
+        self.watermark = wm
+    end
 
     -- ScrollFrame: wraps all detail content so it scrolls when
     -- the embedded tooltip + reagents exceed available height

@@ -114,28 +114,44 @@ function UI:AddTab(name, displayName, createFunc)
     btn:SetHighlightFontObject(GameFontHighlightSmall)
     btn:SetText(displayName)
 
-    -- Tab background textures
-    local bgNormal = btn:CreateTexture(nil, "BACKGROUND")
-    bgNormal:SetAllPoints()
-    Theme:Fill(bgNormal, "navTab")
-    btn.bgNormal = bgNormal
+    if Theme:IsClassic() then
+        -- Classic: Blizzard's bottom tabs, 32 px tall like the template,
+        -- tucked 2 px under the window and overlapping by 15 as Blizzard's
+        -- TBC Character window tabs do.
+        btn:SetHeight(32)
+        local normal, selected = Theme:DrawClassicTab(btn)
+        selected:Hide()
+        btn.bgNormal, btn.bgSelected, btn.border = normal, selected, Theme.NO_TEXTURES
+    else
+        -- Tab background textures
+        local bgNormal = btn:CreateTexture(nil, "BACKGROUND")
+        bgNormal:SetAllPoints()
+        Theme:Fill(bgNormal, "navTab")
+        btn.bgNormal = bgNormal
 
-    local bgSelected = btn:CreateTexture(nil, "BACKGROUND")
-    bgSelected:SetAllPoints()
-    Theme:Fill(bgSelected, "navTabSelected")
-    bgSelected:Hide()
-    btn.bgSelected = bgSelected
+        local bgSelected = btn:CreateTexture(nil, "BACKGROUND")
+        bgSelected:SetAllPoints()
+        Theme:Fill(bgSelected, "navTabSelected")
+        bgSelected:Hide()
+        btn.bgSelected = bgSelected
 
-    -- Bottom border on unselected tabs
-    local border = btn:CreateTexture(nil, "BORDER")
-    border:SetHeight(1)
-    border:SetPoint("BOTTOMLEFT")
-    border:SetPoint("BOTTOMRIGHT")
-    Theme:Fill(border, "navTabBorder")
-    btn.border = border
+        -- Bottom border on unselected tabs
+        local border = btn:CreateTexture(nil, "BORDER")
+        border:SetHeight(1)
+        border:SetPoint("BOTTOMLEFT")
+        border:SetPoint("BOTTOMRIGHT")
+        Theme:Fill(border, "navTabBorder")
+        btn.border = border
+    end
 
     -- Position
-    if tabIndex == 1 then
+    if Theme:IsClassic() then
+        if tabIndex == 1 then
+            btn:SetPoint("TOPLEFT", self.frame, "BOTTOMLEFT", 8, 2)
+        else
+            btn:SetPoint("LEFT", self.frame.tabs[tabIndex - 1].button, "RIGHT", -15, 0)
+        end
+    elseif tabIndex == 1 then
         btn:SetPoint("BOTTOMLEFT", self.frame, "BOTTOMLEFT", 8, -TAB_HEIGHT - 2)
     else
         btn:SetPoint("LEFT", self.frame.tabs[tabIndex - 1].button, "RIGHT", TAB_PAD, 0)

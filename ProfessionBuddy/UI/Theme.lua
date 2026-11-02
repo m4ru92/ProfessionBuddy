@@ -190,8 +190,10 @@ STYLES.classic = {
         recipeRowSelected = { file = "Interface\\Buttons\\UI-Listbox-Highlight2", blend = "ADD", color = { 0.9, 0.9, 0.9, 1 } },
         rowEven = { 1, 0.85, 0.5, 0.08 },
         rowOdd = { 0, 0, 0, 0.15 },
-        scrollThumb = { 0.6, 0.5, 0.25, 0.9 },
-        scrollTrack = { 0, 0, 0, 0.4 },
+        -- Blizzard's classic scroll knob (UIPanelScrollBarTemplate's ThumbTexture,
+        -- Blizzard_SharedXML SecureScrollTemplates.xml), on no track.
+        scrollThumb = { file = "Interface\\Buttons\\UI-ScrollBar-Knob", coords = { 0.20, 0.80, 0.125, 0.875 }, color = { 1, 1, 1, 1 } },
+        scrollTrack = { 0, 0, 0, 0 },
         sectionDivider = { 0.6, 0.5, 0.2, 0.6 },
         settingsBackground = { 0.09, 0.08, 0.06, 1 },
         -- Blizzard: TradeSkillRankFrameBackground is white at 0.2 alpha,
@@ -275,6 +277,7 @@ function Theme:Fill(tex, role, alpha)
             tex:SetHorizTile(true)
             tex:SetVertTile(true)
         end
+        if c.coords then tex:SetTexCoord(c.coords[1], c.coords[2], c.coords[3], c.coords[4]) end
         tex:SetBlendMode(c.blend or "BLEND")
         local v = c.color
         tex:SetVertexColor(v[1], v[2], v[3], alpha or v[4])
@@ -290,6 +293,51 @@ end
 
 function Theme:SetBackdrop(frame, role)
     frame:SetBackdrop(look("backdrop", role))
+end
+
+-- Classic: Blizzard's bottom tab (PanelTabButtonTemplate, Blizzard_SharedXML
+-- Classic/SharedUIPanelTemplates.xml; its atlases exist on both clients):
+-- left, middle and right pieces, a taller set for the selected tab, and the
+-- unselected pieces added at 0.4 alpha on hover. Returns the unselected and
+-- selected sets, each with Show and Hide.
+local function textureGroup(list)
+    return {
+        Show = function() for _, t in ipairs(list) do t:Show() end end,
+        Hide = function() for _, t in ipairs(list) do t:Hide() end end,
+    }
+end
+Theme.NO_TEXTURES = textureGroup({})
+
+function Theme:DrawClassicTab(btn)
+    local function set(prefix, leftX, layer, alpha)
+        local L = btn:CreateTexture(nil, layer)
+        L:SetAtlas("uiframe-" .. prefix .. "-left", true)
+        L:SetPoint("TOPLEFT", leftX, 0)
+        local R = btn:CreateTexture(nil, layer)
+        R:SetAtlas("uiframe-" .. prefix .. "-right", true)
+        R:SetPoint("TOPRIGHT", 8, 0)
+        local Mid = btn:CreateTexture(nil, layer)
+        Mid:SetAtlas("_uiframe-" .. prefix .. "-center", true)
+        Mid:SetHorizTile(true)
+        Mid:SetPoint("TOPLEFT", L, "TOPRIGHT")
+        Mid:SetPoint("TOPRIGHT", R, "TOPLEFT")
+        if alpha then
+            for _, t in ipairs({ L, Mid, R }) do
+                t:SetBlendMode("ADD")
+                t:SetAlpha(alpha)
+            end
+        end
+        return { L, Mid, R }
+    end
+    local normal = set("tab", -3, "BACKGROUND")
+    local selected = set("activetab", -1, "BACKGROUND")
+    set("tab", -3, "HIGHLIGHT", 0.4)
+    local fs = btn:GetFontString()
+    if fs then
+        fs:ClearAllPoints()
+        fs:SetPoint("CENTER", 0, 2)
+    end
+    return textureGroup(normal), textureGroup(selected)
 end
 
 -- Classic: Blizzard's +/- expand button as an inline texture, for headers
