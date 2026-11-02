@@ -51,4 +51,7 @@ print("  PASS W4 settings saved before 2.0.1 get Colorblind markers Auto at load
 -- W5: settings saved before the window style existed get Modern at load
 EXPECT(ProfBuddyDB.settings.windowStyle == "modern", "old settings: windowStyle " .. tostring(ProfBuddyDB.settings.windowStyle))
 print("  PASS W5 settings saved before the window style get Modern at load")
-print("ALL FOREVER REPLACE-OFF TESTS PASS (5)")
+-- W6: settings saved before the Held by slider existed get 8 at load
+EXPECT(ProfBuddyDB.settings.tooltipMaxHeldBy == 8, "old settings: tooltipMaxHeldBy " .. tostring(ProfBuddyDB.settings.tooltipMaxHeldBy))
+print("  PASS W6 settings saved before the Held by slider get 8 at load")
+print("ALL FOREVER REPLACE-OFF TESTS PASS (6)")

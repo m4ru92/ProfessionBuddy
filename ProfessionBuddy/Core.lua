@@ -679,6 +679,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         tooltipMaxOwn       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxOther     = 5,
+        tooltipMaxHeldBy    = 8,    -- "Held by" lines on item tooltips; 21 = "All"
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
@@ -744,6 +745,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.tooltipMaxOwn == nil then
         ProfBuddyDB.settings.tooltipMaxOwn = 16
     end
+    if ProfBuddyDB.settings.tooltipMaxHeldBy == nil then ProfBuddyDB.settings.tooltipMaxHeldBy = 8 end
     if ProfBuddyDB.settings.tooltipMaxOther == nil then
         ProfBuddyDB.settings.tooltipMaxOther = 5
     end

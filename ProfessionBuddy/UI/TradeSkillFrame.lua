@@ -1430,7 +1430,95 @@ function TSF:HookItemTooltip()
         tip:Show()
     end)
 
+    -- "Held by" tooltip: who holds the hovered item, in bags and bank. You,
+    -- your alts, and friends who share their bags, following the same Show in
+    -- tooltips boxes as Craftable by (guildmates never share bags or bank).
+    -- The Material Calculator's rows list holders themselves, so they set
+    -- TSF._ownHeldBy around their SetItemByID to keep this off.
+    HookItemTooltip(function(tip)
+        if self._ownHeldBy then return end
+        local S = addon.db.settings
+        local showAlts, showRemote = S.showAltInTooltips, S.showRemoteInTooltips
+        if not (showAlts or showRemote) then return end
+        if not DS then return end
+        local itemLink = TooltipItemLink(tip)
+        local itemID = itemLink and addon:ItemIDFromLink(itemLink)
+        if not itemID then return end
+        local lines = self:HeldByLines(itemID, showAlts, showRemote)
+        if #lines == 0 then return end
+
+        local max = S.tooltipMaxHeldBy or 8
+        local shown = max >= 21 and #lines or math.min(#lines, max)
+        tip:AddLine(" ")
+        tip:AddLine("Held by (ProfessionBuddy):", 1, 0.82, 0)
+        local friendsHeader = false
+        for i = 1, shown do
+            local l = lines[i]
+            if l.isRemote and not friendsHeader then
+                tip:AddLine("Friends:", 0.5, 0.75, 1)
+                friendsHeader = true
+            end
+            tip:AddLine("  " .. l.text, 1, 1, 1)
+        end
+        if #lines > shown then
+            tip:AddLine("|cff666666... and " .. (#lines - shown) .. " more|r")
+        end
+        tip:Show()
+    end)
+
     self._hookedTooltip = true
+end
+
+-- The "Held by" lines for one item, in order: you, then your alts, then
+-- friends, most held first within each. A line reads "Name 68 (Bags 5,
+-- Bank 63)", dropping a side that holds none ("Name 63 (Bank)").
+function TSF:HeldByLines(itemID, showAlts, showRemote)
+    local currentKey = addon:PlayerKey()
+    local you, alts, friends = {}, {}, {}
+    for charKey, charData in pairs(DS:GetAllCharacters() or {}) do
+        local inv = charData.inventory
+        local bags = inv and inv.bags and inv.bags[itemID] or 0
+        local bank = inv and inv.bank and inv.bank[itemID] or 0
+        local isCurrent = addon:SameKey(charKey, currentKey)
+        local typeOK = isCurrent
+            or (charData.isRemote and showRemote)
+            or (not charData.isRemote and showAlts)
+        if bags + bank > 0 and typeOK
+           and (isCurrent or addon:ShowsFaction(charData, charKey)) then
+            local where
+            if bags > 0 and bank > 0 then
+                where = "Bags " .. bags .. ", Bank " .. bank
+            elseif bags > 0 then
+                where = "Bags"
+            else
+                where = "Bank"
+            end
+            local cc = addon:ClassColor(charData.class or "WARRIOR")
+            local entry = {
+                total = bags + bank, key = charKey, isRemote = charData.isRemote and true or false,
+                text = cc .. addon:ShortName(charKey) .. "|r " .. (bags + bank) .. " (" .. where .. ")"
+                    .. (isCurrent and " |cff00ff00(you)|r" or ""),
+            }
+            if isCurrent then
+                you[1] = entry
+            elseif entry.isRemote then
+                friends[#friends + 1] = entry
+            else
+                alts[#alts + 1] = entry
+            end
+        end
+    end
+    local function byCount(a, b)
+        if a.total ~= b.total then return a.total > b.total end
+        return a.key < b.key
+    end
+    table.sort(alts, byCount)
+    table.sort(friends, byCount)
+    local out = {}
+    for _, group in ipairs({ you, alts, friends }) do
+        for _, e in ipairs(group) do out[#out + 1] = e end
+    end
+    return out
 end
 
 -- Hide a live Blizzard frame WITHOUT running its OnHide. CraftFrame's
@@ -4154,7 +4242,9 @@ function TSF:BuildCalcPanel()
         row:SetScript("OnEnter", function(r)
             if r.itemID then
                 GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
+                TSF._ownHeldBy = true
                 GameTooltip:SetItemByID(r.itemID)
+                TSF._ownHeldBy = nil
                 -- Append per-alt inventory breakdown
                 local showAlt = addon.db.settings.showAltInDetail
                 local showRemote = addon.db.settings.showRemoteInDetail
@@ -5635,6 +5725,36 @@ function TSF:BuildSettingsPanel(parent)
     otherSlider.Low:SetText("0")
     otherSlider.High:SetText("20")
     otherSlider.Text:SetText("")
+    yRight = yRight - 44
+
+    -- Slider 4: "Held by" lines (1-20, 21 = "All"). Not part of Used in, so
+    -- it stays live when Used in is off; the Show in tooltips boxes turn
+    -- the section itself off.
+    local heldLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    heldLabel:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight)
+    heldLabel:SetTextColor(0.9, 0.9, 0.9)
+
+    local heldSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
+    heldSlider:SetSize(SLIDER_W, 16)
+    heldSlider:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight - 18)
+    heldSlider:SetMinMaxValues(1, 21)
+    heldSlider:SetValueStep(1)
+    heldSlider:SetObeyStepOnDrag(true)
+    heldSlider:SetValue(settings.tooltipMaxHeldBy or 8)
+    heldSlider.Low:SetText("1")
+    heldSlider.High:SetText("All")
+    heldSlider.Text:SetText("")
+    self.heldBySlider = heldSlider
+    local function UpdateHeldLabel(v)
+        v = math.floor(v or settings.tooltipMaxHeldBy or 8)
+        heldLabel:SetText("Held by: " .. (v >= 21 and "All" or tostring(v)))
+    end
+    UpdateHeldLabel()
+    self.heldByLabel = heldLabel
+    heldSlider:SetScript("OnValueChanged", function(_, val)
+        settings.tooltipMaxHeldBy = math.floor(val)
+        UpdateHeldLabel(val)
+    end)
     yRight = yRight - 14
 
     -- Gather skill on ore/herb NODES + skinnable/mineable/herbable MOBS.
@@ -5821,6 +5941,7 @@ function TSF:BuildSettingsPanel(parent)
         ownSlider:SetValue(settings.tooltipMaxOwn or 16)
         altSlider:SetValue(settings.tooltipMaxAlt or 16)
         otherSlider:SetValue(settings.tooltipMaxOther or 5)
+        heldSlider:SetValue(settings.tooltipMaxHeldBy or 8)
         UpdateTooltipGroup()
         UpdateGatherSub()
         SyncBoardAlertDD()

@@ -1248,7 +1248,7 @@ rawset(GameTooltip, "AddLine", nil)                            -- F21 captured i
 rawset(GameTooltip, "Show", nil)
 local posts = 0
 for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then posts = posts + 1 end end
-EXPECT(posts == 2, "item tooltip post-calls: " .. posts)
+EXPECT(posts == 3, "item tooltip post-calls: " .. posts)   -- Used in, Craftable by, Held by
 local function has(lines, text)
     for _, l in ipairs(lines) do if type(l) == "string" and l:find(text, 1, true) then return l end end
 end
@@ -3727,4 +3727,82 @@ do
 end
 print("  PASS F67 Classic knob and clear track, Blizzard's classic tab art (selected raised, white label), profession watermark (none on Forever)")
 
-print("ALL FOREVER TESTS PASS (67)")
+-- F68: "Held by" on item tooltips. You first with (you), then alts, then
+-- friends under their own heading, most held first; "68 (Bags 5, Bank
+-- 63)" with a side that holds none dropped. The Show in tooltips boxes
+-- gate alts and friends, the slider caps the lines (21 = All) with
+-- "... and N more", and the Material Calculator's own list keeps it off.
+do
+    local DB, DS = ProfBuddy.db, ProfBuddy.DataStore
+    local me = ProfBuddy:PlayerKey()
+    local ITEM = 2318
+    local keep = {}
+    for k, v in pairs(DB.characters) do keep[k] = v end
+    local myChar = DS:GetCharacter(me)
+    local myInv = myChar.inventory
+    myChar.inventory = { bags = { [ITEM] = 5 }, bank = { [ITEM] = 63 } }
+    DB.characters["Altone-Forever"] = { class = "MAGE", inventory = { bags = {}, bank = { [ITEM] = 63 } } }
+    DB.characters["Alttwo-Forever"] = { class = "ROGUE", inventory = { bags = { [ITEM] = 100 }, bank = {} } }
+    DB.characters["Pal-Forever"] = { class = "PRIEST", isRemote = true, inventory = { bags = { [ITEM] = 7 }, bank = {} } }
+    DB.characters["Empty-Forever"] = { class = "PRIEST", inventory = { bags = {}, bank = {} } }
+    rawset(GameTooltip, "AddLine", nil)
+    rawset(GameTooltip, "Show", nil)
+    local S = DB.settings
+    local keepS = { S.showAltInTooltips, S.showRemoteInTooltips, S.tooltipMaxHeldBy }
+    S.showAltInTooltips, S.showRemoteInTooltips, S.tooltipMaxHeldBy = true, true, 8
+
+    local function heldBy(lines)
+        local out, on = {}, false
+        for _, l in ipairs(lines) do
+            if type(l) == "string" then
+                if l == "Held by (ProfessionBuddy):" then on = true
+                elseif on and l ~= " " then out[#out + 1] = l end
+            end
+        end
+        return out
+    end
+    local h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 5, "Held by lines: " .. table.concat(h, " / "))
+    EXPECT(h[1]:find("68 (Bags 5, Bank 63)", 1, true) and h[1]:find("(you)", 1, true), "you first: " .. tostring(h[1]))
+    EXPECT(h[2]:find("Alttwo", 1, true) and h[2]:find("100 (Bags)", 1, true), "biggest alt second: " .. tostring(h[2]))
+    EXPECT(h[3]:find("Altone", 1, true) and h[3]:find("63 (Bank)", 1, true), "bank-only alt: " .. tostring(h[3]))
+    EXPECT(h[4] == "Friends:" and h[5]:find("Pal", 1, true) and h[5]:find("7 (Bags)", 1, true), "friend under Friends: " .. tostring(h[5]))
+    for _, l in ipairs(h) do EXPECT(not l:find("Empty", 1, true), "a character holding none listed") end
+
+    S.tooltipMaxHeldBy = 2
+    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 3 and h[3]:find("... and 2 more", 1, true), "cap 2: " .. table.concat(h, " / "))
+    S.tooltipMaxHeldBy = 21
+    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 5, "All showed " .. #h)
+
+    S.showRemoteInTooltips = false
+    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 3 and not table.concat(h, " "):find("Pal", 1, true), "friends with their box off: " .. table.concat(h, " / "))
+    S.showAltInTooltips = false
+    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 0, "Held by with both boxes off")
+    S.showAltInTooltips, S.showRemoteInTooltips = true, true
+
+    ProfBuddy.TradeSkillFrame._ownHeldBy = true
+    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 0, "Held by inside the calculator's own list")
+    ProfBuddy.TradeSkillFrame._ownHeldBy = nil
+
+    -- Settings: the slider shows and saves the cap, 21 = All
+    TSF:OpenSettings("main")
+    local sl = TSF.heldBySlider
+    EXPECT(sl and TSF.heldByLabel, "no Held by slider")
+    sl:GetScript("OnValueChanged")(sl, 21)
+    EXPECT(S.tooltipMaxHeldBy == 21 and rawget(TSF.heldByLabel, "_text") == "Held by: All", "slider All: " .. tostring(rawget(TSF.heldByLabel, "_text")))
+    sl:GetScript("OnValueChanged")(sl, 5)
+    EXPECT(S.tooltipMaxHeldBy == 5 and rawget(TSF.heldByLabel, "_text") == "Held by: 5", "slider 5")
+    TSF:CloseSettings()
+
+    S.showAltInTooltips, S.showRemoteInTooltips, S.tooltipMaxHeldBy = keepS[1], keepS[2], keepS[3]
+    myChar.inventory = myInv
+    for k in pairs(DB.characters) do if not keep[k] then DB.characters[k] = nil end end
+end
+print("  PASS F68 Held by on item tooltips: you, alts and friends with bag and bank counts, the cap and All, the Show in tooltips boxes, kept out of the calculator's list, Settings slider")
+
+print("ALL FOREVER TESTS PASS (68)")
