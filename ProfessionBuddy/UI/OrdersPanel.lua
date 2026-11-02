@@ -2331,7 +2331,14 @@ OP._badges = OP._badges or {}
 -- Create a small count badge anchored to a button's top-right corner.
 function OP:CreateBadge(button)
     local b = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    b:SetPoint("TOPRIGHT", button, "TOPRIGHT", -3, -2)
+    local label = Theme:IsClassic() and button:GetFontString()
+    if label then
+        -- Classic: the tab art's ends are clear, so the button's corner lies
+        -- outside the drawn tab; the badge follows the label instead.
+        b:SetPoint("LEFT", label, "RIGHT", 2, 0)
+    else
+        b:SetPoint("TOPRIGHT", button, "TOPRIGHT", -3, -2)
+    end
     b:SetTextColor(1, 0.85, 0.2)
     b:Hide()
     table.insert(self._badges, b)

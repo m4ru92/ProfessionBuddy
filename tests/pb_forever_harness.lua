@@ -3647,7 +3647,7 @@ do
     Theme:Fill(tex, "scrollThumb")
     EXPECT(got.SetTexCoord and got.SetTexCoord[1] == 0.20 and got.SetTexCoord[4] == 0.875, "knob TexCoords not set")
     -- A recording stand-in for the tab button and its textures
-    local files, points, font, hlFile = {}, {}, nil, nil
+    local files, points, font, hlFile, hlAlpha = {}, {}, nil, nil, nil
     local function recorder(t)
         return setmetatable(t or {}, { __index = function(_, m)
             return function(self, a, b, c)
@@ -3656,12 +3656,13 @@ do
             end
         end })
     end
+    local hlTex = recorder({ SetAlpha = function(_, a) hlAlpha = a end })
     local btn = recorder({
         GetWidth = function() return 90 end,
         GetFrameLevel = function() return 1 end,
         CreateTexture = function() return recorder({ _piece = true }) end,
         SetHighlightTexture = function(_, f) hlFile = f end,
-        GetHighlightTexture = function() return recorder() end,
+        GetHighlightTexture = function() return hlTex end,
         SetNormalFontObject = function(_, f) font = f end,
         GetFontString = function() return recorder() end,
     })
@@ -3673,10 +3674,29 @@ do
     EXPECT(hlFile == "Interface\\PaperDollInfoFrame\\UI-Character-Tab-RealHighlight", "tab highlight")
     selected:Show()
     EXPECT(font == GameFontHighlightSmall, "selected tab label not white")
+    EXPECT(hlAlpha == 0, "the selected tab still lights on hover")
     normal:Show()
     EXPECT(font == GameFontNormalSmall, "unselected tab label not gold")
+    EXPECT(hlAlpha == 1, "an unselected tab does not light on hover")
+
+    -- Classic: the Orders badge follows the tab's label; Modern keeps the corner
+    local OP = ProfBuddy.OrdersPanel
+    local function badgeAnchor()
+        local pt
+        local label = {}
+        local fake = { GetFontString = function() return label end,
+            CreateFontString = function() return recorder({ SetPoint = function(_, a, rel) pt = { a, rel } end }) end }
+        local n = #OP._badges
+        OP:CreateBadge(fake)
+        table.remove(OP._badges, n + 1)
+        return pt, label
+    end
+    local pt, label = badgeAnchor()
+    EXPECT(pt[1] == "LEFT" and pt[2] == label, "Classic badge not beside the label")
     Theme.NO_TEXTURES:Show()
     Theme._name = nil
+    pt = badgeAnchor()
+    EXPECT(pt[1] == "TOPRIGHT", "Modern badge moved")
 
     EXPECT(TSF.watermark == nil, "a watermark was built on Forever")
     local shown, texFile

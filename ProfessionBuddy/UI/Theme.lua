@@ -347,8 +347,13 @@ function Theme:DrawClassicTab(btn)
         hl:SetPoint("TOPLEFT", 3, 5)
         hl:SetPoint("BOTTOMRIGHT", -3, 0)
     end
+    btn.tabHighlight = hl
     btn:SetFrameLevel(btn:GetFrameLevel() + 4)
+    -- Blizzard disables its selected tab, so it never lights on hover; PB's
+    -- stays clickable, so the selected tab hides its highlight instead (lit,
+    -- it would draw a line across the tab's join with the window).
     local function label(isSelected)
+        if hl then hl:SetAlpha(isSelected and 0 or 1) end
         btn:SetNormalFontObject(isSelected and GameFontHighlightSmall or GameFontNormalSmall)
         local fs = btn:GetFontString()
         if fs then
