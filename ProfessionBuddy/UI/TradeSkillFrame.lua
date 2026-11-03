@@ -1433,10 +1433,9 @@ function TSF:HookItemTooltip()
     -- "Held by" tooltip: who holds the hovered item, in bags and bank. You,
     -- your alts, and friends who share their bags, following the same Show in
     -- tooltips boxes as Craftable by (guildmates never share bags or bank).
-    -- The Material Calculator's rows list holders themselves, so they set
-    -- TSF._ownHeldBy around their SetItemByID to keep this off.
+    -- Every item tooltip PB shows (its reagent and Material Calculator rows
+    -- too) gets this one section.
     HookItemTooltip(function(tip)
-        if self._ownHeldBy then return end
         local S = addon.db.settings
         local showAlts, showRemote = S.showAltInTooltips, S.showRemoteInTooltips
         if not (showAlts or showRemote) then return end
@@ -3408,13 +3407,6 @@ function TSF:BuildDetailPanel(parent)
             if self.itemID then
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetItemByID(self.itemID)
-                if self.inBags ~= nil then
-                    GameTooltip:AddLine(" ")
-                    GameTooltip:AddDoubleLine("In bags:", tostring(self.inBags),
-                        0.8, 0.8, 0.8, 1, 1, 1)
-                    GameTooltip:AddDoubleLine("In bank:", tostring(self.inBank or 0),
-                        0.8, 0.8, 0.8, 1, 1, 1)
-                end
                 GameTooltip:Show()
             end
         end)
@@ -3750,8 +3742,6 @@ function TSF:RefreshDetailPanel(preserveScroll)
                 inBank = bank[reagent.itemID] or 0
             end
             local total = inBags + inBank
-            -- stash for the row hover tooltip (exact bag/bank split)
-            row.inBags, row.inBank = inBags, inBank
 
             row.nameText:SetText((reagent.name or "???") .. " x" .. need)
 
@@ -4242,36 +4232,7 @@ function TSF:BuildCalcPanel()
         row:SetScript("OnEnter", function(r)
             if r.itemID then
                 GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
-                TSF._ownHeldBy = true
                 GameTooltip:SetItemByID(r.itemID)
-                TSF._ownHeldBy = nil
-                -- Append per-alt inventory breakdown
-                local showAlt = addon.db.settings.showAltInDetail
-                local showRemote = addon.db.settings.showRemoteInDetail
-                if (showAlt or showRemote) and DS then
-                    local owners = DS:WhoHasItem(r.itemID)
-                    if next(owners) then
-                        local ck = addon:PlayerKey()
-                        GameTooltip:AddLine(" ")
-                        GameTooltip:AddLine("Held by:", 1, 0.82, 0)
-                        for charKey, count in pairs(owners) do
-                            local charData = DS:GetCharacter(charKey)
-                            local isCurrent = addon:SameKey(charKey, ck)
-                            -- Alt and friend inclusion are independent; you always count.
-                            local typeOK = isCurrent
-                                or (charData and charData.isRemote and showRemote)
-                                or (charData and not charData.isRemote and showAlt)
-                            if charData and typeOK
-                               and (isCurrent or addon:ShowsFaction(charData, charKey)) then
-                                local cc = addon:ClassColor(charData.class or "WARRIOR")
-                                GameTooltip:AddDoubleLine(
-                                    cc .. addon:ShortName(charKey) .. "|r",
-                                    tostring(count),
-                                    nil, nil, nil, 1, 1, 1)
-                            end
-                        end
-                    end
-                end
                 GameTooltip:Show()
             end
         end)

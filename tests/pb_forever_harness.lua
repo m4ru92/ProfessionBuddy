@@ -3731,7 +3731,7 @@ print("  PASS F67 Classic knob and clear track, Blizzard's classic tab art (sele
 -- friends under their own heading, most held first; "68 (Bags 5, Bank
 -- 63)" with a side that holds none dropped. The Show in tooltips boxes
 -- gate alts and friends, the slider caps the lines (21 = All) with
--- "... and N more", and the Material Calculator's own list keeps it off.
+-- "... and N more", and no row adds a second holder list.
 do
     local DB, DS = ProfBuddy.db, ProfBuddy.DataStore
     local me = ProfBuddy:PlayerKey()
@@ -3784,10 +3784,11 @@ do
     EXPECT(#h == 0, "Held by with both boxes off")
     S.showAltInTooltips, S.showRemoteInTooltips = true, true
 
-    ProfBuddy.TradeSkillFrame._ownHeldBy = true
-    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
-    EXPECT(#h == 0, "Held by inside the calculator's own list")
-    ProfBuddy.TradeSkillFrame._ownHeldBy = nil
+    -- Reagent and Material Calculator rows add no holder list of their own:
+    -- hovering one shows the item tooltip and nothing else.
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(not src:find("In bags:", 1, true) and not src:find('AddLine("Held by:"', 1, true)
+        and not src:find("_ownHeldBy", 1, true), "a row still adds its own holder list")
 
     -- Settings: the slider shows and saves the cap, 21 = All
     TSF:OpenSettings("main")
@@ -3803,6 +3804,6 @@ do
     myChar.inventory = myInv
     for k in pairs(DB.characters) do if not keep[k] then DB.characters[k] = nil end end
 end
-print("  PASS F68 Held by on item tooltips: you, alts and friends with bag and bank counts, the cap and All, the Show in tooltips boxes, kept out of the calculator's list, Settings slider")
+print("  PASS F68 Held by on item tooltips: you, alts and friends with bag and bank counts, the cap and All, the Show in tooltips boxes, one list everywhere, Settings slider")
 
 print("ALL FOREVER TESTS PASS (68)")
