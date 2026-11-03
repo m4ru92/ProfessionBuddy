@@ -1862,11 +1862,23 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
                 -- recycled button never fires the option it used to hold.
                 optBtn:SetScript("OnClick", function(b)
                     local val = b.value
+                    if self.disabledOpts[val] then return end
                     self.selectedValue = val
                     self.btnText:SetText(DisplayText(val))
                     self.listFrame:Hide()
                     if onChange then onChange(val) end
                 end)
+
+                optBtn:SetScript("OnEnter", function(b)
+                    local note = self.disabledOpts[b.value]
+                    if note then
+                        GameTooltip:SetOwner(b, "ANCHOR_RIGHT")
+                        GameTooltip:SetText(b.value, 0.5, 0.5, 0.5)
+                        GameTooltip:AddLine(note, 1, 1, 1, true)
+                        GameTooltip:Show()
+                    end
+                end)
+                optBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
                 self.optionBtns[i] = optBtn
             end
@@ -1874,16 +1886,31 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
             local opt = opts[i]
             optBtn.value = opt
             optBtn.text:SetText(opt)
-            if opt == self.selectedValue then
-                optBtn.text:SetTextColor(0.3, 0.8, 1)
-            else
-                optBtn.text:SetTextColor(0.9, 0.9, 0.9)
-            end
+            self:ColorOption(optBtn)
             optBtn:Show()
         end
 
         for i = shown + 1, #self.optionBtns do
             self.optionBtns[i]:Hide()
+        end
+    end
+
+    -- An option that shows but cannot be picked: grey, and hovering it
+    -- explains why. note nil makes it pickable again.
+    container.disabledOpts = {}
+    function container:SetOptionDisabled(label, note)
+        self.disabledOpts[label] = note
+        for _, ob in ipairs(self.optionBtns) do self:ColorOption(ob) end
+    end
+
+    function container:ColorOption(ob)
+        if not ob.text then return end
+        if self.disabledOpts[ob.value] then
+            ob.text:SetTextColor(0.5, 0.5, 0.5)
+        elseif ob.value == self.selectedValue then
+            ob.text:SetTextColor(0.3, 0.8, 1)
+        else
+            ob.text:SetTextColor(0.9, 0.9, 0.9)
         end
     end
 
@@ -1907,15 +1934,7 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
         else
             CloseAllDropdowns()
             -- Refresh option text colors to highlight current selection
-            for _, ob in ipairs(container.optionBtns) do
-                if ob.text then
-                    if ob.value == container.selectedValue then
-                        ob.text:SetTextColor(0.3, 0.8, 1)
-                    else
-                        ob.text:SetTextColor(0.9, 0.9, 0.9)
-                    end
-                end
-            end
+            for _, ob in ipairs(container.optionBtns) do container:ColorOption(ob) end
             PositionList()
             listFrame:Show()
         end
@@ -3351,6 +3370,33 @@ function TSF:BuildDetailPanel(parent)
     embeddedTip:SetOwner(sc, "ANCHOR_NONE")
     embeddedTip:SetPoint("TOPLEFT", 0, 0)
     embeddedTip:SetScale(0.9)
+    -- Tooltip skins (ElvUI's among them) restyle every tooltip through
+    -- Blizzard's SharedTooltip_SetBackdropStyle and leave out the ones marked
+    -- IsEmbedded. Marked, Blizzard hides this box's own border too, so PB
+    -- draws the game's tooltip border and background behind it instead:
+    -- TooltipDefaultLayout through NineSliceUtil, as Blizzard does for
+    -- GameTooltip (SharedXML NineSlice.lua and NineSliceLayouts.lua, on both
+    -- clients). The box then looks the same with or without a skin.
+    embeddedTip.IsEmbedded = true
+    if embeddedTip.NineSlice then embeddedTip.NineSlice:Hide() end
+    local box = CreateFrame("Frame", nil, sc)
+    box:SetFrameStrata("HIGH")
+    box:SetScale(0.9)
+    box:SetAllPoints(embeddedTip)
+    if NineSliceUtil and NineSliceUtil.GetLayout and NineSlicePanelMixin and Mixin then
+        Mixin(box, NineSlicePanelMixin)
+        local layout = NineSliceUtil.GetLayout("TooltipDefaultLayout")
+        if layout then
+            NineSliceUtil.ApplyLayout(box, layout)
+            local bg = TOOLTIP_DEFAULT_BACKGROUND_COLOR
+            if bg and bg.GetRGB then box:SetCenterColor(bg:GetRGB()) end
+        end
+    end
+    embeddedTip:SetFrameLevel(box:GetFrameLevel() + 1)
+    box:Hide()
+    embeddedTip:HookScript("OnShow", function() box:Show() end)
+    embeddedTip:HookScript("OnHide", function() box:Hide() end)
+    self.itemInfoBox = box
     embeddedTip:Hide()
     self.embeddedTip = embeddedTip
 
@@ -5556,6 +5602,11 @@ function TSF:BuildSettingsPanel(parent)
         end,
         "Window style: ")
     styleDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    -- WoW: Forever has no look of its own yet (ui-themes phase 3), so Match
+    -- the game shows there but cannot be picked.
+    if addon.Source.flavor == "forever" then
+        styleDD:SetOptionDisabled(WS_LABELS.game, "Coming to WoW: Forever in a later update.")
+    end
     self.windowStyleDD = styleDD
     yLeft = yLeft - 34
 

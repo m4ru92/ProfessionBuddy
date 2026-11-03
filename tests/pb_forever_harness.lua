@@ -3508,6 +3508,7 @@ do
     S.windowStyle = "classic"; Theme._name = nil
     EXPECT(Theme:Name() == "classic", "Classic on Forever is " .. Theme:Name())
     S.windowStyle = "modern"; Theme._name = nil
+    EXPECT(Theme:Name() == "modern", "session look")   -- read once, as at login
     local shown = 0
     local oldDialogs, oldShow = StaticPopupDialogs, StaticPopup_Show
     StaticPopupDialogs, StaticPopup_Show = {}, function(n) if n == "PROFBUDDY_RELOAD_STYLE" then shown = shown + 1 end end
@@ -3522,14 +3523,26 @@ do
     EXPECT(shown == 0 and S.windowStyle == "modern", "same style offered a reload")
     choose("Classic")
     EXPECT(S.windowStyle == "classic" and shown == 1, "Classic saved " .. tostring(S.windowStyle) .. ", offers " .. shown)
+    -- Match the game is greyed on Forever: picking it changes nothing,
+    -- offers no reload, and hovering it says why
     choose("Match the game")
-    EXPECT(S.windowStyle == "game" and shown == 2, "Match the game saved " .. tostring(S.windowStyle))
+    EXPECT(S.windowStyle == "classic" and shown == 1, "Match the game was picked on Forever: " .. tostring(S.windowStyle))
+    local game
+    for _, b in ipairs(dd.optionBtns) do if b.value == "Match the game" then game = b end end
+    local col = rawget(game.text, "_color") or {}
+    EXPECT(dd.disabledOpts["Match the game"] == "Coming to WoW: Forever in a later update.", "no hover note")
+    local hoverText
+    local keepSet, keepAdd = GameTooltip.SetText, GameTooltip.AddLine
+    rawset(GameTooltip, "AddLine", function(_, t) hoverText = t end)
+    game:GetScript("OnEnter")(game)
+    rawset(GameTooltip, "AddLine", nil)
+    EXPECT(hoverText == "Coming to WoW: Forever in a later update.", "hover note: " .. tostring(hoverText))
     EXPECT(Theme:Name() == "modern", "the session look changed before a reload")
     S.windowStyle = "modern"
     TSF:CloseSettings()
     StaticPopupDialogs, StaticPopup_Show = oldDialogs, oldShow
 end
-print("  PASS F63 Window style: Match the game is Modern on Forever; the dropdown saves the style and offers a reload")
+print("  PASS F63 Window style: the dropdown saves the style and offers a reload; Match the game is greyed on Forever with a hover note")
 
 -- F64: Quantity - and + (feature/ui-themes, Zorden 11). Both quantity boxes
 -- step by one between 1 and 999; the craft bar's buttons hide and show with
@@ -3806,4 +3819,25 @@ do
 end
 print("  PASS F68 Held by on item tooltips: you, alts and friends with bag and bank counts, the cap and All, the Show in tooltips boxes, one list everywhere, Settings slider")
 
-print("ALL FOREVER TESTS PASS (68)")
+-- F69: the Item Info box keeps its own look under tooltip skins. It is
+-- marked IsEmbedded, which ElvUI's tooltip styling skips, and PB draws the
+-- tooltip border behind it (itemInfoBox), one level below the box, shown
+-- and hidden with it. Match the game is greyed only on Forever.
+do
+    local tip, box = TSF.embeddedTip, TSF.itemInfoBox
+    EXPECT(tip.IsEmbedded == true, "Item Info box not marked IsEmbedded")
+    EXPECT(box, "no border frame behind the Item Info box")
+    local tsrc = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(tsrc:find("embeddedTip:SetFrameLevel%(box:GetFrameLevel%(%) %+ 1%)"), "the border is not just below the box")
+    tip:Show()
+    if tip._h and tip._h.OnShow then tip._h.OnShow(tip) end
+    EXPECT(box:IsShown(), "border not shown with the box")
+    tip:Hide()
+    if tip._h and tip._h.OnHide then tip._h.OnHide(tip) end
+    EXPECT(not box:IsShown(), "border stayed after the box hid")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('if addon%.Source%.flavor == "forever" then%s+styleDD:SetOptionDisabled'), "Match the game greyed outside Forever")
+end
+print("  PASS F69 Item Info box marked IsEmbedded, PB's border behind it shows and hides with it; Match the game greyed on Forever only")
+
+print("ALL FOREVER TESTS PASS (69)")
