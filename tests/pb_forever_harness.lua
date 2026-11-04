@@ -6,7 +6,7 @@
 -- m4ru's 2026-09-22 harvest (tests/forever_tradeskill.lua), then checks
 -- that PB starts cleanly and that its own window reads Forever's
 -- professions: Blizzard's window suppressed, the known recipes with
--- reagents, counts, colours and the game's categories, tabs that open by
+-- reagents, counts, colors and the game's categories, tabs that open by
 -- skill line, Mining never filed under Smelting, crafting (Phase 2b),
 -- late item names retried, a clean close and reopen, the K profession
 -- book, and the edge rows the harvest has no example of.
@@ -94,7 +94,7 @@ FLUSH()
 EXPECT(TSF.frame and TSF.frame:IsShown(), "PB did not open on TRADE_SKILL_LIST_UPDATE")
 print("  PASS F7 Leatherworking: Blizzard's window suppressed before it shows, PB opens when the list is ready")
 
--- F8: the known recipes, with reagents, counts, colours and the game's categories
+-- F8: the known recipes, with reagents, counts, colors and the game's categories
 local st = TSF.state
 EXPECT(st.profName == "Leatherworking" and st.skillLevel == 1 and st.maxSkill == 75, "skill bar state wrong")
 EXPECT(count(st.allRecipes) == 6, "expected the 6 learned recipes, got " .. count(st.allRecipes))
@@ -782,7 +782,7 @@ TSF:RefreshRecipeList()
 print("  PASS F23 a Missing recipe hidden by a filter stays selected and its detail panel stays, through the game's list updates too; a recipe the profession lacks still clears")
 
 -- F24: the filters split (m4ru 2026-09-27: the Skill Up dropdown held only
--- sources in the Missing view). Skill Up lists skill-up colours and shows
+-- sources in the Missing view). Skill Up lists skill-up colors and shows
 -- in Known and All; Source lists sources and shows in Missing and All.
 -- Changing the View keeps the selected recipe when the new view has it
 C_TradeSkillUI.OpenTradeSkill(165)
@@ -810,7 +810,7 @@ pick(TSF.viewDropdown, "Missing")
 EXPECT(not TSF.diffDropdown:IsShown() and TSF.sourceDropdown:IsShown(), "Missing view: Source only")
 pick(TSF.viewDropdown, "All")
 EXPECT(TSF.diffDropdown:IsShown() and TSF.sourceDropdown:IsShown(), "All view: both")
--- All view: a Skill Up colour lists only known recipes, a Source only missing ones
+-- All view: a Skill Up color lists only known recipes, a Source only missing ones
 local function listed()
     local known, missing = 0, 0
     for _, r in ipairs(st.recipes) do
@@ -859,7 +859,7 @@ pick(TSF.viewDropdown, "All")
 EXPECT(st.selected == "Light Leather" and name == "Light Leather", "Known -> All lost the recipe")
 pick(TSF.viewDropdown, "Known")
 EXPECT(st.selected == "Light Leather", "All -> Known lost a known recipe")
-print("  PASS F24 Skill Up (colours; Known and All) and Source (sources; Missing and All) are separate; each filters its own recipes; a View change keeps a selection the new view has and clears one it lacks")
+print("  PASS F24 Skill Up (colors; Known and All) and Source (sources; Missing and All) are separate; each filters its own recipes; a View change keeps a selection the new view has and clears one it lacks")
 
 -- F25: Phase 4d. The first profession open asks Show everything or Learn
 -- as you go (Escape asks again next session); Learn as you go lists only
@@ -1323,11 +1323,11 @@ do
 end
 print("  PASS F29 gathering-node tooltip skips secret tooltip text")
 
--- F30: a Missing recipe shows the colour it will have once learned, not a
+-- F30: a Missing recipe shows the color it will have once learned, not a
 -- placeholder yellow (m4ru 2026-09-29: Kodo Hide Bag read "Yellow - may
 -- level up" before he knew it, and will be orange when learned). Kodo
 -- Hide Bag is learned at 35 with range 35/65/80/95; below 35 it reads
--- orange, the colour it will have when learned at 35.
+-- orange, the color it will have when learned at 35.
 do
     C_TradeSkillUI.OpenTradeSkill(165)
     TS_LIST_READY()
@@ -1363,7 +1363,7 @@ do
     for _, c in ipairs(cases) do
         local d, n, r = at(c[1])
         EXPECT(d == c[2], "skill " .. c[1] .. ": " .. tostring(d))
-        EXPECT(n == c[3] and r == c[3], "skill " .. c[1] .. " colours: name " .. tostring(n) .. ", row " .. tostring(r))
+        EXPECT(n == c[3] and r == c[3], "skill " .. c[1] .. " colors: name " .. tostring(n) .. ", row " .. tostring(r))
     end
     -- no range in PB's data: "not known", in white
     local data = RDB.data.Leatherworking["Kodo Hide Bag"]
@@ -1373,7 +1373,7 @@ do
     local d, n, r = at(70)
     data.skillRange = sr
     EXPECT(d == "Difficulty when learned: not known", "no range: " .. tostring(d))
-    EXPECT(n == WHITE and r == WHITE, "no range colours: name " .. tostring(n) .. ", row " .. tostring(r))
+    EXPECT(n == WHITE and r == WHITE, "no range colors: name " .. tostring(n) .. ", row " .. tostring(r))
     -- a known recipe keeps the game's tier
     st.showTab, st.searchText = "known", "handstitched leather boots"
     TSF:RefreshRecipeList()
@@ -1386,7 +1386,7 @@ do
     st.showTab, st.searchText, st.selected, st.skillLevel = "known", "", nil, 1
     TSF:RefreshRecipeList()
 end
-print("  PASS F30 a Missing recipe shows the colour it will have once learned, in the detail panel and on its row")
+print("  PASS F30 a Missing recipe shows the color it will have once learned, in the detail panel and on its row")
 
 -- F31: numbered chunks (COMM_REV 9). Forever delivers the chunks of a long
 -- message out of order when they go out in a burst (m4ru's traces,
@@ -3547,7 +3547,7 @@ print("  PASS F63 Window style: the dropdown saves the style and offers a reload
 -- F64: Quantity - and + (feature/ui-themes, Zorden 11). Both quantity boxes
 -- step by one between 1 and 999; the craft bar's buttons hide and show with
 -- its box. Classic selection (Zorden 9): the selected recipe's bar takes the
--- recipe's difficulty colour and its name turns white, back to the colour
+-- recipe's difficulty color and its name turns white, back to the color
 -- when deselected; Modern leaves both alone.
 do
     local box, minus, plus = TSF.qtyBox, TSF.qtyMinus, TSF.qtyPlus
@@ -3582,16 +3582,16 @@ do
                        SetVertexColor = function(_, r, g, b, a) got.bar = { r, g, b, a } end },
         nameText = { SetTextColor = function(_, r, g, b) got.text = { r, g, b } end } }
     TSF:PaintSelected(row, true)
-    EXPECT(got.shown and not got.bar and not got.text, "Modern recoloured the selection")
+    EXPECT(got.shown and not got.bar and not got.text, "Modern recolored the selection")
     Theme._name = "classic"
     TSF:PaintSelected(row, true)
-    EXPECT(got.bar and got.bar[1] == 1 and got.bar[2] == 0.5 and got.bar[3] == 0.25, "Classic bar not in the difficulty colour")
+    EXPECT(got.bar and got.bar[1] == 1 and got.bar[2] == 0.5 and got.bar[3] == 0.25, "Classic bar not in the difficulty color")
     EXPECT(got.text and got.text[1] == 1 and got.text[2] == 1 and got.text[3] == 1, "Classic selected name not white")
     TSF:PaintSelected(row, false)
-    EXPECT(not got.shown and got.text[2] == 0.5, "Classic deselect did not restore the name colour")
+    EXPECT(not got.shown and got.text[2] == 0.5, "Classic deselect did not restore the name color")
     Theme._name = nil
 end
-print("  PASS F64 Quantity - and +: 1 to 999 on both boxes, hidden with the box; Classic selection takes the difficulty colour, name white")
+print("  PASS F64 Quantity - and +: 1 to 999 on both boxes, hidden with the box; Classic selection takes the difficulty color, name white")
 
 -- F65: The enchant Craft button wears Blizzard's red button artwork in both
 -- looks (drawn by hand: the template would kill its secure cast). It shows

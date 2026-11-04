@@ -184,7 +184,7 @@ function addon:ShowsFaction(charData, key)
 end
 
 -- Colorblind markers (Settings, "Colorblind markers"): text beside the
--- colours that carry meaning on their own. "auto" follows the game's
+-- colors that carry meaning on their own. "auto" follows the game's
 -- Colorblind Mode check box (CVar colorblindMode, Settings > Accessibility
 -- on both games), "on" shows them always, "off" never. Read on every draw,
 -- so a change to the game's check box shows at the next list refresh.

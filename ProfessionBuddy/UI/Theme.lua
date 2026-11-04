@@ -1,11 +1,11 @@
 ----------------------------------------------------------------------
 -- ProfessionBuddy  --  UI/Theme.lua
--- One place for the colours and backdrops PB's windows draw with.
+-- One place for the colors and backdrops PB's windows draw with.
 -- Every panel fill, row stripe, hover, divider and backdrop asks
 -- Theme for its role by name instead of carrying its own numbers, so
 -- a second look can replace the whole set at once. Modern is the look
 -- PB has always had; Classic is Blizzard's TBC trainer look.
--- Colours that carry meaning (difficulty, quality, have/need counts,
+-- Colors that carry meaning (difficulty, quality, have/need counts,
 -- class and faction) stay where they are.
 ----------------------------------------------------------------------
 
@@ -98,7 +98,7 @@ STYLES.modern = {
         skillBarBackground = { 0.08, 0.08, 0.08, 0.9 },
         statusPill = { 0.1, 0.1, 0.12, 0.9 },
     },
-    -- A colour passed in (faction) scaled by the first value, alpha second
+    -- A color passed in (faction) scaled by the first value, alpha second
     tint = {
         factionHeader = { 0.3, 0.9 },
         factionHeaderHover = { 0.4, 0.9 },
@@ -111,7 +111,7 @@ STYLES.modern = {
 -- background are Blizzard's BACKDROP_DIALOG_32_32 pieces, drawn at a smaller
 -- edge so they fit the space PB's own borders take; hovers are the quest
 -- log's highlight and the selected recipe is the trade skill window's own
--- highlight bar. A fill is a colour, or a file with a vertex colour.
+-- highlight bar. A fill is a color, or a file with a vertex color.
 STYLES.classic = {
     backdrop = {
         calcButtonBorder = { edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 },
@@ -201,7 +201,7 @@ STYLES.classic = {
         skillBarBackground = { 0, 0, 0.75, 0.1 },
         statusPill = { 0.2, 0.15, 0.08, 0.9 },
     },
-    -- Faction colours carry meaning: same tint as Modern.
+    -- Faction colors carry meaning: same tint as Modern.
     tint = {
         factionHeader = { 0.3, 0.9 },
         factionHeaderHover = { 0.4, 0.9 },
@@ -305,7 +305,7 @@ end
 -- draws 4 levels above its window, as the template does, so the selected
 -- tab covers the window's bottom edge and joins the panel. Returns the
 -- unselected and selected sets; showing a set also gives the label the
--- template's colour (gold, or white when selected) and height.
+-- template's color (gold, or white when selected) and height.
 local function textureGroup(list, onShow)
     return {
         Show = function()

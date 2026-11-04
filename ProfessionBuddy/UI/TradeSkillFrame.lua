@@ -286,7 +286,7 @@ local DIFF_TIER_INDEX = { optimal = 1, medium = 2, easy = 3, trivial = 4 }
 -- lists) and RefreshRecipeList (the filter branch). Value string doubles as
 -- the dropdown label, shown after the "Skill Up: " prefix.
 local SKILLUP_NOGREY = "No Grey"
--- Skill Up filters by skill-up colour, which only a known recipe has;
+-- Skill Up filters by skill-up color, which only a known recipe has;
 -- Source filters by where a recipe comes from, which only a missing recipe
 -- carries. Skill Up shows in the Known and All views, Source in Missing and
 -- All. Until this split one dropdown, labelled Skill Up, held both lists.
@@ -302,7 +302,7 @@ local SOURCE_OPTIONS  = { "All", "Trainer", "Vendor", "Drop", "Quest", "Reputati
 -- its static ranges are ever found unreliable.
 local RANGE_NUMBERS_HIDDEN = {}
 
--- The colour an unlearned recipe will have once you learn it: its range
+-- The color an unlearned recipe will have once you learn it: its range
 -- against your skill. A skill below the learn level is below the orange
 -- cutoff too, so it reads orange. nil when PB has no range for it.
 -- Missing recipes used to show a placeholder yellow (m4ru 2026-09-29).
@@ -311,7 +311,7 @@ local function LearnedDiff(recipe, skill)
     if not sr then return nil end
     return DiffFromSkillRange(sr, skill or 0)
 end
--- A name with no known colour
+-- A name with no known color
 local NO_DIFF_COLOR = { r = 1, g = 1, b = 1 }
 
 -- knownDiff (optional): the recipe's ACTUAL difficulty tier -- from the live
@@ -372,7 +372,7 @@ local state = {
     selected     = nil,
     scrollOffset = 0,
     searchText   = "",
-    filterDiff   = "All",   -- Skill Up: colour of a known recipe
+    filterDiff   = "All",   -- Skill Up: color of a known recipe
     filterSource = "All",   -- Source: where a missing recipe comes from
     filterCat    = "All",
     sortBy       = "Category",
@@ -725,7 +725,7 @@ local function NoteGather(t)
 end
 
 -- Render a mob's full skinning loot as a "Skins into:" block: one line per item,
--- highest drop chance first, quality-coloured name (+ stack range) on the left and
+-- highest drop chance first, quality-colored name (+ stack range) on the left and
 -- the drop percent on the right, quest-only rows greyed. Data (Data/GatherMobs.lua):
 -- SkinLoot npcID -> table index, SkinLootTables index -> {itemID,pct,min,max[,quest]},
 -- SkinItems itemID -> {name, quality}. GetItemInfo gives live name/quality once the
@@ -838,7 +838,7 @@ local function ShowLootFor(prof)
     return PlayerGatherSkill(prof) ~= nil or st.gatherLootUnlearned == true
 end
 
--- Colour the "Requires" line by gather difficulty vs your skill: red below the
+-- Color the "Requires" line by gather difficulty vs your skill: red below the
 -- required skill R, then orange/yellow/green/grey at R / R+25 / R+50 / R+100.
 -- Same bands for herb/mine/skin. Derivation and sources in DESIGN-NOTES.md.
 local function GatherBandColor(have, req)
@@ -862,7 +862,7 @@ local function GatherBandMarker(have, req)
     return ""
 end
 
--- Band-coloured "Requires <Prof> (N)" + (if learned) a grey "Your <Prof>: X".
+-- Band-colored "Requires <Prof> (N)" + (if learned) a grey "Your <Prof>: X".
 -- nil = show nothing (unlearned prof and "show for unlearned" off). reqStr
 -- overrides the number, e.g. "??" for a boss-level mob.
 local function GatherLines(prof, req, reqStr)
@@ -3104,7 +3104,7 @@ function TSF:UpdateListRows()
 end
 
 -- Classic, as Blizzard's TBC trade skill window: the selected recipe's
--- highlight bar takes the recipe's difficulty colour and its name turns
+-- highlight bar takes the recipe's difficulty color and its name turns
 -- white (Blizzard_TradeSkillUI TBC: TradeSkillHighlight:SetVertexColor,
 -- name:SetTextColor(HIGHLIGHT_FONT_COLOR)). Modern only shows the bar.
 function TSF:PaintSelected(row, selected)
@@ -6404,7 +6404,7 @@ function TSF:LoadRecipes(unknown)
             if vis ~= nil and #vis == 0 then
                 passFaction = false
             elseif useDiff then
-                -- a missing recipe has no skill-up colour yet
+                -- a missing recipe has no skill-up color yet
                 passDiff = false
             elseif useSrc then
                 local want = srcMap[state.filterSource]

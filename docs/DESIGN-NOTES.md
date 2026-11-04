@@ -3,15 +3,15 @@
 Rationale and sourcing that would otherwise clutter inline comments. The code
 references these by feature name (for example, `-- see DESIGN-NOTES.md`).
 
-## Gather skill-up colour bands
+## Gather skill-up color bands
 
-The gather tooltip colours the "Requires <Prof> (N)" line by how likely a
+The gather tooltip colors the "Requires <Prof> (N)" line by how likely a
 gather is to give a skill point, on the same red/orange/yellow/green/grey scale
 the game uses for crafting recipes.
 
 For a node/mob whose required skill is **R**, vs your current skill:
 
-| Colour | Skill range | Meaning |
+| Color | Skill range | Meaning |
 |--------|-------------|---------|
 | Red    | `< R`       | can't gather |
 | Orange | `R .. R+24` | always skills up |
@@ -23,7 +23,7 @@ For a node/mob whose required skill is **R**, vs your current skill:
 `SkillGainChance(SkillValue, R+100, R+50, R+25)`. The band offsets are +25/+50/
 +100 for herbalism, mining, and skinning alike. (Mining and skinning additionally
 bit-shift the skill-up *chance* down at high skill, but that changes the odds,
-not the colour band.)
+not the color band.)
 
 **No R==1 special case.** cmangos bumps `RedLevel` from 1 to 5 ("stop at 105 not
 101"), but that's a cmangos-only deviation; the real game greys out R=1 gathers
@@ -56,7 +56,7 @@ line.
 `PlayerGatherSkill` reads the live rank from the skill lines
 (`GetSkillLineInfo`) rather than DataStore's cached `skillLevel`, because the
 cache only refreshes on a rescan and so lags while you're actively gaining skill
-(the "Your Mining line / band colour doesn't update while mining" bug). It falls
+(the "Your Mining line / band color doesn't update while mining" bug). It falls
 back to the DataStore cache only if the live line isn't visible (collapsed
 skill-window header, or a non-enUS client where the English name won't match).
 Note: `GetSkillLineInfo` returns base rank, not effective (it ignores +skill

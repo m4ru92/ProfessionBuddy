@@ -115,7 +115,7 @@ local DIFFICULTY = { [0] = "optimal", [1] = "medium", [2] = "easy", [3] = "trivi
 
 -- A recipe that cannot give a skill-up is grey, whatever its tier says.
 -- This also covers the recipes with no skill-up range at all (the camp
--- abilities and the Adaptive gear), which would otherwise have no colour.
+-- abilities and the Adaptive gear), which would otherwise have no color.
 local function Difficulty(info)
     if not info.canSkillUp then return "trivial" end
     return DIFFICULTY[info.relativeDifficulty] or "trivial"

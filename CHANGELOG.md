@@ -18,7 +18,7 @@ ProfessionBuddy runs on WoW: Forever as well as TBC Classic Anniversary, from on
 
 **WoW: Forever**
 
-- PB's own profession window replaces Blizzard's: your learned recipes with reagents, counts, and the game's difficulty colours and categories. K still opens the profession book.
+- PB's own profession window replaces Blizzard's: your learned recipes with reagents, counts, and the game's difficulty colors and categories. K still opens the profession book.
 - Crafting from PB's window: Craft, Craft All and the quantity box, which counts down as each craft finishes.
 - Recipe data for every profession comes from the game's own files (build 1.60.1.70338), with learn levels from trainers. A recipe you know shows "Learned at".
 - Trainers and vendors: opening a trainer records every recipe it teaches and its learn level. Opening a vendor records the recipe items it sells, with price and stock, and a recipe item in your bags counts too. The Source line names them, those in your current zone first. Friends, group members and guildmates share what they recorded, and the tooltip marks theirs "(from <name>)".
@@ -43,7 +43,7 @@ ProfessionBuddy runs on WoW: Forever as well as TBC Classic Anniversary, from on
 - **Battle.net friends (TBC Anniversary):** pick Battle.net friends, and their characters in this game become contacts as they log in. "Also trust them" covers every contact added this way.
 - **Show opposite faction friends:** its own setting under Friend Data, off by default. "Show opposite faction alts" covers alts only.
 - Skill Up and Source are two filters. A selected recipe stays selected across views and filters.
-- PB colours a recipe you do not know by its difficulty on learning ("Difficulty when learned").
+- PB colors a recipe you do not know by its difficulty on learning ("Difficulty when learned").
 - The Friends tab shows up to seven professions per contact, and Settings scrolls.
 - `/pb bug` includes the last gathering tooltip PB drew, and the report scrolls.
 
@@ -114,7 +114,7 @@ Skinning loot on mob tooltips, a mail recipient picker, and two filters that sto
 
 **New**
 
-- **Skinning loot on the hover tooltip:** hovering a skinnable mob now shows a "Skins into:" list of every item it yields, with the drop chance for each, quality-coloured and with stack ranges. A Nagrand clefthoof reads Knothide Leather Scraps 65%, Knothide Leather 25%, Thick Clefthoof Leather 10%. Quest-only drops are listed but greyed and deliberately carry no percentage, because the underlying value is the chance while you are on the quest rather than the rate you would actually see. Built from the same cmangos data the gather feature already uses, and shown only if you have Skinning. Toggle it with "Skinning loot" in the options.
+- **Skinning loot on the hover tooltip:** hovering a skinnable mob now shows a "Skins into:" list of every item it yields, with the drop chance for each, quality-colored and with stack ranges. A Nagrand clefthoof reads Knothide Leather Scraps 65%, Knothide Leather 25%, Thick Clefthoof Leather 10%. Quest-only drops are listed but greyed and deliberately carry no percentage, because the underlying value is the chance while you are on the quest rather than the rate you would actually see. Built from the same cmangos data the gather feature already uses, and shown only if you have Skinning. Toggle it with "Skinning loot" in the options.
 - **Mail recipient picker:** a "PB" button beside the mail To field opens your saved contacts, favorites first, and fills the recipient in one click.
 - **Order source: board vs direct.** Orders claimed from the guild board now carry a "board" tag next to the existing Friend and Guild badge, so you can tell a board claim from an order somebody sent you directly.
 

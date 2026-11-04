@@ -35,6 +35,15 @@ list from cmangos.
             Forever (1.60.x) build on wago.tools. Run it at release prep.
             Exits 0 = up to date, 10 = a newer build exists (rebake).
 
+  --carry-from PREVDIR  the previous build's tables. A build can hide
+            rows before content goes live: an item still in Item but gone
+            from ItemSparse, a recipe gone from SkillLineAbility. Those rows
+            come back from PREVDIR, so a recipe keeps its name, reagents and
+            learn level, and the report lists each one as carried.
+
+Every table must be whole. wago.tools can answer with a body cut off
+mid-row, so the bake stops on a cut table, and --fetch retries one.
+
 Learn level (orange), first match wins:
   1. learned automatically with the profession (SkillLineAbility
      AcquireMethod 1 or 2): the ability's MinSkillLineRank, at least 1.
@@ -70,7 +79,7 @@ Rows left out, each counted in the report:
     a trainer; a Forever ID (1,000,000 and up) over a Classic ID over a
     Season of Discovery ID; the lower ID.
 """
-import argparse, csv, json, math, os, re, sys, urllib.request
+import argparse, csv, io, json, math, os, re, sys, time, urllib.request
 from collections import defaultdict, Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -103,8 +112,28 @@ def I(x):
         return 0
 
 
+def complete(path):
+    """None if the CSV is whole, else why not. wago.tools can answer 200 with
+    a body cut off mid-row (2026-11-03: SpellName stopped at ID 17462), and
+    a cut table bakes without an error, just with recipes missing."""
+    with open(path, "rb") as fh:
+        data = fh.read()
+    if not data.endswith(b"\n"):
+        return "ends mid-row"
+    rows = list(csv.reader(io.StringIO(data.decode("utf-8"), newline="")))
+    width = len(rows[0])
+    short = sum(1 for r in rows[1:] if len(r) != width)
+    if short:
+        return "%d rows not %d columns wide" % (short, width)
+    return None
+
+
 def read(csvdir, name):
-    with open(os.path.join(csvdir, name + ".csv"), encoding="utf-8") as fh:
+    path = os.path.join(csvdir, name + ".csv")
+    why = complete(path)
+    if why:
+        sys.exit("%s: %s; download it again" % (path, why))
+    with open(path, encoding="utf-8") as fh:
         return list(csv.DictReader(fh))
 
 
@@ -112,10 +141,22 @@ def fetch(csvdir, build):
     os.makedirs(csvdir, exist_ok=True)
     for t in TABLES:
         url = "https://wago.tools/db2/%s/csv?build=%s" % (t, build)
-        req = urllib.request.Request(url, headers={"User-Agent": "ProfessionBuddy-bake"})
-        with urllib.request.urlopen(req, timeout=120) as r, \
-                open(os.path.join(csvdir, t + ".csv"), "wb") as fh:
-            fh.write(r.read())
+        path = os.path.join(csvdir, t + ".csv")
+        for attempt in range(1, 7):
+            why = None
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "ProfessionBuddy-bake"})
+                with urllib.request.urlopen(req, timeout=120) as r, open(path, "wb") as fh:
+                    fh.write(r.read())
+                why = complete(path)
+            except OSError as err:   # wago.tools answers 520-524 under load
+                why = str(err)
+            if not why:
+                break
+            print("retry %s (%d): %s" % (t, attempt, why))
+            time.sleep(15)
+        else:
+            sys.exit("could not fetch a whole %s" % t)
         print("fetched", t)
 
 
@@ -155,8 +196,14 @@ def teaching_items(csvdir):
     return teach
 
 
-def build(csvdir):
+def build(csvdir, carry_dir=None):
+    """carry_dir: the previous build's tables. A build can hide rows before
+    content goes live (an item still in Item but gone from ItemSparse, a
+    recipe gone from SkillLineAbility); with carry_dir, those rows come back
+    from the previous build instead of the recipe losing its names, sources
+    or learn level, and each one is listed in the report (carried)."""
     era, caps, game_unknown = load_inputs()
+    carried = []
     names = {I(r["ID"]): r["Name_lang"] for r in read(csvdir, "SpellName")}
     skill = {I(r["ID"]): (r["DisplayName_lang"] or r["NeutralDisplayName"])
              for r in read(csvdir, "SkillLine")}
@@ -164,6 +211,13 @@ def build(csvdir):
     items = {}
     for r in read(csvdir, "ItemSparse"):
         items[I(r["ID"])] = (r.get("Display_lang") or "", I(r["RequiredSkillRank"]))
+    if carry_dir:
+        still_items = {I(r["ID"]) for r in read(csvdir, "Item")}
+        for r in read(carry_dir, "ItemSparse"):
+            iid = I(r["ID"])
+            if iid not in items and iid in still_items:
+                items[iid] = (r.get("Display_lang") or "", I(r["RequiredSkillRank"]))
+                carried.append("carried: item %d %s (still in Item, gone from ItemSparse)" % (iid, items[iid][0]))
     teach = teaching_items(csvdir)
 
     reagents = defaultdict(list)
@@ -198,10 +252,40 @@ def build(csvdir):
         if I(r["Effect"]) == 24 and I(r.get("EffectItemType")):
             created[I(r["SpellID"])] = (I(r["EffectItemType"]), max(I(r.get("EffectBasePointsF")), 1))
 
+    abilities = read(csvdir, "SkillLineAbility")
+    if carry_dir:
+        have = {(I(r["SkillLine"]), I(r["Spell"])) for r in abilities}
+        old_names = {I(r["ID"]): r["Name_lang"] for r in read(carry_dir, "SpellName")}
+        old_reagents = defaultdict(list)
+        orows = read(carry_dir, "SpellReagents")
+        oitem = sorted(c for c in orows[0] if c.startswith("Reagent_"))
+        ocnt = sorted(c for c in orows[0] if c.startswith("ReagentCount_"))
+        for r in orows:
+            for ic, cc in zip(oitem, ocnt):
+                iid, n = I(r[ic]), I(r[cc])
+                if iid > 0 and n > 0:
+                    old_reagents[I(r["SpellID"])].append((iid, n))
+        old_created = {}
+        for r in read(carry_dir, "SpellEffect"):
+            if I(r["Effect"]) == 24 and I(r.get("EffectItemType")):
+                old_created[I(r["SpellID"])] = (I(r["EffectItemType"]), max(I(r.get("EffectBasePointsF")), 1))
+        for r in read(carry_dir, "SkillLineAbility"):
+            spell = I(r["Spell"])
+            if (I(r["SkillLine"]), spell) in have or not I(r["TradeSkillCategoryID"]):
+                continue
+            abilities.append(r)
+            if spell not in names and spell in old_names:
+                names[spell] = old_names[spell]
+            if spell not in reagents and spell in old_reagents:
+                reagents[spell] = old_reagents[spell]
+            if spell not in created and spell in old_created:
+                created[spell] = old_created[spell]
+            carried.append("carried: recipe %d %s (gone from SkillLineAbility)" % (spell, names.get(spell, "?")))
+
     report = Counter()
     per_line = defaultdict(list)
     seen = set()
-    for r in read(csvdir, "SkillLineAbility"):
+    for r in abilities:
         spell, line, cat = I(r["Spell"]), I(r["SkillLine"]), I(r["TradeSkillCategoryID"])
         ability = not cat and line in ABILITY_SKILL_LINES
         if (not cat and not ability) or line in EXCLUDE_SKILL_LINES or (line, spell) in seen:
@@ -312,6 +396,8 @@ def build(csvdir):
     for recs in final.values():
         report["tool: an Enchanting rod"] += sum(1 for rec in recs if rec["rod"])
     report["random stats: crafted items with an item bonus tree"] = len(random)
+    for line in carried:
+        report[line] = 1
     return final, report, rods, random
 
 
@@ -522,6 +608,8 @@ def main():
     ap.add_argument("--fetch", action="store_true", help="download the tables into csvdir first")
     ap.add_argument("--out", default=OUT_DIR)
     ap.add_argument("--check", action="store_true", help="is the baked build the newest? (release prep)")
+    ap.add_argument("--carry-from", metavar="PREVDIR",
+                    help="the previous build's tables: rows this build hides come back from it")
     a = ap.parse_args()
     if a.check:
         check()
@@ -529,7 +617,7 @@ def main():
         ap.error("csvdir is required unless --check")
     if a.fetch:
         fetch(a.csvdir, a.build)
-    final, report, rods, random = build(a.csvdir)
+    final, report, rods, random = build(a.csvdir, a.carry_from)
     os.makedirs(a.out, exist_ok=True)
     files, total = [], 0
     for prof in sorted(final):

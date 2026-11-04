@@ -74,7 +74,7 @@ end
 
 -- A contact key we will store: "Name" or "Name-Realm", letters only, 2 to 12
 -- CHARACTERS, canonicalized to Name-Realm. Without this, anything the user
--- types (colour codes included) becomes a key in SavedVariables and a string
+-- types (color codes included) becomes a key in SavedVariables and a string
 -- painted into a row. The realm half is checked too: it reaches the same key
 -- and the same chat lines, and a realm holding junk addresses a whisper no
 -- server can deliver, so that contact would silently never sync.
@@ -284,7 +284,7 @@ function FP:CreateContent(parent)
         if not key then
             -- There is no key to print on this path, so the RAW input is echoed
             -- back: capped first so one bad paste cannot flood the chat frame,
-            -- then pipe-escaped so a typed colour code prints as text.
+            -- then pipe-escaped so a typed color code prints as text.
             print("|cff00ccffProfessionBuddy:|r " .. (typed:sub(1, 40):gsub("|", "||"))
                 .. " is not a character name. Use " .. ((addon.Source and addon.Source.FULL_NAMES)
                     and "First Surname." or "Name or Name-Realm."))

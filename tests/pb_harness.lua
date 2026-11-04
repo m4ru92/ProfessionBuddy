@@ -3032,7 +3032,7 @@ do
 end
 passed("T100 Colorblind markers: Auto follows the game's Colorblind Mode, On and Off ignore it; Blizzard's [+++]/[++]/[+]")
 
--- T101: Theme (feature/ui-themes phase 1). Every panel colour and backdrop
+-- T101: Theme (feature/ui-themes phase 1). Every panel color and backdrop
 -- call in PB names a role; each role must exist in the Modern look, a
 -- missing one must fail loudly, and the helpers must pass the role's values
 -- through unchanged (alpha override, faction tint).
@@ -3051,7 +3051,7 @@ do
             assert(look[kind][role] ~= nil, "T101: " .. f .. " uses " .. kind .. " role " .. role .. ", missing from the Modern look")
             calls = calls + 1
         end
-        assert(not src:find(":SetColorTexture%(%s*[%d.]+"), "T101: " .. f .. " still sets a colour by number")
+        assert(not src:find(":SetColorTexture%(%s*[%d.]+"), "T101: " .. f .. " still sets a color by number")
         assert(not src:find(":SetBackdrop%(%s*{"), "T101: " .. f .. " still builds its own backdrop")
     end
     assert(calls == 140, "T101: " .. calls .. " Theme calls, expected 140")
@@ -3066,12 +3066,12 @@ do
     local ok = pcall(Theme.Fill, Theme, tex, "noSuchRole")
     assert(not ok, "T101: an unknown role drew nothing instead of failing")
 end
-passed("T101 Theme: all 140 panel colour and backdrop calls name a role the Modern look has; values pass through")
+passed("T101 Theme: all 140 panel color and backdrop calls name a role the Modern look has; values pass through")
 
 -- T102: Window style (feature/ui-themes phase 2). The setting starts at
 -- Modern; Classic and Match the game pick the Classic look on TBC Classic
 -- Anniversary; the pick is read once and kept for the session; Classic has
--- every role Modern has; a file fill sets the file, blend and vertex colour
+-- every role Modern has; a file fill sets the file, blend and vertex color
 -- (alpha override included); changing the style offers a reload.
 do
     local Theme = addon.Theme

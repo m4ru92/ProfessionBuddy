@@ -1818,7 +1818,7 @@ function OP:FindCrafters(query)
             end
             local color = colorCache[charKey]
             if color == nil then
-                -- Unknown class stays white; it used to be coloured as a Warrior.
+                -- Unknown class stays white; it used to be colored as a Warrior.
                 color = addon:ClassColor(char.class)
                 colorCache[charKey] = color
             end
@@ -2331,7 +2331,7 @@ OP._badges = OP._badges or {}
 -- Create a small count badge anchored to a button's top-right corner.
 -- Classic: the tab art's ends are clear, so the button's corner lies outside
 -- the drawn tab. The count joins the tab's own label instead ("Orders (1)"),
--- which the tab centres and colours as one. Modern keeps a separate badge in
+-- which the tab centres and colors as one. Modern keeps a separate badge in
 -- the corner.
 local function LabelBadge(button)
     local base = button:GetText() or ""

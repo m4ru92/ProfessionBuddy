@@ -501,7 +501,7 @@ function GP:BuildList()
                 level     = level or 0,
                 -- Rank names are authored by the guild master, and this is the
                 -- one displayed string here that never went through a
-                -- sanitizer. Escape the pipes so a rank cannot colour the row.
+                -- sanitizer. Escape the pipes so a rank cannot color the row.
                 rank      = ((rank or ""):gsub("|", "||")),
                 rankIndex = rankIndex or 99,
                 classFile = classFile,
