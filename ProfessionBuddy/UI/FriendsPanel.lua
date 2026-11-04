@@ -342,7 +342,7 @@ function FP:CreateContent(parent)
     else
         bnBtn:Disable()
         if bnBtn.SetMotionScriptsWhileDisabled then bnBtn:SetMotionScriptsWhileDisabled(true) end
-        bnTitle, bnText = "Battle.net auto-add", "Coming soon. The WoW: Forever beta does not give addons the Battle.net friend list yet."
+        bnTitle, bnText = "Battle.net auto-add", "Coming soon to WoW: Forever."
     end
     bnBtn:SetScript("OnEnter", function(btn)
         GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")

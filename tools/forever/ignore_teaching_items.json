@@ -1,0 +1,8 @@
+{
+  "_about": "Teaching items to leave out of one recipe, by hand, when a Forever build adds one the game files do not name yet. The recipe then bakes as if the item were not there. Remove an entry once the item has an ItemSparse row. 11447 Draught of Water Walking: item 288206 appeared in 1.60.1.70658 with no ItemSparse row (2026-11-04, m4ru); without the entry the recipe lost its trainer source.",
+  "recipes": {
+    "11447": [
+      288206
+    ]
+  }
+}

@@ -366,8 +366,10 @@ for prof, recipes in pairs(RDB.data) do
         EXPECT(r.sources and METHODS[r.sources[1].method], prof .. "/" .. name .. " source")
     end
 end
--- 14 with Comprehension (the mage's scroll skill, 7 entries) since 2026-10-13
-EXPECT(nProf == 14 and nRec == 2352, "expected 14 professions / 2352 recipes, got " .. nProf .. " / " .. nRec)
+-- 14 with Comprehension (the mage's scroll skill, 7 entries) since 2026-10-13;
+-- 2354 since the launch build 1.60.1.70790 (Enchant Boots - Speed, and Gray
+-- Leather Boots as its own recipe)
+EXPECT(nProf == 14 and nRec == 2354, "expected 14 professions / 2354 recipes, got " .. nProf .. " / " .. nRec)
 -- Tanning and Gardening open the Skinning and Herbalism windows; they are
 -- not recipes (the game does not list them)
 EXPECT(RDB.data.Skinning.Tanning == nil and RDB.data.Herbalism.Gardening == nil, "a profession window spell baked as a recipe")

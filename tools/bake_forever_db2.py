@@ -167,7 +167,8 @@ def load_inputs():
     era = {int(k): v for k, v in j("era_learn_inputs.json")["spells"].items()}
     caps = {int(k): v for k, v in j("trainer_captures.json")["captures"].items()}
     unknown = set(j("game_unknown_items.json")["recipes"])
-    return era, caps, unknown
+    ignore = {int(k): set(v) for k, v in j("ignore_teaching_items.json")["recipes"].items()}
+    return era, caps, unknown, ignore
 
 
 def teaching_items(csvdir):
@@ -202,7 +203,7 @@ def build(csvdir, carry_dir=None):
     recipe gone from SkillLineAbility); with carry_dir, those rows come back
     from the previous build instead of the recipe losing its names, sources
     or learn level, and each one is listed in the report (carried)."""
-    era, caps, game_unknown = load_inputs()
+    era, caps, game_unknown, ignore_teach = load_inputs()
     carried = []
     names = {I(r["ID"]): r["Name_lang"] for r in read(csvdir, "SpellName")}
     skill = {I(r["ID"]): (r["DisplayName_lang"] or r["NeutralDisplayName"])
@@ -315,7 +316,10 @@ def build(csvdir, carry_dir=None):
 
         yellow, grey = I(r["TrivialSkillLineRankLow"]), I(r["TrivialSkillLineRankHigh"])
         acquire = I(r["AcquireMethod"])
-        tinv = sorted(teach.get(spell, ()))
+        skip = ignore_teach.get(spell, ())
+        if skip and skip & teach.get(spell, set()):
+            report["teaching item ignored by hand (ignore_teaching_items.json)"] += 1
+        tinv = sorted(i for i in teach.get(spell, ()) if i not in skip)
         e = era.get(spell, {})
         cap = caps.get(spell)
 

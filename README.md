@@ -127,3 +127,5 @@ Created by m4ru. Built on the Ace3 library suite.
 ## Thanks
 
 Major thanks to my friends Blargle and Shrekcheeks, who assisted greatly in testing every build of ProfessionBuddy with me in game on both clients.
+
+Thanks also to Zorden, whose review of the profession window shaped the Classic look and the quantity buttons.
