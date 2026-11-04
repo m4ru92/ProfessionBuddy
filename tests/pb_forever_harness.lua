@@ -3662,12 +3662,14 @@ do
     Theme:Fill(tex, "scrollThumb")
     EXPECT(got.SetTexCoord and got.SetTexCoord[1] == 0.20 and got.SetTexCoord[4] == 0.875, "knob TexCoords not set")
     -- A recording stand-in for the tab button and its textures
-    local files, points, font, hlFile, hlAlpha = {}, {}, nil, nil, nil
+    local files, points, font, hlFile, hlAlpha, coords, heights = {}, {}, nil, nil, nil, {}, {}
     local function recorder(t)
         return setmetatable(t or {}, { __index = function(_, m)
-            return function(self, a, b, c)
+            return function(self, a, b, c, ...)
                 if m == "SetTexture" then files[#files + 1] = a end
                 if m == "SetPoint" and a == "TOPLEFT" and self._piece then points[#points + 1] = c end
+                if m == "SetTexCoord" and self._piece then coords[#coords + 1] = select(4, a, b, c, ...) end
+                if m == "SetSize" and self._piece and a == 20 then heights[#heights + 1] = b end
             end
         end })
     end
@@ -3685,7 +3687,18 @@ do
     EXPECT(normal and selected and normal.Show and selected.Hide, "tab sets")
     EXPECT(files[1] == "Interface\\PaperDollInfoFrame\\UI-Character-InActiveTab"
         and files[4] == "Interface\\PaperDollInfoFrame\\UI-Character-ActiveTab", "classic tab art")
-    EXPECT(points[1] == 0 and points[2] == 4, "selected tab not 4 px higher")
+    -- Forever draws the Cata template's layout: the selected art is the top
+    -- 0.546875 of its file, 35 tall at 0; the others 32 tall, 1 px down
+    EXPECT(points[1] == -1 and points[2] == 0, "Forever tab offsets " .. tostring(points[1]) .. "/" .. tostring(points[2]))
+    EXPECT(coords[1] == 1 and coords[4] == 0.546875, "Forever selected tab crop " .. tostring(coords[4]))
+    EXPECT(heights[1] == 32 and heights[3] == 35, "Forever tab heights")
+    -- TBC Classic Anniversary keeps the Classic template's layout
+    local flavor = ProfBuddy.Source.flavor
+    ProfBuddy.Source.flavor = "classic"
+    local L = Theme:TabLayout()
+    ProfBuddy.Source.flavor = flavor
+    EXPECT(L.normal.y == 0 and L.selected.y == 4 and L.selected.bottom == 1 and L.selected.h == 32
+        and L.selectedTextY == 4, "TBC Classic Anniversary tab layout changed")
     EXPECT(hlFile == "Interface\\PaperDollInfoFrame\\UI-Character-Tab-RealHighlight", "tab highlight")
     selected:Show()
     EXPECT(font == GameFontHighlightSmall, "selected tab label not white")

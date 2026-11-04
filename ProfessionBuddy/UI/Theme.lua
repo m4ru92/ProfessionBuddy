@@ -318,28 +318,47 @@ end
 Theme.NO_TEXTURES = textureGroup({})
 
 local TAB_ART = "Interface\\PaperDollInfoFrame\\UI-Character-"
+-- The two clients lay the same tab art out differently. TBC Classic
+-- Anniversary loads Blizzard_FrameXML Classic/CharacterFrameTemplates.xml:
+-- both images fill their file, and the selected tab sits 4 px higher with
+-- its label raised to 4 (selectedTextY). WoW: Forever loads only the Cata
+-- copy: the selected tab fills the top 0.546875 of its file and is 35 tall
+-- at 0, the others sit 1 px down, and its label goes to -3, the default in
+-- Forever's PanelTemplates_SelectTab.
+local TAB_LAYOUTS = {
+    classic = { normal = { y = 0, h = 32, bottom = 1 }, selected = { y = 4, h = 32, bottom = 1 },
+                textY = 2, selectedTextY = 4 },
+    cata    = { normal = { y = -1, h = 32, bottom = 1 }, selected = { y = 0, h = 35, bottom = 0.546875 },
+                textY = 2, selectedTextY = -3 },
+}
+function Theme:TabLayout()
+    return TAB_LAYOUTS[(addon.Source and addon.Source.flavor == "forever") and "cata" or "classic"]
+end
+
 function Theme:DrawClassicTab(btn)
     local width = btn:GetWidth()
-    local function set(file, y)
+    local layout = self:TabLayout()
+    local function set(file, piece)
+        local b = piece.bottom
         local L = btn:CreateTexture(nil, "BACKGROUND")
         L:SetTexture(TAB_ART .. file)
-        L:SetTexCoord(0, 0.15625, 0, 1)
-        L:SetSize(20, 32)
-        L:SetPoint("TOPLEFT", 0, y)
+        L:SetTexCoord(0, 0.15625, 0, b)
+        L:SetSize(20, piece.h)
+        L:SetPoint("TOPLEFT", 0, piece.y)
         local Mid = btn:CreateTexture(nil, "BACKGROUND")
         Mid:SetTexture(TAB_ART .. file)
-        Mid:SetTexCoord(0.15625, 0.84375, 0, 1)
-        Mid:SetSize(width - 40, 32)
+        Mid:SetTexCoord(0.15625, 0.84375, 0, b)
+        Mid:SetSize(width - 40, piece.h)
         Mid:SetPoint("LEFT", L, "RIGHT")
         local R = btn:CreateTexture(nil, "BACKGROUND")
         R:SetTexture(TAB_ART .. file)
-        R:SetTexCoord(0.84375, 1, 0, 1)
-        R:SetSize(20, 32)
+        R:SetTexCoord(0.84375, 1, 0, b)
+        R:SetSize(20, piece.h)
         R:SetPoint("LEFT", Mid, "RIGHT")
         return { L, Mid, R }
     end
-    local normal = set("InActiveTab", 0)
-    local selected = set("ActiveTab", 4)
+    local normal = set("InActiveTab", layout.normal)
+    local selected = set("ActiveTab", layout.selected)
     btn:SetHighlightTexture(TAB_ART .. "Tab-RealHighlight", "ADD")
     local hl = btn:GetHighlightTexture()
     if hl then
@@ -358,7 +377,7 @@ function Theme:DrawClassicTab(btn)
         local fs = btn:GetFontString()
         if fs then
             fs:ClearAllPoints()
-            fs:SetPoint("CENTER", 0, isSelected and 4 or 2)
+            fs:SetPoint("CENTER", 0, isSelected and layout.selectedTextY or layout.textY)
         end
     end
     return textureGroup(normal, function() label(false) end),
