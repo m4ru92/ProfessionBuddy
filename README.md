@@ -21,16 +21,25 @@
 
 The screenshots are from WoW: Forever. TBC Classic Anniversary uses the same windows, without the Forever-only options.
 
+### Window style
+
+|  |  |
+| :---: | :---: |
+| ![Profession window, Modern look](media/MainWindow.png) | ![Profession window, Classic look](media/MainWindow_Classic.png) |
+| Modern, the default: recipe browser with difficulty colors from client data | Classic, drawn with the game's own art |
+
+Pick a look under Settings, Window style. The other screenshots show Modern.
+
 ### Profession window
 
 |  |  |
 | :---: | :---: |
-| ![Profession window](media/MainWindow.png) | ![Material Calculator](media/MaterialCalc.png) |
-| Recipe browser with difficulty colors from client data | Material calculator: full reagent tree and shopping list |
-| ![A missing recipe](media/MissingRecipe_TrainerLearnable.png) | ![Learnable now](media/MainWindow_LearnableNow_Trainer.png) |
-| A missing recipe with its learn level and trainer | Learnable now, filtered to trainer recipes |
-| ![Search by material](media/MainWindow_SearchByMaterial.png) | ![Share a recipe](media/MainWindow_ShareSelection.png) |
-| Search by material finds every recipe that uses it | Share a recipe's link to guild, party, raid, or say |
+| ![Material Calculator](media/MaterialCalc.png) | ![A missing recipe](media/MissingRecipe_TrainerLearnable.png) |
+| Material calculator: full reagent tree and shopping list | A missing recipe with its learn level and trainer |
+| ![Learnable now](media/MainWindow_LearnableNow_Trainer.png) | ![Search by material](media/MainWindow_SearchByMaterial.png) |
+| Learnable now, filtered to trainer recipes | Search by material finds every recipe that uses it |
+| ![Share a recipe](media/MainWindow_ShareSelection.png) |  |
+| Share a recipe's link to guild, party, raid, or say |  |
 
 ### WoW: Forever
 
@@ -59,7 +68,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 |  |  |  |
 | :---: | :---: | :---: |
 | ![Mining tooltip](media/MiningTooltip.png) | ![Herbalism tooltip](media/HerbalismTooltip.png) | ![Skinning tooltip](media/SkinningTooltip.png) |
-| Ore vein: skill needed and loot you gathered | Herb: skill needed and Classic loot data | Skinnable mob: skill needed and Classic loot data |
+| Ore vein: skill needed and loot you gathered | Herb: skill needed and Classic loot data | Skinnable mob: skill needed and loot you gathered |
 
 ### Settings
 
