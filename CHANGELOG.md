@@ -2,9 +2,61 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.0.1 - 2026-11-04
+
+The WoW: Forever launch update adds a Classic look for PB's windows, item counts on tooltips, colorblind markers, and launch build recipe data.
+
+Thanks to Zorden, whose review of PB's windows shaped the Classic look and the quantity buttons, and who reported the Item Info box under ElvUI.
+
+**Highlights**
+
+- **Window style:** a Settings list picks Classic (Blizzard's TBC look) or Modern (PB's look so far, and still the default). A change of style applies after a reload, and PB offers one.
+- **Held by:** item tooltips show how many of the item you, your alts, and your friends hold, with bags and bank apart.
+- **Colorblind markers:** recipe difficulty, learn levels, and gathering tooltips gain text markers beside their colors. Auto follows the game's own Colorblind Mode.
+- **Quantity buttons:** the craft bar and Request Craft gain minus and plus buttons beside the quantity box.
+- **WoW: Forever launch data:** recipe data comes from build 1.60.1.70790.
+
+<!-- more -->
+
+**Added on both clients**
+
+- **Window style:** under Colorblind markers in Settings, pick Classic, Modern, or Match the game.
+  - Classic draws Blizzard's TBC art: dialog borders and backgrounds, the character sheet skill bar, Blizzard's bottom tabs, plus and minus buttons on headers, a down arrow on lists, and Blizzard's scroll bar knob and arrows on the recipe list. The selected recipe's bar takes its difficulty color, and reagents sit in item slot frames.
+  - On TBC Anniversary, Classic also shows the profession's icon, large and faint, in the detail pane.
+  - Match the game picks Classic on TBC Anniversary. On WoW: Forever, PB shows the option grey, and its tooltip reads "Coming to WoW: Forever in a later update."
+- **Held by:** bag and auction house tooltips list who holds the item. You come first, marked (you), then your alts, then friends under "Friends:", most held first within each. A line reads "Maruwarr 68 (Bags 5, Bank 63)", and a side that holds none drops out. Friends appear only if they share their bags, and guildmates never share bags. A Held by slider caps the list at 1 to 20 or All, 8 by default. The section follows the Show in tooltips checkboxes under Alt Information and Friend Data.
+- **Colorblind markers:** a Settings list. Set to On, it adds Blizzard's colorblind prefix to recipe names in the profession window and the Characters tab: [+++] for orange, [++] for yellow, [+] for green, and none for grey. A learn level above your skill reads [35 low]. A gathering line ends with its marker, or with (too low) when your skill is below the requirement. Auto, the default, follows the game's Colorblind Mode under Settings, Accessibility.
+- **Quantity buttons:** minus and plus buttons beside the quantity box on the craft bar and on Request Craft step between 1 and 999.
+- The AddOns list shows a campfire icon for ProfessionBuddy: Basic Campfire on TBC Anniversary, and Welcoming Campfire on WoW: Forever.
+
+**WoW: Forever**
+
+- Recipe data comes from launch build 1.60.1.70790. Enchanting gains Enchant Boots - Speed, and Leatherworking lists Gray Leather Boots as its own recipe. 38 Alchemy, Blacksmithing, Enchanting, and Leatherworking recipes take their learn level from their recipe, plans, formula, or pattern, and Prefect's Waistguard comes from its Plans, not a trainer. 14 First Aid, Fishing, Herbalism, Mining, and Skinning camp crafts gain skill ranges. The Leatherworking "Shoulder" recipes read "Shoulders", Draught of Predatory Senses reads Potion of Predatory Senses, and four recipes move to the right category. Three Engineering recipes list both of their tools.
+- WowUp lists ProfessionBuddy on WoW: Forever, instead of "this game client is not supported yet".
+- The grey Battle.net auto-add button's tooltip reads "Coming soon to WoW: Forever."
+- Comprehension is gone. On WoW: Forever it is a spellbook skill with no profession window, so PB no longer shows a Comprehension tab, and it drops what 2.0.0 saved for mages.
+
+**Changes**
+
+- The Material Calculator's rows and the detail panel's reagents use the one Held by section. Their own holder list and the In bags and In bank lines are gone.
+- The detail panel's Held by list reads like the Held by tooltip: you first, marked (you), then your alts, then friends under "Friends:", most held first, with counts such as "68 (Bags 5, Bank 63)". Viewing someone else's profession no longer lists you as an alt.
+- Find a Crafter's "Recipe or item name" hint sits inside the search box.
+- In-game text: the main window title reads ProfessionBuddy, and labels that disagreed match. The profession bar reads "Leatherworking 75/150", "Name: Enchanting 113/150" for someone else's, and "Alchemy: Not learned".
+
+**Fixes**
+
+- With ElvUI or another tooltip skin, the detail panel's Item Info box lost its border and background. It keeps the game's tooltip look in both styles, with or without a skin.
+- Find a Crafter's hint ran under the Sync guild recipes button, from 1.1.0 on.
+- The AddOns list showed a red question mark for ProfessionBuddy.
+- The Characters tab said "1 recipes".
+
+**Compatibility**
+
+The addon message version stays 12. 2.0.1 syncs, exchanges orders, and shares the guild board with 2.0.0 on both clients. Friends on 2.0.0 who share their bags show in Held by.
+
 ## 2.0.0 - 2026-10-16
 
-ProfessionBuddy runs on WoW: Forever as well as TBC Classic Anniversary, from one download. Thanks to Blargle and Shrekcheeks, who assisted greatly in testing every build of this release in game.
+ProfessionBuddy runs on WoW: Forever as well as TBC Classic Anniversary, from one download. Major thanks to my friends Blargle and Shrekcheeks, who assisted greatly in testing every build of ProfessionBuddy with me in game on both clients.
 
 **Highlights**
 
@@ -18,7 +70,7 @@ ProfessionBuddy runs on WoW: Forever as well as TBC Classic Anniversary, from on
 
 **WoW: Forever**
 
-- PB's own profession window replaces Blizzard's: your learned recipes with reagents, counts, and the game's difficulty colours and categories. K still opens the profession book.
+- PB's own profession window replaces Blizzard's: your learned recipes with reagents, counts, and the game's difficulty colors and categories. K still opens the profession book.
 - Crafting from PB's window: Craft, Craft All and the quantity box, which counts down as each craft finishes.
 - Recipe data for every profession comes from the game's own files (build 1.60.1.70338), with learn levels from trainers. A recipe you know shows "Learned at".
 - Trainers and vendors: opening a trainer records every recipe it teaches and its learn level. Opening a vendor records the recipe items it sells, with price and stock, and a recipe item in your bags counts too. The Source line names them, those in your current zone first. Friends, group members and guildmates share what they recorded, and the tooltip marks theirs "(from <name>)".
@@ -43,7 +95,7 @@ ProfessionBuddy runs on WoW: Forever as well as TBC Classic Anniversary, from on
 - **Battle.net friends (TBC Anniversary):** pick Battle.net friends, and their characters in this game become contacts as they log in. "Also trust them" covers every contact added this way.
 - **Show opposite faction friends:** its own setting under Friend Data, off by default. "Show opposite faction alts" covers alts only.
 - Skill Up and Source are two filters. A selected recipe stays selected across views and filters.
-- PB colours a recipe you do not know by its difficulty on learning ("Difficulty when learned").
+- PB colors a recipe you do not know by its difficulty on learning ("Difficulty when learned").
 - The Friends tab shows up to seven professions per contact, and Settings scrolls.
 - `/pb bug` includes the last gathering tooltip PB drew, and the report scrolls.
 
@@ -114,7 +166,7 @@ Skinning loot on mob tooltips, a mail recipient picker, and two filters that sto
 
 **New**
 
-- **Skinning loot on the hover tooltip:** hovering a skinnable mob now shows a "Skins into:" list of every item it yields, with the drop chance for each, quality-coloured and with stack ranges. A Nagrand clefthoof reads Knothide Leather Scraps 65%, Knothide Leather 25%, Thick Clefthoof Leather 10%. Quest-only drops are listed but greyed and deliberately carry no percentage, because the underlying value is the chance while you are on the quest rather than the rate you would actually see. Built from the same cmangos data the gather feature already uses, and shown only if you have Skinning. Toggle it with "Skinning loot" in the options.
+- **Skinning loot on the hover tooltip:** hovering a skinnable mob now shows a "Skins into:" list of every item it yields, with the drop chance for each, quality-colored and with stack ranges. A Nagrand clefthoof reads Knothide Leather Scraps 65%, Knothide Leather 25%, Thick Clefthoof Leather 10%. Quest-only drops are listed but greyed and deliberately carry no percentage, because the underlying value is the chance while you are on the quest rather than the rate you would actually see. Built from the same cmangos data the gather feature already uses, and shown only if you have Skinning. Toggle it with "Skinning loot" in the options.
 - **Mail recipient picker:** a "PB" button beside the mail To field opens your saved contacts, favorites first, and fills the recipient in one click.
 - **Order source: board vs direct.** Orders claimed from the guild board now carry a "board" tag next to the existing Friend and Guild badge, so you can tell a board claim from an order somebody sent you directly.
 

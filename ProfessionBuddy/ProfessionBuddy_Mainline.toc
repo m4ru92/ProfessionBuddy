@@ -1,8 +1,9 @@
 ## Interface: 16001
 ## Title: ProfessionBuddy
 ## Notes: Cross-character profession management for WoW: Forever.
+## IconTexture: Interface\Icons\INV_Camelot_Camping_WelcomingCampfire
 ## Author: m4ru
-## Version: 2.0.0
+## Version: 2.0.1
 ## SavedVariables: ProfBuddyDB
 ## DefaultState: enabled
 ## X-Curse-Project-ID: 1631296
@@ -12,6 +13,7 @@
 
 Libs/libs.xml
 Core.lua
+UI/Theme.lua
 Source/Source.lua
 Source/Forever.lua
 DataStore.lua
@@ -22,7 +24,6 @@ BattleNet.lua
 RecipeDB.lua
 Data/Forever/Alchemy.lua
 Data/Forever/Blacksmithing.lua
-Data/Forever/Comprehension.lua
 Data/Forever/Cooking.lua
 Data/Forever/Enchanting.lua
 Data/Forever/Engineering.lua

@@ -850,7 +850,7 @@ function Comm:OnMessageReceived(prefix, message, distribution, sender)
         if asked and (time() - asked) >= KNOW_REASK then self:RequestKnowledge(sender) end
     end)
     if not done and self:DebugEnabled() then
-        print("|cff00ccffProfessionBuddy:|r comm error handling " .. msgType
+        print("|cff00ccffProfessionBuddy:|r Comm error handling " .. msgType
             .. " from " .. sender .. ": " .. tostring(err))
     end
 end
@@ -965,8 +965,8 @@ function Comm:SendOrderMessage(msgType, data, target, label, isResend)
             if not isResend and not warned and not online then
                 warned = true
                 print("|cff00ccffProfessionBuddy:|r " .. shortName(target) ..
-                    " is offline -- order " .. (label or "update") ..
-                    " queued; it will send automatically when they are next online.")
+                    " is offline. Order " .. (label or "update") ..
+                    " is queued and sends when they are next online.")
             end
             addon.db.orderOutbox[token] = {
                 msgType = msgType, data = data, target = target,
@@ -1976,7 +1976,7 @@ function Comm:RequestSync(target, isManual)
         if self._pendingSync[pkey] then
             -- Their serve cooldown is 30 s, so an impatient second /pb sync is
             -- normal and says nothing about them being offline.
-            print("|cff00ccffProfessionBuddy:|r already requested, waiting for "
+            print("|cff00ccffProfessionBuddy:|r Already requested, waiting for "
                 .. shortName(target) .. ".")
             return
         end
@@ -2016,7 +2016,7 @@ function Comm:RequestGuildSync(targetKey, scope, isManual)
     local last = self._guildSyncAt[key]
     if last and (now - last) < GUILD_SYNC_COOLDOWN then
         if isManual then
-            print("|cff00ccffProfessionBuddy:|r already requested, waiting for "
+            print("|cff00ccffProfessionBuddy:|r Already requested, waiting for "
                 .. shortName(key) .. ".")
         end
         return

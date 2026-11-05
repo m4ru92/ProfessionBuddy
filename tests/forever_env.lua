@@ -122,7 +122,9 @@ function F:GetName() return self._name end
 function F:SetAttribute(k, v) self._attr[k] = v end
 function F:GetAttribute(k) return self._attr[k] end
 function F:GetFrameLevel() return 1 end
-function F:GetText() return self._text or "" end
+-- rawget: an unset field reads as a stub table here, and a new edit box or
+-- font string answers "" in game
+function F:GetText() return rawget(self, "_text") or "" end
 -- A tooltip line, kept in _lines so a harness can read what was added.
 function F:AddLine(text) local l = rawget(self, "_lines"); if l then l[#l + 1] = text end end
 function F:AddDoubleLine(left, right) local l = rawget(self, "_lines"); if l then l[#l + 1] = tostring(left) .. " | " .. tostring(right) end end
@@ -262,6 +264,15 @@ function ToggleProfessionsBook()
     end
 end
 SOUNDKIT = setmetatable({}, { __index = function() return 0 end })
+
+-- Game options through C_CVar. Without this the catch-all answers a truthy
+-- stub, which reads as every option ticked. Tests set CVARS.colorblindMode
+-- = "1" for the game's Colorblind Mode (Settings > Accessibility).
+CVARS = { colorblindMode = "0" }
+C_CVar = {
+    GetCVar = function(name) return CVARS[name] end,
+    GetCVarBool = function(name) return CVARS[name] == "1" end,
+}
 
 -- ------------------------------------------------------------ client
 -- Forever reports WOW_PROJECT_CAMELOT (18) since build 70245 (Patch 1.60.1

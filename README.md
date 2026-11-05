@@ -85,7 +85,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 - **Trainers and vendors.** ProfessionBuddy records each trainer and vendor you visit, with learn levels, prices, and stock, and shares them with your friends.
 - **Gathering loot from play.** Ore veins, herbs, and skinnable mobs start from Classic data and switch to what you and your friends gathered once you have gathered them 10 times together.
 
-The profession window covers Blacksmithing, Leatherworking, Tailoring, Engineering, Alchemy, Enchanting, Cooking, First Aid, and Mining and Smelting. Rogues get Poisons on both games. TBC Classic Anniversary adds Jewelcrafting. WoW: Forever adds Herbalism, Skinning, and Fishing, and Comprehension for mages. Gathering tooltips cover Mining, Herbalism, and Skinning on both games.
+The profession window covers Blacksmithing, Leatherworking, Tailoring, Engineering, Alchemy, Enchanting, Cooking, First Aid, and Mining and Smelting. Rogues get Poisons on both games. TBC Classic Anniversary adds Jewelcrafting. WoW: Forever adds Herbalism, Skinning, and Fishing. Gathering tooltips cover Mining, Herbalism, and Skinning on both games.
 
 ## Installation
 
@@ -114,7 +114,7 @@ Install [!BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber) and [Bu
 
 ## Build and packaging
 
-`tools/release.py` builds and checks the release zip: a single `ProfessionBuddy/` folder, the three tocs, and every file they load. It runs the Lua test harnesses, the recipe data linter, and a global-write check first, and the same checks run on GitHub on every push. There is no `.pkgmeta` packager config. Release notes for every version are in [CHANGELOG.md](CHANGELOG.md).
+`tools/release.py` builds and checks the release zip: a single `ProfessionBuddy/` folder, the four tocs, and every file they load. It runs the Lua test harnesses, the recipe data linter, and a global-write check first, and the same checks run on GitHub on every push. There is no `.pkgmeta` packager config. Release notes for every version are in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
@@ -126,4 +126,6 @@ Created by m4ru. Built on the Ace3 library suite.
 
 ## Thanks
 
-Thanks to Blargle and Shrekcheeks, who assisted greatly in testing every build of 2.0.0 in game, on both games.
+Major thanks to my friends Blargle and Shrekcheeks, who assisted greatly in testing every build of ProfessionBuddy with me in game on both clients.
+
+Thanks also to Zorden, whose review of the profession window shaped the Classic look and the quantity buttons.

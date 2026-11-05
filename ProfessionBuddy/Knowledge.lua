@@ -136,7 +136,7 @@ function KN:Init()
     addon:RegisterEvent("LOOT_OPENED", function()
         local ok, err = pcall(self.OnLootOpened, self)
         if not ok then
-            print("|cff00ccffProfessionBuddy:|r skinning loot record failed: " .. tostring(err))
+            print("|cff00ccffProfessionBuddy:|r Skinning loot record failed: " .. tostring(err))
         end
     end)
     addon:RegisterEvent("MERCHANT_UPDATE", function() self:ScanMerchant() end)
@@ -150,7 +150,7 @@ function KN:Init()
             scan(sc, ...)
             local ok, err = pcall(self.NoteBagItems, self)
             if not ok then
-                print("|cff00ccffProfessionBuddy:|r recipe item scan failed: " .. tostring(err))
+                print("|cff00ccffProfessionBuddy:|r Recipe item scan failed: " .. tostring(err))
             end
         end
     end
@@ -452,7 +452,7 @@ function KN:AskRecipeMode()
         StaticPopupDialogs[PROMPT] = {
             text = "How should ProfessionBuddy show recipes you haven't learned?\n\n"
                 .. "Show everything: every recipe in the game. PB adds trainers, "
-                .. "vendors and learn levels as you play.\n\n"
+                .. "vendors, and learn levels as you play.\n\n"
                 .. "Learn as you go: only recipes you've found at a trainer, a vendor, "
                 .. "or as a recipe item in your bags. The list grows as you explore.\n\n"
                 .. "You can change this later in Settings.",
@@ -950,7 +950,7 @@ function KN:ScanTrainer()
         end
     end
     if not ok then
-        print("|cff00ccffProfessionBuddy:|r trainer scan failed: " .. tostring(err))
+        print("|cff00ccffProfessionBuddy:|r Trainer scan failed: " .. tostring(err))
     end
 end
 

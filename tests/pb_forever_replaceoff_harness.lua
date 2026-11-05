@@ -8,7 +8,7 @@
 dofile("tests/forever_env.lua")
 dofile("tests/forever_tradeskill.lua")
 
-local _, errs = LOAD_TOC("ProfessionBuddy_Mainline.toc")
+local _, errs = LOAD_TOC("ProfessionBuddy_Forever.toc")
 EXPECT(#errs == 0, "load errors: " .. table.concat(errs, " | "))
 -- saved data as a pre-realm-token build left it (W3)
 ProfBuddyDB = { settings = { replaceTradeSkill = false }, schemaVersion = 2,
@@ -43,4 +43,15 @@ EXPECT(ct["Friend Surname-Forever"] and ct["Friend Surname-Forever"].trusted and
        "saved contact not moved at load")
 EXPECT(ProfBuddyDB.realmKeyBackup and ProfBuddyDB.realmKeyBackup.contacts["Friend Surname-ClassicBetaPvP2"], "no backup at load")
 print("  PASS W3 saved names lose their realm at load, with a backup")
-print("ALL FOREVER REPLACE-OFF TESTS PASS (3)")
+-- W4: settings saved before 2.0.1 have no Colorblind markers choice; PB
+-- gives them Auto at load and keeps the rest
+EXPECT(ProfBuddyDB.settings.colorblindMarkers == "auto" and ProfBuddyDB.settings.replaceTradeSkill == false,
+       "old settings: colorblindMarkers " .. tostring(ProfBuddyDB.settings.colorblindMarkers))
+print("  PASS W4 settings saved before 2.0.1 get Colorblind markers Auto at load")
+-- W5: settings saved before the window style existed get Modern at load
+EXPECT(ProfBuddyDB.settings.windowStyle == "modern", "old settings: windowStyle " .. tostring(ProfBuddyDB.settings.windowStyle))
+print("  PASS W5 settings saved before the window style get Modern at load")
+-- W6: settings saved before the Held by slider existed get 8 at load
+EXPECT(ProfBuddyDB.settings.tooltipMaxHeldBy == 8, "old settings: tooltipMaxHeldBy " .. tostring(ProfBuddyDB.settings.tooltipMaxHeldBy))
+print("  PASS W6 settings saved before the Held by slider get 8 at load")
+print("ALL FOREVER REPLACE-OFF TESTS PASS (6)")

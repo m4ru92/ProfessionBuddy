@@ -4,6 +4,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 local UI = addon:NewModule("UI")
 
 local FRAME_WIDTH  = 600
@@ -113,28 +114,45 @@ function UI:AddTab(name, displayName, createFunc)
     btn:SetHighlightFontObject(GameFontHighlightSmall)
     btn:SetText(displayName)
 
-    -- Tab background textures
-    local bgNormal = btn:CreateTexture(nil, "BACKGROUND")
-    bgNormal:SetAllPoints()
-    bgNormal:SetColorTexture(0.15, 0.15, 0.15, 0.9)
-    btn.bgNormal = bgNormal
+    if Theme:IsClassic() then
+        -- Classic: the game's own bottom tabs, 32 px tall like the
+        -- template, tucked 2 px under the window and spaced as its
+        -- Character window tabs are (Theme:TabLayout).
+        btn:SetHeight(32)
+        local normal, selected = Theme:DrawClassicTab(btn)
+        selected:Hide()
+        btn.bgNormal, btn.bgSelected, btn.border = normal, selected, Theme.NO_TEXTURES
+    else
+        -- Tab background textures
+        local bgNormal = btn:CreateTexture(nil, "BACKGROUND")
+        bgNormal:SetAllPoints()
+        Theme:Fill(bgNormal, "navTab")
+        btn.bgNormal = bgNormal
 
-    local bgSelected = btn:CreateTexture(nil, "BACKGROUND")
-    bgSelected:SetAllPoints()
-    bgSelected:SetColorTexture(0.25, 0.25, 0.3, 1)
-    bgSelected:Hide()
-    btn.bgSelected = bgSelected
+        local bgSelected = btn:CreateTexture(nil, "BACKGROUND")
+        bgSelected:SetAllPoints()
+        Theme:Fill(bgSelected, "navTabSelected")
+        bgSelected:Hide()
+        btn.bgSelected = bgSelected
 
-    -- Bottom border on unselected tabs
-    local border = btn:CreateTexture(nil, "BORDER")
-    border:SetHeight(1)
-    border:SetPoint("BOTTOMLEFT")
-    border:SetPoint("BOTTOMRIGHT")
-    border:SetColorTexture(0.4, 0.4, 0.4, 1)
-    btn.border = border
+        -- Bottom border on unselected tabs
+        local border = btn:CreateTexture(nil, "BORDER")
+        border:SetHeight(1)
+        border:SetPoint("BOTTOMLEFT")
+        border:SetPoint("BOTTOMRIGHT")
+        Theme:Fill(border, "navTabBorder")
+        btn.border = border
+    end
 
     -- Position
-    if tabIndex == 1 then
+    if Theme:IsClassic() then
+        local layout = Theme:TabLayout()
+        if tabIndex == 1 then
+            btn:SetPoint("TOPLEFT", self.frame, "BOTTOMLEFT", layout.firstX, 2)
+        else
+            btn:SetPoint("TOPLEFT", self.frame.tabs[tabIndex - 1].button, "TOPRIGHT", layout.gap, 0)
+        end
+    elseif tabIndex == 1 then
         btn:SetPoint("BOTTOMLEFT", self.frame, "BOTTOMLEFT", 8, -TAB_HEIGHT - 2)
     else
         btn:SetPoint("LEFT", self.frame.tabs[tabIndex - 1].button, "RIGHT", TAB_PAD, 0)

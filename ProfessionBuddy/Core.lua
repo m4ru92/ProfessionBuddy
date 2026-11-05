@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "2.0.0"
+addon.version = "2.0.1"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -26,9 +26,18 @@ addon.CRAFTABLE_PROFS = {
 -- never in CRAFTABLE_PROFS (which feeds the panels, orders and guild sync).
 addon.CLASS_PROFS = {
     ["Poisons"] = "ROGUE",
-    -- WoW: Forever: the mage's scroll skill (any mage trainer, level 6)
-    ["Comprehension"] = "MAGE",
 }
+
+-- WoW: Forever's Comprehension is a spellbook skill with no profession
+-- window, so PB no longer lists it. 2.0.0 saved it for mages: drop it from
+-- every saved character.
+function addon:DropComprehension(db)
+    for _, char in pairs(db and db.characters or {}) do
+        if type(char) == "table" and type(char.professions) == "table" then
+            char.professions.Comprehension = nil
+        end
+    end
+end
 
 -- Can a character of classFile have this profession? classFile nil means the
 -- logged-in character. Every profession not in CLASS_PROFS is open to all.
@@ -181,6 +190,33 @@ function addon:ShowsFaction(charData, key)
     local s = (addon.db and addon.db.settings) or {}
     if charData.isRemote then return s.showCrossFactionFriends == true end
     return s.showCrossFactionAlts == true
+end
+
+-- Colorblind markers (Settings, "Colorblind markers"): text beside the
+-- colors that carry meaning on their own. "auto" follows the game's
+-- Colorblind Mode check box (CVar colorblindMode, Settings > Accessibility
+-- on both games), "on" shows them always, "off" never. Read on every draw,
+-- so a change to the game's check box shows at the next list refresh.
+function addon:ColorblindMarkers()
+    local s = self.db and self.db.settings
+    local mode = (s and s.colorblindMarkers) or "auto"
+    if mode == "on" then return true end
+    if mode == "off" then return false end
+    if C_CVar and C_CVar.GetCVarBool then
+        return C_CVar.GetCVarBool("colorblindMode") and true or false
+    end
+    if GetCVarBool then return GetCVarBool("colorblindMode") and true or false end
+    return false
+end
+
+-- Blizzard's own colorblind difficulty prefixes (TradeSkillTypePrefix in
+-- its Wrath and Mists trade skill windows). Grey gets none.
+addon.DIFF_MARKERS = { optimal = "[+++] ", medium = "[++] ", easy = "[+] " }
+
+-- The marker that goes before a recipe name for a difficulty tier, or "".
+function addon:DiffMarker(diff)
+    if not diff or not self:ColorblindMarkers() then return "" end
+    return self.DIFF_MARKERS[diff] or ""
 end
 
 function addon:IsFavorite(key)
@@ -621,9 +657,9 @@ end)
 addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if loadedName ~= "ProfessionBuddy" then return end
 
-    -- ProfessionBuddy_Mainline.toc is for WoW: Forever (interface 16xxx).
-    -- Retail reads the same toc family but is not supported: say so once,
-    -- then stop before any module starts.
+    -- WoW: Forever (interface 16xxx) loads ProfessionBuddy_Forever.toc.
+    -- Retail loads ProfessionBuddy_Mainline.toc, a byte-identical copy, but
+    -- is not supported: say so once, then stop before any module starts.
     local tocVersion = GetBuildInfo and select(4, GetBuildInfo())
     if WOW_PROJECT_ID and WOW_PROJECT_MAINLINE and WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
        and tocVersion and (tocVersion < 16000 or tocVersion >= 17000) then
@@ -652,6 +688,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         tooltipMaxOwn       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxOther     = 5,
+        tooltipMaxHeldBy    = 8,    -- "Held by" lines on item tooltips; 21 = "All"
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
@@ -675,6 +712,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         autoAddParty        = false, -- add party members as contacts automatically
         bnetAutoAdd         = false, -- BattleNet.lua: add picked Battle.net friends as contacts
         bnetTrust           = false, -- ...and trust them
+        colorblindMarkers   = "auto", -- "auto" (follow the game's Colorblind Mode) | "on" | "off"
+        windowStyle         = "modern", -- UI/Theme.lua: "modern" | "classic" | "game" (Match the game); applies after /reload
     }
     -- Migrate old single-slider setting
     if ProfBuddyDB.settings.tooltipMaxRecipes then
@@ -715,6 +754,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.tooltipMaxOwn == nil then
         ProfBuddyDB.settings.tooltipMaxOwn = 16
     end
+    if ProfBuddyDB.settings.tooltipMaxHeldBy == nil then ProfBuddyDB.settings.tooltipMaxHeldBy = 8 end
     if ProfBuddyDB.settings.tooltipMaxOther == nil then
         ProfBuddyDB.settings.tooltipMaxOther = 5
     end
@@ -759,6 +799,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.bnetAutoAdd == nil then ProfBuddyDB.settings.bnetAutoAdd = false end
     if ProfBuddyDB.settings.bnetTrust == nil then ProfBuddyDB.settings.bnetTrust = false end
+    if ProfBuddyDB.settings.colorblindMarkers == nil then ProfBuddyDB.settings.colorblindMarkers = "auto" end
+    if ProfBuddyDB.settings.windowStyle == nil then ProfBuddyDB.settings.windowStyle = "modern" end
 
     -- Trust migration: `trusted` now gates serving full data (see Comm.lua).
     -- Earlier builds auto-created a contact for every group-mate ever seen, so a
@@ -783,6 +825,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     -- (again at PLAYER_LOGIN below).
     addon:MigrateForeverRealms()
     addon:MigrateToFullName()
+    addon:DropComprehension(ProfBuddyDB)
 
     -- Init modules in declared order. A module that errors here must not
     -- take the rest of the addon down with it.
@@ -838,7 +881,7 @@ end
 local function ConfirmReset()
     if not StaticPopupDialogs["PROFBUDDY_CONFIRM_RESET"] then
         StaticPopupDialogs["PROFBUDDY_CONFIRM_RESET"] = {
-            text = "Erase all ProfessionBuddy data (characters, contacts, orders and settings) and reload the UI?",
+            text = "Erase all ProfessionBuddy data (characters, contacts, orders, and settings) and reload the UI?",
             button1 = YES,
             button2 = NO,
             OnAccept = function()
@@ -932,13 +975,13 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         if arg == "on" then s.shareData = true
         elseif arg == "off" then s.shareData = false
         else s.shareData = not s.shareData end
-        print("|cff00ccffProfessionBuddy:|r data sharing is now "
+        print("|cff00ccffProfessionBuddy:|r Data sharing is now "
             .. (s.shareData and "ON." or "OFF (no profession/inventory data sent to others)."))
 
     elseif msg == "debug" then
         local s = ProfBuddyDB.settings
         s.debugComm = not s.debugComm
-        print("|cff00ccffProfessionBuddy:|r comm debug is now "
+        print("|cff00ccffProfessionBuddy:|r Comm debug is now "
             .. (s.debugComm and "ON." or "OFF."))
 
     elseif msg:sub(1, 4) == "sync" then
@@ -978,7 +1021,7 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         local ov = ProfBuddyDB.skillReqOverrides or {}
         local RDB = addon.RecipeDB
         local n = 0
-        print("|cff00ccffProfessionBuddy:|r trainer-scanned learn-level reconciliations:")
+        print("|cff00ccffProfessionBuddy:|r Trainer-scanned learn-level reconciliations:")
         for name, tv in pairs(ov) do
             n = n + 1
             local static = RDB and RDB:StaticSkillReq(name)
@@ -988,7 +1031,7 @@ SlashCmdList["PROFBUDDY"] = function(msg)
                 print(string.format("  %s: trainer %d  (gap-fill; static had none)", name, tv))
             end
         end
-        if n == 0 then print("  (none yet -- visit profession trainers to build this up)") end
+        if n == 0 then print("  (none yet: visit profession trainers to build this up)") end
 
     else
         -- Default: open the /pb main window.
@@ -1057,7 +1100,7 @@ local function BuildBugReport()
 
     -- Known professions (name + skill) from THIS character's scanned data --
     -- highly relevant for a profession addon, and it's the user's own char.
-    local profStr = "(none scanned yet -- open your professions, then re-run)"
+    local profStr = "(none scanned yet: open your professions, then run it again)"
     local key = addon.PlayerKey and addon:PlayerKey()
     local ds = addon.DataStore
     local char = key and ds and ds.GetCharacter and ds:GetCharacter(key)
@@ -1096,7 +1139,7 @@ local function BuildBugReport()
         "",
         "Other addons possibly involved (optional):",
         "",
-        "ProfessionBuddy Lua errors (if applicable -- paste from BugSack / BugGrabber):",
+        "ProfessionBuddy Lua errors, if any (paste from BugSack or BugGrabber):",
         "",
     }) do lines[#lines + 1] = line end
     return table.concat(lines, "\n")
@@ -1111,13 +1154,9 @@ function addon:ShowBugReport()
         f:SetSize(480, 540)   -- room for the gathering section
         f:SetPoint("CENTER")
         f:SetFrameStrata("DIALOG")
-        f:SetBackdrop({
-            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            edgeSize = 16, insets = { left = 4, right = 4, top = 4, bottom = 4 },
-        })
-        f:SetBackdropColor(0.06, 0.06, 0.08, 0.97)
-        f:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+        addon.Theme:SetBackdrop(f, "dialog")
+        addon.Theme:BackdropColor(f, "dialog")
+        addon.Theme:BorderColor(f, "dialog")
         f:EnableMouse(true)
         f:SetMovable(true)
         f:RegisterForDrag("LeftButton")
@@ -1126,7 +1165,7 @@ function addon:ShowBugReport()
 
         local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
         title:SetPoint("TOP", 0, -14)
-        title:SetText("ProfessionBuddy  \226\128\148  Bug Report")
+        title:SetText("ProfessionBuddy Bug Report")
 
         local instr = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         instr:SetPoint("TOPLEFT", 16, -40)
@@ -1144,13 +1183,9 @@ function addon:ShowBugReport()
         local box = CreateFrame("Frame", nil, f, "BackdropTemplate")
         box:SetPoint("TOPLEFT", 14, -80)
         box:SetPoint("BOTTOMRIGHT", -14, 46)
-        box:SetBackdrop({
-            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 },
-        })
-        box:SetBackdropColor(0, 0, 0, 0.5)
-        box:SetBackdropBorderColor(0.3, 0.3, 0.35, 0.9)
+        addon.Theme:SetBackdrop(box, "dialogBox")
+        addon.Theme:BackdropColor(box, "dialogBox")
+        addon.Theme:BorderColor(box, "dialogBox")
 
         -- UIPanelScrollFrameTemplate, as the recipe detail panel uses on both
         -- clients; its bar sits inside the box's right edge.

@@ -15,6 +15,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 local TSF = addon:NewModule("TradeSkillFrame")
 
 -- WoW: Forever (modern API) moved these off the global table; TBC
@@ -77,7 +78,7 @@ local DETAIL_W      = FRAME_W - LIST_W - 30
 local ROW_H         = 20
 local SKILL_BAR_H   = 22
 local VISIBLE_ROWS  = 20
-local CRAFT_BAR_H   = 52
+local CRAFT_BAR_H   = 58   -- two 22 px button rows with 6 px above and below: clear of either look's border
 
 -- Seconds the search box waits after the last keystroke before rebuilding.
 local SEARCH_DEBOUNCE = 0.3
@@ -285,7 +286,7 @@ local DIFF_TIER_INDEX = { optimal = 1, medium = 2, easy = 3, trivial = 4 }
 -- lists) and RefreshRecipeList (the filter branch). Value string doubles as
 -- the dropdown label, shown after the "Skill Up: " prefix.
 local SKILLUP_NOGREY = "No Grey"
--- Skill Up filters by skill-up colour, which only a known recipe has;
+-- Skill Up filters by skill-up color, which only a known recipe has;
 -- Source filters by where a recipe comes from, which only a missing recipe
 -- carries. Skill Up shows in the Known and All views, Source in Missing and
 -- All. Until this split one dropdown, labelled Skill Up, held both lists.
@@ -301,7 +302,7 @@ local SOURCE_OPTIONS  = { "All", "Trainer", "Vendor", "Drop", "Quest", "Reputati
 -- its static ranges are ever found unreliable.
 local RANGE_NUMBERS_HIDDEN = {}
 
--- The colour an unlearned recipe will have once you learn it: its range
+-- The color an unlearned recipe will have once you learn it: its range
 -- against your skill. A skill below the learn level is below the orange
 -- cutoff too, so it reads orange. nil when PB has no range for it.
 -- Missing recipes used to show a placeholder yellow (m4ru 2026-09-29).
@@ -310,7 +311,7 @@ local function LearnedDiff(recipe, skill)
     if not sr then return nil end
     return DiffFromSkillRange(sr, skill or 0)
 end
--- A name with no known colour
+-- A name with no known color
 local NO_DIFF_COLOR = { r = 1, g = 1, b = 1 }
 
 -- knownDiff (optional): the recipe's ACTUAL difficulty tier -- from the live
@@ -371,7 +372,7 @@ local state = {
     selected     = nil,
     scrollOffset = 0,
     searchText   = "",
-    filterDiff   = "All",   -- Skill Up: colour of a known recipe
+    filterDiff   = "All",   -- Skill Up: color of a known recipe
     filterSource = "All",   -- Source: where a missing recipe comes from
     filterCat    = "All",
     sortBy       = "Category",
@@ -422,7 +423,7 @@ end
 -- An unlearned recipe the viewed character can learn now: its learn level
 -- is at or below the profession skill, and its character level (poisons) at
 -- or below theirs. A recipe with no known learn level never counts. The
--- summary's "Learnable Now" and the "Learnable now" view both ask this.
+-- summary's "Learnable now" count and the "Learnable now" view both ask this.
 local function LearnableNow(name, info)
     local req = LearnLevelFor(name, info.skillReq, info.spellID)
     return req ~= nil and req <= (state.skillLevel or 0)
@@ -724,7 +725,7 @@ local function NoteGather(t)
 end
 
 -- Render a mob's full skinning loot as a "Skins into:" block: one line per item,
--- highest drop chance first, quality-coloured name (+ stack range) on the left and
+-- highest drop chance first, quality-colored name (+ stack range) on the left and
 -- the drop percent on the right, quest-only rows greyed. Data (Data/GatherMobs.lua):
 -- SkinLoot npcID -> table index, SkinLootTables index -> {itemID,pct,min,max[,quest]},
 -- SkinItems itemID -> {name, quality}. GetItemInfo gives live name/quality once the
@@ -837,7 +838,7 @@ local function ShowLootFor(prof)
     return PlayerGatherSkill(prof) ~= nil or st.gatherLootUnlearned == true
 end
 
--- Colour the "Requires" line by gather difficulty vs your skill: red below the
+-- Color the "Requires" line by gather difficulty vs your skill: red below the
 -- required skill R, then orange/yellow/green/grey at R / R+25 / R+50 / R+100.
 -- Same bands for herb/mine/skin. Derivation and sources in DESIGN-NOTES.md.
 local function GatherBandColor(have, req)
@@ -849,7 +850,19 @@ local function GatherBandColor(have, req)
     return "ff808080"                        -- grey
 end
 
--- Band-coloured "Requires <Prof> (N)" + (if learned) a grey "Your <Prof>: X".
+-- The same bands as text, for Colorblind markers: Blizzard's [+++]/[++]/[+]
+-- for orange/yellow/green, nothing for grey, "(too low)" for red.
+local function GatherBandMarker(have, req)
+    if not addon:ColorblindMarkers() then return "" end
+    if not have or not req or have < req then return " (too low)" end
+    local d = have - req
+    if d < 25  then return " [+++]" end
+    if d < 50  then return " [++]" end
+    if d < 100 then return " [+]" end
+    return ""
+end
+
+-- Band-colored "Requires <Prof> (N)" + (if learned) a grey "Your <Prof>: X".
 -- nil = show nothing (unlearned prof and "show for unlearned" off). reqStr
 -- overrides the number, e.g. "??" for a boss-level mob.
 local function GatherLines(prof, req, reqStr)
@@ -857,7 +870,7 @@ local function GatherLines(prof, req, reqStr)
     if not have and addon.db.settings.gatherShowUnlearned == false then return nil end
     reqStr = reqStr or tostring(req)
     local requires = "|c" .. GatherBandColor(have, req)
-        .. "Requires " .. prof .. " (" .. reqStr .. ")|r"
+        .. "Requires " .. prof .. " (" .. reqStr .. ")" .. GatherBandMarker(have, req) .. "|r"
     local yours = have and ("|cff808080Your " .. prof .. ": " .. have .. "|r") or nil
     return requires, yours
 end
@@ -1417,7 +1430,100 @@ function TSF:HookItemTooltip()
         tip:Show()
     end)
 
+    -- "Held by" tooltip: who holds the hovered item, in bags and bank. You,
+    -- your alts, and friends who share their bags, following the same Show in
+    -- tooltips boxes as Craftable by (guildmates never share bags or bank).
+    -- Every item tooltip PB shows (its reagent and Material Calculator rows
+    -- too) gets this one section.
+    HookItemTooltip(function(tip)
+        local S = addon.db.settings
+        local showAlts, showRemote = S.showAltInTooltips, S.showRemoteInTooltips
+        if not (showAlts or showRemote) then return end
+        if not DS then return end
+        local itemLink = TooltipItemLink(tip)
+        local itemID = itemLink and addon:ItemIDFromLink(itemLink)
+        if not itemID then return end
+        local lines = self:HeldByLines(itemID, showAlts, showRemote)
+        if #lines == 0 then return end
+
+        local max = S.tooltipMaxHeldBy or 8
+        local shown = max >= 21 and #lines or math.min(#lines, max)
+        tip:AddLine(" ")
+        tip:AddLine("Held by (ProfessionBuddy):", 1, 0.82, 0)
+        local friendsHeader = false
+        for i = 1, shown do
+            local l = lines[i]
+            if l.isRemote and not friendsHeader then
+                tip:AddLine("Friends:", 0.5, 0.75, 1)
+                friendsHeader = true
+            end
+            tip:AddLine("  " .. l.text, 1, 1, 1)
+        end
+        if #lines > shown then
+            tip:AddLine("|cff666666... and " .. (#lines - shown) .. " more|r")
+        end
+        tip:Show()
+    end)
+
     self._hookedTooltip = true
+end
+
+-- A held count as Held by writes it: "68 (Bags 5, Bank 63)", dropping a
+-- side that holds none ("63 (Bank)").
+function TSF:HeldCount(bags, bank)
+    local where
+    if bags > 0 and bank > 0 then
+        where = "Bags " .. bags .. ", Bank " .. bank
+    elseif bags > 0 then
+        where = "Bags"
+    else
+        where = "Bank"
+    end
+    return (bags + bank) .. " (" .. where .. ")"
+end
+
+-- The "Held by" lines for one item, in order: you, then your alts, then
+-- friends, most held first within each. A line reads "Name 68 (Bags 5,
+-- Bank 63)", dropping a side that holds none ("Name 63 (Bank)").
+function TSF:HeldByLines(itemID, showAlts, showRemote)
+    local currentKey = addon:PlayerKey()
+    local you, alts, friends = {}, {}, {}
+    for charKey, charData in pairs(DS:GetAllCharacters() or {}) do
+        local inv = charData.inventory
+        local bags = inv and inv.bags and inv.bags[itemID] or 0
+        local bank = inv and inv.bank and inv.bank[itemID] or 0
+        local isCurrent = addon:SameKey(charKey, currentKey)
+        local typeOK = isCurrent
+            or (charData.isRemote and showRemote)
+            or (not charData.isRemote and showAlts)
+        if bags + bank > 0 and typeOK
+           and (isCurrent or addon:ShowsFaction(charData, charKey)) then
+            local cc = addon:ClassColor(charData.class or "WARRIOR")
+            local entry = {
+                total = bags + bank, key = charKey, isRemote = charData.isRemote and true or false,
+                text = cc .. addon:ShortName(charKey) .. "|r " .. self:HeldCount(bags, bank)
+                    .. (isCurrent and " |cff00ff00(you)|r" or ""),
+            }
+            if isCurrent then
+                you[1] = entry
+            elseif entry.isRemote then
+                friends[#friends + 1] = entry
+            else
+                alts[#alts + 1] = entry
+            end
+        end
+    end
+    local function byCount(a, b)
+        if a.total ~= b.total then return a.total > b.total end
+        return a.key < b.key
+    end
+    table.sort(alts, byCount)
+    table.sort(friends, byCount)
+    local out = {}
+    for _, group in ipairs({ you, alts, friends }) do
+        for _, e in ipairs(group) do out[#out + 1] = e end
+    end
+    return out
 end
 
 -- Hide a live Blizzard frame WITHOUT running its OnHide. CraftFrame's
@@ -1583,6 +1689,93 @@ end
 -- open list on hide; the lists are UIParent children, not window children.
 addon.CloseAllDropdowns = CloseAllDropdowns
 
+-- Blizzard's red panel button drawn by hand, for a button that cannot take
+-- UIPanelButtonTemplate. The enchant Craft button is secure, and the template
+-- on a secure button kills its cast (see the enchant button below), so it gets
+-- the template's own artwork instead: three slices of UI-Panel-Button-Up with
+-- the template's TexCoords (Blizzard_SharedXML SecureUIPanelTemplates.xml,
+-- the same on both clients), the -Down slices while pressed, -Disabled when it
+-- cannot be used, and UIPanelButtonHighlightTexture on hover. The returned
+-- function sets "up", "down" or "disabled".
+local PANEL_BTN = "Interface\\Buttons\\UI-Panel-Button-"
+local function DrawPanelButtonArt(btn, label)
+    local L = btn:CreateTexture(nil, "BACKGROUND")
+    L:SetSize(12, 22)
+    L:SetPoint("TOPLEFT"); L:SetPoint("BOTTOMLEFT")
+    local R = btn:CreateTexture(nil, "BACKGROUND")
+    R:SetSize(12, 22)
+    R:SetPoint("TOPRIGHT"); R:SetPoint("BOTTOMRIGHT")
+    local M = btn:CreateTexture(nil, "BACKGROUND")
+    M:SetPoint("TOPLEFT", L, "TOPRIGHT"); M:SetPoint("BOTTOMRIGHT", R, "BOTTOMLEFT")
+    local hi = btn:CreateTexture(nil, "HIGHLIGHT")
+    hi:SetTexture(PANEL_BTN .. "Highlight")
+    hi:SetTexCoord(0, 0.625, 0, 0.6875)
+    hi:SetBlendMode("ADD")
+    hi:SetAllPoints()
+    local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    text:SetPoint("CENTER")
+    text:SetText(label)
+    local current
+    local function look(state)
+        if state == current then return end
+        current = state
+        btn.lookState = state
+        local file = PANEL_BTN .. (state == "down" and "Down" or state == "disabled" and "Disabled" or "Up")
+        L:SetTexture(file); L:SetTexCoord(0, 0.09375, 0, 0.6875)
+        R:SetTexture(file); R:SetTexCoord(0.53125, 0.625, 0, 0.6875)
+        M:SetTexture(file); M:SetTexCoord(0.09375, 0.53125, 0, 0.6875)
+        if state == "disabled" then
+            text:SetTextColor(0.5, 0.5, 0.5)
+            hi:SetAlpha(0)
+        else
+            text:SetTextColor(1, 0.82, 0)
+            hi:SetAlpha(1)
+        end
+    end
+    -- Hooks only: the secure click handler stays untouched.
+    btn:HookScript("OnMouseDown", function() if current ~= "disabled" then look("down") end end)
+    btn:HookScript("OnMouseUp", function() if current ~= "disabled" then look("up") end end)
+    look("up")
+    return look
+end
+
+-- A quantity box with a minus button on its left and a plus button on its
+-- right, as Blizzard's TBC trade skill window has (TradeSkillDecrementButton
+-- / TradeSkillIncrementButton). Classic uses Blizzard's own arrow buttons;
+-- Modern uses PB's button style with - and +. Steps by one, 1 to 999 (the
+-- order quantity cap). Returns the x offset and width left for the box.
+local QTY_MIN, QTY_MAX = 1, 999
+local function AddQtyStepButtons(parent, box, x, y, width, height)
+    local function step(delta)
+        local n = (tonumber(box:GetText()) or QTY_MIN) + delta
+        if n < QTY_MIN then n = QTY_MIN elseif n > QTY_MAX then n = QTY_MAX end
+        box:SetText(tostring(n))
+        box:ClearFocus()
+    end
+    local function make(isPlus)
+        local b
+        if Theme:IsClassic() then
+            b = CreateFrame("Button", nil, parent)
+            local name = isPlus and "NextPage" or "PrevPage"
+            b:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-" .. name .. "-Up")
+            b:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-" .. name .. "-Down")
+            b:SetDisabledTexture("Interface\\Buttons\\UI-SpellbookIcon-" .. name .. "-Disabled")
+            b:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+        else
+            b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+            b:SetText(isPlus and "+" or "-")
+            b:SetNormalFontObject(GameFontNormalSmall)
+        end
+        b:SetSize(height, height)
+        b:SetScript("OnClick", function() step(isPlus and 1 or -1) end)
+        return b
+    end
+    local minus, plus = make(false), make(true)
+    minus:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    plus:SetPoint("TOPLEFT", parent, "TOPLEFT", x + width - height, y)
+    return x + height + 2, width - 2 * height - 4, minus, plus
+end
+
 local function CreateDropdown(parent, width, options, defaultVal, onChange, prefix)
     local container = CreateFrame("Frame", nil, parent)
     container:SetSize(width, 20)
@@ -1594,35 +1787,38 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
 
     local btnBg = btn:CreateTexture(nil, "BACKGROUND")
     btnBg:SetAllPoints()
-    btnBg:SetColorTexture(0.12, 0.12, 0.15, 1)
+    Theme:Fill(btnBg, "dropdownButton")
 
     local btnBorder = CreateFrame("Frame", nil, btn, "BackdropTemplate")
     btnBorder:SetAllPoints()
-    btnBorder:SetBackdrop({ edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 })
-    btnBorder:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    Theme:SetBackdrop(btnBorder, "dropdownButtonBorder")
+    Theme:BorderColor(btnBorder, "dropdownButton")
 
     local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     btnText:SetPoint("LEFT", 6, 0)
     btnText:SetPoint("RIGHT", -14, 0)
     btnText:SetJustifyH("LEFT")
 
-    local arrow = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    arrow:SetPoint("RIGHT", -4, 0)
-    arrow:SetText("v")
-    arrow:SetTextColor(0.6, 0.6, 0.6)
+    if Theme:IsClassic() then
+        -- Classic: the down arrow Blizzard's chat frame scroll button uses.
+        local arrow = btn:CreateTexture(nil, "OVERLAY")
+        arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+        arrow:SetSize(16, 16)
+        arrow:SetPoint("RIGHT", -1, 0)
+    else
+        local arrow = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        arrow:SetPoint("RIGHT", -4, 0)
+        arrow:SetText("v")
+        arrow:SetTextColor(0.6, 0.6, 0.6)
+    end
 
     local listFrame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     listFrame:SetWidth(width)
     listFrame:SetFrameStrata("TOOLTIP")
     listFrame:SetFrameLevel(200)
-    listFrame:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    listFrame:SetBackdropColor(0.08, 0.08, 0.1, 0.98)
-    listFrame:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+    Theme:SetBackdrop(listFrame, "dropdownList")
+    Theme:BackdropColor(listFrame, "dropdownList")
+    Theme:BorderColor(listFrame, "dropdownList")
     listFrame:Hide()
 
     container.btn = btn
@@ -1662,7 +1858,7 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
 
                 local optHighlight = optBtn:CreateTexture(nil, "HIGHLIGHT")
                 optHighlight:SetAllPoints()
-                optHighlight:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+                Theme:Fill(optHighlight, "menuHover")
 
                 local optText = optBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
                 optText:SetPoint("LEFT", 4, 0)
@@ -1672,11 +1868,23 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
                 -- recycled button never fires the option it used to hold.
                 optBtn:SetScript("OnClick", function(b)
                     local val = b.value
+                    if self.disabledOpts[val] then return end
                     self.selectedValue = val
                     self.btnText:SetText(DisplayText(val))
                     self.listFrame:Hide()
                     if onChange then onChange(val) end
                 end)
+
+                optBtn:SetScript("OnEnter", function(b)
+                    local note = self.disabledOpts[b.value]
+                    if note then
+                        GameTooltip:SetOwner(b, "ANCHOR_RIGHT")
+                        GameTooltip:SetText(b.value, 0.5, 0.5, 0.5)
+                        GameTooltip:AddLine(note, 1, 1, 1, true)
+                        GameTooltip:Show()
+                    end
+                end)
+                optBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
                 self.optionBtns[i] = optBtn
             end
@@ -1684,16 +1892,31 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
             local opt = opts[i]
             optBtn.value = opt
             optBtn.text:SetText(opt)
-            if opt == self.selectedValue then
-                optBtn.text:SetTextColor(0.3, 0.8, 1)
-            else
-                optBtn.text:SetTextColor(0.9, 0.9, 0.9)
-            end
+            self:ColorOption(optBtn)
             optBtn:Show()
         end
 
         for i = shown + 1, #self.optionBtns do
             self.optionBtns[i]:Hide()
+        end
+    end
+
+    -- An option that shows but cannot be picked: grey, and hovering it
+    -- explains why. note nil makes it pickable again.
+    container.disabledOpts = {}
+    function container:SetOptionDisabled(label, note)
+        self.disabledOpts[label] = note
+        for _, ob in ipairs(self.optionBtns) do self:ColorOption(ob) end
+    end
+
+    function container:ColorOption(ob)
+        if not ob.text then return end
+        if self.disabledOpts[ob.value] then
+            ob.text:SetTextColor(0.5, 0.5, 0.5)
+        elseif ob.value == self.selectedValue then
+            ob.text:SetTextColor(0.3, 0.8, 1)
+        else
+            ob.text:SetTextColor(0.9, 0.9, 0.9)
         end
     end
 
@@ -1717,15 +1940,7 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
         else
             CloseAllDropdowns()
             -- Refresh option text colors to highlight current selection
-            for _, ob in ipairs(container.optionBtns) do
-                if ob.text then
-                    if ob.value == container.selectedValue then
-                        ob.text:SetTextColor(0.3, 0.8, 1)
-                    else
-                        ob.text:SetTextColor(0.9, 0.9, 0.9)
-                    end
-                end
-            end
+            for _, ob in ipairs(container.optionBtns) do container:ColorOption(ob) end
             PositionList()
             listFrame:Show()
         end
@@ -1757,7 +1972,7 @@ function TSF:EnsureFrame()
     f:SetClampedToScreen(true)
     f:SetFrameStrata("HIGH")
     f:Hide()
-    f.TitleText:SetText("Profession Buddy")
+    f.TitleText:SetText("ProfessionBuddy")
 
     f:SetScript("OnMouseDown", function()
         CloseAllDropdowns()
@@ -1890,15 +2105,56 @@ function TSF:BuildHeader(parent)
     local bar = CreateFrame("StatusBar", nil, parent)
     bar:SetSize(FRAME_W - 24, SKILL_BAR_H)
     bar:SetPoint("TOPLEFT", 12, -52)
-    bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
-    bar:SetStatusBarColor(0.2, 0.45, 0.85)
+    local textHost = bar
+    if Theme:IsClassic() then
+        -- Classic: Blizzard's TBC trade skill bar (TradeSkillRankFrame), the
+        -- character sheet's skill bar and border, filled blue at half alpha.
+        -- The border sits on a child frame, as Blizzard's does, and the text
+        -- sits on that frame so the border never covers it.
+        bar:SetStatusBarTexture("Interface\\PaperDollInfoFrame\\UI-Character-Skills-Bar")
+        bar:SetStatusBarColor(0, 0, 1, 0.5)
+        -- Blizzard: a 268 x 15 bar in a 281 x 32 border that reaches 5 past
+        -- the bar on the left and 8 on the right. Scaled to this bar's
+        -- height, the bar is pulled in so the border stays inside the space
+        -- the bar would take, and the border is drawn as two ends and a
+        -- stretched middle so the ends keep their shape on a wide bar.
+        local k = SKILL_BAR_H / 15
+        local padL, padR = 5 * k, 8 * k
+        bar:SetSize(FRAME_W - 24 - padL - padR, SKILL_BAR_H)
+        bar:SetPoint("TOPLEFT", 12 + padL, -52)
+        local borderFrame = CreateFrame("Frame", nil, bar)
+        borderFrame:SetAllPoints()
+        local FILE = "Interface\\PaperDollInfoFrame\\UI-Character-Skills-BarBorder"
+        local CAP = 16 / 281                  -- each end, as a share of the texture
+        local capW, borderH = 16 * k, 32 * k
+        local left = borderFrame:CreateTexture(nil, "ARTWORK")
+        left:SetTexture(FILE)
+        left:SetTexCoord(0, CAP, 0, 1)
+        left:SetSize(capW, borderH)
+        left:SetPoint("LEFT", bar, "LEFT", -padL, 0)
+        local right = borderFrame:CreateTexture(nil, "ARTWORK")
+        right:SetTexture(FILE)
+        right:SetTexCoord(1 - CAP, 1, 0, 1)
+        right:SetSize(capW, borderH)
+        right:SetPoint("RIGHT", bar, "RIGHT", padR, 0)
+        local mid = borderFrame:CreateTexture(nil, "ARTWORK")
+        mid:SetTexture(FILE)
+        mid:SetTexCoord(CAP, 1 - CAP, 0, 1)
+        mid:SetHeight(borderH)
+        mid:SetPoint("LEFT", left, "RIGHT")
+        mid:SetPoint("RIGHT", right, "LEFT")
+        textHost = borderFrame
+    else
+        bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+        bar:SetStatusBarColor(0.2, 0.45, 0.85)
+    end
     bar:SetMinMaxValues(0, 375)
 
     local barBg = bar:CreateTexture(nil, "BACKGROUND")
     barBg:SetAllPoints()
-    barBg:SetColorTexture(0.08, 0.08, 0.08, 0.9)
+    Theme:Fill(barBg, "skillBarBackground")
 
-    local barText = bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local barText = textHost:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     barText:SetPoint("CENTER")
 
     self.skillBar = bar
@@ -1939,20 +2195,35 @@ function TSF:BuildNavStrip(parent)
         btn:SetHighlightFontObject(GameFontHighlightSmall)
         btn:SetText(def.text)
 
-        local bg = btn:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        bg:SetColorTexture(0.15, 0.15, 0.15, 0.9)
-
-        local border = btn:CreateTexture(nil, "BORDER")
-        border:SetHeight(1)
-        border:SetPoint("BOTTOMLEFT")
-        border:SetPoint("BOTTOMRIGHT")
-        border:SetColorTexture(0.4, 0.4, 0.4, 1)
-
-        if i == 1 then
-            btn:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 8, -TAB_H - 2)
+        if Theme:IsClassic() then
+            -- Classic: the game's bottom tabs, as on the main window. None
+            -- is ever selected here.
+            btn:SetHeight(32)
+            local normal, selected = Theme:DrawClassicTab(btn)
+            selected:Hide()
+            normal:Show()
+            local layout = Theme:TabLayout()
+            if i == 1 then
+                btn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", layout.firstX, 2)
+            else
+                btn:SetPoint("TOPLEFT", prev, "TOPRIGHT", layout.gap, 0)
+            end
         else
-            btn:SetPoint("LEFT", prev, "RIGHT", TAB_PAD, 0)
+            local bg = btn:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints()
+            Theme:Fill(bg, "navTab")
+
+            local border = btn:CreateTexture(nil, "BORDER")
+            border:SetHeight(1)
+            border:SetPoint("BOTTOMLEFT")
+            border:SetPoint("BOTTOMRIGHT")
+            Theme:Fill(border, "navTabBorder")
+
+            if i == 1 then
+                btn:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 8, -TAB_H - 2)
+            else
+                btn:SetPoint("LEFT", prev, "RIGHT", TAB_PAD, 0)
+            end
         end
 
         btn:SetScript("OnClick", def.toggle)
@@ -1978,8 +2249,9 @@ function TSF:UpdateSkillBar()
     self.titleText:SetText(profName)
     self.skillBar:SetMinMaxValues(0, maxSkill)
     self.skillBar:SetValue(skill)
-    self.skillBarText:SetText(profName .. "  -  " .. skill .. " / " .. maxSkill)
+    self.skillBarText:SetText(profName .. " " .. skill .. "/" .. maxSkill)
     self:UpdateProfessionTabs()
+    self:UpdateWatermark()
 end
 
 ----------------------------------------------------------------------
@@ -2001,9 +2273,24 @@ local PROF_ICONS = {
     ["Skinning"]        = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01",
     ["Fishing"]         = "Interface\\Icons\\Trade_Fishing",
     ["Poisons"]         = "Interface\\Icons\\Trade_BrewPoison",
-    -- WoW: Forever's own icon for the skill line (SkillLine 3012)
-    ["Comprehension"]   = "Interface\\Icons\\Spell_Holy_MindSooth",
 }
+
+-- Classic on TBC Classic Anniversary: the profession's icon, large and faint,
+-- behind the detail pane (Zorden 8). WoW: Forever gets Blizzard's own
+-- profession art instead, with its own look (ui-themes phase 3).
+function TSF:UpdateWatermark()
+    local wm = self.watermark
+    if not wm then return end
+    local name = state.profName
+    if name == "Smelting" then name = "Mining" end
+    local icon = name and PROF_ICONS[name]
+    if icon then
+        wm:SetTexture(icon)
+        wm:Show()
+    else
+        wm:Hide()
+    end
+end
 
 -- Profession sort order: crafting primary first (alpha), gathering primary
 -- (alpha), then secondary (alpha). Smelting counts as gathering.
@@ -2014,7 +2301,6 @@ local PROF_ORDER = {
     ["Herbalism"] = 20,
     ["Mining"] = 21, ["Find Minerals"] = 21.5, ["Skinning"] = 22,
     ["Cooking"] = 30, ["First Aid"] = 31, ["Fishing"] = 32,
-    ["Comprehension"] = 33,
 }
 
 -- All possible profession tabs, pre-built to avoid taint.
@@ -2026,7 +2312,6 @@ local ALL_TAB_PROFS = {
     "Find Minerals", "First Aid", "Fishing",
     "Jewelcrafting", "Leatherworking", "Mining", "Skinning", "Tailoring",
     "Poisons",   -- appended last so every other tab keeps its ProfBuddyProfTab<n> name
-    "Comprehension",   -- WoW: Forever mages; last for the same reason
 }
 
 -- Professions that have a browsable recipe window in the static DB.
@@ -2093,13 +2378,13 @@ function TSF:BuildProfessionTabs(parent)
 
         local bg = tab:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
-        bg:SetColorTexture(0.12, 0.12, 0.15, 0.9)
+        Theme:Fill(bg, "professionTab")
         tab.bg = bg
 
         local border = CreateFrame("Frame", nil, tab, "BackdropTemplate")
         border:SetAllPoints()
         border:EnableMouse(false)  -- don't eat clicks meant for the button
-        border:SetBackdrop({ edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 })
+        Theme:SetBackdrop(border, "professionTabBorder")
         tab.border = border
 
         local icon = tab:CreateTexture(nil, "ARTWORK")
@@ -2138,7 +2423,7 @@ function TSF:BuildProfessionTabs(parent)
     -- Separator line between known and unknown profession tabs
     local sep = self.profTabContainer:CreateTexture(nil, "ARTWORK")
     sep:SetSize(2, 20)
-    sep:SetColorTexture(0.6, 0.6, 0.6, 0.8)
+    Theme:Fill(sep, "professionTabSeparator")
     sep:Hide()
     self.profTabSeparator = sep
 end
@@ -2221,11 +2506,11 @@ function TSF:UpdateProfessionTabs()
             and profName ~= "Find Minerals"
 
         if isActive then
-            tab.bg:SetColorTexture(0.2, 0.35, 0.55, 0.9)
-            tab.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+            Theme:Fill(tab.bg, "professionTabActive")
+            Theme:BorderColor(tab.border, "professionTabActive")
         else
-            tab.bg:SetColorTexture(0.12, 0.12, 0.15, 0.9)
-            tab.border:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.6)
+            Theme:Fill(tab.bg, "professionTab")
+            Theme:BorderColor(tab.border, "professionTab")
         end
         tab.icon:SetDesaturated(false)
         tab.icon:SetAlpha(1)
@@ -2250,13 +2535,13 @@ function TSF:UpdateProfessionTabs()
             local isActive = (profName == activeName)
 
             if isActive then
-                tab.bg:SetColorTexture(0.2, 0.35, 0.55, 0.9)
-                tab.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+                Theme:Fill(tab.bg, "professionTabActive")
+                Theme:BorderColor(tab.border, "professionTabActive")
                 tab.icon:SetDesaturated(false)
                 tab.icon:SetAlpha(1)
             else
-                tab.bg:SetColorTexture(0.08, 0.08, 0.1, 0.9)
-                tab.border:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.4)
+                Theme:Fill(tab.bg, "professionTabDim")
+                Theme:BorderColor(tab.border, "professionTabDim")
                 tab.icon:SetDesaturated(true)
                 tab.icon:SetAlpha(0.5)
             end
@@ -2267,8 +2552,9 @@ function TSF:UpdateProfessionTabs()
 end
 
 -- Lightweight highlight update for use during combat.
--- Only calls non-protected methods (SetColorTexture, SetBackdropBorderColor,
--- SetDesaturated, SetAlpha on sub-textures). No Hide/Show/SetPoint.
+-- Only calls non-protected methods (SetColorTexture and
+-- SetBackdropBorderColor through Theme, SetDesaturated, SetAlpha on
+-- sub-textures). No Hide/Show/SetPoint.
 function TSF:UpdateProfessionTabHighlight()
     local activeName = state.profName
     if activeName == "Smelting" then activeName = "Mining" end
@@ -2280,23 +2566,23 @@ function TSF:UpdateProfessionTabHighlight()
 
             if tab._isUnknown then
                 if isActive then
-                    tab.bg:SetColorTexture(0.2, 0.35, 0.55, 0.9)
-                    tab.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+                    Theme:Fill(tab.bg, "professionTabActive")
+                    Theme:BorderColor(tab.border, "professionTabActive")
                     tab.icon:SetDesaturated(false)
                     tab.icon:SetAlpha(1)
                 else
-                    tab.bg:SetColorTexture(0.08, 0.08, 0.1, 0.9)
-                    tab.border:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.4)
+                    Theme:Fill(tab.bg, "professionTabDim")
+                    Theme:BorderColor(tab.border, "professionTabDim")
                     tab.icon:SetDesaturated(true)
                     tab.icon:SetAlpha(0.5)
                 end
             else
                 if isActive then
-                    tab.bg:SetColorTexture(0.2, 0.35, 0.55, 0.9)
-                    tab.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+                    Theme:Fill(tab.bg, "professionTabActive")
+                    Theme:BorderColor(tab.border, "professionTabActive")
                 else
-                    tab.bg:SetColorTexture(0.12, 0.12, 0.15, 0.9)
-                    tab.border:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.6)
+                    Theme:Fill(tab.bg, "professionTab")
+                    Theme:BorderColor(tab.border, "professionTab")
                 end
             end
         end
@@ -2456,14 +2742,9 @@ function TSF:BuildRecipeList(parent)
     listPanel:SetPoint("TOPLEFT", 10, topOffset)
     listPanel:SetPoint("BOTTOMLEFT", 10, 30)
     listPanel:SetWidth(LIST_W)
-    listPanel:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    listPanel:SetBackdropColor(0.05, 0.05, 0.07, 0.95)
-    listPanel:SetBackdropBorderColor(0.35, 0.35, 0.4, 0.8)
+    Theme:SetBackdrop(listPanel, "pane")
+    Theme:BackdropColor(listPanel, "recipeListPane")
+    Theme:BorderColor(listPanel, "recipeListPane")
 
     self.listRows = {}
     for i = 1, VISIBLE_ROWS do
@@ -2473,17 +2754,17 @@ function TSF:BuildRecipeList(parent)
 
         local highlight = row:CreateTexture(nil, "HIGHLIGHT")
         highlight:SetAllPoints()
-        highlight:SetColorTexture(0.25, 0.3, 0.45, 0.35)
+        Theme:Fill(highlight, "recipeRowHover")
 
         local selectedBg = row:CreateTexture(nil, "BACKGROUND")
         selectedBg:SetAllPoints()
-        selectedBg:SetColorTexture(0.18, 0.22, 0.35, 0.7)
+        Theme:Fill(selectedBg, "recipeRowSelected")
         selectedBg:Hide()
         row.selectedBg = selectedBg
 
         local headerBg = row:CreateTexture(nil, "BACKGROUND")
         headerBg:SetAllPoints()
-        headerBg:SetColorTexture(0.2, 0.17, 0.05, 0.6)
+        Theme:Fill(headerBg, "recipeCategoryHeader")
         headerBg:Hide()
         row.headerBg = headerBg
 
@@ -2619,12 +2900,43 @@ function TSF:BuildRecipeList(parent)
 
     local thumb = scrollBar:CreateTexture(nil, "OVERLAY")
     thumb:SetSize(12, 24)
-    thumb:SetColorTexture(0.4, 0.4, 0.5, 0.8)
+    Theme:Fill(thumb, "scrollThumb")
     scrollBar:SetThumbTexture(thumb)
 
     local trackBg = scrollBar:CreateTexture(nil, "BACKGROUND")
     trackBg:SetAllPoints()
-    trackBg:SetColorTexture(0.08, 0.08, 0.1, 0.6)
+    Theme:Fill(trackBg, "scrollTrack")
+
+    if Theme:IsClassic() then
+        -- Classic: Blizzard's classic scroll bar (UIPanelScrollBarTemplate,
+        -- SecureScrollTemplates.xml): the 18 x 24 knob (scrollThumb) and
+        -- 18 x 16 up and down buttons. It stays PB's own slider, since the
+        -- list draws its own rows; the buttons move it one row.
+        scrollBar:ClearAllPoints()
+        scrollBar:SetPoint("TOPRIGHT", listPanel, "TOPRIGHT", -6, -4 - 16)
+        scrollBar:SetPoint("BOTTOMRIGHT", listPanel, "BOTTOMRIGHT", -6, 4 + 16)
+        scrollBar:SetWidth(16)
+        thumb:SetSize(18, 24)
+        local function arrow(dir, delta)
+            local b = CreateFrame("Button", nil, listPanel)
+            b:SetSize(18, 16)
+            local base = "Interface\\Buttons\\UI-ScrollBar-Scroll" .. dir .. "Button-"
+            b:SetNormalTexture(base .. "Up")
+            b:SetPushedTexture(base .. "Down")
+            b:SetDisabledTexture(base .. "Disabled")
+            b:SetHighlightTexture(base .. "Highlight", "ADD")
+            for _, t in ipairs({ b:GetNormalTexture(), b:GetPushedTexture(),
+                                 b:GetDisabledTexture(), b:GetHighlightTexture() }) do
+                t:SetTexCoord(0.20, 0.80, 0.25, 0.75)
+            end
+            b:SetScript("OnClick", function() scrollBar:SetValue(scrollBar:GetValue() + delta) end)
+            return b
+        end
+        local up, down = arrow("Up", -1), arrow("Down", 1)
+        up:SetPoint("BOTTOM", scrollBar, "TOP")
+        down:SetPoint("TOP", scrollBar, "BOTTOM")
+        self.scrollUp, self.scrollDown = up, down
+    end
 
     scrollBar:SetValue(0)
     scrollBar:SetScript("OnValueChanged", function(_, value)
@@ -2657,6 +2969,7 @@ function TSF:UpdateListRows()
             row:Show()
 
             if entry.isHeader then
+                row._dc = nil
                 row.icon:Hide()
                 local arrow = entry.isCollapsed and "|cffcccccc+ |r" or "|cffcccccc- |r"
                 local indent = 4
@@ -2666,8 +2979,18 @@ function TSF:UpdateListRows()
                 else
                     row.nameText:SetTextColor(DIFF_COLORS.header.r, DIFF_COLORS.header.g, DIFF_COLORS.header.b)
                 end
-                row.nameText:SetText(arrow .. entry.name)
-                row.nameText:SetPoint("LEFT", indent, 0)
+                if Theme:IsClassic() then
+                    -- Classic: Blizzard's +/- expand buttons instead of text.
+                    row.icon:SetTexture(entry.isCollapsed and "Interface\\Buttons\\UI-PlusButton-Up"
+                        or "Interface\\Buttons\\UI-MinusButton-Up")
+                    row.icon:SetPoint("LEFT", indent, 0)
+                    row.icon:Show()
+                    row.nameText:SetText(entry.name)
+                    row.nameText:SetPoint("LEFT", row.icon, "RIGHT", 4, 0)
+                else
+                    row.nameText:SetText(arrow .. entry.name)
+                    row.nameText:SetPoint("LEFT", indent, 0)
+                end
                 row.rightText:SetText("|cff888888(" .. entry.count .. ")|r")
                 row.headerBg:Show()
             else
@@ -2692,14 +3015,15 @@ function TSF:UpdateListRows()
                     row.nameText:SetPoint("LEFT", 4 + recipeIndent, 0)
                 end
 
-                local dc
+                local dc, rowDiff
                 if entry.isKnown then
-                    dc = DiffColor(entry.difficulty)
+                    rowDiff = entry.difficulty
+                    dc = DiffColor(rowDiff)
                 else
-                    local ld = LearnedDiff(entry, state.skillLevel)
-                    dc = ld and DiffColor(ld) or NO_DIFF_COLOR
+                    rowDiff = LearnedDiff(entry, state.skillLevel)
+                    dc = rowDiff and DiffColor(rowDiff) or NO_DIFF_COLOR
                 end
-                row.nameText:SetText(entry.name)
+                row.nameText:SetText(addon:DiffMarker(rowDiff) .. entry.name)
                 row.nameText:SetTextColor(dc.r, dc.g, dc.b)
 
                 if entry.isKnown then
@@ -2764,14 +3088,16 @@ function TSF:UpdateListRows()
                         if (state.skillLevel or 0) >= entryReq then
                             skillText = " |cff00ff00[" .. entryReq .. "]|r"
                         else
-                            skillText = " |cffff4444[" .. entryReq .. "]|r"
+                            skillText = " |cffff4444[" .. entryReq
+                                .. (addon:ColorblindMarkers() and " low" or "") .. "]|r"
                         end
                     end
                     row.rightText:SetText(c .. displaySrc .. "|r" .. skillText)
                 end
 
+                row._dc = dc
                 if entry.name == state.selected then
-                    row.selectedBg:Show()
+                    self:PaintSelected(row, true)
                 end
             end
         else
@@ -2780,16 +3106,39 @@ function TSF:UpdateListRows()
     end
 end
 
+-- Classic, as Blizzard's TBC trade skill window: the selected recipe's
+-- highlight bar takes the recipe's difficulty color and its name turns
+-- white (Blizzard_TradeSkillUI TBC: TradeSkillHighlight:SetVertexColor,
+-- name:SetTextColor(HIGHLIGHT_FONT_COLOR)). Modern only shows the bar.
+function TSF:PaintSelected(row, selected)
+    if selected then
+        row.selectedBg:Show()
+    else
+        row.selectedBg:Hide()
+    end
+    if not Theme:IsClassic() or not row._dc then return end
+    local dc = row._dc
+    if selected then
+        row.selectedBg:SetVertexColor(dc.r, dc.g, dc.b, 1)
+        row.nameText:SetTextColor(1, 1, 1)
+    else
+        row.nameText:SetTextColor(dc.r, dc.g, dc.b)
+    end
+end
+
+-- The craft bar's quantity box and its - / + buttons show and hide together.
+function TSF:SetQtyShown(shown)
+    for _, w in ipairs({ self.qtyBox, self.qtyMinus, self.qtyPlus }) do
+        if shown then w:Show() else w:Hide() end
+    end
+end
+
 function TSF:UpdateListHighlights()
     for i = 1, VISIBLE_ROWS do
         local row = self.listRows[i]
         local dataIdx = i + state.scrollOffset
         local entry = state.recipes[dataIdx]
-        if entry and not entry.isHeader and entry.name == state.selected then
-            row.selectedBg:Show()
-        else
-            row.selectedBg:Hide()
-        end
+        self:PaintSelected(row, entry and not entry.isHeader and entry.name == state.selected)
     end
 end
 
@@ -2874,15 +3223,10 @@ function TSF:BuildDetailPanel(parent)
 
     local detail = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     detail:SetPoint("TOPLEFT", parent, "TOPLEFT", LIST_W + 18, topOffset)
-    detail:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30 + CRAFT_BAR_H + 4)
-    detail:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    detail:SetBackdropColor(0.06, 0.06, 0.08, 0.95)
-    detail:SetBackdropBorderColor(0.35, 0.35, 0.4, 0.8)
+    detail:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30 + CRAFT_BAR_H + 2)   -- 2 px gap above the craft bar
+    Theme:SetBackdrop(detail, "pane")
+    Theme:BackdropColor(detail, "detailPane")
+    Theme:BorderColor(detail, "detailPane")
 
     local placeholder = detail:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     placeholder:SetPoint("CENTER")
@@ -2890,11 +3234,26 @@ function TSF:BuildDetailPanel(parent)
     placeholder:SetTextColor(0.4, 0.4, 0.4)
     self.detPlaceholder = placeholder
 
+    if Theme:IsClassic() and addon.Source.flavor == "classic" then
+        -- Classic on TBC Classic Anniversary: a watermark (UpdateWatermark).
+        local wm = detail:CreateTexture(nil, "ARTWORK")
+        wm:SetSize(160, 160)
+        wm:SetPoint("BOTTOMRIGHT", detail, "BOTTOMRIGHT", -30, 12)
+        wm:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        wm:SetAlpha(0.07)
+        wm:Hide()
+        self.watermark = wm
+    end
+
     -- ScrollFrame: wraps all detail content so it scrolls when
     -- the embedded tooltip + reagents exceed available height
     local scrollFrame = CreateFrame("ScrollFrame", nil, detail, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", 4, -4)
-    scrollFrame:SetPoint("BOTTOMRIGHT", -24, 4)
+    -- Classic's pane border (edge 16) is about 5.5 px wide, so its scroll
+    -- area sits 2 px further in: scrolled content and the scroll bar stop
+    -- short of the border. Modern's thinner border keeps 4 px.
+    local inset = Theme:IsClassic() and 6 or 4
+    scrollFrame:SetPoint("TOPLEFT", inset, -inset)
+    scrollFrame:SetPoint("BOTTOMRIGHT", -20 - inset, inset)
 
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollChild:SetWidth(DETAIL_W - 40)
@@ -2945,7 +3304,7 @@ function TSF:BuildDetailPanel(parent)
     local nameDivider = sc:CreateTexture(nil, "ARTWORK")
     nameDivider:SetSize(DETAIL_W - 40, 1)
     nameDivider:SetPoint("TOPLEFT", detIcon, "BOTTOMLEFT", 0, -4)
-    nameDivider:SetColorTexture(0.3, 0.3, 0.35, 0.6)
+    Theme:Fill(nameDivider, "divider")
     self.nameDivider = nameDivider
 
     local detDiff = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -3003,7 +3362,7 @@ function TSF:BuildDetailPanel(parent)
 
     local itemTooltipDivider = sc:CreateTexture(nil, "ARTWORK")
     itemTooltipDivider:SetSize(DETAIL_W - 40, 1)
-    itemTooltipDivider:SetColorTexture(0.3, 0.3, 0.35, 0.4)
+    Theme:Fill(itemTooltipDivider, "dividerFaint")
     self.itemTooltipDivider = itemTooltipDivider
 
     -- We use a real GameTooltip-style frame embedded in the panel
@@ -3014,13 +3373,40 @@ function TSF:BuildDetailPanel(parent)
     embeddedTip:SetOwner(sc, "ANCHOR_NONE")
     embeddedTip:SetPoint("TOPLEFT", 0, 0)
     embeddedTip:SetScale(0.9)
+    -- Tooltip skins (ElvUI's among them) restyle every tooltip through
+    -- Blizzard's SharedTooltip_SetBackdropStyle and leave out the ones marked
+    -- IsEmbedded. Marked, Blizzard hides this box's own border too, so PB
+    -- draws the game's tooltip border and background behind it instead:
+    -- TooltipDefaultLayout through NineSliceUtil, as Blizzard does for
+    -- GameTooltip (SharedXML NineSlice.lua and NineSliceLayouts.lua, on both
+    -- clients). The box then looks the same with or without a skin.
+    embeddedTip.IsEmbedded = true
+    if embeddedTip.NineSlice then embeddedTip.NineSlice:Hide() end
+    local box = CreateFrame("Frame", nil, sc)
+    box:SetFrameStrata("HIGH")
+    box:SetScale(0.9)
+    box:SetAllPoints(embeddedTip)
+    if NineSliceUtil and NineSliceUtil.GetLayout and NineSlicePanelMixin and Mixin then
+        Mixin(box, NineSlicePanelMixin)
+        local layout = NineSliceUtil.GetLayout("TooltipDefaultLayout")
+        if layout then
+            NineSliceUtil.ApplyLayout(box, layout)
+            local bg = TOOLTIP_DEFAULT_BACKGROUND_COLOR
+            if bg and bg.GetRGB then box:SetCenterColor(bg:GetRGB()) end
+        end
+    end
+    embeddedTip:SetFrameLevel(box:GetFrameLevel() + 1)
+    box:Hide()
+    embeddedTip:HookScript("OnShow", function() box:Show() end)
+    embeddedTip:HookScript("OnHide", function() box:Hide() end)
+    self.itemInfoBox = box
     embeddedTip:Hide()
     self.embeddedTip = embeddedTip
 
     -- Reagents
     local reagentDivider = sc:CreateTexture(nil, "ARTWORK")
     reagentDivider:SetSize(DETAIL_W - 40, 1)
-    reagentDivider:SetColorTexture(0.3, 0.3, 0.35, 0.4)
+    Theme:Fill(reagentDivider, "dividerFaint")
     self.reagentDivider = reagentDivider
 
     local reagentHeader = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -3040,6 +3426,21 @@ function TSF:BuildDetailPanel(parent)
         rIcon:SetPoint("LEFT", 0, 0)
         rFrame.icon = rIcon
 
+        if Theme:IsClassic() then
+            -- Classic: Blizzard's quest item slot (QuestItemTemplate), scaled
+            -- from its 39 px icon to this 18 px one: the item button frame
+            -- around the icon and the NameFrame banner behind the name.
+            local slot = rFrame:CreateTexture(nil, "BORDER")
+            slot:SetTexture("Interface\\Buttons\\UI-Quickslot2")
+            slot:SetSize(18 * 64 / 37, 18 * 64 / 37)
+            slot:SetPoint("CENTER", rIcon, "CENTER")
+            local banner = rFrame:CreateTexture(nil, "BACKGROUND")
+            banner:SetTexture("Interface\\QuestFrame\\UI-QuestItemNameFrame")
+            banner:SetPoint("LEFT", rIcon, "RIGHT", -10 * 18 / 39, 0)
+            banner:SetPoint("RIGHT", rFrame, "RIGHT", 0, 0)
+            banner:SetHeight(64 * 18 / 39)
+        end
+
         local rName = rFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         rName:SetPoint("LEFT", rIcon, "RIGHT", 4, 0)
         rName:SetPoint("RIGHT", rFrame, "RIGHT", -36, 0)
@@ -3055,13 +3456,6 @@ function TSF:BuildDetailPanel(parent)
             if self.itemID then
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetItemByID(self.itemID)
-                if self.inBags ~= nil then
-                    GameTooltip:AddLine(" ")
-                    GameTooltip:AddDoubleLine("In bags:", tostring(self.inBags),
-                        0.8, 0.8, 0.8, 1, 1, 1)
-                    GameTooltip:AddDoubleLine("In bank:", tostring(self.inBank or 0),
-                        0.8, 0.8, 0.8, 1, 1, 1)
-                end
                 GameTooltip:Show()
             end
         end)
@@ -3084,7 +3478,7 @@ function TSF:BuildDetailPanel(parent)
     -- Alt materials
     local altDivider = sc:CreateTexture(nil, "ARTWORK")
     altDivider:SetSize(DETAIL_W - 40, 1)
-    altDivider:SetColorTexture(0.3, 0.3, 0.35, 0.4)
+    Theme:Fill(altDivider, "dividerFaint")
     self.altDivider = altDivider
 
     local altHeader = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -3397,8 +3791,6 @@ function TSF:RefreshDetailPanel(preserveScroll)
                 inBank = bank[reagent.itemID] or 0
             end
             local total = inBags + inBank
-            -- stash for the row hover tooltip (exact bag/bank split)
-            row.inBags, row.inBank = inBags, inBank
 
             row.nameText:SetText((reagent.name or "???") .. " x" .. need)
 
@@ -3646,68 +4038,89 @@ function TSF:AppendRodLine(tip, recipe)
 end
 
 function TSF:ShowAltMaterials(recipe)
-    -- Alt and friend visibility are independent toggles; if neither is on
-    -- nothing is collected below and the section stays hidden.
+    -- Who holds this recipe's reagents, laid out like the Held by tooltip:
+    -- you first, marked (you), then alts, then friends under "Friends:",
+    -- most held first, with the other faction last in each group. A count
+    -- reads like the tooltip's ("68 (Bags 5, Bank 63)"). The character being
+    -- viewed is left out, as the reagent rows show its counts. Alts and
+    -- friends follow their own Show in detail boxes; with neither on the
+    -- section stays hidden.
     if not recipe.reagents or not DS then return end
+    local showRemote = addon.db.settings.showRemoteInDetail
+    local showAlts = addon.db.settings.showAltInDetail
+    if not (showAlts or showRemote) then return end
 
-    local currentKey = state._viewCharKey or addon:PlayerKey()
-    local currentChar = DS:GetCharacter(currentKey)
-    local currentFaction = currentChar and currentChar.faction
-    local allChars = DS:GetAllCharacters()
+    local viewedKey = state._viewCharKey or addon:PlayerKey()
+    local playerKey = addon:PlayerKey()
+    local viewedChar = DS:GetCharacter(viewedKey)
+    local viewedFaction = viewedChar and viewedChar.faction
 
-    local showRemoteInDetail = addon.db.settings.showRemoteInDetail
-    local showAltInDetail = addon.db.settings.showAltInDetail
-
-    -- Collect into alts (local) and friends (remote); tag opposing faction.
-    -- Each type is gated by its own toggle, independently.
-    local alts, friends = {}, {}
-    for charKey, charData in pairs(allChars) do
-        local typeEnabled = (charData.isRemote and showRemoteInDetail)
-                         or (not charData.isRemote and showAltInDetail)
-        if not addon:SameKey(charKey, currentKey)
-           and typeEnabled
-           and addon:ShowsFaction(charData, charKey) then
-            local bags = charData.inventory and charData.inventory.bags or {}
-            local bankItems = charData.inventory and charData.inventory.bank or {}
-            local parts = {}
-
+    local you, alts, friends = {}, {}, {}
+    for charKey, charData in pairs(DS:GetAllCharacters() or {}) do
+        local isYou = addon:SameKey(charKey, playerKey)
+        local typeOK = isYou
+            or (charData.isRemote and showRemote)
+            or (not charData.isRemote and showAlts)
+        if not addon:SameKey(charKey, viewedKey) and typeOK
+           and (isYou or addon:ShowsFaction(charData, charKey)) then
+            local inv = charData.inventory
+            local bags = inv and inv.bags or {}
+            local bank = inv and inv.bank or {}
+            local parts, total = {}, 0
             for _, reagent in ipairs(recipe.reagents) do
-                if reagent.itemID then
-                    local count = (bags[reagent.itemID] or 0) + (bankItems[reagent.itemID] or 0)
-                    if count > 0 then
-                        table.insert(parts, (reagent.name or "?") .. ":" .. count)
-                    end
+                local id = reagent.itemID
+                if id and (bags[id] or 0) + (bank[id] or 0) > 0 then
+                    parts[#parts + 1] = (reagent.name or "?") .. " " .. self:HeldCount(bags[id] or 0, bank[id] or 0)
+                    total = total + (bags[id] or 0) + (bank[id] or 0)
                 end
             end
-
             if #parts > 0 then
+                local opposing = viewedFaction and charData.faction and charData.faction ~= viewedFaction
+                local tag = ""
+                if opposing then
+                    tag = (charData.faction == "Alliance") and "|cff4080ff[A]|r " or "|cffff4040[H]|r "
+                end
                 local entry = {
-                    short    = addon:ShortName(charKey),
-                    class    = charData.class,
-                    faction  = charData.faction,
-                    opposing = (charData.faction ~= currentFaction),
-                    summary  = table.concat(parts, ", "),
+                    key = charKey, total = total, opposing = opposing and true or false,
+                    text = tag .. addon:ClassColor(charData.class or "WARRIOR") .. addon:ShortName(charKey) .. "|r"
+                        .. (isYou and " |cff00ff00(you)|r" or "") .. "  " .. table.concat(parts, ", "),
                 }
-                if charData.isRemote then
-                    table.insert(friends, entry)
+                if isYou then
+                    you[1] = entry
+                elseif charData.isRemote then
+                    friends[#friends + 1] = entry
                 else
-                    table.insert(alts, entry)
+                    alts[#alts + 1] = entry
                 end
             end
         end
     end
+    if #you + #alts + #friends == 0 then return end
 
-    if #alts == 0 and #friends == 0 then return end
-
-    -- Sort each group: current faction first, then opposing; alpha within
-    local function sortGroup(t)
-        table.sort(t, function(a, b)
-            if a.opposing ~= b.opposing then return not a.opposing end
-            return a.short < b.short
-        end)
+    local function order(a, b)
+        if a.opposing ~= b.opposing then return not a.opposing end
+        if a.total ~= b.total then return a.total > b.total end
+        return a.key < b.key
     end
-    sortGroup(alts)
-    sortGroup(friends)
+    table.sort(alts, order)
+    table.sort(friends, order)
+
+    -- The lines in order; a heading has no entry. When they outrun the
+    -- panel's lines, the last one says how many characters are left.
+    local rows = {}
+    for _, e in ipairs(you) do rows[#rows + 1] = { text = e.text, entry = true } end
+    for _, e in ipairs(alts) do rows[#rows + 1] = { text = e.text, entry = true } end
+    if #friends > 0 then
+        rows[#rows + 1] = { text = "|cff80c0ffFriends:|r" }
+        for _, e in ipairs(friends) do rows[#rows + 1] = { text = e.text, entry = true } end
+    end
+    local max = #self.altLines
+    if #rows > max then
+        local left = 0
+        for i = max, #rows do if rows[i].entry then left = left + 1 end end
+        for i = #rows, max, -1 do rows[i] = nil end
+        rows[max] = { text = "|cff666666... and " .. left .. " more|r", entry = true }
+    end
 
     -- Anchor the divider/header below the last visible reagent row
     -- The reagent grid records its own bottom row (it owns the column split),
@@ -3720,35 +4133,16 @@ function TSF:ShowAltMaterials(recipe)
     self.altHeader:SetPoint("TOPLEFT", self.altDivider, "BOTTOMLEFT", 0, -4)
     self.altHeader:Show()
 
-    -- Render groups (each line anchored to the header at a computed row)
+    -- Each line anchored to the header at its row; characters indented
+    -- under the headings, as in the tooltip
     local LH = 14
-    local idx = 0
-    local function emit(text, indentX)
-        idx = idx + 1
-        if idx > #self.altLines then return false end
-        local line = self.altLines[idx]
+    for i, row in ipairs(rows) do
+        local line = self.altLines[i]
         line:ClearAllPoints()
-        line:SetPoint("TOPLEFT", self.altHeader, "BOTTOMLEFT", 4 + (indentX or 0), -4 - (idx - 1) * LH)
-        line:SetText(text)
+        line:SetPoint("TOPLEFT", self.altHeader, "BOTTOMLEFT", 4 + (row.entry and 10 or 0), -4 - (i - 1) * LH)
+        line:SetText(row.text)
         line:Show()
-        return true
     end
-
-    local function emitGroup(label, labelHex, list)
-        if #list == 0 then return end
-        if not emit("|cff" .. labelHex .. label .. "|r", 0) then return end
-        for _, e in ipairs(list) do
-            local cc = addon:ClassColor(e.class or "WARRIOR")
-            local tag = ""
-            if e.opposing then
-                tag = (e.faction == "Alliance") and "|cff4080ff[A]|r " or "|cffff4040[H]|r "
-            end
-            if not emit(tag .. cc .. e.short .. "|r  " .. e.summary, 10) then break end
-        end
-    end
-
-    emitGroup("Alts", "ffd820", alts)
-    emitGroup("Friends", "80c0ff", friends)
 end
 
 ----------------------------------------------------------------------
@@ -3790,7 +4184,7 @@ function TSF:BuildCalcPanel()
     local divider = calc:CreateTexture(nil, "ARTWORK")
     divider:SetSize(CALC_W - 30, 1)
     divider:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -4)
-    divider:SetColorTexture(0.3, 0.3, 0.35, 0.6)
+    Theme:Fill(divider, "divider")
 
     -- Summary line
     local summary = calc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -3828,7 +4222,7 @@ function TSF:BuildCalcPanel()
     local colDiv = calc:CreateTexture(nil, "ARTWORK")
     colDiv:SetSize(CALC_W - 30, 1)
     colDiv:SetPoint("TOPLEFT", colHeaders, "BOTTOMLEFT", 0, -2)
-    colDiv:SetColorTexture(0.25, 0.25, 0.3, 0.5)
+    Theme:Fill(colDiv, "calcColumnDivider")
 
     -- Scroll frame for material rows
     local scrollParent = CreateFrame("Frame", nil, calc)
@@ -3881,7 +4275,7 @@ function TSF:BuildCalcPanel()
         local divLine = row:CreateTexture(nil, "ARTWORK")
         divLine:SetSize(CALC_W - 36, 1)
         divLine:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 2, 0)
-        divLine:SetColorTexture(0.4, 0.38, 0.3, 0.6)
+        Theme:Fill(divLine, "calcRowDivider")
         divLine:Hide()
         row.sectionDivider = divLine
 
@@ -3890,33 +4284,6 @@ function TSF:BuildCalcPanel()
             if r.itemID then
                 GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
                 GameTooltip:SetItemByID(r.itemID)
-                -- Append per-alt inventory breakdown
-                local showAlt = addon.db.settings.showAltInDetail
-                local showRemote = addon.db.settings.showRemoteInDetail
-                if (showAlt or showRemote) and DS then
-                    local owners = DS:WhoHasItem(r.itemID)
-                    if next(owners) then
-                        local ck = addon:PlayerKey()
-                        GameTooltip:AddLine(" ")
-                        GameTooltip:AddLine("Held by:", 1, 0.82, 0)
-                        for charKey, count in pairs(owners) do
-                            local charData = DS:GetCharacter(charKey)
-                            local isCurrent = addon:SameKey(charKey, ck)
-                            -- Alt and friend inclusion are independent; you always count.
-                            local typeOK = isCurrent
-                                or (charData and charData.isRemote and showRemote)
-                                or (charData and not charData.isRemote and showAlt)
-                            if charData and typeOK
-                               and (isCurrent or addon:ShowsFaction(charData, charKey)) then
-                                local cc = addon:ClassColor(charData.class or "WARRIOR")
-                                GameTooltip:AddDoubleLine(
-                                    cc .. addon:ShortName(charKey) .. "|r",
-                                    tostring(count),
-                                    nil, nil, nil, 1, 1, 1)
-                            end
-                        end
-                    end
-                end
                 GameTooltip:Show()
             end
         end)
@@ -4155,14 +4522,9 @@ function TSF:BuildCraftBar(parent)
     craftBar:SetHeight(CRAFT_BAR_H)
     craftBar:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, 30)
     craftBar:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30)
-    craftBar:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    craftBar:SetBackdropColor(0.08, 0.08, 0.1, 0.95)
-    craftBar:SetBackdropBorderColor(0.35, 0.35, 0.4, 0.8)
+    Theme:SetBackdrop(craftBar, "barPane")
+    Theme:BackdropColor(craftBar, "craftBarPane")
+    Theme:BorderColor(craftBar, "craftBarPane")
 
     -- Layout: craft bar is DETAIL_W wide (~390px after borders)
     -- Row 1: [Craft]     [qty box] [Craft 1]  [Craft 5]
@@ -4171,7 +4533,7 @@ function TSF:BuildCraftBar(parent)
     local BTN_W  = 88
     local GAP    = 4
     local PAD    = 8
-    local ROW1_Y = -4
+    local ROW1_Y = -6
     local ROW2_Y = ROW1_Y - BTN_H - 2
 
     local x1 = PAD
@@ -4192,16 +4554,13 @@ function TSF:BuildCraftBar(parent)
     self.craftBtn = craftBtn
 
     local qtyBox = CreateFrame("EditBox", nil, craftBar, "BackdropTemplate")
-    qtyBox:SetSize(BTN_W, BTN_H)
-    qtyBox:SetPoint("TOPLEFT", craftBar, "TOPLEFT", x2, ROW1_Y)
-    qtyBox:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 8,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    qtyBox:SetBackdropColor(0.05, 0.05, 0.07, 0.9)
-    qtyBox:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    local qtyX, qtyW
+    qtyX, qtyW, self.qtyMinus, self.qtyPlus = AddQtyStepButtons(craftBar, qtyBox, x2, ROW1_Y, BTN_W, BTN_H)
+    qtyBox:SetSize(qtyW, BTN_H)
+    qtyBox:SetPoint("TOPLEFT", craftBar, "TOPLEFT", qtyX, ROW1_Y)
+    Theme:SetBackdrop(qtyBox, "input")
+    Theme:BackdropColor(qtyBox, "input")
+    Theme:BorderColor(qtyBox, "input")
     qtyBox:SetTextInsets(6, 6, 2, 2)
     qtyBox:SetFontObject(GameFontNormalSmall)
     qtyBox:SetAutoFocus(false)
@@ -4279,27 +4638,15 @@ function TSF:BuildCraftBar(parent)
     -- the macrotext is set out of combat in UpdateCraftBar.
     -- SecureActionButtonTemplate ONLY -- combining with UIPanelButtonTemplate
     -- lets its OnClick override the secure click handler, which silently
-    -- kills the cast. So we style it by hand instead (like the prof tabs).
+    -- kills the cast. So it draws the template's own artwork by hand
+    -- (DrawPanelButtonArt) and matches the other Craft buttons.
     local enchantBtn = CreateFrame("Button", "ProfBuddyEnchantCraftBtn", parent,
         "SecureActionButtonTemplate")
     enchantBtn:SetSize(BTN_W, BTN_H)
     enchantBtn:SetPoint("TOPLEFT", craftBar, "TOPLEFT", x1, ROW1_Y)
     enchantBtn:SetFrameLevel(craftBar:GetFrameLevel() + 5)
 
-    -- Outer (border color) then an inset fill, for a simple 1px border
-    local ebBg = enchantBtn:CreateTexture(nil, "BACKGROUND")
-    ebBg:SetAllPoints()
-    ebBg:SetColorTexture(0.4, 0.4, 0.45, 0.9)
-    local ebFill = enchantBtn:CreateTexture(nil, "BORDER")
-    ebFill:SetPoint("TOPLEFT", 1, -1)
-    ebFill:SetPoint("BOTTOMRIGHT", -1, 1)
-    ebFill:SetColorTexture(0.18, 0.18, 0.2, 1)
-    local ebHi = enchantBtn:CreateTexture(nil, "HIGHLIGHT")
-    ebHi:SetAllPoints()
-    ebHi:SetColorTexture(0.35, 0.35, 0.45, 0.4)
-    local ebText = enchantBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    ebText:SetPoint("CENTER")
-    ebText:SetText("Craft")
+    enchantBtn.look = DrawPanelButtonArt(enchantBtn, "Craft")
 
     enchantBtn:SetAttribute("type", "macro")
     -- Secure casts fire on key-DOWN on the modern engine, so the down
@@ -4483,14 +4830,9 @@ function TSF:ShowShareMenu(anchorBtn)
     if not m then
         m = CreateFrame("Frame", "ProfBuddyShareMenu", UIParent, "BackdropTemplate")
         m:SetFrameStrata("FULLSCREEN_DIALOG")
-        m:SetBackdrop({
-            bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            edgeSize = 12,
-            insets   = { left = 3, right = 3, top = 3, bottom = 3 },
-        })
-        m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
-        m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+        Theme:SetBackdrop(m, "menu")
+        Theme:BackdropColor(m, "menu")
+        Theme:BorderColor(m, "menu")
         m:EnableMouse(true)
         m:SetClampedToScreen(true)
         m:Hide()
@@ -4518,7 +4860,7 @@ function TSF:ShowShareMenu(anchorBtn)
             b:SetHeight(ROW_H)
             local hl = b:CreateTexture(nil, "HIGHLIGHT")
             hl:SetAllPoints()
-            hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+            Theme:Fill(hl, "menuHover")
             b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             b.text:SetPoint("LEFT", 8, 0)
             b.text:SetJustifyH("LEFT")
@@ -4641,26 +4983,28 @@ function TSF:UpdateCraftBar()
                 btn:Hide()
             end
         end
-        if self.qtyBox then self.qtyBox:Hide() end
+        self:SetQtyShown(false)
     elseif itemLess and eb then
         -- Enchant: use the secure cast button; the normal craft buttons
         -- and qty box don't apply (enchants are one cast per target item).
         for _, btn in ipairs(self.craftBtns) do btn:Hide() end
-        if self.qtyBox then self.qtyBox:Hide() end
+        self:SetQtyShown(false)
         if InCombatLockdown() then
             -- The macrotext is a secure attribute and cannot be rewritten in
             -- combat, so leaving the button live would cast whatever enchant
             -- was selected BEFORE combat onto the next item clicked. Disable
             -- it instead; PLAYER_REGEN_ENABLED re-runs this function.
-            eb:SetAlpha(0.4)
+            eb.look("disabled")
+            eb:SetAlpha(1)
             eb:EnableMouse(false)
         else
             eb:SetAttribute("macrotext", "/cast " .. recipe.name)
+            eb:SetAlpha(1)
             if canCraft then
-                eb:SetAlpha(1)
+                eb.look("up")
                 eb:EnableMouse(true)
             else
-                eb:SetAlpha(0.4)
+                eb.look("disabled")
                 eb:EnableMouse(false)
             end
         end
@@ -4677,7 +5021,7 @@ function TSF:UpdateCraftBar()
                 btn:Disable()
             end
         end
-        if self.qtyBox then self.qtyBox:Show() end
+        self:SetQtyShown(true)
     end
 
     if self.craftNotLearned then
@@ -4716,20 +5060,15 @@ function TSF:BuildComposer(parent)
     bar:SetHeight(CRAFT_BAR_H)
     bar:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, 30)
     bar:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30)
-    bar:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 10,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    bar:SetBackdropColor(0.08, 0.08, 0.1, 0.95)
-    bar:SetBackdropBorderColor(0.35, 0.35, 0.4, 0.8)
+    Theme:SetBackdrop(bar, "barPane")
+    Theme:BackdropColor(bar, "craftBarPane")
+    Theme:BorderColor(bar, "craftBarPane")
 
     local BTN_H  = 22
     local BTN_W  = 88
     local GAP    = 4
     local PAD    = 8
-    local ROW1_Y = -4
+    local ROW1_Y = -6
     local ROW2_Y = ROW1_Y - BTN_H - 2
 
     local x1 = PAD
@@ -4747,16 +5086,13 @@ function TSF:BuildComposer(parent)
 
     -- ---- Row 1 col 2: quantity ----
     local qty = CreateFrame("EditBox", nil, bar, "BackdropTemplate")
-    qty:SetSize(BTN_W, BTN_H)
-    qty:SetPoint("TOPLEFT", bar, "TOPLEFT", x2, ROW1_Y)
-    qty:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 8,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    qty:SetBackdropColor(0.05, 0.05, 0.07, 0.9)
-    qty:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    local qtyX, qtyW
+    qtyX, qtyW, self.composerQtyMinus, self.composerQtyPlus = AddQtyStepButtons(bar, qty, x2, ROW1_Y, BTN_W, BTN_H)
+    qty:SetSize(qtyW, BTN_H)
+    qty:SetPoint("TOPLEFT", bar, "TOPLEFT", qtyX, ROW1_Y)
+    Theme:SetBackdrop(qty, "input")
+    Theme:BackdropColor(qty, "input")
+    Theme:BorderColor(qty, "input")
     qty:SetTextInsets(6, 6, 2, 2)
     qty:SetFontObject(GameFontNormalSmall)
     qty:SetAutoFocus(false)
@@ -4787,14 +5123,9 @@ function TSF:BuildComposer(parent)
     local noteFrame = CreateFrame("Frame", nil, bar, "BackdropTemplate")
     noteFrame:SetPoint("TOPLEFT", bar, "TOPLEFT", x3, ROW1_Y)
     noteFrame:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -PAD, 4)
-    noteFrame:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 8,
-        insets   = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    noteFrame:SetBackdropColor(0.05, 0.05, 0.07, 0.9)
-    noteFrame:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
+    Theme:SetBackdrop(noteFrame, "input")
+    Theme:BackdropColor(noteFrame, "input")
+    Theme:BorderColor(noteFrame, "input")
 
     local note = CreateFrame("EditBox", nil, noteFrame)
     note:SetMultiLine(true)
@@ -4968,33 +5299,57 @@ end
 -- Bottom bar
 ----------------------------------------------------------------------
 function TSF:BuildBottomBar(parent)
+    -- The bar spans the window's inner area: Blizzard's InsetBg
+    -- (BasicFrameTemplateWithInset, Blizzard_UIPanelTemplates), which sits 4
+    -- px from the window's left edge and 6 from its right, less 3 px for the
+    -- inner border (its corners are 6 x 6). Its text and button keep the
+    -- places they had on the old 10-px-inset bar.
+    local inner = parent.InsetBg or parent
     local bar = CreateFrame("Frame", nil, parent)
-    bar:SetSize(FRAME_W - 20, 22)
-    bar:SetPoint("BOTTOMLEFT", 10, 6)
+    bar:SetHeight(22)
+    bar:SetPoint("BOTTOMLEFT", inner, "BOTTOMLEFT", 3, 2)
+    bar:SetPoint("BOTTOMRIGHT", inner, "BOTTOMRIGHT", -3, 2)
 
     local barBg = bar:CreateTexture(nil, "BACKGROUND")
     barBg:SetAllPoints()
-    barBg:SetColorTexture(0.08, 0.08, 0.1, 0.9)
+    Theme:Fill(barBg, "bottomBar")
 
     local summary = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    summary:SetPoint("LEFT", 8, 0)
+    summary:SetPoint("LEFT", 11, 0)
     self.summaryText = summary
 
     -- Material Calculator toggle button (right side of bottom bar)
+    if Theme:IsClassic() then
+        -- Classic: Blizzard's red button, its highlight locked on while the
+        -- calculator is open (UpdateCalcBtnState).
+        local calcBtn = CreateFrame("Button", nil, bar, "UIPanelButtonTemplate")
+        calcBtn:SetSize(120, 20)
+        calcBtn:SetPoint("RIGHT", -3, 0)
+        calcBtn:SetText("Material Calculator")
+        calcBtn:SetNormalFontObject(GameFontNormalSmall)
+        calcBtn:SetHighlightFontObject(GameFontHighlightSmall)
+        calcBtn:SetScript("OnClick", function()
+            self:ToggleCalcPanel()
+            self:UpdateCalcBtnState()
+        end)
+        self.calcBtn = calcBtn
+        self.bottomBar = bar
+        return
+    end
     local calcBtn = CreateFrame("Button", nil, bar)
     calcBtn:SetSize(120, 18)
-    calcBtn:SetPoint("RIGHT", -4, 0)
+    calcBtn:SetPoint("RIGHT", -5, 0)
 
     local calcBg = calcBtn:CreateTexture(nil, "BACKGROUND")
     calcBg:SetAllPoints()
-    calcBg:SetColorTexture(0.15, 0.15, 0.18, 0.9)
+    Theme:Fill(calcBg, "calcButton")
     calcBtn.bg = calcBg
 
     local calcBorder = CreateFrame("Frame", nil, calcBtn, "BackdropTemplate")
     calcBorder:SetAllPoints()
     calcBorder:EnableMouse(false)
-    calcBorder:SetBackdrop({ edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 8 })
-    calcBorder:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.6)
+    Theme:SetBackdrop(calcBorder, "calcButtonBorder")
+    Theme:BorderColor(calcBorder, "calcButton")
     calcBtn.border = calcBorder
 
     local calcText = calcBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -5008,12 +5363,12 @@ function TSF:BuildBottomBar(parent)
     end)
     calcBtn:SetScript("OnEnter", function(self)
         if not self._depressed then
-            self.bg:SetColorTexture(0.22, 0.22, 0.28, 0.9)
+            Theme:Fill(self.bg, "calcButtonHover")
         end
     end)
     calcBtn:SetScript("OnLeave", function(self)
         if not self._depressed then
-            self.bg:SetColorTexture(0.15, 0.15, 0.18, 0.9)
+            Theme:Fill(self.bg, "calcButton")
         end
     end)
 
@@ -5028,15 +5383,20 @@ function TSF:UpdateCalcBtnState()
     local isOpen = self.calcPanel and self.calcPanel:IsShown()
     btn._depressed = isOpen
 
+    if Theme:IsClassic() then
+        if isOpen then btn:LockHighlight() else btn:UnlockHighlight() end
+        return
+    end
+
     if isOpen then
         -- Depressed / active state
-        btn.bg:SetColorTexture(0.1, 0.25, 0.45, 0.9)
-        btn.border:SetBackdropBorderColor(0.4, 0.7, 1, 0.9)
+        Theme:Fill(btn.bg, "calcButtonActive")
+        Theme:BorderColor(btn.border, "calcButtonActive")
         btn.label:SetTextColor(0.7, 0.85, 1)
     else
         -- Normal state
-        btn.bg:SetColorTexture(0.15, 0.15, 0.18, 0.9)
-        btn.border:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.6)
+        Theme:Fill(btn.bg, "calcButton")
+        Theme:BorderColor(btn.border, "calcButton")
         btn.label:SetTextColor(1, 0.82, 0)
     end
 end
@@ -5060,7 +5420,7 @@ function TSF:BuildSettingsPanel(parent)
     -- Solid background so nothing bleeds through
     local bg = panel:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.05, 0.05, 0.07, 1)
+    Theme:Fill(bg, "settingsBackground")
 
     -- Title
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -5073,7 +5433,7 @@ function TSF:BuildSettingsPanel(parent)
     divider:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
     divider:SetPoint("RIGHT", panel, "RIGHT", -16, 0)
     divider:SetHeight(1)
-    divider:SetColorTexture(0.3, 0.3, 0.35, 0.6)
+    Theme:Fill(divider, "divider")
 
     local settings = addon.db.settings
 
@@ -5107,7 +5467,6 @@ function TSF:BuildSettingsPanel(parent)
     local checkboxes = {}
     local COL_LEFT = 14
     local COL_RIGHT = 358
-    local GROUP_W = 336
 
     -- Both columns scroll together inside one scroll frame; the title line
     -- above and the hint below stay put. The bar shows only when the
@@ -5202,7 +5561,59 @@ function TSF:BuildSettingsPanel(parent)
     end
     SyncMinimapCB()
     self.minimapCB = minimapCB
-    yLeft = yLeft - 40
+    yLeft = yLeft - 30
+
+    -- Colorblind markers: [+++]/[++]/[+] before recipe names, " low" in a
+    -- missing recipe's learn tag, and the same on gather tooltips
+    -- (addon:ColorblindMarkers in Core.lua). Auto follows the game's own
+    -- Colorblind Mode check box.
+    local CB_LABELS = { auto = "Auto (game setting)", on = "On", off = "Off" }
+    local CB_ORDER = { "auto", "on", "off" }
+    local cbOpts = {}
+    for i, k in ipairs(CB_ORDER) do cbOpts[i] = CB_LABELS[k] end
+    local colorblindDD = CreateDropdown(content, 322, cbOpts,
+        CB_LABELS[settings.colorblindMarkers] or CB_LABELS.auto,
+        function(val)
+            for k, label in pairs(CB_LABELS) do
+                if label == val then settings.colorblindMarkers = k end
+            end
+            -- Guarded like the faction box: the list may not exist yet.
+            if TSF.scrollBar then TSF:RefreshRecipeList() end
+        end,
+        "Colorblind markers: ")
+    colorblindDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    self.colorblindDD = colorblindDD
+    local function SyncColorblindDD()
+        colorblindDD:SetValue(CB_LABELS[settings.colorblindMarkers] or CB_LABELS.auto)
+    end
+    SyncColorblindDD()
+    yLeft = yLeft - 34
+
+    -- Window style (UI/Theme.lua). The windows are built once per session,
+    -- so a new style applies after a reload; changing it offers one.
+    local WS_LABELS = { classic = "Classic", modern = "Modern", game = "Match the game" }
+    local WS_ORDER = { "classic", "modern", "game" }
+    local wsOpts = {}
+    for i, k in ipairs(WS_ORDER) do wsOpts[i] = WS_LABELS[k] end
+    local styleDD = CreateDropdown(content, 322, wsOpts,
+        WS_LABELS[settings.windowStyle] or WS_LABELS.modern,
+        function(val)
+            for k, label in pairs(WS_LABELS) do
+                if label == val and settings.windowStyle ~= k then
+                    settings.windowStyle = k
+                    Theme:OfferReload()
+                end
+            end
+        end,
+        "Window style: ")
+    styleDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    -- WoW: Forever has no look of its own yet (ui-themes phase 3), so Match
+    -- the game shows there but cannot be picked.
+    if addon.Source.flavor == "forever" then
+        styleDD:SetOptionDisabled(WS_LABELS.game, "Coming to WoW: Forever in a later update.")
+    end
+    self.windowStyleDD = styleDD
+    yLeft = yLeft - 34
 
     -- ── Alt Information section ────────────────────────────────
     local altHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -5211,16 +5622,6 @@ function TSF:BuildSettingsPanel(parent)
     altHeader:SetTextColor(1, 0.82, 0)
     yLeft = yLeft - 20
 
-    local altGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
-    altGroupBg:SetPoint("TOPLEFT", COL_LEFT - 4, yLeft + 4)
-    altGroupBg:SetSize(GROUP_W, 1) -- height set below
-    altGroupBg:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = nil,
-        insets   = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    altGroupBg:SetBackdropColor(0.1, 0.1, 0.12, 0.6)
-    local altGroupTop = yLeft + 4
     yLeft = yLeft - 6
 
     MakeCheckbox("Show in detail panel", "showAltInDetail", yLeft)
@@ -5229,10 +5630,9 @@ function TSF:BuildSettingsPanel(parent)
     yLeft = yLeft - 26
     MakeCheckbox("Include in material calculator", "includeAltsInCalc", yLeft)
     yLeft = yLeft - 26
-    MakeCheckbox("Show opposite faction alts", "showCrossFactionAlts", yLeft)
-    yLeft = yLeft - 14
+    MakeCheckbox("Show opposite-faction alts", "showCrossFactionAlts", yLeft)
+    yLeft = yLeft - 28   -- the 24 px check box and 4 px, matching the top
 
-    altGroupBg:SetHeight(altGroupTop - yLeft)
 
     -- ── Friend Data section ──────────────────────────────────
     yLeft = yLeft - 20
@@ -5243,16 +5643,6 @@ function TSF:BuildSettingsPanel(parent)
     friendHeader:SetTextColor(1, 0.82, 0)
     yLeft = yLeft - 20
 
-    local friendGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
-    friendGroupBg:SetPoint("TOPLEFT", COL_LEFT - 4, yLeft + 4)
-    friendGroupBg:SetSize(GROUP_W, 1)
-    friendGroupBg:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = nil,
-        insets   = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    friendGroupBg:SetBackdropColor(0.1, 0.1, 0.12, 0.6)
-    local friendGroupTop = yLeft + 4
     yLeft = yLeft - 6
 
     MakeCheckbox("Show in detail panel", "showRemoteInDetail", yLeft)
@@ -5268,15 +5658,14 @@ function TSF:BuildSettingsPanel(parent)
     yLeft = yLeft - 26
     -- Friends and guildmates of the other faction (addon:ShowsFaction): off
     -- hides them everywhere, Friends tab included. Their data stays.
-    local crossFriendsCB = MakeCheckbox("Show opposite faction friends", "showCrossFactionFriends", yLeft)
+    local crossFriendsCB = MakeCheckbox("Show opposite-faction friends", "showCrossFactionFriends", yLeft)
     crossFriendsCB:SetScript("OnClick", function(self)
         settings.showCrossFactionFriends = self:GetChecked() and true or false
         if addon.FriendsPanel and addon.FriendsPanel.Refresh then addon.FriendsPanel:Refresh() end
     end)
     TSF.crossFriendsCB = crossFriendsCB
-    yLeft = yLeft - 14
+    yLeft = yLeft - 28   -- the 24 px check box and 4 px, matching the top
 
-    friendGroupBg:SetHeight(friendGroupTop - yLeft)
 
     -- ════════════════════════════════════════════════════════════
     -- RIGHT COLUMN
@@ -5290,16 +5679,6 @@ function TSF:BuildSettingsPanel(parent)
     sectionHeader:SetTextColor(1, 0.82, 0)
     yRight = yRight - 20
 
-    local groupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
-    groupBg:SetPoint("TOPLEFT", COL_RIGHT - 4, yRight + 4)
-    groupBg:SetSize(GROUP_W, 1) -- height set below
-    groupBg:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = nil,
-        insets   = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    groupBg:SetBackdropColor(0.1, 0.1, 0.12, 0.6)
-    local groupTop = yRight + 4
     yRight = yRight - 6
 
     local usedInCB = MakeCheckbox("Show recipes used in", "tooltipShowUsedIn", yRight, COL_RIGHT)
@@ -5363,6 +5742,36 @@ function TSF:BuildSettingsPanel(parent)
     otherSlider.Low:SetText("0")
     otherSlider.High:SetText("20")
     otherSlider.Text:SetText("")
+    yRight = yRight - 44
+
+    -- Slider 4: "Held by" lines (1-20, 21 = "All"). Not part of Used in, so
+    -- it stays live when Used in is off; the Show in tooltips boxes turn
+    -- the section itself off.
+    local heldLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    heldLabel:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight)
+    heldLabel:SetTextColor(0.9, 0.9, 0.9)
+
+    local heldSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
+    heldSlider:SetSize(SLIDER_W, 16)
+    heldSlider:SetPoint("TOPLEFT", COL_RIGHT + 24, yRight - 18)
+    heldSlider:SetMinMaxValues(1, 21)
+    heldSlider:SetValueStep(1)
+    heldSlider:SetObeyStepOnDrag(true)
+    heldSlider:SetValue(settings.tooltipMaxHeldBy or 8)
+    heldSlider.Low:SetText("1")
+    heldSlider.High:SetText("All")
+    heldSlider.Text:SetText("")
+    self.heldBySlider = heldSlider
+    local function UpdateHeldLabel(v)
+        v = math.floor(v or settings.tooltipMaxHeldBy or 8)
+        heldLabel:SetText("Held by: " .. (v >= 21 and "All" or tostring(v)))
+    end
+    UpdateHeldLabel()
+    self.heldByLabel = heldLabel
+    heldSlider:SetScript("OnValueChanged", function(_, val)
+        settings.tooltipMaxHeldBy = math.floor(val)
+        UpdateHeldLabel(val)
+    end)
     yRight = yRight - 14
 
     -- Gather skill on ore/herb NODES + skinnable/mineable/herbable MOBS.
@@ -5387,7 +5796,6 @@ function TSF:BuildSettingsPanel(parent)
     end)
     lootUnlearnedCB:SetScript("OnLeave", function() GameTooltip:Hide() end)
     yRight = yRight - 24
-    groupBg:SetHeight(groupTop - yRight)
 
     -- "Show for unlearned professions" and "Skinning yield" are SUB-options of
     -- "Gather skill on tooltips" -- disable/grey them when the parent is off
@@ -5492,16 +5900,6 @@ function TSF:BuildSettingsPanel(parent)
     notifHeader:SetTextColor(1, 0.82, 0)
     yRight = yRight - 20
 
-    local notifGroupBg = CreateFrame("Frame", nil, content, "BackdropTemplate")
-    notifGroupBg:SetPoint("TOPLEFT", COL_RIGHT - 4, yRight + 4)
-    notifGroupBg:SetSize(GROUP_W, 1)
-    notifGroupBg:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = nil,
-        insets   = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    notifGroupBg:SetBackdropColor(0.1, 0.1, 0.12, 0.6)
-    local notifGroupTop = yRight + 4
     yRight = yRight - 6
 
     -- Two checkboxes on one row: the column has room for one more row only,
@@ -5541,9 +5939,8 @@ function TSF:BuildSettingsPanel(parent)
     notifNote:SetText("|cff888888The Orders tab count badge is always shown.|r")
     yRight = yRight - 16
 
-    notifGroupBg:SetHeight(notifGroupTop - yRight)
 
-    content:SetHeight(math.max(-yLeft, -yRight) + 8)
+    content:SetHeight(math.max(-yLeft, -yRight) + 20)
 
     -- Hint at the bottom
     local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -5561,10 +5958,12 @@ function TSF:BuildSettingsPanel(parent)
         ownSlider:SetValue(settings.tooltipMaxOwn or 16)
         altSlider:SetValue(settings.tooltipMaxAlt or 16)
         otherSlider:SetValue(settings.tooltipMaxOther or 5)
+        heldSlider:SetValue(settings.tooltipMaxHeldBy or 8)
         UpdateTooltipGroup()
         UpdateGatherSub()
         SyncBoardAlertDD()
         SyncMinimapCB()
+        SyncColorblindDD()
         sf:SetVerticalScroll(0)
         -- Belt-and-suspenders: hide content that shouldn't be visible
         if TSF.craftBar then TSF.craftBar:Hide() end
@@ -5756,7 +6155,7 @@ function TSF:UpdateBottomBar(unknown)
         "|cff00ff00Known: " .. knownCount .. "|r    " ..
         "|cffff8800Missing: " .. missingCount .. "|r    " ..
         "|cffffff00From Trainer: " .. trainableCount .. "|r    " ..
-        "|cff44ddffLearnable Now: " .. learnableNow .. "|r"
+        "|cff44ddffLearnable now: " .. learnableNow .. "|r"
     )
 end
 
@@ -6010,7 +6409,7 @@ function TSF:LoadRecipes(unknown)
             if vis ~= nil and #vis == 0 then
                 passFaction = false
             elseif useDiff then
-                -- a missing recipe has no skill-up colour yet
+                -- a missing recipe has no skill-up color yet
                 passDiff = false
             elseif useSrc then
                 local want = srcMap[state.filterSource]
@@ -6394,19 +6793,6 @@ local function scrapeRecipes(isCraft)
         }
         table.insert(state.recipeOrder, row.name)
     end
-    -- Abilities (WoW: Forever, Comprehension) are never in the window:
-    -- list the ones this character knows, under their own category. No
-    -- index, so they can never be crafted.
-    local prof = addon.Scanner and addon.Scanner:Canonicalize(state.profName) or state.profName
-    for name, e in pairs(RDB and RDB.KnownAbilities and RDB:KnownAbilities(prof) or {}) do
-        if not state.allRecipes[name] then
-            state.allRecipes[name] = {
-                spellID = e.spellID, itemID = 0, numAvail = 0, reagents = {},
-                category = e.category, difficulty = "trivial", ability = true,
-            }
-            table.insert(state.recipeOrder, name)
-        end
-    end
     return win.itemsPending
 end
 
@@ -6599,7 +6985,7 @@ function TSF:OpenWithStatic(profName)
     if self.skillBar then
         self.skillBar:SetMinMaxValues(0, 1)
         self.skillBar:SetValue(0)
-        self.skillBarText:SetText(profName .. "  -  Not learned")
+        self.skillBarText:SetText(profName .. ": Not learned")
     end
     self:UpdateProfessionTabs()
 
@@ -6753,7 +7139,7 @@ function TSF:OpenWithCharacter(charKey, profName)
     if self.skillBar then
         self.skillBar:SetMinMaxValues(0, maxSkill)
         self.skillBar:SetValue(skill)
-        self.skillBarText:SetText(classColor .. shortName .. "|r  -  " .. profName .. "  " .. skill .. "/" .. maxSkill)
+        self.skillBarText:SetText(classColor .. shortName .. "|r: " .. profName .. " " .. skill .. "/" .. maxSkill)
     end
     self:UpdateProfessionTabs()
 

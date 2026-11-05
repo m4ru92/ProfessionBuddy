@@ -7,6 +7,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 local MH = addon:NewModule("MailHelper")
 
 -- Contact keys, favorites first, then alphabetical by short name. Mail never
@@ -43,14 +44,9 @@ local function ensureMenu()
     if MH._menu then return MH._menu end
     local m = CreateFrame("Frame", "ProfBuddyMailMenu", UIParent, "BackdropTemplate")
     m:SetFrameStrata("FULLSCREEN_DIALOG")
-    m:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12,
-        insets   = { left = 3, right = 3, top = 3, bottom = 3 },
-    })
-    m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
-    m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+    Theme:SetBackdrop(m, "menu")
+    Theme:BackdropColor(m, "menu")
+    Theme:BorderColor(m, "menu")
     m:EnableMouse(true)
     m:SetClampedToScreen(true)
     m:Hide()
@@ -80,7 +76,7 @@ local function menuButton(m, i)
         b:SetHeight(ROW_H)
         local hl = b:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints()
-        hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+        Theme:Fill(hl, "menuHover")
         b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         b.text:SetPoint("LEFT", 8, 0)
         b.text:SetJustifyH("LEFT")

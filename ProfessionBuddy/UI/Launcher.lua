@@ -39,7 +39,7 @@ function Launcher:Init()
             if not tt or not tt.AddLine then return end
             tt:AddLine(NAME)
             tt:AddLine("Left-click: open ProfessionBuddy", 1, 1, 1)
-            tt:AddLine("Right-click: Settings", 1, 1, 1)
+            tt:AddLine("Right-click: open Settings", 1, 1, 1)
         end,
     })
 

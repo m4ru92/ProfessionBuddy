@@ -1,12 +1,12 @@
 ----------------------------------------------------------------------
 -- WoW: Forever harness (Forever 2.0.0, Phases 0, 2a, 2b and 4a).
 --
--- Loads ProfessionBuddy_Mainline.toc into a modern-client stub
+-- Loads ProfessionBuddy_Forever.toc into a modern-client stub
 -- (tests/forever_env.lua) with a fake profession backend built from
 -- m4ru's 2026-09-22 harvest (tests/forever_tradeskill.lua), then checks
 -- that PB starts cleanly and that its own window reads Forever's
 -- professions: Blizzard's window suppressed, the known recipes with
--- reagents, counts, colours and the game's categories, tabs that open by
+-- reagents, counts, colors and the game's categories, tabs that open by
 -- skill line, Mining never filed under Smelting, crafting (Phase 2b),
 -- late item names retried, a clean close and reopen, the K profession
 -- book, and the edge rows the harvest has no example of.
@@ -22,7 +22,7 @@ local function called(prefix)
 end
 
 -- F1: every Mainline file loads
-local files, errs = LOAD_TOC("ProfessionBuddy_Mainline.toc")
+local files, errs = LOAD_TOC("ProfessionBuddy_Forever.toc")
 EXPECT(#errs == 0, "load errors: " .. table.concat(errs, " | "))
 for _, f in ipairs(files) do
     EXPECT((not f:match("^Data/") or f:match("^Data/Forever/")) and f ~= "Source/Classic.lua",
@@ -94,7 +94,7 @@ FLUSH()
 EXPECT(TSF.frame and TSF.frame:IsShown(), "PB did not open on TRADE_SKILL_LIST_UPDATE")
 print("  PASS F7 Leatherworking: Blizzard's window suppressed before it shows, PB opens when the list is ready")
 
--- F8: the known recipes, with reagents, counts, colours and the game's categories
+-- F8: the known recipes, with reagents, counts, colors and the game's categories
 local st = TSF.state
 EXPECT(st.profName == "Leatherworking" and st.skillLevel == 1 and st.maxSkill == 75, "skill bar state wrong")
 EXPECT(count(st.allRecipes) == 6, "expected the 6 learned recipes, got " .. count(st.allRecipes))
@@ -366,8 +366,10 @@ for prof, recipes in pairs(RDB.data) do
         EXPECT(r.sources and METHODS[r.sources[1].method], prof .. "/" .. name .. " source")
     end
 end
--- 14 with Comprehension (the mage's scroll skill, 7 entries) since 2026-10-13
-EXPECT(nProf == 14 and nRec == 2352, "expected 14 professions / 2352 recipes, got " .. nProf .. " / " .. nRec)
+-- 2354 at the launch build 1.60.1.70790 (Enchant Boots - Speed, and Gray
+-- Leather Boots as its own recipe); 13 and 2347 without Comprehension (the
+-- mage's spellbook skill, 7 entries), which has no profession window
+EXPECT(nProf == 13 and nRec == 2347, "expected 13 professions / 2347 recipes, got " .. nProf .. " / " .. nRec)
 -- Tanning and Gardening open the Skinning and Herbalism windows; they are
 -- not recipes (the game does not list them)
 EXPECT(RDB.data.Skinning.Tanning == nil and RDB.data.Herbalism.Gardening == nil, "a profession window spell baked as a recipe")
@@ -491,13 +493,13 @@ TRAINERS[90001] = { name = "Tester", tradeskill = true, services = {
 local keepSummary = TSF.summaryText
 TSF.summaryText = { SetText = function(self, t) self.t = t end, GetText = function(self) return self.t end }
 TSF:UpdateBottomBar()
-local learnBefore = tonumber(TSF.summaryText:GetText():match("Learnable Now: (%d+)"))
+local learnBefore = tonumber(TSF.summaryText:GetText():match("Learnable now: (%d+)"))
 TRAINER_OPEN(90001)
 FLUSH()
 TRAINER_CLOSE()
 EXPECT(K[unk.spellID].learnLevel == 1, "test trainer not recorded")
 TSF:UpdateBottomBar()
-local learnAfter = tonumber(TSF.summaryText:GetText():match("Learnable Now: (%d+)"))
+local learnAfter = tonumber(TSF.summaryText:GetText():match("Learnable now: (%d+)"))
 EXPECT(learnAfter == learnBefore + 1, "Learnable Now " .. tostring(learnBefore) .. " -> " .. tostring(learnAfter))
 TSF.summaryText = keepSummary
 st.showTab, st.searchText = "missing", unknownLearn:lower()
@@ -782,7 +784,7 @@ TSF:RefreshRecipeList()
 print("  PASS F23 a Missing recipe hidden by a filter stays selected and its detail panel stays, through the game's list updates too; a recipe the profession lacks still clears")
 
 -- F24: the filters split (m4ru 2026-09-27: the Skill Up dropdown held only
--- sources in the Missing view). Skill Up lists skill-up colours and shows
+-- sources in the Missing view). Skill Up lists skill-up colors and shows
 -- in Known and All; Source lists sources and shows in Missing and All.
 -- Changing the View keeps the selected recipe when the new view has it
 C_TradeSkillUI.OpenTradeSkill(165)
@@ -810,7 +812,7 @@ pick(TSF.viewDropdown, "Missing")
 EXPECT(not TSF.diffDropdown:IsShown() and TSF.sourceDropdown:IsShown(), "Missing view: Source only")
 pick(TSF.viewDropdown, "All")
 EXPECT(TSF.diffDropdown:IsShown() and TSF.sourceDropdown:IsShown(), "All view: both")
--- All view: a Skill Up colour lists only known recipes, a Source only missing ones
+-- All view: a Skill Up color lists only known recipes, a Source only missing ones
 local function listed()
     local known, missing = 0, 0
     for _, r in ipairs(st.recipes) do
@@ -859,7 +861,7 @@ pick(TSF.viewDropdown, "All")
 EXPECT(st.selected == "Light Leather" and name == "Light Leather", "Known -> All lost the recipe")
 pick(TSF.viewDropdown, "Known")
 EXPECT(st.selected == "Light Leather", "All -> Known lost a known recipe")
-print("  PASS F24 Skill Up (colours; Known and All) and Source (sources; Missing and All) are separate; each filters its own recipes; a View change keeps a selection the new view has and clears one it lacks")
+print("  PASS F24 Skill Up (colors; Known and All) and Source (sources; Missing and All) are separate; each filters its own recipes; a View change keeps a selection the new view has and clears one it lacks")
 
 -- F25: Phase 4d. The first profession open asks Show everything or Learn
 -- as you go (Escape asks again next session); Learn as you go lists only
@@ -1248,7 +1250,7 @@ rawset(GameTooltip, "AddLine", nil)                            -- F21 captured i
 rawset(GameTooltip, "Show", nil)
 local posts = 0
 for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then posts = posts + 1 end end
-EXPECT(posts == 2, "item tooltip post-calls: " .. posts)
+EXPECT(posts == 3, "item tooltip post-calls: " .. posts)   -- Used in, Craftable by, Held by
 local function has(lines, text)
     for _, l in ipairs(lines) do if type(l) == "string" and l:find(text, 1, true) then return l end end
 end
@@ -1323,11 +1325,11 @@ do
 end
 print("  PASS F29 gathering-node tooltip skips secret tooltip text")
 
--- F30: a Missing recipe shows the colour it will have once learned, not a
+-- F30: a Missing recipe shows the color it will have once learned, not a
 -- placeholder yellow (m4ru 2026-09-29: Kodo Hide Bag read "Yellow - may
 -- level up" before he knew it, and will be orange when learned). Kodo
 -- Hide Bag is learned at 35 with range 35/65/80/95; below 35 it reads
--- orange, the colour it will have when learned at 35.
+-- orange, the color it will have when learned at 35.
 do
     C_TradeSkillUI.OpenTradeSkill(165)
     TS_LIST_READY()
@@ -1363,7 +1365,7 @@ do
     for _, c in ipairs(cases) do
         local d, n, r = at(c[1])
         EXPECT(d == c[2], "skill " .. c[1] .. ": " .. tostring(d))
-        EXPECT(n == c[3] and r == c[3], "skill " .. c[1] .. " colours: name " .. tostring(n) .. ", row " .. tostring(r))
+        EXPECT(n == c[3] and r == c[3], "skill " .. c[1] .. " colors: name " .. tostring(n) .. ", row " .. tostring(r))
     end
     -- no range in PB's data: "not known", in white
     local data = RDB.data.Leatherworking["Kodo Hide Bag"]
@@ -1373,7 +1375,7 @@ do
     local d, n, r = at(70)
     data.skillRange = sr
     EXPECT(d == "Difficulty when learned: not known", "no range: " .. tostring(d))
-    EXPECT(n == WHITE and r == WHITE, "no range colours: name " .. tostring(n) .. ", row " .. tostring(r))
+    EXPECT(n == WHITE and r == WHITE, "no range colors: name " .. tostring(n) .. ", row " .. tostring(r))
     -- a known recipe keeps the game's tier
     st.showTab, st.searchText = "known", "handstitched leather boots"
     TSF:RefreshRecipeList()
@@ -1386,7 +1388,7 @@ do
     st.showTab, st.searchText, st.selected, st.skillLevel = "known", "", nil, 1
     TSF:RefreshRecipeList()
 end
-print("  PASS F30 a Missing recipe shows the colour it will have once learned, in the detail panel and on its row")
+print("  PASS F30 a Missing recipe shows the color it will have once learned, in the detail panel and on its row")
 
 -- F31: numbered chunks (COMM_REV 9). Forever delivers the chunks of a long
 -- message out of order when they go out in a burst (m4ru's traces,
@@ -1934,7 +1936,7 @@ do
     issecretvalue = nil
     local after = 0
     for _ in pairs(ProfBuddyDB.skinLoot) do after = after + 1 end
-    EXPECT(okD and not PRINTED("skinning loot record failed") and after == before, "secret source: " .. tostring(errD))
+    EXPECT(okD and not PRINTED("Skinning loot record failed") and after == before, "secret source: " .. tostring(errD))
     for k, v in pairs(real) do _G[k] = v end
 end
 print("  PASS F36 skinning loot learned as you skin: a Skinning cast's loot window (after it or during it) is counted per mob, nothing else is, the corpse at the cast's start stands in for the loot source, a secret source records nothing")
@@ -2214,7 +2216,7 @@ do
     local onUpdate = GameTooltip._h.OnUpdate
     local left = {}
     for i = 1, 3 do
-        left[i] = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        left[i] = CreateFrame("Frame", "GameTooltipTextLeft" .. i)
         rawset(left[i], "SetText", function(self, t) self._text = t end)
         rawset(left[i], "GetText", function(self) return self._text end)
     end
@@ -2846,7 +2848,7 @@ do
     local lines = {}
     obj.OnTooltipShow({ AddLine = function(_, t) lines[#lines + 1] = t end })
     EXPECT(lines[1] == "ProfessionBuddy" and lines[2]:find("Left-click", 1, true)
-           and lines[3]:find("Right-click: Settings", 1, true), "tooltip lines")
+           and lines[3]:find("Right-click: open Settings", 1, true), "tooltip lines")
     -- compartment: one entry, its click does what the button does
     local entry
     for _, d in ipairs(AddonCompartmentFrame.registeredAddons) do
@@ -3048,64 +3050,63 @@ do
 end
 print("  PASS F55 fix wave: tool line without an item link, 7 board rows, sightings asked again after 15 minutes")
 
--- F56: Comprehension (the WoW: Forever mage's scroll skill), the seventh
--- profession slot, and the Guild Board's right-hand controls.
+-- F56: no Comprehension (the WoW: Forever mage's spellbook skill, which
+-- has no profession window), the seventh profession slot, and the Guild
+-- Board's right-hand controls.
 do
-    local RDB, TSF, SC = ProfBuddy.RecipeDB, ProfBuddy.TradeSkillFrame, ProfBuddy.Scanner
-    local C = RDB.data.Comprehension
-    EXPECT(C and C.Study and not C.Study.ability and C.Study.reagents[1].name == "Light Feather", "Study is not a recipe")
-    local abilities = 0
-    for name, e in pairs(C) do
-        if e.ability then
-            abilities = abilities + 1
-            EXPECT(e.category == "Abilities" and e.itemID == 0, name .. " is not a plain ability")
-        end
+    local RDB, SC = ProfBuddy.RecipeDB, ProfBuddy.Scanner
+    EXPECT(RDB.data.Comprehension == nil, "Comprehension data loaded")
+    for prof, recipes in pairs(RDB.data) do
+        for name, e in pairs(recipes) do EXPECT(e.ability == nil, prof .. "/" .. name .. " is an ability") end
     end
-    EXPECT(abilities == 6, "abilities: " .. abilities)
-    EXPECT(C["Comprehend Scroll"] and C["Comprehend Scroll (15-30)"] and C["Comprehend Scroll (250-300)"],
-           "Comprehend Scroll ranks are not named by their skill band")
-    EXPECT(ProfBuddy:ProfessionForClass("Comprehension", "MAGE")
-           and not ProfBuddy:ProfessionForClass("Comprehension", "WARRIOR"), "Comprehension is not mage-only")
-    EXPECT(not ProfBuddy.CRAFTABLE_PROFS.Comprehension, "Comprehension would sync to others")
+    EXPECT(ProfBuddy.CLASS_PROFS.Comprehension == nil and not ProfBuddy.CRAFTABLE_PROFS.Comprehension,
+           "Comprehension is still a profession")
+    EXPECT(RDB.KnownAbilities == nil and RDB.AddKnownAbilities == nil, "the abilities path is still there")
 
     -- the seventh slot (Forever: two primaries and up to five secondaries)
-    local realGP, realGPI = GetProfessions, GetProfessionInfo
-    local slots = { "Leatherworking", "Skinning", "Cooking", "First Aid", "Fishing", false, "Comprehension" }
+    -- is read; Comprehension's skill line (3012) is skipped in any language
+    local realGP, realGPI, realSI = GetProfessions, GetProfessionInfo, C_Spell.GetSpellInfo
+    local slots = {}
     GetProfessions = function() return 1, 2, 3, 4, 5, nil, 7 end
     GetProfessionInfo = function(i)
         local n = slots[i]
         if not n then return nil end
-        return n, 0, 10, 300, 1, 0, 0
+        return n[1], 0, 10, 300, 1, 0, n[2]
     end
+    local base = { { "Leatherworking", 165 }, { "Skinning", 393 }, { "Cooking", 185 }, { "First Aid", 129 },
+                   { "Fishing", 356 }, false }
+    for i = 1, 6 do slots[i] = base[i] end
+    slots[7] = { "Herbalism", 182 }
     local lines = ProfBuddy.Source:ReadProfessionSkills()
-    EXPECT(#lines == 6 and lines[6].name == "Comprehension", "the seventh profession slot was not read")
+    EXPECT(#lines == 6 and lines[6].name == "Herbalism", "the seventh profession slot was not read")
+    slots[7] = { "Verständnis", 3012 }
+    lines = ProfBuddy.Source:ReadProfessionSkills()
+    EXPECT(#lines == 5, "Comprehension's slot was read: " .. #lines)
 
-    -- known abilities come from the spellbook into the saved record
-    local realSB = C_SpellBook
-    C_SpellBook = { IsSpellKnown = function(id) return id == 1296017 or id == 1309973 end }
-    SC:ScanProfessions()
-    local rec = ProfBuddy.DataStore:GetProfession(nil, "Comprehension")
-    EXPECT(rec and rec.recipes["Comprehend Scroll"] and rec.recipes["Comprehend Scroll"].ability
-           and rec.recipes["Comprehend Scroll (15-30)"], "known abilities not saved")
-    local unknown = RDB:GetAllUnknownRecipes(nil, "Comprehension")
-    EXPECT(not unknown["Comprehend Scroll"] and not unknown["Comprehend Scroll (15-30)"]
-           and unknown.Research and unknown.Study and unknown["Comprehend Scroll (50-75)"],
-           "Missing should list the unknown ones only")
-
-    -- a live window lists a known ability, with no index (never crafted)
-    RDB.data.Leatherworking["Test Ability"] = { spellID = 999001, itemID = 0, ability = true,
-        category = "Abilities", sources = { { method = "trainer" } } }
-    C_SpellBook.IsSpellKnown = function(id) return id == 999001 end
-    C_TradeSkillUI.OpenTradeSkill(165)
-    TS_LIST_READY()
-    FLUSH()
-    local a = TSF.state.allRecipes["Test Ability"]
-    EXPECT(a and a.ability and a.index == nil and a.category == "Abilities", "a known ability is not in the Known list")
-    RDB.data.Leatherworking["Test Ability"] = nil
-    C_SpellBook = realSB
-    GetProfessions, GetProfessionInfo = realGP, realGPI
+    -- with it in a slot, an unlearned profession still leaves the record,
+    -- and Comprehension is not stored
+    local names = { [2108] = "Leatherworking", [8613] = "Skinning", [2550] = "Cooking", [3273] = "First Aid",
+                    [7620] = "Fishing", [3908] = "Tailoring" }
+    C_Spell.GetSpellInfo = function(id) return names[id] and { name = names[id] } or nil end
     local char = ProfBuddy.DataStore:GetCharacter()
-    char.professions.Comprehension = nil
+    local saved = char.professions
+    char.professions = { Leatherworking = { skillLevel = 10, maxSkill = 300, recipes = {} },
+                         Tailoring = { skillLevel = 10, maxSkill = 300, recipes = {} } }
+    SC:ScanProfessions()
+    EXPECT(char.professions.Tailoring == nil, "a mage's unlearned profession was kept")
+    EXPECT(char.professions.Comprehension == nil and char.professions["Verständnis"] == nil, "Comprehension stored")
+    char.professions = saved
+    GetProfessions, GetProfessionInfo, C_Spell.GetSpellInfo = realGP, realGPI, realSI
+
+    -- 2.0.0 saved it for mages: loading drops it from every character
+    local db = { characters = { A = { professions = { Comprehension = { skillLevel = 5 }, Tailoring = {} } },
+                                B = { professions = { Comprehension = {} } }, C = {}, D = "x" } }
+    ProfBuddy:DropComprehension(db)
+    EXPECT(db.characters.A.professions.Comprehension == nil and db.characters.A.professions.Tailoring
+           and db.characters.B.professions.Comprehension == nil, "saved Comprehension not dropped")
+    local core = assert(io.open(PB_BASE .. "/Core.lua")):read("*a")
+    EXPECT(core:find("addon:MigrateToFullName%(%)%s+addon:DropComprehension%(ProfBuddyDB%)"),
+           "loading does not drop saved Comprehension")
     SC:ScanProfessions()
 
     -- the Guild Board's right-hand controls sit flush with the list's scroll bar
@@ -3121,7 +3122,7 @@ do
     if not FP.rows then FP:Toggle() end
     EXPECT(FP.rows and FP.rows[1] and #FP.rows[1].profIcons == 7, "Friends rows do not hold 7 profession icons")
 end
-print("  PASS F56 Comprehension (mage-only data, abilities saved and listed, never crafted), seventh profession slot, board controls flush right, 7 Friends icons")
+print("  PASS F56 no Comprehension (no data, slot skipped by skill line, saved copies dropped), seventh profession slot, board controls flush right, 7 Friends icons")
 
 -- F57: an unlearned profession leaves the player's record on Forever too.
 -- GetProfessions lists professions only, so an unnamed slot stops the
@@ -3132,9 +3133,10 @@ do
     local saved = char.professions
     local function prof(n) return { skillLevel = n, maxSkill = 300, recipes = { ["R" .. n] = { spellID = n } } } end
     char.professions = { Leatherworking = prof(100), Skinning = prof(90), Tailoring = prof(80),
-        Comprehension = prof(10) }
+        Poisons = prof(10) }
     local realGP, realGPI, realSI = GetProfessions, GetProfessionInfo, C_Spell.GetSpellInfo
-    local names = { [2108] = "Leatherworking", [8613] = "Skinning", [3908] = "Tailoring", [2550] = "Cooking" }
+    local names = { [2108] = "Leatherworking", [8613] = "Skinning", [3908] = "Tailoring", [2550] = "Cooking",
+                    [2842] = "Poisons" }
     C_Spell.GetSpellInfo = function(id) return names[id] and { name = names[id] } or nil end
     local slots = {}
     GetProfessions = function() local r = {} for i = 1, #slots do r[i] = i end return unpack(r) end
@@ -3145,7 +3147,7 @@ do
     local p = char.professions
     EXPECT(p.Tailoring == nil, "an unlearned profession is still stored on Forever")
     EXPECT(p.Leatherworking and p.Leatherworking.recipes.R100 and p.Skinning, "a learned profession was touched")
-    EXPECT(p.Comprehension, "Comprehension (a class skill) was removed")
+    EXPECT(p.Poisons, "Poisons (a class skill) was removed")
 
     p.Cooking = prof(50)
     slots = { "Leatherworking", "Kochkunst" }
@@ -3305,4 +3307,668 @@ do
 end
 print("  PASS F59 search matches materials, Learnable now lists exactly the learnable missing recipes, Share opens the chat box with the link")
 
-print("ALL FOREVER TESTS PASS (59)")
+-- F60: Find a Crafter's "Recipe or item name" sits inside the search box as
+-- placeholder text, not as a label beside the box that ran under the Sync
+-- guild recipes button. It shows while the box is empty (the panel focuses
+-- the box on open) and hides while there is text.
+do
+    local OP = ProfBuddy.OrdersPanel
+    OP:ToggleFind()
+    local box = OP.findBox
+    EXPECT(OP.findFrame:IsShown(), "Find a Crafter did not open")
+    local found = {}
+    for _, fr in ipairs(FRAMES) do
+        if rawget(fr, "_text") == "Recipe or item name" then found[#found + 1] = fr end
+    end
+    EXPECT(#found == 1, "expected one Recipe or item name text, found " .. #found)
+    local ph = found[1]
+    EXPECT(rawget(ph, "_parent") == box, "the placeholder is not on the search box")
+    local pt = rawget(ph, "_lastPoint")
+    EXPECT(pt and pt[1] == "LEFT" and pt[2] == box and pt[3] == "LEFT",
+           "the placeholder is not anchored inside the box")
+    for _, fr in ipairs(FRAMES) do
+        local p = rawget(fr, "_lastPoint")
+        EXPECT(not (p and p[2] == box and p[3] == "RIGHT"), "something is still anchored right of the box")
+    end
+    EXPECT(ph:IsShown(), "placeholder hidden on an empty box")
+    local onChanged = box:GetScript("OnTextChanged")
+    box:SetText("copper"); onChanged(box)
+    EXPECT(not ph:IsShown(), "placeholder still shown with text in the box")
+    box:SetText(""); onChanged(box)
+    EXPECT(ph:IsShown(), "placeholder did not come back when the box was cleared")
+    OP:ToggleFind()
+    EXPECT(not OP.findFrame:IsShown(), "Find a Crafter did not close")
+end
+print("  PASS F60 Find a Crafter shows Recipe or item name inside the box while it is empty")
+
+-- F61: 2.0.1 text pass. The Characters tab says "1 recipe", not "1 recipes",
+-- and the profession bar reads "<Profession> 75/150", "<Name>: <Profession>
+-- 113/150" for someone else's, and "<Profession>: Not learned", with no
+-- " - " or spaced slash.
+do
+    local CP = ProfBuddy.CharacterPanel
+    local r1 = CP:CreateProfessionRow("X-Forever", "Leatherworking",
+        { skillLevel = 10, maxSkill = 75, recipes = { a = {} } }, 0, false)
+    local t1 = rawget(r1.recipeText, "_text") or ""
+    EXPECT(t1:find("1 recipe|r", 1, true) and not t1:find("1 recipes", 1, true), "one recipe reads " .. t1)
+    local r2 = CP:CreateProfessionRow("X-Forever", "Tailoring",
+        { skillLevel = 10, maxSkill = 75, recipes = { a = {}, b = {} } }, 0, false)
+    local t2 = rawget(r2.recipeText, "_text") or ""
+    EXPECT(t2:find("2 recipes|r", 1, true), "two recipes read " .. t2)
+
+    local bar = TSF.skillBarText
+    TSF:UpdateSkillBar()
+    local own = bar:GetText()
+    EXPECT(own:match("^.+ %d+/%d+$") and not own:find(" - ", 1, true) and not own:find(" / ", 1, true),
+           "own profession bar reads " .. own)
+
+    ProfBuddyDB.characters["Barpal-Forever"] = { isRemote = true, class = "MAGE", faction = "Horde",
+        professions = { Tailoring = { skillLevel = 50, maxSkill = 75, recipes = { a = {} } } } }
+    TSF:OpenWithCharacter("Barpal-Forever", "Tailoring")
+    local other = bar:GetText()
+    EXPECT(other:find("|r: Tailoring 50/75", 1, true) and not other:find(" - ", 1, true),
+           "someone else's profession bar reads " .. other)
+
+    TSF:OpenWithStatic("Alchemy")
+    local unl = bar:GetText()
+    EXPECT(unl:find(": Not learned", 1, true) and not unl:find(" - ", 1, true),
+           "not-learned profession bar reads " .. unl)
+    ProfBuddyDB.characters["Barpal-Forever"] = nil
+end
+print("  PASS F61 Characters tab says 1 recipe; the profession bar reads Profession 75/150 with no dash")
+
+-- F62: Colorblind markers (2.0.1 item 10). With markers on, a recipe row
+-- puts Blizzard's [+++]/[++]/[+] before the name, a missing recipe's red
+-- learn tag reads [35 low], a gather line ends in its band's marker or
+-- (too low), and the Characters tab's expanded list marks names too. Auto follows
+-- the game's Colorblind Mode; Settings has the Auto / On / Off dropdown.
+do
+    local S = ProfBuddyDB.settings
+    EXPECT(S.colorblindMarkers == "auto", "colorblind default: " .. tostring(S.colorblindMarkers))
+    CVARS.colorblindMode = "1"
+    EXPECT(ProfBuddy:ColorblindMarkers(), "Auto missed the game's Colorblind Mode")
+
+    -- the missing Kodo Hide Bag row (F22): orange when learned, learn level 35 above your skill
+    -- F61 left a static Alchemy view up: reopen your own Leatherworking
+    TSF.frame:Hide()
+    C_TradeSkillUI.OpenTradeSkill(165)
+    FLUSH(); TS_LIST_READY(); FLUSH()
+    local st = TSF.state
+    EXPECT(st.profName == "Leatherworking" and not st._viewCharKey, "Leatherworking did not reopen: " .. tostring(st.profName))
+    st.showTab, st.searchText, st.selected, st.filterSource = "missing", "kodo hide bag", nil, "All"
+    TSF:RefreshRecipeList()
+    local names, rights = {}, {}
+    for i, row in ipairs(TSF.listRows) do
+        rawset(row.nameText, "SetText", function(_, t) names[i] = t end)
+        rawset(row.rightText, "SetText", function(_, t) rights[i] = t end)
+    end
+    local function kodo()
+        names, rights = {}, {}
+        TSF:UpdateListRows()
+        for i, t in pairs(names) do
+            if type(t) == "string" and t:find("Kodo Hide Bag", 1, true) then return t, rights[i] end
+        end
+    end
+    local n, r = kodo()
+    EXPECT(n == "[+++] Kodo Hide Bag", "marked missing row name: " .. tostring(n))
+    EXPECT(r == "|cffffff00Vendor|r |cffff4444[35 low]|r", "marked learn tag: " .. tostring(r))
+    S.colorblindMarkers = "off"
+    n, r = kodo()
+    EXPECT(n == "Kodo Hide Bag" and r == "|cffffff00Vendor|r |cffff4444[35]|r", "Off still marks: " .. tostring(n) .. " " .. tostring(r))
+    S.colorblindMarkers = "auto"
+
+    -- known rows: each name carries its own tier's marker
+    st.showTab, st.searchText = "known", ""
+    TSF:RefreshRecipeList()
+    names = {}
+    TSF:UpdateListRows()
+    local checked = 0
+    for i in ipairs(TSF.listRows) do
+        local e = st.recipes[i + (st.scrollOffset or 0)]
+        if e and not e.isHeader and e.isKnown and names[i] then
+            EXPECT(names[i] == ProfBuddy:DiffMarker(e.difficulty) .. e.name, "known row: " .. names[i])
+            checked = checked + 1
+        end
+    end
+    EXPECT(checked > 0, "no known rows to check")
+    for _, row in ipairs(TSF.listRows) do rawset(row.nameText, "SetText", nil); rawset(row.rightText, "SetText", nil) end
+
+    -- a gather line: Copper Vein needs Mining 1
+    local onUpdate = GameTooltip._h.OnUpdate
+    local left = {}
+    for i = 1, 3 do
+        left[i] = CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(left[i], "SetText", function(self, t) self._text = t end)
+    end
+    rawset(GameTooltip, "GetUnit", function() return nil end)
+    rawset(GameTooltip, "GetItem", function() return nil end)
+    rawset(GameTooltip, "NumLines", function() return 2 end)
+    local added = {}
+    rawset(GameTooltip, "AddLine", function(_, t) added[#added + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    left[1]._text, left[2]._text = "Copper Vein", "Requires Mining"
+    onUpdate(GameTooltip, 1)
+    local have = tonumber((added[1] or ""):match("Your Mining: (%d+)"))
+    EXPECT(have, "no Your Mining line: " .. tostring(added[1]))
+    local d = have - 1
+    local want = (d < 25 and " [+++]") or (d < 50 and " [++]") or (d < 100 and " [+]") or ""
+    EXPECT(left[2]._text:find("Requires Mining (1)" .. want .. "|r", 1, true), "marked vein line: " .. tostring(left[2]._text))
+    -- Small Thorium Vein needs 245: too low
+    left[1]._text, left[2]._text = "Small Thorium Vein", "Requires Mining"
+    added = {}
+    onUpdate(GameTooltip, 1)
+    EXPECT(left[2]._text:find("Requires Mining (245) (too low)|r", 1, true), "too-low vein line: " .. tostring(left[2]._text))
+    CVARS.colorblindMode = "0"
+    left[1]._text, left[2]._text = "Small Thorium Vein", "Requires Mining"
+    onUpdate(GameTooltip, 1)
+    EXPECT(left[2]._text:find("Requires Mining (245)|r", 1, true), "unmarked vein line: " .. tostring(left[2]._text))
+    rawset(GameTooltip, "NumLines", nil); rawset(GameTooltip, "GetItem", nil)
+
+    -- the Characters tab's expanded recipe list
+    CVARS.colorblindMode = "1"
+    local CP = ProfBuddy.CharacterPanel
+    CP:ReleaseAll()
+    CP:RenderExpandedRecipes("X-Forever", "Leatherworking",
+        { recipes = { ["Alpha"] = { difficulty = "optimal" }, ["Beta"] = { difficulty = "easy" },
+                      ["Gamma"] = { difficulty = "trivial" } } }, 0)
+    local got = {}
+    local pool = CP._pools.recipeRow
+    for i = 1, pool.n do got[#got + 1] = rawget(pool.objs[i].nameText, "_text") end
+    EXPECT(got[1] == "[+++] Alpha" and got[2] == "[+] Beta" and got[3] == "Gamma",
+           "expanded list: " .. table.concat(got, " | "))
+    CP:ReleaseAll()
+    CVARS.colorblindMode = "0"
+
+    -- Settings: the dropdown shows the saved choice and sets it
+    S.colorblindMarkers = "off"
+    TSF:OpenSettings("main")
+    local dd = TSF.colorblindDD
+    EXPECT(dd and rawget(dd.btnText, "_text") == "Colorblind markers: Off", "dropdown text: " .. tostring(dd and rawget(dd.btnText, "_text")))
+    local on
+    for _, b in ipairs(dd.optionBtns) do if b.value == "On" then on = b end end
+    EXPECT(on, "no On option")
+    on:GetScript("OnClick")(on)
+    EXPECT(S.colorblindMarkers == "on", "choosing On saved " .. tostring(S.colorblindMarkers))
+    local auto
+    for _, b in ipairs(dd.optionBtns) do if b.value == "Auto (game setting)" then auto = b end end
+    auto:GetScript("OnClick")(auto)
+    EXPECT(S.colorblindMarkers == "auto", "choosing Auto saved " .. tostring(S.colorblindMarkers))
+    TSF:CloseSettings()
+end
+print("  PASS F62 Colorblind markers: rows, learn tag, gather line and the Characters tab list marked; Auto follows the game; Settings dropdown")
+
+-- F63: Window style on WoW: Forever (feature/ui-themes phase 2). Match the
+-- game stays Modern here until Forever's own look exists; the Settings
+-- dropdown shows the saved style, saves a new one and offers a reload, and
+-- choosing the same style again offers nothing.
+do
+    local Theme = ProfBuddy.Theme
+    local S = ProfBuddy.db.settings
+    EXPECT(S.windowStyle == "modern", "default " .. tostring(S.windowStyle))
+    S.windowStyle = "game"; Theme._name = nil
+    EXPECT(Theme:Name() == "modern", "Match the game on Forever is " .. Theme:Name())
+    S.windowStyle = "classic"; Theme._name = nil
+    EXPECT(Theme:Name() == "classic", "Classic on Forever is " .. Theme:Name())
+    S.windowStyle = "modern"; Theme._name = nil
+    EXPECT(Theme:Name() == "modern", "session look")   -- read once, as at login
+    local shown = 0
+    local oldDialogs, oldShow = StaticPopupDialogs, StaticPopup_Show
+    StaticPopupDialogs, StaticPopup_Show = {}, function(n) if n == "PROFBUDDY_RELOAD_STYLE" then shown = shown + 1 end end
+    TSF:OpenSettings("main")
+    local dd = TSF.windowStyleDD
+    EXPECT(dd and rawget(dd.btnText, "_text") == "Window style: Modern", "dropdown text: " .. tostring(dd and rawget(dd.btnText, "_text")))
+    local function choose(label)
+        for _, b in ipairs(dd.optionBtns) do if b.value == label then b:GetScript("OnClick")(b); return end end
+        error("no option " .. label)
+    end
+    choose("Modern")
+    EXPECT(shown == 0 and S.windowStyle == "modern", "same style offered a reload")
+    choose("Classic")
+    EXPECT(S.windowStyle == "classic" and shown == 1, "Classic saved " .. tostring(S.windowStyle) .. ", offers " .. shown)
+    -- Match the game is greyed on Forever: picking it changes nothing,
+    -- offers no reload, and hovering it says why
+    choose("Match the game")
+    EXPECT(S.windowStyle == "classic" and shown == 1, "Match the game was picked on Forever: " .. tostring(S.windowStyle))
+    local game
+    for _, b in ipairs(dd.optionBtns) do if b.value == "Match the game" then game = b end end
+    local col = rawget(game.text, "_color") or {}
+    EXPECT(dd.disabledOpts["Match the game"] == "Coming to WoW: Forever in a later update.", "no hover note")
+    local hoverText
+    local keepSet, keepAdd = GameTooltip.SetText, GameTooltip.AddLine
+    rawset(GameTooltip, "AddLine", function(_, t) hoverText = t end)
+    game:GetScript("OnEnter")(game)
+    rawset(GameTooltip, "AddLine", nil)
+    EXPECT(hoverText == "Coming to WoW: Forever in a later update.", "hover note: " .. tostring(hoverText))
+    EXPECT(Theme:Name() == "modern", "the session look changed before a reload")
+    S.windowStyle = "modern"
+    TSF:CloseSettings()
+    StaticPopupDialogs, StaticPopup_Show = oldDialogs, oldShow
+end
+print("  PASS F63 Window style: the dropdown saves the style and offers a reload; Match the game is greyed on Forever with a hover note")
+
+-- F64: Quantity - and + (feature/ui-themes, Zorden 11). Both quantity boxes
+-- step by one between 1 and 999; the craft bar's buttons hide and show with
+-- its box. Classic selection (Zorden 9): the selected recipe's bar takes the
+-- recipe's difficulty color and its name turns white, back to the color
+-- when deselected; Modern leaves both alone.
+do
+    local box, minus, plus = TSF.qtyBox, TSF.qtyMinus, TSF.qtyPlus
+    EXPECT(minus and plus, "no craft quantity buttons")
+    box:SetText("1")
+    minus:GetScript("OnClick")(minus)
+    EXPECT(box:GetText() == "1", "minus went below 1: " .. box:GetText())
+    plus:GetScript("OnClick")(plus); plus:GetScript("OnClick")(plus)
+    EXPECT(box:GetText() == "3", "plus twice from 1 gave " .. box:GetText())
+    box:SetText("999")
+    plus:GetScript("OnClick")(plus)
+    EXPECT(box:GetText() == "999", "plus went past 999: " .. box:GetText())
+    minus:GetScript("OnClick")(minus)
+    EXPECT(box:GetText() == "998", "minus from 999 gave " .. box:GetText())
+    box:SetText("")
+    plus:GetScript("OnClick")(plus)
+    EXPECT(box:GetText() == "2", "plus on an empty box gave " .. box:GetText())
+    box:SetText("1")
+    TSF:SetQtyShown(false)
+    EXPECT(not box:IsShown() and not minus:IsShown() and not plus:IsShown(), "buttons stayed with the box hidden")
+    TSF:SetQtyShown(true)
+    EXPECT(box:IsShown() and minus:IsShown() and plus:IsShown(), "buttons did not come back with the box")
+    local cq, cplus = TSF.composerQty, TSF.composerQtyPlus
+    EXPECT(cq and cplus and TSF.composerQtyMinus, "no Request Craft quantity buttons")
+    cq:SetText("4"); cplus:GetScript("OnClick")(cplus)
+    EXPECT(cq:GetText() == "5", "Request Craft plus gave " .. cq:GetText())
+
+    local Theme = ProfBuddy.Theme
+    local got = {}
+    local row = { _dc = { r = 1, g = 0.5, b = 0.25 },
+        selectedBg = { Show = function() got.shown = true end, Hide = function() got.shown = false end,
+                       SetVertexColor = function(_, r, g, b, a) got.bar = { r, g, b, a } end },
+        nameText = { SetTextColor = function(_, r, g, b) got.text = { r, g, b } end } }
+    TSF:PaintSelected(row, true)
+    EXPECT(got.shown and not got.bar and not got.text, "Modern recolored the selection")
+    Theme._name = "classic"
+    TSF:PaintSelected(row, true)
+    EXPECT(got.bar and got.bar[1] == 1 and got.bar[2] == 0.5 and got.bar[3] == 0.25, "Classic bar not in the difficulty color")
+    EXPECT(got.text and got.text[1] == 1 and got.text[2] == 1 and got.text[3] == 1, "Classic selected name not white")
+    TSF:PaintSelected(row, false)
+    EXPECT(not got.shown and got.text[2] == 0.5, "Classic deselect did not restore the name color")
+    Theme._name = nil
+end
+print("  PASS F64 Quantity - and +: 1 to 999 on both boxes, hidden with the box; Classic selection takes the difficulty color, name white")
+
+-- F65: The enchant Craft button wears Blizzard's red button artwork in both
+-- looks (drawn by hand: the template would kill its secure cast). It shows
+-- the pressed slices while held, the disabled ones when nothing can be
+-- crafted, and never takes UIPanelButtonTemplate.
+do
+    local eb = TSF.enchantCraftBtn
+    EXPECT(eb and eb.look, "no enchant button artwork")
+    EXPECT(eb.lookState == "up", "enchant button starts " .. tostring(eb.lookState))
+    eb.look("disabled")
+    EXPECT(eb.lookState == "disabled", "disabled look")
+    local down = eb._h and eb._h.OnMouseDown
+    EXPECT(down, "no pressed-state hook")
+    down(eb)
+    EXPECT(eb.lookState == "disabled", "a disabled button showed pressed")
+    eb.look("up"); down(eb)
+    EXPECT(eb.lookState == "down", "pressed look")
+    eb._h.OnMouseUp(eb)
+    EXPECT(eb.lookState == "up", "released look")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('CreateFrame%("Button", "ProfBuddyEnchantCraftBtn", parent,%s*"SecureActionButtonTemplate"%)'),
+        "the enchant button's template changed")
+end
+print("  PASS F65 Enchant Craft button: Blizzard's red button artwork, pressed and disabled states, secure template only")
+
+-- F66: Layout shared by both looks (phase 2e). The bottom bar spans the
+-- window's inner area (Blizzard's InsetBg), 3 px in for its border, at the
+-- same 6 px from the bottom as before; the craft and Request Craft bars are
+-- 58 px tall so two 22 px button rows clear the border by 6 px above and
+-- below, and the detail pane ends 2 px above them where it did before (90).
+do
+    local bar = TSF.bottomBar
+    local p = bar and rawget(bar, "_lastPoint")
+    EXPECT(p and p[1] == "BOTTOMRIGHT" and p[2] == TSF.frame.InsetBg and p[4] == -3 and p[5] == 2,
+        "bottom bar is not on the window's inner area")
+    EXPECT(rawget(TSF.craftBar, "_size")[2] == 58 and rawget(TSF.composerBar, "_size")[2] == 58,
+        "craft bars are not 58 px tall")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('detail:SetPoint%("BOTTOMRIGHT", parent, "BOTTOMRIGHT", %-10, 30 %+ CRAFT_BAR_H %+ 2%)'),
+        "the detail pane's bottom moved")
+    -- The detail pane's scroll area: 4 px in for Modern, 6 for Classic's
+    -- thicker border (the harness runs Modern).
+    local dsf = TSF.detScrollFrame
+    local dp = dsf and rawget(dsf, "_lastPoint")
+    EXPECT(dp and dp[1] == "BOTTOMRIGHT" and dp[2] == -24 and dp[3] == 4, "Modern detail scroll area moved")
+    EXPECT(src:find('local inset = Theme:IsClassic%(%) and 6 or 4'), "Classic detail scroll inset missing")
+    local cp = rawget(TSF.craftBtn, "_lastPoint")
+    EXPECT(cp and cp[5] == -6, "the craft bar's first row is not 6 px down: " .. tostring(cp and cp[5]))
+end
+print("  PASS F66 Bottom bar on the window's inner area; craft and Request Craft bars 58 px tall, detail pane bottom unchanged")
+
+-- F67: Classic recipe list scroll bar, bottom tabs and watermark (Zorden 2,
+-- 5 and 8). The knob is Blizzard's classic one with its TexCoords on no
+-- track; Classic tabs draw Blizzard's tab pieces in an unselected and a
+-- selected set; the watermark shows the profession's icon (Smelting uses
+-- Mining's) and hides for anything else, and is never built on Forever.
+do
+    local Theme = ProfBuddy.Theme
+    local cl = Theme.STYLES.classic.fill
+    EXPECT(cl.scrollThumb.file == "Interface\\Buttons\\UI-ScrollBar-Knob" and cl.scrollThumb.coords[3] == 0.125,
+        "Classic knob")
+    EXPECT(cl.scrollTrack[4] == 0, "Classic track not clear")
+    Theme._name = "classic"
+    local got = {}
+    local tex = setmetatable({}, { __index = function(_, m) return function(_, ...) got[m] = { ... } end end })
+    Theme:Fill(tex, "scrollThumb")
+    EXPECT(got.SetTexCoord and got.SetTexCoord[1] == 0.20 and got.SetTexCoord[4] == 0.875, "knob TexCoords not set")
+    -- A recording stand-in for the tab button and its textures
+    local rec
+    local function recorder(t)
+        return setmetatable(t or {}, { __index = function(_, m)
+            return function(self, a, b, c, ...)
+                if m == "SetTexture" then rec.files[#rec.files + 1] = a end
+                if m == "SetAtlas" then rec.atlases[#rec.atlases + 1] = a .. (b and "+size" or "") end
+                if m == "SetPoint" and self._piece and (a == "TOPLEFT" or a == "TOPRIGHT") and type(b) == "number" then
+                    rec.points[#rec.points + 1] = a .. " " .. b .. "," .. c
+                end
+                if m == "SetBlendMode" then rec.blend[#rec.blend + 1] = a end
+                if m == "SetAlpha" and self._piece then rec.alpha[#rec.alpha + 1] = a end
+                if m == "SetPoint" and self._label then rec.textY = c end
+            end
+        end })
+    end
+    local function drawTab(flavor)
+        rec = { files = {}, atlases = {}, points = {}, blend = {}, alpha = {}, layers = {}, level = nil }
+        local keep = ProfBuddy.Source.flavor
+        ProfBuddy.Source.flavor = flavor
+        local hlTex = recorder({ _piece = true })
+        local btn = recorder({
+            GetWidth = function() return 90 end,
+            GetFrameLevel = function() return 1 end,
+            SetFrameLevel = function(_, l) rec.level = l end,
+            CreateTexture = function(_, _, layer) rec.layers[#rec.layers + 1] = layer; return recorder({ _piece = true }) end,
+            SetHighlightTexture = function(_, f) rec.hlFile = f end,
+            GetHighlightTexture = function() return hlTex end,
+            SetNormalFontObject = function(_, f) rec.font = f end,
+            GetFontString = function() return recorder({ _label = true }) end,
+        })
+        local normal, selected = Theme:DrawClassicTab(btn)
+        ProfBuddy.Source.flavor = keep
+        return normal, selected
+    end
+    local function lastAlphas(n)
+        local out = {}
+        for i = #rec.alpha - n + 1, #rec.alpha do out[#out + 1] = rec.alpha[i] end
+        return table.concat(out, ",")
+    end
+
+    -- WoW: Forever draws its own Character window tabs
+    -- (PanelTabButtonTemplate): the uiframe-tab atlases at their own sizes,
+    -- ends 3/7 out (selected 1/8), a 0.4 hover light from the same pieces,
+    -- and no TBC art or button highlight texture
+    local normal, selected = drawTab("forever")
+    EXPECT(normal and selected and normal.Show and selected.Hide, "tab sets")
+    EXPECT(table.concat(rec.atlases, " ") == "uiframe-tab-left+size uiframe-tab-right+size _uiframe-tab-center+size"
+        .. " uiframe-activetab-left+size uiframe-activetab-right+size _uiframe-activetab-center+size"
+        .. " uiframe-tab-left+size uiframe-tab-right+size _uiframe-tab-center+size",
+        "Forever tab atlases: " .. table.concat(rec.atlases, " "))
+    EXPECT(table.concat(rec.points, " ") == "TOPLEFT -3,0 TOPRIGHT 7,0 TOPLEFT -1,0 TOPRIGHT 8,0 TOPLEFT -3,0 TOPRIGHT 7,0",
+        "Forever tab ends: " .. table.concat(rec.points, " "))
+    EXPECT(#rec.files == 0 and rec.hlFile == nil, "Forever tab drew TBC art")
+    EXPECT(table.concat(rec.layers, " ") == "BACKGROUND BACKGROUND BACKGROUND BACKGROUND BACKGROUND BACKGROUND HIGHLIGHT HIGHLIGHT HIGHLIGHT"
+        and table.concat(rec.blend, " ") == "ADD ADD ADD", "Forever hover light")
+    EXPECT(rec.level == 5, "tab not 4 levels above its window")
+    selected:Show()
+    EXPECT(rec.font == GameFontHighlightSmall and rec.textY == -3, "Forever selected label " .. tostring(rec.textY))
+    EXPECT(lastAlphas(3) == "0,0,0", "the selected tab still lights on hover")
+    normal:Show()
+    EXPECT(rec.font == GameFontNormalSmall and rec.textY == 2, "Forever unselected label " .. tostring(rec.textY))
+    EXPECT(lastAlphas(3) == "0.4,0.4,0.4", "an unselected tab does not light on hover: " .. lastAlphas(3))
+    local L = Theme:TabLayout()
+    EXPECT(L.firstX == 11 and L.gap == 1, "Forever tab spacing")
+
+    -- TBC Classic Anniversary keeps Blizzard's classic tab art and layout
+    normal, selected = drawTab("classic")
+    EXPECT(rec.files[1] == "Interface\\PaperDollInfoFrame\\UI-Character-InActiveTab"
+        and rec.files[4] == "Interface\\PaperDollInfoFrame\\UI-Character-ActiveTab" and #rec.atlases == 0, "classic tab art")
+    EXPECT(table.concat(rec.points, " ") == "TOPLEFT 0,0 TOPLEFT 0,4 TOPLEFT 3,5",
+        "TBC Classic Anniversary tab offsets: " .. table.concat(rec.points, " "))
+    EXPECT(rec.hlFile == "Interface\\PaperDollInfoFrame\\UI-Character-Tab-RealHighlight", "tab highlight")
+    selected:Show()
+    EXPECT(rec.font == GameFontHighlightSmall and rec.textY == 4, "selected tab label not white and raised")
+    EXPECT(lastAlphas(1) == "0", "the selected tab still lights on hover")
+    normal:Show()
+    EXPECT(rec.font == GameFontNormalSmall and rec.textY == 2, "unselected tab label not gold")
+    EXPECT(lastAlphas(1) == "1", "an unselected tab does not light on hover")
+    local flavor = ProfBuddy.Source.flavor
+    ProfBuddy.Source.flavor = "classic"
+    L = Theme:TabLayout()
+    ProfBuddy.Source.flavor = flavor
+    EXPECT(L.firstX == 8 and L.gap == -15 and L.selectedTextY == 4, "TBC Classic Anniversary tab layout changed")
+
+    -- Classic: the Orders count joins the tab's label ("Orders (1)", centred
+    -- as one); Modern keeps a separate badge in the corner.
+    local OP = ProfBuddy.OrdersPanel
+    local function makeTab()
+        local tab = { text = "Orders" }
+        tab.GetText = function() return tab.text end
+        tab.SetText = function(_, t) tab.text = t end
+        tab.CreateFontString = function() return recorder({ SetPoint = function(_, a) tab.pt = a end }) end
+        local n = #OP._badges
+        local b = OP:CreateBadge(tab)
+        table.remove(OP._badges, n + 1)
+        return tab, b
+    end
+    local tab, b = makeTab()
+    b:SetText("(1)"); b:Show()
+    EXPECT(tab.text == "Orders (1)" and tab.pt == nil, "Classic count not in the label: " .. tab.text)
+    b:SetText("(3)")
+    EXPECT(tab.text == "Orders (3)", "Classic count did not update: " .. tab.text)
+    b:Hide()
+    EXPECT(tab.text == "Orders", "Classic label kept the count: " .. tab.text)
+    Theme.NO_TEXTURES:Show()
+    Theme._name = nil
+    tab = makeTab()
+    EXPECT(tab.pt == "TOPRIGHT" and tab.text == "Orders", "Modern badge moved")
+
+    EXPECT(TSF.watermark == nil, "a watermark was built on Forever")
+    local shown, texFile
+    TSF.watermark = { SetTexture = function(_, f) texFile = f end,
+                      Show = function() shown = true end, Hide = function() shown = false end }
+    local st = TSF.state
+    local keep = st.profName
+    st.profName = "Smelting"; TSF:UpdateWatermark()
+    EXPECT(shown and texFile == "Interface\\Icons\\Trade_Mining", "Smelting watermark: " .. tostring(texFile))
+    st.profName = "Tailoring"; TSF:UpdateWatermark()
+    EXPECT(shown and texFile == "Interface\\Icons\\Trade_Tailoring", "Tailoring watermark")
+    st.profName = "Nothing"; TSF:UpdateWatermark()
+    EXPECT(shown == false, "unknown profession kept a watermark")
+    st.profName = "Tailoring"; texFile = nil
+    TSF:UpdateSkillBar()
+    EXPECT(texFile == "Interface\\Icons\\Trade_Tailoring", "a profession switch did not update the watermark")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('if Theme:IsClassic%(%) and addon%.Source%.flavor == "classic" then%s+%-%- Classic on TBC Classic Anniversary: a watermark'),
+        "the watermark is not limited to Classic on TBC Classic Anniversary")
+    st.profName = keep
+    TSF.watermark = nil
+end
+print("  PASS F67 Classic knob and clear track, each client's own tab art (Forever's atlases, TBC's raised tab), profession watermark (none on Forever)")
+
+-- F68: "Held by" on item tooltips. You first with (you), then alts, then
+-- friends under their own heading, most held first; "68 (Bags 5, Bank
+-- 63)" with a side that holds none dropped. The Show in tooltips boxes
+-- gate alts and friends, the slider caps the lines (21 = All) with
+-- "... and N more", and no row adds a second holder list.
+do
+    local DB, DS = ProfBuddy.db, ProfBuddy.DataStore
+    local me = ProfBuddy:PlayerKey()
+    local ITEM = 2318
+    local keep = {}
+    for k, v in pairs(DB.characters) do keep[k] = v end
+    local myChar = DS:GetCharacter(me)
+    local myInv = myChar.inventory
+    myChar.inventory = { bags = { [ITEM] = 5 }, bank = { [ITEM] = 63 } }
+    DB.characters["Altone-Forever"] = { class = "MAGE", inventory = { bags = {}, bank = { [ITEM] = 63 } } }
+    DB.characters["Alttwo-Forever"] = { class = "ROGUE", inventory = { bags = { [ITEM] = 100 }, bank = {} } }
+    DB.characters["Pal-Forever"] = { class = "PRIEST", isRemote = true, inventory = { bags = { [ITEM] = 7 }, bank = {} } }
+    DB.characters["Empty-Forever"] = { class = "PRIEST", inventory = { bags = {}, bank = {} } }
+    rawset(GameTooltip, "AddLine", nil)
+    rawset(GameTooltip, "Show", nil)
+    local S = DB.settings
+    local keepS = { S.showAltInTooltips, S.showRemoteInTooltips, S.tooltipMaxHeldBy }
+    S.showAltInTooltips, S.showRemoteInTooltips, S.tooltipMaxHeldBy = true, true, 8
+
+    local function heldBy(lines)
+        local out, on = {}, false
+        for _, l in ipairs(lines) do
+            if type(l) == "string" then
+                if l == "Held by (ProfessionBuddy):" then on = true
+                elseif on and l ~= " " then out[#out + 1] = l end
+            end
+        end
+        return out
+    end
+    local h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 5, "Held by lines: " .. table.concat(h, " / "))
+    EXPECT(h[1]:find("68 (Bags 5, Bank 63)", 1, true) and h[1]:find("(you)", 1, true), "you first: " .. tostring(h[1]))
+    EXPECT(h[2]:find("Alttwo", 1, true) and h[2]:find("100 (Bags)", 1, true), "biggest alt second: " .. tostring(h[2]))
+    EXPECT(h[3]:find("Altone", 1, true) and h[3]:find("63 (Bank)", 1, true), "bank-only alt: " .. tostring(h[3]))
+    EXPECT(h[4] == "Friends:" and h[5]:find("Pal", 1, true) and h[5]:find("7 (Bags)", 1, true), "friend under Friends: " .. tostring(h[5]))
+    for _, l in ipairs(h) do EXPECT(not l:find("Empty", 1, true), "a character holding none listed") end
+
+    S.tooltipMaxHeldBy = 2
+    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 3 and h[3]:find("... and 2 more", 1, true), "cap 2: " .. table.concat(h, " / "))
+    S.tooltipMaxHeldBy = 21
+    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 5, "All showed " .. #h)
+
+    S.showRemoteInTooltips = false
+    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 3 and not table.concat(h, " "):find("Pal", 1, true), "friends with their box off: " .. table.concat(h, " / "))
+    S.showAltInTooltips = false
+    h = heldBy(SHOW_ITEM_TOOLTIP(GameTooltip, ITEM))
+    EXPECT(#h == 0, "Held by with both boxes off")
+    S.showAltInTooltips, S.showRemoteInTooltips = true, true
+
+    -- Reagent and Material Calculator rows add no holder list of their own:
+    -- hovering one shows the item tooltip and nothing else.
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(not src:find("In bags:", 1, true) and not src:find('AddLine("Held by:"', 1, true)
+        and not src:find("_ownHeldBy", 1, true), "a row still adds its own holder list")
+
+    -- Settings: the slider shows and saves the cap, 21 = All
+    TSF:OpenSettings("main")
+    local sl = TSF.heldBySlider
+    EXPECT(sl and TSF.heldByLabel, "no Held by slider")
+    sl:GetScript("OnValueChanged")(sl, 21)
+    EXPECT(S.tooltipMaxHeldBy == 21 and rawget(TSF.heldByLabel, "_text") == "Held by: All", "slider All: " .. tostring(rawget(TSF.heldByLabel, "_text")))
+    sl:GetScript("OnValueChanged")(sl, 5)
+    EXPECT(S.tooltipMaxHeldBy == 5 and rawget(TSF.heldByLabel, "_text") == "Held by: 5", "slider 5")
+    TSF:CloseSettings()
+
+    S.showAltInTooltips, S.showRemoteInTooltips, S.tooltipMaxHeldBy = keepS[1], keepS[2], keepS[3]
+    myChar.inventory = myInv
+    for k in pairs(DB.characters) do if not keep[k] then DB.characters[k] = nil end end
+end
+print("  PASS F68 Held by on item tooltips: you, alts and friends with bag and bank counts, the cap and All, the Show in tooltips boxes, one list everywhere, Settings slider")
+
+-- F69: the Item Info box keeps its own look under tooltip skins. It is
+-- marked IsEmbedded, which ElvUI's tooltip styling skips, and PB draws the
+-- tooltip border behind it (itemInfoBox), one level below the box, shown
+-- and hidden with it. Match the game is greyed only on Forever.
+do
+    local tip, box = TSF.embeddedTip, TSF.itemInfoBox
+    EXPECT(tip.IsEmbedded == true, "Item Info box not marked IsEmbedded")
+    EXPECT(box, "no border frame behind the Item Info box")
+    local tsrc = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(tsrc:find("embeddedTip:SetFrameLevel%(box:GetFrameLevel%(%) %+ 1%)"), "the border is not just below the box")
+    tip:Show()
+    if tip._h and tip._h.OnShow then tip._h.OnShow(tip) end
+    EXPECT(box:IsShown(), "border not shown with the box")
+    tip:Hide()
+    if tip._h and tip._h.OnHide then tip._h.OnHide(tip) end
+    EXPECT(not box:IsShown(), "border stayed after the box hid")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('if addon%.Source%.flavor == "forever" then%s+styleDD:SetOptionDisabled'), "Match the game greyed outside Forever")
+end
+print("  PASS F69 Item Info box marked IsEmbedded, PB's border behind it shows and hides with it; Match the game greyed on Forever only")
+
+-- F70: the detail panel's Held by block reads like the Held by tooltip:
+-- you first with (you), then alts, then friends under "Friends:", most held
+-- first (Altone before Aalt), counts as "68 (Bags 5, Bank 63)"; the viewed
+-- character left out.
+do
+    local TSF = ProfBuddy.TradeSkillFrame
+    local db, S = ProfBuddy.db, ProfBuddy.db.settings
+    local me = ProfBuddy:PlayerKey()
+    local chars = db.characters
+    local myInv, fac = chars[me].inventory, chars[me].faction
+    local keepAlt, keepRemote, keepView = S.showAltInDetail, S.showRemoteInDetail, TSF.state._viewCharKey
+    local added = {}
+    local function add(key, t) t.faction = t.faction or fac; t.professions = {}; chars[key] = t; added[#added + 1] = key end
+    chars[me].inventory = { bags = { [2589] = 2 }, bank = {} }
+    add("Altone", { class = "WARRIOR", inventory = { bags = { [2589] = 5, [2592] = 3 }, bank = { [2589] = 63 } } })
+    add("Aalt", { class = "MAGE", inventory = { bags = {}, bank = { [2589] = 1 } } })
+    add("Pal", { class = "PRIEST", isRemote = true, inventory = { bags = { [2589] = 40 }, bank = { [2589] = 100 } } })
+    add("Viewed", { class = "ROGUE", isRemote = true, inventory = { bags = { [2589] = 9 } } })
+    add("Nothing", { class = "ROGUE", inventory = { bags = { [9999] = 9 } } })
+    local recipe = { reagents = { { itemID = 2589, name = "Linen Cloth" }, { itemID = 2592, name = "Wool Cloth" } } }
+    local function plain(t) return (t:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) end
+    local function show(viewKey)
+        TSF.state._viewCharKey = viewKey
+        TSF.altHeader:Hide()
+        for _, l in ipairs(TSF.altLines) do l:Hide() end
+        TSF:ShowAltMaterials(recipe)
+        local out = {}
+        for _, l in ipairs(TSF.altLines) do
+            if l:IsShown() then
+                local x = rawget(l, "_lastPoint")[4]
+                out[#out + 1] = (x == 14 and "  " or "") .. plain(rawget(l, "_text"))
+            end
+        end
+        return out, TSF.altHeader:IsShown()
+    end
+    local youName = ProfBuddy:ShortName(me)
+    S.showAltInDetail, S.showRemoteInDetail = true, true
+    local got = show("Viewed")
+    local want = { "  " .. youName .. " (you)  Linen Cloth 2 (Bags)",
+                   "  Altone  Linen Cloth 68 (Bags 5, Bank 63), Wool Cloth 3 (Bags)",
+                   "  Aalt  Linen Cloth 1 (Bank)",
+                   "Friends:",
+                   "  Pal  Linen Cloth 140 (Bags 40, Bank 100)" }
+    EXPECT(table.concat(got, "|") == table.concat(want, "|"), "Held by panel:\n" .. table.concat(got, "\n"))
+
+    -- your own profession: you are the viewed character, so you are left out
+    got = show(nil)
+    EXPECT(got[1] == "  Altone  Linen Cloth 68 (Bags 5, Bank 63), Wool Cloth 3 (Bags)" and #got == 5
+           and got[4] == "  Pal  Linen Cloth 140 (Bags 40, Bank 100)" and got[5]:find("^  Viewed"),
+           "own profession:\n" .. table.concat(got, "\n"))
+
+    -- the boxes: alts off keeps you and friends; both off hides the section
+    S.showAltInDetail = false
+    got = show("Viewed")
+    EXPECT(#got == 3 and got[1]:find("%(you%)") and got[2] == "Friends:", "alts off:\n" .. table.concat(got, "\n"))
+    S.showRemoteInDetail = false
+    local shown
+    got, shown = show("Viewed")
+    EXPECT(#got == 0 and not shown, "both off still shows the section")
+    S.showAltInDetail, S.showRemoteInDetail = true, true
+
+    -- more characters than lines: the last line says how many are left
+    for i = 1, 20 do add(string.format("Many%02d", i), { class = "MAGE", inventory = { bags = { [2589] = 1 }, bank = {} } }) end
+    got = show("Viewed")
+    -- you, Altone, then Aalt and Many01-Many20 (1 each, by key), Friends:
+    -- and Pal: 25 lines, 24 of them characters. 13 lines show, so the last
+    -- counts the 11 characters left (the heading is not one).
+    EXPECT(#TSF.altLines == 14 and #got == 14 and got[13] == "  Many10  Linen Cloth 1 (Bags)"
+           and got[14] == "  ... and 11 more",
+           "overflow:\n" .. table.concat(got, "\n"))
+
+    for _, k in ipairs(added) do chars[k] = nil end
+    chars[me].inventory = myInv
+    S.showAltInDetail, S.showRemoteInDetail, TSF.state._viewCharKey = keepAlt, keepRemote, keepView
+end
+print("  PASS F70 detail panel Held by: you first (you), alts, then Friends, most held first, tooltip counts; viewed character left out; boxes; overflow")
+
+print("ALL FOREVER TESTS PASS (70)")

@@ -193,6 +193,14 @@ function CollapseSkillHeader(i)
     if r and r[2] then sim.collapsedHeaders[r[1]] = true end
 end
 
+-- Game options (C_CVar exists on TBC Anniversary too). CVARS.colorblindMode
+-- = "1" is the game's Colorblind Mode (Settings > Accessibility).
+CVARS = { colorblindMode = "0" }
+C_CVar = {
+    GetCVar = function(name) return CVARS[name] end,
+    GetCVarBool = function(name) return CVARS[name] == "1" end,
+}
+
 C_Container = {
     GetContainerNumSlots = function(bag)
         local b = sim.bags[bag]
@@ -215,6 +223,7 @@ ERR_CHAT_PLAYER_NOT_FOUND_S = "No player named '%s' is currently playing."
 
 -- ── load the addon files ─────────────────────────────────────────
 dofile(BASE .. "/Core.lua")
+dofile(BASE .. "/UI/Theme.lua")
 dofile(BASE .. "/Source/Source.lua")
 dofile(BASE .. "/Source/Classic.lua")
 dofile(BASE .. "/DataStore.lua")
@@ -3001,8 +3010,126 @@ do
 end
 passed("T99 opposite-faction friends -- their own setting, separate from alts; calculator and mail picker follow it")
 
+-- T100: Colorblind markers. The setting starts at Auto, which follows the
+-- game's Colorblind Mode through C_CVar; On and Off ignore the game. The
+-- difficulty markers are Blizzard's own [+++]/[++]/[+], none for grey.
+do
+    local S = addon.db.settings
+    assert(S.colorblindMarkers == "auto", "T100: default is " .. tostring(S.colorblindMarkers))
+    CVARS.colorblindMode = "0"
+    assert(not addon:ColorblindMarkers() and addon:DiffMarker("optimal") == "", "T100: markers with the game's mode off")
+    CVARS.colorblindMode = "1"
+    assert(addon:ColorblindMarkers(), "T100: Auto missed the game's Colorblind Mode")
+    assert(addon:DiffMarker("optimal") == "[+++] " and addon:DiffMarker("medium") == "[++] "
+        and addon:DiffMarker("easy") == "[+] " and addon:DiffMarker("trivial") == ""
+        and addon:DiffMarker(nil) == "", "T100: marker text")
+    S.colorblindMarkers = "off"
+    assert(not addon:ColorblindMarkers() and addon:DiffMarker("optimal") == "", "T100: Off showed markers")
+    S.colorblindMarkers = "on"
+    CVARS.colorblindMode = "0"
+    assert(addon:ColorblindMarkers() and addon:DiffMarker("easy") == "[+] ", "T100: On hid markers")
+    S.colorblindMarkers = "auto"
+end
+passed("T100 Colorblind markers: Auto follows the game's Colorblind Mode, On and Off ignore it; Blizzard's [+++]/[++]/[+]")
+
+-- T101: Theme (feature/ui-themes phase 1). Every panel color and backdrop
+-- call in PB names a role; each role must exist in the Modern look, a
+-- missing one must fail loudly, and the helpers must pass the role's values
+-- through unchanged (alpha override, faction tint).
+do
+    local Theme = addon.Theme
+    local look = Theme:Style()
+    local KIND = { Fill = "fill", Tint = "tint", SetBackdrop = "backdrop", BackdropColor = "bg", BorderColor = "border" }
+    local files = { "Core.lua", "BattleNet.lua", "UI/Main.lua", "UI/CharacterPanel.lua", "UI/FriendsPanel.lua",
+                    "UI/GuildPanel.lua", "UI/OrdersPanel.lua", "UI/MailHelper.lua", "UI/TradeSkillFrame.lua" }
+    local calls = 0
+    for _, f in ipairs(files) do
+        local fh = assert(io.open(BASE .. "/" .. f, "r"), "T101: no " .. f)
+        local src = fh:read("*a"); fh:close()
+        for fn, role in src:gmatch('Theme:(%a+)%([^,%)\n]+, "([%w_]+)"') do
+            local kind = assert(KIND[fn], "T101: unknown Theme call " .. fn .. " in " .. f)
+            assert(look[kind][role] ~= nil, "T101: " .. f .. " uses " .. kind .. " role " .. role .. ", missing from the Modern look")
+            calls = calls + 1
+        end
+        assert(not src:find(":SetColorTexture%(%s*[%d.]+"), "T101: " .. f .. " still sets a color by number")
+        assert(not src:find(":SetBackdrop%(%s*{"), "T101: " .. f .. " still builds its own backdrop")
+    end
+    assert(calls == 140, "T101: " .. calls .. " Theme calls, expected 140")
+    local got = {}
+    local tex = { SetColorTexture = function(_, r, g, b, a) got = { r, g, b, a } end }
+    Theme:Fill(tex, "menuHover")
+    assert(got[1] == 0.3 and got[2] == 0.3 and got[3] == 0.5 and got[4] == 0.5, "T101: Fill values")
+    Theme:Fill(tex, "professionRowHover", 0)
+    assert(got[4] == 0, "T101: Fill alpha override")
+    Theme:Tint(tex, "factionHeaderHover", { r = 1, g = 0.5, b = 0.25 })
+    assert(got[1] == 1 * 0.4 and got[2] == 0.5 * 0.4 and got[3] == 0.25 * 0.4 and got[4] == 0.9, "T101: Tint values")
+    local ok = pcall(Theme.Fill, Theme, tex, "noSuchRole")
+    assert(not ok, "T101: an unknown role drew nothing instead of failing")
+end
+passed("T101 Theme: all 140 panel color and backdrop calls name a role the Modern look has; values pass through")
+
+-- T102: Window style (feature/ui-themes phase 2). The setting starts at
+-- Modern; Classic and Match the game pick the Classic look on TBC Classic
+-- Anniversary; the pick is read once and kept for the session; Classic has
+-- every role Modern has; a file fill sets the file, blend and vertex color
+-- (alpha override included); changing the style offers a reload.
+do
+    local Theme = addon.Theme
+    local S = addon.db.settings
+    assert(S.windowStyle == "modern", "T102: default is " .. tostring(S.windowStyle))
+    assert(addon.Source.flavor == "classic", "T102: harness is not the TBC client")
+    local function pick(v) S.windowStyle = v; Theme._name = nil; return Theme:Name() end
+    assert(pick("modern") == "modern" and not Theme:IsClassic(), "T102: Modern")
+    assert(pick("classic") == "classic" and Theme:IsClassic(), "T102: Classic")
+    assert(pick("game") == "classic", "T102: Match the game on TBC Classic Anniversary is " .. Theme:Name())
+    assert(pick("bogus") == "modern", "T102: an unknown style falls back to Modern")
+    S.windowStyle = "classic"
+    assert(Theme:Name() == "modern", "T102: the session pick changed without a reload")
+    for kind, roles in pairs(Theme.STYLES.modern) do
+        for role in pairs(roles) do
+            assert(Theme.STYLES.classic[kind][role] ~= nil, "T102: Classic lacks " .. kind .. " role " .. role)
+        end
+    end
+    for kind, roles in pairs(Theme.STYLES.classic) do
+        for role in pairs(roles) do
+            assert(Theme.STYLES.modern[kind][role] ~= nil, "T102: Classic has a role Modern lacks: " .. kind .. " " .. role)
+        end
+    end
+    pick("classic")
+    local calls = {}
+    local tex = setmetatable({}, { __index = function(_, m) return function(_, ...) calls[m] = { ... } end end })
+    Theme:Fill(tex, "professionRowHover", 0)
+    assert(calls.SetTexture and calls.SetTexture[1] == "Interface\\QuestFrame\\UI-QuestTitleHighlight", "T102: file fill texture")
+    assert(calls.SetBlendMode and calls.SetBlendMode[1] == "ADD", "T102: file fill blend")
+    assert(calls.SetVertexColor and calls.SetVertexColor[4] == 0, "T102: file fill alpha override")
+    calls = {}
+    Theme:Fill(tex, "listBackground")
+    assert(calls.SetTexture[2] == "REPEAT" and calls.SetHorizTile and calls.SetVertTile, "T102: tiled fill")
+    local shown
+    local oldDialogs, oldShow = StaticPopupDialogs, StaticPopup_Show
+    StaticPopupDialogs, StaticPopup_Show = {}, function(n) shown = n end
+    Theme:OfferReload()
+    assert(shown == "PROFBUDDY_RELOAD_STYLE" and StaticPopupDialogs.PROFBUDDY_RELOAD_STYLE.button1 == "Reload",
+        "T102: reload offer")
+    StaticPopupDialogs, StaticPopup_Show = oldDialogs, oldShow
+    -- Classic draws text headers' expand marks as Blizzard's +/- buttons.
+    -- Settings has no group boxes in either look.
+    assert(Theme:ExpandIcon(true):find("UI%-PlusButton%-Up") and Theme:ExpandIcon(false):find("UI%-MinusButton%-Up"),
+        "T102: expand icons")
+    assert(Theme.STYLES.classic.backdrop.settingsGroup == nil and Theme.STYLES.modern.backdrop.settingsGroup == nil,
+        "T102: a look still has Settings group boxes")
+    assert(Theme.STYLES.classic.backdrop.barPane.edgeSize < Theme.STYLES.classic.backdrop.pane.edgeSize,
+        "T102: Classic craft bar border is not the thinner one")
+    local fh = assert(io.open(BASE .. "/UI/TradeSkillFrame.lua", "r"))
+    local tsf = fh:read("*a"); fh:close()
+    assert(tsf:find('Theme:SetBackdrop%(craftBar, "barPane"%)') and tsf:find('Theme:SetBackdrop%(bar, "barPane"%)'),
+        "T102: the craft and Request Craft bars do not use barPane")
+    S.windowStyle = "modern"; Theme._name = nil
+end
+passed("T102 Window style: Modern by default; Classic and Match the game give Classic here; kept for the session; every role in both looks; reload offer")
+
 leaveGuild()
-print("ALL 99 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 102 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -3018,6 +3145,6 @@ print("ALL 99 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T1
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting, T100 Colorblind markers, T101 the theme roles, T102 the window style; "
     .. pass .. " of them print a PASS line above)")
 

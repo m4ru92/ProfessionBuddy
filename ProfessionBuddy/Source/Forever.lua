@@ -107,15 +107,19 @@ local SKILL_LINE = {
     ["Enchanting"]     = 333, ["Engineering"]   = 202, ["First Aid"] = 129,
     ["Fishing"]        = 356, ["Herbalism"]     = 182, ["Leatherworking"] = 165,
     ["Mining"]         = 186, ["Skinning"]      = 393, ["Tailoring"] = 197,
-    ["Comprehension"]  = 3012,
 }
+
+-- Skill lines in the profession slots that are not professions: the mage's
+-- Comprehension (3012) is a spellbook skill with no profession window.
+-- Matched by ID, so any client language skips it.
+local NOT_PROFESSIONS = { [3012] = true }
 
 -- Enum.TradeskillRelativeDifficulty: Optimal 0, Medium 1, Easy 2, Trivial 3.
 local DIFFICULTY = { [0] = "optimal", [1] = "medium", [2] = "easy", [3] = "trivial" }
 
 -- A recipe that cannot give a skill-up is grey, whatever its tier says.
 -- This also covers the recipes with no skill-up range at all (the camp
--- abilities and the Adaptive gear), which would otherwise have no colour.
+-- abilities and the Adaptive gear), which would otherwise have no color.
 local function Difficulty(info)
     if not info.canSkillUp then return "trivial" end
     return DIFFICULTY[info.relativeDifficulty] or "trivial"
@@ -222,13 +226,13 @@ local function ProfessionLines()
     if not (GetProfessions and GetProfessionInfo) then return rows end
     -- Forever's own profession window reads seven slots: two primaries and
     -- up to five secondaries (Camelot ProfessionsMixin:RefreshRightTabs).
-    -- With six, a mage's Comprehension or a rogue's last secondary was cut.
+    -- With six, a mage's or a rogue's last secondary was cut.
     local slots = { GetProfessions() }
     for i = 1, 7 do
         local slot = slots[i]
         if slot then
-            local name, _, rank, maxRank = GetProfessionInfo(slot)
-            if name then
+            local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(slot)
+            if name and not NOT_PROFESSIONS[skillLine] then
                 rows[#rows + 1] = { name = name, rank = rank, maxRank = maxRank }
             end
         end

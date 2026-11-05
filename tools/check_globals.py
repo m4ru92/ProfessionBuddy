@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ProfessionBuddy global-write gate.
 
-Parses every .lua file the addon loads (all three tocs; Libs/ excluded: the
+Parses every .lua file the addon loads (every toc; Libs/ excluded: the
 bundled libraries own their globals) and lists each assignment to a global
 variable: `x = 1` or `function x() end` where `x` is not a local in scope.
 Field writes (`ProfBuddy.x = 1`, `UIPanelWindows[name] = nil`) are not

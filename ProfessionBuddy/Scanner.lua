@@ -106,9 +106,6 @@ local CRAFTING_PROFS = {
     ["Enchanting"] = true, ["Engineering"] = true, ["Jewelcrafting"] = true,
     ["Leatherworking"] = true, ["Tailoring"] = true, ["First Aid"] = true,
     ["Poisons"] = true,
-    -- WoW: Forever, mage only (Core CLASS_PROFS): Study makes a Bundle of
-    -- Scrolls; the rest are abilities (RecipeDB KnownAbilities)
-    ["Comprehension"] = true,
 }
 
 local GATHERING_PROFS = {
@@ -244,7 +241,7 @@ function Scanner:ScanProfessions()
             local existing = DS:GetProfession(nil, canon) or {}
             existing.skillLevel = line.rank
             existing.maxSkill   = line.maxRank
-            existing.recipes    = addon.RecipeDB:AddKnownAbilities(canon, existing.recipes or {})
+            existing.recipes    = existing.recipes or {}
             DS:SetProfessionData(canon, existing)
         elseif addon.Source.flavor ~= "classic" then
             -- Forever reads profession slots only, so a line we cannot name
@@ -363,7 +360,7 @@ function Scanner:ScanCurrentTradeSkill()
     DS:SetProfessionData(profName, {
         skillLevel = rank,
         maxSkill   = maxRank,
-        recipes    = addon.RecipeDB:AddKnownAbilities(profName, recipes),
+        recipes    = recipes,
     })
 
     -- Before 1.1.5 a non-enUS rogue's Poisons was stored under the localized
@@ -436,7 +433,7 @@ function Scanner:ScanCurrentCraft()
     DS:SetProfessionData(profName, {
         skillLevel = rank,
         maxSkill   = maxRank,
-        recipes    = addon.RecipeDB:AddKnownAbilities(profName, recipes),
+        recipes    = recipes,
     })
 end
 
@@ -465,7 +462,7 @@ function Scanner:ReconcileSkillReq(recipes)
         end
     end
     if newCorrections > 0 and addon.db.settings and addon.db.settings.skillReqNotify then
-        print(string.format("|cff00ccffProfessionBuddy:|r reconciled %d trainer learn-level correction%s (/pb skillreq to view).",
+        print(string.format("|cff00ccffProfessionBuddy:|r Reconciled %d trainer learn-level correction%s (/pb skillreq to view).",
             newCorrections, newCorrections == 1 and "" or "s"))
     end
 end

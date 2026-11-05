@@ -264,7 +264,7 @@ local function makeInstance(name, realm)
     -- Load the addon (same files pb_harness loads) into this env, in order.
     -- The Source files come right after Core, as in the toc: Comm reads the
     -- trade-skill update event from addon.Source.EVENT.
-    for _, file in ipairs({ "Core", "Source/Source", "Source/Classic", "DataStore", "Orders", "Comm", "RecipeDB" }) do
+    for _, file in ipairs({ "Core", "UI/Theme", "Source/Source", "Source/Classic", "DataStore", "Orders", "Comm", "RecipeDB" }) do
         loadFileInEnv(BASE .. "/" .. file .. ".lua", env)()
     end
 

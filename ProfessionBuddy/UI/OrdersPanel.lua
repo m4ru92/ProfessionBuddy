@@ -11,6 +11,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 local OP = addon:NewModule("OrdersPanel")
 
 local ROW_HEIGHT = 36
@@ -323,7 +324,7 @@ function OP:BuildList(parent, ctx, rowCount)
     sb:SetThumbTexture(thumb)
     local sbg = sb:CreateTexture(nil, "BACKGROUND")
     sbg:SetAllPoints()
-    sbg:SetColorTexture(0.05, 0.05, 0.05, 0.5)
+    Theme:Fill(sbg, "listBackground")
     sb:SetScript("OnValueChanged", function(_, value)
         ctx.scrollOffset = math.floor(value)
         self:PaintList(ctx)
@@ -357,15 +358,15 @@ function OP:CreateRow(parent, index, ctx)
     local bg = row:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     if index % 2 == 0 then
-        bg:SetColorTexture(0.12, 0.12, 0.12, 0.6)
+        Theme:Fill(bg, "rowEven")
     else
-        bg:SetColorTexture(0.08, 0.08, 0.08, 0.3)
+        Theme:Fill(bg, "rowOdd")
     end
     row.bg = bg
 
     local hbg = row:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints()
-    hbg:SetColorTexture(0.18, 0.18, 0.22, 0.95)
+    Theme:Fill(hbg, "orderSectionHeader")
     hbg:Hide()
     row.headerBg = hbg
 
@@ -424,7 +425,7 @@ function OP:CreateRow(parent, index, ctx)
     -- the layout adapts to the panel width.
     local pillBg = row:CreateTexture(nil, "ARTWORK")
     pillBg:SetSize(72, 16)
-    pillBg:SetColorTexture(0.1, 0.1, 0.12, 0.9)
+    Theme:Fill(pillBg, "statusPill")
     pillBg:Hide()
     row.pillBg = pillBg
 
@@ -633,7 +634,11 @@ function OP:PaintList(ctx)
             row._section = item.section
             local arrow = ctx.collapsed[item.section] and "+" or "-"
             local label = (item.section == "incoming") and "Incoming" or "Outgoing"
-            row.headerLabel:SetText(string.format("%s  %s (%d)", arrow, label, item.count))
+            if Theme:IsClassic() then
+                row.headerLabel:SetText(string.format("%s%s (%d)", Theme:ExpandIcon(ctx.collapsed[item.section]), label, item.count))
+            else
+                row.headerLabel:SetText(string.format("%s  %s (%d)", arrow, label, item.count))
+            end
             row.headerLabel:Show()
             -- History sections get a "Clear" button when non-empty.
             if ctx == self.histCtx and item.count > 0 then
@@ -798,7 +803,7 @@ function OP:CreateContent(parent)
     findBtn:SetSize(104, 20)
     -- flush right, over the Guild Board list's scroll bar (m4ru 2026-10-13)
     findBtn:SetPoint("RIGHT", 0, 0)
-    findBtn:SetText("Find a crafter")
+    findBtn:SetText("Find a Crafter")
     findBtn:SetNormalFontObject(GameFontNormalSmall)
     findBtn:SetHighlightFontObject(GameFontHighlightSmall)
     findBtn:SetScript("OnClick", function() OP:ToggleFind() end)
@@ -828,7 +833,7 @@ function OP:CreateContent(parent)
             { text = "No incoming requests.",
               hint = "When a friend or guildmate requests a craft from you, it shows up here." },
             { text = "No outgoing orders.",
-              hint = "Open a friend's or guildmate's professions and hit Request Craft, or claim a post on the Guild Board." })
+              hint = "Open a friend's or guildmate's professions and click Request Craft, or claim a post on the Guild Board." })
         applyScrollRange(ctx)
         self:PaintList(ctx)
     end
@@ -984,15 +989,15 @@ function OP:CreateBoardRow(parent, index, ctx)
     local bg = row:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     if index % 2 == 0 then
-        bg:SetColorTexture(0.12, 0.12, 0.12, 0.6)
+        Theme:Fill(bg, "rowEven")
     else
-        bg:SetColorTexture(0.08, 0.08, 0.08, 0.3)
+        Theme:Fill(bg, "rowOdd")
     end
     row.bg = bg
 
     local hbg = row:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints()
-    hbg:SetColorTexture(0.18, 0.18, 0.22, 0.95)
+    Theme:Fill(hbg, "orderSectionHeader")
     hbg:Hide()
     row.headerBg = hbg
 
@@ -1131,7 +1136,7 @@ function OP:BuildBoardList(parent, ctx, rowCount)
     sb:SetThumbTexture(thumb)
     local sbg = sb:CreateTexture(nil, "BACKGROUND")
     sbg:SetAllPoints()
-    sbg:SetColorTexture(0.05, 0.05, 0.05, 0.5)
+    Theme:Fill(sbg, "listBackground")
     sb:SetScript("OnValueChanged", function(_, value)
         ctx.scrollOffset = math.floor(value)
         self:PaintBoardList(ctx)
@@ -1344,14 +1349,9 @@ local function ensureItemFavMenu()
     if OP._itemFavMenu then return OP._itemFavMenu end
     local m = CreateFrame("Frame", "ProfBuddyItemFavMenu", UIParent, "BackdropTemplate")
     m:SetFrameStrata("FULLSCREEN_DIALOG")
-    m:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12,
-        insets   = { left = 3, right = 3, top = 3, bottom = 3 },
-    })
-    m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
-    m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+    Theme:SetBackdrop(m, "menu")
+    Theme:BackdropColor(m, "menu")
+    Theme:BorderColor(m, "menu")
     m:EnableMouse(true)
     m:SetClampedToScreen(true)
     m:Hide()
@@ -1409,7 +1409,7 @@ local function showItemFavMenu(anchorBtn, itemBox, qtyBox, refreshStar)
             b = CreateFrame("Button", nil, m)
             b:SetHeight(ROW_H)
             local hl = b:CreateTexture(nil, "HIGHLIGHT")
-            hl:SetAllPoints(); hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+            hl:SetAllPoints(); Theme:Fill(hl, "menuHover")
             b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             b.text:SetPoint("LEFT", 8, 0); b.text:SetJustifyH("LEFT")
             m.buttons[i] = b
@@ -1818,7 +1818,7 @@ function OP:FindCrafters(query)
             end
             local color = colorCache[charKey]
             if color == nil then
-                -- Unknown class stays white; it used to be coloured as a Warrior.
+                -- Unknown class stays white; it used to be colored as a Warrior.
                 color = addon:ClassColor(char.class)
                 colorCache[charKey] = color
             end
@@ -1959,15 +1959,23 @@ function OP:BuildFindPanel()
     box:SetPoint("TOPLEFT", 16, -30)
     box:SetAutoFocus(false)
     box:SetScript("OnEscapePressed", function(b) b:ClearFocus() end)
+
+    -- Placeholder inside the box. ToggleFind focuses the box on open, so it
+    -- stays up while the box is empty, focused or not (the main Search box
+    -- does the same); hiding it on focus would mean it never shows.
+    local ph = box:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    ph:SetPoint("LEFT", box, "LEFT", 4, 0)
+    ph:SetText("Recipe or item name")
+    local function updatePH() if box:GetText() ~= "" then ph:Hide() else ph:Show() end end
+    updatePH()
+    self.findPlaceholder = ph
+
     -- Debounced: a typed word runs one search, not one per letter.
     box:SetScript("OnTextChanged", function()
+        updatePH()
         debounce("findSearch", 0.25, function() OP:RefreshFind() end)
     end)
     self.findBox = box
-
-    local hint = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    hint:SetPoint("LEFT", box, "RIGHT", 8, 0)
-    hint:SetText("Recipe or item name")
 
     -- The discovery path: pull recipe lists from guildmates who have none here
     -- yet. Deliberately a button, because it costs both sides a payload each.
@@ -2017,8 +2025,8 @@ function OP:BuildFindPanel()
         row:SetPoint("RIGHT", -16, 0)
         local bg = row:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
-        if i % 2 == 0 then bg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
-        else bg:SetColorTexture(0.08, 0.08, 0.08, 0.3) end
+        if i % 2 == 0 then Theme:Fill(bg, "historyRowEven")
+        else Theme:Fill(bg, "rowOdd") end
         row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
         local rec = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         rec:SetPoint("TOPLEFT", 6, -4)
@@ -2321,10 +2329,28 @@ end
 OP._badges = OP._badges or {}
 
 -- Create a small count badge anchored to a button's top-right corner.
+-- Classic: the tab art's ends are clear, so the button's corner lies outside
+-- the drawn tab. The count joins the tab's own label instead ("Orders (1)"),
+-- which the tab centres and colors as one. Modern keeps a separate badge in
+-- the corner.
+local function LabelBadge(button)
+    local base = button:GetText() or ""
+    return {
+        SetText = function(_, t) button:SetText(base .. " " .. t) end,
+        Show = function() end,
+        Hide = function() button:SetText(base) end,
+    }
+end
+
 function OP:CreateBadge(button)
-    local b = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    b:SetPoint("TOPRIGHT", button, "TOPRIGHT", -3, -2)
-    b:SetTextColor(1, 0.85, 0.2)
+    local b
+    if Theme:IsClassic() then
+        b = LabelBadge(button)
+    else
+        b = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        b:SetPoint("TOPRIGHT", button, "TOPRIGHT", -3, -2)
+        b:SetTextColor(1, 0.85, 0.2)
+    end
     b:Hide()
     table.insert(self._badges, b)
     self:UpdateBadge()

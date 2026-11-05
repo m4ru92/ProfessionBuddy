@@ -4,6 +4,7 @@
 ----------------------------------------------------------------------
 
 local addon = ProfBuddy
+local Theme = addon.Theme
 local FP = addon:NewModule("FriendsPanel")
 
 local DS   -- DataStore ref, set in Init
@@ -58,7 +59,7 @@ end
 local function ensureRemovePopup()
     if StaticPopupDialogs["PROFBUDDY_REMOVE_CONTACT"] then return end
     StaticPopupDialogs["PROFBUDDY_REMOVE_CONTACT"] = {
-        text = "Remove %s as a contact?\nTheir synced professions, recipes and inventory are deleted with them, and they can no longer pull yours.",
+        text = "Remove %s as a contact?\nTheir synced professions, recipes, and inventory are deleted with them, and they can no longer pull yours.",
         button1 = YES,
         button2 = NO,
         OnAccept = function(self, key)
@@ -73,7 +74,7 @@ end
 
 -- A contact key we will store: "Name" or "Name-Realm", letters only, 2 to 12
 -- CHARACTERS, canonicalized to Name-Realm. Without this, anything the user
--- types (colour codes included) becomes a key in SavedVariables and a string
+-- types (color codes included) becomes a key in SavedVariables and a string
 -- painted into a row. The realm half is checked too: it reaches the same key
 -- and the same chat lines, and a realm holding junk addresses a whisper no
 -- server can deliver, so that contact would silently never sync.
@@ -131,14 +132,9 @@ local function ensureOrderMenu()
 
     local m = CreateFrame("Frame", "ProfBuddyOrderMenu", UIParent, "BackdropTemplate")
     m:SetFrameStrata("FULLSCREEN_DIALOG")
-    m:SetBackdrop({
-        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12,
-        insets   = { left = 3, right = 3, top = 3, bottom = 3 },
-    })
-    m:SetBackdropColor(0.08, 0.08, 0.1, 0.97)
-    m:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
+    Theme:SetBackdrop(m, "menu")
+    Theme:BackdropColor(m, "menu")
+    Theme:BorderColor(m, "menu")
     m:EnableMouse(true)
     -- Anchored under its row button, so the bottom rows would otherwise run
     -- off the screen.
@@ -183,7 +179,7 @@ local function showOrderMenu(anchorBtn, key, profs)
             b:SetHeight(ROW_H)
             local hl = b:CreateTexture(nil, "HIGHLIGHT")
             hl:SetAllPoints()
-            hl:SetColorTexture(0.3, 0.3, 0.5, 0.5)
+            Theme:Fill(hl, "menuHover")
             b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             b.text:SetPoint("LEFT", 8, 0)
             b.text:SetJustifyH("LEFT")
@@ -288,7 +284,7 @@ function FP:CreateContent(parent)
         if not key then
             -- There is no key to print on this path, so the RAW input is echoed
             -- back: capped first so one bad paste cannot flood the chat frame,
-            -- then pipe-escaped so a typed colour code prints as text.
+            -- then pipe-escaped so a typed color code prints as text.
             print("|cff00ccffProfessionBuddy:|r " .. (typed:sub(1, 40):gsub("|", "||"))
                 .. " is not a character name. Use " .. ((addon.Source and addon.Source.FULL_NAMES)
                     and "First Surname." or "Name or Name-Realm."))
@@ -346,7 +342,7 @@ function FP:CreateContent(parent)
     else
         bnBtn:Disable()
         if bnBtn.SetMotionScriptsWhileDisabled then bnBtn:SetMotionScriptsWhileDisabled(true) end
-        bnTitle, bnText = "Battle.net auto-add", "Coming soon. The WoW: Forever beta does not give addons the Battle.net friend list yet."
+        bnTitle, bnText = "Battle.net auto-add", "Coming soon to WoW: Forever."
     end
     bnBtn:SetScript("OnEnter", function(btn)
         GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
@@ -375,7 +371,7 @@ function FP:CreateContent(parent)
 
     local headerBg = headerBar:CreateTexture(nil, "BACKGROUND")
     headerBg:SetAllPoints()
-    headerBg:SetColorTexture(0.15, 0.15, 0.15, 0.8)
+    Theme:Fill(headerBg, "columnHeader")
 
     local function MakeHeader(text, x, width)
         local fs = headerBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -423,7 +419,7 @@ function FP:CreateContent(parent)
     scrollBar:SetThumbTexture(thumbTex)
     local bgTex = scrollBar:CreateTexture(nil, "BACKGROUND")
     bgTex:SetAllPoints()
-    bgTex:SetColorTexture(0.05, 0.05, 0.05, 0.5)
+    Theme:Fill(bgTex, "listBackground")
     scrollBar:SetScript("OnValueChanged", function(_, value)
         self.scrollOffset = math.floor(value)
         self:UpdateRows()
@@ -474,9 +470,9 @@ function FP:CreateRow(parent, index)
     local bg = row:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     if index % 2 == 0 then
-        bg:SetColorTexture(0.12, 0.12, 0.12, 0.6)
+        Theme:Fill(bg, "rowEven")
     else
-        bg:SetColorTexture(0.08, 0.08, 0.08, 0.3)
+        Theme:Fill(bg, "rowOdd")
     end
 
     -- Favorite star: its own hit-area so it toggles the pin without triggering
@@ -709,7 +705,7 @@ function FP:Refresh()
     -- Empty list: say so, and take the lone scroll bar off the blank area.
     local hasContacts = #self.contactKeys > 0
     self.empty:SetText(hidden > 0
-        and "Your contacts are all of the other faction. Settings, Friend Data: Show opposite faction friends."
+        and "Your contacts are all of the other faction. Settings, Friend Data: Show opposite-faction friends."
         or "No contacts yet. Type a name above and click Add.")
     self.empty:SetShown(not hasContacts)
     self.scrollBar:SetShown(hasContacts)
