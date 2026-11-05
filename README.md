@@ -85,7 +85,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 - **Trainers and vendors.** ProfessionBuddy records each trainer and vendor you visit, with learn levels, prices, and stock, and shares them with your friends.
 - **Gathering loot from play.** Ore veins, herbs, and skinnable mobs start from Classic data and switch to what you and your friends gathered once you have gathered them 10 times together.
 
-The profession window covers Blacksmithing, Leatherworking, Tailoring, Engineering, Alchemy, Enchanting, Cooking, First Aid, and Mining and Smelting. Rogues get Poisons on both games. TBC Classic Anniversary adds Jewelcrafting. WoW: Forever adds Herbalism, Skinning, and Fishing, and Comprehension for mages. Gathering tooltips cover Mining, Herbalism, and Skinning on both games.
+The profession window covers Blacksmithing, Leatherworking, Tailoring, Engineering, Alchemy, Enchanting, Cooking, First Aid, and Mining and Smelting. Rogues get Poisons on both games. TBC Classic Anniversary adds Jewelcrafting. WoW: Forever adds Herbalism, Skinning, and Fishing. Gathering tooltips cover Mining, Herbalism, and Skinning on both games.
 
 ## Installation
 

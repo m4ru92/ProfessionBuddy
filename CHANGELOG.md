@@ -24,7 +24,7 @@ Thanks to Zorden, whose review of PB's windows shaped the Classic look and the q
   - Classic draws Blizzard's TBC art: dialog borders and backgrounds, the character sheet skill bar, Blizzard's bottom tabs, plus and minus buttons on headers, a down arrow on lists, and Blizzard's scroll bar knob and arrows on the recipe list. The selected recipe's bar takes its difficulty color, and reagents sit in item slot frames.
   - On TBC Anniversary, Classic also shows the profession's icon, large and faint, in the detail pane.
   - Match the game picks Classic on TBC Anniversary. On WoW: Forever, PB shows the option grey, and its tooltip reads "Coming to WoW: Forever in a later update."
-- **Held by:** bag, auction house, and chat link tooltips list who holds the item. You come first, marked (you), then your alts, then friends under "Friends:", most held first within each. A line reads "Maruwarr 68 (Bags 5, Bank 63)", and a side that holds none drops out. Friends appear only if they share their bags, and guildmates never share bags. A Held by slider caps the list at 1 to 20 or All, 8 by default. The section follows the Show in tooltips checkboxes under Alt Information and Friend Data.
+- **Held by:** bag and auction house tooltips list who holds the item. You come first, marked (you), then your alts, then friends under "Friends:", most held first within each. A line reads "Maruwarr 68 (Bags 5, Bank 63)", and a side that holds none drops out. Friends appear only if they share their bags, and guildmates never share bags. A Held by slider caps the list at 1 to 20 or All, 8 by default. The section follows the Show in tooltips checkboxes under Alt Information and Friend Data.
 - **Colorblind markers:** a Settings list. Set to On, it adds Blizzard's colorblind prefix to recipe names in the profession window and the Characters tab: [+++] for orange, [++] for yellow, [+] for green, and none for grey. A learn level above your skill reads [35 low]. A gathering line ends with its marker, or with (too low) when your skill is below the requirement. Auto, the default, follows the game's Colorblind Mode under Settings, Accessibility.
 - **Quantity buttons:** minus and plus buttons beside the quantity box on the craft bar and on Request Craft step between 1 and 999.
 - The AddOns list shows a campfire icon for ProfessionBuddy: Basic Campfire on TBC Anniversary, and Welcoming Campfire on WoW: Forever.
@@ -34,10 +34,12 @@ Thanks to Zorden, whose review of PB's windows shaped the Classic look and the q
 - Recipe data comes from launch build 1.60.1.70790. Enchanting gains Enchant Boots - Speed, and Leatherworking lists Gray Leather Boots as its own recipe. 38 Alchemy, Blacksmithing, Enchanting, and Leatherworking recipes take their learn level from their recipe, plans, formula, or pattern, and Prefect's Waistguard comes from its Plans, not a trainer. 14 First Aid, Fishing, Herbalism, Mining, and Skinning camp crafts gain skill ranges. The Leatherworking "Shoulder" recipes read "Shoulders", Draught of Predatory Senses reads Potion of Predatory Senses, and four recipes move to the right category. Three Engineering recipes list both of their tools.
 - WowUp lists ProfessionBuddy on WoW: Forever, instead of "this game client is not supported yet".
 - The grey Battle.net auto-add button's tooltip reads "Coming soon to WoW: Forever."
+- Comprehension is gone. On WoW: Forever it is a spellbook skill with no profession window, so PB no longer shows a Comprehension tab, and it drops what 2.0.0 saved for mages.
 
 **Changes**
 
 - The Material Calculator's rows and the detail panel's reagents use the one Held by section. Their own holder list and the In bags and In bank lines are gone.
+- The detail panel's Held by list reads like the Held by tooltip: you first, marked (you), then your alts, then friends under "Friends:", most held first, with counts such as "68 (Bags 5, Bank 63)". Viewing someone else's profession no longer lists you as an alt.
 - Find a Crafter's "Recipe or item name" hint sits inside the search box.
 - In-game text: the main window title reads ProfessionBuddy, and labels that disagreed match. The profession bar reads "Leatherworking 75/150", "Name: Enchanting 113/150" for someone else's, and "Alchemy: Not learned".
 

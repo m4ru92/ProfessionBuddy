@@ -1468,6 +1468,20 @@ function TSF:HookItemTooltip()
     self._hookedTooltip = true
 end
 
+-- A held count as Held by writes it: "68 (Bags 5, Bank 63)", dropping a
+-- side that holds none ("63 (Bank)").
+function TSF:HeldCount(bags, bank)
+    local where
+    if bags > 0 and bank > 0 then
+        where = "Bags " .. bags .. ", Bank " .. bank
+    elseif bags > 0 then
+        where = "Bags"
+    else
+        where = "Bank"
+    end
+    return (bags + bank) .. " (" .. where .. ")"
+end
+
 -- The "Held by" lines for one item, in order: you, then your alts, then
 -- friends, most held first within each. A line reads "Name 68 (Bags 5,
 -- Bank 63)", dropping a side that holds none ("Name 63 (Bank)").
@@ -1484,18 +1498,10 @@ function TSF:HeldByLines(itemID, showAlts, showRemote)
             or (not charData.isRemote and showAlts)
         if bags + bank > 0 and typeOK
            and (isCurrent or addon:ShowsFaction(charData, charKey)) then
-            local where
-            if bags > 0 and bank > 0 then
-                where = "Bags " .. bags .. ", Bank " .. bank
-            elseif bags > 0 then
-                where = "Bags"
-            else
-                where = "Bank"
-            end
             local cc = addon:ClassColor(charData.class or "WARRIOR")
             local entry = {
                 total = bags + bank, key = charKey, isRemote = charData.isRemote and true or false,
-                text = cc .. addon:ShortName(charKey) .. "|r " .. (bags + bank) .. " (" .. where .. ")"
+                text = cc .. addon:ShortName(charKey) .. "|r " .. self:HeldCount(bags, bank)
                     .. (isCurrent and " |cff00ff00(you)|r" or ""),
             }
             if isCurrent then
@@ -2267,8 +2273,6 @@ local PROF_ICONS = {
     ["Skinning"]        = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01",
     ["Fishing"]         = "Interface\\Icons\\Trade_Fishing",
     ["Poisons"]         = "Interface\\Icons\\Trade_BrewPoison",
-    -- WoW: Forever's own icon for the skill line (SkillLine 3012)
-    ["Comprehension"]   = "Interface\\Icons\\Spell_Holy_MindSooth",
 }
 
 -- Classic on TBC Classic Anniversary: the profession's icon, large and faint,
@@ -2297,7 +2301,6 @@ local PROF_ORDER = {
     ["Herbalism"] = 20,
     ["Mining"] = 21, ["Find Minerals"] = 21.5, ["Skinning"] = 22,
     ["Cooking"] = 30, ["First Aid"] = 31, ["Fishing"] = 32,
-    ["Comprehension"] = 33,
 }
 
 -- All possible profession tabs, pre-built to avoid taint.
@@ -2309,7 +2312,6 @@ local ALL_TAB_PROFS = {
     "Find Minerals", "First Aid", "Fishing",
     "Jewelcrafting", "Leatherworking", "Mining", "Skinning", "Tailoring",
     "Poisons",   -- appended last so every other tab keeps its ProfBuddyProfTab<n> name
-    "Comprehension",   -- WoW: Forever mages; last for the same reason
 }
 
 -- Professions that have a browsable recipe window in the static DB.
@@ -4036,68 +4038,89 @@ function TSF:AppendRodLine(tip, recipe)
 end
 
 function TSF:ShowAltMaterials(recipe)
-    -- Alt and friend visibility are independent toggles; if neither is on
-    -- nothing is collected below and the section stays hidden.
+    -- Who holds this recipe's reagents, laid out like the Held by tooltip:
+    -- you first, marked (you), then alts, then friends under "Friends:",
+    -- most held first, with the other faction last in each group. A count
+    -- reads like the tooltip's ("68 (Bags 5, Bank 63)"). The character being
+    -- viewed is left out, as the reagent rows show its counts. Alts and
+    -- friends follow their own Show in detail boxes; with neither on the
+    -- section stays hidden.
     if not recipe.reagents or not DS then return end
+    local showRemote = addon.db.settings.showRemoteInDetail
+    local showAlts = addon.db.settings.showAltInDetail
+    if not (showAlts or showRemote) then return end
 
-    local currentKey = state._viewCharKey or addon:PlayerKey()
-    local currentChar = DS:GetCharacter(currentKey)
-    local currentFaction = currentChar and currentChar.faction
-    local allChars = DS:GetAllCharacters()
+    local viewedKey = state._viewCharKey or addon:PlayerKey()
+    local playerKey = addon:PlayerKey()
+    local viewedChar = DS:GetCharacter(viewedKey)
+    local viewedFaction = viewedChar and viewedChar.faction
 
-    local showRemoteInDetail = addon.db.settings.showRemoteInDetail
-    local showAltInDetail = addon.db.settings.showAltInDetail
-
-    -- Collect into alts (local) and friends (remote); tag opposing faction.
-    -- Each type is gated by its own toggle, independently.
-    local alts, friends = {}, {}
-    for charKey, charData in pairs(allChars) do
-        local typeEnabled = (charData.isRemote and showRemoteInDetail)
-                         or (not charData.isRemote and showAltInDetail)
-        if not addon:SameKey(charKey, currentKey)
-           and typeEnabled
-           and addon:ShowsFaction(charData, charKey) then
-            local bags = charData.inventory and charData.inventory.bags or {}
-            local bankItems = charData.inventory and charData.inventory.bank or {}
-            local parts = {}
-
+    local you, alts, friends = {}, {}, {}
+    for charKey, charData in pairs(DS:GetAllCharacters() or {}) do
+        local isYou = addon:SameKey(charKey, playerKey)
+        local typeOK = isYou
+            or (charData.isRemote and showRemote)
+            or (not charData.isRemote and showAlts)
+        if not addon:SameKey(charKey, viewedKey) and typeOK
+           and (isYou or addon:ShowsFaction(charData, charKey)) then
+            local inv = charData.inventory
+            local bags = inv and inv.bags or {}
+            local bank = inv and inv.bank or {}
+            local parts, total = {}, 0
             for _, reagent in ipairs(recipe.reagents) do
-                if reagent.itemID then
-                    local count = (bags[reagent.itemID] or 0) + (bankItems[reagent.itemID] or 0)
-                    if count > 0 then
-                        table.insert(parts, (reagent.name or "?") .. ":" .. count)
-                    end
+                local id = reagent.itemID
+                if id and (bags[id] or 0) + (bank[id] or 0) > 0 then
+                    parts[#parts + 1] = (reagent.name or "?") .. " " .. self:HeldCount(bags[id] or 0, bank[id] or 0)
+                    total = total + (bags[id] or 0) + (bank[id] or 0)
                 end
             end
-
             if #parts > 0 then
+                local opposing = viewedFaction and charData.faction and charData.faction ~= viewedFaction
+                local tag = ""
+                if opposing then
+                    tag = (charData.faction == "Alliance") and "|cff4080ff[A]|r " or "|cffff4040[H]|r "
+                end
                 local entry = {
-                    short    = addon:ShortName(charKey),
-                    class    = charData.class,
-                    faction  = charData.faction,
-                    opposing = (charData.faction ~= currentFaction),
-                    summary  = table.concat(parts, ", "),
+                    key = charKey, total = total, opposing = opposing and true or false,
+                    text = tag .. addon:ClassColor(charData.class or "WARRIOR") .. addon:ShortName(charKey) .. "|r"
+                        .. (isYou and " |cff00ff00(you)|r" or "") .. "  " .. table.concat(parts, ", "),
                 }
-                if charData.isRemote then
-                    table.insert(friends, entry)
+                if isYou then
+                    you[1] = entry
+                elseif charData.isRemote then
+                    friends[#friends + 1] = entry
                 else
-                    table.insert(alts, entry)
+                    alts[#alts + 1] = entry
                 end
             end
         end
     end
+    if #you + #alts + #friends == 0 then return end
 
-    if #alts == 0 and #friends == 0 then return end
-
-    -- Sort each group: current faction first, then opposing; alpha within
-    local function sortGroup(t)
-        table.sort(t, function(a, b)
-            if a.opposing ~= b.opposing then return not a.opposing end
-            return a.short < b.short
-        end)
+    local function order(a, b)
+        if a.opposing ~= b.opposing then return not a.opposing end
+        if a.total ~= b.total then return a.total > b.total end
+        return a.key < b.key
     end
-    sortGroup(alts)
-    sortGroup(friends)
+    table.sort(alts, order)
+    table.sort(friends, order)
+
+    -- The lines in order; a heading has no entry. When they outrun the
+    -- panel's lines, the last one says how many characters are left.
+    local rows = {}
+    for _, e in ipairs(you) do rows[#rows + 1] = { text = e.text, entry = true } end
+    for _, e in ipairs(alts) do rows[#rows + 1] = { text = e.text, entry = true } end
+    if #friends > 0 then
+        rows[#rows + 1] = { text = "|cff80c0ffFriends:|r" }
+        for _, e in ipairs(friends) do rows[#rows + 1] = { text = e.text, entry = true } end
+    end
+    local max = #self.altLines
+    if #rows > max then
+        local left = 0
+        for i = max, #rows do if rows[i].entry then left = left + 1 end end
+        for i = #rows, max, -1 do rows[i] = nil end
+        rows[max] = { text = "|cff666666... and " .. left .. " more|r", entry = true }
+    end
 
     -- Anchor the divider/header below the last visible reagent row
     -- The reagent grid records its own bottom row (it owns the column split),
@@ -4110,35 +4133,16 @@ function TSF:ShowAltMaterials(recipe)
     self.altHeader:SetPoint("TOPLEFT", self.altDivider, "BOTTOMLEFT", 0, -4)
     self.altHeader:Show()
 
-    -- Render groups (each line anchored to the header at a computed row)
+    -- Each line anchored to the header at its row; characters indented
+    -- under the headings, as in the tooltip
     local LH = 14
-    local idx = 0
-    local function emit(text, indentX)
-        idx = idx + 1
-        if idx > #self.altLines then return false end
-        local line = self.altLines[idx]
+    for i, row in ipairs(rows) do
+        local line = self.altLines[i]
         line:ClearAllPoints()
-        line:SetPoint("TOPLEFT", self.altHeader, "BOTTOMLEFT", 4 + (indentX or 0), -4 - (idx - 1) * LH)
-        line:SetText(text)
+        line:SetPoint("TOPLEFT", self.altHeader, "BOTTOMLEFT", 4 + (row.entry and 10 or 0), -4 - (i - 1) * LH)
+        line:SetText(row.text)
         line:Show()
-        return true
     end
-
-    local function emitGroup(label, labelHex, list)
-        if #list == 0 then return end
-        if not emit("|cff" .. labelHex .. label .. "|r", 0) then return end
-        for _, e in ipairs(list) do
-            local cc = addon:ClassColor(e.class or "WARRIOR")
-            local tag = ""
-            if e.opposing then
-                tag = (e.faction == "Alliance") and "|cff4080ff[A]|r " or "|cffff4040[H]|r "
-            end
-            if not emit(tag .. cc .. e.short .. "|r  " .. e.summary, 10) then break end
-        end
-    end
-
-    emitGroup("Alts", "ffd820", alts)
-    emitGroup("Friends", "80c0ff", friends)
 end
 
 ----------------------------------------------------------------------
@@ -6788,19 +6792,6 @@ local function scrapeRecipes(isCraft)
             category = row.category,
         }
         table.insert(state.recipeOrder, row.name)
-    end
-    -- Abilities (WoW: Forever, Comprehension) are never in the window:
-    -- list the ones this character knows, under their own category. No
-    -- index, so they can never be crafted.
-    local prof = addon.Scanner and addon.Scanner:Canonicalize(state.profName) or state.profName
-    for name, e in pairs(RDB and RDB.KnownAbilities and RDB:KnownAbilities(prof) or {}) do
-        if not state.allRecipes[name] then
-            state.allRecipes[name] = {
-                spellID = e.spellID, itemID = 0, numAvail = 0, reagents = {},
-                category = e.category, difficulty = "trivial", ability = true,
-            }
-            table.insert(state.recipeOrder, name)
-        end
     end
     return win.itemsPending
 end

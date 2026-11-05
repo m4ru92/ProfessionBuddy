@@ -26,9 +26,18 @@ addon.CRAFTABLE_PROFS = {
 -- never in CRAFTABLE_PROFS (which feeds the panels, orders and guild sync).
 addon.CLASS_PROFS = {
     ["Poisons"] = "ROGUE",
-    -- WoW: Forever: the mage's scroll skill (any mage trainer, level 6)
-    ["Comprehension"] = "MAGE",
 }
+
+-- WoW: Forever's Comprehension is a spellbook skill with no profession
+-- window, so PB no longer lists it. 2.0.0 saved it for mages: drop it from
+-- every saved character.
+function addon:DropComprehension(db)
+    for _, char in pairs(db and db.characters or {}) do
+        if type(char) == "table" and type(char.professions) == "table" then
+            char.professions.Comprehension = nil
+        end
+    end
+end
 
 -- Can a character of classFile have this profession? classFile nil means the
 -- logged-in character. Every profession not in CLASS_PROFS is open to all.
@@ -816,6 +825,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     -- (again at PLAYER_LOGIN below).
     addon:MigrateForeverRealms()
     addon:MigrateToFullName()
+    addon:DropComprehension(ProfBuddyDB)
 
     -- Init modules in declared order. A module that errors here must not
     -- take the rest of the addon down with it.

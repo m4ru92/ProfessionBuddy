@@ -366,10 +366,10 @@ for prof, recipes in pairs(RDB.data) do
         EXPECT(r.sources and METHODS[r.sources[1].method], prof .. "/" .. name .. " source")
     end
 end
--- 14 with Comprehension (the mage's scroll skill, 7 entries) since 2026-10-13;
--- 2354 since the launch build 1.60.1.70790 (Enchant Boots - Speed, and Gray
--- Leather Boots as its own recipe)
-EXPECT(nProf == 14 and nRec == 2354, "expected 14 professions / 2354 recipes, got " .. nProf .. " / " .. nRec)
+-- 2354 at the launch build 1.60.1.70790 (Enchant Boots - Speed, and Gray
+-- Leather Boots as its own recipe); 13 and 2347 without Comprehension (the
+-- mage's spellbook skill, 7 entries), which has no profession window
+EXPECT(nProf == 13 and nRec == 2347, "expected 13 professions / 2347 recipes, got " .. nProf .. " / " .. nRec)
 -- Tanning and Gardening open the Skinning and Herbalism windows; they are
 -- not recipes (the game does not list them)
 EXPECT(RDB.data.Skinning.Tanning == nil and RDB.data.Herbalism.Gardening == nil, "a profession window spell baked as a recipe")
@@ -3050,64 +3050,63 @@ do
 end
 print("  PASS F55 fix wave: tool line without an item link, 7 board rows, sightings asked again after 15 minutes")
 
--- F56: Comprehension (the WoW: Forever mage's scroll skill), the seventh
--- profession slot, and the Guild Board's right-hand controls.
+-- F56: no Comprehension (the WoW: Forever mage's spellbook skill, which
+-- has no profession window), the seventh profession slot, and the Guild
+-- Board's right-hand controls.
 do
-    local RDB, TSF, SC = ProfBuddy.RecipeDB, ProfBuddy.TradeSkillFrame, ProfBuddy.Scanner
-    local C = RDB.data.Comprehension
-    EXPECT(C and C.Study and not C.Study.ability and C.Study.reagents[1].name == "Light Feather", "Study is not a recipe")
-    local abilities = 0
-    for name, e in pairs(C) do
-        if e.ability then
-            abilities = abilities + 1
-            EXPECT(e.category == "Abilities" and e.itemID == 0, name .. " is not a plain ability")
-        end
+    local RDB, SC = ProfBuddy.RecipeDB, ProfBuddy.Scanner
+    EXPECT(RDB.data.Comprehension == nil, "Comprehension data loaded")
+    for prof, recipes in pairs(RDB.data) do
+        for name, e in pairs(recipes) do EXPECT(e.ability == nil, prof .. "/" .. name .. " is an ability") end
     end
-    EXPECT(abilities == 6, "abilities: " .. abilities)
-    EXPECT(C["Comprehend Scroll"] and C["Comprehend Scroll (15-30)"] and C["Comprehend Scroll (250-300)"],
-           "Comprehend Scroll ranks are not named by their skill band")
-    EXPECT(ProfBuddy:ProfessionForClass("Comprehension", "MAGE")
-           and not ProfBuddy:ProfessionForClass("Comprehension", "WARRIOR"), "Comprehension is not mage-only")
-    EXPECT(not ProfBuddy.CRAFTABLE_PROFS.Comprehension, "Comprehension would sync to others")
+    EXPECT(ProfBuddy.CLASS_PROFS.Comprehension == nil and not ProfBuddy.CRAFTABLE_PROFS.Comprehension,
+           "Comprehension is still a profession")
+    EXPECT(RDB.KnownAbilities == nil and RDB.AddKnownAbilities == nil, "the abilities path is still there")
 
     -- the seventh slot (Forever: two primaries and up to five secondaries)
-    local realGP, realGPI = GetProfessions, GetProfessionInfo
-    local slots = { "Leatherworking", "Skinning", "Cooking", "First Aid", "Fishing", false, "Comprehension" }
+    -- is read; Comprehension's skill line (3012) is skipped in any language
+    local realGP, realGPI, realSI = GetProfessions, GetProfessionInfo, C_Spell.GetSpellInfo
+    local slots = {}
     GetProfessions = function() return 1, 2, 3, 4, 5, nil, 7 end
     GetProfessionInfo = function(i)
         local n = slots[i]
         if not n then return nil end
-        return n, 0, 10, 300, 1, 0, 0
+        return n[1], 0, 10, 300, 1, 0, n[2]
     end
+    local base = { { "Leatherworking", 165 }, { "Skinning", 393 }, { "Cooking", 185 }, { "First Aid", 129 },
+                   { "Fishing", 356 }, false }
+    for i = 1, 6 do slots[i] = base[i] end
+    slots[7] = { "Herbalism", 182 }
     local lines = ProfBuddy.Source:ReadProfessionSkills()
-    EXPECT(#lines == 6 and lines[6].name == "Comprehension", "the seventh profession slot was not read")
+    EXPECT(#lines == 6 and lines[6].name == "Herbalism", "the seventh profession slot was not read")
+    slots[7] = { "Verständnis", 3012 }
+    lines = ProfBuddy.Source:ReadProfessionSkills()
+    EXPECT(#lines == 5, "Comprehension's slot was read: " .. #lines)
 
-    -- known abilities come from the spellbook into the saved record
-    local realSB = C_SpellBook
-    C_SpellBook = { IsSpellKnown = function(id) return id == 1296017 or id == 1309973 end }
-    SC:ScanProfessions()
-    local rec = ProfBuddy.DataStore:GetProfession(nil, "Comprehension")
-    EXPECT(rec and rec.recipes["Comprehend Scroll"] and rec.recipes["Comprehend Scroll"].ability
-           and rec.recipes["Comprehend Scroll (15-30)"], "known abilities not saved")
-    local unknown = RDB:GetAllUnknownRecipes(nil, "Comprehension")
-    EXPECT(not unknown["Comprehend Scroll"] and not unknown["Comprehend Scroll (15-30)"]
-           and unknown.Research and unknown.Study and unknown["Comprehend Scroll (50-75)"],
-           "Missing should list the unknown ones only")
-
-    -- a live window lists a known ability, with no index (never crafted)
-    RDB.data.Leatherworking["Test Ability"] = { spellID = 999001, itemID = 0, ability = true,
-        category = "Abilities", sources = { { method = "trainer" } } }
-    C_SpellBook.IsSpellKnown = function(id) return id == 999001 end
-    C_TradeSkillUI.OpenTradeSkill(165)
-    TS_LIST_READY()
-    FLUSH()
-    local a = TSF.state.allRecipes["Test Ability"]
-    EXPECT(a and a.ability and a.index == nil and a.category == "Abilities", "a known ability is not in the Known list")
-    RDB.data.Leatherworking["Test Ability"] = nil
-    C_SpellBook = realSB
-    GetProfessions, GetProfessionInfo = realGP, realGPI
+    -- with it in a slot, an unlearned profession still leaves the record,
+    -- and Comprehension is not stored
+    local names = { [2108] = "Leatherworking", [8613] = "Skinning", [2550] = "Cooking", [3273] = "First Aid",
+                    [7620] = "Fishing", [3908] = "Tailoring" }
+    C_Spell.GetSpellInfo = function(id) return names[id] and { name = names[id] } or nil end
     local char = ProfBuddy.DataStore:GetCharacter()
-    char.professions.Comprehension = nil
+    local saved = char.professions
+    char.professions = { Leatherworking = { skillLevel = 10, maxSkill = 300, recipes = {} },
+                         Tailoring = { skillLevel = 10, maxSkill = 300, recipes = {} } }
+    SC:ScanProfessions()
+    EXPECT(char.professions.Tailoring == nil, "a mage's unlearned profession was kept")
+    EXPECT(char.professions.Comprehension == nil and char.professions["Verständnis"] == nil, "Comprehension stored")
+    char.professions = saved
+    GetProfessions, GetProfessionInfo, C_Spell.GetSpellInfo = realGP, realGPI, realSI
+
+    -- 2.0.0 saved it for mages: loading drops it from every character
+    local db = { characters = { A = { professions = { Comprehension = { skillLevel = 5 }, Tailoring = {} } },
+                                B = { professions = { Comprehension = {} } }, C = {}, D = "x" } }
+    ProfBuddy:DropComprehension(db)
+    EXPECT(db.characters.A.professions.Comprehension == nil and db.characters.A.professions.Tailoring
+           and db.characters.B.professions.Comprehension == nil, "saved Comprehension not dropped")
+    local core = assert(io.open(PB_BASE .. "/Core.lua")):read("*a")
+    EXPECT(core:find("addon:MigrateToFullName%(%)%s+addon:DropComprehension%(ProfBuddyDB%)"),
+           "loading does not drop saved Comprehension")
     SC:ScanProfessions()
 
     -- the Guild Board's right-hand controls sit flush with the list's scroll bar
@@ -3123,7 +3122,7 @@ do
     if not FP.rows then FP:Toggle() end
     EXPECT(FP.rows and FP.rows[1] and #FP.rows[1].profIcons == 7, "Friends rows do not hold 7 profession icons")
 end
-print("  PASS F56 Comprehension (mage-only data, abilities saved and listed, never crafted), seventh profession slot, board controls flush right, 7 Friends icons")
+print("  PASS F56 no Comprehension (no data, slot skipped by skill line, saved copies dropped), seventh profession slot, board controls flush right, 7 Friends icons")
 
 -- F57: an unlearned profession leaves the player's record on Forever too.
 -- GetProfessions lists professions only, so an unnamed slot stops the
@@ -3134,9 +3133,10 @@ do
     local saved = char.professions
     local function prof(n) return { skillLevel = n, maxSkill = 300, recipes = { ["R" .. n] = { spellID = n } } } end
     char.professions = { Leatherworking = prof(100), Skinning = prof(90), Tailoring = prof(80),
-        Comprehension = prof(10) }
+        Poisons = prof(10) }
     local realGP, realGPI, realSI = GetProfessions, GetProfessionInfo, C_Spell.GetSpellInfo
-    local names = { [2108] = "Leatherworking", [8613] = "Skinning", [3908] = "Tailoring", [2550] = "Cooking" }
+    local names = { [2108] = "Leatherworking", [8613] = "Skinning", [3908] = "Tailoring", [2550] = "Cooking",
+                    [2842] = "Poisons" }
     C_Spell.GetSpellInfo = function(id) return names[id] and { name = names[id] } or nil end
     local slots = {}
     GetProfessions = function() local r = {} for i = 1, #slots do r[i] = i end return unpack(r) end
@@ -3147,7 +3147,7 @@ do
     local p = char.professions
     EXPECT(p.Tailoring == nil, "an unlearned profession is still stored on Forever")
     EXPECT(p.Leatherworking and p.Leatherworking.recipes.R100 and p.Skinning, "a learned profession was touched")
-    EXPECT(p.Comprehension, "Comprehension (a class skill) was removed")
+    EXPECT(p.Poisons, "Poisons (a class skill) was removed")
 
     p.Cooking = prof(50)
     slots = { "Leatherworking", "Kochkunst" }
@@ -3894,4 +3894,81 @@ do
 end
 print("  PASS F69 Item Info box marked IsEmbedded, PB's border behind it shows and hides with it; Match the game greyed on Forever only")
 
-print("ALL FOREVER TESTS PASS (69)")
+-- F70: the detail panel's Held by block reads like the Held by tooltip:
+-- you first with (you), then alts, then friends under "Friends:", most held
+-- first (Altone before Aalt), counts as "68 (Bags 5, Bank 63)"; the viewed
+-- character left out.
+do
+    local TSF = ProfBuddy.TradeSkillFrame
+    local db, S = ProfBuddy.db, ProfBuddy.db.settings
+    local me = ProfBuddy:PlayerKey()
+    local chars = db.characters
+    local myInv, fac = chars[me].inventory, chars[me].faction
+    local keepAlt, keepRemote, keepView = S.showAltInDetail, S.showRemoteInDetail, TSF.state._viewCharKey
+    local added = {}
+    local function add(key, t) t.faction = t.faction or fac; t.professions = {}; chars[key] = t; added[#added + 1] = key end
+    chars[me].inventory = { bags = { [2589] = 2 }, bank = {} }
+    add("Altone", { class = "WARRIOR", inventory = { bags = { [2589] = 5, [2592] = 3 }, bank = { [2589] = 63 } } })
+    add("Aalt", { class = "MAGE", inventory = { bags = {}, bank = { [2589] = 1 } } })
+    add("Pal", { class = "PRIEST", isRemote = true, inventory = { bags = { [2589] = 40 }, bank = { [2589] = 100 } } })
+    add("Viewed", { class = "ROGUE", isRemote = true, inventory = { bags = { [2589] = 9 } } })
+    add("Nothing", { class = "ROGUE", inventory = { bags = { [9999] = 9 } } })
+    local recipe = { reagents = { { itemID = 2589, name = "Linen Cloth" }, { itemID = 2592, name = "Wool Cloth" } } }
+    local function plain(t) return (t:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) end
+    local function show(viewKey)
+        TSF.state._viewCharKey = viewKey
+        TSF.altHeader:Hide()
+        for _, l in ipairs(TSF.altLines) do l:Hide() end
+        TSF:ShowAltMaterials(recipe)
+        local out = {}
+        for _, l in ipairs(TSF.altLines) do
+            if l:IsShown() then
+                local x = rawget(l, "_lastPoint")[4]
+                out[#out + 1] = (x == 14 and "  " or "") .. plain(rawget(l, "_text"))
+            end
+        end
+        return out, TSF.altHeader:IsShown()
+    end
+    local youName = ProfBuddy:ShortName(me)
+    S.showAltInDetail, S.showRemoteInDetail = true, true
+    local got = show("Viewed")
+    local want = { "  " .. youName .. " (you)  Linen Cloth 2 (Bags)",
+                   "  Altone  Linen Cloth 68 (Bags 5, Bank 63), Wool Cloth 3 (Bags)",
+                   "  Aalt  Linen Cloth 1 (Bank)",
+                   "Friends:",
+                   "  Pal  Linen Cloth 140 (Bags 40, Bank 100)" }
+    EXPECT(table.concat(got, "|") == table.concat(want, "|"), "Held by panel:\n" .. table.concat(got, "\n"))
+
+    -- your own profession: you are the viewed character, so you are left out
+    got = show(nil)
+    EXPECT(got[1] == "  Altone  Linen Cloth 68 (Bags 5, Bank 63), Wool Cloth 3 (Bags)" and #got == 5
+           and got[4] == "  Pal  Linen Cloth 140 (Bags 40, Bank 100)" and got[5]:find("^  Viewed"),
+           "own profession:\n" .. table.concat(got, "\n"))
+
+    -- the boxes: alts off keeps you and friends; both off hides the section
+    S.showAltInDetail = false
+    got = show("Viewed")
+    EXPECT(#got == 3 and got[1]:find("%(you%)") and got[2] == "Friends:", "alts off:\n" .. table.concat(got, "\n"))
+    S.showRemoteInDetail = false
+    local shown
+    got, shown = show("Viewed")
+    EXPECT(#got == 0 and not shown, "both off still shows the section")
+    S.showAltInDetail, S.showRemoteInDetail = true, true
+
+    -- more characters than lines: the last line says how many are left
+    for i = 1, 20 do add(string.format("Many%02d", i), { class = "MAGE", inventory = { bags = { [2589] = 1 }, bank = {} } }) end
+    got = show("Viewed")
+    -- you, Altone, then Aalt and Many01-Many20 (1 each, by key), Friends:
+    -- and Pal: 25 lines, 24 of them characters. 13 lines show, so the last
+    -- counts the 11 characters left (the heading is not one).
+    EXPECT(#TSF.altLines == 14 and #got == 14 and got[13] == "  Many10  Linen Cloth 1 (Bags)"
+           and got[14] == "  ... and 11 more",
+           "overflow:\n" .. table.concat(got, "\n"))
+
+    for _, k in ipairs(added) do chars[k] = nil end
+    chars[me].inventory = myInv
+    S.showAltInDetail, S.showRemoteInDetail, TSF.state._viewCharKey = keepAlt, keepRemote, keepView
+end
+print("  PASS F70 detail panel Held by: you first (you), alts, then Friends, most held first, tooltip counts; viewed character left out; boxes; overflow")
+
+print("ALL FOREVER TESTS PASS (70)")

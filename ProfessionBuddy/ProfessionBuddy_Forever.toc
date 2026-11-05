@@ -24,7 +24,6 @@ BattleNet.lua
 RecipeDB.lua
 Data/Forever/Alchemy.lua
 Data/Forever/Blacksmithing.lua
-Data/Forever/Comprehension.lua
 Data/Forever/Cooking.lua
 Data/Forever/Enchanting.lua
 Data/Forever/Engineering.lua

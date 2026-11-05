@@ -90,16 +90,10 @@ TABLES = ["SkillLineAbility", "SkillLine", "SpellName", "SpellEffect", "SpellRea
           "SpellTotems", "TotemCategory", "ItemXBonusTree",
           "TradeSkillCategory", "ItemSparse", "Item", "ItemEffect", "ItemXItemEffect"]
 
-# skill lines that are test/prototype content, not shipped professions.
-# Comprehension (3012) was here as unreleased; it is the mage's class
-# skill on the live beta (m4ru 2026-10-13), so it is baked now.
-EXCLUDE_SKILL_LINES = {2933}
-# Skill lines whose rows outside a trade-skill category are baked as
-# abilities: learnable, listed under "Abilities", never crafted. The
-# mage's Comprehension: Comprehend Scroll (five rows) and Research sit
-# outside its one category, which holds Study.
-ABILITY_SKILL_LINES = {3012}
-ABILITY_CATEGORY = "Abilities"
+# Skill lines PB does not bake: 2933 is test content, and 3012 is the
+# mage's Comprehension, a spellbook skill with no profession window
+# (m4ru 2026-11-04, live).
+EXCLUDE_SKILL_LINES = {2933, 3012}
 SOD_IDS = range(400000, 500000)
 ROD_TYPE = 3   # TotemCategoryType of the Runed X Rods
 csv.field_size_limit(10_000_000)
@@ -288,8 +282,7 @@ def build(csvdir, carry_dir=None):
     seen = set()
     for r in abilities:
         spell, line, cat = I(r["Spell"]), I(r["SkillLine"]), I(r["TradeSkillCategoryID"])
-        ability = not cat and line in ABILITY_SKILL_LINES
-        if (not cat and not ability) or line in EXCLUDE_SKILL_LINES or (line, spell) in seen:
+        if not cat or line in EXCLUDE_SKILL_LINES or (line, spell) in seen:
             continue
         seen.add((line, spell))
         name = names.get(spell)
@@ -307,7 +300,7 @@ def build(csvdir, carry_dir=None):
         if spell in game_unknown:
             report["dropped: crafted item unknown to the game (harvest)"] += 1
             continue
-        if not out and not reagents.get(spell) and not ability:
+        if not out and not reagents.get(spell):
             # Tanning (Skinning) and Gardening (Herbalism): the spells that
             # open the profession window, not recipes; the game does not
             # list them, so PB would show them as never learned
@@ -362,8 +355,7 @@ def build(csvdir, carry_dir=None):
             "learnFrom": learn_from,
             "skillRange": [learn if learn is not None else False, yellow,
                            math.floor((yellow + grey) / 2), grey] if grey else None,
-            "category": ABILITY_CATEGORY if ability else cats.get(cat),
-            "ability": ability,
+            "category": cats.get(cat),
             "sources": sources,
             "captured": bool(cap),
             "rod": rod_of.get(spell),
@@ -378,14 +370,6 @@ def build(csvdir, carry_dir=None):
 
     final = {}
     for prof, recs in per_line.items():
-        # Abilities sharing a name are ranks of one spell (Comprehend
-        # Scroll x5): the game gives them no rank text, so a rank with a
-        # skill-up band is named by it ("Comprehend Scroll (15-30)") and
-        # all of them are kept.
-        names_ab = Counter(rec["name"] for rec in recs if rec["ability"])
-        for rec in recs:
-            if rec["ability"] and names_ab[rec["name"]] > 1 and rec["skillRange"]:
-                rec["name"] = "%s (%d-%d)" % (rec["name"], rec["skillRange"][1], rec["skillRange"][3])
         by_name = defaultdict(list)
         for rec in recs:
             by_name[rec["name"]].append(rec)
@@ -507,8 +491,6 @@ def emit(prof, recs, build_id, rods=()):
                 "false" if sr[0] is False else str(sr[0]), sr[1], sr[2], sr[3]))
         if r["category"]:
             L.append("        category   = %s," % lua_str(r["category"]))
-        if r.get("ability"):
-            L.append("        ability    = true,")
         if r["teachItems"]:
             L.append("        teachItems = { %s }," % ", ".join(str(i) for i in r["teachItems"]))
         if r.get("rod"):
