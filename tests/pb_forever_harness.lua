@@ -3662,50 +3662,89 @@ do
     Theme:Fill(tex, "scrollThumb")
     EXPECT(got.SetTexCoord and got.SetTexCoord[1] == 0.20 and got.SetTexCoord[4] == 0.875, "knob TexCoords not set")
     -- A recording stand-in for the tab button and its textures
-    local files, points, font, hlFile, hlAlpha, coords, heights = {}, {}, nil, nil, nil, {}, {}
+    local rec
     local function recorder(t)
         return setmetatable(t or {}, { __index = function(_, m)
             return function(self, a, b, c, ...)
-                if m == "SetTexture" then files[#files + 1] = a end
-                if m == "SetPoint" and a == "TOPLEFT" and self._piece then points[#points + 1] = c end
-                if m == "SetTexCoord" and self._piece then coords[#coords + 1] = select(4, a, b, c, ...) end
-                if m == "SetSize" and self._piece and a == 20 then heights[#heights + 1] = b end
+                if m == "SetTexture" then rec.files[#rec.files + 1] = a end
+                if m == "SetAtlas" then rec.atlases[#rec.atlases + 1] = a .. (b and "+size" or "") end
+                if m == "SetPoint" and self._piece and (a == "TOPLEFT" or a == "TOPRIGHT") and type(b) == "number" then
+                    rec.points[#rec.points + 1] = a .. " " .. b .. "," .. c
+                end
+                if m == "SetBlendMode" then rec.blend[#rec.blend + 1] = a end
+                if m == "SetAlpha" and self._piece then rec.alpha[#rec.alpha + 1] = a end
+                if m == "SetPoint" and self._label then rec.textY = c end
             end
         end })
     end
-    local hlTex = recorder({ SetAlpha = function(_, a) hlAlpha = a end })
-    local btn = recorder({
-        GetWidth = function() return 90 end,
-        GetFrameLevel = function() return 1 end,
-        CreateTexture = function() return recorder({ _piece = true }) end,
-        SetHighlightTexture = function(_, f) hlFile = f end,
-        GetHighlightTexture = function() return hlTex end,
-        SetNormalFontObject = function(_, f) font = f end,
-        GetFontString = function() return recorder() end,
-    })
-    local normal, selected = Theme:DrawClassicTab(btn)
+    local function drawTab(flavor)
+        rec = { files = {}, atlases = {}, points = {}, blend = {}, alpha = {}, layers = {}, level = nil }
+        local keep = ProfBuddy.Source.flavor
+        ProfBuddy.Source.flavor = flavor
+        local hlTex = recorder({ _piece = true })
+        local btn = recorder({
+            GetWidth = function() return 90 end,
+            GetFrameLevel = function() return 1 end,
+            SetFrameLevel = function(_, l) rec.level = l end,
+            CreateTexture = function(_, _, layer) rec.layers[#rec.layers + 1] = layer; return recorder({ _piece = true }) end,
+            SetHighlightTexture = function(_, f) rec.hlFile = f end,
+            GetHighlightTexture = function() return hlTex end,
+            SetNormalFontObject = function(_, f) rec.font = f end,
+            GetFontString = function() return recorder({ _label = true }) end,
+        })
+        local normal, selected = Theme:DrawClassicTab(btn)
+        ProfBuddy.Source.flavor = keep
+        return normal, selected
+    end
+    local function lastAlphas(n)
+        local out = {}
+        for i = #rec.alpha - n + 1, #rec.alpha do out[#out + 1] = rec.alpha[i] end
+        return table.concat(out, ",")
+    end
+
+    -- WoW: Forever draws its own Character window tabs
+    -- (PanelTabButtonTemplate): the uiframe-tab atlases at their own sizes,
+    -- ends 3/7 out (selected 1/8), a 0.4 hover light from the same pieces,
+    -- and no TBC art or button highlight texture
+    local normal, selected = drawTab("forever")
     EXPECT(normal and selected and normal.Show and selected.Hide, "tab sets")
-    EXPECT(files[1] == "Interface\\PaperDollInfoFrame\\UI-Character-InActiveTab"
-        and files[4] == "Interface\\PaperDollInfoFrame\\UI-Character-ActiveTab", "classic tab art")
-    -- Forever draws the Cata template's layout: the selected art is the top
-    -- 0.546875 of its file, 35 tall at 0; the others 32 tall, 1 px down
-    EXPECT(points[1] == -1 and points[2] == 0, "Forever tab offsets " .. tostring(points[1]) .. "/" .. tostring(points[2]))
-    EXPECT(coords[1] == 1 and coords[4] == 0.546875, "Forever selected tab crop " .. tostring(coords[4]))
-    EXPECT(heights[1] == 32 and heights[3] == 35, "Forever tab heights")
-    -- TBC Classic Anniversary keeps the Classic template's layout
+    EXPECT(table.concat(rec.atlases, " ") == "uiframe-tab-left+size uiframe-tab-right+size _uiframe-tab-center+size"
+        .. " uiframe-activetab-left+size uiframe-activetab-right+size _uiframe-activetab-center+size"
+        .. " uiframe-tab-left+size uiframe-tab-right+size _uiframe-tab-center+size",
+        "Forever tab atlases: " .. table.concat(rec.atlases, " "))
+    EXPECT(table.concat(rec.points, " ") == "TOPLEFT -3,0 TOPRIGHT 7,0 TOPLEFT -1,0 TOPRIGHT 8,0 TOPLEFT -3,0 TOPRIGHT 7,0",
+        "Forever tab ends: " .. table.concat(rec.points, " "))
+    EXPECT(#rec.files == 0 and rec.hlFile == nil, "Forever tab drew TBC art")
+    EXPECT(table.concat(rec.layers, " ") == "BACKGROUND BACKGROUND BACKGROUND BACKGROUND BACKGROUND BACKGROUND HIGHLIGHT HIGHLIGHT HIGHLIGHT"
+        and table.concat(rec.blend, " ") == "ADD ADD ADD", "Forever hover light")
+    EXPECT(rec.level == 5, "tab not 4 levels above its window")
+    selected:Show()
+    EXPECT(rec.font == GameFontHighlightSmall and rec.textY == -3, "Forever selected label " .. tostring(rec.textY))
+    EXPECT(lastAlphas(3) == "0,0,0", "the selected tab still lights on hover")
+    normal:Show()
+    EXPECT(rec.font == GameFontNormalSmall and rec.textY == 2, "Forever unselected label " .. tostring(rec.textY))
+    EXPECT(lastAlphas(3) == "0.4,0.4,0.4", "an unselected tab does not light on hover: " .. lastAlphas(3))
+    local L = Theme:TabLayout()
+    EXPECT(L.firstX == 11 and L.gap == 1, "Forever tab spacing")
+
+    -- TBC Classic Anniversary keeps Blizzard's classic tab art and layout
+    normal, selected = drawTab("classic")
+    EXPECT(rec.files[1] == "Interface\\PaperDollInfoFrame\\UI-Character-InActiveTab"
+        and rec.files[4] == "Interface\\PaperDollInfoFrame\\UI-Character-ActiveTab" and #rec.atlases == 0, "classic tab art")
+    EXPECT(table.concat(rec.points, " ") == "TOPLEFT 0,0 TOPLEFT 0,4 TOPLEFT 3,5",
+        "TBC Classic Anniversary tab offsets: " .. table.concat(rec.points, " "))
+    EXPECT(rec.hlFile == "Interface\\PaperDollInfoFrame\\UI-Character-Tab-RealHighlight", "tab highlight")
+    selected:Show()
+    EXPECT(rec.font == GameFontHighlightSmall and rec.textY == 4, "selected tab label not white and raised")
+    EXPECT(lastAlphas(1) == "0", "the selected tab still lights on hover")
+    normal:Show()
+    EXPECT(rec.font == GameFontNormalSmall and rec.textY == 2, "unselected tab label not gold")
+    EXPECT(lastAlphas(1) == "1", "an unselected tab does not light on hover")
     local flavor = ProfBuddy.Source.flavor
     ProfBuddy.Source.flavor = "classic"
-    local L = Theme:TabLayout()
+    L = Theme:TabLayout()
     ProfBuddy.Source.flavor = flavor
-    EXPECT(L.normal.y == 0 and L.selected.y == 4 and L.selected.bottom == 1 and L.selected.h == 32
-        and L.selectedTextY == 4, "TBC Classic Anniversary tab layout changed")
-    EXPECT(hlFile == "Interface\\PaperDollInfoFrame\\UI-Character-Tab-RealHighlight", "tab highlight")
-    selected:Show()
-    EXPECT(font == GameFontHighlightSmall, "selected tab label not white")
-    EXPECT(hlAlpha == 0, "the selected tab still lights on hover")
-    normal:Show()
-    EXPECT(font == GameFontNormalSmall, "unselected tab label not gold")
-    EXPECT(hlAlpha == 1, "an unselected tab does not light on hover")
+    EXPECT(L.firstX == 8 and L.gap == -15 and L.selectedTextY == 4, "TBC Classic Anniversary tab layout changed")
 
     -- Classic: the Orders count joins the tab's label ("Orders (1)", centred
     -- as one); Modern keeps a separate badge in the corner.
@@ -3753,7 +3792,7 @@ do
     st.profName = keep
     TSF.watermark = nil
 end
-print("  PASS F67 Classic knob and clear track, Blizzard's classic tab art (selected raised, white label), profession watermark (none on Forever)")
+print("  PASS F67 Classic knob and clear track, each client's own tab art (Forever's atlases, TBC's raised tab), profession watermark (none on Forever)")
 
 -- F68: "Held by" on item tooltips. You first with (you), then alts, then
 -- friends under their own heading, most held first; "68 (Bags 5, Bank

@@ -2190,16 +2190,17 @@ function TSF:BuildNavStrip(parent)
         btn:SetText(def.text)
 
         if Theme:IsClassic() then
-            -- Classic: Blizzard's bottom tabs, as on the main window. None
+            -- Classic: the game's bottom tabs, as on the main window. None
             -- is ever selected here.
             btn:SetHeight(32)
             local normal, selected = Theme:DrawClassicTab(btn)
             selected:Hide()
             normal:Show()
+            local layout = Theme:TabLayout()
             if i == 1 then
-                btn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 8, 2)
+                btn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", layout.firstX, 2)
             else
-                btn:SetPoint("LEFT", prev, "RIGHT", -15, 0)
+                btn:SetPoint("TOPLEFT", prev, "TOPRIGHT", layout.gap, 0)
             end
         else
             local bg = btn:CreateTexture(nil, "BACKGROUND")

@@ -295,17 +295,26 @@ function Theme:SetBackdrop(frame, role)
     frame:SetBackdrop(look("backdrop", role))
 end
 
--- Classic: Blizzard's classic tab, as on its TBC Character window
--- (CharacterFrameTabButtonTemplate in Blizzard_FrameXML Classic/
--- CharacterFrameTemplates.xml, which the TBC client loads; the art exists on
--- both clients): UI-Character-InActiveTab in three pieces (20 px, the
--- middle, 20 px, all 32 tall), UI-Character-ActiveTab 4 px higher for the
--- selected tab, and UI-Character-Tab-RealHighlight on hover. The art's ends
--- are clear, so tabs set 15 px into each other sit side by side. The tab
--- draws 4 levels above its window, as the template does, so the selected
--- tab covers the window's bottom edge and joins the panel. Returns the
--- unselected and selected sets; showing a set also gives the label the
--- template's color (gold, or white when selected) and height.
+-- Classic: the game's own bottom tabs, as on its Character window. Returns
+-- the unselected and selected sets; showing a set also gives the label the
+-- template's color (gold, or white when selected) and height. The tab draws
+-- 4 levels above its window, as both templates do, so the selected tab
+-- covers the window's bottom edge and joins the panel.
+--
+-- TBC Classic Anniversary: CharacterFrameTabButtonTemplate (Blizzard_FrameXML
+-- Classic/CharacterFrameTemplates.xml): UI-Character-InActiveTab in three
+-- pieces (20 px, the middle, 20 px, all 32 tall), UI-Character-ActiveTab 4 px
+-- higher for the selected tab with its label raised to 4, and
+-- UI-Character-Tab-RealHighlight on hover. The art's ends are clear, so tabs
+-- set 15 px into each other sit side by side.
+--
+-- WoW: Forever loads only the Cata copy of that file, and its Character
+-- window uses PanelTabButtonTemplate instead (Blizzard_SharedXML/Mainline/
+-- SharedUIPanelTemplates.xml): the uiframe-tab atlases at their own sizes,
+-- the left end 3 px out past the button (selected 1) and the right end 7
+-- (selected 8), the same unselected pieces added at 0.4 as the hover light,
+-- and the label at 2, or -3 when selected (PanelTemplates_SelectTab). Its
+-- tabs sit 1 px apart, the first 11 px in (CharacterFrame.xml).
 local function textureGroup(list, onShow)
     return {
         Show = function()
@@ -318,47 +327,38 @@ end
 Theme.NO_TEXTURES = textureGroup({})
 
 local TAB_ART = "Interface\\PaperDollInfoFrame\\UI-Character-"
--- The two clients lay the same tab art out differently. TBC Classic
--- Anniversary loads Blizzard_FrameXML Classic/CharacterFrameTemplates.xml:
--- both images fill their file, and the selected tab sits 4 px higher with
--- its label raised to 4 (selectedTextY). WoW: Forever loads only the Cata
--- copy: the selected tab fills the top 0.546875 of its file and is 35 tall
--- at 0, the others sit 1 px down, and its label goes to -3, the default in
--- Forever's PanelTemplates_SelectTab.
 local TAB_LAYOUTS = {
-    classic = { normal = { y = 0, h = 32, bottom = 1 }, selected = { y = 4, h = 32, bottom = 1 },
-                textY = 2, selectedTextY = 4 },
-    cata    = { normal = { y = -1, h = 32, bottom = 1 }, selected = { y = 0, h = 35, bottom = 0.546875 },
-                textY = 2, selectedTextY = -3 },
+    classic = { firstX = 8, gap = -15, textY = 2, selectedTextY = 4 },
+    forever = { firstX = 11, gap = 1, textY = 2, selectedTextY = -3 },
 }
 function Theme:TabLayout()
-    return TAB_LAYOUTS[(addon.Source and addon.Source.flavor == "forever") and "cata" or "classic"]
+    return TAB_LAYOUTS[(addon.Source and addon.Source.flavor == "forever") and "forever" or "classic"]
 end
 
-function Theme:DrawClassicTab(btn)
+-- TBC Classic Anniversary's pieces; returns the unselected and selected
+-- textures and the hover light.
+local function classicTabArt(btn)
     local width = btn:GetWidth()
-    local layout = self:TabLayout()
-    local function set(file, piece)
-        local b = piece.bottom
+    local function set(file, y)
         local L = btn:CreateTexture(nil, "BACKGROUND")
         L:SetTexture(TAB_ART .. file)
-        L:SetTexCoord(0, 0.15625, 0, b)
-        L:SetSize(20, piece.h)
-        L:SetPoint("TOPLEFT", 0, piece.y)
+        L:SetTexCoord(0, 0.15625, 0, 1)
+        L:SetSize(20, 32)
+        L:SetPoint("TOPLEFT", 0, y)
         local Mid = btn:CreateTexture(nil, "BACKGROUND")
         Mid:SetTexture(TAB_ART .. file)
-        Mid:SetTexCoord(0.15625, 0.84375, 0, b)
-        Mid:SetSize(width - 40, piece.h)
+        Mid:SetTexCoord(0.15625, 0.84375, 0, 1)
+        Mid:SetSize(width - 40, 32)
         Mid:SetPoint("LEFT", L, "RIGHT")
         local R = btn:CreateTexture(nil, "BACKGROUND")
         R:SetTexture(TAB_ART .. file)
-        R:SetTexCoord(0.84375, 1, 0, b)
-        R:SetSize(20, piece.h)
+        R:SetTexCoord(0.84375, 1, 0, 1)
+        R:SetSize(20, 32)
         R:SetPoint("LEFT", Mid, "RIGHT")
         return { L, Mid, R }
     end
-    local normal = set("InActiveTab", layout.normal)
-    local selected = set("ActiveTab", layout.selected)
+    local normal = set("InActiveTab", 0)
+    local selected = set("ActiveTab", 4)
     btn:SetHighlightTexture(TAB_ART .. "Tab-RealHighlight", "ADD")
     local hl = btn:GetHighlightTexture()
     if hl then
@@ -366,13 +366,42 @@ function Theme:DrawClassicTab(btn)
         hl:SetPoint("TOPLEFT", 3, 5)
         hl:SetPoint("BOTTOMRIGHT", -3, 0)
     end
-    btn.tabHighlight = hl
+    return normal, selected, hl and { hl } or {}, 1
+end
+
+-- WoW: Forever's pieces. The middle is a 1 px column, so stretching it
+-- draws the same as the template's tiling.
+local function foreverTabArt(btn)
+    local function set(atlas, layer, leftX, rightX)
+        local L = btn:CreateTexture(nil, layer)
+        L:SetAtlas(atlas .. "-left", true)
+        L:SetPoint("TOPLEFT", leftX, 0)
+        local R = btn:CreateTexture(nil, layer)
+        R:SetAtlas(atlas .. "-right", true)
+        R:SetPoint("TOPRIGHT", rightX, 0)
+        local Mid = btn:CreateTexture(nil, layer)
+        Mid:SetAtlas("_" .. atlas .. "-center", true)
+        Mid:SetPoint("TOPLEFT", L, "TOPRIGHT")
+        Mid:SetPoint("TOPRIGHT", R, "TOPLEFT")
+        return { L, Mid, R }
+    end
+    local normal = set("uiframe-tab", "BACKGROUND", -3, 7)
+    local selected = set("uiframe-activetab", "BACKGROUND", -1, 8)
+    local light = set("uiframe-tab", "HIGHLIGHT", -3, 7)
+    for _, t in ipairs(light) do t:SetBlendMode("ADD") end
+    return normal, selected, light, 0.4
+end
+
+function Theme:DrawClassicTab(btn)
+    local layout = self:TabLayout()
+    local art = layout == TAB_LAYOUTS.forever and foreverTabArt or classicTabArt
+    local normal, selected, light, lightAlpha = art(btn)
     btn:SetFrameLevel(btn:GetFrameLevel() + 4)
     -- Blizzard disables its selected tab, so it never lights on hover; PB's
-    -- stays clickable, so the selected tab hides its highlight instead (lit,
-    -- it would draw a line across the tab's join with the window).
+    -- stays clickable, so the selected tab hides its light instead (lit, it
+    -- would draw a line across the tab's join with the window).
     local function label(isSelected)
-        if hl then hl:SetAlpha(isSelected and 0 or 1) end
+        for _, t in ipairs(light) do t:SetAlpha(isSelected and 0 or lightAlpha) end
         btn:SetNormalFontObject(isSelected and GameFontHighlightSmall or GameFontNormalSmall)
         local fs = btn:GetFontString()
         if fs then
