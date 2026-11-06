@@ -166,7 +166,7 @@ function Comm:Init()
     end)
     if not ok then
         -- Libraries not available -- silently disable comms
-        print("|cff00ccffProfessionBuddy:|r Comm libraries not found, sync disabled.")
+        print("|cff00ccffProfessionBuddy:|r Comm libraries not found; sync is off.")
         return
     end
 

@@ -261,8 +261,100 @@ function GP:CreateRow(parent)
     hl:SetAllPoints()
     Theme:Fill(hl, "guildRowHover")
     row:EnableMouse(true)
+    -- Right-click: PB's own small menu (Whisper, Invite to group), like
+    -- right-clicking a name in chat or the guild roster.
+    row:SetScript("OnMouseUp", function(self, button)
+        if button == "RightButton" and self._member then GP:ShowMemberMenu(self, self._member) end
+    end)
 
     return row
+end
+
+----------------------------------------------------------------------
+-- Right-click menu on a guildmate's row. PB's own popup, not Blizzard's
+-- unit menu: that menu, opened by an addon, can leave Blizzard's protected
+-- actions blocked later. Whisper and invite go through the same calls on
+-- both clients (ChatFrameUtil, C_PartyInfo), with the older globals as a
+-- fallback, and use the roster's own name for the guildmate.
+----------------------------------------------------------------------
+local function sendTell(name)
+    local f = (ChatFrameUtil and ChatFrameUtil.SendTell) or ChatFrame_SendTell
+    if f then f(name) end
+end
+
+local function invite(name)
+    local f = (C_PartyInfo and C_PartyInfo.InviteUnit) or InviteUnit
+    if f then f(name) end
+end
+
+GP.MEMBER_ACTIONS = {
+    { text = "Whisper", run = sendTell },
+    { text = "Invite to group", run = invite },
+}
+
+function GP:EnsureMemberMenu()
+    if self._memberMenu then return self._memberMenu end
+    local m = CreateFrame("Frame", "ProfBuddyGuildMemberMenu", UIParent, "BackdropTemplate")
+    m:SetFrameStrata("FULLSCREEN_DIALOG")
+    Theme:SetBackdrop(m, "menu")
+    Theme:BackdropColor(m, "menu")
+    Theme:BorderColor(m, "menu")
+    m:EnableMouse(true)
+    m:SetClampedToScreen(true)
+    m:Hide()
+
+    m.title = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    m.title:SetPoint("TOPLEFT", 8, -7)
+    m.title:SetTextColor(1, 0.82, 0)
+
+    m.buttons = {}
+    local ROW_H = 18
+    for i, action in ipairs(self.MEMBER_ACTIONS) do
+        local b = CreateFrame("Button", nil, m)
+        b:SetHeight(ROW_H)
+        local bhl = b:CreateTexture(nil, "HIGHLIGHT")
+        bhl:SetAllPoints()
+        Theme:Fill(bhl, "menuHover")
+        b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        b.text:SetPoint("LEFT", 8, 0)
+        b.text:SetJustifyH("LEFT")
+        b.text:SetText(action.text)
+        b:SetPoint("TOPLEFT", m, "TOPLEFT", 4, -24 - (i - 1) * ROW_H)
+        b:SetPoint("RIGHT", m, "RIGHT", -4, 0)
+        b:SetScript("OnClick", function()
+            m:Hide()
+            if m._name then action.run(m._name) end
+        end)
+        m.buttons[i] = b
+    end
+    m:SetHeight(28 + #self.MEMBER_ACTIONS * ROW_H)
+
+    -- A click anywhere else closes the menu, any button, as on the Friends
+    -- tab's order menu.
+    local catcher = CreateFrame("Button", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:SetFrameStrata("DIALOG")
+    catcher:RegisterForClicks("AnyUp")
+    catcher:Hide()
+    catcher:SetScript("OnClick", function() m:Hide() end)
+    m:SetScript("OnShow", function() catcher:Show() end)
+    m:SetScript("OnHide", function() catcher:Hide() end)
+    table.insert(UISpecialFrames, "ProfBuddyGuildMemberMenu")   -- Escape closes it
+
+    self._memberMenu = m
+    return m
+end
+
+function GP:ShowMemberMenu(row, member)
+    local m = self:EnsureMemberMenu()
+    m._name = member.name
+    m.title:SetText(addon:ShortName(member.charKey or member.name))
+    local w = m.title:GetStringWidth() + 16
+    for _, b in ipairs(m.buttons) do w = math.max(w, b.text:GetStringWidth() + 24) end
+    m:SetWidth(math.max(w, 120))
+    m:ClearAllPoints()
+    m:SetPoint("TOPLEFT", row, "BOTTOMLEFT", 20, 0)
+    m:Show()
 end
 
 ----------------------------------------------------------------------
@@ -626,10 +718,10 @@ function GP:Repaint()
     if not inGuild then
         self.header:SetText("Guild")
     elseif #self.filtered ~= #self.members then
-        self.header:SetText("Guild  (showing " .. #self.filtered .. " of " .. #self.members
+        self.header:SetText("Guild (showing " .. #self.filtered .. " of " .. #self.members
             .. ", " .. online .. " online)" .. partial)
     else
-        self.header:SetText("Guild  (" .. #self.members .. " members, " .. online .. " online)" .. partial)
+        self.header:SetText("Guild (" .. #self.members .. " members, " .. online .. " online)" .. partial)
     end
 
     local maxScroll = math.max(0, #self.filtered - VISIBLE_ROWS)
@@ -707,12 +799,14 @@ function GP:UpdateRows()
             end
 
             row.favBtn._key = m.charKey
+            row._member = m
             local fav = addon:IsFavorite(m.charKey)
             row.favBtn.icon:SetDesaturated(not fav)
             row.favBtn.icon:SetAlpha(fav and 1 or 0.28)
 
             row:Show()
         else
+            row._member = nil
             row:Hide()
         end
     end

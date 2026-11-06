@@ -77,6 +77,8 @@ local LIST_W        = 320
 local DETAIL_W      = FRAME_W - LIST_W - 30
 local ROW_H         = 20
 local SKILL_BAR_H   = 22
+local LINK_BTN      = 23   -- WoW: Forever's profession link button (Blizzard's size)
+local LINK_GAP      = 4
 local VISIBLE_ROWS  = 20
 local CRAFT_BAR_H   = 58   -- two 22 px button rows with 6 px above and below: clear of either look's border
 
@@ -285,12 +287,12 @@ local DIFF_TIER_INDEX = { optimal = 1, medium = 2, easy = 3, trivial = 4 }
 -- the existing single-select Skill Up dropdown -- see BuildToolbar (option
 -- lists) and RefreshRecipeList (the filter branch). Value string doubles as
 -- the dropdown label, shown after the "Skill Up: " prefix.
-local SKILLUP_NOGREY = "No Grey"
+local SKILLUP_NOGREY = "No Gray"
 -- Skill Up filters by skill-up color, which only a known recipe has;
 -- Source filters by where a recipe comes from, which only a missing recipe
 -- carries. Skill Up shows in the Known and All views, Source in Missing and
 -- All. Until this split one dropdown, labelled Skill Up, held both lists.
-local SKILLUP_OPTIONS = { "All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Grey" }
+local SKILLUP_OPTIONS = { "All", SKILLUP_NOGREY, "Orange", "Yellow", "Green", "Gray" }
 local SOURCE_OPTIONS  = { "All", "Trainer", "Vendor", "Drop", "Quest", "Reputation",
                           "Discovery", "Automatic", "Undetermined" }
 
@@ -323,7 +325,7 @@ local NO_DIFF_COLOR = { r = 1, g = 1, b = 1 }
 local function SkillRangeDetailed(range, currentSkill, knownDiff)
     if not range then return "" end
 
-    local labels = { "Orange", "Yellow", "Green", "Grey" }
+    local labels = { "Orange", "Yellow", "Green", "Gray" }
     local colors = {
         "|cffff8000",  -- orange
         "|cffffff00",  -- yellow
@@ -464,10 +466,12 @@ function TSF:Init()
     self._bagTracker       = bagTracker
     self._bagTrackerUpdate = BagTrackerOnUpdate
 
-    -- PB always opens on profession events regardless of setting.
-    -- The setting only controls whether the default Blizzard frame
-    -- is suppressed (on) or shown alongside PB (off).
+    -- PB opens on profession events when it replaces Blizzard's window, or
+    -- beside it when the player asked for both (Settings), or when PB's own
+    -- window is already open. Otherwise Blizzard's window opens alone; the
+    -- Scanner still records the recipes on its own events.
     On(E.TRADE_SHOW, function()
+        if not self:OpensOnProfessionEvents() then return end
         -- Grab the previous frame's bag state (before C-level close)
         self._savedBagState = {}
         local src = self._bagTracker._prev
@@ -547,6 +551,7 @@ function TSF:Init()
         -- no pet-training UI (training points, pet level requirements), so
         -- it leaves that window to Blizzard entirely.
         if addon.Source:IsPetTraining() then return end
+        if not self:OpensOnProfessionEvents() then return end
         -- Same previous-frame snapshot as TRADE_SKILL_SHOW
         self._savedBagState = {}
         local src = self._bagTracker._prev
@@ -1430,6 +1435,49 @@ function TSF:HookItemTooltip()
         tip:Show()
     end)
 
+    -- "Disenchants into": what the hovered item disenchants into, with each
+    -- material's chance and count, on every character's tooltips (a bank alt
+    -- holds the gear an Enchanter breaks down). TBC Anniversary adds the
+    -- Enchanting skill it needs, red when none of your characters has it;
+    -- WoW: Forever needs none. On Forever, an item the 1.12 database does not
+    -- list but Forever's own tables place (Data/Forever/Disenchant.lua
+    -- estimates) says "estimate" on the right. Only items the data lists or
+    -- places get the section. Registered after Held by so it sits below it.
+    local function disenchantSection(tip)
+        if addon.db.settings.tooltipShowDisenchant == false then return end
+        local itemLink = TooltipItemLink(tip)
+        local itemID = itemLink and addon:ItemIDFromLink(itemLink)
+        local group, estimate = nil, false
+        if itemID then group, estimate = self:DisenchantGroup(itemID) end
+        if not group then return end
+        local mats = addon.Disenchant.materials or {}
+        tip:AddLine(" ")
+        local head = "Disenchants into (ProfessionBuddy):"
+        if group.skill then
+            local can = self:BestEnchantingSkill() >= group.skill
+            if can then
+                tip:AddDoubleLine(head, "Requires Enchanting " .. group.skill, 1, 0.82, 0, 0.7, 0.7, 0.7)
+            else
+                tip:AddDoubleLine(head, "Requires Enchanting " .. group.skill, 1, 0.82, 0, 1, 0.25, 0.25)
+            end
+        elseif estimate then
+            tip:AddDoubleLine(head, "estimate", 1, 0.82, 0, 0.6, 0.6, 0.6)
+        else
+            tip:AddLine(head, 1, 0.82, 0)
+        end
+        for _, row in ipairs(group.loot or {}) do
+            local id, pct, lo, hi = row[1], row[2], row[3], row[4]
+            local mat = mats[id]
+            local name = GetItemInfo(id) or (mat and mat[1]) or ("item:" .. id)
+            local qc = ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[mat and mat[2] or 1]
+            local r, g, b = 1, 1, 1
+            if qc then r, g, b = qc.r, qc.g, qc.b end
+            local count = (lo == hi) and tostring(lo) or (lo .. "-" .. hi)
+            tip:AddDoubleLine("  " .. name .. " " .. count, pct .. "%", r, g, b, 1, 1, 1)
+        end
+        tip:Show()
+    end
+
     -- "Held by" tooltip: who holds the hovered item, in bags and bank. You,
     -- your alts, and friends who share their bags, following the same Show in
     -- tooltips boxes as Craftable by (guildmates never share bags or bank).
@@ -1464,8 +1512,42 @@ function TSF:HookItemTooltip()
         end
         tip:Show()
     end)
+    HookItemTooltip(disenchantSection)
 
     self._hookedTooltip = true
+end
+
+-- The disenchant group of an item (Data/Disenchant.lua) and whether it is
+-- an estimate, or nil: an index from item ID to group, built on first use.
+function TSF:DisenchantGroup(itemID)
+    local D = addon.Disenchant
+    if not D or not D.groups then return nil end
+    if not self._deIndex then
+        local index, est = {}, {}
+        for _, g in pairs(D.groups) do
+            for _, id in ipairs(g.items or {}) do index[id] = g end
+            for _, id in ipairs(g.estimates or {}) do
+                if not index[id] then index[id] = g; est[id] = true end
+            end
+        end
+        self._deIndex, self._deEstimate = index, est
+    end
+    local g = self._deIndex[itemID]
+    if not g then return nil end
+    return g, self._deEstimate[itemID] == true
+end
+
+-- The highest Enchanting skill among your own characters (not friends'),
+-- for the disenchant section's skill line.
+function TSF:BestEnchantingSkill()
+    local best = 0
+    for _, char in pairs(DS and DS:GetAllCharacters() or {}) do
+        if type(char) == "table" and not char.isRemote and type(char.professions) == "table" then
+            local e = char.professions.Enchanting
+            if e and (e.skillLevel or 0) > best then best = e.skillLevel end
+        end
+    end
+    return best
 end
 
 -- A held count as Held by writes it: "68 (Bags 5, Bank 63)", dropping a
@@ -1557,6 +1639,34 @@ function TSF:HideSharedFrames()
             QuietHideFrame(frame)
         end
     end
+end
+
+-- Does a profession event open PB's window? Yes when PB replaces
+-- Blizzard's window, when the player asked for both, or when PB's window is
+-- already open (switching professions from PB's own tabs).
+function TSF:OpensOnProfessionEvents()
+    local s = addon.db and addon.db.settings or {}
+    if s.replaceTradeSkill ~= false or s.openBesideBlizzard then return true end
+    return self.frame and self.frame:IsShown() and true or false
+end
+
+-- Unticking Replace brings Blizzard's window back only after a reload: the
+-- suppression strips scripts and events that cannot be put back. Ask, so a
+-- player can change other settings first and reload once.
+function TSF:OfferReplaceReload()
+    if not StaticPopupDialogs["PROFBUDDY_RELOAD_REPLACE"] then
+        StaticPopupDialogs["PROFBUDDY_RELOAD_REPLACE"] = {
+            text = "Blizzard's profession window comes back after a reload. Reload now?",
+            button1 = "Reload",
+            button2 = "Later",
+            OnAccept = function() ReloadUI() end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3,
+        }
+    end
+    StaticPopup_Show("PROFBUDDY_RELOAD_REPLACE")
 end
 
 function TSF:SuppressDefaultFrames()
@@ -2020,6 +2130,11 @@ function TSF:EnsureFrame()
     self:BuildBottomBar(f)
     self:BuildSettingsPanel(f)
     self:BuildNavStrip(f)
+    -- Drag to scale; the Material Calculator, fastened to this window's
+    -- right edge, scales with it
+    if addon.UI and addon.UI.AddScaleGrip then
+        self.scaleGrip = addon.UI:AddScaleGrip(f, "professionWindowScale", { self.calcPanel })
+    end
 
     -- Expose state so MaterialCalc can access live recipe data
     self.state = state
@@ -2101,9 +2216,13 @@ function TSF:BuildHeader(parent)
     search:SetScript("OnMouseDown", function() CloseAllDropdowns() end)
     self.searchBox = search
 
-    -- Row 2: skill bar
+    -- Row 2: skill bar. On WoW: Forever it leaves room on the right for the
+    -- profession link button and never changes width: the button shows or
+    -- hides in that space, as in Blizzard's own profession window.
+    local linkRoom = addon.Source.flavor == "forever" and (LINK_BTN + LINK_GAP) or 0
+    local linkX = LINK_GAP
     local bar = CreateFrame("StatusBar", nil, parent)
-    bar:SetSize(FRAME_W - 24, SKILL_BAR_H)
+    bar:SetSize(FRAME_W - 24 - linkRoom, SKILL_BAR_H)
     bar:SetPoint("TOPLEFT", 12, -52)
     local textHost = bar
     if Theme:IsClassic() then
@@ -2120,8 +2239,9 @@ function TSF:BuildHeader(parent)
         -- stretched middle so the ends keep their shape on a wide bar.
         local k = SKILL_BAR_H / 15
         local padL, padR = 5 * k, 8 * k
-        bar:SetSize(FRAME_W - 24 - padL - padR, SKILL_BAR_H)
+        bar:SetSize(FRAME_W - 24 - padL - padR - linkRoom, SKILL_BAR_H)
         bar:SetPoint("TOPLEFT", 12 + padL, -52)
+        linkX = padR + LINK_GAP
         local borderFrame = CreateFrame("Frame", nil, bar)
         borderFrame:SetAllPoints()
         local FILE = "Interface\\PaperDollInfoFrame\\UI-Character-Skills-BarBorder"
@@ -2159,6 +2279,126 @@ function TSF:BuildHeader(parent)
 
     self.skillBar = bar
     self.skillBarText = barText
+    if linkRoom > 0 then self:BuildLinkButton(bar, linkX) end
+end
+
+-- WoW: Forever: the profession link button from Blizzard's own profession
+-- window (Blizzard_ProfessionsCrafting: ProfessionsLinkButtonMixin, its
+-- LinkButton and its menu): a 23 x 23 DropdownButton with the chat bubble
+-- icon. Its menu posts the profession's link to Guild, Party, Raid or a
+-- joined channel by opening the chat box with the link typed; a click with
+-- the chat box already open types the link there. The client's own strings,
+-- English as the fallback.
+function TSF:BuildLinkButton(bar, x)
+    local btn = CreateFrame("DropdownButton", nil, bar)
+    btn:SetSize(LINK_BTN, LINK_BTN)
+    btn:SetPoint("LEFT", bar, "RIGHT", x, 0)
+    btn:SetFrameLevel(bar:GetFrameLevel() + 3)   -- above Classic's border frame
+    local bg = btn:CreateTexture(nil, "BACKGROUND")
+    bg:SetPoint("CENTER")
+    local icon = btn:CreateTexture(nil, "ARTWORK")
+    icon:SetPoint("CENTER")
+    btn.Background, btn.Icon = bg, icon
+
+    -- The art for each state, as ProfessionsLinkButtonMixin:OnButtonStateChanged
+    local function paint()
+        if btn:IsEnabled() then
+            local over = btn:IsMouseOver()
+            icon:SetAtlas("common-icon-chatlink", true)
+            bg:SetAtlas((over and btn._down) and "common-button-tertiary-square-pressed"
+                or over and "common-button-tertiary-square-hover"
+                or "common-button-tertiary-square-normal", true)
+        else
+            icon:SetAtlas("common-icon-chatlink-disable", true)
+            bg:SetAtlas("common-button-tertiary-square-disabled", true)
+        end
+    end
+    btn.Paint = paint
+    btn:SetScript("OnEnter", function(self)
+        paint()
+        GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT")
+        GameTooltip:SetText(LINK_TRADESKILL_TOOLTIP or "Click here to create a link to your profession.",
+            nil, nil, nil, nil, true)
+        GameTooltip:Show()
+    end)
+    btn:SetScript("OnLeave", function() btn._down = false; paint(); GameTooltip:Hide() end)
+    -- HookScript: the DropdownButton opens its menu on its own mouse down
+    btn:HookScript("OnMouseDown", function() btn._down = true; paint() end)
+    btn:HookScript("OnMouseUp", function() btn._down = false; paint() end)
+
+    btn:SetScript("OnClick", function()
+        local T = C_TradeSkillUI
+        local link = T and T.GetTradeSkillListLink and T.GetTradeSkillListLink()
+        if link then
+            if MacroFrameText and MacroFrameText:IsShown() and MacroFrameText:HasFocus() then
+                if strlenutf8(MacroFrameText:GetText()) + strlenutf8(link) <= MacroFrameText:GetMaxLetters() then
+                    MacroFrameText:Insert(link)
+                end
+            elseif ChatFrameUtil and ChatFrameUtil.GetActiveWindow and ChatFrameUtil.GetActiveWindow() then
+                ChatFrameUtil.InsertLink(link)
+            end
+        end
+        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+    end)
+
+    if btn.SetupMenu then
+        btn:SetupMenu(function(_, root) TSF:FillLinkMenu(root) end)
+    end
+    paint()
+    btn:Hide()
+    self.linkButton = btn
+end
+
+-- The link button's menu, as Blizzard's: "Post in chat", then each channel;
+-- a pick opens the chat box on that channel with the link typed.
+function TSF:FillLinkMenu(root)
+    root:CreateTitle(TRADESKILL_POST or "Post in chat")
+    for _, ch in ipairs(self:LinkChannels()) do
+        local item = root:CreateButton(ch.text, function()
+            local T = C_TradeSkillUI
+            local link = T and T.GetTradeSkillListLink and T.GetTradeSkillListLink()
+            if link then
+                ChatFrameUtil.OpenChat(string.format("%s %s", ch.slash, link), DEFAULT_CHAT_FRAME)
+            end
+        end)
+        item:SetEnabled(ch.enabled)
+    end
+end
+
+-- Where the profession link can be posted, as Blizzard's menu lists them:
+-- Guild, Party and Raid, then every joined chat channel; each greyed when
+-- it cannot be used.
+function TSF:LinkChannels()
+    local out = {
+        { slash = SLASH_GUILD1 or "/g", text = GUILD or "Guild", enabled = IsInGuild() and true or false },
+        { slash = SLASH_PARTY1 or "/p", text = PARTY or "Party", enabled = (GetNumSubgroupMembers() or 0) > 0 },
+        { slash = SLASH_RAID1 or "/raid", text = RAID or "Raid", enabled = IsInRaid() and true or false },
+    }
+    local list = { GetChannelList() }
+    for i = 1, #list, 3 do
+        local name = list[i + 1]
+        if ChatFrameUtil and ChatFrameUtil.ResolveChannelName then name = ChatFrameUtil.ResolveChannelName(name) end
+        out[#out + 1] = { slash = "/" .. tostring(list[i]), text = name, enabled = not list[i + 2] }
+    end
+    return out
+end
+
+-- The link button shows for your own profession, live, the way Blizzard's
+-- does (CanTradeSkillListLink, local crafting mode: not an NPC crafting
+-- order, not a linked or guild list; mouse and keyboard UI), and never for
+-- PB's views of an alt, a friend or a profession you have not learned.
+function TSF:UpdateLinkButton()
+    local btn = self.linkButton
+    if not btn then return end
+    local T = C_TradeSkillUI
+    local show = T and T.CanTradeSkillListLink and T.CanTradeSkillListLink()
+        and not state._viewCharKey and not state._isStaticView and not state._isLinkedView
+        and not state.isCraftWindow
+        and not (T.IsNPCCrafting and T.IsNPCCrafting())
+        and not (T.IsTradeSkillLinked and T.IsTradeSkillLinked())
+        and not (T.IsTradeSkillGuild and T.IsTradeSkillGuild())
+        and not (InputUtil and InputUtil.IsMKBUIEnabled and not InputUtil.IsMKBUIEnabled())
+    if show then btn:Show() else btn:Hide() end
 end
 
 ----------------------------------------------------------------------
@@ -2252,6 +2492,7 @@ function TSF:UpdateSkillBar()
     self.skillBarText:SetText(profName .. " " .. skill .. "/" .. maxSkill)
     self:UpdateProfessionTabs()
     self:UpdateWatermark()
+    self:UpdateLinkButton()
 end
 
 ----------------------------------------------------------------------
@@ -2602,7 +2843,7 @@ function TSF:BuildToolbar(parent)
         return "Sort: " .. state.sortBy .. arrow
     end
     self.sortDropdown = CreateDropdown(parent, 140,
-        {"Category", "Skill Ups", "Name"}, "Category",
+        {"Category", "Skill-ups", "Name"}, "Category",
         function(val)
             if state.sortBy == val then
                 state.sortAsc = not state.sortAsc
@@ -2636,7 +2877,7 @@ function TSF:BuildToolbar(parent)
             state.filterDiff = val
             self:RefreshRecipeList()
         end,
-        "Skill Up: "
+        "Skill-up: "
     )
     self.diffDropdown:SetPoint("LEFT", self.catDropdown, "RIGHT", 4, 0)
 
@@ -2799,25 +3040,27 @@ function TSF:BuildRecipeList(parent)
             end
             if entry.isHeader then return end
 
-            -- Modified click: route through the client's own handler, the
-            -- same way reagent and calculator rows do, so shift (chat link),
-            -- alt (AH search) and ctrl (dressing room) all work here too. It
-            -- no-ops on an unmodified click, so selection below still runs.
-            -- An item-less enchant has itemID 0 -- truthy in Lua, and
-            -- GetItemInfo(0) returns nothing -- so link its spell instead.
+            -- Shift (chat link): the same link the Share button gives
+            -- (RecipeChatLink: the crafted item, else the recipe's spell).
+            -- If it is still loading, say so, as Share does, instead of
+            -- selecting the recipe.
+            if IsModifiedClick("CHATLINK") then
+                local chatLink = self:RecipeChatLink(entry)
+                if not chatLink then
+                    print("|cff00ccffProfessionBuddy:|r This recipe's link is still loading; try again in a moment.")
+                    return
+                end
+                if ChatEdit_InsertLink(chatLink) then return end
+            end
+            -- Other modified clicks (alt: AH search, ctrl: dressing room)
+            -- through the client's own handler, the same way reagent and
+            -- calculator rows do. It no-ops on an unmodified click, so
+            -- selection below still runs.
             local link = entry.itemLink
             if not link and entry.itemID and entry.itemID ~= 0 then
                 link = select(2, GetItemInfo(entry.itemID))
             end
-            if link then
-                if HandleModifiedItemClick(link) then return end
-            elseif entry.spellID and IsModifiedClick("CHATLINK") then
-                local spellLink = GetSpellLink and GetSpellLink(entry.spellID)
-                if spellLink then
-                    ChatEdit_InsertLink(spellLink)
-                    return
-                end
-            end
+            if link and not IsModifiedClick("CHATLINK") and HandleModifiedItemClick(link) then return end
 
             state.selected = entry.name
             self:UpdateListHighlights()
@@ -3044,7 +3287,7 @@ function TSF:UpdateListRows()
                         -- (smelting); suppress until the 1.0.1 game-sourced
                         -- rework. Name color (from the game) still shows.
                         rangeStr = ""
-                    elseif state.sortBy == "Skill Ups" and sr then
+                    elseif state.sortBy == "Skill-ups" and sr then
                         -- Show tier threshold: "310 to yellow" with colors
                         local threshold, targetName, targetHex
                         if entry.difficulty == "optimal" then
@@ -3356,7 +3599,7 @@ function TSF:BuildDetailPanel(parent)
 
     -- v6: Embedded item tooltip (shows item stats/effects)
     local itemTooltipHeader = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    itemTooltipHeader:SetText("Item Info")
+    itemTooltipHeader:SetText("Item info")
     itemTooltipHeader:SetTextColor(1, 0.82, 0)
     self.itemTooltipHeader = itemTooltipHeader
 
@@ -3591,10 +3834,10 @@ function TSF:RefreshDetailPanel(preserveScroll)
     end
 
     local diffLabels = {
-        optimal = "Orange - will level up",
-        medium  = "Yellow - may level up",
-        easy    = "Green - unlikely to level",
-        trivial = "Grey - no skill gain",
+        optimal = "Orange: will level up",
+        medium  = "Yellow: may level up",
+        easy    = "Green: unlikely to level",
+        trivial = "Gray: no skill gain",
     }
     local dc
     if recipe.isKnown then
@@ -3940,7 +4183,7 @@ function TSF:BuildRecipeTooltip(tip, entry)
 
     local sr = entry.skillRange
     if type(sr) == "table" and sr[1] then
-        tip:AddDoubleLine("Skill ups:",
+        tip:AddDoubleLine("Skill-ups:",
             string.format("|cffff8040%d|r |cffffff00%d|r |cff40c040%d|r |cff909090%d|r",
                 sr[1] or 0, sr[2] or 0, sr[3] or 0, sr[4] or 0),
             0.8, 0.8, 0.8)
@@ -4340,7 +4583,7 @@ function TSF:RefreshCalcPanel()
     if #tree > 0 then
         table.insert(displayData, {
             isSection = true,
-            text = "Reagent Breakdown",
+            text = "Reagent breakdown",
         })
 
         local globalItems = DS:GetCalcItemCounts()
@@ -4367,7 +4610,7 @@ function TSF:RefreshCalcPanel()
         end
         table.insert(displayData, {
             isSection = true,
-            text = "Shopping List (raw materials)",
+            text = "Shopping list (raw materials)",
         })
 
         for _, item in ipairs(shoppingList) do
@@ -4602,7 +4845,7 @@ function TSF:BuildCraftBar(parent)
 
     -- ---- ROW 2: [Craft All] [empty] [Craft 10] [Craft 20] ----
 
-    local craftAll = MakeCraftBtn("Craft All", "all", x1, ROW2_Y)
+    local craftAll = MakeCraftBtn("Craft all", "all", x1, ROW2_Y)
     local craft10  = MakeCraftBtn("Craft 10",  10,    x3, ROW2_Y)
     local craft20  = MakeCraftBtn("Craft 20",  20,    x4, ROW2_Y)
 
@@ -4839,7 +5082,7 @@ function TSF:ShowShareMenu(anchorBtn)
         m.title = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         m.title:SetPoint("TOPLEFT", 8, -7)
         m.title:SetTextColor(1, 0.82, 0)
-        m.title:SetText("Share to")
+        m.title:SetText("Post in chat")
         m.buttons = {}
         local catcher = CreateFrame("Button", nil, UIParent)
         catcher:SetAllPoints(UIParent)
@@ -5045,14 +5288,14 @@ end
 --   Row 2: [ Mat-resp dropdown (2 wide) ] [ ---- (2x2) ---- ]
 ----------------------------------------------------------------------
 local MATRESP_OPTIONS = {
-    "Order provides mats",
+    "Requester provides mats",
     "Crafter provides mats",
-    "Split / discuss",
+    "Split or discuss",
 }
 local MATRESP_VALUE = {
-    ["Order provides mats"]   = "requester",
+    ["Requester provides mats"] = "requester",
     ["Crafter provides mats"] = "crafter",
-    ["Split / discuss"]       = "split",
+    ["Split or discuss"]      = "split",
 }
 
 function TSF:BuildComposer(parent)
@@ -5509,17 +5752,32 @@ function TSF:BuildSettingsPanel(parent)
     local yLeft = -46 - SCROLL_TOP      -- the old panel offset, now inside the scroll frame
 
     local replCB = MakeCheckbox("Replace default profession window", "replaceTradeSkill", yLeft)
+    yLeft = yLeft - 24
+    -- Only matters while Replace is off, so greyed while it is on.
+    local besideCB = MakeCheckbox("Open ProfessionBuddy beside Blizzard's window", "openBesideBlizzard",
+        yLeft, COL_LEFT + 20)
+    local function UpdateBesideCB()
+        if settings.replaceTradeSkill ~= false then
+            besideCB:Disable(); besideCB:SetAlpha(0.4)
+        else
+            besideCB:Enable(); besideCB:SetAlpha(1)
+        end
+    end
     replCB:SetScript("OnClick", function(self)
-        local on = self:GetChecked()
+        local on = self:GetChecked() and true or false
         settings.replaceTradeSkill = on
+        UpdateBesideCB()
         if on then
             TSF:SuppressDefaultFrames()
         else
-            -- Restoring default frames requires re-registering events
-            -- that we can't reconstruct -- reload to get a clean state.
-            ReloadUI()
+            TSF:OfferReplaceReload()
         end
     end)
+    besideCB:SetScript("OnClick", function(self)
+        settings.openBesideBlizzard = self:GetChecked() and true or false
+    end)
+    UpdateBesideCB()
+    self.replaceCB, self.besideCB = replCB, besideCB
     yLeft = yLeft - 30
     MakeCheckbox("Remember window state between opens", "rememberWindowState", yLeft)
     yLeft = yLeft - 30
@@ -5618,7 +5876,7 @@ function TSF:BuildSettingsPanel(parent)
     -- ── Alt Information section ────────────────────────────────
     local altHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     altHeader:SetPoint("TOPLEFT", COL_LEFT, yLeft)
-    altHeader:SetText("Alt Information")
+    altHeader:SetText("Alt information")
     altHeader:SetTextColor(1, 0.82, 0)
     yLeft = yLeft - 20
 
@@ -5639,7 +5897,7 @@ function TSF:BuildSettingsPanel(parent)
 
     local friendHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     friendHeader:SetPoint("TOPLEFT", COL_LEFT, yLeft)
-    friendHeader:SetText("Friend Data")
+    friendHeader:SetText("Friend data")
     friendHeader:SetTextColor(1, 0.82, 0)
     yLeft = yLeft - 20
 
@@ -5675,7 +5933,7 @@ function TSF:BuildSettingsPanel(parent)
     -- ── Item Tooltips section ──────────────────────────────────
     local sectionHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     sectionHeader:SetPoint("TOPLEFT", COL_RIGHT, yRight)
-    sectionHeader:SetText("Item Tooltips")
+    sectionHeader:SetText("Item tooltips")
     sectionHeader:SetTextColor(1, 0.82, 0)
     yRight = yRight - 20
 
@@ -5774,11 +6032,14 @@ function TSF:BuildSettingsPanel(parent)
     end)
     yRight = yRight - 14
 
-    -- Gather skill on ore/herb NODES + skinnable/mineable/herbable MOBS.
-    -- The -52 clears the third slider's track + its min/max labels below it
-    -- (the same clearance the notif section used to need); a smaller gap made
-    -- the checkboxes overlap the slider. Verified via layout sim.
+    -- "Disenchants into" on item tooltips. The -52 clears the Held by
+    -- slider's track and its min/max labels below it; a smaller gap made the
+    -- checkboxes overlap the slider. Verified via layout sim.
     yRight = yRight - 52
+    MakeCheckbox("Show disenchant results", "tooltipShowDisenchant", yRight, COL_RIGHT)
+
+    -- Gather skill on ore/herb NODES + skinnable/mineable/herbable MOBS.
+    yRight = yRight - 26
     local gatherCB = MakeCheckbox("Gather skill on tooltips", "gatherSkillTooltip", yRight, COL_RIGHT)
     yRight = yRight - 26
     local unlearnedCB = MakeCheckbox("Show for unlearned professions", "gatherShowUnlearned", yRight, COL_RIGHT + 20)
@@ -5896,7 +6157,7 @@ function TSF:BuildSettingsPanel(parent)
 
     local notifHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     notifHeader:SetPoint("TOPLEFT", COL_RIGHT, yRight)
-    notifHeader:SetText("Crafting Order Notifications")
+    notifHeader:SetText("Crafting order notifications")
     notifHeader:SetTextColor(1, 0.82, 0)
     yRight = yRight - 20
 
@@ -5961,6 +6222,7 @@ function TSF:BuildSettingsPanel(parent)
         heldSlider:SetValue(settings.tooltipMaxHeldBy or 8)
         UpdateTooltipGroup()
         UpdateGatherSub()
+        UpdateBesideCB()
         SyncBoardAlertDD()
         SyncMinimapCB()
         SyncColorblindDD()
@@ -6373,7 +6635,7 @@ function TSF:LoadRecipes(unknown)
 
     -- Filter
     local filtered = {}
-    local diffMap = { Orange = "optimal", Yellow = "medium", Green = "easy", Grey = "trivial" }
+    local diffMap = { Orange = "optimal", Yellow = "medium", Green = "easy", Gray = "trivial" }
     -- Every method in SOURCE_COLORS gets an entry, "undetermined" included:
     -- without one the Source filter could not isolate those recipes, and the
     -- option list above would silently match nothing.
@@ -6481,7 +6743,7 @@ function TSF:LoadRecipes(unknown)
         end)
     else
         table.sort(filtered, function(a, b)
-            if sortBy == "Skill Ups" then
+            if sortBy == "Skill-ups" then
                 -- Known sorts above missing
                 if a.isKnown ~= b.isKnown then return a.isKnown end
                 -- Missing recipes: sort by learn level
@@ -6731,7 +6993,7 @@ function TSF:RestoreWindowState(profName)
     state.sortBy       = saved.sortBy
     -- Migrate removed sort options from older versions
     if state.sortBy == "Skill Req" or state.sortBy == "Craftable" or state.sortBy == "Difficulty" then
-        state.sortBy = "Skill Ups"
+        state.sortBy = "Skill-ups"
     end
     state.sortAsc      = saved.sortAsc
     state.searchText   = saved.searchText
@@ -6988,6 +7250,7 @@ function TSF:OpenWithStatic(profName)
         self.skillBarText:SetText(profName .. ": Not learned")
     end
     self:UpdateProfessionTabs()
+    self:UpdateLinkButton()
 
     -- Restore UI widgets to defaults
     if self.searchBox then self.searchBox:SetText("") end
@@ -7142,6 +7405,7 @@ function TSF:OpenWithCharacter(charKey, profName)
         self.skillBarText:SetText(classColor .. shortName .. "|r: " .. profName .. " " .. skill .. "/" .. maxSkill)
     end
     self:UpdateProfessionTabs()
+    self:UpdateLinkButton()
 
     -- Restore UI widgets to defaults
     if self.searchBox then self.searchBox:SetText("") end

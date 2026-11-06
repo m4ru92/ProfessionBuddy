@@ -44,6 +44,7 @@ function UI:Init()
     f:SetScript("OnDragStop", f.StopMovingOrSizing)
     f:SetClampedToScreen(true)
     f:Hide()
+    self.scaleGrip = self:AddScaleGrip(f, "mainWindowScale")
 
     -- Close any open dropdown list (e.g. the Guild tab profession filter) and
     -- the Friends tab order menu when the window hides. Those lists are
@@ -252,6 +253,88 @@ end
 
 function UI:Show()
     self.frame:Show()
+end
+
+----------------------------------------------------------------------
+-- Drag to scale (2.0.2, RESIZE-scope.md): a grip in a window's bottom-right
+-- corner, with Blizzard's resize grabber art (PanelResizeButtonTemplate's
+-- textures, on both clients). Dragging it scales the whole window, 75% to
+-- 150%, and keeps the window's top-left corner where it is; right-click
+-- goes back to 100%. The scale is saved in settings[key] and applied when
+-- the window is built. A window holding secure buttons cannot be scaled in
+-- combat, so the grip does nothing then. `followers` scale with the window
+-- (the profession window's Material Calculator).
+----------------------------------------------------------------------
+UI.SCALE_MIN, UI.SCALE_MAX = 0.75, 1.5
+
+function UI:ClampScale(s)
+    s = tonumber(s) or 1
+    if s < self.SCALE_MIN then s = self.SCALE_MIN end
+    if s > self.SCALE_MAX then s = self.SCALE_MAX end
+    return math.floor(s * 100 + 0.5) / 100
+end
+
+-- Scale frame (and its followers) to s, its top-left corner staying put.
+function UI:ApplyScale(frame, s, followers)
+    if InCombatLockdown() then return false end
+    s = self:ClampScale(s)
+    local old = frame:GetScale() or 1
+    local left, top = frame:GetLeft(), frame:GetTop()
+    frame:SetScale(s)
+    if left and top then
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left * old / s, top * old / s)
+    end
+    for _, f in ipairs(followers or {}) do f:SetScale(s) end
+    return true
+end
+
+function UI:AddScaleGrip(frame, key, followers)
+    local settings = addon.db.settings
+    local grip = CreateFrame("Button", nil, frame)
+    grip:SetSize(14, 14)
+    grip:SetPoint("BOTTOMRIGHT", 0, 0)
+    grip:SetFrameLevel(frame:GetFrameLevel() + 20)
+    grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    grip:RegisterForClicks("RightButtonUp")
+    local function stop(self)
+        if not self._dragging then return end
+        self._dragging = false
+        self:SetScript("OnUpdate", nil)
+        settings[key] = UI:ClampScale(frame:GetScale())
+    end
+    grip:SetScript("OnMouseDown", function(self, button)
+        if button ~= "LeftButton" or InCombatLockdown() then return end
+        local s = frame:GetScale() or 1
+        self._left, self._top = frame:GetLeft() * s, frame:GetTop() * s
+        self._baseW, self._baseH = frame:GetWidth(), frame:GetHeight()
+        self._dragging = true
+        self:SetScript("OnUpdate", function()
+            if InCombatLockdown() then return stop(self) end
+            local x, y = GetCursorPosition()
+            local es = UIParent:GetEffectiveScale()
+            x, y = x / es, y / es
+            local ns = math.max((x - self._left) / self._baseW, (self._top - y) / self._baseH)
+            UI:ApplyScale(frame, ns, followers)
+        end)
+    end)
+    grip:SetScript("OnMouseUp", stop)
+    grip:SetScript("OnHide", stop)
+    grip:SetScript("OnClick", function()
+        if UI:ApplyScale(frame, 1, followers) then settings[key] = 1 end
+    end)
+    grip:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Window size")
+        GameTooltip:AddLine("Drag to make the window bigger or smaller. Right-click: back to 100%.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    grip:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    local saved = settings[key]
+    if saved and saved ~= 1 then UI:ApplyScale(frame, saved, followers) end
+    return grip
 end
 
 function UI:Hide()

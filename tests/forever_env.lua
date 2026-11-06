@@ -94,7 +94,10 @@ F.__index = function(t, k)
     if FRAME_NIL_FIELDS[k] then return nil end
     local v = NEW(); rawset(t, k, v); return v
 end
-local TOOLTIP_SCRIPTS_GONE = { OnTooltipSetItem = true, OnTooltipSetUnit = true, OnTooltipSetSpell = true }
+-- tbc_env.lua sets TOOLTIP_SCRIPTS_KEEP before loading this file: TBC
+-- Anniversary's tooltips still have these scripts.
+local TOOLTIP_SCRIPTS_GONE = rawget(_G, "TOOLTIP_SCRIPTS_KEEP") and {}
+    or { OnTooltipSetItem = true, OnTooltipSetUnit = true, OnTooltipSetSpell = true }
 function F:SetScript(s, fn) self._s[s] = fn end
 function F:GetScript(s) return self._s[s] end
 function F:HasScript(s) return not (self._tooltip and TOOLTIP_SCRIPTS_GONE[s]) end

@@ -62,7 +62,7 @@ local STATUS_DISPLAY = {
     crafted   = { text = "Crafted",   r = 0.3, g = 0.9,  b = 0.4 },
     completed = { text = "Completed", r = 0.5, g = 0.85, b = 0.5 },
     declined  = { text = "Declined",  r = 0.9, g = 0.4,  b = 0.4 },
-    cancelled = { text = "Cancelled", r = 0.7, g = 0.5,  b = 0.4 },
+    cancelled = { text = "Canceled", r = 0.7, g = 0.5,  b = 0.4 },
     expired   = { text = "Expired",   r = 0.6, g = 0.6,  b = 0.6 },
 }
 
@@ -111,12 +111,12 @@ local function profPostList()
 end
 
 local POST_MATRESP_OPTIONS = {
-    "Requester provides mats", "Crafter provides mats", "Split / discuss",
+    "Requester provides mats", "Crafter provides mats", "Split or discuss",
 }
 local POST_MATRESP_VALUE = {
     ["Requester provides mats"] = "requester",
     ["Crafter provides mats"]   = "crafter",
-    ["Split / discuss"]         = "split",
+    ["Split or discuss"]        = "split",
 }
 
 ----------------------------------------------------------------------
@@ -2189,7 +2189,7 @@ function OP:BuildHistoryPanel()
     f:SetClampedToScreen(true)
     f:SetFrameStrata("HIGH")
     f:SetScript("OnShow", anchorRight)
-    f.TitleText:SetText("Order History")
+    f.TitleText:SetText("Order history")
     f:Hide()
     table.insert(UISpecialFrames, "ProfBuddyOrderHistory")
 
@@ -2411,7 +2411,7 @@ local NOTIFY_TEXT = {
     accepted   = function(o) return addon:ShortName(o.crafter) .. " accepted your order: " .. o.quantity .. "x " .. o.item.name end,
     declined   = function(o) return addon:ShortName(o.crafter) .. " declined your order: " .. o.quantity .. "x " .. o.item.name end,
     crafted    = function(o) return addon:ShortName(o.crafter) .. " crafted your order: " .. o.quantity .. "x " .. o.item.name .. " (ready to pick up)" end,
-    cancelled  = function(o) return addon:ShortName(o.requester) .. " cancelled their order: " .. o.quantity .. "x " .. o.item.name end,
+    cancelled  = function(o) return addon:ShortName(o.requester) .. " canceled their order: " .. o.quantity .. "x " .. o.item.name end,
     completed  = function(o) return "Order completed: " .. o.quantity .. "x " .. o.item.name end,
 }
 

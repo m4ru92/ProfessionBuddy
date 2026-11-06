@@ -2273,7 +2273,7 @@ do
     -- where and when on their own line (the mob line wrapped mid-date)
     assert(text:find("  Mob: Thunder Lizard (NPC 3130, level 10, corpse)\n  Where: The Barrens, ", 1, true), "T87: mob line\n" .. text)
     assert(text:find("  PB showed: Requires Skinning (1), Your Skinning: 87, loot from TBC data", 1, true), "T87: shown line")
-    assert(text:find("  Why: mob list\n", 1, true) and text:find("Could you gather it (yes / no)?", 1, true), "T87: why line")
+    assert(text:find("  Why: mob list\n", 1, true) and text:find("Could you gather it (yes or no)?", 1, true), "T87: why line")
     assert(text:find("Could you gather it", 1, true) < text:find("What happened:", 1, true), "T87: section order")
     addon.db.lastGather = { kind = "node", name = "Tin Vein", shown = "Requires Mining (65)", why = "node table",
         gameLine = "Requires Mining" }
@@ -3054,7 +3054,7 @@ do
         assert(not src:find(":SetColorTexture%(%s*[%d.]+"), "T101: " .. f .. " still sets a color by number")
         assert(not src:find(":SetBackdrop%(%s*{"), "T101: " .. f .. " still builds its own backdrop")
     end
-    assert(calls == 140, "T101: " .. calls .. " Theme calls, expected 140")
+    assert(calls == 144, "T101: " .. calls .. " Theme calls, expected 144")
     local got = {}
     local tex = { SetColorTexture = function(_, r, g, b, a) got = { r, g, b, a } end }
     Theme:Fill(tex, "menuHover")

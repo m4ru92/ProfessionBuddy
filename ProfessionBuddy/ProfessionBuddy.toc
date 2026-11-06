@@ -2,7 +2,7 @@
 ## Title: ProfessionBuddy |cffff4444(this game client is not supported yet)|r
 ## Notes: ProfessionBuddy supports TBC Classic Anniversary and WoW: Forever. This game client is not supported yet.
 ## Author: m4ru
-## Version: 2.0.1
+## Version: 2.0.2
 ## DefaultState: enabled
 ## X-Curse-Project-ID: 1631296
 ## X-Website: https://github.com/m4ru92/ProfessionBuddy

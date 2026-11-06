@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "2.0.1"
+addon.version = "2.0.2"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -689,12 +689,14 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxOther     = 5,
         tooltipMaxHeldBy    = 8,    -- "Held by" lines on item tooltips; 21 = "All"
+        tooltipShowDisenchant = true, -- "Disenchants into" on item tooltips (Data/Disenchant.lua)
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
         showCrossFactionFriends = false,
         hideOppositeFactionRecipes = true, -- hide recipes only the other faction can obtain
         replaceTradeSkill   = true,
+        openBesideBlizzard  = false, -- Replace off: also open PB's window beside Blizzard's
         rememberWindowState = true,
         showAllProfessions  = false,
         includeAltsInCalc   = true,
@@ -714,6 +716,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         bnetTrust           = false, -- ...and trust them
         colorblindMarkers   = "auto", -- "auto" (follow the game's Colorblind Mode) | "on" | "off"
         windowStyle         = "modern", -- UI/Theme.lua: "modern" | "classic" | "game" (Match the game); applies after /reload
+        mainWindowScale     = 1,    -- UI/Main.lua drag-to-scale grip, 0.75-1.5
+        professionWindowScale = 1,
     }
     -- Migrate old single-slider setting
     if ProfBuddyDB.settings.tooltipMaxRecipes then
@@ -801,6 +805,11 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.bnetTrust == nil then ProfBuddyDB.settings.bnetTrust = false end
     if ProfBuddyDB.settings.colorblindMarkers == nil then ProfBuddyDB.settings.colorblindMarkers = "auto" end
     if ProfBuddyDB.settings.windowStyle == nil then ProfBuddyDB.settings.windowStyle = "modern" end
+    -- 2.0.2: before this setting, Replace off always opened both windows.
+    -- Players who had it off keep that; everyone else starts with it off.
+    if ProfBuddyDB.settings.openBesideBlizzard == nil then
+        ProfBuddyDB.settings.openBesideBlizzard = ProfBuddyDB.settings.replaceTradeSkill == false
+    end
 
     -- Trust migration: `trusted` now gates serving full data (see Comm.lua).
     -- Earlier builds auto-created a contact for every group-mate ever seen, so a
@@ -839,7 +848,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         end
     end
 
-    print("|cff00ccffProfessionBuddy|r v" .. addon.version .. " loaded.  /pb  or  /profbuddy")
+    print("|cff00ccffProfessionBuddy|r v" .. addon.version .. " loaded. Type /pb or /profbuddy.")
 end)
 
 -- The surname may not be readable at ADDON_LOADED; by login it is.
@@ -976,7 +985,7 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         elseif arg == "off" then s.shareData = false
         else s.shareData = not s.shareData end
         print("|cff00ccffProfessionBuddy:|r Data sharing is now "
-            .. (s.shareData and "ON." or "OFF (no profession/inventory data sent to others)."))
+            .. (s.shareData and "ON." or "OFF: no profession or inventory data is sent to others."))
 
     elseif msg == "debug" then
         local s = ProfBuddyDB.settings
@@ -1088,7 +1097,7 @@ local function GatherSection()
     for _, line in ipairs({
         "  " .. shown,
         "  Why: " .. (g.why or "?") .. (g.gameLine and ("; the game's line: " .. g.gameLine) or ""),
-        "Could you gather it (yes / no)?",
+        "Could you gather it (yes or no)?",
         "",
         "",
     }) do out[#out + 1] = line end
@@ -1165,7 +1174,7 @@ function addon:ShowBugReport()
 
         local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
         title:SetPoint("TOP", 0, -14)
-        title:SetText("ProfessionBuddy Bug Report")
+        title:SetText("ProfessionBuddy bug report")
 
         local instr = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         instr:SetPoint("TOPLEFT", 16, -40)
@@ -1215,7 +1224,7 @@ function addon:ShowBugReport()
         local selBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         selBtn:SetSize(120, 22)
         selBtn:SetPoint("BOTTOMLEFT", 14, 14)
-        selBtn:SetText("Select All")
+        selBtn:SetText("Select all")
         selBtn:SetScript("OnClick", function() eb:SetFocus(); eb:HighlightText() end)
 
         local closeBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
