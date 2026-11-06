@@ -334,6 +334,12 @@ function UI:AddScaleGrip(frame, key, followers)
     grip:SetScript("OnLeave", function() GameTooltip:Hide() end)
     local saved = settings[key]
     if saved and saved ~= 1 then UI:ApplyScale(frame, saved, followers) end
+    -- A window first built in combat could not take its saved size; it
+    -- takes it the next time it opens out of combat.
+    frame:HookScript("OnShow", function()
+        local want = UI:ClampScale(settings[key] or 1)
+        if math.abs((frame:GetScale() or 1) - want) > 0.001 then UI:ApplyScale(frame, want, followers) end
+    end)
     return grip
 end
 

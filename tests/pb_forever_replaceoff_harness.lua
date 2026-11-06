@@ -60,7 +60,9 @@ print("  PASS W6 settings saved before the Held by slider get 8 at load")
 -- setting starts on for them (W1 ran with it)
 EXPECT(ProfBuddyDB.settings.openBesideBlizzard == true, "Replace-off player lost both windows: "
        .. tostring(ProfBuddyDB.settings.openBesideBlizzard))
-print("  PASS W7 a player with Replace off before 2.0.2 gets Open beside Blizzard's window on")
+EXPECT(ProfBuddyDB.settings.tooltipShowDisenchant == true, "old settings: Show disenchant results "
+       .. tostring(ProfBuddyDB.settings.tooltipShowDisenchant))
+print("  PASS W7 a player with Replace off before 2.0.2 gets Open beside Blizzard's window on; Show disenchant results on")
 
 -- W8: with it off, Blizzard's window opens alone and PB still records the
 -- recipes; with PB's window already open, PB follows the profession

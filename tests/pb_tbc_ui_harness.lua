@@ -135,7 +135,17 @@ print("  PASS " .. TAG .. "5 Enchanting opens through the craft window; an encha
 -- U6: Replace off and "Open beside Blizzard's window" off: neither window
 -- opens PB's, and both still record the recipes
 local S = PB.db.settings
+-- unticked this session (Reload / Later, Later): Blizzard's window is still
+-- suppressed until the reload, so PB's window keeps opening
+EXPECT(rawget(TSF, "_suppressed") == true, "Replace on did not suppress Blizzard's windows")
 S.replaceTradeSkill, S.openBesideBlizzard = false, false
+TSF.frame:Hide()
+ok, err = pcall(OPEN_TRADE)
+EXPECT(ok and TSF.frame:IsShown(), "unticked without a reload: no window opens: " .. tostring(err))
+pcall(CLOSE_TRADE)
+-- after the reload (a session that starts with Replace off): nothing is
+-- suppressed, and PB stays closed
+TSF._suppressed = nil
 TSF.frame:Hide()
 local char = DS:GetCharacter()
 char.professions.Leatherworking.recipes, char.professions.Enchanting.recipes = {}, {}
@@ -154,7 +164,8 @@ pcall(OPEN_TRADE)
 EXPECT(TSF.frame:IsShown(), "PB did not open beside Blizzard's window with the setting on")
 pcall(CLOSE_TRADE)
 S.replaceTradeSkill, S.openBesideBlizzard = true, false
-print("  PASS " .. TAG .. "6 Replace off: PB stays closed and still records both windows; opens beside them when asked")
+TSF._suppressed = true
+print("  PASS " .. TAG .. "6 Replace off: PB opens until the reload, then stays closed and still records both windows; opens beside them when asked")
 
 -- U7: "Disenchants into" on TBC Anniversary: the skill line, grey when one
 -- of your characters has it (Enchanting 50 here), red when none does

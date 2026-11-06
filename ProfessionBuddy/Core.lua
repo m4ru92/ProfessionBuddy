@@ -805,6 +805,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.bnetTrust == nil then ProfBuddyDB.settings.bnetTrust = false end
     if ProfBuddyDB.settings.colorblindMarkers == nil then ProfBuddyDB.settings.colorblindMarkers = "auto" end
     if ProfBuddyDB.settings.windowStyle == nil then ProfBuddyDB.settings.windowStyle = "modern" end
+    if ProfBuddyDB.settings.replaceTradeSkill == nil then ProfBuddyDB.settings.replaceTradeSkill = true end
+    if ProfBuddyDB.settings.tooltipShowDisenchant == nil then ProfBuddyDB.settings.tooltipShowDisenchant = true end
     -- 2.0.2: before this setting, Replace off always opened both windows.
     -- Players who had it off keep that; everyone else starts with it off.
     if ProfBuddyDB.settings.openBesideBlizzard == nil then

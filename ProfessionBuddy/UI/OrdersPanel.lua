@@ -69,7 +69,7 @@ local STATUS_DISPLAY = {
 local MATRESP_LABEL = {
     requester = "Requester provides mats",
     crafter   = "Crafter provides mats",
-    split     = "Split",
+    split     = "Split or discuss",
 }
 
 -- Compact form for the row's secondary line (full form is in the tooltip)

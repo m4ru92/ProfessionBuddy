@@ -4008,6 +4008,8 @@ do
     up(row, "RightButton")
     m.buttons[2]:GetScript("OnClick")(m.buttons[2])
     EXPECT(invited[1] == "Noodle Stand" and not m:IsShown(), "Invite: " .. tostring(invited[1]))
+    local osrc = assert(io.open(PB_BASE .. "/UI/OrdersPanel.lua")):read("*a")
+    EXPECT(osrc:find('split     = "Split or discuss"', 1, true), "order details do not say Split or discuss")
     local src = assert(io.open(PB_BASE .. "/UI/GuildPanel.lua")):read("*a")
     EXPECT(not src:find("UnitPopup", 1, true) and not src:find("ToggleDropDownMenu", 1, true),
            "the guild menu uses Blizzard's unit menu")
@@ -4100,8 +4102,11 @@ do
     st._viewCharKey, st._isStaticView, st._isLinkedView, st.isCraftWindow = save[1], save[2], save[3], save[4]
     TSF:UpdateLinkButton()
 
-    -- shift-click on a recipe row: Share's link, or Share's loading line
+    -- the background fills the button and the icon is centred, as Blizzard's
     local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('local bg = btn:CreateTexture%(nil, "BACKGROUND"%)%s+bg:SetAllPoints%(%)%s+local icon = btn:CreateTexture')
+           and not src:find('square%-normal", true%)'), "link button background does not fill the button")
+    -- shift-click on a recipe row: Share's link, or Share's loading line
     EXPECT(src:find('if IsModifiedClick%("CHATLINK"%) then%s+local chatLink = self:RecipeChatLink%(entry%)'),
            "row shift-click does not use Share's link")
     local row = TSF.listRows and TSF.listRows[1]
@@ -4193,6 +4198,14 @@ do
     S.testScale = 1.3
     UI:AddScaleGrip(win3, "testScale")
     EXPECT(st3.scale == 1.3, "saved scale not applied at build: " .. tostring(st3.scale))
+    -- built in combat: no scale then; it applies on the next open after combat
+    local win4, st4 = fakeWindow(100, 500, 740, 540)
+    InCombatLockdown = function() return true end
+    UI:AddScaleGrip(win4, "testScale")
+    EXPECT(st4.scale == 1, "scaled in combat at build")
+    InCombatLockdown = keepCombat
+    rawget(win4, "_h").OnShow(win4)
+    EXPECT(st4.scale == 1.3, "saved scale not applied on the next open: " .. tostring(st4.scale))
     S.testScale = nil
     local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
     EXPECT(src:find('AddScaleGrip%(f, "professionWindowScale", { self%.calcPanel }%)'),

@@ -1643,10 +1643,13 @@ end
 
 -- Does a profession event open PB's window? Yes when PB replaces
 -- Blizzard's window, when the player asked for both, or when PB's window is
--- already open (switching professions from PB's own tabs).
+-- already open (switching professions from PB's own tabs). Also while this
+-- session still suppresses Blizzard's window: unticking Replace brings it
+-- back only after a reload, and until then PB's window is the only one.
 function TSF:OpensOnProfessionEvents()
     local s = addon.db and addon.db.settings or {}
     if s.replaceTradeSkill ~= false or s.openBesideBlizzard then return true end
+    if self._suppressed then return true end
     return self.frame and self.frame:IsShown() and true or false
 end
 
@@ -2294,8 +2297,10 @@ function TSF:BuildLinkButton(bar, x)
     btn:SetSize(LINK_BTN, LINK_BTN)
     btn:SetPoint("LEFT", bar, "RIGHT", x, 0)
     btn:SetFrameLevel(bar:GetFrameLevel() + 3)   -- above Classic's border frame
+    -- Blizzard's Background has no anchors, so it fills the button; the
+    -- Icon is centred at its atlas size (25 x 25)
     local bg = btn:CreateTexture(nil, "BACKGROUND")
-    bg:SetPoint("CENTER")
+    bg:SetAllPoints()
     local icon = btn:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("CENTER")
     btn.Background, btn.Icon = bg, icon
@@ -2307,10 +2312,10 @@ function TSF:BuildLinkButton(bar, x)
             icon:SetAtlas("common-icon-chatlink", true)
             bg:SetAtlas((over and btn._down) and "common-button-tertiary-square-pressed"
                 or over and "common-button-tertiary-square-hover"
-                or "common-button-tertiary-square-normal", true)
+                or "common-button-tertiary-square-normal")
         else
             icon:SetAtlas("common-icon-chatlink-disable", true)
-            bg:SetAtlas("common-button-tertiary-square-disabled", true)
+            bg:SetAtlas("common-button-tertiary-square-disabled")
         end
     end
     btn.Paint = paint
