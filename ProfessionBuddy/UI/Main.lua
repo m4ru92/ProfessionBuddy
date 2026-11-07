@@ -271,7 +271,10 @@ end
 -- secure buttons cannot be scaled in combat, so the grip does nothing
 -- then. `followers` scale with the window (the profession window's
 -- Material Calculator; the main window's Order History and Find a
--- Crafter).
+-- Crafter). They sit beside its right edge, so the size limit leaves room
+-- for the widest of them, and the window moves left when one opens with no
+-- room on the right (otherwise the game pushes the panel back on screen,
+-- over the window).
 ----------------------------------------------------------------------
 UI.SCALE_MIN, UI.SCALE_MAX = 0.75, 1.5
 
@@ -282,23 +285,50 @@ function UI:ClampScale(s)
     return math.floor(s * 100 + 0.5) / 100
 end
 
+-- Gap between a window and a side panel fastened to its right edge
+UI.SIDE_GAP = 4
+
 -- The scale frame gets for s: within the limits, and no bigger than fits
--- on the screen, so the grip in its corner can always be reached.
-function UI:FitScale(frame, s)
+-- on the screen, so the grip in its corner can always be reached, with room
+-- beside it for the widest of its side panels.
+function UI:FitScale(frame, s, followers)
     s = self:ClampScale(s)
     local sw, sh = tonumber(UIParent:GetWidth()), tonumber(UIParent:GetHeight())
     local fw, fh = tonumber(frame:GetWidth()), tonumber(frame:GetHeight())
     if sw and sh and fw and fh and fw > 0 and fh > 0 then
-        local fit = math.floor(math.min(sw / fw, sh / fh) * 100) / 100
+        local side = 0
+        for _, f in ipairs(followers or {}) do
+            local w = type(f.GetWidth) == "function" and tonumber(f:GetWidth())
+            if w and w + self.SIDE_GAP > side then side = w + self.SIDE_GAP end
+        end
+        local fit = math.floor(math.min(sw / (fw + side), sh / fh) * 100) / 100
         if s > fit then s = math.max(fit, self.SCALE_MIN) end
     end
     return s
 end
 
--- Scale frame (and its followers) to s, its top-left corner staying put.
+-- A side panel just opened (or its window grew): move the window left as
+-- far as the panel runs past the screen's right edge. Not in combat: a
+-- window holding secure buttons cannot move then.
+function UI:MakeRoomBeside(frame, panel)
+    if InCombatLockdown() or not (frame and panel) then return end
+    local s = tonumber(frame:GetScale()) or 1
+    local ps = tonumber(panel:GetScale()) or s
+    local left, top, right = tonumber(frame:GetLeft()), tonumber(frame:GetTop()), tonumber(frame:GetRight())
+    local pw, sw = tonumber(panel:GetWidth()), tonumber(UIParent:GetWidth())
+    if not (left and top and right and pw and sw) then return end
+    local over = (right + self.SIDE_GAP) * s + pw * ps - sw
+    if over <= 0 then return end
+    local newLeft = math.max(left * s - over, 0)
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", newLeft / s, top)
+end
+
+-- Scale frame (and its followers) to s, its top-left corner staying put
+-- unless an open side panel needs the room.
 function UI:ApplyScale(frame, s, followers)
     if InCombatLockdown() then return false end
-    s = self:FitScale(frame, s)
+    s = self:FitScale(frame, s, followers)
     local old = frame:GetScale() or 1
     local left, top = frame:GetLeft(), frame:GetTop()
     frame:SetScale(s)
@@ -306,7 +336,10 @@ function UI:ApplyScale(frame, s, followers)
         frame:ClearAllPoints()
         frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left * old / s, top * old / s)
     end
-    for _, f in ipairs(followers or {}) do f:SetScale(s) end
+    for _, f in ipairs(followers or {}) do
+        f:SetScale(s)
+        if type(f.IsShown) == "function" and f:IsShown() then self:MakeRoomBeside(frame, f) end
+    end
     return true
 end
 
@@ -341,6 +374,8 @@ function UI:AddScaleGrip(frame, key, followers)
     end
     grip:SetScript("OnMouseDown", function(self, button)
         if button ~= "LeftButton" or InCombatLockdown() then return end
+        -- an open dropdown list would keep its old size until the next click
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
         local s = frame:GetScale() or 1
         local left, top = frame:GetLeft() * s, frame:GetTop() * s
         local x, y = cursor()
@@ -352,7 +387,7 @@ function UI:AddScaleGrip(frame, key, followers)
             if InCombatLockdown() then return stop(self) end
             local cx, cy = cursor()
             local ns = s * math.max((cx - left) / dx, (top - cy) / dy)
-            if UI:FitScale(frame, ns) ~= UI:ClampScale(frame:GetScale()) then UI:ApplyScale(frame, ns, followers) end
+            if UI:FitScale(frame, ns, followers) ~= UI:ClampScale(frame:GetScale()) then UI:ApplyScale(frame, ns, followers) end
         end)
     end)
     grip:SetScript("OnMouseUp", stop)
@@ -372,7 +407,7 @@ function UI:AddScaleGrip(frame, key, followers)
     -- A window first built in combat could not take its saved size; it
     -- takes it the next time it opens out of combat.
     frame:HookScript("OnShow", function()
-        local want = UI:FitScale(frame, settings[key] or 1)
+        local want = UI:FitScale(frame, settings[key] or 1, followers)
         if math.abs((frame:GetScale() or 1) - want) > 0.001 then UI:ApplyScale(frame, want, followers) end
     end)
     return grip

@@ -4372,4 +4372,151 @@ do
 end
 print("  PASS F74 Disenchants into: materials, counts and chances on every character, no skill line on Forever, Forever estimates marked, other items skipped, Settings box")
 
-print("ALL FOREVER TESTS PASS (74)")
+-- F75: skill-up ranges at the trainer (UI/Trainer.lua). Blizzard's row
+-- builder, loaded with the trainer window, gets the four colored numbers
+-- after its Requires line for a recipe you have not learned; the row's
+-- tooltip gets the labeled line with your tier marked; known recipes, a
+-- weapon master, a profession rank and the setting off add nothing
+do
+    local TR, S = ProfBuddy.Trainer, ProfBuddy.db.settings
+    EXPECT(TR and S.trainerShowRanges == true, "no Trainer module or the setting is not on by default")
+    -- Blizzard_TrainerUI loads: its row builder sets the Requires line
+    ClassTrainerFrame_InitServiceButton = function(button, elementData)
+        local i = (elementData.data or elementData).skillIndex
+        local _, rank = GetTrainerServiceSkillReq(i)
+        button.subText:SetText(rank and rank > 0 and ("Requires: Leatherworking (" .. rank .. ")") or "")
+    end
+    FIRE("ADDON_LOADED", "Blizzard_TrainerUI")
+    local function row(i)
+        local b = CreateFrame("Button", nil, UIParent)
+        rawset(b, "subText", b:CreateFontString())
+        ClassTrainerFrame_InitServiceButton(b, { data = { skillIndex = i } })
+        return b.subText:GetText()
+    end
+    local function index(name)
+        for i = 1, GetNumTrainerServices() do if GetTrainerServiceInfo(i) == name then return i end end
+    end
+    TRAINER_FILTER.used = true
+    TRAINER_OPEN(3008)                  -- Mak, Leatherworking
+    local belt = index("Handstitched Leather Belt")
+    EXPECT(row(belt) == "Requires: Leatherworking (25)   |cffff800025|r  |cffffff0055|r  |cff00ff0070|r  |cff80808085|r",
+           "row: " .. tostring(row(belt)))
+    -- the row builder runs on every scroll: the numbers never double
+    EXPECT(select(2, row(belt):gsub("|cffff8000", "")) == 1, "the numbers doubled")
+    EXPECT(row(index("Apprentice Leatherworking")) == "", "a profession rank got numbers")
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(belt)
+    local tl = rawget(GameTooltip, "_lines")
+    EXPECT(#tl == 1 and tl[1]:find("^Skill%-ups %(ProfessionBuddy%): |cffffffff>|r|cffff8000Orange: 25|r|cffffffff<|r  |cffffff00Yellow: 55|r"),
+           "tooltip: " .. tostring(tl[1]))
+    -- a recipe you already know: no numbers, no tooltip line
+    local kept = TRAINERS[3008].services
+    for _, sv in ipairs(kept) do if sv.name == "Handstitched Leather Belt" then sv.type = "used" end end
+    TRAINER_CLOSE(); TRAINER_OPEN(3008)
+    belt = index("Handstitched Leather Belt")
+    EXPECT(row(belt) == "Requires: Leatherworking (25)", "a known recipe got numbers: " .. tostring(row(belt)))
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(belt)
+    EXPECT(#rawget(GameTooltip, "_lines") == 0, "a known recipe got a tooltip line")
+    for _, sv in ipairs(kept) do if sv.name == "Handstitched Leather Belt" then sv.type = "unavailable" end end
+    -- the setting off: nothing
+    S.trainerShowRanges = false
+    TRAINER_CLOSE(); TRAINER_OPEN(3008)
+    belt = index("Handstitched Leather Belt")
+    EXPECT(row(belt) == "Requires: Leatherworking (25)", "numbers with the setting off")
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(belt)
+    EXPECT(#rawget(GameTooltip, "_lines") == 0, "a tooltip line with the setting off")
+    S.trainerShowRanges = true
+    TRAINER_CLOSE()
+    -- a weapon master: nothing
+    TRAINER_OPEN(11869)
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(2)
+    EXPECT(#rawget(GameTooltip, "_lines") == 0, "a weapon master got a tooltip line")
+    TRAINER_CLOSE()
+    TRAINER_FILTER.used = false
+    rawset(GameTooltip, "_lines", nil)
+    local found
+    for _, cb in ipairs(ProfBuddy.TradeSkillFrame.settingsCheckboxes or {}) do
+        if cb.settingKey == "trainerShowRanges" then found = cb end
+    end
+    EXPECT(found, "no Show skill-up ranges at trainers box in Settings")
+end
+print("  PASS F75 trainer ranges: colored numbers on unlearned recipe rows, no doubling, labeled tooltip line with your tier, nothing for known recipes, ranks, a weapon master or the setting off, Settings box")
+
+-- F76: side panels never cover their window. The size limit leaves room
+-- for the widest side panel; a panel opening with no room on the right
+-- moves its window left (not in combat); a drag on the grip closes an open
+-- dropdown list first
+do
+    local UI, TSF = ProfBuddy.UI, ProfBuddy.TradeSkillFrame
+    local keepW, keepH = rawget(UIParent, "GetWidth"), rawget(UIParent, "GetHeight")
+    rawset(UIParent, "GetWidth", function() return 1366 end)
+    rawset(UIParent, "GetHeight", function() return 768 end)
+    local st = { scale = 1.3, left = 600, top = 700 }
+    local win = CreateFrame("Frame", nil, UIParent)
+    rawset(win, "GetScale", function() return st.scale end)
+    rawset(win, "SetScale", function(_, v) st.scale = v end)
+    rawset(win, "GetLeft", function() return st.left / st.scale end)
+    rawset(win, "GetTop", function() return st.top / st.scale end)
+    rawset(win, "GetRight", function() return st.left / st.scale + 740 end)
+    rawset(win, "GetWidth", function() return 740 end)
+    rawset(win, "GetHeight", function() return 540 end)
+    rawset(win, "SetPoint", function(_, p, rel, rp, x, y) st.left, st.top = x * st.scale, y * st.scale end)
+    local panel = CreateFrame("Frame", nil, UIParent)
+    rawset(panel, "GetWidth", function() return 280 end)
+    rawset(panel, "GetScale", function() return st.scale end)
+    rawset(panel, "SetScale", function() end)
+    -- 740 wide plus a 280 wide panel on a 1366 wide screen: 1.33, not 1.42
+    EXPECT(UI:FitScale(win, 1.5) == 1.42 and UI:FitScale(win, 1.5, { panel }) == 1.33,
+           "the size limit leaves no room for the side panel: " .. tostring(UI:FitScale(win, 1.5, { panel })))
+    -- the panel opens past the screen's right edge: the window moves left by the overflow
+    UI:MakeRoomBeside(win, panel)
+    EXPECT(math.abs(st.left - (600 - ((600 / 1.3 + 744) * 1.3 + 280 * 1.3 - 1366))) < 0.01 and math.abs(st.top - 700) < 0.01,
+           "window not moved left for the panel: " .. tostring(st.left))
+    -- room already: it stays
+    local was = st.left
+    UI:MakeRoomBeside(win, panel)
+    EXPECT(math.abs(st.left - was) < 0.01, "a window with room moved")
+    -- never past the screen's left edge, and never in combat
+    st.left = 1000
+    local keepCombat = InCombatLockdown
+    InCombatLockdown = function() return true end
+    UI:MakeRoomBeside(win, panel)
+    EXPECT(st.left == 1000, "a window moved in combat")
+    InCombatLockdown = keepCombat
+    st.scale = 1.5; st.left = 200
+    rawset(UIParent, "GetWidth", function() return 1000 end)
+    UI:MakeRoomBeside(win, panel)
+    EXPECT(st.left == 0, "a window moved past the screen's left edge: " .. tostring(st.left))
+    rawset(UIParent, "GetWidth", function() return 1366 end)
+    -- a scale change with the panel open makes room the same way
+    st.scale, st.left = 1, 600
+    rawset(panel, "IsShown", function() return true end)
+    UI:ApplyScale(win, 1.33, { panel })
+    EXPECT(st.scale == 1.33 and st.left < 600, "a scale change with the panel open left it covering the window")
+    rawset(UIParent, "GetWidth", keepW); rawset(UIParent, "GetHeight", keepH)
+    -- the Material Calculator, Order History and Find a Crafter make room when they open
+    local calls = {}
+    local keepMR = UI.MakeRoomBeside
+    UI.MakeRoomBeside = function(_, f, p) calls[#calls + 1] = { f, p } end
+    local calc = TSF.calcPanel
+    calc:GetScript("OnShow")(calc)
+    local OP = ProfBuddy.OrdersPanel
+    OP.histFrame:GetScript("OnShow")(OP.histFrame)
+    OP.findFrame:GetScript("OnShow")(OP.findFrame)
+    UI.MakeRoomBeside = keepMR
+    EXPECT(#calls == 3 and calls[1][1] == TSF.frame and calls[1][2] == calc
+           and calls[2][1] == UI.frame and calls[2][2] == OP.histFrame
+           and calls[3][1] == UI.frame and calls[3][2] == OP.findFrame, "a side panel does not make room when it opens")
+    -- a drag on the grip closes an open dropdown list
+    local dd = TSF.sortDropdown
+    dd.listFrame:Show()
+    TSF.scaleGrip:GetScript("OnMouseDown")(TSF.scaleGrip, "LeftButton")
+    TSF.scaleGrip:GetScript("OnMouseUp")(TSF.scaleGrip)
+    EXPECT(not dd.listFrame:IsShown(), "a grip drag left a dropdown list open")
+end
+print("  PASS F76 side panels: the size limit leaves room for the widest, opening one moves the window left by the overflow (not past the edge, not in combat), a scale change does the same, a grip drag closes dropdown lists")
+
+print("ALL FOREVER TESTS PASS (76)")

@@ -893,6 +893,9 @@ local function ReadService(i)
     end
     return id, tonumber(rank)
 end
+-- The trainer window's skill-up ranges (UI/Trainer.lua) find the recipe the
+-- same way.
+KN.ReadService = ReadService
 
 -- Record every recipe the open trainer lists. Returns how many.
 function KN:CaptureTrainer()

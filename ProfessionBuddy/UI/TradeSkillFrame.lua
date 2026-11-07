@@ -322,16 +322,20 @@ local NO_DIFF_COLOR = { r = 1, g = 1, b = 1 }
 -- agrees with the recipe list (and the "Difficulty:" label), even if the
 -- static range numbers are imperfect. Falls back to computing the tier from
 -- currentSkill vs the range when not provided.
+-- The four range colors, orange to grey: the detail panel's range line and
+-- the trainer window's (UI/Trainer.lua).
+local RANGE_COLORS = {
+    "|cffff8000",  -- orange
+    "|cffffff00",  -- yellow
+    "|cff00ff00",  -- green
+    "|cff808080",  -- grey
+}
+
 local function SkillRangeDetailed(range, currentSkill, knownDiff)
     if not range then return "" end
 
     local labels = { "Orange", "Yellow", "Green", "Gray" }
-    local colors = {
-        "|cffff8000",  -- orange
-        "|cffffff00",  -- yellow
-        "|cff00ff00",  -- green
-        "|cff808080",  -- grey
-    }
+    local colors = RANGE_COLORS
 
     local knownIdx = knownDiff and DIFF_TIER_INDEX[knownDiff] or nil
 
@@ -358,6 +362,16 @@ local function SkillRangeDetailed(range, currentSkill, knownDiff)
 
     return table.concat(parts, "  ")
 end
+
+-- For the trainer window (UI/Trainer.lua): the same range, colors and line
+-- PB's own window shows.
+addon.SkillRange = {
+    Get      = GetSkillRange,
+    Detailed = SkillRangeDetailed,
+    Diff     = DiffFromSkillRange,
+    Num      = RangeNum,
+    COLORS   = RANGE_COLORS,
+}
 
 ----------------------------------------------------------------------
 -- State
@@ -4421,6 +4435,8 @@ function TSF:BuildCalcPanel()
     calc:SetScript("OnShow", function(s)
         s:ClearAllPoints()
         s:SetPoint("TOPLEFT", self.frame, "TOPRIGHT", 4, 0)
+        -- no room on the right at this size: the window moves left
+        if addon.UI and addon.UI.MakeRoomBeside then addon.UI:MakeRoomBeside(self.frame, s) end
     end)
     calc:SetScript("OnHide", function()
         self:UpdateCalcBtnState()
@@ -6051,6 +6067,9 @@ function TSF:BuildSettingsPanel(parent)
     -- checkboxes overlap the slider. Verified via layout sim.
     yRight = yRight - 52
     MakeCheckbox("Show disenchant results", "tooltipShowDisenchant", yRight, COL_RIGHT)
+    -- Skill-up ranges on a profession trainer's recipes (UI/Trainer.lua)
+    yRight = yRight - 26
+    MakeCheckbox("Show skill-up ranges at trainers", "trainerShowRanges", yRight, COL_RIGHT)
 
     -- Gather skill on ore/herb NODES + skinnable/mineable/herbable MOBS.
     yRight = yRight - 26

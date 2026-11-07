@@ -200,4 +200,65 @@ end
 EXPECT(#missing == 0, "fell back to a stub for " .. table.concat(missing, ", "))
 print("  PASS " .. TAG .. "8 no classic API call fell back to a stub")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 8)")
+-- U9: skill-up ranges at the trainer on TBC Anniversary. The selected
+-- recipe's Requires line gets the numbers only when they fit on that line
+-- (the Cost label sits right under it); the skill icon's tooltip always gets
+-- the labeled line; a known recipe, a class trainer and the setting off add
+-- nothing
+do
+    local S = PB.db.settings
+    local services = {
+        { "Embossed Leather Gloves", "unavailable", "Leatherworking", 55 },
+        { "Handstitched Leather Boots", "used", "Leatherworking", 1 },
+    }
+    local tradeskill = true
+    -- TBC order: name, subText, category
+    GetTrainerServiceInfo = function(i) local v = services[i]; if v then return v[1], "", v[2], false end end
+    GetTrainerServiceSkillReq = function(i) local v = services[i]; if v then return v[3], v[4], true end end
+    IsTradeskillTrainer = function() return tradeskill end
+    local req = CreateFrame("FontString", "ClassTrainerSkillRequirements", UIParent)
+    local charW = 4
+    rawset(req, "GetWidth", function() return 244 end)
+    rawset(req, "GetUnboundedStringWidth", function(self)
+        return #(self:GetText():gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) * charW
+    end)
+    ClassTrainer_SetSelection = function(i)
+        local v = services[i]
+        req:SetText("Requires: " .. v[3] .. " (" .. v[4] .. ")")
+    end
+    FIRE("ADDON_LOADED", "Blizzard_TrainerUI")
+    FIRE("TRAINER_SHOW")
+    -- U7 replaced the tooltip's AddLine; read lines into _lines again
+    rawset(GameTooltip, "AddLine", function(self, t) local l = rawget(self, "_lines"); if l then l[#l + 1] = t end end)
+    ClassTrainer_SetSelection(1)
+    EXPECT(req:GetText() == "Requires: Leatherworking (55)   |cffff800055|r  |cffffff0085|r  |cff00ff00100|r  |cff808080115|r",
+           "Requires line: " .. tostring(req:GetText()))
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(1)
+    local tl = rawget(GameTooltip, "_lines")
+    EXPECT(#tl == 1 and tl[1]:find("^Skill%-ups %(ProfessionBuddy%): |cffffffff>|r|cffff8000Orange: 55|r"),
+           "tooltip: " .. tostring(tl[1]))
+    -- too long for one line: the line stays Blizzard's, the tooltip still has it
+    charW = 7
+    ClassTrainer_SetSelection(1)
+    EXPECT(req:GetText() == "Requires: Leatherworking (55)", "a line too long for the pane: " .. tostring(req:GetText()))
+    charW = 4
+    -- a recipe you know
+    ClassTrainer_SetSelection(2)
+    EXPECT(req:GetText() == "Requires: Leatherworking (1)", "a known recipe got numbers")
+    -- the setting off, and a class trainer
+    S.trainerShowRanges = false
+    ClassTrainer_SetSelection(1)
+    EXPECT(req:GetText() == "Requires: Leatherworking (55)", "numbers with the setting off")
+    S.trainerShowRanges = true
+    tradeskill = false
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(1)
+    ClassTrainer_SetSelection(1)
+    EXPECT(#rawget(GameTooltip, "_lines") == 0 and req:GetText() == "Requires: Leatherworking (55)",
+           "a class trainer got skill-up ranges")
+    rawset(GameTooltip, "_lines", nil)
+end
+print("  PASS " .. TAG .. "9 trainer ranges on TBC Anniversary: numbers on the Requires line when they fit, none when too long, tooltip line, nothing for a known recipe, the setting off or a class trainer")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 9)")

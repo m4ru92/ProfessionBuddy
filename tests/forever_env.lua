@@ -170,6 +170,9 @@ function CreateFrame(kind, name, parent)
 end
 UIParent = CreateFrame("Frame", "UIParent")
 GameTooltip = CreateFrame("GameTooltip", "GameTooltip", UIParent)
+-- A trainer service's tooltip (both clients); the trainer harness steps
+-- post-hook it, so it is a real method on the tooltip itself
+rawset(GameTooltip, "SetTrainerService", function(self, i) rawset(self, "_trainerService", i) end)
 UISpecialFrames = {}
 UIPanelWindows = {}
 

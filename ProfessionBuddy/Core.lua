@@ -690,6 +690,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         tooltipMaxOther     = 5,
         tooltipMaxHeldBy    = 8,    -- "Held by" lines on item tooltips; 21 = "All"
         tooltipShowDisenchant = true, -- "Disenchants into" on item tooltips (Data/Disenchant.lua)
+        trainerShowRanges   = true, -- skill-up ranges on a profession trainer's recipes (UI/Trainer.lua)
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
@@ -807,6 +808,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.windowStyle == nil then ProfBuddyDB.settings.windowStyle = "modern" end
     if ProfBuddyDB.settings.replaceTradeSkill == nil then ProfBuddyDB.settings.replaceTradeSkill = true end
     if ProfBuddyDB.settings.tooltipShowDisenchant == nil then ProfBuddyDB.settings.tooltipShowDisenchant = true end
+    if ProfBuddyDB.settings.trainerShowRanges == nil then ProfBuddyDB.settings.trainerShowRanges = true end
     -- 2.0.2: before this setting, Replace off always opened both windows.
     -- Players who had it off keep that; everyone else starts with it off.
     if ProfBuddyDB.settings.openBesideBlizzard == nil then
