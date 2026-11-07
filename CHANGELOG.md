@@ -20,10 +20,10 @@ Thanks to the guild members whose requests and reports shaped this update.
 
 **Added on both clients**
 
-- **Disenchants into:** a tooltip section on every item you can disenchant, below Held by: each material, its count, and its chance, from the cmangos (TBC Anniversary) and VMaNGOS (WoW: Forever) databases, the same sources as the gathering data. On TBC Anniversary it also reads "Requires Enchanting N", red when none of your characters has that skill. WoW: Forever needs no Enchanting skill to disenchant, so there is no skill line. On WoW: Forever, gear the 1.12 database does not list, such as Forever's new items, gets an estimate: Forever's own disenchant groups place it by quality, item level, and type, and the section says "estimate". A "Show disenchant results" box in Settings, under the Held by slider, turns it off.
-- **Window size:** a grip in the bottom-right corner of the main window and the profession window. Drag it to scale the window from 75% to 150%; the window's top-left corner stays put, and the Material Calculator scales with the profession window. Right-click the grip to go back to 100%. Each window keeps its size, and the grip does nothing in combat.
-- **Guild right-click menu:** right-click a guildmate's row on the Guild tab for Whisper and Invite to group.
-- **Open ProfessionBuddy beside Blizzard's window:** a box under "Replace default profession window", for when Replace is off. Ticked, a profession opens both windows, as before; unticked, only Blizzard's window opens, and PB still records your recipes. Players who had Replace off keep both windows.
+- **Disenchants into:** a tooltip section on every item you can disenchant, below Held by: each material, its count, and its chance, from the cmangos (TBC Anniversary) and VMaNGOS (WoW: Forever) databases, the same sources as the gathering data. On TBC Anniversary it also reads "Requires Enchanting N", red when none of your characters has that skill. WoW: Forever needs no Enchanting skill to disenchant, so there is no skill line. On WoW: Forever, gear that the 1.12 database has no disenchant results for, such as items added in Forever, gets an estimate. Forever's own disenchant groups place it by quality, item level, and type, and the section says "estimate". To turn the section off, clear the "Show disenchant results" checkbox in Settings, under the Held by slider.
+- **Window size:** a grip in the bottom-right corner of the main window and the profession window. Drag it to scale the window from 75% to 150%; the window's top-left corner stays put, and the Material Calculator scales with the profession window. Order History, Find a Crafter, dropdown lists, and menus take the size of the window they open from. A window never grows bigger than the screen. Right-click the grip to go back to 100%. Each window keeps its size, and the grip does nothing in combat.
+- **Guild right-click menu:** right-click a guildmate's row on the Guild tab for Whisper and Invite to group. Both are unavailable for an offline guildmate and for yourself, and Invite is unavailable for someone already in your group.
+- **Open ProfessionBuddy beside Blizzard's window:** a checkbox under "Replace default profession window", for when Replace is off. When it's selected, a profession opens both windows, as before. When it's clear, only Blizzard's window opens, and PB still records your recipes. Players who had Replace off keep both windows.
 
 **WoW: Forever**
 
@@ -33,11 +33,11 @@ Thanks to the guild members whose requests and reports shaped this update.
 **Changes**
 
 - Shift-clicking a recipe row types the same link Share gives. When the link is still loading, PB says so, as Share does, instead of selecting the recipe.
-- In-game text: Gray and Canceled replace Grey and Cancelled. Headings and buttons use sentence case ("Order history", "Item info", "Craft all"), and feature names keep theirs (Material Calculator, Find a Crafter, Guild Board, Request Craft). The difficulty lines read "Orange: will level up". Request Craft says "Requester provides mats", like the Orders tab, and "Split or discuss" replaces "Split / discuss". The skill-up filter and sort read "Skill-up" and "Skill-ups". The Share menu is titled "Post in chat". The login line reads "ProfessionBuddy v2.0.2 loaded. Type /pb or /profbuddy."
+- In-game text: Gray and Canceled replace Grey and Cancelled. Headings and buttons use sentence case ("Order history", "Item info", "Craft all"), and feature names keep theirs (Material Calculator, Find a Crafter, Guild Board, Request Craft). The difficulty lines read "Orange: will level up". Request Craft says "Requester provides mats", like the Orders tab, and "Split or discuss" replaces "Split / discuss". The skill-up filter and sort read "Skill-up" and "Skill-ups". The Share menu's title reads "Post in chat". The login line reads "ProfessionBuddy v2.0.2 loaded. Type /pb or /profbuddy."
 
 **Fixes**
 
-- Unticking "Replace default profession window" reloaded the game at once, without asking. It asks Reload or Later instead, so you can change other settings first.
+- Clearing the "Replace default profession window" checkbox reloaded the game at once, without asking. It asks Reload or Later instead, so you can change other settings first.
 - The Guild tab's header had a double space ("Guild  (64 members").
 
 **Compatibility**

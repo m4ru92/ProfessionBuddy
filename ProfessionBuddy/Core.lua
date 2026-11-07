@@ -1176,7 +1176,7 @@ function addon:ShowBugReport()
 
         local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
         title:SetPoint("TOP", 0, -14)
-        title:SetText("ProfessionBuddy bug report")
+        title:SetText("ProfessionBuddy Bug Report")
 
         local instr = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         instr:SetPoint("TOPLEFT", 16, -40)

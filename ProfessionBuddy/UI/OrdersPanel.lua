@@ -1431,6 +1431,7 @@ local function showItemFavMenu(anchorBtn, itemBox, qtyBox, refreshStar)
     m:SetWidth(math.max(150, maxW))
     m:SetHeight(24 + #entries * ROW_H + 8)
     m:ClearAllPoints()
+    if addon.UI and addon.UI.MatchScale then addon.UI:MatchScale(m, anchorBtn) end
     m:SetPoint("TOPLEFT", anchorBtn, "BOTTOMLEFT", 0, -2)
     m:Show()
 end
@@ -1937,12 +1938,15 @@ function OP:BuildFindPanel()
     local function anchorRight()
         f:ClearAllPoints()
         if addon.UI and addon.UI.frame then
+            -- the main window's size (its grip), like its height
+            f:SetScale(addon.UI.frame:GetScale() or 1)
             f:SetPoint("TOPLEFT", addon.UI.frame, "TOPRIGHT", 4, 0)
         else
             f:SetPoint("CENTER")
         end
     end
     anchorRight()
+    if addon.UI and addon.UI.scaleFollowers then table.insert(addon.UI.scaleFollowers, f) end
     if addon.UI and addon.UI.frame then
         addon.UI.frame:HookScript("OnHide", function() if f:IsShown() then f:Hide() end end)
     end
@@ -2172,12 +2176,15 @@ function OP:BuildHistoryPanel()
     local function anchorRight()
         f:ClearAllPoints()
         if addon.UI and addon.UI.frame then
+            -- the main window's size (its grip), like its height
+            f:SetScale(addon.UI.frame:GetScale() or 1)
             f:SetPoint("TOPLEFT", addon.UI.frame, "TOPRIGHT", 4, 0)
         else
             f:SetPoint("CENTER")
         end
     end
     anchorRight()
+    if addon.UI and addon.UI.scaleFollowers then table.insert(addon.UI.scaleFollowers, f) end
     if addon.UI and addon.UI.frame then
         -- Close with the parent window
         addon.UI.frame:HookScript("OnHide", function()

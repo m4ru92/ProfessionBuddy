@@ -506,13 +506,16 @@ function TSF:Init()
         if self._bagTracker and self._bagTrackerUpdate then
             self._bagTracker:SetScript("OnUpdate", self._bagTrackerUpdate)
         end
+        -- Nothing to close when PB's window is not open (Blizzard's window
+        -- alone, with Replace off): no close sound, no stale window state.
+        local open = self.frame and self.frame:IsShown() and true or false
         if InCombatLockdown() then
             -- Entering combat closes the trade skill server-side. Replay the
             -- close when combat ends instead of leaving PB up on a dead
             -- backend, where Craft would silently do nothing.
-            self._pendingClose = true
+            self._pendingClose = open
             self._pendingOpen = nil
-        else
+        elseif open then
             self:Hide(true)  -- from the game's close event; backend already closed
         end
     end)
@@ -579,10 +582,11 @@ function TSF:Init()
         if self._bagTracker and self._bagTrackerUpdate then
             self._bagTracker:SetScript("OnUpdate", self._bagTrackerUpdate)
         end
+        local open = self.frame and self.frame:IsShown() and true or false
         if InCombatLockdown() then
-            self._pendingClose = true
+            self._pendingClose = open
             self._pendingOpen = nil
-        else
+        elseif open then
             self:Hide(true)  -- from the game's close event; backend already closed
         end
     end)
@@ -2039,6 +2043,10 @@ local function CreateDropdown(parent, width, options, defaultVal, onChange, pref
     end
 
     local function PositionList()
+        -- The list is UIParent's child; give it the button's scale (a window
+        -- scaled by its grip), so the button's own coordinates place it and
+        -- it is the same size as the window
+        listFrame:SetScale(btn:GetEffectiveScale() / UIParent:GetEffectiveScale())
         local x = btn:GetCenter()
         local bw = btn:GetWidth()
         local left = x - bw / 2
@@ -3305,7 +3313,7 @@ function TSF:UpdateListRows()
                             targetHex = DIFF_COLORS.easy.hex
                         elseif entry.difficulty == "easy" then
                             threshold = sr[4]
-                            targetName = "grey"
+                            targetName = "gray"
                             targetHex = DIFF_COLORS.trivial.hex
                         end
                         if threshold then
@@ -5134,6 +5142,7 @@ function TSF:ShowShareMenu(anchorBtn)
     m:SetWidth(110)
     m:SetHeight(24 + #SHARE_CHANNELS * ROW_H + 8)
     m:ClearAllPoints()
+    if addon.UI and addon.UI.MatchScale then addon.UI:MatchScale(m, anchorBtn) end
     m:SetPoint("TOPRIGHT", anchorBtn, "BOTTOMRIGHT", 0, -2)
     m:Show()
 end

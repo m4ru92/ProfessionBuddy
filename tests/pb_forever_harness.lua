@@ -3994,7 +3994,7 @@ do
     row._member = false   -- an empty row (the stub frames answer any unset field)
     up(row, "RightButton")
     EXPECT(not GP._memberMenu or not GP._memberMenu:IsShown(), "an empty row opened the menu")
-    row._member = { name = "Noodle Stand", charKey = "Noodle Stand-Forever" }
+    row._member = { name = "Noodle Stand", charKey = "Noodle Stand-Forever", online = true }
     up(row, "LeftButton")
     EXPECT(not GP._memberMenu or not GP._memberMenu:IsShown(), "a left click opened the menu")
     up(row, "RightButton")
@@ -4008,6 +4008,35 @@ do
     up(row, "RightButton")
     m.buttons[2]:GetScript("OnClick")(m.buttons[2])
     EXPECT(invited[1] == "Noodle Stand" and not m:IsShown(), "Invite: " .. tostring(invited[1]))
+    up(row, "RightButton")
+    ProfBuddy.CloseAllPopups()   -- the main window hiding or a tab switch
+    EXPECT(not m:IsShown(), "the guild menu stays open when the window hides")
+    -- greyed when they cannot work: offline, yourself, Invite when grouped
+    local function usable() return m.buttons[1]:IsEnabled() and true or false, m.buttons[2]:IsEnabled() and true or false end
+    up(row, "RightButton")
+    local w, i = usable()
+    EXPECT(w and i, "an online guildmate's actions greyed")
+    m:Hide()
+    row._member = { name = "Noodle Stand", charKey = "Noodle Stand-Forever", online = false }
+    up(row, "RightButton"); w, i = usable()
+    EXPECT(m:IsShown() and not w and not i, "an offline guildmate's Whisper or Invite not greyed")
+    m:Hide()
+    local me = ProfBuddy:PlayerKey()
+    row._member = { name = me, charKey = me, online = true }
+    up(row, "RightButton"); w, i = usable()
+    EXPECT(not w and not i, "your own Whisper or Invite not greyed")
+    m:Hide()
+    local keepUIP, keepUIR = rawget(_G, "UnitInParty"), rawget(_G, "UnitInRaid")
+    UnitInParty = function(n) return n == "Noodle Stand" end
+    UnitInRaid = function() return nil end
+    row._member = { name = "Noodle Stand-Forever", charKey = "Noodle Stand-Forever", online = true }
+    up(row, "RightButton"); w, i = usable()
+    EXPECT(w and not i, "Invite not greyed for a guildmate in your group")
+    m:Hide()
+    UnitInParty, UnitInRaid = keepUIP, keepUIR
+    local csrc = assert(io.open(PB_BASE .. "/Core.lua")):read("*a")
+    EXPECT(csrc:find('title:SetText("ProfessionBuddy Bug Report")', 1, true)
+           and csrc:find('"== ProfessionBuddy Bug Report =="', 1, true), "bug report window title and text differ")
     local osrc = assert(io.open(PB_BASE .. "/UI/OrdersPanel.lua")):read("*a")
     EXPECT(osrc:find('split     = "Split or discuss"', 1, true), "order details do not say Split or discuss")
     local src = assert(io.open(PB_BASE .. "/UI/GuildPanel.lua")):read("*a")
@@ -4015,7 +4044,7 @@ do
            "the guild menu uses Blizzard's unit menu")
     ChatFrameUtil.SendTell, C_PartyInfo = keepCFU, keepPI
 end
-print("  PASS F71 guild row right-click: PB's menu with Whisper and Invite to group, roster name, closes after a pick")
+print("  PASS F71 guild row right-click: PB's menu with Whisper and Invite to group, roster name, closes after a pick and with the window, greyed offline, for yourself, and Invite when grouped")
 
 -- F72: the profession link button (WoW: Forever), as in Blizzard's own
 -- window: the bar is always shorter by its room; it shows for your own live
@@ -4159,6 +4188,10 @@ do
         rawset(f, "SetPoint", function(_, p, rel, rp, x, y) st.point = { p, rp, x, y }; st.left, st.top = x * st.scale, y * st.scale end)
         return f, st
     end
+    local keepW, keepH = rawget(UIParent, "GetWidth"), rawget(UIParent, "GetHeight")
+    local screenW, screenH = 1920, 1080
+    rawset(UIParent, "GetWidth", function() return screenW end)
+    rawset(UIParent, "GetHeight", function() return screenH end)
     local follower = { SetScale = function(self, v) self.scale = v end }
     local win, st = fakeWindow(100, 500, 740, 540)
     EXPECT(UI:ApplyScale(win, 1.5, { follower }) and st.scale == 1.5 and follower.scale == 1.5, "scale not applied")
@@ -4175,14 +4208,24 @@ do
     S.testScale = nil
     local grip = UI:AddScaleGrip(win2, "testScale", { follower2 })
     rawset(UIParent, "GetEffectiveScale", function() return 1 end)
-    GetCursorPosition = function() return 100 + 740 * 1.2, 500 - 540 * 1.1 end
+    -- pressed 7 px inside the corner, as on the grip: no change until it moves
+    local cx, cy = 100 + 740 - 7, 500 - 540 + 7
+    GetCursorPosition = function() return cx, cy end
     grip:GetScript("OnMouseDown")(grip, "LeftButton")
+    grip:GetScript("OnUpdate")(grip)
+    EXPECT(st2.scale == 1 and follower2.scale == nil, "a press without a move changed the size: " .. tostring(st2.scale))
+    cx, cy = 100 + 733 * 1.2, 500 - 533 * 1.1
     grip:GetScript("OnUpdate")(grip)
     EXPECT(math.abs(st2.scale - 1.2) < 0.001 and follower2.scale == st2.scale, "drag scale " .. tostring(st2.scale))
     grip:GetScript("OnMouseUp")(grip)
     EXPECT(S.testScale == 1.2, "drag not saved: " .. tostring(S.testScale))
-    GetCursorPosition = function() return 100 + 740 * 3, 500 - 540 * 3 end
+    -- a press and release without a move saves the size unchanged
     grip:GetScript("OnMouseDown")(grip, "LeftButton")
+    grip:GetScript("OnUpdate")(grip)
+    grip:GetScript("OnMouseUp")(grip)
+    EXPECT(S.testScale == 1.2 and st2.scale == 1.2, "a click on the grip changed the size: " .. tostring(st2.scale))
+    grip:GetScript("OnMouseDown")(grip, "LeftButton")
+    cx, cy = 100 + 740 * 4, 500 - 540 * 4
     grip:GetScript("OnUpdate")(grip)
     grip:GetScript("OnMouseUp")(grip)
     EXPECT(S.testScale == 1.5, "drag past the limit saved " .. tostring(S.testScale))
@@ -4206,12 +4249,77 @@ do
     InCombatLockdown = keepCombat
     rawget(win4, "_h").OnShow(win4)
     EXPECT(st4.scale == 1.3, "saved scale not applied on the next open: " .. tostring(st4.scale))
+    -- never bigger than the screen: 540 tall on a 768 tall screen stops at 1.42
+    screenH = 768
+    EXPECT(UI:FitScale(win, 1.5) == 1.42 and UI:FitScale(win, 1.2) == 1.2, "scale not capped to the screen")
+    local win5, st5 = fakeWindow(100, 700, 740, 540)
+    S.testScale = 1
+    local grip5 = UI:AddScaleGrip(win5, "testScale")
+    GetCursorPosition = function() return 100 + 733, 700 - 533 end
+    grip5:GetScript("OnMouseDown")(grip5, "LeftButton")
+    GetCursorPosition = function() return 100 + 733 * 1.5, 700 - 533 end   -- sideways
+    grip5:GetScript("OnUpdate")(grip5)
+    grip5:GetScript("OnMouseUp")(grip5)
+    EXPECT(st5.scale == 1.42 and S.testScale == 1.42, "a sideways drag made the window taller than the screen: " .. tostring(st5.scale))
+    S.testScale = 1.5
+    rawget(win5, "_h").OnShow(win5)
+    EXPECT(st5.scale == 1.42, "a saved scale bigger than the screen applied: " .. tostring(st5.scale))
+    rawset(UIParent, "GetWidth", keepW); rawset(UIParent, "GetHeight", keepH)
+    -- a dropdown list (UIParent's child) opens at the button and the window's
+    -- size when the window is scaled
+    local dd = TSF.sortDropdown
+    local keepES = rawget(UIParent, "GetEffectiveScale")
+    rawset(dd.btn, "GetEffectiveScale", function() return 1.5 end)
+    rawset(UIParent, "GetEffectiveScale", function() return 1 end)
+    rawset(dd.btn, "GetCenter", function() return 300, 400 end)
+    rawset(dd.btn, "GetWidth", function() return 140 end)
+    rawset(dd.btn, "GetRect", function() return 230, 390, 140, 20 end)
+    local lp
+    rawset(dd.listFrame, "SetPoint", function(_, ...) lp = { ... } end)
+    rawset(dd.listFrame, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+    dd.btn:GetScript("OnClick")(dd.btn)
+    EXPECT(rawget(dd.listFrame, "_scale") == 1.5 and lp and lp[4] == 230 and lp[5] == 390,
+           "a dropdown list does not follow the window's scale")
+    dd.listFrame:Hide()
+    for _, k in ipairs({ "GetEffectiveScale", "GetCenter", "GetWidth", "GetRect" }) do rawset(dd.btn, k, nil) end
+    rawset(dd.listFrame, "SetPoint", nil); rawset(dd.listFrame, "SetScale", nil)
+    -- small menus take the size of the control they open from
+    local menu, anchor = CreateFrame("Frame", nil, UIParent), CreateFrame("Button", nil, UIParent)
+    rawset(anchor, "GetEffectiveScale", function() return 1.3 end)
+    rawset(menu, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+    UI:MatchScale(menu, anchor)
+    EXPECT(rawget(menu, "_scale") == 1.3, "a menu does not take its window's size")
+    for file, n in pairs({ ["UI/TradeSkillFrame.lua"] = 1, ["UI/GuildPanel.lua"] = 1, ["UI/OrdersPanel.lua"] = 1,
+                           ["UI/FriendsPanel.lua"] = 1, ["UI/MailHelper.lua"] = 1 }) do
+        local fsrc = assert(io.open(PB_BASE .. "/" .. file)):read("*a")
+        local _, c = fsrc:gsub("UI:MatchScale%(m, ", "")
+        EXPECT(c == n, file .. ": a menu does not take its window's size")
+    end
+    rawset(UIParent, "GetEffectiveScale", keepES)
+    -- Order History and Find a Crafter follow the main window's size
+    local OP = ProfBuddy.OrdersPanel
+    OP:BuildHistoryPanel(); OP:BuildFindPanel()
+    local found = 0
+    for _, fl in ipairs(UI.scaleFollowers) do
+        if fl == OP.histFrame or fl == OP.findFrame then found = found + 1 end
+    end
+    EXPECT(found == 2, "Order History and Find a Crafter do not scale with the main window")
+    rawset(UI.frame, "GetScale", function() return 1.3 end)
+    for _, pf in ipairs({ OP.histFrame, OP.findFrame }) do
+        rawset(pf, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+        pf:GetScript("OnShow")(pf)
+        EXPECT(rawget(pf, "_scale") == 1.3, "a side panel opened at the wrong size")
+        rawset(pf, "SetScale", nil)
+    end
+    rawset(UI.frame, "GetScale", nil)
     S.testScale = nil
     local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(not src:find('targetName = "grey"', 1, true) and src:find('targetName = "gray"', 1, true),
+           'the Skill-ups range still reads "to grey"')
     EXPECT(src:find('AddScaleGrip%(f, "professionWindowScale", { self%.calcPanel }%)'),
            "the Material Calculator does not follow the profession window's scale")
 end
-print("  PASS F73 drag to scale: both windows, 75-150%, top-left kept, drag and release save, right-click resets, not in combat, applied at build")
+print("  PASS F73 drag to scale: both windows, 75-150%, top-left kept, drag and release save, a press alone keeps the size, right-click resets, not in combat, never bigger than the screen, dropdown lists, menus and side panels follow, applied at build")
 
 -- F74: "Disenchants into" on item tooltips (Data/Forever/Disenchant.lua,
 -- from VMaNGOS): the materials with count and chance, below Held by, on

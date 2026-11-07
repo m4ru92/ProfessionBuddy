@@ -84,11 +84,12 @@ Expected output ends with `ALL GHOST HARNESS TESTS PASS`.
 
 ## pb_tbc_ui_harness.lua, TBC Classic Anniversary windows
 
-Loads the `_TBC` toc in `tbc_env.lua` (the Forever stub environment with the
-TBC client's API, events and tooltips) and opens every window the way a player
-does: the main window and its four tabs, Leatherworking through the trade
-skill window and Enchanting through the craft window with a recipe selected,
-Settings, and the Material Calculator. A Lua error anywhere stops the run.
+Loads the `_TBC` toc in `tbc_env.lua`, the Forever stub environment with the
+TBC client's API, events, and tooltips. It opens every window the way a
+player does: the main window and its four tabs, Settings, and the Material
+Calculator. It opens Leatherworking through the trade skill window and
+Enchanting through the craft window, each with a recipe selected. A Lua
+error anywhere stops the run.
 `pb_tbc_ui_classic.lua` runs the same file in the Classic look, since PB
 builds its windows once per session. The output ends with
 `ALL TBC WINDOW TESTS PASS (modern, 8)` and `(classic, 8)`.

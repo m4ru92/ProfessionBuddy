@@ -349,6 +349,9 @@ function Ambiguate(name)
     return name
 end
 function UnitName() return "Me" end
+-- Not in a group: no unit is in your party or raid
+function UnitInParty() return false end
+function UnitInRaid() return nil end
 function GetUnitName() return "Me" end
 function UnitClass() return "Hunter", "HUNTER" end
 function UnitRace() return "Tauren", "Tauren" end

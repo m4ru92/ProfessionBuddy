@@ -83,8 +83,16 @@ EXPECT(ProfessionsFrame:IsShown(), "Blizzard's window did not open")
 EXPECT(not TSF.frame:IsShown(), "PB opened beside Blizzard's window with the setting off")
 EXPECT(openName and next(ProfBuddy.DataStore:GetProfession(nil, openName).recipes),
        "recipes not recorded while PB stayed closed (" .. tostring(openName) .. ")")
+-- closing Blizzard's window: PB, not open, plays no close sound and saves no
+-- window state
+local keepSound, keepSave, closeSounds, saves = PlaySound, TSF.SaveWindowState, 0, 0
+PlaySound = function(id) if id == SOUNDKIT.IG_SPELLBOOK_CLOSE then closeSounds = closeSounds + 1 end end
+TSF.SaveWindowState = function() saves = saves + 1 end
 C_TradeSkillUI.CloseTradeSkill()
 FLUSH()
+PlaySound, TSF.SaveWindowState = keepSound, keepSave
+EXPECT(closeSounds == 0 and saves == 0, "closing Blizzard's window ran PB's close: " .. closeSounds
+       .. " sounds, " .. saves .. " saves")
 TSF.frame:Show()
 C_TradeSkillUI.OpenTradeSkill(165)
 TS_LIST_READY()
@@ -92,7 +100,7 @@ FLUSH()
 openName = C_TradeSkillUI.GetBaseProfessionInfo().professionName
 EXPECT(TSF.frame:IsShown() and TSF.state.profName == openName, "an open PB window did not follow the profession: "
        .. tostring(TSF.state.profName) .. " vs " .. tostring(openName))
-print("  PASS W8 setting off: Blizzard's window opens alone, recipes still recorded; an open PB window follows")
+print("  PASS W8 setting off: Blizzard's window opens alone, recipes still recorded, no PB close on its close; an open PB window follows")
 
 -- W9: Settings. Unticking Replace asks Reload / Later instead of reloading;
 -- the sub-setting is greyed while Replace is on and saves when ticked

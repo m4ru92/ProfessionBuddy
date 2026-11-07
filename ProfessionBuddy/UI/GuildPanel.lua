@@ -275,7 +275,8 @@ end
 -- unit menu: that menu, opened by an addon, can leave Blizzard's protected
 -- actions blocked later. Whisper and invite go through the same calls on
 -- both clients (ChatFrameUtil, C_PartyInfo), with the older globals as a
--- fallback, and use the roster's own name for the guildmate.
+-- fallback, and use the roster's own name for the guildmate. The menu
+-- opens for offline guildmates too, with both actions greyed.
 ----------------------------------------------------------------------
 local function sendTell(name)
     local f = (ChatFrameUtil and ChatFrameUtil.SendTell) or ChatFrame_SendTell
@@ -287,9 +288,22 @@ local function invite(name)
     if f then f(name) end
 end
 
+-- Is the guildmate already in your party or raid?
+local function inYourGroup(name)
+    for _, n in ipairs({ name, addon:ShortName(name) }) do
+        if (UnitInParty and UnitInParty(n)) or (UnitInRaid and UnitInRaid(n)) then return true end
+    end
+    return false
+end
+
+-- Each action greys out when it cannot work: both for an offline
+-- guildmate and for yourself (Blizzard's offline guild menu has neither),
+-- and Invite for someone already in your group, as Blizzard's does.
 GP.MEMBER_ACTIONS = {
-    { text = "Whisper", run = sendTell },
-    { text = "Invite to group", run = invite },
+    { text = "Whisper", run = sendTell,
+      usable = function(m, isSelf) return m.online and not isSelf end },
+    { text = "Invite to group", run = invite,
+      usable = function(m, isSelf) return m.online and not isSelf and not inYourGroup(m.name) end },
 }
 
 function GP:EnsureMemberMenu()
@@ -349,10 +363,21 @@ function GP:ShowMemberMenu(row, member)
     local m = self:EnsureMemberMenu()
     m._name = member.name
     m.title:SetText(addon:ShortName(member.charKey or member.name))
+    local isSelf = addon:SameKey(member.charKey or member.name, addon:PlayerKey()) and true or false
+    for i, b in ipairs(m.buttons) do
+        if self.MEMBER_ACTIONS[i].usable(member, isSelf) then
+            b.text:SetTextColor(1, 0.82, 0)
+            b:Enable()
+        else
+            b.text:SetTextColor(0.5, 0.5, 0.5)
+            b:Disable()
+        end
+    end
     local w = m.title:GetStringWidth() + 16
     for _, b in ipairs(m.buttons) do w = math.max(w, b.text:GetStringWidth() + 24) end
     m:SetWidth(math.max(w, 120))
     m:ClearAllPoints()
+    if addon.UI and addon.UI.MatchScale then addon.UI:MatchScale(m, row) end
     m:SetPoint("TOPLEFT", row, "BOTTOMLEFT", 20, 0)
     m:Show()
 end

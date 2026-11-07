@@ -206,6 +206,7 @@ local function showOrderMenu(anchorBtn, key, profs)
     m:SetWidth(math.max(130, maxW))
     m:SetHeight(24 + #profs * ROW_H + 8)
     m:ClearAllPoints()
+    if addon.UI and addon.UI.MatchScale then addon.UI:MatchScale(m, anchorBtn) end
     m:SetPoint("TOPLEFT", anchorBtn, "BOTTOMLEFT", 0, -2)
     m:Show()
 end
