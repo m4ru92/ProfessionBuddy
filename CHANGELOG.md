@@ -2,7 +2,7 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
-## 2.0.2 - 2026-11-06
+## 2.0.2 - 2026-11-07
 
 A follow-up to the WoW: Forever launch, built from players' requests. It adds disenchant results, skill-up ranges at the trainer, a resize grip, a guild right-click menu, and Battle.net friends and a profession link on Forever. It also fixes the surprise reload.
 
