@@ -14,7 +14,7 @@ Thanks to the guild members whose requests and reports shaped this update.
 - **Skill-up ranges at the trainer:** each recipe you haven't learned shows the skill levels where it turns yellow, green, and gray.
 - **Window size:** drag the grip in a window's bottom-right corner to scale it from 75% to 150%.
 - **Battle.net friends on WoW: Forever:** the Battle.net button adds picked friends' Forever characters as contacts, as on TBC Anniversary.
-- **Profession link (WoW: Forever):** the chat bubble button beside the skill bar posts your profession's link, as in Blizzard's own window.
+- **Profession link (WoW: Forever):** the chat bubble button beside the skill bar posts your profession's link, as in Blizzard's own window. Guildmates, group members, and ProfessionBuddy friends who run ProfessionBuddy can open it.
 - **Guild right-click:** right-click a guildmate on the Guild tab to whisper them or invite them to your group.
 
 <!-- more -->
@@ -31,6 +31,7 @@ Thanks to the guild members whose requests and reports shaped this update.
 
 - The Battle.net button works on WoW: Forever. A picked Battle.net friend's Forever character becomes a contact when they log in, as on TBC Anniversary.
 - A profession link button sits right of the skill bar on your own professions: Blizzard's chat bubble, with its tooltip and its "Post in chat" menu for Guild, Party, Raid, and your channels. Clicking it with the chat box open types the link. The skill bar is always shorter by the button's width, so it never changes size.
+- WoW: Forever doesn't open other players' profession links, so ProfessionBuddy opens them. Click a profession link from a guildmate, a group member, or a ProfessionBuddy friend, and their recipes open in ProfessionBuddy's window. If ProfessionBuddy doesn't have their recipes yet, it asks them first and opens the window when the recipes arrive. Both players need ProfessionBuddy.
 
 **Changes**
 

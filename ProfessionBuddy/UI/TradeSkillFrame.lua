@@ -2346,6 +2346,10 @@ function TSF:BuildLinkButton(bar, x)
         GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT")
         GameTooltip:SetText(LINK_TRADESKILL_TOOLTIP or "Click here to create a link to your profession.",
             nil, nil, nil, nil, true)
+        -- The game does not open other players' profession links on WoW:
+        -- Forever; PB does, for these players (UI/ProfessionLink.lua)
+        GameTooltip:AddLine("Guildmates, group members, and ProfessionBuddy friends who run ProfessionBuddy can open it.",
+            1, 1, 1, true)
         GameTooltip:Show()
     end)
     btn:SetScript("OnLeave", function() btn._down = false; paint(); GameTooltip:Hide() end)

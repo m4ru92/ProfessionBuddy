@@ -50,4 +50,5 @@ UI/OrdersPanel.lua
 UI/MailHelper.lua
 UI/TradeSkillFrame.lua
 UI/Trainer.lua
+UI/ProfessionLink.lua
 UI/Launcher.lua

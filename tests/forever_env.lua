@@ -363,6 +363,8 @@ function UnitFactionGroup() return "Horde" end
 function UnitGUID() return "Player-1-00000001" end
 function IsShiftKeyDown() return false end
 function IsModifiedClick() return false end
+-- A chat link click (Blizzard_UIPanels_Game ItemRef.lua); PB post-hooks it
+function SetItemRef() end
 function IsInGuild() return false end
 function IsInGroup() return false end
 function IsInRaid() return false end

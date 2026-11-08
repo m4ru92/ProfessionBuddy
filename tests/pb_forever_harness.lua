@@ -4519,4 +4519,118 @@ do
 end
 print("  PASS F76 side panels: the size limit leaves room for the widest, opening one moves the window left by the overflow (not past the edge, not in combat), a scale change does the same, a grip drag closes dropdown lists")
 
-print("ALL FOREVER TESTS PASS (76)")
+-- F77: a profession link opens in PB's window between PB users. The game
+-- does not open other players' profession links on WoW: Forever, so PB reads
+-- the poster from the link's GUID and opens their recipes: a guildmate's
+-- stored recipes at once, or after asking them; a first name alone matches
+-- the one guildmate with it; a group member by unit GUID; strangers, your
+-- own link, modified and right clicks, and other links do nothing
+do
+    local PL, C, S = ProfBuddy.ProfessionLink, ProfBuddy.Comm, ProfBuddy.db
+    EXPECT(PL, "no ProfessionLink module")
+    local LINK = "trade:Player-6926-001E5723:2108:165"
+    local keep = {
+        IsInGuild = IsInGuild, GetNumGuildMembers = GetNumGuildMembers, GetGuildRosterInfo = GetGuildRosterInfo,
+        GetPlayerInfoByGUID = rawget(_G, "GetPlayerInfoByGUID"), IsInGroup = IsInGroup,
+        GetNumSubgroupMembers = GetNumSubgroupMembers, UnitGUID = UnitGUID, GetUnitName = GetUnitName,
+        IsModifiedClick = IsModifiedClick,
+    }
+    local roster = { "Bran Underhill", "Noodle Stand" }
+    IsInGuild = function() return true end
+    GetNumGuildMembers = function() return #roster end
+    GetGuildRosterInfo = function(i) return roster[i], "Member", 1, 20, nil, nil, nil, nil, true end
+    C._guildSet = nil
+    local infoName = "Bran Underhill"
+    GetPlayerInfoByGUID = function(g) if g == "Player-6926-001E5723" then return "Warrior", "WARRIOR", "Orc", "Orc", 2, infoName, "" end end
+    local opened, asked = {}, {}
+    local keepOpen, keepReq = PL.Open, C.RequestGuildSync
+    PL.Open = function(_, key, prof) opened[#opened + 1] = key .. "|" .. prof end
+    C.RequestGuildSync = function(_, key) asked[#asked + 1] = key end
+    local BRAN = ProfBuddy:NormKey("Bran Underhill")
+    S.characters[BRAN] = nil
+    local function click(link, button) PRINTS = {}; SetItemRef(link, "[Leatherworking]", button or "LeftButton") end
+
+    -- a guildmate with no stored recipes: PB asks, then opens when they arrive, once
+    click(LINK)
+    EXPECT(#asked == 1 and asked[1] == BRAN and #opened == 0, "a guildmate's link did not ask for recipes")
+    EXPECT(PRINTED("Asked Bran Underhill for their Leatherworking recipes."), "no asked line")
+    S.characters[BRAN] = { isRemote = true, professions = { Leatherworking = { skillLevel = 50, maxSkill = 75,
+        recipes = { ["Light Armor Kit"] = true } } } }
+    C:NotifyUIRefresh()
+    C:NotifyUIRefresh()
+    EXPECT(#opened == 1 and opened[1] == BRAN .. "|Leatherworking", "the reply did not open the profession once: " .. #opened)
+    -- stored recipes: opens at once, and still asks for fresh ones
+    opened, asked = {}, {}
+    click(LINK)
+    EXPECT(#opened == 1 and #asked == 1, "stored recipes did not open at once")
+    -- a first name alone (WoW: Forever's GetPlayerInfoByGUID) matches the one guildmate with it
+    infoName = "Bran"
+    opened = {}
+    click(LINK)
+    EXPECT(#opened == 1 and opened[1] == BRAN .. "|Leatherworking", "a first name did not match the guildmate")
+    -- two guildmates with that first name: PB does not guess
+    roster[3] = "Bran Otherfamily"; C._guildSet = nil
+    opened = {}
+    click(LINK)
+    EXPECT(#opened == 0 and PRINTED("Couldn't tell whose profession link that is."), "an ambiguous first name opened something")
+    roster[3] = nil; C._guildSet = nil
+    infoName = "Bran Underhill"
+    -- nobody answers: one line after the wait
+    S.characters[BRAN] = nil
+    click(LINK)
+    PRINTS = {}
+    FLUSH()
+    EXPECT(PRINTED("Bran Underhill didn't answer (offline or not running ProfessionBuddy)."), "no line when nobody answers")
+    -- a stranger: no request, and PB says who it opens links for
+    roster = { "Noodle Stand" }; C._guildSet = nil
+    opened, asked = {}, {}
+    click(LINK)
+    EXPECT(#asked == 0 and #opened == 0 and PRINTED("ProfessionBuddy opens Bran Underhill's Leatherworking when they're in your guild, your group, or your ProfessionBuddy friends."),
+           "a stranger's link was requested or opened")
+    -- a group member, found by their unit's GUID
+    IsInGroup = function() return true end
+    GetNumSubgroupMembers = function() return 1 end
+    local ownGUID = "Player-1-00000001"
+    UnitGUID = function(u) if u == "party1" then return "Player-6926-001E5723" end return ownGUID end
+    GetUnitName = function(u) if u == "party1" then return "Sushi Cats" end return "Me" end
+    GetPlayerInfoByGUID = function() return nil end
+    click(LINK)
+    EXPECT(#asked == 1 and asked[1] == ProfBuddy:NormKey("Sushi Cats"), "a group member's link was not asked for: " .. tostring(asked[1]))
+    -- your own link, a modified click, a right click, other links and
+    -- unknown skill lines: nothing (the poster is still a group member here,
+    -- so each one would ask if it got through)
+    local function nothing(what)
+        asked = {}
+        click(LINK)
+        EXPECT(#asked == 1, "the group member's link stopped asking before: " .. what)
+        asked = {}
+    end
+    nothing("own link")
+    ownGUID = "Player-6926-001E5723"
+    click(LINK)
+    ownGUID = "Player-1-00000001"
+    EXPECT(#asked == 0, "your own link asked for recipes")
+    nothing("modified click")
+    IsModifiedClick = function() return true end
+    click(LINK)
+    IsModifiedClick = keep.IsModifiedClick
+    EXPECT(#asked == 0, "a modified click asked for recipes")
+    nothing("right click")
+    click(LINK, "RightButton")
+    EXPECT(#asked == 0, "a right click asked for recipes")
+    click("item:2318::::::::")
+    click("trade:Player-6926-001E5723:2108:999")
+    EXPECT(#asked == 0, "another link or an unknown skill line asked for recipes")
+    -- the link button's tooltip says who can open it
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find("Guildmates, group members, and ProfessionBuddy friends who run ProfessionBuddy can open it.", 1, true),
+           "the link button's tooltip does not say who can open it")
+    PL.Open, C.RequestGuildSync = keepOpen, keepReq
+    for k, v in pairs(keep) do _G[k] = v end
+    C._guildSet = nil
+    S.characters[BRAN] = nil
+    PRINTS = {}
+end
+print("  PASS F77 profession links between PB users: a guildmate's recipes open at once or after asking, once; a first name matches one guildmate, never two; a group member by unit GUID; no answer says so; strangers, your own link, modified and right clicks, other links do nothing; tooltip")
+
+print("ALL FOREVER TESTS PASS (77)")
