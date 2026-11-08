@@ -1957,6 +1957,10 @@ function OP:BuildFindPanel()
         anchorRight()
         -- no room on the right at this size: the main window moves left
         if addon.UI and addon.UI.MakeRoomBeside then addon.UI:MakeRoomBeside(addon.UI.frame, f) end
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(addon.UI.frame, addon.UI.scaleFollowers) end
+    end)
+    f:HookScript("OnHide", function()
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(addon.UI.frame, addon.UI.scaleFollowers, f) end
     end)
     f.TitleText:SetText("Find a Crafter")
     f:Hide()
@@ -2203,6 +2207,10 @@ function OP:BuildHistoryPanel()
         anchorRight()
         -- no room on the right at this size: the main window moves left
         if addon.UI and addon.UI.MakeRoomBeside then addon.UI:MakeRoomBeside(addon.UI.frame, f) end
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(addon.UI.frame, addon.UI.scaleFollowers) end
+    end)
+    f:HookScript("OnHide", function()
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(addon.UI.frame, addon.UI.scaleFollowers, f) end
     end)
     f.TitleText:SetText("Order history")
     f:Hide()

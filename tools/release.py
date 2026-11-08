@@ -153,8 +153,9 @@ def read_core_version(addon_dir):
 
 # ----------------------------------------------------------- pre-build gates
 def assert_no_build_stamp(addon_dir):
-    """addon.BUILD is a dev-slice marker that is written and never read. A tree
-    that still sets it is a dev tree, not a release (D-8)."""
+    """addon.BUILD is a test-build label: a test zip sets it, and the login line
+    shows it ("v2.0.2 (TEST-g)"). A tree that still sets it is a test or dev
+    tree, not a release (D-8)."""
     core = os.path.join(addon_dir, "Core.lua")
     if not os.path.isfile(core):
         return

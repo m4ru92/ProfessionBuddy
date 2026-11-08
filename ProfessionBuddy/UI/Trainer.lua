@@ -2,12 +2,18 @@
 -- ProfessionBuddy  --  UI/Trainer.lua
 -- Skill-up ranges at a profession trainer (TRAINER-RANGES-scope.md).
 -- A recipe you have not learned shows when it turns yellow, green and
--- grey, as PB's own window does for a known recipe:
---   * WoW: Forever: four colored numbers after the row's "Requires:" line
---     (Blizzard_TrainerUI Mainline, ClassTrainerFrame_InitServiceButton).
---   * TBC Anniversary: the same numbers on the selected recipe's "Requires:"
---     line (ClassTrainer_SetSelection), only when they fit on that one line:
---     the "Cost:" label sits at a fixed spot right under it.
+-- grey, as PB's own window does for a known recipe. The three numbers go
+-- inside Blizzard's "Requires:" parentheses, after the learn level Blizzard
+-- already shows there (the orange value): "Requires: Leatherworking
+-- (50 80 95 110)". Only when the line still fits on one line; otherwise
+-- Blizzard's line stays as it was (TEST-f: four numbers after the line
+-- wrapped on Forever rows and did not fit TBC Anniversary's pane in the
+-- default font).
+--   * WoW: Forever: each row of the trainer list (Blizzard_TrainerUI
+--     Mainline, ClassTrainerFrame_InitServiceButton).
+--   * TBC Anniversary: the selected recipe's "Requires:" line
+--     (ClassTrainer_SetSelection); the "Cost:" label sits at a fixed spot
+--     right under it.
 --   * Both: a labeled line on the recipe's tooltip
 --     (GameTooltip:SetTrainerService).
 -- Post-hooks only. PB sets text on Blizzard's font strings and adds tooltip
@@ -72,7 +78,7 @@ local function Lookup(i)
                 local range = { sr[1], sr[2], sr[3], sr[4] }
                 -- the trainer's own learn level is the orange value
                 if rank and rank > 0 then range[1] = rank end
-                value = { range = range, profName = profName }
+                value = { range = range, profName = profName, skill = skill }
             end
         end
     end
@@ -80,12 +86,35 @@ local function Lookup(i)
     return value
 end
 
--- "   80  105  125  145", each in its range color
+-- " 80 95 110": yellow, green and grey, each in its range color
 local function Numbers(range)
     local SR = addon.SkillRange
     local out = {}
-    for k = 1, 4 do out[k] = SR.COLORS[k] .. tostring(SR.Num(range[k])) .. "|r" end
-    return "   " .. table.concat(out, "  ")
+    for k = 2, 4 do out[#out + 1] = SR.COLORS[k] .. tostring(SR.Num(range[k])) .. "|r" end
+    return " " .. table.concat(out, " ")
+end
+
+-- Blizzard's Requires text with the numbers just inside the skill
+-- requirement's ")" ("Leatherworking (50)"), or nil when it has none. The
+-- skill's own "(" is found by name, so a later requirement in parentheses
+-- is left alone. Blizzard colors only the number red when you are below
+-- it, so the parentheses and PB's numbers sit outside that color.
+local function WithNumbers(text, range, skill)
+    local open = type(skill) == "string" and text:find(skill .. " (", 1, true)
+    local close = open and text:find(")", open + #skill + 2, true)
+    if not close then return nil end
+    return text:sub(1, close - 1) .. Numbers(range) .. text:sub(close)
+end
+
+-- Put the numbered line on a font string when it fits on one line;
+-- otherwise leave Blizzard's text as it was
+local function SetIfFits(fs, text, hit)
+    local line = WithNumbers(text, hit.range, hit.skill)
+    if not line then return end
+    fs:SetText(line)
+    local width = tonumber(fs:GetWidth())
+    local used = tonumber(fs.GetUnboundedStringWidth and fs:GetUnboundedStringWidth() or fs:GetStringWidth())
+    if not (width and used) or used > width then fs:SetText(text) end
 end
 
 -- The tooltip line, with > < around the tier the recipe would have at your
@@ -108,11 +137,10 @@ function TR:DecorateRow(button, elementData)
     local text = fs:GetText()
     if type(text) ~= "string" or text == "" then return end
     local hit = Lookup(i)
-    if hit then fs:SetText(text .. Numbers(hit.range)) end
+    if hit then SetIfFits(fs, text, hit) end
 end
 
--- TBC Anniversary: the selected recipe's Requires line, only when the line
--- still fits as one line
+-- TBC Anniversary: the selected recipe's Requires line
 function TR:DecorateSelection(i)
     if not Wanted() then return end
     local fs = ClassTrainerSkillRequirements
@@ -120,11 +148,7 @@ function TR:DecorateSelection(i)
     local text = fs:GetText()
     if type(text) ~= "string" or text == "" then return end
     local hit = Lookup(i)
-    if not hit then return end
-    fs:SetText(text .. Numbers(hit.range))
-    local width = tonumber(fs:GetWidth())
-    local used = tonumber(fs.GetUnboundedStringWidth and fs:GetUnboundedStringWidth() or fs:GetStringWidth())
-    if not (width and used) or used > width then fs:SetText(text) end
+    if hit then SetIfFits(fs, text, hit) end
 end
 
 -- Both clients: the recipe's tooltip

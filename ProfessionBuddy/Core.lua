@@ -852,7 +852,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         end
     end
 
-    print("|cff00ccffProfessionBuddy|r v" .. addon.version .. " loaded. Type /pb or /profbuddy.")
+    print(addon:LoadedLine())
 end)
 
 -- The surname may not be readable at ADDON_LOADED; by login it is.
@@ -876,6 +876,14 @@ addon:RegisterEvent("PLAYER_ENTERING_WORLD", function(_, isInitialLogin, isReloa
         end
     end)
 end)
+
+-- The login line. A test build carries its label in addon.BUILD (set in
+-- the test zip only; tools/release.py refuses a Core.lua that sets it), so
+-- a tester sees which build is loaded: "v2.0.2 (TEST-g)".
+function addon:LoadedLine()
+    local label = type(self.BUILD) == "string" and self.BUILD ~= "" and (" (" .. self.BUILD .. ")") or ""
+    return "|cff00ccffProfessionBuddy|r v" .. self.version .. label .. " loaded. Type /pb or /profbuddy."
+end
 
 ----------------------------------------------------------------------
 -- Module registration helper

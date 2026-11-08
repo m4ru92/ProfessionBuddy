@@ -2103,7 +2103,11 @@ function TSF:EnsureFrame()
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
     f:SetScript("OnDragStart", f.StartMoving)
-    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    -- the Material Calculator, when open, stops at the screen edge with it
+    f:SetScript("OnDragStop", function(fr)
+        if addon.UI and addon.UI.AfterDrag then addon.UI:AfterDrag(fr, { self.calcPanel })
+        else fr:StopMovingOrSizing() end
+    end)
     f:SetClampedToScreen(true)
     f:SetFrameStrata("HIGH")
     f:Hide()
@@ -4441,9 +4445,11 @@ function TSF:BuildCalcPanel()
         s:SetPoint("TOPLEFT", self.frame, "TOPRIGHT", 4, 0)
         -- no room on the right at this size: the window moves left
         if addon.UI and addon.UI.MakeRoomBeside then addon.UI:MakeRoomBeside(self.frame, s) end
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(self.frame, { s }) end
     end)
-    calc:SetScript("OnHide", function()
+    calc:SetScript("OnHide", function(s)
         self:UpdateCalcBtnState()
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(self.frame, { s }, s) end
     end)
 
     calc.TitleText:SetText("Material Calculator")

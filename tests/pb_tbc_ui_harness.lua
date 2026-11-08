@@ -231,8 +231,14 @@ do
     -- U7 replaced the tooltip's AddLine; read lines into _lines again
     rawset(GameTooltip, "AddLine", function(self, t) local l = rawget(self, "_lines"); if l then l[#l + 1] = t end end)
     ClassTrainer_SetSelection(1)
-    EXPECT(req:GetText() == "Requires: Leatherworking (55)   |cffff800055|r  |cffffff0085|r  |cff00ff00100|r  |cff808080115|r",
+    EXPECT(req:GetText() == "Requires: Leatherworking (55 |cffffff0085|r |cff00ff00100|r |cff808080115|r)",
            "Requires line: " .. tostring(req:GetText()))
+    -- the TEST-f line ("(55)   55  85  100  115", 46 characters) did not fit
+    -- the 244 pane in the default font; this one (38) does at 6 per character
+    charW = 6
+    ClassTrainer_SetSelection(1)
+    EXPECT(req:GetText():find("(55 |cffffff0085|r", 1, true), "the shorter line does not fit at 6 per character")
+    charW = 4
     rawset(GameTooltip, "_lines", {})
     GameTooltip:SetTrainerService(1)
     local tl = rawget(GameTooltip, "_lines")

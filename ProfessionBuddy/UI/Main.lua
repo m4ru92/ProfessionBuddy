@@ -44,7 +44,8 @@ function UI:Init()
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
     f:SetScript("OnDragStart", f.StartMoving)
-    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    -- a side panel open beside it stops at the screen edge with it
+    f:SetScript("OnDragStop", function(fr) UI:AfterDrag(fr, UI.scaleFollowers) end)
     f:SetClampedToScreen(true)
     f:Hide()
     -- Order History and Find a Crafter, fastened to this window's right
@@ -322,6 +323,33 @@ function UI:MakeRoomBeside(frame, panel)
     local newLeft = math.max(left * s - over, 0)
     frame:ClearAllPoints()
     frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", newLeft / s, top)
+end
+
+-- While a side panel is open, the window and the panel stop at the screen
+-- edge together: the window's clamp area reaches past its right edge by the
+-- widest shown panel plus the gap (SetClampRectInsets moves each edge of the
+-- clamp area; a positive right inset moves the right edge out). `except` is
+-- a panel being hidden right now. SetClampRectInsets is protected, so not
+-- in combat; the next show or hide out of combat catches up.
+function UI:UpdateSideClamp(frame, followers, except)
+    if InCombatLockdown() or not (frame and frame.SetClampRectInsets) then return end
+    local side = 0
+    for _, f in ipairs(followers or {}) do
+        if f ~= except and type(f.IsShown) == "function" and f:IsShown() then
+            local w = type(f.GetWidth) == "function" and tonumber(f:GetWidth())
+            if w and w + self.SIDE_GAP > side then side = w + self.SIDE_GAP end
+        end
+    end
+    frame:SetClampRectInsets(0, side, 0, 0)
+end
+
+-- A drag ended: an open side panel past the screen's right edge moves the
+-- window left, should the clamp area not have held it (in combat, say).
+function UI:AfterDrag(frame, followers)
+    frame:StopMovingOrSizing()
+    for _, f in ipairs(followers or {}) do
+        if type(f.IsShown) == "function" and f:IsShown() then self:MakeRoomBeside(frame, f) end
+    end
 end
 
 -- Scale frame (and its followers) to s, its top-left corner staying put

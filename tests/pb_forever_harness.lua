@@ -4387,11 +4387,18 @@ do
         button.subText:SetText(rank and rank > 0 and ("Requires: Leatherworking (" .. rank .. ")") or "")
     end
     FIRE("ADDON_LOADED", "Blizzard_TrainerUI")
+    -- the row's Requires line is 240 wide; a character is 4 wide here
+    local charW = 4
     local function row(i)
         local b = CreateFrame("Button", nil, UIParent)
-        rawset(b, "subText", b:CreateFontString())
+        local fs = b:CreateFontString()
+        rawset(fs, "GetWidth", function() return 240 end)
+        rawset(fs, "GetUnboundedStringWidth", function(self)
+            return #(self:GetText():gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) * charW
+        end)
+        rawset(b, "subText", fs)
         ClassTrainerFrame_InitServiceButton(b, { data = { skillIndex = i } })
-        return b.subText:GetText()
+        return fs:GetText()
     end
     local function index(name)
         for i = 1, GetNumTrainerServices() do if GetTrainerServiceInfo(i) == name then return i end end
@@ -4399,10 +4406,47 @@ do
     TRAINER_FILTER.used = true
     TRAINER_OPEN(3008)                  -- Mak, Leatherworking
     local belt = index("Handstitched Leather Belt")
-    EXPECT(row(belt) == "Requires: Leatherworking (25)   |cffff800025|r  |cffffff0055|r  |cff00ff0070|r  |cff80808085|r",
+    -- yellow, green and grey inside Blizzard's parentheses, after its learn level
+    EXPECT(row(belt) == "Requires: Leatherworking (25 |cffffff0055|r |cff00ff0070|r |cff80808085|r)",
            "row: " .. tostring(row(belt)))
     -- the row builder runs on every scroll: the numbers never double
-    EXPECT(select(2, row(belt):gsub("|cffff8000", "")) == 1, "the numbers doubled")
+    EXPECT(select(2, row(belt):gsub("|cffffff00", "")) == 1, "the numbers doubled")
+    -- a learn level you are below: Blizzard's red stays on its number
+    local redLine
+    do
+        local b = CreateFrame("Button", nil, UIParent)
+        local fs = b:CreateFontString()
+        rawset(fs, "GetWidth", function() return 240 end)
+        rawset(fs, "GetUnboundedStringWidth", function() return 150 end)
+        rawset(b, "subText", fs)
+        fs:SetText("Requires: Leatherworking (|cffff202025|r)")
+        ProfBuddy.Trainer:DecorateRow(b, { data = { skillIndex = belt } })
+        redLine = fs:GetText()
+    end
+    EXPECT(redLine == "Requires: Leatherworking (|cffff202025|r |cffffff0055|r |cff00ff0070|r |cff80808085|r)",
+           "red learn level: " .. tostring(redLine))
+    -- a later requirement in parentheses is left alone: the numbers go
+    -- inside the skill's own
+    do
+        local b = CreateFrame("Button", nil, UIParent)
+        local fs = b:CreateFontString()
+        rawset(fs, "GetWidth", function() return 240 end)
+        rawset(fs, "GetUnboundedStringWidth", function() return 150 end)
+        rawset(b, "subText", fs)
+        fs:SetText("Requires: Leatherworking (25), Tanning (Expert)")
+        ProfBuddy.Trainer:DecorateRow(b, { data = { skillIndex = belt } })
+        EXPECT(fs:GetText() == "Requires: Leatherworking (25 |cffffff0055|r |cff00ff0070|r |cff80808085|r), Tanning (Expert)",
+               "numbers outside the skill's parentheses: " .. tostring(fs:GetText()))
+        -- and an earlier one too: the skill's "(" is found by its name
+        fs:SetText("Requires: Level 20 (Rested), Leatherworking (25)")
+        ProfBuddy.Trainer:DecorateRow(b, { data = { skillIndex = belt } })
+        EXPECT(fs:GetText() == "Requires: Level 20 (Rested), Leatherworking (25 |cffffff0055|r |cff00ff0070|r |cff80808085|r)",
+               "numbers not inside the skill's own parentheses: " .. tostring(fs:GetText()))
+    end
+    -- a line too wide for one line keeps Blizzard's text
+    charW = 7
+    EXPECT(row(belt) == "Requires: Leatherworking (25)", "a too-wide row was changed: " .. tostring(row(belt)))
+    charW = 4
     EXPECT(row(index("Apprentice Leatherworking")) == "", "a profession rank got numbers")
     rawset(GameTooltip, "_lines", {})
     GameTooltip:SetTrainerService(belt)
@@ -4516,8 +4560,72 @@ do
     TSF.scaleGrip:GetScript("OnMouseDown")(TSF.scaleGrip, "LeftButton")
     TSF.scaleGrip:GetScript("OnMouseUp")(TSF.scaleGrip)
     EXPECT(not dd.listFrame:IsShown(), "a grip drag left a dropdown list open")
+
+    -- dragging: while a side panel is open, the window's clamp area reaches
+    -- past its right edge by the panel and the gap, so both stop at the
+    -- screen edge; back to the window alone when the panel hides; not in
+    -- combat; a drag's end makes room as a panel opening does
+    local win2 = CreateFrame("Frame", nil, UIParent)
+    local clamp
+    rawset(win2, "SetClampRectInsets", function(_, l, r, t, b) clamp = { l, r, t, b } end)
+    local p1, p2 = CreateFrame("Frame", nil, UIParent), CreateFrame("Frame", nil, UIParent)
+    rawset(p1, "GetWidth", function() return 280 end)
+    rawset(p2, "GetWidth", function() return 360 end)
+    p1:Show()
+    UI:UpdateSideClamp(win2, { p1, p2 })
+    EXPECT(clamp and clamp[1] == 0 and clamp[2] == 284 and clamp[3] == 0 and clamp[4] == 0,
+           "the clamp area does not cover the open panel: " .. tostring(clamp and clamp[2]))
+    p2:Show()
+    UI:UpdateSideClamp(win2, { p1, p2 })
+    EXPECT(clamp[2] == 364, "the clamp area does not cover the widest open panel")
+    UI:UpdateSideClamp(win2, { p1, p2 }, p2)
+    EXPECT(clamp[2] == 284, "a panel being hidden still counted")
+    p1:Hide(); p2:Hide()
+    UI:UpdateSideClamp(win2, { p1, p2 })
+    EXPECT(clamp[2] == 0, "the clamp area did not go back to the window")
+    p1:Show()
+    InCombatLockdown = function() return true end
+    UI:UpdateSideClamp(win2, { p1 })
+    InCombatLockdown = keepCombat
+    EXPECT(clamp[2] == 0, "the clamp area changed in combat")
+    local stopped, roomFor = false, {}
+    rawset(win2, "StopMovingOrSizing", function() stopped = true end)
+    local keepMR2 = UI.MakeRoomBeside
+    UI.MakeRoomBeside = function(_, f, panel) roomFor[#roomFor + 1] = panel end
+    p2:Hide()
+    UI:AfterDrag(win2, { p1, p2 })
+    UI.MakeRoomBeside = keepMR2
+    EXPECT(stopped and #roomFor == 1 and roomFor[1] == p1, "a drag's end did not make room for the open panel")
+    p1:Hide()
+    -- Order History or Find a Crafter closing stops counting, even while it
+    -- still reads as shown
+    do
+        local OP = ProfBuddy.OrdersPanel
+        local mainClamp
+        rawset(UI.frame, "SetClampRectInsets", function(_, l, r) mainClamp = r end)
+        for _, h in ipairs({ OP.histFrame, OP.findFrame }) do
+            rawset(h, "GetWidth", function() return 300 end)
+            rawset(h, "_shown", true)
+            h:GetScript("OnShow")(h)
+            EXPECT(mainClamp == 304, "a side panel opening did not set the clamp area: " .. tostring(mainClamp))
+            rawget(h, "_h").OnHide(h)
+            EXPECT(mainClamp == 0, "a side panel closing still counted: " .. tostring(mainClamp))
+            rawset(h, "_shown", false)
+            rawset(h, "GetWidth", nil)
+        end
+        rawset(UI.frame, "SetClampRectInsets", nil)
+    end
+    -- both windows use it: drag stops and the panels' show and hide
+    local tsrc = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    local msrc = assert(io.open(PB_BASE .. "/UI/Main.lua")):read("*a")
+    local osrc = assert(io.open(PB_BASE .. "/UI/OrdersPanel.lua")):read("*a")
+    EXPECT(tsrc:find("addon.UI:AfterDrag(fr, { self.calcPanel })", 1, true)
+           and msrc:find("UI:AfterDrag(fr, UI.scaleFollowers)", 1, true), "a window's drag does not end with AfterDrag")
+    EXPECT(select(2, tsrc:gsub("UpdateSideClamp%(self%.frame", "")) == 2
+           and select(2, osrc:gsub("UpdateSideClamp%(addon%.UI%.frame", "")) == 4,
+           "a side panel's show or hide does not update the clamp area")
 end
-print("  PASS F76 side panels: the size limit leaves room for the widest, opening one moves the window left by the overflow (not past the edge, not in combat), a scale change does the same, a grip drag closes dropdown lists")
+print("  PASS F76 side panels: the size limit leaves room for the widest, opening one moves the window left by the overflow (not past the edge, not in combat), a scale change does the same, a grip drag closes dropdown lists; dragging stops window and panel at the edge together")
 
 -- F77: a profession link opens in PB's window between PB users. The game
 -- does not open other players' profession links on WoW: Forever, so PB reads
@@ -4633,4 +4741,18 @@ do
 end
 print("  PASS F77 profession links between PB users: a guildmate's recipes open at once or after asking, once; a first name matches one guildmate, never two; a group member by unit GUID; no answer says so; strangers, your own link, modified and right clicks, other links do nothing; tooltip")
 
-print("ALL FOREVER TESTS PASS (77)")
+-- F78: a test build's label in the login line ("v2.0.2 (TEST-g)"), set
+-- only in a test zip's Core.lua; plain otherwise
+do
+    local PB = ProfBuddy
+    EXPECT(PB.BUILD == nil, "the repo's Core.lua sets addon.BUILD")
+    EXPECT(PB:LoadedLine() == "|cff00ccffProfessionBuddy|r v" .. PB.version .. " loaded. Type /pb or /profbuddy.",
+           "plain login line: " .. PB:LoadedLine())
+    PB.BUILD = "TEST-g"
+    EXPECT(PB:LoadedLine() == "|cff00ccffProfessionBuddy|r v" .. PB.version .. " (TEST-g) loaded. Type /pb or /profbuddy.",
+           "labeled login line: " .. PB:LoadedLine())
+    PB.BUILD = nil
+end
+print("  PASS F78 login line: plain in the repo, the test label when a test zip sets addon.BUILD")
+
+print("ALL FOREVER TESTS PASS (78)")
