@@ -4621,7 +4621,8 @@ do
     local osrc = assert(io.open(PB_BASE .. "/UI/OrdersPanel.lua")):read("*a")
     EXPECT(tsrc:find("addon.UI:AfterDrag(fr, { self.calcPanel })", 1, true)
            and msrc:find("UI:AfterDrag(fr, UI.scaleFollowers)", 1, true), "a window's drag does not end with AfterDrag")
-    EXPECT(select(2, tsrc:gsub("UpdateSideClamp%(self%.frame", "")) == 2
+    -- the calculator's show and hide, and its Price columns widening it (2.1.0)
+    EXPECT(select(2, tsrc:gsub("UpdateSideClamp%(self%.frame", "")) == 3
            and select(2, osrc:gsub("UpdateSideClamp%(addon%.UI%.frame", "")) == 4,
            "a side panel's show or hide does not update the clamp area")
 end
@@ -4755,4 +4756,215 @@ do
 end
 print("  PASS F78 login line: plain in the repo, the test label when a test zip sets addon.BUILD")
 
-print("ALL FOREVER TESTS PASS (78)")
+-- F79: prices (Prices.lua, 2.1.0). Handstitched Leather Cloak: 2 Light
+-- Leather (crafted from 3 Ruined Leather Scraps with a known recipe) and 1
+-- Coarse Thread (a vendor sells it, 10c in the baked table).
+do
+    local PB = ProfBuddy
+    local P, S = PB.Prices, PB.db.settings
+    local TSF = PB.TradeSkillFrame
+    local function plain(t)
+        return ((t or ""):gsub("|T[^|]*|t", function(icon)
+            return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c"
+        end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+    end
+    EXPECT(S.showPrices == true and S.priceAuctionator == true and S.priceTSM == true
+           and S.priceTSMSource == "DBMarket" and S.priceStaleDays == 7 and S.priceIntermediates == "both",
+           "price settings defaults")
+    for _, toc in ipairs({ "ProfessionBuddy_Forever.toc", "ProfessionBuddy_Mainline.toc" }) do
+        local src = assert(io.open(PB_BASE .. "/" .. toc)):read("*a")
+        EXPECT(src:find("## OptionalDeps: Auctionator, TradeSkillMaster", 1, true)
+               and src:find("\nData/Forever/VendorPrices.lua", 1, true) and src:find("\nPrices.lua", 1, true)
+               and not src:find("\nData/VendorPrices.lua", 1, true), toc .. ": prices files or OptionalDeps")
+    end
+    EXPECT(PB.VendorPrices[2320] == 10 and PB.VendorPrices[2321] == 100 and PB.VendorPrices[2318] == nil,
+           "baked Forever vendor prices")
+    EXPECT(plain(P:Money(12345)) == "1g 23s 45c" and plain(P:Money(5)) == "5c" and plain(P:Money(0)) == "0c"
+           and plain(P:Money(12345, true)) == "1g 23s" and plain(P:Money(12399, true)) == "1g 24s"
+           and plain(P:SignedMoney(-150)) == "-1s 50c" and plain(P:SignedMoney(85)) == "+85c", "money text")
+
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+    TSF.state.showTab, TSF.state.searchText = "known", ""
+    TSF:RefreshRecipeList()
+    local function detail(name)
+        TSF.state.selected = name
+        TSF:RefreshDetailPanel()
+        return TSF.detPrice:IsShown() and plain(TSF.detPrice:GetText()) or nil, TSF.detPriceHover.result
+    end
+    local cloak = "Handstitched Leather Cloak"
+
+    -- F21's Test Vendor sells Light Leather (55c, unlimited), so PB has
+    -- recorded it as a vendor price already
+    EXPECT(PB.db.prices.vendor[2318].p == 55, "F21's vendor Light Leather not recorded")
+    P:ClearRecorded()
+    -- neither Auctionator nor TSM, nothing recorded: the thread from the
+    -- baked table, the leather has no price
+    local line, r = detail(cloak)
+    EXPECT(line == "Cost: 10c+ (1 material has no price)", "no auction prices: " .. tostring(line))
+    EXPECT(r.missing == 1 and r.missingNames[1] == "Light Leather" and r.profit == nil, "missing material named")
+
+    -- Auctionator: leather 50c (2 days old), scraps 10c, the cloak 3s (10
+    -- days old, past the 7-day limit). Crafting the leather (3 x 10c) is
+    -- cheaper than buying it. Profit = 3s less 5%, less 70c.
+    local AUC = { [2318] = 50, [2934] = 10, [7276] = 300, [2320] = 25 }
+    local AGE = { [2318] = 2, [7276] = 10 }
+    local calls = {}
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(caller, id) calls[#calls + 1] = caller; return AUC[id] end,
+        GetAuctionAgeByItemID = function(caller, id) return AGE[id] end,
+    } } }
+    line, r = detail(cloak)
+    EXPECT(line == "Cost: 70c   Sells: 3s   Profit: +2s 15c", "Auctionator: " .. tostring(line))
+    EXPECT(TSF.detPrice:GetText():find("|cff808080" .. P:Money(300) .. "|r", 1, true), "an old sale price is not gray")
+    EXPECT(calls[1] == "ProfessionBuddy", "Auctionator called without PB's name")
+    local leather = r.parts[1].price
+    EXPECT(leather.buy == 50 and leather.buySource == "Auctionator" and leather.craft == 30 and leather.used == "craft"
+           and leather.unit == 30, "Light Leather buy 50 / craft 30")
+    -- a vendor material is never priced above the vendor (25c at auction, 10c vendor)
+    local thread = r.parts[2].price
+    EXPECT(thread.unit == 10 and thread.buySource == "vendor", "Coarse Thread above the vendor price")
+    AUC[2320] = 5
+    EXPECT(P:MaterialPrice(2320).unit == 5, "an auction price below the vendor's lost")
+    AUC[2320] = 25
+    -- the tooltip: both prices for the crafted leather, the cheaper bright;
+    -- "Cheaper price only" shows the one used
+    local lines = {}
+    local tt = { AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
+                 AddDoubleLine = function(_, a, b) lines[#lines + 1] = plain(a) .. " = " .. plain(b) end }
+    P:FillTooltip(tt, r)
+    local tip = table.concat(lines, "\n")
+    EXPECT(tip:find("2 x Light Leather = buy 1s (Auctionator, 2 days old)  craft 60c", 1, true)
+           and tip:find("1 x Coarse Thread = 10c (vendor)", 1, true)
+           and tip:find("Sells at auction = 3s (Auctionator, 10 days old)", 1, true)
+           and tip:find("Profit = +2s 15c", 1, true)
+           and tip:find("Auction price less the 5% auction house cut, less the cost.", 1, true), "price tooltip:\n" .. tip)
+    lines = {}
+    P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = t end,
+                    AddDoubleLine = function(_, a, b) lines[#lines + 1] = a .. " = " .. b end }, r)
+    EXPECT(table.concat(lines, "\n"):find("|cff808080buy " .. P:Money(100), 1, true)
+           and table.concat(lines, "\n"):find("|cffffffffcraft " .. P:Money(60), 1, true), "the cheaper is not the bright one")
+    S.priceIntermediates = "cheaper"
+    lines = {}
+    P:FillTooltip(tt, r)
+    EXPECT(table.concat(lines, "\n"):find("2 x Light Leather = craft 60c", 1, true), "cheaper only:\n" .. table.concat(lines, "\n"))
+    S.priceIntermediates = "both"
+
+    -- TSM when Auctionator is switched off: the typed price source, i:<id>
+    local asked = {}
+    TSM_API = { GetCustomPriceValue = function(src, item) asked[#asked + 1] = src .. " " .. item
+        return ({ ["i:2318"] = 40, ["i:2934"] = 20, ["i:7276"] = 500 })[item] end }
+    S.priceAuctionator = false
+    S.priceTSMSource = " DBMinBuyout "
+    line = detail(cloak)
+    EXPECT(asked[1] == "DBMinBuyout i:2318", "TSM asked: " .. tostring(asked[1]))
+    EXPECT(line == "Cost: 90c   Sells: 5s   Profit: +3s 85c", "TSM: " .. tostring(line))
+    S.priceTSMSource = "DBMarket"
+    -- both off: PB's recorded prices (3 days old), the vendor; the cloak
+    -- falls back to the vendor's price
+    S.priceTSM = false
+    local house = P:HouseKey()
+    EXPECT(house == "Realm-Horde", "house key " .. house)
+    P:Store().auction[house] = { [2934] = { p = 12, t = time() - 3 * 86400 } }
+    local keepItem = C_Item.GetItemInfo
+    C_Item.GetItemInfo = function(id) if id == 7276 then return "Cloak", nil, 1, 5, 1, "Armor", "Cloth", 1, "", 1, 64 end end
+    line, r = detail(cloak)
+    EXPECT(line == "Cost: 82c   Sells: 64c (vendor)   Profit: -18c", "recorded + vendor: " .. tostring(line))
+    EXPECT(r.parts[1].price.craftParts[1].price.buySource == "PB" and math.floor(r.parts[1].price.craftParts[1].price.age) == 3,
+           "recorded price source and age")
+    C_Item.GetItemInfo = keepItem
+    P:Store().auction[house] = nil
+    S.priceAuctionator, S.priceTSM = true, true
+
+    -- vendors: a material sold for money with unlimited stock is recorded
+    -- per item (a stack of 4 for 36c is 9c each) and beats the baked price;
+    -- limited stock, a token price and a pattern are not recorded
+    MERCHANT_OPEN(90105)
+    MERCHANT_CLOSE()
+    local V = PB.db.prices.vendor
+    EXPECT(V[2320] and V[2320].p == 9 and V[2321] == nil and V[2678] == nil and V[5083] == nil,
+           "vendor prices recorded: " .. tostring(V[2320] and V[2320].p))
+    EXPECT(P:VendorBuy(2320) == 9, "a recorded vendor price did not beat the baked one")
+    line = detail(cloak)
+    EXPECT(line == "Cost: 69c   Sells: 3s   Profit: +2s 16c", "recorded vendor price: " .. tostring(line))
+
+    -- an enchant (no item): cost only
+    C_TradeSkillUI.OpenTradeSkill(333)
+    TS_LIST_READY()
+    FLUSH()
+    TSF.state.showTab = "known"
+    TSF:RefreshRecipeList()
+    AUC[10940] = 120
+    line, r = detail("Enchant Bracer - Minor Stamina")
+    EXPECT(line == "Cost: 2s 40c" and r.itemID == nil, "enchant: " .. tostring(line))
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+    TSF.state.showTab = "known"
+    TSF:RefreshRecipeList()
+
+    -- the Material Calculator: Price and Cost columns widen it; To buy is
+    -- the shopping list's shortfall
+    TSF.state.selected = cloak
+    TSF:RefreshDetailPanel()
+    TSF.qtyBox:SetText("2")
+    if not TSF.calcPanel then TSF:BuildCalcPanel() end
+    local calcW
+    rawset(TSF.calcPanel, "SetWidth", function(_, w) calcW = w end)
+    rawset(TSF.calcPanel, "GetWidth", function() return calcW end)
+    TSF:RefreshCalcPanel()
+    EXPECT(TSF.calcPanel:GetWidth() == 404 and TSF.calcCols.price:IsShown(), "calculator not widened for prices")
+    local rows = {}
+    for _, row in ipairs(TSF.calcRows) do
+        if row:IsShown() and row.itemID then
+            rows[#rows + 1] = row.itemID .. " " .. plain(row.priceText:GetText()) .. " " .. plain(row.costText:GetText())
+        end
+    end
+    local summary = plain(TSF.calcSummary:GetText())
+    EXPECT(table.concat(rows, "|"):find("2318 30c 1s 20c", 1, true) and table.concat(rows, "|"):find("2320 9c 18c", 1, true),
+           "calculator rows: " .. table.concat(rows, "|"))
+    -- the character has the Light Leather, so the shopping list is the thread
+    EXPECT(summary:find("To buy: 18c   All materials: 18c", 1, true), "calculator summary: " .. summary)
+    -- one thread in the bags: To buy is the one still needed
+    local myInv = PB.db.characters[PB:PlayerKey()].inventory
+    local keepThread = myInv.bags[2320]
+    myInv.bags[2320] = 1
+    TSF:RefreshCalcPanel()
+    summary = plain(TSF.calcSummary:GetText())
+    EXPECT(summary:find("To buy: 9c   All materials: 18c", 1, true), "calculator with a thread in the bags: " .. summary)
+    myInv.bags[2320] = keepThread
+    TSF:RefreshCalcPanel()
+    -- a material with no price: "?" and the count
+    local keepBaked, keepSeen = PB.VendorPrices[2320], PB.db.prices.vendor[2320]
+    PB.VendorPrices[2320], PB.db.prices.vendor[2320], AUC[2320] = nil, nil, nil
+    TSF:RefreshCalcPanel()
+    summary = plain(TSF.calcSummary:GetText())
+    EXPECT(summary:find("To buy: ?   All materials: ?\n(1 material has no price)", 1, true), "missing in calculator: " .. summary)
+    PB.VendorPrices[2320], PB.db.prices.vendor[2320], AUC[2320] = keepBaked, keepSeen, 25
+
+    -- Show prices off: no line, the calculator back to its width
+    S.showPrices = false
+    line = detail(cloak)
+    TSF:RefreshCalcPanel()
+    EXPECT(line == nil and calcW == 280 and not TSF.calcCols.price:IsShown()
+           and not plain(TSF.calcSummary:GetText()):find("To buy", 1, true), "Show prices off")
+    S.showPrices = true
+
+    -- Settings: the Prices section, Auctionator and TSM gray when not installed
+    Auctionator, TSM_API = nil, nil
+    EXPECT(TSF.showPricesCB and TSF.priceAucCB and TSF.priceTSMCB and TSF.priceTSMBox and TSF.priceStaleDD
+           and TSF.priceInterDD and TSF.priceClearBtn, "Settings > Prices controls")
+    EXPECT(not TSF.priceAucCB:IsEnabled() and not TSF.priceTSMCB:IsEnabled(), "Auctionator / TSM box usable while not installed")
+    local tsrc = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(tsrc:find('"Auctionator prices (not installed)"', 1, true) and tsrc:find('"Prices turn gray after: "', 1, true),
+           "Settings labels")
+    P:ClearRecorded()
+    EXPECT(PB.db.prices == nil, "Clear recorded prices")
+    TSF.calcPanel:Hide()
+    rawset(TSF.calcPanel, "SetWidth", nil)
+    rawset(TSF.calcPanel, "GetWidth", nil)
+end
+print("  PASS F79 prices: vendor table, Auctionator (PB's name, ages, gray when old), TSM with the typed source, PB's recorded prices, vendor cap, crafted material at the cheaper of buy and craft, missing materials named, 5% cut, vendor sale fallback, enchant cost only; vendors recorded per item (unlimited, money only); calculator columns and To buy; Show prices off; Settings")
+
+print("ALL FOREVER TESTS PASS (79)")

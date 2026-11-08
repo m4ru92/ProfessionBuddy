@@ -267,4 +267,61 @@ do
 end
 print("  PASS " .. TAG .. "9 trainer ranges on TBC Anniversary: numbers on the Requires line when they fit, none when too long, tooltip line, nothing for a known recipe, the setting off or a class trainer")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 9)")
+-- U10: prices on TBC Anniversary (Prices.lua, 2.1.0): the TBC vendor
+-- table, the classic vendor API, Auctionator, the detail line, the
+-- calculator and Settings
+do
+    local P = PB.Prices
+    EXPECT(P and PB.VendorPrices and PB.VendorPrices[2320] == 10 and PB.VendorPrices[14341] == 5000,
+           "TBC vendor prices (Coarse Thread 10c, Rune Thread 50s)")
+    local tocSrc = assert(io.open(PB_BASE .. "/ProfessionBuddy_TBC.toc")):read("*a")
+    EXPECT(tocSrc:find("## OptionalDeps: Auctionator, TradeSkillMaster", 1, true)
+           and tocSrc:find("\nData/VendorPrices.lua", 1, true) and tocSrc:find("\nPrices.lua", 1, true),
+           "TBC toc: prices files or OptionalDeps")
+    local function plain(t)
+        return ((t or ""):gsub("|T[^|]*|t", function(icon)
+            return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c"
+        end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+    end
+    -- the classic vendor window: GetMerchantItemInfo, no C_MerchantFrame.GetItemInfo
+    local ITEMS = {
+        { 2320, 40, 4, -1, false },   -- Coarse Thread, a stack of 4 for 40c
+        { 2321, 100, 1, 3, false },   -- Fine Thread, limited stock
+        { 2604, 50, 1, -1, true },    -- Red Dye for tokens
+    }
+    local keep = { C_MerchantFrame = rawget(_G, "C_MerchantFrame") }
+    C_MerchantFrame = { GetBuybackItemID = function() end }
+    GetMerchantNumItems = function() return #ITEMS end
+    GetMerchantItemID = function(i) return ITEMS[i] and ITEMS[i][1] end
+    GetMerchantItemInfo = function(i)
+        local it = ITEMS[i]
+        return "x", "icon", it[2], it[3], it[4], true, true, it[5]
+    end
+    FIRE("MERCHANT_SHOW")
+    local V = PB.db.prices and PB.db.prices.vendor or {}
+    EXPECT(V[2320] and V[2320].p == 10 and V[2321] == nil and V[2604] == nil,
+           "TBC vendor scan: " .. tostring(V[2320] and V[2320].p))
+    GetMerchantNumItems = function() return 0 end
+    C_MerchantFrame = keep.C_MerchantFrame
+
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(_, id) return ({ [2934] = 10, [2318] = 50 })[id] end,
+        GetAuctionAgeByItemID = function() return 0 end,
+    } } }
+    ok, err = pcall(OPEN_TRADE)
+    EXPECT(ok, "trade skill reopen: " .. tostring(err))
+    TSF.state.selected = "Light Leather"
+    TSF:RefreshDetailPanel()
+    local line = plain(TSF.detPrice:GetText())
+    EXPECT(TSF.detPrice:IsShown() and line == "Cost: 30c   Sells: 50c   Profit: +18c", "TBC price line: " .. line)
+    ok, err = pcall(TSF.ToggleCalcPanel, TSF)
+    EXPECT(ok and TSF.calcCols.price:IsShown(), "calculator with prices: " .. tostring(err))
+    ok, err = pcall(TSF.ToggleCalcPanel, TSF)
+    EXPECT(ok, "calculator close: " .. tostring(err))
+    EXPECT(TSF.showPricesCB and TSF.priceAucCB and TSF.priceTSMBox, "Settings > Prices on TBC Anniversary")
+    Auctionator = nil
+    pcall(CLOSE_TRADE)
+end
+print("  PASS " .. TAG .. "10 prices: TBC vendor table, the classic vendor window recorded per item (unlimited, money only), Auctionator line in the detail panel, calculator columns, Settings")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 10)")

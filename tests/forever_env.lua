@@ -120,6 +120,7 @@ function F:Show() if not self._shown then self._shown = true
 function F:Hide() if self._shown then self._shown = false
     if self._s.OnHide then self._s.OnHide(self) end end end
 function F:IsShown() return self._shown end
+function F:SetShown(v) if v then self:Show() else self:Hide() end end
 function F:IsVisible() return self._shown end
 function F:GetName() return self._name end
 function F:SetAttribute(k, v) self._attr[k] = v end

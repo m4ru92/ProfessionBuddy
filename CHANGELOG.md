@@ -2,6 +2,31 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.1.0
+
+Prices, built from players' requests: what a craft costs, what it sells for, and the profit, from Auctionator, TSM, and vendor prices.
+
+Thanks to the guild members whose requests shaped this update.
+
+**Highlights**
+
+- **Craft cost and profit:** under "Can make", the detail panel shows what one craft costs, what it sells for, and the profit. Hover the line to see each material's price and where it came from.
+- **Material Calculator prices:** Price and Cost columns, and what the materials you still need cost to buy.
+
+<!-- more -->
+
+**Added on both clients**
+
+- **Prices:** ProfessionBuddy reads Auctionator's and TSM's prices when they're installed, then vendor prices. You can switch either one off in Settings, under Prices. A material a vendor sells is never priced above the vendor's price. A material one of your characters crafts costs whichever is cheaper, buying it or crafting it, and the tooltip shows both prices, with the cheaper one bright. A price older than 7 days shows gray. A material with no price shows "?", and the cost reads like "Cost: 1g 20s+ (1 material has no price)".
+- **Profit:** the auction price minus the 5% auction house cut, minus the cost. Without an auction price, PB uses the vendor's price. Enchants show only the cost.
+- **Vendor prices:** built in for every material a vendor sells, from the cmangos (TBC Anniversary) and VMaNGOS (WoW: Forever) vendor lists and the game's own item prices. When you open a vendor, PB records what it charges you for materials, and that price replaces the built-in one.
+- **Material Calculator:** with prices on, the window is wider, with a Price and a Cost column, and "To buy" and "All materials" totals under the summary.
+- **Settings, Prices section:** Show prices, Auctionator prices, TSM prices with the TSM price source (DBMarket by default), when prices turn gray, how crafted materials show, and Clear recorded prices.
+
+**Changes**
+
+- WoW: Forever recipe data is from game build 1.60.1.70862.
+
 ## 2.0.2 - 2026-11-07
 
 A follow-up to the WoW: Forever launch, built from players' requests. It adds disenchant results, skill-up ranges at the trainer, a resize grip, a guild right-click menu, and Battle.net friends and a profession link on Forever. It also fixes the surprise reload.

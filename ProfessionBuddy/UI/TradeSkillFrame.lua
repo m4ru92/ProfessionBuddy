@@ -3632,6 +3632,27 @@ function TSF:BuildDetailPanel(parent)
     detCanMake:SetPoint("TOPLEFT", detSource, "BOTTOMLEFT", 0, -8)
     self.detCanMake = detCanMake
 
+    -- Prices.lua: what one craft costs, sells for and makes, under Can make.
+    -- Hovering it lists each material's price and where it came from.
+    local detPrice = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    detPrice:SetPoint("TOPLEFT", detCanMake, "BOTTOMLEFT", 0, -4)
+    detPrice:SetWidth(DETAIL_W - 40)
+    detPrice:SetJustifyH("LEFT")
+    detPrice:Hide()
+    self.detPrice = detPrice
+    local priceHover = CreateFrame("Frame", nil, sc)
+    priceHover:SetAllPoints(detPrice)
+    priceHover:EnableMouse(true)
+    priceHover:SetScript("OnEnter", function(f)
+        if not (f.result and addon.Prices) then return end
+        GameTooltip:SetOwner(f, "ANCHOR_RIGHT")
+        addon.Prices:FillTooltip(GameTooltip, f.result)
+        GameTooltip:Show()
+    end)
+    priceHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    priceHover:Hide()
+    self.detPriceHover = priceHover
+
     -- v6: Embedded item tooltip (shows item stats/effects)
     local itemTooltipHeader = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     itemTooltipHeader:SetText("Item info")
@@ -3795,6 +3816,7 @@ function TSF:UpdateScrollChildHeight()
     checkRegion(self.detIcon)
     checkRegion(self.nameDivider)
     checkRegion(self.detCanMake)
+    checkRegion(self.detPrice)
     checkRegion(self.embeddedTip)
     checkRegion(self.reagentDivider)
     checkRegion(self.reagentHeader)
@@ -3830,6 +3852,10 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.detSource:SetText("")
     if self.detSourceHover then self.detSourceHover.spellID = nil end
     self.detCanMake:SetText("")
+    self.detPrice:SetText("")
+    self.detPrice:Hide()
+    self.detPriceHover.result = nil
+    self.detPriceHover:Hide()
     self.nameDivider:Hide()
     self.itemTooltipHeader:Hide()
     self.itemTooltipDivider:Hide()
@@ -3990,13 +4016,16 @@ function TSF:RefreshDetailPanel(preserveScroll)
         end
     end
 
+    self:ShowPriceLine(recipe)
+
     -- v6: Show embedded item tooltip
     self:ShowEmbeddedTooltip(recipe)
 
     local reagents = recipe.reagents
     if reagents and #reagents > 0 then
-        -- Position reagents below the embedded tooltip or below detCanMake
-        local reagentAnchor = self.detCanMake
+        -- Position reagents below the embedded tooltip or below Can make
+        -- (and the price line under it)
+        local reagentAnchor = self:CanMakeBottom()
         if self.embeddedTip:IsShown() then
             reagentAnchor = self.embeddedTip
         end
@@ -4144,6 +4173,30 @@ function TSF:AppendRandomEnchantLine(tip, itemID)
     tip:AddLine(RANDOM_LINE, 0, 1, 0)
 end
 
+-- The lowest line of the Can make block: the price line when it shows
+function TSF:CanMakeBottom()
+    if self.detPrice and self.detPrice:IsShown() then return self.detPrice end
+    return self.detCanMake
+end
+
+-- Prices.lua: "Cost: 1g 20s   Sells: 2g 5s   Profit: +85s" under Can make
+-- (Settings > Prices > Show prices)
+function TSF:ShowPriceLine(recipe)
+    local line, hover = self.detPrice, self.detPriceHover
+    line:SetText("")
+    line:Hide()
+    hover.result = nil
+    hover:Hide()
+    local P = addon.Prices
+    if not (P and P:Enabled()) then return end
+    local result = P:RecipeCost(recipe, state.profName)
+    if not result then return end
+    line:SetText(P:DetailText(result))
+    line:Show()
+    hover.result = result
+    hover:Show()
+end
+
 function TSF:ShowEmbeddedTooltip(recipe)
     local tip = self.embeddedTip
     tip:Hide()
@@ -4157,8 +4210,8 @@ function TSF:ShowEmbeddedTooltip(recipe)
     local hasItem = recipe.itemLink or (itemID and itemID ~= 0)
     if not hasItem and not recipe.spellID then return end
 
-    -- Position below detCanMake
-    self.itemTooltipDivider:SetPoint("TOPLEFT", self.detCanMake, "BOTTOMLEFT", 0, -6)
+    -- Position below Can make (and the price line under it)
+    self.itemTooltipDivider:SetPoint("TOPLEFT", self:CanMakeBottom(), "BOTTOMLEFT", 0, -6)
     self.itemTooltipDivider:Show()
     self.itemTooltipHeader:SetPoint("TOPLEFT", self.itemTooltipDivider, "BOTTOMLEFT", 0, -4)
     self.itemTooltipHeader:Show()
@@ -4428,6 +4481,8 @@ end
 ----------------------------------------------------------------------
 local CALC_W = 280
 local CALC_H = FRAME_H
+-- Prices.lua: the Price and Cost columns widen the window by this much
+local CALC_PRICE_W = 124
 
 function TSF:BuildCalcPanel()
     local calc = CreateFrame("Frame", "ProfBuddyCalcWindow", UIParent, "BasicFrameTemplateWithInset")
@@ -4467,6 +4522,8 @@ function TSF:BuildCalcPanel()
     divider:SetSize(CALC_W - 30, 1)
     divider:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -4)
     Theme:Fill(divider, "divider")
+    -- Everything as wide as the window, for LayoutCalcColumns
+    self._calcWide = { divider }
 
     -- Summary line
     local summary = calc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -4474,6 +4531,7 @@ function TSF:BuildCalcPanel()
     summary:SetWidth(CALC_W - 30)
     summary:SetJustifyH("LEFT")
     self.calcSummary = summary
+    table.insert(self._calcWide, summary)
 
     -- Column headers
     local colHeaders = CreateFrame("Frame", nil, calc)
@@ -4500,11 +4558,25 @@ function TSF:BuildCalcPanel()
     colShort:SetText("|cff888888Left|r")
     colShort:SetJustifyH("RIGHT")
 
+    -- Prices.lua: one item's price, and the price of all you need
+    local colPrice = colHeaders:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    colPrice:SetPoint("RIGHT", colHeaders, "RIGHT", -66, 0)
+    colPrice:SetText("|cff888888Price|r")
+    colPrice:SetJustifyH("RIGHT")
+    local colCost = colHeaders:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    colCost:SetPoint("RIGHT", colHeaders, "RIGHT", -2, 0)
+    colCost:SetText("|cff888888Cost|r")
+    colCost:SetJustifyH("RIGHT")
+    self.calcCols = { frame = colHeaders, need = colNeed, have = colHave, short = colShort,
+                      price = colPrice, cost = colCost }
+
     -- Column header divider
     local colDiv = calc:CreateTexture(nil, "ARTWORK")
     colDiv:SetSize(CALC_W - 30, 1)
     colDiv:SetPoint("TOPLEFT", colHeaders, "BOTTOMLEFT", 0, -2)
     Theme:Fill(colDiv, "calcColumnDivider")
+    table.insert(self._calcWide, colHeaders)
+    table.insert(self._calcWide, colDiv)
 
     -- Scroll frame for material rows
     local scrollParent = CreateFrame("Frame", nil, calc)
@@ -4553,6 +4625,17 @@ function TSF:BuildCalcPanel()
         shortText:SetWidth(26)
         row.shortText = shortText
 
+        local priceText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        priceText:SetPoint("RIGHT", row, "RIGHT", -66, 0)
+        priceText:SetJustifyH("RIGHT")
+        priceText:SetWidth(58)
+        row.priceText = priceText
+        local costText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        costText:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+        costText:SetJustifyH("RIGHT")
+        costText:SetWidth(62)
+        row.costText = costText
+
         -- Section divider line (shown only for section headers)
         local divLine = row:CreateTexture(nil, "ARTWORK")
         divLine:SetSize(CALC_W - 36, 1)
@@ -4566,6 +4649,10 @@ function TSF:BuildCalcPanel()
             if r.itemID then
                 GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
                 GameTooltip:SetItemByID(r.itemID)
+                if r.price and addon.Prices then
+                    GameTooltip:AddDoubleLine("ProfessionBuddy price", addon.Prices:MaterialText(r.price),
+                        1, 0.82, 0, 1, 1, 1)
+                end
                 GameTooltip:Show()
             end
         end)
@@ -4592,6 +4679,40 @@ function TSF:BuildCalcPanel()
 
     self.calcPanel = calc
     self.calcData = {}
+    self._calcExtra = nil   -- the first LayoutCalcColumns sets the columns either way
+end
+
+-- Prices.lua: the Price and Cost columns, shown with Settings > Prices >
+-- Show prices. They widen the window; Need, Have and Left move left.
+function TSF:LayoutCalcColumns(prices)
+    local calc = self.calcPanel
+    local extra = prices and CALC_PRICE_W or 0
+    if self._calcExtra == extra then return end
+    self._calcExtra = extra
+    local w = CALC_W + extra
+    calc:SetWidth(w)
+    for _, region in ipairs(self._calcWide) do region:SetWidth(w - 30) end
+    local h = self.calcCols
+    h.need:SetPoint("RIGHT", h.frame, "RIGHT", -64 - extra, 0)
+    h.have:SetPoint("RIGHT", h.frame, "RIGHT", -30 - extra, 0)
+    h.short:SetPoint("RIGHT", h.frame, "RIGHT", -2 - extra, 0)
+    h.price:SetShown(prices)
+    h.cost:SetShown(prices)
+    for _, row in ipairs(self.calcRows) do
+        row:SetWidth(w - 36)
+        row.sectionDivider:SetWidth(w - 36)
+        row.nameText:SetPoint("RIGHT", row, "RIGHT", -100 - extra, 0)
+        row.needText:SetPoint("RIGHT", row, "RIGHT", -64 - extra, 0)
+        row.haveText:SetPoint("RIGHT", row, "RIGHT", -30 - extra, 0)
+        row.shortText:SetPoint("RIGHT", row, "RIGHT", -2 - extra, 0)
+        row.priceText:SetShown(prices)
+        row.costText:SetShown(prices)
+    end
+    -- the window changed width while open: keep it beside the profession window
+    if calc:IsShown() and addon.UI then
+        if addon.UI.MakeRoomBeside then addon.UI:MakeRoomBeside(self.frame, calc) end
+        if addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(self.frame, { calc }) end
+    end
 end
 
 -- Populate (or refresh) the calc window for the currently selected recipe.
@@ -4666,6 +4787,30 @@ function TSF:RefreshCalcPanel()
         end
     end
 
+    -- Prices.lua: each material's price, and what the shopping list costs
+    local P = addon.Prices
+    local prices = P and P:Enabled() or false
+    self:LayoutCalcColumns(prices)
+    local toBuy, allCost, buyMissing, allMissing = 0, 0, 0, 0
+    if prices then
+        for _, entry in ipairs(displayData) do
+            if entry.itemID then
+                local mp = P:MaterialPrice(entry.itemID, {}, 0)
+                entry.price = mp
+                if entry.isShoppingItem then
+                    if mp.unit then
+                        toBuy = toBuy + mp.unit * entry.shortfall
+                        allCost = allCost + mp.unit * entry.need
+                    end
+                    if not mp.unit or mp.partial then
+                        allMissing = allMissing + 1
+                        if entry.shortfall > 0 then buyMissing = buyMissing + 1 end
+                    end
+                end
+            end
+        end
+    end
+
     self.calcData = displayData
     self.calcScrollOffset = 0
 
@@ -4687,6 +4832,13 @@ function TSF:RefreshCalcPanel()
         self.calcSummary:SetText("|cff00ff00All materials available " .. scope .. "!|r")
     else
         self.calcSummary:SetText("|cffff4444Missing " .. totalShort .. " of " .. totalRaw .. " raw materials.|r")
+    end
+    if prices and totalRaw > 0 then
+        local buy = (buyMissing > 0 and toBuy == 0) and "?" or (P:Money(toBuy) .. (buyMissing > 0 and "+" or ""))
+        local all = (allMissing > 0 and allCost == 0) and "?" or (P:Money(allCost) .. (allMissing > 0 and "+" or ""))
+        local text = "To buy: " .. buy .. "   All materials: " .. all
+        if allMissing > 0 then text = text .. "\n|cff888888(" .. P:MissingText(allMissing) .. ")|r" end
+        self.calcSummary:SetText(self.calcSummary:GetText() .. "\n" .. text)
     end
 
     self:UpdateCalcRows()
@@ -4737,7 +4889,10 @@ function TSF:UpdateCalcRows()
                 row.needText:SetText("")
                 row.haveText:SetText("")
                 row.shortText:SetText("")
+                row.priceText:SetText("")
+                row.costText:SetText("")
                 row.itemID = nil
+                row.price = nil
                 row.sectionDivider:Hide()
             elseif entry.isSection then
                 -- Section header with divider
@@ -4747,7 +4902,10 @@ function TSF:UpdateCalcRows()
                 row.needText:SetText("")
                 row.haveText:SetText("")
                 row.shortText:SetText("")
+                row.priceText:SetText("")
+                row.costText:SetText("")
                 row.itemID = nil
+                row.price = nil
                 row.sectionDivider:Show()
             else
                 -- Material row
@@ -4788,6 +4946,26 @@ function TSF:UpdateCalcRows()
                 else
                     row.haveText:SetText("|cff888888" .. entry.have .. "|r")
                     row.shortText:SetText("|cffff4444" .. entry.shortfall .. "|r")
+                end
+
+                -- Prices.lua: one item's price and the price of all you need,
+                -- gray when old; "+" when a crafted material's own materials
+                -- are not all priced
+                local mp = entry.price
+                row.price = mp
+                if mp and mp.unit then
+                    local P = addon.Prices
+                    local grey = mp.used == "buy" and mp.stale
+                    local plus = mp.partial and "+" or ""
+                    local function Fmt(v) return grey and ("|cff808080" .. v .. "|r") or v end
+                    row.priceText:SetText(Fmt(P:Money(mp.unit, true) .. plus))
+                    row.costText:SetText(Fmt(P:Money(mp.unit * entry.need, true) .. plus))
+                elseif mp then
+                    row.priceText:SetText("|cffff4444?|r")
+                    row.costText:SetText("|cffff4444?|r")
+                else
+                    row.priceText:SetText("")
+                    row.costText:SetText("")
                 end
             end
         else
@@ -5963,6 +6141,152 @@ function TSF:BuildSettingsPanel(parent)
     end)
     TSF.crossFriendsCB = crossFriendsCB
     yLeft = yLeft - 28   -- the 24 px check box and 4 px, matching the top
+
+    -- ── Prices section (Prices.lua) ───────────────────────────
+    yLeft = yLeft - 20
+
+    local priceHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    priceHeader:SetPoint("TOPLEFT", COL_LEFT, yLeft)
+    priceHeader:SetText("Prices")
+    priceHeader:SetTextColor(1, 0.82, 0)
+    yLeft = yLeft - 20
+
+    yLeft = yLeft - 6
+
+    local P = addon.Prices
+    local function PricesChanged() if P then P:Changed() end end
+    local showPricesCB = MakeCheckbox("Show prices", "showPrices", yLeft)
+    yLeft = yLeft - 26
+    -- Auctionator and TSM are read only when installed; otherwise the box
+    -- is gray and says so
+    local aucCB = MakeCheckbox(P and P:HasAuctionator() and "Auctionator prices"
+        or "Auctionator prices (not installed)", "priceAuctionator", yLeft, COL_LEFT + 20)
+    yLeft = yLeft - 26
+    local tsmCB = MakeCheckbox(P and P:HasTSM() and "TSM prices:" or "TSM prices (not installed)",
+        "priceTSM", yLeft, COL_LEFT + 20)
+    local tsmBox = CreateFrame("EditBox", nil, content, "InputBoxTemplate")
+    tsmBox:SetSize(120, 20)
+    tsmBox:SetPoint("TOPLEFT", COL_LEFT + 150, yLeft - 2)
+    tsmBox:SetAutoFocus(false)
+    tsmBox:SetText(settings.priceTSMSource or "DBMarket")
+    tsmBox:SetCursorPosition(0)
+    local function SaveTSMSource(box)
+        local typed = strtrim(box:GetText() or "")
+        if typed == "" then typed = "DBMarket" end
+        box:SetText(typed)
+        box:SetCursorPosition(0)
+        -- red when TSM does not accept the source
+        if P and P:TSMSourceValid(typed) == false then
+            box:SetTextColor(1, 0.27, 0.27)
+        else
+            box:SetTextColor(1, 1, 1)
+        end
+        if settings.priceTSMSource ~= typed then
+            settings.priceTSMSource = typed
+            PricesChanged()
+        end
+    end
+    tsmBox:SetScript("OnEnterPressed", function(box) SaveTSMSource(box); box:ClearFocus() end)
+    tsmBox:SetScript("OnEscapePressed", function(box)
+        box:SetText(settings.priceTSMSource or "DBMarket")
+        box:ClearFocus()
+    end)
+    tsmBox:SetScript("OnEditFocusLost", SaveTSMSource)
+    tsmBox:SetScript("OnEnter", function(box)
+        GameTooltip:SetOwner(box, "ANCHOR_RIGHT")
+        GameTooltip:SetText("TSM price source", 1, 1, 1)
+        GameTooltip:AddLine("Any TSM price source, such as DBMarket or DBMinBuyout. Red when TSM does not accept it.",
+            nil, nil, nil, true)
+        GameTooltip:Show()
+    end)
+    tsmBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.priceTSMBox = tsmBox
+    yLeft = yLeft - 30
+
+    local STALE_ORDER = { 3, 7, 14, 30 }
+    local staleOpts = {}
+    for i, d in ipairs(STALE_ORDER) do staleOpts[i] = d .. " days" end
+    local staleDD = CreateDropdown(content, 322, staleOpts, (settings.priceStaleDays or 7) .. " days",
+        function(val)
+            settings.priceStaleDays = tonumber(val:match("^(%d+)")) or 7
+            PricesChanged()
+        end,
+        "Prices turn gray after: ")
+    staleDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    self.priceStaleDD = staleDD
+    yLeft = yLeft - 30
+
+    local INTER_LABELS = { both = "Buy and craft prices", cheaper = "Cheaper price only" }
+    local interDD = CreateDropdown(content, 322, { INTER_LABELS.both, INTER_LABELS.cheaper },
+        INTER_LABELS[settings.priceIntermediates] or INTER_LABELS.both,
+        function(val)
+            settings.priceIntermediates = (val == INTER_LABELS.cheaper) and "cheaper" or "both"
+            PricesChanged()
+        end,
+        "Crafted materials: ")
+    interDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    self.priceInterDD = interDD
+    yLeft = yLeft - 30
+
+    local clearBtn = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    clearBtn:SetSize(160, 22)
+    clearBtn:SetPoint("TOPLEFT", COL_LEFT + 4, yLeft)
+    clearBtn:SetText("Clear recorded prices")
+    clearBtn:SetScript("OnClick", function()
+        if not StaticPopupDialogs["PROFBUDDY_CLEAR_PRICES"] then
+            StaticPopupDialogs["PROFBUDDY_CLEAR_PRICES"] = {
+                text = "Clear every auction and vendor price ProfessionBuddy recorded? Auctionator, TSM and the built-in vendor prices stay.",
+                button1 = "Clear",
+                button2 = "Cancel",
+                OnAccept = function() if P then P:ClearRecorded() end end,
+                timeout = 0,
+                whileDead = true,
+                hideOnEscape = true,
+                preferredIndex = 3,
+            }
+        end
+        StaticPopup_Show("PROFBUDDY_CLEAR_PRICES")
+    end)
+    self.priceClearBtn = clearBtn
+    yLeft = yLeft - 26
+
+    local priceNote = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    priceNote:SetPoint("TOPLEFT", COL_LEFT + 4, yLeft)
+    priceNote:SetWidth(322)
+    priceNote:SetJustifyH("LEFT")
+    priceNote:SetText("|cff888888Order: Auctionator, TSM, prices ProfessionBuddy recorded, then the vendor. A material a vendor sells is never priced above the vendor's price.|r")
+    yLeft = yLeft - 30
+
+    -- The sources and the boxes below Show prices are gray while it is off;
+    -- Auctionator and TSM stay gray while not installed
+    local function UpdatePriceSub()
+        local on = settings.showPrices ~= false
+        local function Set(widget, enabled)
+            if enabled then widget:Enable(); widget:SetAlpha(1) else widget:Disable(); widget:SetAlpha(0.4) end
+        end
+        Set(aucCB, on and P and P:HasAuctionator())
+        Set(tsmCB, on and P and P:HasTSM())
+        Set(tsmBox, on and P and P:HasTSM() and settings.priceTSM ~= false)
+        Set(clearBtn, on)
+        staleDD:SetAlpha(on and 1 or 0.4)
+        interDD:SetAlpha(on and 1 or 0.4)
+    end
+    showPricesCB:SetScript("OnClick", function(cb)
+        settings.showPrices = cb:GetChecked() and true or false
+        UpdatePriceSub()
+        PricesChanged()
+    end)
+    aucCB:SetScript("OnClick", function(cb)
+        settings.priceAuctionator = cb:GetChecked() and true or false
+        PricesChanged()
+    end)
+    tsmCB:SetScript("OnClick", function(cb)
+        settings.priceTSM = cb:GetChecked() and true or false
+        UpdatePriceSub()
+        PricesChanged()
+    end)
+    UpdatePriceSub()
+    self.showPricesCB, self.priceAucCB, self.priceTSMCB = showPricesCB, aucCB, tsmCB
 
 
     -- ════════════════════════════════════════════════════════════

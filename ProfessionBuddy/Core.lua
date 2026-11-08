@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "2.0.2"
+addon.version = "2.1.0"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -691,6 +691,12 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         tooltipMaxHeldBy    = 8,    -- "Held by" lines on item tooltips; 21 = "All"
         tooltipShowDisenchant = true, -- "Disenchants into" on item tooltips (Data/Disenchant.lua)
         trainerShowRanges   = true, -- skill-up ranges on a profession trainer's recipes (UI/Trainer.lua)
+        showPrices          = true, -- Prices.lua: craft cost, sale price and profit
+        priceAuctionator    = true, -- read Auctionator's prices when it is installed
+        priceTSM            = true, -- read TSM's prices when it is installed
+        priceTSMSource      = "DBMarket", -- the TSM price source
+        priceStaleDays      = 7,    -- prices older than this show gray
+        priceIntermediates  = "both", -- a material you craft: "both" (buy and craft) | "cheaper"
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
@@ -809,6 +815,12 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.replaceTradeSkill == nil then ProfBuddyDB.settings.replaceTradeSkill = true end
     if ProfBuddyDB.settings.tooltipShowDisenchant == nil then ProfBuddyDB.settings.tooltipShowDisenchant = true end
     if ProfBuddyDB.settings.trainerShowRanges == nil then ProfBuddyDB.settings.trainerShowRanges = true end
+    -- 2.1.0 prices (Prices.lua)
+    local PRICE_DEFAULTS = { showPrices = true, priceAuctionator = true, priceTSM = true,
+        priceTSMSource = "DBMarket", priceStaleDays = 7, priceIntermediates = "both" }
+    for k, v in pairs(PRICE_DEFAULTS) do
+        if ProfBuddyDB.settings[k] == nil then ProfBuddyDB.settings[k] = v end
+    end
     -- 2.0.2: before this setting, Replace off always opened both windows.
     -- Players who had it off keep that; everyone else starts with it off.
     if ProfBuddyDB.settings.openBesideBlizzard == nil then

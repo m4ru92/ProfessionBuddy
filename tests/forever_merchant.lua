@@ -18,6 +18,16 @@ MERCHANTS = {
     [90102] = { name = "Other Vendor", zone = "Orgrimmar", items = {
         { id = 5083, price = 1400, stock = -1 },
     } },
+    -- 2.1.0 prices (Prices.lua): a trade goods vendor. Coarse Thread sold
+    -- in a stack of 4 at a reputation discount, Fine Thread with limited
+    -- stock, Mild Spices for tokens, Light Leather (a material) and a
+    -- pattern (not one)
+    [90105] = { name = "Trade Goods", zone = "Thunder Bluff", items = {
+        { id = 2320, price = 36, stock = -1, stack = 4 },  -- Coarse Thread
+        { id = 2321, price = 100, stock = 5 },             -- Fine Thread
+        { id = 2678, price = 10, stock = -1, ext = true }, -- Mild Spices
+        { id = 5083, price = 1350, stock = -1 },           -- Pattern: Kodo Hide Bag
+    } },
 }
 
 MERCHANT = { open = nil }
@@ -37,8 +47,9 @@ C_MerchantFrame = C_MerchantFrame or {}
 C_MerchantFrame.GetItemInfo = function(i)
     local m = MERCHANT.open and MERCHANTS[MERCHANT.open]
     local it = m and m.items[i]
-    return it and { name = "x", texture = 1, price = it.price, stackCount = 1,
-                    numAvailable = it.stock, isPurchasable = true } or nil
+    return it and { name = "x", texture = 1, price = it.price, stackCount = it.stack or 1,
+                    numAvailable = it.stock, isPurchasable = true,
+                    hasExtendedCost = it.ext or false } or nil
 end
 
 local baseUnitName, baseUnitGUID, baseFaction = UnitName, UnitGUID, UnitFactionGroup

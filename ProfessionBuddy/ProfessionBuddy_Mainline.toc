@@ -3,8 +3,9 @@
 ## Notes: Cross-character profession management for WoW: Forever.
 ## IconTexture: Interface\Icons\INV_Camelot_Camping_WelcomingCampfire
 ## Author: m4ru
-## Version: 2.0.2
+## Version: 2.1.0
 ## SavedVariables: ProfBuddyDB
+## OptionalDeps: Auctionator, TradeSkillMaster
 ## DefaultState: enabled
 ## X-Curse-Project-ID: 1631296
 ## X-Website: https://github.com/m4ru92/ProfessionBuddy
@@ -40,8 +41,10 @@ Data/Forever/Disenchant.lua
 Data/Forever/RandomStats.lua
 Data/Forever/Tools.lua
 Data/Forever/NpcFactions.lua
+Data/Forever/VendorPrices.lua
 Knowledge.lua
 MaterialCalc.lua
+Prices.lua
 UI/Main.lua
 UI/CharacterPanel.lua
 UI/FriendsPanel.lua

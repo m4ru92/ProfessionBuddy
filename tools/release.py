@@ -43,6 +43,7 @@ The same gates and a dry run also run on GitHub on every push
 Before a real upload (not --dry-run), also:
   tools/gather_db.py --check          gathering data is the newest cmangos / VMaNGOS
   tools/disenchant_db.py --check      disenchant data is the newest cmangos / VMaNGOS
+  tools/vendor_db.py --check          vendor prices match the newest databases and game builds
   tools/bake_forever_db2.py --check   Forever recipe data is the newest client build
   Core.lua             refuses to build while a dev addon.BUILD stamp is set
   LICENSE              the addon folder's copy is refreshed from the root copy
@@ -544,6 +545,8 @@ def main():
                  "tools/gather_db.py --check (cmangos TBC + VMaNGOS gathering data)")
         run_gate(os.path.join(tools_dir(), "disenchant_db.py"), ["--check", "--addon-dir", addon_dir],
                  "tools/disenchant_db.py --check (cmangos TBC + VMaNGOS disenchant data)")
+        run_gate(os.path.join(tools_dir(), "vendor_db.py"), ["--check", "--addon-dir", addon_dir],
+                 "tools/vendor_db.py --check (vendor prices: cmangos TBC + VMaNGOS, game item prices)")
         forever = os.path.join(tools_dir(), "bake_forever_db2.py")
         if args.allow_older_forever_data:
             log("Gate: tools/bake_forever_db2.py --check (Forever recipe data build)")
