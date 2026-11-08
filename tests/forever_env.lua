@@ -94,7 +94,10 @@ F.__index = function(t, k)
     if FRAME_NIL_FIELDS[k] then return nil end
     local v = NEW(); rawset(t, k, v); return v
 end
-local TOOLTIP_SCRIPTS_GONE = { OnTooltipSetItem = true, OnTooltipSetUnit = true, OnTooltipSetSpell = true }
+-- tbc_env.lua sets TOOLTIP_SCRIPTS_KEEP before loading this file: TBC
+-- Anniversary's tooltips still have these scripts.
+local TOOLTIP_SCRIPTS_GONE = rawget(_G, "TOOLTIP_SCRIPTS_KEEP") and {}
+    or { OnTooltipSetItem = true, OnTooltipSetUnit = true, OnTooltipSetSpell = true }
 function F:SetScript(s, fn) self._s[s] = fn end
 function F:GetScript(s) return self._s[s] end
 function F:HasScript(s) return not (self._tooltip and TOOLTIP_SCRIPTS_GONE[s]) end
@@ -167,6 +170,9 @@ function CreateFrame(kind, name, parent)
 end
 UIParent = CreateFrame("Frame", "UIParent")
 GameTooltip = CreateFrame("GameTooltip", "GameTooltip", UIParent)
+-- A trainer service's tooltip (both clients); the trainer harness steps
+-- post-hook it, so it is a real method on the tooltip itself
+rawset(GameTooltip, "SetTrainerService", function(self, i) rawset(self, "_trainerService", i) end)
 UISpecialFrames = {}
 UIPanelWindows = {}
 
@@ -346,6 +352,9 @@ function Ambiguate(name)
     return name
 end
 function UnitName() return "Me" end
+-- Not in a group: no unit is in your party or raid
+function UnitInParty() return false end
+function UnitInRaid() return nil end
 function GetUnitName() return "Me" end
 function UnitClass() return "Hunter", "HUNTER" end
 function UnitRace() return "Tauren", "Tauren" end
@@ -354,6 +363,8 @@ function UnitFactionGroup() return "Horde" end
 function UnitGUID() return "Player-1-00000001" end
 function IsShiftKeyDown() return false end
 function IsModifiedClick() return false end
+-- A chat link click (Blizzard_UIPanels_Game ItemRef.lua); PB post-hooks it
+function SetItemRef() end
 function IsInGuild() return false end
 function IsInGroup() return false end
 function IsInRaid() return false end

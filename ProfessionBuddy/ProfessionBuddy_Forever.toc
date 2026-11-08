@@ -3,7 +3,7 @@
 ## Notes: Cross-character profession management for WoW: Forever.
 ## IconTexture: Interface\Icons\INV_Camelot_Camping_WelcomingCampfire
 ## Author: m4ru
-## Version: 2.0.1
+## Version: 2.0.2
 ## SavedVariables: ProfBuddyDB
 ## DefaultState: enabled
 ## X-Curse-Project-ID: 1631296
@@ -36,6 +36,7 @@ Data/Forever/Poisons.lua
 Data/Forever/Skinning.lua
 Data/Forever/Tailoring.lua
 Data/Forever/Gather.lua
+Data/Forever/Disenchant.lua
 Data/Forever/RandomStats.lua
 Data/Forever/Tools.lua
 Data/Forever/NpcFactions.lua
@@ -48,4 +49,6 @@ UI/GuildPanel.lua
 UI/OrdersPanel.lua
 UI/MailHelper.lua
 UI/TradeSkillFrame.lua
+UI/Trainer.lua
+UI/ProfessionLink.lua
 UI/Launcher.lua

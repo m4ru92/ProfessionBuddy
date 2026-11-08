@@ -389,6 +389,15 @@ function Source:TabSkillLine(profName)
     return SKILL_LINE[profName]
 end
 
+-- The profession a skill line belongs to (a profession link carries the
+-- skill line), or nil.
+function Source:ProfForSkillLine(skillLine)
+    for profName, id in pairs(SKILL_LINE) do
+        if id == skillLine then return profName end
+    end
+    return nil
+end
+
 function Source:OpenProfession(skillLine)
     if skillLine and C_TradeSkillUI and C_TradeSkillUI.OpenTradeSkill then
         C_TradeSkillUI.OpenTradeSkill(skillLine)

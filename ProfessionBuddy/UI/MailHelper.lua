@@ -116,6 +116,7 @@ local function showMenu(anchor)
     m:SetWidth(math.max(150, maxW))
     m:SetHeight(24 + n * ROW_H + 8)
     m:ClearAllPoints()
+    if addon.UI and addon.UI.MatchScale then addon.UI:MatchScale(m, anchor) end
     m:SetPoint("TOPRIGHT", anchor, "BOTTOMRIGHT", 0, -2)
     m:Show()
 end

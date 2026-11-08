@@ -42,6 +42,7 @@ The same gates and a dry run also run on GitHub on every push
 
 Before a real upload (not --dry-run), also:
   tools/gather_db.py --check          gathering data is the newest cmangos / VMaNGOS
+  tools/disenchant_db.py --check      disenchant data is the newest cmangos / VMaNGOS
   tools/bake_forever_db2.py --check   Forever recipe data is the newest client build
   Core.lua             refuses to build while a dev addon.BUILD stamp is set
   LICENSE              the addon folder's copy is refreshed from the root copy
@@ -152,8 +153,9 @@ def read_core_version(addon_dir):
 
 # ----------------------------------------------------------- pre-build gates
 def assert_no_build_stamp(addon_dir):
-    """addon.BUILD is a dev-slice marker that is written and never read. A tree
-    that still sets it is a dev tree, not a release (D-8)."""
+    """addon.BUILD is a test-build label: a test zip sets it, and the login line
+    shows it ("v2.0.2 (TEST-g)"). A tree that still sets it is a test or dev
+    tree, not a release (D-8)."""
     core = os.path.join(addon_dir, "Core.lua")
     if not os.path.isfile(core):
         return
@@ -540,6 +542,8 @@ def main():
     else:
         run_gate(os.path.join(tools_dir(), "gather_db.py"), ["--check", "--addon-dir", addon_dir],
                  "tools/gather_db.py --check (cmangos TBC + VMaNGOS gathering data)")
+        run_gate(os.path.join(tools_dir(), "disenchant_db.py"), ["--check", "--addon-dir", addon_dir],
+                 "tools/disenchant_db.py --check (cmangos TBC + VMaNGOS disenchant data)")
         forever = os.path.join(tools_dir(), "bake_forever_db2.py")
         if args.allow_older_forever_data:
             log("Gate: tools/bake_forever_db2.py --check (Forever recipe data build)")

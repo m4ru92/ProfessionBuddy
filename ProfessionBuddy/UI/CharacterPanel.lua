@@ -214,7 +214,7 @@ function CP:CreateContent(parent)
     -- Header row
     local header = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     header:SetPoint("TOPLEFT", 5, -5)
-    header:SetText("Character Overview")
+    header:SetText("Character overview")
     header:SetTextColor(COLORS.header.r, COLORS.header.g, COLORS.header.b)
 
     -- Search box
@@ -714,7 +714,7 @@ function CP:ShowProfessionTooltip(anchor, charKey, profName, profData)
         end
 
         GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("Known Recipes:")
+        GameTooltip:AddLine("Known recipes:")
         if counts.optimal > 0 then
             GameTooltip:AddLine("  Orange: " .. counts.optimal, 1, 0.5, 0.25)
         end
@@ -725,7 +725,7 @@ function CP:ShowProfessionTooltip(anchor, charKey, profName, profData)
             GameTooltip:AddLine("  Green: " .. counts.easy, 0.25, 0.75, 0.25)
         end
         if counts.trivial > 0 then
-            GameTooltip:AddLine("  Grey: " .. counts.trivial, 0.5, 0.5, 0.5)
+            GameTooltip:AddLine("  Gray: " .. counts.trivial, 0.5, 0.5, 0.5)
         end
     end
 
@@ -740,7 +740,7 @@ function CP:ShowProfessionTooltip(anchor, charKey, profName, profData)
 
         if next(bySource) then
             GameTooltip:AddLine(" ")
-            GameTooltip:AddLine("Missing Recipes:")
+            GameTooltip:AddLine("Missing recipes:")
             for src, count in pairs(bySource) do
                 GameTooltip:AddLine("  " .. src .. ": " .. count, 1, 0.5, 0)
             end

@@ -9,9 +9,9 @@
 -- Auto-sync ticked, and synced once). Removing the
 -- Battle.net friend removes the contacts added this way, never a manual
 -- one, and never while Battle.net is down or the list reads empty.
--- TBC Anniversary only for now: the WoW: Forever beta gives addons an
--- empty friend list (a known beta issue), so there the button is greyed
--- out and says it is coming soon.
+-- Both clients since 2.0.2: live WoW: Forever gives addons the friend list
+-- (the beta read it empty). There a friend's realmName is an internal name
+-- per character, and NormKey drops it for the Forever key, Name-Forever.
 -- Local only: no wire change. The Real ID name is never read.
 ----------------------------------------------------------------------
 
@@ -28,9 +28,11 @@ local function plain(v)
     return v
 end
 
--- Off on WoW: Forever until its friend list works for addons (2.0.1).
+-- On both clients since 2.0.2 (m4ru's /pbt bnet on live Forever,
+-- 2026-11-06: 32 friends at login, project 18, names whole). Kept as the
+-- one switch, should a client ever lose the list again.
 function BN:Available()
-    return not (addon.Source and addon.Source.flavor == "forever")
+    return true
 end
 
 function BN:Settings()

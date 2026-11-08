@@ -12,15 +12,18 @@ local FRAME_HEIGHT = 450
 
 ----------------------------------------------------------------------
 -- Every floating list this window opens lives on UIParent, not on the
--- window: the dropdown lists (TradeSkillFrame owns them) and the Friends
--- tab's order menu with its full-screen click catcher. Hiding the window
--- or switching tabs has to close them by hand or they float over the game
--- world and swallow the next click.
+-- window: the dropdown lists (TradeSkillFrame owns them), the Friends
+-- tab's order menu and the Guild tab's right-click menu, each with its
+-- full-screen click catcher. Hiding the window or switching tabs has to
+-- close them by hand or they float over the game world and swallow the
+-- next click.
 ----------------------------------------------------------------------
 function addon.CloseAllPopups()
     if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
     local fp = addon.FriendsPanel
     if fp and fp._orderMenu then fp._orderMenu:Hide() end
+    local gp = addon.GuildPanel
+    if gp and gp._memberMenu then gp._memberMenu:Hide() end
 end
 
 ----------------------------------------------------------------------
@@ -41,9 +44,14 @@ function UI:Init()
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
     f:SetScript("OnDragStart", f.StartMoving)
-    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    -- a side panel open beside it stops at the screen edge with it
+    f:SetScript("OnDragStop", function(fr) UI:AfterDrag(fr, UI.scaleFollowers) end)
     f:SetClampedToScreen(true)
     f:Hide()
+    -- Order History and Find a Crafter, fastened to this window's right
+    -- edge, add themselves here when built and scale with it
+    self.scaleFollowers = {}
+    self.scaleGrip = self:AddScaleGrip(f, "mainWindowScale", self.scaleFollowers)
 
     -- Close any open dropdown list (e.g. the Guild tab profession filter) and
     -- the Friends tab order menu when the window hides. Those lists are
@@ -252,6 +260,185 @@ end
 
 function UI:Show()
     self.frame:Show()
+end
+
+----------------------------------------------------------------------
+-- Drag to scale (2.0.2, RESIZE-scope.md): a grip in a window's bottom-right
+-- corner, with Blizzard's resize grabber art (PanelResizeButtonTemplate's
+-- textures, on both clients). Dragging it scales the whole window, 75% to
+-- 150% and never bigger than the screen, and keeps the window's top-left
+-- corner where it is; right-click goes back to 100%. The scale is saved in
+-- settings[key] and applied when the window is built. A window holding
+-- secure buttons cannot be scaled in combat, so the grip does nothing
+-- then. `followers` scale with the window (the profession window's
+-- Material Calculator; the main window's Order History and Find a
+-- Crafter). They sit beside its right edge, so the size limit leaves room
+-- for the widest of them, and the window moves left when one opens with no
+-- room on the right (otherwise the game pushes the panel back on screen,
+-- over the window).
+----------------------------------------------------------------------
+UI.SCALE_MIN, UI.SCALE_MAX = 0.75, 1.5
+
+function UI:ClampScale(s)
+    s = tonumber(s) or 1
+    if s < self.SCALE_MIN then s = self.SCALE_MIN end
+    if s > self.SCALE_MAX then s = self.SCALE_MAX end
+    return math.floor(s * 100 + 0.5) / 100
+end
+
+-- Gap between a window and a side panel fastened to its right edge
+UI.SIDE_GAP = 4
+
+-- The scale frame gets for s: within the limits, and no bigger than fits
+-- on the screen, so the grip in its corner can always be reached, with room
+-- beside it for the widest of its side panels.
+function UI:FitScale(frame, s, followers)
+    s = self:ClampScale(s)
+    local sw, sh = tonumber(UIParent:GetWidth()), tonumber(UIParent:GetHeight())
+    local fw, fh = tonumber(frame:GetWidth()), tonumber(frame:GetHeight())
+    if sw and sh and fw and fh and fw > 0 and fh > 0 then
+        local side = 0
+        for _, f in ipairs(followers or {}) do
+            local w = type(f.GetWidth) == "function" and tonumber(f:GetWidth())
+            if w and w + self.SIDE_GAP > side then side = w + self.SIDE_GAP end
+        end
+        local fit = math.floor(math.min(sw / (fw + side), sh / fh) * 100) / 100
+        if s > fit then s = math.max(fit, self.SCALE_MIN) end
+    end
+    return s
+end
+
+-- A side panel just opened (or its window grew): move the window left as
+-- far as the panel runs past the screen's right edge. Not in combat: a
+-- window holding secure buttons cannot move then.
+function UI:MakeRoomBeside(frame, panel)
+    if InCombatLockdown() or not (frame and panel) then return end
+    local s = tonumber(frame:GetScale()) or 1
+    local ps = tonumber(panel:GetScale()) or s
+    local left, top, right = tonumber(frame:GetLeft()), tonumber(frame:GetTop()), tonumber(frame:GetRight())
+    local pw, sw = tonumber(panel:GetWidth()), tonumber(UIParent:GetWidth())
+    if not (left and top and right and pw and sw) then return end
+    local over = (right + self.SIDE_GAP) * s + pw * ps - sw
+    if over <= 0 then return end
+    local newLeft = math.max(left * s - over, 0)
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", newLeft / s, top)
+end
+
+-- While a side panel is open, the window and the panel stop at the screen
+-- edge together: the window's clamp area reaches past its right edge by the
+-- widest shown panel plus the gap (SetClampRectInsets moves each edge of the
+-- clamp area; a positive right inset moves the right edge out). `except` is
+-- a panel being hidden right now. SetClampRectInsets is protected, so not
+-- in combat; the next show or hide out of combat catches up.
+function UI:UpdateSideClamp(frame, followers, except)
+    if InCombatLockdown() or not (frame and frame.SetClampRectInsets) then return end
+    local side = 0
+    for _, f in ipairs(followers or {}) do
+        if f ~= except and type(f.IsShown) == "function" and f:IsShown() then
+            local w = type(f.GetWidth) == "function" and tonumber(f:GetWidth())
+            if w and w + self.SIDE_GAP > side then side = w + self.SIDE_GAP end
+        end
+    end
+    frame:SetClampRectInsets(0, side, 0, 0)
+end
+
+-- A drag ended: an open side panel past the screen's right edge moves the
+-- window left, should the clamp area not have held it (in combat, say).
+function UI:AfterDrag(frame, followers)
+    frame:StopMovingOrSizing()
+    for _, f in ipairs(followers or {}) do
+        if type(f.IsShown) == "function" and f:IsShown() then self:MakeRoomBeside(frame, f) end
+    end
+end
+
+-- Scale frame (and its followers) to s, its top-left corner staying put
+-- unless an open side panel needs the room.
+function UI:ApplyScale(frame, s, followers)
+    if InCombatLockdown() then return false end
+    s = self:FitScale(frame, s, followers)
+    local old = frame:GetScale() or 1
+    local left, top = frame:GetLeft(), frame:GetTop()
+    frame:SetScale(s)
+    if left and top then
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left * old / s, top * old / s)
+    end
+    for _, f in ipairs(followers or {}) do
+        f:SetScale(s)
+        if type(f.IsShown) == "function" and f:IsShown() then self:MakeRoomBeside(frame, f) end
+    end
+    return true
+end
+
+-- A small menu on UIParent takes the scale of the control it opens from, so
+-- it is the same size as the window holding that control.
+function UI:MatchScale(popup, anchor)
+    local es, ues = anchor and tonumber(anchor:GetEffectiveScale()), tonumber(UIParent:GetEffectiveScale())
+    if es and ues and ues > 0 then popup:SetScale(es / ues) end
+end
+
+function UI:AddScaleGrip(frame, key, followers)
+    local settings = addon.db.settings
+    local grip = CreateFrame("Button", nil, frame)
+    grip:SetSize(14, 14)
+    grip:SetPoint("BOTTOMRIGHT", 0, 0)
+    grip:SetFrameLevel(frame:GetFrameLevel() + 20)
+    grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    grip:RegisterForClicks("RightButtonUp")
+    local function stop(self)
+        if not self._dragging then return end
+        self._dragging = false
+        self:SetScript("OnUpdate", nil)
+        settings[key] = UI:ClampScale(frame:GetScale())
+    end
+    -- The cursor, in UIParent's units
+    local function cursor()
+        local x, y = GetCursorPosition()
+        local es = UIParent:GetEffectiveScale()
+        return x / es, y / es
+    end
+    grip:SetScript("OnMouseDown", function(self, button)
+        if button ~= "LeftButton" or InCombatLockdown() then return end
+        -- an open dropdown list would keep its old size until the next click
+        if addon.CloseAllDropdowns then addon.CloseAllDropdowns() end
+        local s = frame:GetScale() or 1
+        local left, top = frame:GetLeft() * s, frame:GetTop() * s
+        local x, y = cursor()
+        -- Scale by how far the cursor moves from where the drag began, so a
+        -- press on the grip without moving leaves the size alone
+        local dx, dy = math.max(x - left, 1), math.max(top - y, 1)
+        self._dragging = true
+        self:SetScript("OnUpdate", function()
+            if InCombatLockdown() then return stop(self) end
+            local cx, cy = cursor()
+            local ns = s * math.max((cx - left) / dx, (top - cy) / dy)
+            if UI:FitScale(frame, ns, followers) ~= UI:ClampScale(frame:GetScale()) then UI:ApplyScale(frame, ns, followers) end
+        end)
+    end)
+    grip:SetScript("OnMouseUp", stop)
+    grip:SetScript("OnHide", stop)
+    grip:SetScript("OnClick", function()
+        if UI:ApplyScale(frame, 1, followers) then settings[key] = 1 end
+    end)
+    grip:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Window size")
+        GameTooltip:AddLine("Drag to make the window bigger or smaller. Right-click: back to 100%.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    grip:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    local saved = settings[key]
+    if saved and saved ~= 1 then UI:ApplyScale(frame, saved, followers) end
+    -- A window first built in combat could not take its saved size; it
+    -- takes it the next time it opens out of combat.
+    frame:HookScript("OnShow", function()
+        local want = UI:FitScale(frame, settings[key] or 1, followers)
+        if math.abs((frame:GetScale() or 1) - want) > 0.001 then UI:ApplyScale(frame, want, followers) end
+    end)
+    return grip
 end
 
 function UI:Hide()

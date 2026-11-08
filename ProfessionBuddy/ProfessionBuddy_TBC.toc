@@ -3,7 +3,7 @@
 ## Notes: Cross-character profession management, recipe tracking, and material calculator for TBC Classic Anniversary
 ## IconTexture: Interface\Icons\Spell_Fire_Fire
 ## Author: m4ru
-## Version: 2.0.1
+## Version: 2.0.2
 ## SavedVariables: ProfBuddyDB
 ## DefaultState: enabled
 ## X-Curse-Project-ID: 1631296
@@ -35,6 +35,7 @@ Data/FirstAid.lua
 Data/Smelting.lua
 Data/Poisons.lua
 Data/GatherMobs.lua
+Data/Disenchant.lua
 Data/RandomEnchant.lua
 Data/Tools.lua
 MaterialCalc.lua
@@ -45,4 +46,5 @@ UI/GuildPanel.lua
 UI/OrdersPanel.lua
 UI/MailHelper.lua
 UI/TradeSkillFrame.lua
+UI/Trainer.lua
 UI/Launcher.lua

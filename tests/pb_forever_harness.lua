@@ -37,7 +37,7 @@ FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
 for _, l in ipairs(PRINTS) do EXPECT(not l:find("failed to load", 1, true), "module init error: " .. l) end
-EXPECT(PRINTED("loaded.  /pb"), "no loaded line")
+EXPECT(PRINTED("loaded. Type /pb or /profbuddy."), "no loaded line")
 EXPECT(not PRINTED("not supported"), "a not-supported line is still printed")
 local DS = ProfBuddy.DataStore
 local lw, sk = DS:GetProfession(nil, "Leatherworking"), DS:GetProfession(nil, "Skinning")
@@ -802,7 +802,7 @@ local function pick(dd, v)
     end
     error("no option " .. v)
 end
-EXPECT(values(TSF.diffDropdown) == "All,No Grey,Orange,Yellow,Green,Grey", "Skill Up options: " .. values(TSF.diffDropdown))
+EXPECT(values(TSF.diffDropdown) == "All,No Gray,Orange,Yellow,Green,Gray", "Skill Up options: " .. values(TSF.diffDropdown))
 EXPECT(values(TSF.sourceDropdown) == "All,Trainer,Vendor,Drop,Quest,Reputation,Discovery,Automatic,Undetermined",
        "Source options: " .. values(TSF.sourceDropdown))
 st.searchText = ""
@@ -1250,7 +1250,7 @@ rawset(GameTooltip, "AddLine", nil)                            -- F21 captured i
 rawset(GameTooltip, "Show", nil)
 local posts = 0
 for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then posts = posts + 1 end end
-EXPECT(posts == 3, "item tooltip post-calls: " .. posts)   -- Used in, Craftable by, Held by
+EXPECT(posts == 4, "item tooltip post-calls: " .. posts)   -- Used in, Craftable by, Held by, Disenchants into
 local function has(lines, text)
     for _, l in ipairs(lines) do if type(l) == "string" and l:find(text, 1, true) then return l end end
 end
@@ -1356,11 +1356,11 @@ do
         return diffText, nameColor, rowColor
     end
     local cases = {
-        { 1,   "Difficulty when learned: Orange - will level up", ORANGE },   -- below 35: learned at 35
-        { 64,  "Difficulty when learned: Orange - will level up", ORANGE },
-        { 65,  "Difficulty when learned: Yellow - may level up", YELLOW },
-        { 80,  "Difficulty when learned: Green - unlikely to level", GREEN },
-        { 95,  "Difficulty when learned: Grey - no skill gain", GREY },
+        { 1,   "Difficulty when learned: Orange: will level up", ORANGE },   -- below 35: learned at 35
+        { 64,  "Difficulty when learned: Orange: will level up", ORANGE },
+        { 65,  "Difficulty when learned: Yellow: may level up", YELLOW },
+        { 80,  "Difficulty when learned: Green: unlikely to level", GREEN },
+        { 95,  "Difficulty when learned: Gray: no skill gain", GREY },
     }
     for _, c in ipairs(cases) do
         local d, n, r = at(c[1])
@@ -2901,28 +2901,36 @@ do
 end
 print("  PASS F52 the player's own whispers keep their offline line, PB's hide for five minutes")
 
--- F53: Battle.net auto-add on WoW: Forever: the Friends tab button is
--- greyed out and its tooltip says coming soon, and nothing scans. Then the
--- picker window's own logic, with the client check forced on.
+-- F53: Battle.net auto-add on WoW: Forever (2.0.2): the Friends tab button
+-- works and its tooltip explains it; a picked friend on a Forever character
+-- becomes a contact under the Forever key, whatever internal realm the game
+-- reports, surname whole; a friend in another game is not added. Then the
+-- picker window's own logic.
 do
     local BN, S = ProfBuddy.BattleNet, ProfBuddy.db.settings
     local FP = ProfBuddy.FriendsPanel
-    EXPECT(not BN:Available(), "Battle.net auto-add is on on Forever")
+    EXPECT(BN:Available(), "Battle.net auto-add is off on Forever")
     if not FP.bnetBtn then FP:Toggle() end           -- the tab builds on first show
     local btn = FP.bnetBtn
-    EXPECT(btn and not btn:IsEnabled(), "the Battle.net button is not greyed out on Forever")
+    EXPECT(btn and btn:IsEnabled(), "the Battle.net button is greyed out on Forever")
     local tipLines = {}
     local realAdd, realSet = GameTooltip.AddLine, GameTooltip.SetText
     rawset(GameTooltip, "SetText", function(_, t) tipLines[#tipLines + 1] = t end)
     rawset(GameTooltip, "AddLine", function(_, t) tipLines[#tipLines + 1] = t end)
     btn:GetScript("OnEnter")(btn)
     rawset(GameTooltip, "SetText", realSet); rawset(GameTooltip, "AddLine", realAdd)
-    EXPECT(tipLines[2] and tipLines[2]:find("Coming soon", 1, true), "tooltip: " .. tostring(tipLines[2]))
+    EXPECT(tipLines[1] == "Battle.net friends" and tipLines[2] and tipLines[2]:find("ProfessionBuddy", 1, true),
+           "tooltip: " .. tostring(tipLines[1]) .. " / " .. tostring(tipLines[2]))
+    local src = assert(io.open(PB_BASE .. "/UI/FriendsPanel.lua")):read("*a")
+    EXPECT(not src:find("Coming soon", 1, true), "the coming-soon text is still there")
     BNConnected = function() return true end
     local list = {
         { tag = "Zed#1", games = {} },
+        -- as m4ru's live read: realmName is an internal per-character name
         { tag = "Ann#2", games = { { clientProgram = "WoW", isOnline = true, wowProjectID = WOW_PROJECT_ID,
-            isInCurrentRegion = true, characterName = "Ann Wren", realmName = "Forever", factionName = "Horde" } } },
+            isInCurrentRegion = true, characterName = "Ann Wren", realmName = "CAMWOWUS1Realm4PvP", factionName = "Horde" } } },
+        { tag = "Tbc#3", games = { { clientProgram = "WoW", isOnline = true, wowProjectID = 5,
+            isInCurrentRegion = true, characterName = "Oldie", realmName = "Dreamscythe", factionName = "Horde" } } },
     }
     BNGetNumFriends = function() return #list end
     C_BattleNet = {
@@ -2930,13 +2938,14 @@ do
         GetFriendNumGameAccounts = function(i) return #list[i].games end,
         GetFriendGameAccountInfo = function(i, j) return list[i].games[j] end,
     }
-    S.bnetAutoAdd, S.bnetPicks = true, { ["Ann#2"] = true }
+    S.bnetAutoAdd, S.bnetPicks = true, { ["Ann#2"] = true, ["Tbc#3"] = true }
     BN:Scan()
-    EXPECT(not ProfBuddy.db.contacts["Ann Wren-Forever"], "Forever scanned while greyed out")
-    BN:ToggleWindow()
-    EXPECT(not BN.window, "the picker opened on Forever")
-    -- the window, forced on
-    BN.Available = function() return true end
+    local ct = ProfBuddy.db.contacts
+    EXPECT(ct["Ann Wren-Forever"] and ct["Ann Wren-Forever"].bnet == "Ann#2", "a picked Forever friend was not added")
+    EXPECT(not ct["Ann Wren-CAMWOWUS1Realm4PvP"], "the internal realm went into the key")
+    EXPECT(not ct["Oldie-Forever"] and not ct["Oldie-Dreamscythe"], "a friend in TBC Anniversary was added on Forever")
+    ct["Ann Wren-Forever"] = nil
+    -- the window
     S.bnetAutoAdd, S.bnetPicks = false, {}
     BN:ToggleWindow()
     local w = BN.window
@@ -2944,26 +2953,26 @@ do
     local note = rawget(w, "waitNote")       -- an unset frame field reads as a stub
     EXPECT(note and tostring(note:GetText()):find("minute or two", 1, true),
            "no note that a new contact's data takes a while")
-    EXPECT(w.rows[1].label:GetText() == "Ann" and w.rows[2].label:GetText() == "Zed",
+    EXPECT(w.rows[1].label:GetText() == "Ann" and w.rows[2].label:GetText() == "Tbc"
+           and w.rows[3].label:GetText() == "Zed",
            "friends in this game first, then by name; BattleTag cut at #")
     EXPECT(w.rows[1].status:GetText():find("Ann Wren", 1, true), "no 'playing' line for a friend in game")
     EXPECT(not w.trust:IsEnabled(), "Also trust them usable with auto-add off")
     rawset(w.auto, "GetChecked", function() return true end)
     w.auto:GetScript("OnClick")(w.auto)
     EXPECT(S.bnetAutoAdd == true and w.trust:IsEnabled(), "auto-add box did not save or enable trust")
-    rawset(w.rows[2], "GetChecked", function() return true end)
-    w.rows[2]:GetScript("OnClick")(w.rows[2])
+    rawset(w.rows[3], "GetChecked", function() return true end)
+    w.rows[3]:GetScript("OnClick")(w.rows[3])
     EXPECT(S.bnetPicks["Zed#1"] == true, "ticking a friend did not save the pick")
     rawset(w.rows[1], "GetChecked", function() return true end)
     w.rows[1]:GetScript("OnClick")(w.rows[1])
     EXPECT(ProfBuddy.db.contacts["Ann Wren-Forever"], "ticking a friend in game did not add them")
     ProfBuddy.db.contacts["Ann Wren-Forever"] = nil
     w:Hide()
-    BN.Available = nil
     S.bnetAutoAdd, S.bnetTrust, S.bnetPicks = false, false, {}
     BNConnected, BNGetNumFriends, C_BattleNet = nil, nil, nil
 end
-print("  PASS F53 Battle.net on Forever: button greyed with a coming-soon tooltip, no scan; picker lists, ticks and adds")
+print("  PASS F53 Battle.net on Forever: button works, picked friend added under the Forever key (internal realm ignored), other games skipped; picker lists, ticks and adds")
 
 -- F54: Settings scroll. Both columns sit in one scroll frame (bar hidden
 -- when nothing to scroll), Settings opens at the top, nothing runs past the
@@ -3971,4 +3980,779 @@ do
 end
 print("  PASS F70 detail panel Held by: you first (you), alts, then Friends, most held first, tooltip counts; viewed character left out; boxes; overflow")
 
-print("ALL FOREVER TESTS PASS (70)")
+-- F71: right-click a guildmate's row for PB's own menu: Whisper and Invite
+-- to group, using the roster's name; nothing on a left click or an empty row
+do
+    local GP = ProfBuddy.GuildPanel
+    local told, invited = {}, {}
+    local keepCFU, keepPI = ChatFrameUtil.SendTell, rawget(_G, "C_PartyInfo")
+    ChatFrameUtil.SendTell = function(name) told[#told + 1] = name end
+    C_PartyInfo = { InviteUnit = function(name) invited[#invited + 1] = name end }
+    local row = GP:CreateRow(UIParent)
+    local up = row:GetScript("OnMouseUp")
+    EXPECT(up, "guild rows have no click handler")
+    row._member = false   -- an empty row (the stub frames answer any unset field)
+    up(row, "RightButton")
+    EXPECT(not GP._memberMenu or not GP._memberMenu:IsShown(), "an empty row opened the menu")
+    row._member = { name = "Noodle Stand", charKey = "Noodle Stand-Forever", online = true }
+    up(row, "LeftButton")
+    EXPECT(not GP._memberMenu or not GP._memberMenu:IsShown(), "a left click opened the menu")
+    up(row, "RightButton")
+    local m = GP._memberMenu
+    EXPECT(m and m:IsShown(), "right-click did not open the menu")
+    EXPECT(rawget(m.title, "_text") == "Noodle Stand", "menu title " .. tostring(rawget(m.title, "_text")))
+    EXPECT(#m.buttons == 2 and rawget(m.buttons[1].text, "_text") == "Whisper"
+           and rawget(m.buttons[2].text, "_text") == "Invite to group", "menu items")
+    m.buttons[1]:GetScript("OnClick")(m.buttons[1])
+    EXPECT(told[1] == "Noodle Stand" and not m:IsShown(), "Whisper: " .. tostring(told[1]))
+    up(row, "RightButton")
+    m.buttons[2]:GetScript("OnClick")(m.buttons[2])
+    EXPECT(invited[1] == "Noodle Stand" and not m:IsShown(), "Invite: " .. tostring(invited[1]))
+    up(row, "RightButton")
+    ProfBuddy.CloseAllPopups()   -- the main window hiding or a tab switch
+    EXPECT(not m:IsShown(), "the guild menu stays open when the window hides")
+    -- greyed when they cannot work: offline, yourself, Invite when grouped
+    local function usable() return m.buttons[1]:IsEnabled() and true or false, m.buttons[2]:IsEnabled() and true or false end
+    up(row, "RightButton")
+    local w, i = usable()
+    EXPECT(w and i, "an online guildmate's actions greyed")
+    m:Hide()
+    row._member = { name = "Noodle Stand", charKey = "Noodle Stand-Forever", online = false }
+    up(row, "RightButton"); w, i = usable()
+    EXPECT(m:IsShown() and not w and not i, "an offline guildmate's Whisper or Invite not greyed")
+    m:Hide()
+    local me = ProfBuddy:PlayerKey()
+    row._member = { name = me, charKey = me, online = true }
+    up(row, "RightButton"); w, i = usable()
+    EXPECT(not w and not i, "your own Whisper or Invite not greyed")
+    m:Hide()
+    local keepUIP, keepUIR = rawget(_G, "UnitInParty"), rawget(_G, "UnitInRaid")
+    UnitInParty = function(n) return n == "Noodle Stand" end
+    UnitInRaid = function() return nil end
+    row._member = { name = "Noodle Stand-Forever", charKey = "Noodle Stand-Forever", online = true }
+    up(row, "RightButton"); w, i = usable()
+    EXPECT(w and not i, "Invite not greyed for a guildmate in your group")
+    m:Hide()
+    UnitInParty, UnitInRaid = keepUIP, keepUIR
+    local csrc = assert(io.open(PB_BASE .. "/Core.lua")):read("*a")
+    EXPECT(csrc:find('title:SetText("ProfessionBuddy Bug Report")', 1, true)
+           and csrc:find('"== ProfessionBuddy Bug Report =="', 1, true), "bug report window title and text differ")
+    local osrc = assert(io.open(PB_BASE .. "/UI/OrdersPanel.lua")):read("*a")
+    EXPECT(osrc:find('split     = "Split or discuss"', 1, true), "order details do not say Split or discuss")
+    local src = assert(io.open(PB_BASE .. "/UI/GuildPanel.lua")):read("*a")
+    EXPECT(not src:find("UnitPopup", 1, true) and not src:find("ToggleDropDownMenu", 1, true),
+           "the guild menu uses Blizzard's unit menu")
+    ChatFrameUtil.SendTell, C_PartyInfo = keepCFU, keepPI
+end
+print("  PASS F71 guild row right-click: PB's menu with Whisper and Invite to group, roster name, closes after a pick and with the window, greyed offline, for yourself, and Invite when grouped")
+
+-- F72: the profession link button (WoW: Forever), as in Blizzard's own
+-- window: the bar is always shorter by its room; it shows for your own live
+-- profession only; its menu lists Guild, Party, Raid and joined channels;
+-- a pick opens the chat box with "/g <link>"; a click types the link only
+-- into an open chat box. Then recipe-row shift-click: Share's link, or
+-- Share's "still loading" line instead of selecting.
+do
+    local TSF = ProfBuddy.TradeSkillFrame
+    local st = TSF.state
+    local btn = TSF.linkButton
+    EXPECT(btn, "no link button on Forever")
+    local bw = rawget(TSF.skillBar, "_size")[1]
+    EXPECT(bw == 740 - 24 - 27, "skill bar width " .. tostring(bw))
+    local p = rawget(btn, "_lastPoint")
+    EXPECT(p and p[1] == "LEFT" and p[3] == "RIGHT" and p[4] == 4, "link button not right of the bar")
+    EXPECT(rawget(btn, "_size")[1] == 23, "link button size")
+
+    local T = C_TradeSkillUI
+    local keep = { T.CanTradeSkillListLink, T.GetTradeSkillListLink, T.IsNPCCrafting, T.IsTradeSkillLinked }
+    local can = true
+    T.CanTradeSkillListLink = function() return can end
+    T.GetTradeSkillListLink = function() return "|cffffd000|Htrade:Player-1-00000001:165:393|h[Leatherworking]|h|r" end
+    T.IsNPCCrafting = function() return false end
+    T.IsTradeSkillLinked = function() return false end
+    local save = { st._viewCharKey, st._isStaticView, st._isLinkedView, st.isCraftWindow }
+    st._viewCharKey, st._isStaticView, st._isLinkedView, st.isCraftWindow = nil, false, false, false
+    TSF:UpdateLinkButton()
+    EXPECT(btn:IsShown(), "no link button on your own profession")
+    st._viewCharKey = "Alt-Forever"; TSF:UpdateLinkButton()
+    EXPECT(not btn:IsShown(), "link button on an alt's profession")
+    st._viewCharKey, st._isStaticView = nil, true; TSF:UpdateLinkButton()
+    EXPECT(not btn:IsShown(), "link button on a profession not learned")
+    st._isStaticView, st._isLinkedView = false, true; TSF:UpdateLinkButton()
+    EXPECT(not btn:IsShown(), "link button on a linked profession")
+    st._isLinkedView = false; can = false; TSF:UpdateLinkButton()
+    EXPECT(not btn:IsShown(), "link button when the game says it cannot link")
+    can = true; TSF:UpdateLinkButton()
+    EXPECT(rawget(TSF.skillBar, "_size")[1] == bw, "the skill bar width changed")
+
+    -- the menu (the client's own strings, GlobalStrings build 70790)
+    TRADESKILL_POST, GUILD, PARTY, RAID = "Post in chat", "Guild", "Party", "Raid"
+    SLASH_GUILD1, SLASH_PARTY1, SLASH_RAID1 = "/g", "/p", "/raid"
+    local keepG, keepCL = IsInGuild, GetChannelList
+    IsInGuild = function() return true end
+    GetChannelList = function() return 1, "General", false, 2, "Trade", true end
+    local opened
+    local keepOpen = ChatFrameUtil.OpenChat
+    ChatFrameUtil.OpenChat = function(text) opened = text end
+    local items, title = {}, nil
+    local root = {
+        CreateTitle = function(_, t) title = t end,
+        CreateButton = function(_, text, fn)
+            local it = { text = text, fn = fn }
+            function it:SetEnabled(e) self.enabled = e end
+            items[#items + 1] = it
+            return it
+        end,
+    }
+    TSF:FillLinkMenu(root)
+    local names = {}
+    for _, it in ipairs(items) do names[#names + 1] = tostring(it.text) .. (it.enabled and "" or "(off)") end
+    EXPECT(title == "Post in chat", "menu title " .. tostring(title))
+    EXPECT(#items == 5 and items[1].enabled and not items[2].enabled and not items[3].enabled
+           and items[4].enabled and not items[5].enabled, "menu items: " .. table.concat(names, ", "))
+    items[1].fn()
+    EXPECT(opened and opened:find("^/g |cffffd000|Htrade:", 1), "Guild pick opened " .. tostring(opened))
+
+    -- a click types the link only into an open chat box (macro editor closed)
+    MacroFrameText = { IsShown = function() return false end }
+    local keepAW = ChatFrameUtil.GetActiveWindow
+    local n0 = 0
+    for _, c in ipairs(CALLS) do if c == "ChatFrameUtil.InsertLink" then n0 = n0 + 1 end end
+    ChatFrameUtil.GetActiveWindow = function() return nil end
+    btn:GetScript("OnClick")(btn)
+    ChatFrameUtil.GetActiveWindow = function() return {} end
+    btn:GetScript("OnClick")(btn)
+    local n1 = 0
+    for _, c in ipairs(CALLS) do if c == "ChatFrameUtil.InsertLink" then n1 = n1 + 1 end end
+    EXPECT(n1 - n0 == 1, "the click typed the link " .. (n1 - n0) .. " times")
+    ChatFrameUtil.GetActiveWindow, ChatFrameUtil.OpenChat = keepAW, keepOpen
+    IsInGuild, GetChannelList = keepG, keepCL
+    T.CanTradeSkillListLink, T.GetTradeSkillListLink, T.IsNPCCrafting, T.IsTradeSkillLinked = keep[1], keep[2], keep[3], keep[4]
+    st._viewCharKey, st._isStaticView, st._isLinkedView, st.isCraftWindow = save[1], save[2], save[3], save[4]
+    TSF:UpdateLinkButton()
+
+    -- the background fills the button and the icon is centred, as Blizzard's
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find('local bg = btn:CreateTexture%(nil, "BACKGROUND"%)%s+bg:SetAllPoints%(%)%s+local icon = btn:CreateTexture')
+           and not src:find('square%-normal", true%)'), "link button background does not fill the button")
+    -- shift-click on a recipe row: Share's link, or Share's loading line
+    EXPECT(src:find('if IsModifiedClick%("CHATLINK"%) then%s+local chatLink = self:RecipeChatLink%(entry%)'),
+           "row shift-click does not use Share's link")
+    local row = TSF.listRows and TSF.listRows[1]
+    local firstReal
+    for idx, e in ipairs(st.recipes or {}) do if not e.isHeader then firstReal = idx; break end end
+    EXPECT(row and firstReal, "no recipe row to click")
+    local keepOff, keepMod, keepRCL = st.scrollOffset, IsModifiedClick, TSF.RecipeChatLink
+    st.scrollOffset = firstReal - 1
+    IsModifiedClick = function(k) return k == "CHATLINK" end
+    TSF.RecipeChatLink = function() return nil end
+    local before = st.selected
+    st.selected = "nothing"
+    PRINTS = {}
+    row:GetScript("OnClick")(row)
+    EXPECT(PRINTED("still loading; try again in a moment."), "no loading line on shift-click")
+    EXPECT(st.selected == "nothing", "a loading shift-click selected the recipe")
+    TSF.RecipeChatLink = keepRCL
+    local n2 = 0
+    for _, c in ipairs(CALLS) do if c == "ChatFrameUtil.InsertLink" then n2 = n2 + 1 end end
+    row:GetScript("OnClick")(row)
+    local n3 = 0
+    for _, c in ipairs(CALLS) do if c == "ChatFrameUtil.InsertLink" then n3 = n3 + 1 end end
+    EXPECT(n3 - n2 == 1, "shift-click did not type the link")
+    -- the stub chat box takes nothing (no open chat box), so the click went
+    -- on to select the recipe, as an unmodified click does
+    EXPECT(st.selected == st.recipes[firstReal].name, "shift-click with no chat box did not select the recipe")
+    IsModifiedClick, st.scrollOffset, st.selected = keepMod, keepOff, before
+end
+print("  PASS F72 profession link button: fixed bar, own live profession only, Blizzard's menu and click; row shift-click uses Share's link and loading line")
+
+-- F73: drag to scale. Both windows have the grip; scales stay in 75-150%;
+-- the top-left corner stays put; a drag scales by the farther of the two
+-- directions and saves on release; right-click goes back to 100%; nothing
+-- changes in combat; a saved scale is applied when the window is built, and
+-- the Material Calculator follows the profession window.
+do
+    local UI, TSF, S = ProfBuddy.UI, ProfBuddy.TradeSkillFrame, ProfBuddy.db.settings
+    EXPECT(UI.scaleGrip and TSF.scaleGrip, "a window has no scale grip")
+    EXPECT(UI:ClampScale(0.5) == 0.75 and UI:ClampScale(2) == 1.5 and UI:ClampScale(1.234) == 1.23
+           and UI:ClampScale(nil) == 1, "scale limits")
+    local function fakeWindow(left, top, w, h)
+        local f = CreateFrame("Frame", nil, UIParent)
+        local st = { scale = 1, left = left, top = top }
+        rawset(f, "GetScale", function() return st.scale end)
+        rawset(f, "SetScale", function(_, v) st.scale = v end)
+        rawset(f, "GetLeft", function() return st.left / st.scale end)
+        rawset(f, "GetTop", function() return st.top / st.scale end)
+        rawset(f, "GetWidth", function() return w end)
+        rawset(f, "GetHeight", function() return h end)
+        rawset(f, "SetPoint", function(_, p, rel, rp, x, y) st.point = { p, rp, x, y }; st.left, st.top = x * st.scale, y * st.scale end)
+        return f, st
+    end
+    local keepW, keepH = rawget(UIParent, "GetWidth"), rawget(UIParent, "GetHeight")
+    local screenW, screenH = 1920, 1080
+    rawset(UIParent, "GetWidth", function() return screenW end)
+    rawset(UIParent, "GetHeight", function() return screenH end)
+    local follower = { SetScale = function(self, v) self.scale = v end }
+    local win, st = fakeWindow(100, 500, 740, 540)
+    EXPECT(UI:ApplyScale(win, 1.5, { follower }) and st.scale == 1.5 and follower.scale == 1.5, "scale not applied")
+    EXPECT(st.point[1] == "TOPLEFT" and st.point[2] == "BOTTOMLEFT"
+           and math.abs(st.left - 100) < 0.01 and math.abs(st.top - 500) < 0.01, "the top-left corner moved")
+    local keepCombat = InCombatLockdown
+    InCombatLockdown = function() return true end
+    EXPECT(UI:ApplyScale(win, 1, { follower }) == false and st.scale == 1.5, "scaled in combat")
+    InCombatLockdown = keepCombat
+
+    -- a drag on a grip, then right-click
+    local win2, st2 = fakeWindow(100, 500, 740, 540)
+    local follower2 = { SetScale = function(self, v) self.scale = v end }
+    S.testScale = nil
+    local grip = UI:AddScaleGrip(win2, "testScale", { follower2 })
+    rawset(UIParent, "GetEffectiveScale", function() return 1 end)
+    -- pressed 7 px inside the corner, as on the grip: no change until it moves
+    local cx, cy = 100 + 740 - 7, 500 - 540 + 7
+    GetCursorPosition = function() return cx, cy end
+    grip:GetScript("OnMouseDown")(grip, "LeftButton")
+    grip:GetScript("OnUpdate")(grip)
+    EXPECT(st2.scale == 1 and follower2.scale == nil, "a press without a move changed the size: " .. tostring(st2.scale))
+    cx, cy = 100 + 733 * 1.2, 500 - 533 * 1.1
+    grip:GetScript("OnUpdate")(grip)
+    EXPECT(math.abs(st2.scale - 1.2) < 0.001 and follower2.scale == st2.scale, "drag scale " .. tostring(st2.scale))
+    grip:GetScript("OnMouseUp")(grip)
+    EXPECT(S.testScale == 1.2, "drag not saved: " .. tostring(S.testScale))
+    -- a press and release without a move saves the size unchanged
+    grip:GetScript("OnMouseDown")(grip, "LeftButton")
+    grip:GetScript("OnUpdate")(grip)
+    grip:GetScript("OnMouseUp")(grip)
+    EXPECT(S.testScale == 1.2 and st2.scale == 1.2, "a click on the grip changed the size: " .. tostring(st2.scale))
+    grip:GetScript("OnMouseDown")(grip, "LeftButton")
+    cx, cy = 100 + 740 * 4, 500 - 540 * 4
+    grip:GetScript("OnUpdate")(grip)
+    grip:GetScript("OnMouseUp")(grip)
+    EXPECT(S.testScale == 1.5, "drag past the limit saved " .. tostring(S.testScale))
+    grip:GetScript("OnClick")(grip, "RightButton")
+    EXPECT(st2.scale == 1 and S.testScale == 1, "right-click did not reset to 100%")
+    InCombatLockdown = function() return true end
+    grip:GetScript("OnMouseDown")(grip, "LeftButton")
+    EXPECT(not grip:GetScript("OnUpdate"), "a drag started in combat")
+    InCombatLockdown = keepCombat
+
+    -- a saved scale applies when the window is built
+    local win3, st3 = fakeWindow(100, 500, 740, 540)
+    S.testScale = 1.3
+    UI:AddScaleGrip(win3, "testScale")
+    EXPECT(st3.scale == 1.3, "saved scale not applied at build: " .. tostring(st3.scale))
+    -- built in combat: no scale then; it applies on the next open after combat
+    local win4, st4 = fakeWindow(100, 500, 740, 540)
+    InCombatLockdown = function() return true end
+    UI:AddScaleGrip(win4, "testScale")
+    EXPECT(st4.scale == 1, "scaled in combat at build")
+    InCombatLockdown = keepCombat
+    rawget(win4, "_h").OnShow(win4)
+    EXPECT(st4.scale == 1.3, "saved scale not applied on the next open: " .. tostring(st4.scale))
+    -- never bigger than the screen: 540 tall on a 768 tall screen stops at 1.42
+    screenH = 768
+    EXPECT(UI:FitScale(win, 1.5) == 1.42 and UI:FitScale(win, 1.2) == 1.2, "scale not capped to the screen")
+    local win5, st5 = fakeWindow(100, 700, 740, 540)
+    S.testScale = 1
+    local grip5 = UI:AddScaleGrip(win5, "testScale")
+    GetCursorPosition = function() return 100 + 733, 700 - 533 end
+    grip5:GetScript("OnMouseDown")(grip5, "LeftButton")
+    GetCursorPosition = function() return 100 + 733 * 1.5, 700 - 533 end   -- sideways
+    grip5:GetScript("OnUpdate")(grip5)
+    grip5:GetScript("OnMouseUp")(grip5)
+    EXPECT(st5.scale == 1.42 and S.testScale == 1.42, "a sideways drag made the window taller than the screen: " .. tostring(st5.scale))
+    S.testScale = 1.5
+    rawget(win5, "_h").OnShow(win5)
+    EXPECT(st5.scale == 1.42, "a saved scale bigger than the screen applied: " .. tostring(st5.scale))
+    rawset(UIParent, "GetWidth", keepW); rawset(UIParent, "GetHeight", keepH)
+    -- a dropdown list (UIParent's child) opens at the button and the window's
+    -- size when the window is scaled
+    local dd = TSF.sortDropdown
+    local keepES = rawget(UIParent, "GetEffectiveScale")
+    rawset(dd.btn, "GetEffectiveScale", function() return 1.5 end)
+    rawset(UIParent, "GetEffectiveScale", function() return 1 end)
+    rawset(dd.btn, "GetCenter", function() return 300, 400 end)
+    rawset(dd.btn, "GetWidth", function() return 140 end)
+    rawset(dd.btn, "GetRect", function() return 230, 390, 140, 20 end)
+    local lp
+    rawset(dd.listFrame, "SetPoint", function(_, ...) lp = { ... } end)
+    rawset(dd.listFrame, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+    dd.btn:GetScript("OnClick")(dd.btn)
+    EXPECT(rawget(dd.listFrame, "_scale") == 1.5 and lp and lp[4] == 230 and lp[5] == 390,
+           "a dropdown list does not follow the window's scale")
+    dd.listFrame:Hide()
+    for _, k in ipairs({ "GetEffectiveScale", "GetCenter", "GetWidth", "GetRect" }) do rawset(dd.btn, k, nil) end
+    rawset(dd.listFrame, "SetPoint", nil); rawset(dd.listFrame, "SetScale", nil)
+    -- small menus take the size of the control they open from
+    local menu, anchor = CreateFrame("Frame", nil, UIParent), CreateFrame("Button", nil, UIParent)
+    rawset(anchor, "GetEffectiveScale", function() return 1.3 end)
+    rawset(menu, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+    UI:MatchScale(menu, anchor)
+    EXPECT(rawget(menu, "_scale") == 1.3, "a menu does not take its window's size")
+    for file, n in pairs({ ["UI/TradeSkillFrame.lua"] = 1, ["UI/GuildPanel.lua"] = 1, ["UI/OrdersPanel.lua"] = 1,
+                           ["UI/FriendsPanel.lua"] = 1, ["UI/MailHelper.lua"] = 1 }) do
+        local fsrc = assert(io.open(PB_BASE .. "/" .. file)):read("*a")
+        local _, c = fsrc:gsub("UI:MatchScale%(m, ", "")
+        EXPECT(c == n, file .. ": a menu does not take its window's size")
+    end
+    rawset(UIParent, "GetEffectiveScale", keepES)
+    -- Order History and Find a Crafter follow the main window's size
+    local OP = ProfBuddy.OrdersPanel
+    OP:BuildHistoryPanel(); OP:BuildFindPanel()
+    local found = 0
+    for _, fl in ipairs(UI.scaleFollowers) do
+        if fl == OP.histFrame or fl == OP.findFrame then found = found + 1 end
+    end
+    EXPECT(found == 2, "Order History and Find a Crafter do not scale with the main window")
+    rawset(UI.frame, "GetScale", function() return 1.3 end)
+    for _, pf in ipairs({ OP.histFrame, OP.findFrame }) do
+        rawset(pf, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+        pf:GetScript("OnShow")(pf)
+        EXPECT(rawget(pf, "_scale") == 1.3, "a side panel opened at the wrong size")
+        rawset(pf, "SetScale", nil)
+    end
+    rawset(UI.frame, "GetScale", nil)
+    S.testScale = nil
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(not src:find('targetName = "grey"', 1, true) and src:find('targetName = "gray"', 1, true),
+           'the Skill-ups range still reads "to grey"')
+    EXPECT(src:find('AddScaleGrip%(f, "professionWindowScale", { self%.calcPanel }%)'),
+           "the Material Calculator does not follow the profession window's scale")
+end
+print("  PASS F73 drag to scale: both windows, 75-150%, top-left kept, drag and release save, a press alone keeps the size, right-click resets, not in combat, never bigger than the screen, dropdown lists, menus and side panels follow, applied at build")
+
+-- F74: "Disenchants into" on item tooltips (Data/Forever/Disenchant.lua,
+-- from VMaNGOS): the materials with count and chance, below Held by, on
+-- every character; no "Requires Enchanting" line on Forever; nothing for an
+-- item the data does not list; the Settings box turns it off.
+do
+    local D, TSF, S = ProfBuddy.Disenchant, ProfBuddy.TradeSkillFrame, ProfBuddy.db.settings
+    EXPECT(D and D.source:find("^VMaNGOS db ") and D.groups and D.materials, "Forever disenchant data not loaded")
+    for _, g in pairs(D.groups) do EXPECT(g.skill == nil, "a Forever group carries a skill") end
+    local g = TSF:DisenchantGroup(821)
+    EXPECT(g and g.loot[1][1] == 10940, "item 821 is not in the Strange Dust group")
+    rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "Show", nil)
+    local lines = SHOW_ITEM_TOOLTIP(GameTooltip, 821)
+    local head, dust
+    for i, l in ipairs(lines) do
+        if l == "Disenchants into (ProfessionBuddy):" then head = i end
+        if type(l) == "string" and l:find("Strange Dust 1-2 | 80%", 1, true) then dust = i end
+    end
+    EXPECT(head and dust and dust > head, "no disenchant section on item 821: " .. table.concat(lines, " / "))
+    for _, l in ipairs(lines) do
+        EXPECT(not tostring(l):find("Requires Enchanting", 1, true), "a skill line on Forever")
+        EXPECT(not tostring(l):find("| estimate", 1, true), "a listed item says estimate")
+    end
+    -- an item the 1.12 database does not list, placed by Forever's own
+    -- disenchant groups: the same section, marked estimate
+    local estID, estGroup
+    for _, eg in pairs(D.groups) do
+        if eg.estimates and eg.estimates[1] then estID, estGroup = eg.estimates[1], eg; break end
+    end
+    EXPECT(estID, "no Forever estimates baked")
+    for _, eg in pairs(D.groups) do
+        for _, id in ipairs(eg.items) do EXPECT(id ~= estID, "an estimate is also listed") end
+    end
+    local g2, isEst = TSF:DisenchantGroup(estID)
+    EXPECT(g2 == estGroup and isEst == true, "estimate not found as an estimate")
+    lines = SHOW_ITEM_TOOLTIP(GameTooltip, estID)
+    local estHead
+    for _, l in ipairs(lines) do if l == "Disenchants into (ProfessionBuddy): | estimate" then estHead = true end end
+    EXPECT(estHead, "estimate item " .. estID .. ": " .. table.concat(lines, " / "))
+    lines = SHOW_ITEM_TOOLTIP(GameTooltip, 2589)
+    for _, l in ipairs(lines) do EXPECT(not tostring(l):find("Disenchants into", 1, true), "Linen Cloth disenchants") end
+    S.tooltipShowDisenchant = false
+    lines = SHOW_ITEM_TOOLTIP(GameTooltip, 821)
+    for _, l in ipairs(lines) do EXPECT(not tostring(l):find("Disenchants into", 1, true), "the setting did not turn it off") end
+    S.tooltipShowDisenchant = true
+    local found
+    TSF:OpenSettings("main")
+    for _, cb in ipairs(TSF.settingsCheckboxes) do if cb.settingKey == "tooltipShowDisenchant" then found = cb end end
+    EXPECT(found, "no Show disenchant results box in Settings")
+end
+print("  PASS F74 Disenchants into: materials, counts and chances on every character, no skill line on Forever, Forever estimates marked, other items skipped, Settings box")
+
+-- F75: skill-up ranges at the trainer (UI/Trainer.lua). Blizzard's row
+-- builder, loaded with the trainer window, gets the four colored numbers
+-- after its Requires line for a recipe you have not learned; the row's
+-- tooltip gets the labeled line with your tier marked; known recipes, a
+-- weapon master, a profession rank and the setting off add nothing
+do
+    local TR, S = ProfBuddy.Trainer, ProfBuddy.db.settings
+    EXPECT(TR and S.trainerShowRanges == true, "no Trainer module or the setting is not on by default")
+    -- Blizzard_TrainerUI loads: its row builder sets the Requires line
+    ClassTrainerFrame_InitServiceButton = function(button, elementData)
+        local i = (elementData.data or elementData).skillIndex
+        local _, rank = GetTrainerServiceSkillReq(i)
+        button.subText:SetText(rank and rank > 0 and ("Requires: Leatherworking (" .. rank .. ")") or "")
+    end
+    FIRE("ADDON_LOADED", "Blizzard_TrainerUI")
+    -- the row's Requires line is 240 wide; a character is 4 wide here
+    local charW = 4
+    local function row(i)
+        local b = CreateFrame("Button", nil, UIParent)
+        local fs = b:CreateFontString()
+        rawset(fs, "GetWidth", function() return 240 end)
+        rawset(fs, "GetUnboundedStringWidth", function(self)
+            return #(self:GetText():gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) * charW
+        end)
+        rawset(b, "subText", fs)
+        ClassTrainerFrame_InitServiceButton(b, { data = { skillIndex = i } })
+        return fs:GetText()
+    end
+    local function index(name)
+        for i = 1, GetNumTrainerServices() do if GetTrainerServiceInfo(i) == name then return i end end
+    end
+    TRAINER_FILTER.used = true
+    TRAINER_OPEN(3008)                  -- Mak, Leatherworking
+    local belt = index("Handstitched Leather Belt")
+    -- yellow, green and grey inside Blizzard's parentheses, after its learn level
+    EXPECT(row(belt) == "Requires: Leatherworking (25 |cffffff0055|r |cff00ff0070|r |cff80808085|r)",
+           "row: " .. tostring(row(belt)))
+    -- the row builder runs on every scroll: the numbers never double
+    EXPECT(select(2, row(belt):gsub("|cffffff00", "")) == 1, "the numbers doubled")
+    -- a learn level you are below: Blizzard's red stays on its number
+    local redLine
+    do
+        local b = CreateFrame("Button", nil, UIParent)
+        local fs = b:CreateFontString()
+        rawset(fs, "GetWidth", function() return 240 end)
+        rawset(fs, "GetUnboundedStringWidth", function() return 150 end)
+        rawset(b, "subText", fs)
+        fs:SetText("Requires: Leatherworking (|cffff202025|r)")
+        ProfBuddy.Trainer:DecorateRow(b, { data = { skillIndex = belt } })
+        redLine = fs:GetText()
+    end
+    EXPECT(redLine == "Requires: Leatherworking (|cffff202025|r |cffffff0055|r |cff00ff0070|r |cff80808085|r)",
+           "red learn level: " .. tostring(redLine))
+    -- a later requirement in parentheses is left alone: the numbers go
+    -- inside the skill's own
+    do
+        local b = CreateFrame("Button", nil, UIParent)
+        local fs = b:CreateFontString()
+        rawset(fs, "GetWidth", function() return 240 end)
+        rawset(fs, "GetUnboundedStringWidth", function() return 150 end)
+        rawset(b, "subText", fs)
+        fs:SetText("Requires: Leatherworking (25), Tanning (Expert)")
+        ProfBuddy.Trainer:DecorateRow(b, { data = { skillIndex = belt } })
+        EXPECT(fs:GetText() == "Requires: Leatherworking (25 |cffffff0055|r |cff00ff0070|r |cff80808085|r), Tanning (Expert)",
+               "numbers outside the skill's parentheses: " .. tostring(fs:GetText()))
+        -- and an earlier one too: the skill's "(" is found by its name
+        fs:SetText("Requires: Level 20 (Rested), Leatherworking (25)")
+        ProfBuddy.Trainer:DecorateRow(b, { data = { skillIndex = belt } })
+        EXPECT(fs:GetText() == "Requires: Level 20 (Rested), Leatherworking (25 |cffffff0055|r |cff00ff0070|r |cff80808085|r)",
+               "numbers not inside the skill's own parentheses: " .. tostring(fs:GetText()))
+    end
+    -- a line too wide for one line keeps Blizzard's text
+    charW = 7
+    EXPECT(row(belt) == "Requires: Leatherworking (25)", "a too-wide row was changed: " .. tostring(row(belt)))
+    charW = 4
+    EXPECT(row(index("Apprentice Leatherworking")) == "", "a profession rank got numbers")
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(belt)
+    local tl = rawget(GameTooltip, "_lines")
+    EXPECT(#tl == 1 and tl[1]:find("^Skill%-ups %(ProfessionBuddy%): |cffffffff>|r|cffff8000Orange: 25|r|cffffffff<|r  |cffffff00Yellow: 55|r"),
+           "tooltip: " .. tostring(tl[1]))
+    -- a recipe you already know: no numbers, no tooltip line
+    local kept = TRAINERS[3008].services
+    for _, sv in ipairs(kept) do if sv.name == "Handstitched Leather Belt" then sv.type = "used" end end
+    TRAINER_CLOSE(); TRAINER_OPEN(3008)
+    belt = index("Handstitched Leather Belt")
+    EXPECT(row(belt) == "Requires: Leatherworking (25)", "a known recipe got numbers: " .. tostring(row(belt)))
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(belt)
+    EXPECT(#rawget(GameTooltip, "_lines") == 0, "a known recipe got a tooltip line")
+    for _, sv in ipairs(kept) do if sv.name == "Handstitched Leather Belt" then sv.type = "unavailable" end end
+    -- the setting off: nothing
+    S.trainerShowRanges = false
+    TRAINER_CLOSE(); TRAINER_OPEN(3008)
+    belt = index("Handstitched Leather Belt")
+    EXPECT(row(belt) == "Requires: Leatherworking (25)", "numbers with the setting off")
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(belt)
+    EXPECT(#rawget(GameTooltip, "_lines") == 0, "a tooltip line with the setting off")
+    S.trainerShowRanges = true
+    TRAINER_CLOSE()
+    -- a weapon master: nothing
+    TRAINER_OPEN(11869)
+    rawset(GameTooltip, "_lines", {})
+    GameTooltip:SetTrainerService(2)
+    EXPECT(#rawget(GameTooltip, "_lines") == 0, "a weapon master got a tooltip line")
+    TRAINER_CLOSE()
+    TRAINER_FILTER.used = false
+    rawset(GameTooltip, "_lines", nil)
+    local found
+    for _, cb in ipairs(ProfBuddy.TradeSkillFrame.settingsCheckboxes or {}) do
+        if cb.settingKey == "trainerShowRanges" then found = cb end
+    end
+    EXPECT(found, "no Show skill-up ranges at trainers box in Settings")
+end
+print("  PASS F75 trainer ranges: colored numbers on unlearned recipe rows, no doubling, labeled tooltip line with your tier, nothing for known recipes, ranks, a weapon master or the setting off, Settings box")
+
+-- F76: side panels never cover their window. The size limit leaves room
+-- for the widest side panel; a panel opening with no room on the right
+-- moves its window left (not in combat); a drag on the grip closes an open
+-- dropdown list first
+do
+    local UI, TSF = ProfBuddy.UI, ProfBuddy.TradeSkillFrame
+    local keepW, keepH = rawget(UIParent, "GetWidth"), rawget(UIParent, "GetHeight")
+    rawset(UIParent, "GetWidth", function() return 1366 end)
+    rawset(UIParent, "GetHeight", function() return 768 end)
+    local st = { scale = 1.3, left = 600, top = 700 }
+    local win = CreateFrame("Frame", nil, UIParent)
+    rawset(win, "GetScale", function() return st.scale end)
+    rawset(win, "SetScale", function(_, v) st.scale = v end)
+    rawset(win, "GetLeft", function() return st.left / st.scale end)
+    rawset(win, "GetTop", function() return st.top / st.scale end)
+    rawset(win, "GetRight", function() return st.left / st.scale + 740 end)
+    rawset(win, "GetWidth", function() return 740 end)
+    rawset(win, "GetHeight", function() return 540 end)
+    rawset(win, "SetPoint", function(_, p, rel, rp, x, y) st.left, st.top = x * st.scale, y * st.scale end)
+    local panel = CreateFrame("Frame", nil, UIParent)
+    rawset(panel, "GetWidth", function() return 280 end)
+    rawset(panel, "GetScale", function() return st.scale end)
+    rawset(panel, "SetScale", function() end)
+    -- 740 wide plus a 280 wide panel on a 1366 wide screen: 1.33, not 1.42
+    EXPECT(UI:FitScale(win, 1.5) == 1.42 and UI:FitScale(win, 1.5, { panel }) == 1.33,
+           "the size limit leaves no room for the side panel: " .. tostring(UI:FitScale(win, 1.5, { panel })))
+    -- the panel opens past the screen's right edge: the window moves left by the overflow
+    UI:MakeRoomBeside(win, panel)
+    EXPECT(math.abs(st.left - (600 - ((600 / 1.3 + 744) * 1.3 + 280 * 1.3 - 1366))) < 0.01 and math.abs(st.top - 700) < 0.01,
+           "window not moved left for the panel: " .. tostring(st.left))
+    -- room already: it stays
+    local was = st.left
+    UI:MakeRoomBeside(win, panel)
+    EXPECT(math.abs(st.left - was) < 0.01, "a window with room moved")
+    -- never past the screen's left edge, and never in combat
+    st.left = 1000
+    local keepCombat = InCombatLockdown
+    InCombatLockdown = function() return true end
+    UI:MakeRoomBeside(win, panel)
+    EXPECT(st.left == 1000, "a window moved in combat")
+    InCombatLockdown = keepCombat
+    st.scale = 1.5; st.left = 200
+    rawset(UIParent, "GetWidth", function() return 1000 end)
+    UI:MakeRoomBeside(win, panel)
+    EXPECT(st.left == 0, "a window moved past the screen's left edge: " .. tostring(st.left))
+    rawset(UIParent, "GetWidth", function() return 1366 end)
+    -- a scale change with the panel open makes room the same way
+    st.scale, st.left = 1, 600
+    rawset(panel, "IsShown", function() return true end)
+    UI:ApplyScale(win, 1.33, { panel })
+    EXPECT(st.scale == 1.33 and st.left < 600, "a scale change with the panel open left it covering the window")
+    rawset(UIParent, "GetWidth", keepW); rawset(UIParent, "GetHeight", keepH)
+    -- the Material Calculator, Order History and Find a Crafter make room when they open
+    local calls = {}
+    local keepMR = UI.MakeRoomBeside
+    UI.MakeRoomBeside = function(_, f, p) calls[#calls + 1] = { f, p } end
+    local calc = TSF.calcPanel
+    calc:GetScript("OnShow")(calc)
+    local OP = ProfBuddy.OrdersPanel
+    OP.histFrame:GetScript("OnShow")(OP.histFrame)
+    OP.findFrame:GetScript("OnShow")(OP.findFrame)
+    UI.MakeRoomBeside = keepMR
+    EXPECT(#calls == 3 and calls[1][1] == TSF.frame and calls[1][2] == calc
+           and calls[2][1] == UI.frame and calls[2][2] == OP.histFrame
+           and calls[3][1] == UI.frame and calls[3][2] == OP.findFrame, "a side panel does not make room when it opens")
+    -- a drag on the grip closes an open dropdown list
+    local dd = TSF.sortDropdown
+    dd.listFrame:Show()
+    TSF.scaleGrip:GetScript("OnMouseDown")(TSF.scaleGrip, "LeftButton")
+    TSF.scaleGrip:GetScript("OnMouseUp")(TSF.scaleGrip)
+    EXPECT(not dd.listFrame:IsShown(), "a grip drag left a dropdown list open")
+
+    -- dragging: while a side panel is open, the window's clamp area reaches
+    -- past its right edge by the panel and the gap, so both stop at the
+    -- screen edge; back to the window alone when the panel hides; not in
+    -- combat; a drag's end makes room as a panel opening does
+    local win2 = CreateFrame("Frame", nil, UIParent)
+    local clamp
+    rawset(win2, "SetClampRectInsets", function(_, l, r, t, b) clamp = { l, r, t, b } end)
+    local p1, p2 = CreateFrame("Frame", nil, UIParent), CreateFrame("Frame", nil, UIParent)
+    rawset(p1, "GetWidth", function() return 280 end)
+    rawset(p2, "GetWidth", function() return 360 end)
+    p1:Show()
+    UI:UpdateSideClamp(win2, { p1, p2 })
+    EXPECT(clamp and clamp[1] == 0 and clamp[2] == 284 and clamp[3] == 0 and clamp[4] == 0,
+           "the clamp area does not cover the open panel: " .. tostring(clamp and clamp[2]))
+    p2:Show()
+    UI:UpdateSideClamp(win2, { p1, p2 })
+    EXPECT(clamp[2] == 364, "the clamp area does not cover the widest open panel")
+    UI:UpdateSideClamp(win2, { p1, p2 }, p2)
+    EXPECT(clamp[2] == 284, "a panel being hidden still counted")
+    p1:Hide(); p2:Hide()
+    UI:UpdateSideClamp(win2, { p1, p2 })
+    EXPECT(clamp[2] == 0, "the clamp area did not go back to the window")
+    p1:Show()
+    InCombatLockdown = function() return true end
+    UI:UpdateSideClamp(win2, { p1 })
+    InCombatLockdown = keepCombat
+    EXPECT(clamp[2] == 0, "the clamp area changed in combat")
+    local stopped, roomFor = false, {}
+    rawset(win2, "StopMovingOrSizing", function() stopped = true end)
+    local keepMR2 = UI.MakeRoomBeside
+    UI.MakeRoomBeside = function(_, f, panel) roomFor[#roomFor + 1] = panel end
+    p2:Hide()
+    UI:AfterDrag(win2, { p1, p2 })
+    UI.MakeRoomBeside = keepMR2
+    EXPECT(stopped and #roomFor == 1 and roomFor[1] == p1, "a drag's end did not make room for the open panel")
+    p1:Hide()
+    -- Order History or Find a Crafter closing stops counting, even while it
+    -- still reads as shown
+    do
+        local OP = ProfBuddy.OrdersPanel
+        local mainClamp
+        rawset(UI.frame, "SetClampRectInsets", function(_, l, r) mainClamp = r end)
+        for _, h in ipairs({ OP.histFrame, OP.findFrame }) do
+            rawset(h, "GetWidth", function() return 300 end)
+            rawset(h, "_shown", true)
+            h:GetScript("OnShow")(h)
+            EXPECT(mainClamp == 304, "a side panel opening did not set the clamp area: " .. tostring(mainClamp))
+            rawget(h, "_h").OnHide(h)
+            EXPECT(mainClamp == 0, "a side panel closing still counted: " .. tostring(mainClamp))
+            rawset(h, "_shown", false)
+            rawset(h, "GetWidth", nil)
+        end
+        rawset(UI.frame, "SetClampRectInsets", nil)
+    end
+    -- both windows use it: drag stops and the panels' show and hide
+    local tsrc = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    local msrc = assert(io.open(PB_BASE .. "/UI/Main.lua")):read("*a")
+    local osrc = assert(io.open(PB_BASE .. "/UI/OrdersPanel.lua")):read("*a")
+    EXPECT(tsrc:find("addon.UI:AfterDrag(fr, { self.calcPanel })", 1, true)
+           and msrc:find("UI:AfterDrag(fr, UI.scaleFollowers)", 1, true), "a window's drag does not end with AfterDrag")
+    EXPECT(select(2, tsrc:gsub("UpdateSideClamp%(self%.frame", "")) == 2
+           and select(2, osrc:gsub("UpdateSideClamp%(addon%.UI%.frame", "")) == 4,
+           "a side panel's show or hide does not update the clamp area")
+end
+print("  PASS F76 side panels: the size limit leaves room for the widest, opening one moves the window left by the overflow (not past the edge, not in combat), a scale change does the same, a grip drag closes dropdown lists; dragging stops window and panel at the edge together")
+
+-- F77: a profession link opens in PB's window between PB users. The game
+-- does not open other players' profession links on WoW: Forever, so PB reads
+-- the poster from the link's GUID and opens their recipes: a guildmate's
+-- stored recipes at once, or after asking them; a first name alone matches
+-- the one guildmate with it; a group member by unit GUID; strangers, your
+-- own link, modified and right clicks, and other links do nothing
+do
+    local PL, C, S = ProfBuddy.ProfessionLink, ProfBuddy.Comm, ProfBuddy.db
+    EXPECT(PL, "no ProfessionLink module")
+    local LINK = "trade:Player-6926-001E5723:2108:165"
+    local keep = {
+        IsInGuild = IsInGuild, GetNumGuildMembers = GetNumGuildMembers, GetGuildRosterInfo = GetGuildRosterInfo,
+        GetPlayerInfoByGUID = rawget(_G, "GetPlayerInfoByGUID"), IsInGroup = IsInGroup,
+        GetNumSubgroupMembers = GetNumSubgroupMembers, UnitGUID = UnitGUID, GetUnitName = GetUnitName,
+        IsModifiedClick = IsModifiedClick,
+    }
+    local roster = { "Bran Underhill", "Noodle Stand" }
+    IsInGuild = function() return true end
+    GetNumGuildMembers = function() return #roster end
+    GetGuildRosterInfo = function(i) return roster[i], "Member", 1, 20, nil, nil, nil, nil, true end
+    C._guildSet = nil
+    local infoName = "Bran Underhill"
+    GetPlayerInfoByGUID = function(g) if g == "Player-6926-001E5723" then return "Warrior", "WARRIOR", "Orc", "Orc", 2, infoName, "" end end
+    local opened, asked = {}, {}
+    local keepOpen, keepReq = PL.Open, C.RequestGuildSync
+    PL.Open = function(_, key, prof) opened[#opened + 1] = key .. "|" .. prof end
+    C.RequestGuildSync = function(_, key) asked[#asked + 1] = key end
+    local BRAN = ProfBuddy:NormKey("Bran Underhill")
+    S.characters[BRAN] = nil
+    local function click(link, button) PRINTS = {}; SetItemRef(link, "[Leatherworking]", button or "LeftButton") end
+
+    -- a guildmate with no stored recipes: PB asks, then opens when they arrive, once
+    click(LINK)
+    EXPECT(#asked == 1 and asked[1] == BRAN and #opened == 0, "a guildmate's link did not ask for recipes")
+    EXPECT(PRINTED("Asked Bran Underhill for their Leatherworking recipes."), "no asked line")
+    S.characters[BRAN] = { isRemote = true, professions = { Leatherworking = { skillLevel = 50, maxSkill = 75,
+        recipes = { ["Light Armor Kit"] = true } } } }
+    C:NotifyUIRefresh()
+    C:NotifyUIRefresh()
+    EXPECT(#opened == 1 and opened[1] == BRAN .. "|Leatherworking", "the reply did not open the profession once: " .. #opened)
+    -- stored recipes: opens at once, and still asks for fresh ones
+    opened, asked = {}, {}
+    click(LINK)
+    EXPECT(#opened == 1 and #asked == 1, "stored recipes did not open at once")
+    -- a first name alone (WoW: Forever's GetPlayerInfoByGUID) matches the one guildmate with it
+    infoName = "Bran"
+    opened = {}
+    click(LINK)
+    EXPECT(#opened == 1 and opened[1] == BRAN .. "|Leatherworking", "a first name did not match the guildmate")
+    -- two guildmates with that first name: PB does not guess
+    roster[3] = "Bran Otherfamily"; C._guildSet = nil
+    opened = {}
+    click(LINK)
+    EXPECT(#opened == 0 and PRINTED("Couldn't tell whose profession link that is."), "an ambiguous first name opened something")
+    roster[3] = nil; C._guildSet = nil
+    infoName = "Bran Underhill"
+    -- nobody answers: one line after the wait
+    S.characters[BRAN] = nil
+    click(LINK)
+    PRINTS = {}
+    FLUSH()
+    EXPECT(PRINTED("Bran Underhill didn't answer (offline or not running ProfessionBuddy)."), "no line when nobody answers")
+    -- a stranger: no request, and PB says who it opens links for
+    roster = { "Noodle Stand" }; C._guildSet = nil
+    opened, asked = {}, {}
+    click(LINK)
+    EXPECT(#asked == 0 and #opened == 0 and PRINTED("ProfessionBuddy opens Bran Underhill's Leatherworking when they're in your guild, your group, or your ProfessionBuddy friends."),
+           "a stranger's link was requested or opened")
+    -- a group member, found by their unit's GUID
+    IsInGroup = function() return true end
+    GetNumSubgroupMembers = function() return 1 end
+    local ownGUID = "Player-1-00000001"
+    UnitGUID = function(u) if u == "party1" then return "Player-6926-001E5723" end return ownGUID end
+    GetUnitName = function(u) if u == "party1" then return "Sushi Cats" end return "Me" end
+    GetPlayerInfoByGUID = function() return nil end
+    click(LINK)
+    EXPECT(#asked == 1 and asked[1] == ProfBuddy:NormKey("Sushi Cats"), "a group member's link was not asked for: " .. tostring(asked[1]))
+    -- your own link, a modified click, a right click, other links and
+    -- unknown skill lines: nothing (the poster is still a group member here,
+    -- so each one would ask if it got through)
+    local function nothing(what)
+        asked = {}
+        click(LINK)
+        EXPECT(#asked == 1, "the group member's link stopped asking before: " .. what)
+        asked = {}
+    end
+    nothing("own link")
+    ownGUID = "Player-6926-001E5723"
+    click(LINK)
+    ownGUID = "Player-1-00000001"
+    EXPECT(#asked == 0, "your own link asked for recipes")
+    nothing("modified click")
+    IsModifiedClick = function() return true end
+    click(LINK)
+    IsModifiedClick = keep.IsModifiedClick
+    EXPECT(#asked == 0, "a modified click asked for recipes")
+    nothing("right click")
+    click(LINK, "RightButton")
+    EXPECT(#asked == 0, "a right click asked for recipes")
+    click("item:2318::::::::")
+    click("trade:Player-6926-001E5723:2108:999")
+    EXPECT(#asked == 0, "another link or an unknown skill line asked for recipes")
+    -- the link button's tooltip says who can open it
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find("Guildmates, group members, and ProfessionBuddy friends who run ProfessionBuddy can open it.", 1, true),
+           "the link button's tooltip does not say who can open it")
+    PL.Open, C.RequestGuildSync = keepOpen, keepReq
+    for k, v in pairs(keep) do _G[k] = v end
+    C._guildSet = nil
+    S.characters[BRAN] = nil
+    PRINTS = {}
+end
+print("  PASS F77 profession links between PB users: a guildmate's recipes open at once or after asking, once; a first name matches one guildmate, never two; a group member by unit GUID; no answer says so; strangers, your own link, modified and right clicks, other links do nothing; tooltip")
+
+-- F78: a test build's label in the login line ("v2.0.2 (TEST-g)"), set
+-- only in a test zip's Core.lua; plain otherwise
+do
+    local PB = ProfBuddy
+    EXPECT(PB.BUILD == nil, "the repo's Core.lua sets addon.BUILD")
+    EXPECT(PB:LoadedLine() == "|cff00ccffProfessionBuddy|r v" .. PB.version .. " loaded. Type /pb or /profbuddy.",
+           "plain login line: " .. PB:LoadedLine())
+    PB.BUILD = "TEST-g"
+    EXPECT(PB:LoadedLine() == "|cff00ccffProfessionBuddy|r v" .. PB.version .. " (TEST-g) loaded. Type /pb or /profbuddy.",
+           "labeled login line: " .. PB:LoadedLine())
+    PB.BUILD = nil
+end
+print("  PASS F78 login line: plain in the repo, the test label when a test zip sets addon.BUILD")
+
+print("ALL FOREVER TESTS PASS (78)")

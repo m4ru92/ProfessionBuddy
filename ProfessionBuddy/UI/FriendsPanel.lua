@@ -206,6 +206,7 @@ local function showOrderMenu(anchorBtn, key, profs)
     m:SetWidth(math.max(130, maxW))
     m:SetHeight(24 + #profs * ROW_H + 8)
     m:ClearAllPoints()
+    if addon.UI and addon.UI.MatchScale then addon.UI:MatchScale(m, anchorBtn) end
     m:SetPoint("TOPLEFT", anchorBtn, "BOTTOMLEFT", 0, -2)
     m:Show()
 end
@@ -328,8 +329,8 @@ function FP:CreateContent(parent)
         self:Refresh()
     end)
 
-    -- Battle.net auto-add picker (BattleNet.lua). Greyed out on WoW: Forever
-    -- until its friend list reaches addons (2.0.1).
+    -- Battle.net auto-add picker (BattleNet.lua); greyed out on a client
+    -- whose friend list does not reach addons (none since 2.0.2).
     local bnBtn = CreateFrame("Button", nil, addBar, "UIPanelButtonTemplate")
     bnBtn:SetSize(90, 22)
     bnBtn:SetPoint("RIGHT", addBar, "RIGHT", -4, 0)
@@ -342,7 +343,7 @@ function FP:CreateContent(parent)
     else
         bnBtn:Disable()
         if bnBtn.SetMotionScriptsWhileDisabled then bnBtn:SetMotionScriptsWhileDisabled(true) end
-        bnTitle, bnText = "Battle.net auto-add", "Coming soon to WoW: Forever."
+        bnTitle, bnText = "Battle.net auto-add", "Not available on this game client."
     end
     bnBtn:SetScript("OnEnter", function(btn)
         GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
@@ -705,7 +706,7 @@ function FP:Refresh()
     -- Empty list: say so, and take the lone scroll bar off the blank area.
     local hasContacts = #self.contactKeys > 0
     self.empty:SetText(hidden > 0
-        and "Your contacts are all of the other faction. Settings, Friend Data: Show opposite-faction friends."
+        and "Your contacts are all of the other faction. Settings, Friend data: Show opposite-faction friends."
         or "No contacts yet. Type a name above and click Add.")
     self.empty:SetShown(not hasContacts)
     self.scrollBar:SetShown(hasContacts)

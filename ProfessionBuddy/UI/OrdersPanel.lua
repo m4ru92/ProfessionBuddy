@@ -62,14 +62,14 @@ local STATUS_DISPLAY = {
     crafted   = { text = "Crafted",   r = 0.3, g = 0.9,  b = 0.4 },
     completed = { text = "Completed", r = 0.5, g = 0.85, b = 0.5 },
     declined  = { text = "Declined",  r = 0.9, g = 0.4,  b = 0.4 },
-    cancelled = { text = "Cancelled", r = 0.7, g = 0.5,  b = 0.4 },
+    cancelled = { text = "Canceled", r = 0.7, g = 0.5,  b = 0.4 },
     expired   = { text = "Expired",   r = 0.6, g = 0.6,  b = 0.6 },
 }
 
 local MATRESP_LABEL = {
     requester = "Requester provides mats",
     crafter   = "Crafter provides mats",
-    split     = "Split",
+    split     = "Split or discuss",
 }
 
 -- Compact form for the row's secondary line (full form is in the tooltip)
@@ -111,12 +111,12 @@ local function profPostList()
 end
 
 local POST_MATRESP_OPTIONS = {
-    "Requester provides mats", "Crafter provides mats", "Split / discuss",
+    "Requester provides mats", "Crafter provides mats", "Split or discuss",
 }
 local POST_MATRESP_VALUE = {
     ["Requester provides mats"] = "requester",
     ["Crafter provides mats"]   = "crafter",
-    ["Split / discuss"]         = "split",
+    ["Split or discuss"]        = "split",
 }
 
 ----------------------------------------------------------------------
@@ -1431,6 +1431,7 @@ local function showItemFavMenu(anchorBtn, itemBox, qtyBox, refreshStar)
     m:SetWidth(math.max(150, maxW))
     m:SetHeight(24 + #entries * ROW_H + 8)
     m:ClearAllPoints()
+    if addon.UI and addon.UI.MatchScale then addon.UI:MatchScale(m, anchorBtn) end
     m:SetPoint("TOPLEFT", anchorBtn, "BOTTOMLEFT", 0, -2)
     m:Show()
 end
@@ -1937,19 +1938,30 @@ function OP:BuildFindPanel()
     local function anchorRight()
         f:ClearAllPoints()
         if addon.UI and addon.UI.frame then
+            -- the main window's size (its grip), like its height
+            f:SetScale(addon.UI.frame:GetScale() or 1)
             f:SetPoint("TOPLEFT", addon.UI.frame, "TOPRIGHT", 4, 0)
         else
             f:SetPoint("CENTER")
         end
     end
     anchorRight()
+    if addon.UI and addon.UI.scaleFollowers then table.insert(addon.UI.scaleFollowers, f) end
     if addon.UI and addon.UI.frame then
         addon.UI.frame:HookScript("OnHide", function() if f:IsShown() then f:Hide() end end)
     end
     f:EnableMouse(true)
     f:SetClampedToScreen(true)
     f:SetFrameStrata("HIGH")
-    f:SetScript("OnShow", anchorRight)
+    f:SetScript("OnShow", function()
+        anchorRight()
+        -- no room on the right at this size: the main window moves left
+        if addon.UI and addon.UI.MakeRoomBeside then addon.UI:MakeRoomBeside(addon.UI.frame, f) end
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(addon.UI.frame, addon.UI.scaleFollowers) end
+    end)
+    f:HookScript("OnHide", function()
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(addon.UI.frame, addon.UI.scaleFollowers, f) end
+    end)
     f.TitleText:SetText("Find a Crafter")
     f:Hide()
     table.insert(UISpecialFrames, "ProfBuddyFindCrafter")
@@ -2172,12 +2184,15 @@ function OP:BuildHistoryPanel()
     local function anchorRight()
         f:ClearAllPoints()
         if addon.UI and addon.UI.frame then
+            -- the main window's size (its grip), like its height
+            f:SetScale(addon.UI.frame:GetScale() or 1)
             f:SetPoint("TOPLEFT", addon.UI.frame, "TOPRIGHT", 4, 0)
         else
             f:SetPoint("CENTER")
         end
     end
     anchorRight()
+    if addon.UI and addon.UI.scaleFollowers then table.insert(addon.UI.scaleFollowers, f) end
     if addon.UI and addon.UI.frame then
         -- Close with the parent window
         addon.UI.frame:HookScript("OnHide", function()
@@ -2188,8 +2203,16 @@ function OP:BuildHistoryPanel()
     f:EnableMouse(true)
     f:SetClampedToScreen(true)
     f:SetFrameStrata("HIGH")
-    f:SetScript("OnShow", anchorRight)
-    f.TitleText:SetText("Order History")
+    f:SetScript("OnShow", function()
+        anchorRight()
+        -- no room on the right at this size: the main window moves left
+        if addon.UI and addon.UI.MakeRoomBeside then addon.UI:MakeRoomBeside(addon.UI.frame, f) end
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(addon.UI.frame, addon.UI.scaleFollowers) end
+    end)
+    f:HookScript("OnHide", function()
+        if addon.UI and addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(addon.UI.frame, addon.UI.scaleFollowers, f) end
+    end)
+    f.TitleText:SetText("Order history")
     f:Hide()
     table.insert(UISpecialFrames, "ProfBuddyOrderHistory")
 
@@ -2411,7 +2434,7 @@ local NOTIFY_TEXT = {
     accepted   = function(o) return addon:ShortName(o.crafter) .. " accepted your order: " .. o.quantity .. "x " .. o.item.name end,
     declined   = function(o) return addon:ShortName(o.crafter) .. " declined your order: " .. o.quantity .. "x " .. o.item.name end,
     crafted    = function(o) return addon:ShortName(o.crafter) .. " crafted your order: " .. o.quantity .. "x " .. o.item.name .. " (ready to pick up)" end,
-    cancelled  = function(o) return addon:ShortName(o.requester) .. " cancelled their order: " .. o.quantity .. "x " .. o.item.name end,
+    cancelled  = function(o) return addon:ShortName(o.requester) .. " canceled their order: " .. o.quantity .. "x " .. o.item.name end,
     completed  = function(o) return "Order completed: " .. o.quantity .. "x " .. o.item.name end,
 }
 
