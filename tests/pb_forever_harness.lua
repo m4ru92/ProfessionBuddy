@@ -5406,4 +5406,45 @@ do
 end
 print("  PASS F81 TEST-b2: a profession opened in combat leaves Blizzard's window alone until combat ends, then PB's window opens; also when combat starts before the list arrives")
 
-print("ALL FOREVER TESTS PASS (81)")
+-- F82 TEST-b3: the auction house tab reads PB when the tabs don't fit
+-- (Auctionator's four and TSM's ran past the window's edge), with a
+-- tooltip naming ProfessionBuddy; the full name comes back with room
+do
+    local AP = ProfBuddy.AuctionPrices
+    local AHF, tab = AuctionHouseFrame, AP.tab
+    EXPECT(tab and tab:GetText() == "ProfessionBuddy", "the tab before: " .. tostring(tab and tab:GetText()))
+    local R, W = 0, 0
+    rawset(AHF, "GetRight", function() return 975 end)
+    rawset(tab, "GetRight", function() return R end)
+    rawset(tab, "GetWidth", function() return W end)
+    R, W = 1030, 158
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    EXPECT(tab:IsShown() and tab:GetText() == "PB" and AP._tabShort, "crowded: the label is " .. tostring(tab:GetText()))
+    rawset(GameTooltip, "_text", nil)
+    tab._h.OnEnter(tab)
+    EXPECT(rawget(GameTooltip, "_text") == "ProfessionBuddy", "no ProfessionBuddy tooltip on the short tab")
+    GameTooltip:Show()
+    tab._h.OnLeave(tab)
+    EXPECT(not GameTooltip:IsShown() and not AP._tabTip, "the tab's tooltip stayed after leaving it")
+    FIRE("AUCTION_HOUSE_CLOSED")
+    -- still no room for the full name (900 - 70 + 158 = 988, past 975)
+    R, W = 900, 70
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    EXPECT(tab:GetText() == "PB", "the full name came back without room")
+    FIRE("AUCTION_HOUSE_CLOSED")
+    -- room again (800 - 70 + 158 = 888)
+    R, W = 800, 70
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    EXPECT(tab:GetText() == "ProfessionBuddy" and not AP._tabShort, "the full name did not come back with room")
+    rawset(GameTooltip, "_text", nil)
+    tab._h.OnEnter(tab)
+    EXPECT(rawget(GameTooltip, "_text") == nil, "a tooltip on the full-name tab")
+    FIRE("AUCTION_HOUSE_CLOSED")
+    rawset(AHF, "GetRight", nil); rawset(tab, "GetRight", nil); rawset(tab, "GetWidth", nil)
+end
+print("  PASS F82 TEST-b3: the auction house tab reads PB when the tabs don't fit, with a ProfessionBuddy tooltip; the full name comes back when it fits")
+
+print("ALL FOREVER TESTS PASS (82)")

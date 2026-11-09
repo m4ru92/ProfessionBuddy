@@ -370,6 +370,10 @@ end
 ----------------------------------------------------------------------
 
 AP.TAB_ID = "ProfessionBuddy"
+-- The tab's label, and the short one when the auction house's tabs don't
+-- fit (TEST-b2: with Auctionator's four tabs and TSM's, PB's ran past the
+-- window's right edge)
+AP.TAB_TEXT, AP.TAB_SHORT = "ProfessionBuddy", "PB"
 
 -- Shown while neither Auctionator nor TSM is installed and switched on (P10)
 function AP:ScansShown()
@@ -428,7 +432,7 @@ function AP:BuildModernTab()
     panel:SetPoint("TOPLEFT", AuctionHouseFrame, "TOPLEFT", 24, -70)
     panel:SetPoint("BOTTOMRIGHT", AuctionHouseFrame, "BOTTOMRIGHT", -24, 40)
     if not lib:DoesIDExist(self.TAB_ID) then
-        lib:CreateTab(self.TAB_ID, panel, "ProfessionBuddy", "ProfessionBuddy")
+        lib:CreateTab(self.TAB_ID, panel, self.TAB_TEXT, "ProfessionBuddy")
     end
     return lib:GetButton(self.TAB_ID)
 end
@@ -441,7 +445,7 @@ function AP:BuildClassicTab()
     local index = (AuctionFrame.numTabs or 3) + 1
     local tab = CreateFrame("Button", "AuctionFrameTab" .. index, AuctionFrame, "AuctionTabTemplate")
     tab:SetID(index)
-    tab:SetText("ProfessionBuddy")
+    tab:SetText(self.TAB_TEXT)
     tab:SetPoint("TOPLEFT", _G["AuctionFrameTab" .. (index - 1)], "TOPRIGHT", -8, 0)
     PanelTemplates_SetNumTabs(AuctionFrame, index)
     PanelTemplates_TabResize(tab, 0)
@@ -466,15 +470,67 @@ function AP:BuildClassicTab()
     return tab
 end
 
+-- The auction house window the tab belongs to
+function AP:Host()
+    if self:Modern() then return AuctionHouseFrame end
+    return AuctionFrame
+end
+
+-- The tab's label, sized as its own kind of tab sizes it (LibAHTab: 20
+-- padding, 70 at least; the classic tabs: no padding)
+function AP:SizeTab(short)
+    local tab = self.tab
+    tab:SetText(short and self.TAB_SHORT or self.TAB_TEXT)
+    if self:Modern() then PanelTemplates_TabResize(tab, 20, nil, 70) else PanelTemplates_TabResize(tab, 0) end
+    self._tabShort = short
+end
+
+-- Once the tabs are laid out: the short label when the full one runs past
+-- the window's right edge; the full one again when it would fit. The full
+-- label's width is kept from when it showed, so going back needs no try.
+function AP:FitTab()
+    local tab, host = self.tab, self:Host()
+    if not (tab and host and tab:IsShown()) then return end
+    local right, edge, width = tab:GetRight(), host:GetRight(), tab:GetWidth()
+    if type(right) ~= "number" or type(edge) ~= "number" or type(width) ~= "number" then return end
+    if not self._tabShort then
+        self._fullWidth = width
+        if right > edge then self:SizeTab(true) end
+    elseif self._fullWidth and right - width + self._fullWidth <= edge then
+        self:SizeTab(false)
+    end
+end
+
+-- The short label names PB in a tooltip
+function AP:TabTooltip(tab)
+    if not self._tabShort then return end
+    GameTooltip:SetOwner(tab, "ANCHOR_TOP")
+    GameTooltip:SetText("ProfessionBuddy")
+    GameTooltip:AddLine("Scan my materials and Full scan", 1, 1, 1)
+    GameTooltip:Show()
+    self._tabTip = true
+end
+
 function AP:UpdateTab()
     if not self._open then return end
     local shown = self:ScansShown()
     if not self.tab and shown then
         if self:Modern() then self.tab = self:BuildModernTab() else self.tab = self:BuildClassicTab() end
+        if self.tab then
+            self.tab:HookScript("OnEnter", function(t) AP:TabTooltip(t) end)
+            self.tab:HookScript("OnLeave", function()
+                -- only the tooltip PB showed
+                if AP._tabTip then AP._tabTip = nil; GameTooltip:Hide() end
+            end)
+        end
     end
     if not self.tab then return end
     if shown then
         self.tab:Show()
+        -- other addons add their tabs as the auction house opens: measure
+        -- after this frame, and once more a moment later
+        C_Timer.After(0, function() AP:FitTab() end)
+        C_Timer.After(0.5, function() AP:FitTab() end)
     else
         -- the tab goes (Auctionator or TSM switched on in Settings); on the
         -- classic auction house its page goes back to Browse. The modern one

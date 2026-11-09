@@ -377,6 +377,17 @@ do
     EXPECT(AP.panel:IsShown() and AF._tab == 4, "PB's page not shown by its tab")
     AuctionFrameTab_OnClick(AuctionFrameTab1)
     EXPECT(not AP.panel:IsShown(), "PB's page left over Browse")
+    -- TEST-b3: PB when the tabs run past the window's edge (Auctionator's)
+    rawset(AF, "GetRight", function() return 840 end)
+    rawset(AP.tab, "GetRight", function() return 900 end)
+    rawset(AP.tab, "GetWidth", function() return 120 end)
+    AP:FitTab()
+    EXPECT(AP.tab:GetText() == "PB", "TBC Anniversary crowded tab: " .. tostring(AP.tab:GetText()))
+    rawset(AP.tab, "GetRight", function() return 700 end)
+    rawset(AP.tab, "GetWidth", function() return 60 end)
+    AP:FitTab()
+    EXPECT(AP.tab:GetText() == "ProfessionBuddy", "TBC Anniversary tab with room: " .. tostring(AP.tab:GetText()))
+    rawset(AF, "GetRight", nil); rawset(AP.tab, "GetRight", nil); rawset(AP.tab, "GetWidth", nil)
     -- a page you browse: lowest per item (40c for 5 = 8c; 30c for 2 = 15c)
     LIST = { { 2934, 5, 40 }, { 2934, 2, 30 }, { 99999, 1, 1 } }
     FIRE("AUCTION_ITEM_LIST_UPDATE")
@@ -431,6 +442,6 @@ do
     StaticPopup_Show, StaticPopupDialogs = keepPopup, keepDialogs
     P:ClearRecorded()
 end
-print("  PASS " .. TAG .. "11 auction prices on TBC Anniversary: browsed pages, Scan my materials by exact name cheapest first, the game's search and full-scan limits, full scan read from index 1, another addon's full scan left alone; PB's tab as the fourth AuctionFrameTab; Gadgetzan not recorded; BoP")
+print("  PASS " .. TAG .. "11 auction prices on TBC Anniversary: browsed pages, Scan my materials by exact name cheapest first, the game's search and full-scan limits, full scan read from index 1, another addon's full scan left alone; PB's tab as the fourth AuctionFrameTab, PB when crowded; Gadgetzan not recorded; BoP")
 
 print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 11)")
