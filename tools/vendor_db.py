@@ -14,7 +14,12 @@ stack of VendorStackCount):
 
 Only materials of ProfessionBuddy's recipes (the reagents in Data/*.lua or
 Data/Forever/*.lua), sold by some vendor with unlimited stock (maxcount 0)
-and for money alone (no ExtendedCost on cmangos). A price PB records at a
+and for money alone (no ExtendedCost on cmangos), and only by a vendor
+the database places in the world: a creature row with its ID (VMaNGOS:
+any of id..id5), directly or through its vendor template. cmangos keeps
+test vendors that are never placed: 26304 "General Goods Vendor" sells
+every primal, Arcane Dust and Void Crystal for gold, 26309 sells raid
+drops (2.1.0 TEST-b3: Primal Nether priced at a vendor's 1g 60s). A price PB records at a
 vendor in game beats the baked one.
 
   --check   compare the databases and game builds baked into both files
@@ -64,28 +69,56 @@ def reagent_ids(data_dir):
 
 
 # ---- which items a vendor sells ----
+def sql_rows(sql, table, cols):
+    """The rows of a cmangos table's INSERTs, as {column: text}."""
+    idx = G.col_index(sql, table, cols)
+    for mm in re.finditer(r"INSERT INTO `%s`[^;]*;" % table, sql, re.S):
+        for t in re.finditer(r"\(((?:[^()']|'(?:[^'\\]|\\.|'')*')*)\)", G.t_body(mm.group(0))):
+            f = G.split_tuple(t.group(1))
+            try:
+                yield {c: f[idx[c]] for c in cols}
+            except IndexError:
+                continue
+
+
 def tbc_vendor_items(sql):
+    placed = set()
+    for r in sql_rows(sql, "creature", ["id"]):
+        try: placed.add(int(r["id"]))
+        except ValueError: pass
+    # npc_vendor_template rows reach a vendor through VendorTemplateId
+    users = {}
+    for r in sql_rows(sql, "creature_template", ["Entry", "VendorTemplateId"]):
+        try: e, v = int(r["Entry"]), int(r["VendorTemplateId"] or 0)
+        except ValueError: continue
+        if v: users.setdefault(v, set()).add(e)
     items = set()
     for table in ("npc_vendor", "npc_vendor_template"):
-        idx = G.col_index(sql, table, ["item", "maxcount", "ExtendedCost"])
-        for mm in re.finditer(r"INSERT INTO `%s`[^;]*;" % table, sql, re.S):
-            for t in re.finditer(r"\(((?:[^()']|'(?:[^'\\]|\\.|'')*')*)\)", G.t_body(mm.group(0))):
-                f = G.split_tuple(t.group(1))
-                try:
-                    item, mx, ext = int(f[idx["item"]]), int(f[idx["maxcount"]]), int(f[idx["ExtendedCost"]])
-                except (ValueError, IndexError):
-                    continue
-                if mx == 0 and ext == 0:
-                    items.add(item)
+        for r in sql_rows(sql, table, ["entry", "item", "maxcount", "ExtendedCost"]):
+            try:
+                entry, item, mx, ext = int(r["entry"]), int(r["item"]), int(r["maxcount"]), int(r["ExtendedCost"])
+            except ValueError:
+                continue
+            npcs = {entry} if table == "npc_vendor" else users.get(entry, set())
+            if mx == 0 and ext == 0 and npcs & placed:
+                items.add(item)
     return items
 
 
 def classic_vendor_items(db):
     c = sqlite3.connect(db)
+    placed = set()
+    cols = [r[1] for r in c.execute("PRAGMA table_info(creature)")]
+    for col in [x for x in ("id", "id2", "id3", "id4", "id5") if x in cols]:
+        placed |= {r[0] for r in c.execute("SELECT DISTINCT %s FROM creature WHERE %s > 0" % (col, col))}
+    users = {}
+    for e, v in c.execute("SELECT entry, vendor_id FROM creature_template WHERE vendor_id > 0"):
+        users.setdefault(v, set()).add(e)
     items = set()
     for table in ("npc_vendor", "npc_vendor_template"):
-        for item, mx in c.execute("SELECT item, maxcount FROM %s" % table):
-            if mx == 0:
+        for entry, item, mx in c.execute("SELECT entry, item, maxcount FROM %s" % table):
+            npcs = {entry} if table == "npc_vendor" else users.get(entry, set())
+            if mx == 0 and npcs & placed:
                 items.add(item)
     c.close()
     return items
@@ -149,7 +182,7 @@ def fmt(v):
     return ("%.4f" % v).rstrip("0").rstrip(".")
 
 
-def regen(addon_dir, source, from_file, csvdir, write):
+def regen(addon_dir, source, from_file, csvdir, write, want_build=None):
     tbc_path, classic_path = paths(addon_dir)
     if source == "tbc":
         if from_file:
@@ -161,7 +194,7 @@ def regen(addon_dir, source, from_file, csvdir, write):
             raw = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "pb"}), timeout=300).read()
         sold = tbc_vendor_items(gzip.decompress(raw).decode("utf-8", errors="replace"))
         label, path, rel, anchors = "cmangos TBCDB %s" % version, tbc_path, "Data/VendorPrices.lua", ANCHORS
-        build = latest_tbc_build()
+        build = want_build or latest_tbc_build()
         reagents = reagent_ids(os.path.join(addon_dir, "Data"))
     else:
         if from_file:
@@ -212,6 +245,7 @@ def main():
     ap.add_argument("--from", dest="from_file")
     ap.add_argument("--csv", dest="csvdir")
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--build", help="game build for prices (default: the newest for tbc, the recipe data's for classic)")
     a = ap.parse_args()
     if a.check or not a.regen:
         tbc_path, classic_path = paths(a.addon_dir)
@@ -233,7 +267,7 @@ def main():
             log("UP TO DATE -- no vendor-price regen needed for release."); sys.exit(0)
         log("NEWER data available: run --regen %s --write before the CurseForge release."
             % " and --regen ".join(stale)); sys.exit(10)
-    regen(a.addon_dir, a.source, a.from_file, a.csvdir, a.write)
+    regen(a.addon_dir, a.source, a.from_file, a.csvdir, a.write, a.build)
 
 
 if __name__ == "__main__":

@@ -826,6 +826,12 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     for k, v in pairs(PRICE_DEFAULTS) do
         if ProfBuddyDB.settings[k] == nil then ProfBuddyDB.settings[k] = v end
     end
+    -- 2.1.0 TEST-c: window state and positions kept across a reload or
+    -- logout (UI/Main.lua), per character in ProfBuddyDB.windows
+    if ProfBuddyDB.settings.keepWindowState == nil then ProfBuddyDB.settings.keepWindowState = true end
+    ProfBuddyDB.windows = ProfBuddyDB.windows or {}
+    -- TEST-c G2: guildmates' recipes filled in the background (UI/GuildPanel.lua)
+    if ProfBuddyDB.settings.guildKeepRecipes == nil then ProfBuddyDB.settings.guildKeepRecipes = true end
     -- 2.0.2: before this setting, Replace off always opened both windows.
     -- Players who had it off keep that; everyone else starts with it off.
     if ProfBuddyDB.settings.openBesideBlizzard == nil then

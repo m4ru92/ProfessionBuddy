@@ -110,9 +110,181 @@ local function hasRecipes(charData, profName)
 end
 
 ----------------------------------------------------------------------
--- Init: register the tab, refresh on roster changes
+-- Ask, then open when the recipes arrive (TEST-c, G1). A click on a
+-- guildmate's profession with no recipes asks for them and opens the
+-- profession when the reply arrives, once; no answer in WAIT seconds says
+-- so. Profession links (UI/ProfessionLink.lua, WoW: Forever) use the same
+-- path with their own opener. No comm change: Comm:RequestGuildSync, and
+-- Comm:NotifyUIRefresh when data arrives.
 ----------------------------------------------------------------------
+-- Longer than a peer's 30 s serve cooldown, as for a manual sync
+GP.WAIT = 35
+
+local function Say(text) print("|cff00ccffProfessionBuddy:|r " .. text) end
+
+function GP:HasRecipes(key, profName)
+    local char = addon.DataStore and addon.DataStore:GetCharacter(key)
+    local prof = char and char.professions and char.professions[profName]
+    return (prof and type(prof.recipes) == "table" and next(prof.recipes)) and true or false
+end
+
+local function OpenRecipes(key, profName)
+    local tsf = addon.TradeSkillFrame
+    if tsf and tsf.OpenWithCharacter then tsf:OpenWithCharacter(key, profName) end
+end
+
+-- open(key, profName) opens it; default PB's profession window. Returns
+-- true when it opened at once.
+function GP:AskThenOpen(key, profName, open)
+    open = open or OpenRecipes
+    local C = addon.Comm
+    -- ask every time: the reply refreshes an open window too
+    if C and C.RequestGuildSync then C:RequestGuildSync(key) end
+    if self:HasRecipes(key, profName) then
+        self._pending = nil
+        open(key, profName)
+        return true
+    end
+    local who = addon:ShortName(key)
+    Say("Asked " .. who .. " for their " .. profName .. " recipes. They open when they arrive.")
+    local pending = { key = key, profName = profName, open = open }
+    self._pending = pending
+    C_Timer.After(self.WAIT, function()
+        if self._pending ~= pending then return end
+        self._pending = nil
+        Say(who .. " didn't answer (offline or not running ProfessionBuddy).")
+    end)
+    return false
+end
+
+function GP:IsPending(key, profName)
+    local p = self._pending
+    return (p and p.key == key and p.profName == profName) and true or false
+end
+
+-- Sync data arrived: open the profession PB is waiting for, once
+function GP:CheckPending()
+    local p = self._pending
+    if p and self:HasRecipes(p.key, p.profName) then
+        self._pending = nil
+        p.open(p.key, p.profName)
+    end
+end
+
+----------------------------------------------------------------------
+-- Keep guildmates' recipes filled in the background (TEST-c, G2,
+-- GUILD-SYNC-scope.md). After login, and when guildmates come online, PB
+-- asks online guildmates who run PB and have a profession with recipes
+-- for them, one at a time, FILL_GAP seconds apart: guildmates it has no
+-- recipes for first, then the oldest. It skips anyone pulled in the last
+-- FILL_FRESH seconds, and anyone this session's fill asked in the last
+-- FILL_RETRY seconds (no answer: offline or busy). Each guildmate is asked
+-- once per fill, so a requester never hits a guildmate's own limit (one
+-- answer per person per 2 minutes); the shared limit (10 answers a minute
+-- per guildmate) only matters when many PB users log in together, and a
+-- skipped guildmate comes up again in the next fill. Setting "Keep
+-- guildmates' recipes up to date" (guildKeepRecipes, on). No comm change.
+----------------------------------------------------------------------
+GP.FILL_GAP   = 3
+GP.FILL_FRESH = 12 * 3600
+GP.FILL_RETRY = 600
+GP.FILL_DELAY = 10      -- after login or a roster change, before the fill
+
+function GP:FillOn()
+    return addon.db and addon.db.settings and addon.db.settings.guildKeepRecipes ~= false or false
+end
+
+-- Does this guildmate have a profession page PB can show, and recipes for
+-- every one of them yet?
+local function fillNeed(charData)
+    if type(charData) ~= "table" then return false, false end
+    local targets = clickTargets(charData, profList(charData))
+    local any, all = false, true
+    for _, target in pairs(targets) do
+        any = true
+        if not hasRecipes(charData, target) then all = false end
+    end
+    return any, any and all
+end
+
+-- Who to ask now, in order: { key, has, at }
+function GP:FillQueue()
+    local C = addon.Comm
+    local set = C and C.GuildSet and C:GuildSet()
+    if not set then return {} end
+    local now, me = time(), addon:PlayerKey()
+    self._fillAsked = self._fillAsked or {}
+    local list = {}
+    for key, info in pairs(set) do
+        if info.online and not addon:SameKey(key, me) then
+            local char = addon.DataStore and addon.DataStore:GetCharacter(key)
+            local wants, has = fillNeed(char)
+            local at = char and tonumber(char.lastSync) or 0
+            local asked = self._fillAsked[key]
+            if wants and not (has and now - at < self.FILL_FRESH)
+               and not (asked and now - asked < self.FILL_RETRY) then
+                list[#list + 1] = { key = key, has = has, at = at }
+            end
+        end
+    end
+    table.sort(list, function(a, b)
+        if a.has ~= b.has then return not a.has end
+        if a.at ~= b.at then return a.at < b.at end
+        return a.key < b.key
+    end)
+    return list
+end
+
+-- A fill starts FILL_DELAY seconds after login or a roster change, one at
+-- a time; a change while one runs is picked up by the next
+function GP:ScheduleFill()
+    if not self:FillOn() or self._fillTimer or self._fill then return end
+    self._fillTimer = true
+    C_Timer.After(self.FILL_DELAY, function()
+        GP._fillTimer = nil
+        GP:StartFill()
+    end)
+end
+
+function GP:StartFill()
+    if not self:FillOn() or self._fill then return end
+    local q = self:FillQueue()
+    if #q == 0 then return end
+    self._fill = { queue = q, i = 0, asked = {}, skipped = {}, started = time() }
+    self:FillNext()
+end
+
+function GP:FillNext()
+    local f = self._fill
+    if not f then return end
+    local C = addon.Comm
+    -- off, or Comm not ready to send: stop without marking anyone asked
+    if not (self:FillOn() and C and C._ready) then self._lastFill, self._fill = f, nil; return end
+    f.i = f.i + 1
+    local e = f.queue[f.i]
+    if not e then self._lastFill, self._fill = f, nil; return end
+    -- still online, and not pulled meanwhile (a click, a link)
+    local set = C and C.GuildSet and C:GuildSet()
+    local char = addon.DataStore and addon.DataStore:GetCharacter(e.key)
+    local _, has = fillNeed(char)
+    local at = char and tonumber(char.lastSync) or 0
+    if not (set and set[e.key] and set[e.key].online) then
+        f.skipped[#f.skipped + 1] = { key = e.key, why = "offline" }
+        return self:FillNext()
+    elseif has and time() - at < self.FILL_FRESH then
+        f.skipped[#f.skipped + 1] = { key = e.key, why = "fresh" }
+        return self:FillNext()
+    end
+    C:RequestGuildSync(e.key)
+    self._fillAsked[e.key] = time()
+    f.asked[#f.asked + 1] = { key = e.key, at = time() }
+    C_Timer.After(self.FILL_GAP, function() if GP._fill == f then GP:FillNext() end end)
+end
+
 function GP:Init()
+    if addon.Comm and type(addon.Comm.NotifyUIRefresh) == "function" then
+        hooksecurefunc(addon.Comm, "NotifyUIRefresh", function() GP:CheckPending() end)
+    end
     self.sortKey = "status"   -- default: online first, then name
     self.sortAsc = true
     self.searchText = ""
@@ -131,6 +303,8 @@ function GP:Init()
     local function onRosterEvent()
         GP._dirty = true
         if GP.parent and GP.parent:IsVisible() then GP:Refresh() end
+        -- the roster arrived (login) or someone came online: fill (G2)
+        GP:ScheduleFill()
     end
     addon:RegisterEvent("GUILD_ROSTER_UPDATE", onRosterEvent)
     addon:RegisterEvent("PLAYER_GUILD_UPDATE", onRosterEvent)
@@ -142,7 +316,7 @@ function GP:Toggle()
     if not addon.UI then return end
     if addon.TradeSkillFrame and addon.TradeSkillFrame.frame
        and addon.TradeSkillFrame.frame:IsShown() then
-        addon.TradeSkillFrame:Hide()
+        addon.TradeSkillFrame:HideForMain()
     end
     if not addon.UI.frame:IsShown() then
         addon.UI:Show()
@@ -221,21 +395,10 @@ function GP:CreateRow(parent)
 
         btn:SetScript("OnClick", function(self)
             if not self._charKey or not self._openProf then return end
-            -- Pull this guildmate's full recipe data on demand. Guild trust is
-            -- live, so this needs no persisted contact. The reply arrives async
-            -- and NotifyUIRefresh updates the open profession window.
-            if addon.Comm and addon.Comm.RequestGuildSync then
-                addon.Comm:RequestGuildSync(self._charKey)
-            end
-            if not self._hasRecipes then
-                print("|cff00ccffProfessionBuddy:|r Asked " .. (self._shortName or "?")
-                    .. " for their " .. self._openProf .. " recipes.")
-                return
-            end
-            local tsf = addon.TradeSkillFrame
-            if tsf and tsf.OpenWithCharacter then
-                tsf:OpenWithCharacter(self._charKey, self._openProf)
-            end
+            -- Pull this guildmate's full recipe data on demand (guild trust
+            -- is live, so no contact needed), and open it now or when it
+            -- arrives (G1)
+            GP:AskThenOpen(self._charKey, self._openProf)
         end)
         btn:SetScript("OnEnter", function(self)
             if not self._profName then return end
@@ -243,11 +406,20 @@ function GP:CreateRow(parent)
             if not self._openProf then
                 GameTooltip:SetText(self._profName)
                 GameTooltip:AddLine("Gathering profession: no recipe list to open.", 1, 1, 1, true)
+            elseif GP:IsPending(self._charKey, self._openProf) then
+                GameTooltip:SetText(self._profName)
+                GameTooltip:AddLine("Requesting... opens when it arrives.", 1, 1, 1, true)
             elseif not self._hasRecipes then
                 GameTooltip:SetText(self._profName)
                 GameTooltip:AddLine("No recipe data yet. Click to request it.", 1, 1, 1, true)
             else
                 GameTooltip:SetText("View " .. (self._shortName or "?") .. "'s " .. self._openProf)
+                -- how fresh they are (TEST-c, G1)
+                local char = addon.DataStore and addon.DataStore:GetCharacter(self._charKey)
+                local at = char and tonumber(char.lastSync)
+                if at and at > 0 and addon.CharacterPanel and addon.CharacterPanel.TimeAgo then
+                    GameTooltip:AddLine("Recipes from " .. addon.CharacterPanel:TimeAgo(at), 0.7, 0.7, 0.7)
+                end
             end
             GameTooltip:Show()
         end)

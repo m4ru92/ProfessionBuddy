@@ -44,6 +44,8 @@ Before a real upload (not --dry-run), also:
   tools/gather_db.py --check          gathering data is the newest cmangos / VMaNGOS
   tools/disenchant_db.py --check      disenchant data is the newest cmangos / VMaNGOS
   tools/vendor_db.py --check          vendor prices match the newest databases and game builds
+  tools/waylaid_db.py --check         Waylaid crates baked from the Forever recipe data's build
+  tools/writs_db.py --check           the writ harvest matches the game's Craftsman's Writs
   tools/bake_forever_db2.py --check   Forever recipe data is the newest client build
   Core.lua             refuses to build while a dev addon.BUILD stamp is set
   LICENSE              the addon folder's copy is refreshed from the root copy
@@ -547,6 +549,10 @@ def main():
                  "tools/disenchant_db.py --check (cmangos TBC + VMaNGOS disenchant data)")
         run_gate(os.path.join(tools_dir(), "vendor_db.py"), ["--check", "--addon-dir", addon_dir],
                  "tools/vendor_db.py --check (vendor prices: cmangos TBC + VMaNGOS, game item prices)")
+        run_gate(os.path.join(tools_dir(), "waylaid_db.py"), ["--check", "--addon-dir", addon_dir],
+                 "tools/waylaid_db.py --check (Waylaid Supplies crates baked from the Forever recipe data's build)")
+        run_gate(os.path.join(tools_dir(), "writs_db.py"), ["--check", "--addon-dir", addon_dir],
+                 "tools/writs_db.py --check (Craftsman's Writs harvest matches the game's writs)")
         forever = os.path.join(tools_dir(), "bake_forever_db2.py")
         if args.allow_older_forever_data:
             log("Gate: tools/bake_forever_db2.py --check (Forever recipe data build)")

@@ -377,6 +377,11 @@ do
     EXPECT(AP.panel:IsShown() and AF._tab == 4, "PB's page not shown by its tab")
     AuctionFrameTab_OnClick(AuctionFrameTab1)
     EXPECT(not AP.panel:IsShown(), "PB's page left over Browse")
+    -- the tan bar over the corner art's empty button wells, on PB's page
+    -- (the harness has no textures; where it sits is checked in game)
+    local apSrc = assert(io.open(PB_BASE .. "/AuctionPrices.lua")):read("*a")
+    EXPECT(rawget(AP.panel, "bottomBar") ~= nil and apSrc:find('bar:SetPoint("TOPLEFT", AuctionFrame, "TOPLEFT", 673, -411)', 1, true),
+           "no bar over the bottom-right wells")
     -- TEST-b3: PB when the tabs run past the window's edge (Auctionator's)
     rawset(AF, "GetRight", function() return 840 end)
     rawset(AP.tab, "GetRight", function() return 900 end)
@@ -437,11 +442,67 @@ do
     local keepGII = GetItemInfo
     GetItemInfo = function(id) if id == 7276 then return "x", nil, 1, 5, 1, "Armor", "Cloth", 1, "", 1, 64, 4, 1, 1 end return keepGII(id) end
     EXPECT(P:IsBoP(7276) and not P:IsBoP(2934), "BoP on TBC Anniversary")
+    -- TEST-c: the vendor table counts only vendors placed in the world;
+    -- cmangos's test vendor 26304 had every primal at 1g 60s (TEST-b3 B10)
+    EXPECT(P:VendorBuy(23572) == nil and P:VendorBuy(22450) == nil and P:VendorBuy(2320) == 10,
+           "vendor table: Primal Nether, Void Crystal or Coarse Thread")
+    GetItemInfo = function(id) if id == 23572 then return "Primal Nether", nil, 2, 1, 1, "Trade Goods", "Elemental", 20, "", 1, 0, 7, 0, 1 end return keepGII(id) end
+    local nether = P:MaterialPrice(23572)
+    EXPECT(nether.bop and nether.unit == nil, "Primal Nether is not ? (BoP)")
     GetItemInfo = keepGII
     GetSubZoneText, C_Map = keepSub, keepMap
     StaticPopup_Show, StaticPopupDialogs = keepPopup, keepDialogs
     P:ClearRecorded()
 end
-print("  PASS " .. TAG .. "11 auction prices on TBC Anniversary: browsed pages, Scan my materials by exact name cheapest first, the game's search and full-scan limits, full scan read from index 1, another addon's full scan left alone; PB's tab as the fourth AuctionFrameTab, PB when crowded; Gadgetzan not recorded; BoP")
+print("  PASS " .. TAG .. "11 auction prices on TBC Anniversary: browsed pages, Scan my materials by exact name cheapest first, the game's search and full-scan limits, full scan read from index 1, another addon's full scan left alone; PB's tab as the fourth AuctionFrameTab, PB when crowded; Gadgetzan not recorded; BoP; no vendor price from unplaced vendors")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 11)")
+-- U12 TEST-c (N1, N2): the main window's strip on TBC Anniversary is
+-- secure buttons with the same /cast macros, so the window waits for
+-- combat to end to open or close (decision D3), with one chat line; a
+-- bottom tab parks the open profession and Back brings it back
+do
+    local UI, TSF = PB.UI, PB.TradeSkillFrame
+    local strip = UI.profStrip
+    EXPECT(strip and strip.secure, "no secure strip in the main window on TBC Anniversary")
+    local lw = strip.byName.Leatherworking
+    EXPECT(lw and lw:GetAttribute("type") == "macro" and lw:GetAttribute("macrotext") == "/cast Leatherworking",
+           "the strip's Leatherworking macro: " .. tostring(lw and lw:GetAttribute("macrotext")))
+    if UI.frame:IsShown() then UI:Hide() end
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    PRINTS = {}
+    UI:Show()
+    EXPECT(not UI.frame:IsShown() and PRINTED("opens when combat ends"), "the main window opened in combat")
+    UI:Show()
+    local n = 0
+    for _, l in ipairs(PRINTS) do if l:find("when combat ends", 1, true) then n = n + 1 end end
+    EXPECT(n == 1, "the combat line said " .. n .. " times")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED")
+    EXPECT(UI.frame:IsShown(), "the main window did not open when combat ended")
+    InCombatLockdown = function() return true end
+    UI:Hide()
+    EXPECT(UI.frame:IsShown(), "the main window closed in combat")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED")
+    EXPECT(not UI.frame:IsShown(), "the main window did not close when combat ended")
+    EXPECT(UI.backBtn and not UI.backBtn:IsShown(), "Back shown with nothing parked")
+end
+-- G1 on TBC Anniversary too: the reply opens the guildmate's profession
+do
+    local GP, C, S = PB.GuildPanel, PB.Comm, PB.db
+    local opened = 0
+    local keepReq = C.RequestGuildSync
+    C.RequestGuildSync = function() end
+    local K = PB:NormKey("Sticker-Realm")
+    S.characters[K] = nil
+    GP:AskThenOpen(K, "Tailoring", function() opened = opened + 1 end)
+    S.characters[K] = { isRemote = true, professions = { Tailoring = { recipes = { ["Bolt of Linen Cloth"] = true } } } }
+    C:NotifyUIRefresh()
+    EXPECT(opened == 1, "G1 did not open on TBC Anniversary")
+    S.characters[K] = nil
+    C.RequestGuildSync = keepReq
+end
+print("  PASS " .. TAG .. "12 the main window's strip on TBC Anniversary: secure /cast buttons; the window opens and closes when combat ends, one chat line; G1 opens a guildmate's profession when the reply arrives")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 12)")

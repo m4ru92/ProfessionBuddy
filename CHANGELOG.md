@@ -4,7 +4,7 @@ Every ProfessionBuddy release, newest first. Each entry lists what is new, what 
 
 ## 2.1.0
 
-Prices, built from players' requests: what a craft costs, what it sells for, and the profit, from Auctionator, TSM, the auction prices ProfessionBuddy records, and vendor prices.
+Prices, built from players' requests: what a craft costs, what it sells for, and the profit, from Auctionator, TSM, the auction prices ProfessionBuddy records, and vendor prices. Also: your professions in the main window, a Back button to the profession you were in, window positions and filters that stay after a reload, and guildmates' recipes that are there when you click them.
 
 Thanks to the guild members whose requests shaped this update.
 
@@ -13,6 +13,7 @@ Thanks to the guild members whose requests shaped this update.
 - **Craft cost and profit:** under "Can make", the detail panel shows what one craft costs, what it sells for, and the profit. Hover the line to see each material's price and where it came from.
 - **Material Calculator prices:** Price and Cost columns, and what the materials you still need cost to buy.
 - **Profit in the recipe list:** an optional Profit column, a Profit sort, and "Hide crafts at a loss".
+- **Your professions in the main window:** the profession icons along its top, and "Back to Leatherworking" after a bottom tab took you away from a profession.
 
 <!-- more -->
 
@@ -25,9 +26,18 @@ Thanks to the guild members whose requests shaped this update.
 - **Recipe list:** "Profit in the recipe list" adds each recipe's profit to its row and a Profit choice to the Sort menu. "Hide crafts at a loss" hides recipes that lose money.
 - **Crafts that bind when picked up:** they can't be sold at auction, so their profit uses the vendor's price alone ("Sells: 25c (vendor, BoP)"). In the recipe list they show a gray "BoP" instead of a profit and sort last by Profit. "Hide crafts at a loss" hides the ones that lose money.
 - **Materials that bind when picked up:** they never take an auction price. One you craft keeps its craft cost, and one a vendor sells keeps the vendor's price. Otherwise it shows "? (BoP)", the cost line reads "(1 material binds when picked up)" instead of "has no price", and the Material Calculator shows BoP in its price columns.
-- **Vendor prices:** built in for every material a vendor sells, from the cmangos (TBC Anniversary) and VMaNGOS (WoW: Forever) vendor lists and the game's own item prices. When you open a vendor, PB records what it charges you for materials, and that price replaces the built-in one.
+- **Vendor prices:** built in for every material a vendor sells, from the cmangos (TBC Anniversary) and VMaNGOS (WoW: Forever) vendor lists, counting only vendors placed in the world, and the game's own item prices. When you open a vendor, PB records what it charges you for materials, and that price replaces the built-in one.
 - **Material Calculator:** with prices on, the window is wider, with a Price and a Cost column, and "To buy" and "All materials" totals under the summary.
 - **Settings, Prices section:** Show prices, Auctionator prices, TSM prices with the TSM price source (DBMarket by default), when prices turn gray, how crafted materials show, the two sale price boxes, the two recipe list boxes, and Clear recorded prices.
+- **Profession icons in the main window:** the icons the profession window has, along the top of the main window on every tab. A click opens that profession; one you don't know opens its read-only list. On TBC Anniversary the icons cast the profession, so the main window can't open or close during combat there: it waits until combat ends, with a chat line.
+- **Back to your profession:** the profession window's bottom tabs (Characters, Friends, Guild, Orders) keep your profession open behind the main window, and "Back to Leatherworking" brings it back as you left it: selection, filters, scroll, and the Material Calculator. Closing the main window closes that profession too.
+- **Keep after a reload or logout:** a box under "Remember window state between opens", on by default. The profession window's filters, sort, search, and selection, and where the profession window and the main window sit, stay for each character after a /reload or logout. A window that would land off a smaller screen moves back onto it.
+- **Guildmates' recipes open by themselves:** clicking a guildmate's profession you have no recipes for asks for them and opens the profession when they arrive. Its tooltip says "Requesting... opens when it arrives" while you wait, and "Recipes from 2h ago" once you have them. If nobody answers in 35 seconds, chat says so.
+- **Keep guildmates' recipes up to date:** a box under Friend data, on by default. After you log in, and when guildmates come online, PB asks online guildmates who run it for their recipes, one every 3 seconds, starting with the guildmates PB has no recipes for, so clicking their profession opens it at once. PB skips anyone whose recipes it got in the last 12 hours.
+
+**Added on WoW: Forever**
+
+- **Waylaid Supplies and Craftsman's Writs:** their tooltips show the fill cost: what the requested items cost ("Fill cost: 6s", "20 x Copper Bar"), priced the same way as a craft's materials. A writ also shows what the writ itself sells for at auction. Reward details (money, experience, reputation) come in a later update.
 
 **Changes**
 
@@ -36,7 +46,8 @@ Thanks to the guild members whose requests shaped this update.
 **Fixes**
 
 - With TradeSkillMaster's Crafting window open, clicking a recipe, a material, or a Material Calculator row went to TSM and PB didn't select the recipe. A plain click stays with PB; Shift, Ctrl, and Alt clicks still go to the game and to other addons (chat links, the dressing room).
-- WoW: Forever: pressing K in combat after opening a profession gave an error and opened nothing. K works in combat now. Blizzard's profession book reopens the profession you last had open, in Blizzard's window, and ProfessionBuddy's window takes over when combat ends. The same goes for any profession you open in combat.
+- "Remember window state between opens" lost the View, Skill-up, and Source choices when you closed the profession window with its X button or Escape: only closing it with the profession's own button saved them.
+- WoW: Forever: pressing K in combat after opening a profession gave an error and opened nothing. K works in combat. Blizzard's profession book reopens the profession you last had open, in Blizzard's window, and ProfessionBuddy's window takes over when combat ends. The same goes for any profession you open in combat.
 
 ## 2.0.2 - 2026-11-07
 

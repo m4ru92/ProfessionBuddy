@@ -453,6 +453,18 @@ function AP:BuildClassicTab()
     local panel = self:BuildPanel(AuctionFrame)
     panel:SetPoint("TOPLEFT", AuctionFrame, "TOPLEFT", 90, -110)
     panel:SetPoint("BOTTOMRIGHT", AuctionFrame, "BOTTOMRIGHT", -40, 60)
+    -- The bottom-right corner art has the empty wells where the Browse
+    -- tab's Buyout and Close buttons sit (m4ru, TEST-b3). The plain tan bar
+    -- of the Auctions tab's bottom art covers them. Measured from the
+    -- 256 px textures: the bar is rows 155 to 177; the corner texture sits
+    -- 673 px in and 159 px wide, from file column 102.4, and its right
+    -- border starts at column 246, 148 px in.
+    local bar = panel:CreateTexture(nil, "BACKGROUND")
+    bar:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-Auction-Bot")
+    bar:SetTexCoord(26 / 256, 174 / 256, 155 / 256, 177 / 256)
+    bar:SetSize(148, 22)
+    bar:SetPoint("TOPLEFT", AuctionFrame, "TOPLEFT", 673, -411)
+    panel.bottomBar = bar
     hooksecurefunc("AuctionFrameTab_OnClick", function(clicked)
         if clicked == tab then
             -- the Bids tab's plain frame art, as Blizzard sets per tab

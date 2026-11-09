@@ -1250,7 +1250,7 @@ rawset(GameTooltip, "AddLine", nil)                            -- F21 captured i
 rawset(GameTooltip, "Show", nil)
 local posts = 0
 for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then posts = posts + 1 end end
-EXPECT(posts == 4, "item tooltip post-calls: " .. posts)   -- Used in, Craftable by, Held by, Disenchants into
+EXPECT(posts == 5, "item tooltip post-calls: " .. posts)   -- Used in, Craftable by, Held by, Disenchants into, Fill cost (TEST-c)
 local function has(lines, text)
     for _, l in ipairs(lines) do if type(l) == "string" and l:find(text, 1, true) then return l end end
 end
@@ -5447,4 +5447,341 @@ do
 end
 print("  PASS F82 TEST-b3: the auction house tab reads PB when the tabs don't fit, with a ProfessionBuddy tooltip; the full name comes back when it fits")
 
-print("ALL FOREVER TESTS PASS (82)")
+-- F83 TEST-c items 9 and 3: closing with the X (or Escape, the same
+-- frame:Hide) saves the window state; states and window positions are
+-- kept across a reload per character, pulled back onto the screen; the
+-- Keep box is gray while Remember is off; keeping off clears them
+do
+    local PB = ProfBuddy
+    local TSF, UI, S = PB.TradeSkillFrame, PB.UI, PB.db.settings
+    local st = TSF.state
+    EXPECT(S.keepWindowState == true and S.rememberWindowState == true, "keep/remember defaults")
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    open()
+    local cats = {}
+    for _, r in ipairs(st.recipes) do if r.isHeader then cats[#cats + 1] = r.name end end
+    st.showTab, st.filterDiff, st.filterCat, st.sortBy = "known", "No Gray", cats[2] or cats[1], "Name"
+    TSF:RefreshRecipeList()
+    local cat = st.filterCat
+    TSF.frame:Hide(); FLUSH()                       -- the X button
+    open()
+    EXPECT(st.filterDiff == "No Gray" and st.filterCat == cat and st.sortBy == "Name",
+           "X close lost the state: " .. tostring(st.filterDiff) .. " " .. tostring(st.filterCat) .. " " .. tostring(st.sortBy))
+    -- Missing view and Source, closed with the X
+    st.showTab, st.filterSource = "missing", "Trainer"
+    TSF:RefreshRecipeList()
+    TSF.frame:Hide(); FLUSH()
+    open()
+    EXPECT(st.showTab == "missing" and st.filterSource == "Trainer", "X close lost View or Source")
+    st.showTab, st.filterSource = "known", "All"
+    TSF:RefreshRecipeList()
+    -- positions: the screen and the windows' sizes
+    rawset(UIParent, "GetWidth", function() return 1920 end)
+    rawset(UIParent, "GetHeight", function() return 1080 end)
+    local F = TSF.frame
+    rawset(F, "GetWidth", function() return 700 end)
+    rawset(F, "GetHeight", function() return 500 end)
+    rawset(F, "GetScale", function() return 1 end)
+    rawset(F, "GetLeft", function() return 300 end)
+    rawset(F, "GetTop", function() return 900 end)
+    F:GetScript("OnDragStop")(F)
+    local key = PB:PlayerKey()
+    local w = PB.db.windows[key]
+    EXPECT(w and w.pos and w.pos.profession and w.pos.profession.x == 300 and w.pos.profession.y == 900,
+           "drag end did not save the position")
+    -- logout: the states go into the saved settings
+    FIRE("PLAYER_LOGOUT")
+    EXPECT(type(w.states) == "table" and w.states["Leatherworking|self"]
+           and w.states["Leatherworking|self"].filterDiff == "No Gray", "states not kept at logout")
+    -- a new session: states and position come back
+    TSF.frame:Hide(); FLUSH()
+    TSF._savedStates, TSF._keptLoaded = {}, nil
+    rawset(F, "_pbPosRestored", false)
+    open()
+    EXPECT(st.filterDiff == "No Gray" and st.filterCat == cat, "states not back after a reload")
+    local lp = rawget(F, "_lastPoint")
+    EXPECT(lp and lp[1] == "TOPLEFT" and lp[2] == UIParent and lp[4] == 300 and lp[5] == 900,
+           "position not back after a reload: " .. tostring(lp and lp[4]) .. "," .. tostring(lp and lp[5]))
+    -- a smaller screen: pulled back on (1920 - 700, at least the height)
+    TSF.frame:Hide(); FLUSH()
+    w.pos.profession = { x = 5000, y = 99 }
+    rawset(F, "_pbPosRestored", false)
+    open()
+    lp = rawget(F, "_lastPoint")
+    EXPECT(lp[4] == 1220 and lp[5] == 500, "off-screen position not pulled back: " .. tostring(lp[4]) .. "," .. tostring(lp[5]))
+    -- the Keep box is gray while Remember is off
+    local rcb, kcb = TSF.rememberCB, TSF.keepCB
+    EXPECT(rcb and kcb and kcb:IsEnabled(), "Keep box missing or gray with Remember on")
+    rawset(rcb, "GetChecked", function() return false end)
+    rcb:GetScript("OnClick")(rcb)
+    EXPECT(S.rememberWindowState == false and not kcb:IsEnabled(), "Keep box usable with Remember off")
+    rawset(rcb, "GetChecked", function() return true end)
+    rcb:GetScript("OnClick")(rcb)
+    rawset(rcb, "GetChecked", nil)
+    EXPECT(S.rememberWindowState == true and kcb:IsEnabled(), "Keep box gray with Remember back on")
+    -- keeping off: nothing of this character's carries over
+    S.keepWindowState = false
+    FIRE("PLAYER_LOGOUT")
+    EXPECT(w.states == nil and w.pos == nil, "kept states or positions with keeping off")
+    S.keepWindowState = true
+    -- the main window keeps its position too
+    UI:Show()
+    local M = UI.frame
+    rawset(M, "GetScale", function() return 1 end)
+    rawset(M, "GetLeft", function() return 40 end)
+    rawset(M, "GetTop", function() return 700 end)
+    M:Hide()
+    EXPECT(PB.db.windows[key].pos and PB.db.windows[key].pos.main and PB.db.windows[key].pos.main.x == 40,
+           "the main window's position not saved on close")
+    for _, k in ipairs({ "GetWidth", "GetHeight", "GetScale", "GetLeft", "GetTop" }) do rawset(F, k, nil); rawset(M, k, nil) end
+    rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+end
+print("  PASS F83 TEST-c: X and Escape save the window state (View, Skill-up, Source, Type, Sort); states and positions kept across a reload per character, pulled onto the screen; Keep gray with Remember off; keeping off clears them; the main window's position")
+
+-- F84 TEST-c items 1 and 2 (N1, N2): a bottom tab parks the profession
+-- (session kept, state kept); Back brings it back; the park ends on the
+-- close event and when the main window closes (closing the session); the
+-- main window's strip is plain buttons on WoW: Forever and opens a
+-- profession by skill line; the tabs' content starts below it
+do
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local st = TSF.state
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local function closes() local n = 0; for _, c in ipairs(TS_CALLS) do if c == "CloseTradeSkill" then n = n + 1 end end; return n end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    EXPECT(UI.profStrip and UI.profStrip.secure == false and UI.backBtn, "no plain strip or Back button in the main window")
+    EXPECT(UI.CONTENT_TOP == 52, "tab content not below the strip")
+    EXPECT(UI.profStrip.byName.Leatherworking and not UI.profStrip.byName["Find Minerals"] and not UI.profStrip.byName.Poisons,
+           "the plain strip kept a cast-only profession")
+    open()
+    st.filterDiff = "No Gray"
+    TSF:RefreshRecipeList()
+    local before = closes()
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])        -- Characters
+    FLUSH()
+    EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "bottom tab: profession not parked or main window not shown")
+    EXPECT(closes() == before and TS.open == "Leatherworking", "parking closed the game's session")
+    EXPECT(TSF._parked and TSF._parked.prof == "Leatherworking" and UI.backBtn:IsShown()
+           and UI.backBtn:GetText() == "Back to Leatherworking", "no Back button: " .. tostring(UI.backBtn:GetText()))
+    EXPECT(UI.profStrip.byName.Leatherworking:IsShown(), "the strip has no Leatherworking icon")
+    UI.backBtn:GetScript("OnClick")(UI.backBtn)
+    FLUSH()
+    EXPECT(TSF.frame:IsShown() and not UI.frame:IsShown() and st.filterDiff == "No Gray" and not TSF._parked,
+           "Back did not bring the profession back as it was")
+    -- the game closes the parked session: the park ends
+    TSF.navTabs[2]:GetScript("OnClick")(TSF.navTabs[2])        -- Friends
+    FLUSH()
+    EXPECT(TSF._parked, "not parked from Friends")
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    EXPECT(not TSF._parked and not UI.backBtn:IsShown(), "the park outlived the game's close event")
+    -- closing the main window while parked closes the session (D2)
+    open()
+    TSF.navTabs[3]:GetScript("OnClick")(TSF.navTabs[3])        -- Guild
+    FLUSH()
+    EXPECT(TSF._parked and TS.open == "Leatherworking", "not parked from Guild")
+    before = closes()
+    UI:Hide()
+    FLUSH()
+    EXPECT(not TSF._parked and TS.open == nil and closes() == before + 1, "closing the main window left the session open")
+    -- the strip opens a profession by skill line, and the main window goes
+    UI:Show()
+    FLUSH()
+    local lw = UI.profStrip.byName.Leatherworking
+    lw:GetScript("OnClick")(lw)
+    TS_LIST_READY(); FLUSH()
+    EXPECT(TS.open == "Leatherworking" and TSF.frame:IsShown() and not UI.frame:IsShown(),
+           "the main window's Leatherworking icon did not open it")
+    -- WoW: Forever: the main window is never locked in combat
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    EXPECT(not UI:Locked(), "main window locked in combat on WoW: Forever")
+    InCombatLockdown = keepICL
+    TSF.frame:Hide(); FLUSH()
+end
+print("  PASS F84 TEST-c: a bottom tab parks the profession (session and state kept), Back brings it back, the park ends on the close event and closing the main window closes the session; the main window's plain strip opens a profession; content below the strip")
+
+-- F85 TEST-c item 6 (G1): a guildmate's profession with no recipes: PB
+-- asks, the icon reads as pending, and the profession opens when the
+-- reply arrives, once; no answer says so after the wait; stored recipes
+-- open at once and still ask
+do
+    local PB = ProfBuddy
+    local GP, C, S = PB.GuildPanel, PB.Comm, PB.db
+    local opened, asked = {}, {}
+    local keepReq, keepOpen = C.RequestGuildSync, PB.TradeSkillFrame.OpenWithCharacter
+    C.RequestGuildSync = function(_, key) asked[#asked + 1] = key end
+    PB.TradeSkillFrame.OpenWithCharacter = function(_, key, prof) opened[#opened + 1] = key .. "|" .. prof end
+    local HIR = PB:NormKey("Hircus Stone")
+    S.characters[HIR] = nil
+    PRINTS = {}
+    EXPECT(GP:AskThenOpen(HIR, "Tailoring") == false and #asked == 1 and #opened == 0, "no recipes: did not ask, or opened")
+    EXPECT(PRINTED("Asked Hircus Stone for their Tailoring recipes. They open when they arrive."), "no asked line")
+    EXPECT(GP:IsPending(HIR, "Tailoring") and not GP:IsPending(HIR, "Cooking"), "not pending")
+    S.characters[HIR] = { isRemote = true, lastSync = time(), professions = { Tailoring = { skillLevel = 80,
+        recipes = { ["Bolt of Linen Cloth"] = true } } } }
+    C:NotifyUIRefresh()
+    C:NotifyUIRefresh()
+    EXPECT(#opened == 1 and opened[1] == HIR .. "|Tailoring" and not GP:IsPending(HIR, "Tailoring"),
+           "the reply did not open the profession once: " .. #opened)
+    -- stored recipes: opens at once and still asks
+    opened, asked = {}, {}
+    EXPECT(GP:AskThenOpen(HIR, "Tailoring") == true and #opened == 1 and #asked == 1, "stored recipes did not open at once")
+    -- nobody answers: one line after the wait, then not pending
+    S.characters[HIR] = nil
+    GP:AskThenOpen(HIR, "Tailoring")
+    PRINTS = {}
+    FLUSH()
+    EXPECT(PRINTED("Hircus Stone didn't answer (offline or not running ProfessionBuddy).") and not GP:IsPending(HIR, "Tailoring"),
+           "no line when nobody answers")
+    C.RequestGuildSync, PB.TradeSkillFrame.OpenWithCharacter = keepReq, keepOpen
+end
+print("  PASS F85 TEST-c: G1, a guildmate's profession with no recipes asks, shows as pending, opens when the reply arrives (once); no answer says so; stored recipes open at once and still ask")
+
+-- F86 TEST-c item 8 (G2): the background fill asks online guildmates who
+-- run PB and have a profession page, no recipes first then the oldest,
+-- one every FILL_GAP seconds, each once; skips fresh, offline, asked in
+-- the last FILL_RETRY, and anyone pulled meanwhile; off with the setting;
+-- starts on a roster change
+do
+    local PB = ProfBuddy
+    local GP, C, S = PB.GuildPanel, PB.Comm, PB.db
+    local keep = { IsInGuild = IsInGuild, GetNumGuildMembers = GetNumGuildMembers, GetGuildRosterInfo = GetGuildRosterInfo }
+    local roster = {
+        { "Amy Stitch", true }, { "Ben Hide", true }, { "Cal Fresh", true },
+        { "Dot Away", false }, { "Eli Herb", true },
+    }
+    IsInGuild = function() return true end
+    GetNumGuildMembers = function() return #roster end
+    GetGuildRosterInfo = function(i) return roster[i][1], "Member", 1, 20, nil, nil, nil, nil, roster[i][2] end
+    C._guildSet = nil
+    local K = {}
+    for _, r in ipairs(roster) do K[r[1]] = PB:NormKey(r[1]) end
+    local now = time()
+    local function tailor(recipes, at)
+        return { isRemote = true, lastSync = at, professions = { Tailoring = { skillLevel = 80,
+            recipes = recipes and { ["Bolt of Linen Cloth"] = true } or nil } } }
+    end
+    S.characters[K["Amy Stitch"]] = tailor(false, 0)                 -- no recipes yet
+    S.characters[K["Ben Hide"]]   = tailor(true, now - 13 * 3600)     -- old
+    S.characters[K["Cal Fresh"]]  = tailor(true, now - 3600)          -- fresh
+    S.characters[K["Dot Away"]]   = tailor(false, 0)                  -- offline
+    S.characters[K["Eli Herb"]]   = { isRemote = true, professions = {} }   -- runs PB, no professions
+    local asked = {}
+    local keepReq = C.RequestGuildSync
+    C.RequestGuildSync = function(_, key) asked[#asked + 1] = key end
+    GP._fillAsked, GP._fill, GP._lastFill, GP._fillTimer = {}, nil, nil, nil
+    EXPECT(PB.db.settings.guildKeepRecipes == true, "the setting is not on by default")
+    local q = GP:FillQueue()
+    EXPECT(#q == 2 and q[1].key == K["Amy Stitch"] and q[2].key == K["Ben Hide"],
+           "fill order: " .. #q .. " " .. tostring(q[1] and q[1].key) .. " " .. tostring(q[2] and q[2].key))
+    GP:StartFill()
+    EXPECT(#asked == 1 and asked[1] == K["Amy Stitch"] and GP._fill, "the fill did not ask the first guildmate at once")
+    FLUSH()
+    EXPECT(#asked == 2 and asked[2] == K["Ben Hide"] and not GP._fill and #GP._lastFill.asked == 2,
+           "the fill did not go on to the next, or did not end")
+    -- asked in the last FILL_RETRY: not again
+    asked = {}
+    GP:StartFill(); FLUSH()
+    EXPECT(#asked == 0, "the fill asked the same guildmates again at once")
+    -- pulled meanwhile (a click): skipped as fresh
+    GP._fillAsked = {}
+    GP:StartFill()
+    S.characters[K["Ben Hide"]].lastSync = time()
+    FLUSH()
+    EXPECT(#asked == 1 and GP._lastFill.skipped[1] and GP._lastFill.skipped[1].why == "fresh", "a guildmate pulled meanwhile was asked")
+    -- the setting off: nothing
+    GP._fillAsked, asked = {}, {}
+    PB.db.settings.guildKeepRecipes = false
+    GP:StartFill(); FLUSH()
+    EXPECT(#asked == 0, "the fill ran with the setting off")
+    PB.db.settings.guildKeepRecipes = true
+    -- a roster change starts one after the delay
+    S.characters[K["Ben Hide"]].lastSync = now - 13 * 3600
+    FIRE("GUILD_ROSTER_UPDATE")
+    FLUSH()
+    EXPECT(#asked == 2, "a roster change did not start a fill: " .. #asked)
+    C.RequestGuildSync = keepReq
+    for k, v in pairs(keep) do _G[k] = v end
+    C._guildSet = nil
+    for _, key in pairs(K) do S.characters[key] = nil end
+    GP._fillAsked, GP._fill, GP._fillTimer = {}, nil, nil
+end
+print("  PASS F86 TEST-c: G2, the background fill asks online PB guildmates with a profession page, no recipes first then the oldest, one at a time, each once; skips fresh, offline, recently asked and pulled-meanwhile; off with the setting; starts on a roster change")
+
+-- F87 TEST-c items 4 and 5: a Waylaid Supplies crate's and a
+-- Craftsman's Writ's tooltip show the fill cost from Prices.lua, "?"
+-- without a price, the writ's own auction price, and the gray rewards
+-- line; nothing with Show prices off; the baked tables are well-formed
+do
+    local PB = ProfBuddy
+    local P, S = PB.Prices, PB.db.settings
+    local n, ok = 0, true
+    for crate, e in pairs(PB.Waylaid or {}) do
+        n = n + 1
+        if not (type(e[1]) == "number" and e[2] >= 1 and e[3] > 0) then ok = false end
+    end
+    EXPECT(n == 104 and ok and PB.Waylaid[210771][1] == 2840 and PB.Waylaid[210771][2] == 20, "Waylaid table: " .. n)
+    local w = 0
+    for _, e in pairs(PB.Writs or {}) do w = w + 1; if not (e[1] > 0 and e[2] >= 1 and e[3] > 0) then ok = false end end
+    EXPECT(w == 150 and ok and PB.Writs[264037][2] == 200, "Writs table: " .. w)
+    -- every item post-call runs, as the game runs them
+    local function post(tip)
+        for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then c.fn(tip) end end
+    end
+    local function tipFor(id)
+        local lines = {}
+        local keepGD = TooltipUtil.GetDisplayedItem
+        TooltipUtil.GetDisplayedItem = function() return "x", "|cffffffff|Hitem:" .. id .. "::::::::|h[x]|h|r" end
+        rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = tostring(t) end)
+        rawset(GameTooltip, "AddDoubleLine", function(_, a, b) lines[#lines + 1] = tostring(a) .. " = " .. tostring(b) end)
+        rawset(GameTooltip, "Show", function() end)
+        post(GameTooltip)
+        TooltipUtil.GetDisplayedItem = keepGD
+        rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "Show", nil)
+        local plain = {}
+        for _, l in ipairs(lines) do
+            plain[#plain + 1] = (l:gsub("|T[^|]*|t", function(icon)
+                return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c" end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+        end
+        return table.concat(plain, "\n")
+    end
+    P:ClearRecorded()
+    local AUC = { [2840] = 30, [264037] = 4000 }
+    local keepAuc = Auctionator
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return AUC[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    local t = tipFor(210771)
+    EXPECT(t:find("Fill cost (ProfessionBuddy): = 6s", 1, true) and t:find("20 x ", 1, true)
+           and t:find("Reward details: coming in a later update.", 1, true), "crate tooltip:\n" .. t)
+    -- a writ: its item has no price here, and the writ's own auction price
+    t = tipFor(264037)
+    EXPECT(t:find("Fill cost (ProfessionBuddy): = ?", 1, true) and t:find("200 x ", 1, true)
+           and t:find("Writ sells for = 40s", 1, true), "writ tooltip:\n" .. t)
+    -- Show prices off: nothing
+    S.showPrices = false
+    t = tipFor(210771)
+    EXPECT(not t:find("Fill cost", 1, true), "fill cost with Show prices off")
+    S.showPrices = true
+    -- an ordinary item: nothing
+    EXPECT(not tipFor(2840):find("Fill cost", 1, true), "fill cost on an ordinary item")
+    Auctionator = keepAuc
+end
+print("  PASS F87 TEST-c: Waylaid Supplies and Craftsman's Writs tooltips: fill cost from Prices.lua, ? without a price, the writ's own auction price, the rewards-later line; off with Show prices; the baked tables")
+
+-- F88 TEST-c rebuild: vendor prices only from vendors placed in the world
+-- (VMaNGOS 17078, unplaced, was the only seller of Heavy Runecloth
+-- Bandage); recipe names wrap to two lines at most
+do
+    local P = ProfBuddy.Prices
+    EXPECT(P:VendorBuy(14530) == nil and P:VendorBuy(2320) == 10, "Forever vendor table")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find("nameText:SetMaxLines(2)", 1, true), "recipe names not capped at two lines")
+end
+print("  PASS F88 TEST-c: vendor prices only from placed vendors; recipe names at most two lines")
+
+print("ALL FOREVER TESTS PASS (88)")

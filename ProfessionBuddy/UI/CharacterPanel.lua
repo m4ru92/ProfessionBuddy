@@ -190,7 +190,7 @@ function CP:Toggle()
     -- profession window covering it). Mirrors FriendsPanel/OrdersPanel.
     local tsf = addon.TradeSkillFrame
     if tsf and tsf.frame and tsf.frame:IsShown() then
-        tsf:Hide()
+        tsf:HideForMain()
         addon.UI:Show()
         selectCharacters()
         return

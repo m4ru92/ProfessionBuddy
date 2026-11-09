@@ -232,7 +232,7 @@ function FP:Toggle()
     -- Close profession window if open
     if addon.TradeSkillFrame and addon.TradeSkillFrame.frame
        and addon.TradeSkillFrame.frame:IsShown() then
-        addon.TradeSkillFrame:Hide()
+        addon.TradeSkillFrame:HideForMain()
     end
 
     if not addon.UI.frame:IsShown() then

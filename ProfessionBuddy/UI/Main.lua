@@ -43,7 +43,9 @@ function UI:Init()
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", f.StartMoving)
+    -- TBC Anniversary: not in combat, once the strip's secure buttons make
+    -- moving it a blocked action (UI:Locked)
+    f:SetScript("OnDragStart", function(fr) if not UI:Locked() then fr:StartMoving() end end)
     -- a side panel open beside it stops at the screen edge with it
     f:SetScript("OnDragStop", function(fr) UI:AfterDrag(fr, UI.scaleFollowers) end)
     f:SetClampedToScreen(true)
@@ -52,6 +54,8 @@ function UI:Init()
     -- edge, add themselves here when built and scale with it
     self.scaleFollowers = {}
     self.scaleGrip = self:AddScaleGrip(f, "mainWindowScale", self.scaleFollowers)
+    -- after the scale grip, whose OnShow puts the saved size back first
+    self:TrackPosition(f, "main")
 
     -- Close any open dropdown list (e.g. the Guild tab profession filter) and
     -- the Friends tab order menu when the window hides. Those lists are
@@ -59,6 +63,10 @@ function UI:Init()
     -- the order menu leaves a full-screen click catcher behind if it survives.
     f:HookScript("OnHide", function()
         addon.CloseAllPopups()
+        -- closing it while a profession is parked closes that profession
+        -- too, so no hidden session stays open (TEST-c, decision D2)
+        local tsf = addon.TradeSkillFrame
+        if tsf and tsf._parked then tsf:EndPark(true) end
     end)
 
     -- Title
@@ -91,7 +99,7 @@ function UI:Init()
         -- it when settings returns here (the Hide below closes it).
         if addon.OrdersPanel then addon.OrdersPanel:CaptureHistoryState() end
         -- Hide the /pb window and open settings in the profession window
-        f:Hide()
+        UI:Hide()
         if addon.TradeSkillFrame then
             addon.TradeSkillFrame:OpenSettings("main")
         end
@@ -99,6 +107,8 @@ function UI:Init()
 
     -- Make it closeable with Escape
     table.insert(UISpecialFrames, "ProfBuddyMainFrame")
+
+    self:BuildStrip(f)
 
     -- Tab bar container
     f.tabs = {}
@@ -169,7 +179,7 @@ function UI:AddTab(name, displayName, createFunc)
     -- Content frame (fills the inset area). Top inset kept just below the title
     -- bar; -60 left a visibly loose gap above every tab's content.
     local content = CreateFrame("Frame", nil, self.frame)
-    content:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 10, -42)
+    content:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 10, -UI.CONTENT_TOP)
     content:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -10, 10)
     content:Hide()
 
@@ -252,15 +262,102 @@ end
 -- which fires for this path and for every panel Toggle as well.
 function UI:Toggle()
     if self.frame:IsShown() then
-        self.frame:Hide()
+        self:Hide()
     else
-        self.frame:Show()
+        self:Show()
     end
 end
 
 function UI:Show()
+    if self:Locked() then return self:Defer("show") end
     self.frame:Show()
 end
+
+----------------------------------------------------------------------
+-- The profession strip and Back (TEST-c, N1 and N2, Bran). The icons the
+-- profession window has, in this window's top-left corner on every tab:
+-- a click opens that profession (an unknown one opens its read-only list).
+-- Left of them, in a fixed spot, "Back to <profession>" while one is
+-- parked (decision D1). The tabs' content starts below them.
+----------------------------------------------------------------------
+UI.CONTENT_TOP = 52        -- was 42; the strip needs the room
+UI.BACK_W = 160
+
+function UI:BuildStrip(f)
+    local back = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    back:SetSize(self.BACK_W, 22)
+    -- "Back to Leatherworking" fits in the smaller font
+    back:SetNormalFontObject(GameFontNormalSmall)
+    back:SetHighlightFontObject(GameFontHighlightSmall)
+    back:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -27)
+    back:SetFrameLevel(f:GetFrameLevel() + 5)
+    back:SetScript("OnClick", function()
+        if addon.TradeSkillFrame then addon.TradeSkillFrame:Unpark() end
+    end)
+    back:Hide()
+    self.backBtn = back
+    local tsf = addon.TradeSkillFrame
+    if not (tsf and tsf.NewProfStrip) then return end
+    -- WoW: Forever opens a profession by skill line: plain buttons, so this
+    -- window can still open and close in combat. TBC Anniversary casts the
+    -- profession: secure buttons, and the window waits for combat to end
+    -- (UI:Locked, decision D3).
+    local strip = tsf:NewProfStrip(f, "ProfBuddyMainProfTab", { plain = true, isMain = true })
+    strip.container:SetPoint("TOPLEFT", f, "TOPLEFT", 12 + self.BACK_W + 6, -28)
+    self.profStrip = strip
+    f:HookScript("OnShow", function()
+        UI:UpdateStrip()
+        UI:UpdateBack()
+    end)
+end
+
+-- Lay out the strip, the parked profession highlighted
+function UI:UpdateStrip()
+    local strip, tsf = self.profStrip, addon.TradeSkillFrame
+    if not (strip and tsf) then return end
+    if strip.secure and InCombatLockdown() then self._stripDirty = true; return end
+    self._stripDirty = nil
+    tsf:LayoutProfStrip(strip, tsf._parked and tsf._parked.prof)
+end
+
+function UI:UpdateBack()
+    local back, tsf = self.backBtn, addon.TradeSkillFrame
+    if not back then return end
+    local p = tsf and tsf._parked
+    if p then
+        back:SetText("Back to " .. p.display)
+        back:Show()
+    else
+        back:Hide()
+    end
+    if self.frame and self.frame:IsShown() then self:UpdateStrip() end
+end
+
+-- TBC Anniversary: the strip's secure buttons make this window one the
+-- game won't let an addon show, hide or move in combat
+function UI:Locked()
+    return (self.profStrip and self.profStrip.secure and InCombatLockdown()) and true or false
+end
+
+-- In combat: open or close when combat ends, said once per fight
+function UI:Defer(action)
+    self._pending = action
+    if not self._saidCombat then
+        self._saidCombat = true
+        print("|cff00ccffProfessionBuddy:|r The ProfessionBuddy window "
+            .. (action == "show" and "opens" or "closes") .. " when combat ends.")
+    end
+end
+
+addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+    UI._saidCombat = nil
+    local act = UI._pending
+    UI._pending = nil
+    if UI.frame then
+        if act == "show" then UI.frame:Show() elseif act == "hide" then UI.frame:Hide() end
+    end
+    if UI._stripDirty and UI.frame and UI.frame:IsShown() then UI:UpdateStrip() end
+end)
 
 ----------------------------------------------------------------------
 -- Drag to scale (2.0.2, RESIZE-scope.md): a grip in a window's bottom-right
@@ -349,6 +446,89 @@ function UI:AfterDrag(frame, followers)
     frame:StopMovingOrSizing()
     for _, f in ipairs(followers or {}) do
         if type(f.IsShown) == "function" and f:IsShown() then self:MakeRoomBeside(frame, f) end
+    end
+    self:SavePosition(frame)
+end
+
+----------------------------------------------------------------------
+-- Window state and positions kept across a /reload or logout (TEST-c,
+-- Hircus and Sticker): per character in ProfBuddyDB.windows, while both
+-- "Remember window state between opens" and "Keep after a reload or
+-- logout" are on. Not in the character record, which friends receive.
+----------------------------------------------------------------------
+function UI:KeepOn()
+    local s = addon.db and addon.db.settings
+    return (s and s.rememberWindowState ~= false and s.keepWindowState ~= false) and true or false
+end
+
+-- This character's table, made on first use
+function UI:CharWindows()
+    local db = addon.db
+    db.windows = db.windows or {}
+    local key = addon:PlayerKey()
+    if not key then return nil end
+    db.windows[key] = db.windows[key] or {}
+    return db.windows[key]
+end
+
+-- The window's top-left corner in UIParent's units (its own units times
+-- its scale), so a scale change does not move it
+function UI:SavePosition(frame)
+    local key = frame and frame._pbPosKey
+    if not (key and self:KeepOn()) then return end
+    local left, top = frame:GetLeft(), frame:GetTop()
+    if type(left) ~= "number" or type(top) ~= "number" then return end
+    local w = self:CharWindows()
+    if not w then return end
+    local s = frame:GetScale() or 1
+    w.pos = w.pos or {}
+    w.pos[key] = { x = left * s, y = top * s }
+end
+
+-- Back where it was, pulled onto the screen if the screen got smaller
+function UI:RestorePosition(frame)
+    local key = frame and frame._pbPosKey
+    if not (key and self:KeepOn()) then return end
+    local w = addon.db.windows and addon.db.windows[addon:PlayerKey() or ""]
+    local p = w and w.pos and w.pos[key]
+    local x, y = p and tonumber(p.x), p and tonumber(p.y)
+    if not (x and y) then return end
+    local s = frame:GetScale() or 1
+    local sw, sh = UIParent:GetWidth(), UIParent:GetHeight()
+    local fw, fh = (frame:GetWidth() or 0) * s, (frame:GetHeight() or 0) * s
+    if type(sw) == "number" and type(sh) == "number" then
+        x = math.max(0, math.min(x, sw - fw))
+        y = math.min(sh, math.max(y, fh))
+    end
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+end
+
+-- Keep this window's position under key: put back the first time it
+-- shows, saved when it hides, a drag ends (AfterDrag) or you log out
+function UI:TrackPosition(frame, key)
+    frame._pbPosKey = key
+    frame._pbPosRestored = false
+    self._tracked = self._tracked or {}
+    self._tracked[#self._tracked + 1] = frame
+    frame:HookScript("OnShow", function(f)
+        if f._pbPosRestored then return end
+        f._pbPosRestored = true
+        UI:RestorePosition(f)
+    end)
+    frame:HookScript("OnHide", function(f) UI:SavePosition(f) end)
+end
+
+-- At logout and /reload, before the game writes the saved settings
+function UI:SaveAllPositions()
+    if not self:KeepOn() then
+        -- keeping is off: nothing of this character's carries over
+        local w = addon.db.windows and addon.db.windows[addon:PlayerKey() or ""]
+        if type(w) == "table" then w.pos = nil end
+        return
+    end
+    for _, f in ipairs(self._tracked or {}) do
+        if f:IsShown() then self:SavePosition(f) end
     end
 end
 
@@ -442,5 +622,6 @@ function UI:AddScaleGrip(frame, key, followers)
 end
 
 function UI:Hide()
+    if self:Locked() then return self:Defer("hide") end
     self.frame:Hide()
 end

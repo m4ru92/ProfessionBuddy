@@ -510,6 +510,8 @@ function TSF:Init()
     end)
     On(E.TRADE_CLOSE, function()
         self._awaitingTradeList = nil
+        -- the game closed the parked session (cast again, walked away)
+        if self._parked and not self._parked.isCraft then self:EndPark(false) end
         if self._isMouseOverTab then return end
         -- A background trade-skill session closing (PB is showing Enchanting,
         -- or PB closed it itself on a switch) must not hide PB.
@@ -595,6 +597,7 @@ function TSF:Init()
         end
     end)
     On(E.CRAFT_CLOSE, function()
+        if self._parked and self._parked.isCraft then self:EndPark(false) end
         if self._isMouseOverTab then return end
         -- Same, the other way round: a background Craft session closing while
         -- PB shows a trade skill must not hide PB.
@@ -645,6 +648,13 @@ function TSF:Init()
     -- When combat ends, replay whatever the lockdown blocked: an open, a
     -- close, or just the craft bar (the enchant button's secure attribute
     -- can only be written out of combat, so it sits disabled until now).
+    -- TEST-c: window state and positions kept across a reload or logout;
+    -- PLAYER_LOGOUT fires before the game writes the saved settings
+    addon:RegisterEvent("PLAYER_LOGOUT", function()
+        if self.frame and self.frame:IsShown() then self:SaveWindowState() end
+        self:KeepStates()
+        if addon.UI and addon.UI.SaveAllPositions then addon.UI:SaveAllPositions() end
+    end)
     addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if self._pendingOpen then
             local kind = self._pendingOpen
@@ -1504,6 +1514,37 @@ function TSF:HookItemTooltip()
         tip:Show()
     end
 
+    -- Waylaid Supplies crates and Craftsman's Writs (WoW: Forever, TEST-c
+    -- items 4 and 5; Data/Forever/Waylaid.lua and Writs.lua): what filling
+    -- one costs, priced by Prices.lua (auction, vendor, or the cheaper of
+    -- buying and crafting), "?" when the item has no price. A writ also
+    -- shows its own auction price. Rewards come in a later update (option A,
+    -- 2026-11-08: no Forever reward data yet). Off with Show prices.
+    HookItemTooltip(function(tip)
+        local P = addon.Prices
+        if not (P and P:Enabled()) then return end
+        if not (addon.Waylaid or addon.Writs) then return end
+        local itemLink = TooltipItemLink(tip)
+        local itemID = itemLink and addon:ItemIDFromLink(itemLink)
+        if not itemID then return end
+        local writ = addon.Writs and addon.Writs[itemID]
+        local need = (addon.Waylaid and addon.Waylaid[itemID]) or writ
+        if not need then return end
+        local item, count = need[1], need[2]
+        local mp = P:MaterialPrice(item)
+        local name = GetItemInfo(item) or ("item:" .. item)
+        local cost = mp.unit and (P:Money(mp.unit * count) .. (mp.partial and "+" or "")) or "|cffff4444?|r"
+        tip:AddLine(" ")
+        tip:AddDoubleLine("Fill cost (ProfessionBuddy):", cost, 1, 0.82, 0, 1, 1, 1)
+        tip:AddLine("  " .. count .. " x " .. name, 0.9, 0.9, 0.9)
+        if writ then
+            local sell = P:AuctionPrice(itemID)
+            if sell then tip:AddDoubleLine("  Writ sells for", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
+        end
+        tip:AddLine("  Reward details: coming in a later update.", 0.5, 0.5, 0.5)
+        tip:Show()
+    end)
+
     -- "Held by" tooltip: who holds the hovered item, in bags and bank. You,
     -- your alts, and friends who share their bags, following the same Show in
     -- tooltips boxes as Craftable by (guildmates never share bags or bank).
@@ -2159,6 +2200,11 @@ function TSF:EnsureFrame()
         end
     end)
     f:SetScript("OnHide", function()
+        -- Every way the window closes saves its state: the X button and
+        -- Escape hide the frame directly and never ran TSF:Hide, so View,
+        -- Skill-up, Source and the rest went back on the next open (Sticker,
+        -- TEST-c item 9). Before the calculator closes: its state is saved.
+        self:SaveWindowState()
         CloseAllDropdowns()
         if self.calcPanel then self.calcPanel:Hide() end
         -- Defer RestoreContentPanels to break the taint chain -- when
@@ -2167,7 +2213,8 @@ function TSF:EnsureFrame()
         C_Timer.After(0, function() self:RestoreContentPanels() end)
         -- Close the backend trade skill so the profession icon doesn't
         -- need a double-click to reopen after closing via the X button.
-        if not self._closingFromEvent then
+        -- parking (TEST-c, N1) keeps the game's session open for Back
+        if not self._closingFromEvent and not self._keepSession then
             addon.Source:CloseWindow(state.isCraftWindow)
         end
         -- And never leave the OTHER channel's session open behind a closed PB:
@@ -2198,6 +2245,8 @@ function TSF:EnsureFrame()
     if addon.UI and addon.UI.AddScaleGrip then
         self.scaleGrip = addon.UI:AddScaleGrip(f, "professionWindowScale", { self.calcPanel })
     end
+    -- TEST-c: its position kept across a reload (UI/Main.lua)
+    if addon.UI and addon.UI.TrackPosition then addon.UI:TrackPosition(f, "profession") end
 
     -- Expose state so MaterialCalc can access live recipe data
     self.state = state
@@ -2632,12 +2681,20 @@ local function CraftableProfs()
     return addon.CRAFTABLE_PROFS or {}
 end
 
-function TSF:BuildProfessionTabs(parent)
-    self.profTabsByName = {}
-    self.profTabContainer = CreateFrame("Frame", nil, parent)
-    self.profTabContainer:SetSize(300, 22)
-    self.profTabContainer:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, -28)
-    self.profTabContainer:SetFrameLevel(parent:GetFrameLevel() + 5)
+-- One strip of profession icons. The profession window has one (top
+-- left), and from TEST-c the main window has one too (UI/Main.lua, N2).
+-- namePrefix names the buttons. opts.plain: plain buttons where the client
+-- opens a profession by skill line (WoW: Forever), so the main window
+-- holds no secure button there and can show and hide in combat.
+-- opts.isMain: the main window's strip leaves the profession window's
+-- close-event guard (_isMouseOverTab) alone. Returns the strip:
+-- { container, byName, sep, secure, isMain }.
+function TSF:NewProfStrip(parent, namePrefix, opts)
+    opts = opts or {}
+    local strip = { byName = {}, isMain = opts.isMain and true or false, secure = false }
+    strip.container = CreateFrame("Frame", nil, parent)
+    strip.container:SetSize(300, 22)
+    strip.container:SetFrameLevel(parent:GetFrameLevel() + 5)
 
     local TAB_SIZE = 22
 
@@ -2653,89 +2710,108 @@ function TSF:BuildProfessionTabs(parent)
     -- Pre-create a secure button for every profession with attributes
     -- set NOW (at frame build time, before any taint)
     for idx, profName in ipairs(tabProfs) do
-        local tab = CreateFrame("Button", "ProfBuddyProfTab" .. idx, self.profTabContainer, "SecureActionButtonTemplate")
-        tab:SetSize(TAB_SIZE, TAB_SIZE)
-
-        -- Register for clicks (modern client requires explicit registration).
-        -- DOWN only, matching the enchant craft button: registering both
-        -- edges runs the secure /cast twice per click, and casting a
-        -- profession spell while its window is open toggles it shut, so the
-        -- up edge could close what the down edge opened. PostClick (which
-        -- opens the static view for an unknown profession) also ran twice.
-        tab:RegisterForClicks("AnyDown")
-
-        -- Set secure attributes at creation time -- never touched again
-        -- Use macro type for reliable profession opening
-        -- Gathering profs: Mining opens Smelting, Herbalism/Skinning
-        -- toggle their respective spells
-        local MACRO_OVERRIDES = {
-            ["Mining"]        = "/cast Smelting",
-            ["Find Minerals"] = "/cast Find Minerals",
-            ["Herbalism"]     = "/cast Find Herbs",
-            -- /cast takes the client's own spell name; 2842 is Poisons.
-            ["Poisons"]       = "/cast " .. (GetSpellInfo(2842) or "Poisons"),
-        }
-        -- A flavor that opens professions by skill line gets no macro at
-        -- all: PostClick opens it (WoW: Forever, where several spells
-        -- share a profession's name).
         local skillLine = addon.Source.TabSkillLine and addon.Source:TabSkillLine(profName)
-        if skillLine then
-            tab.skillLine = skillLine
-        else
-            tab:SetAttribute("type", "macro")
-            tab:SetAttribute("macrotext", MACRO_OVERRIDES[profName] or ("/cast " .. profName))
-        end
+        local secure = not (opts.plain and skillLine)
+        -- A plain strip on a client that opens professions by skill line
+        -- (WoW: Forever) leaves out what opens only by casting (Find
+        -- Minerals, Poisons): one secure button would lock the whole window
+        -- in combat.
+        if opts.plain and addon.Source.TabSkillLine and not skillLine then secure = nil end
+        if secure ~= nil then
+            local tab = CreateFrame("Button", namePrefix .. idx, strip.container, secure and "SecureActionButtonTemplate" or nil)
+            tab:SetSize(TAB_SIZE, TAB_SIZE)
+            if secure then strip.secure = true end
 
-        local bg = tab:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        Theme:Fill(bg, "professionTab")
-        tab.bg = bg
+            -- Register for clicks (modern client requires explicit registration).
+            -- DOWN only, matching the enchant craft button: registering both
+            -- edges runs the secure /cast twice per click, and casting a
+            -- profession spell while its window is open toggles it shut, so the
+            -- up edge could close what the down edge opened. PostClick (which
+            -- opens the static view for an unknown profession) also ran twice.
+            if secure then tab:RegisterForClicks("AnyDown") else tab:RegisterForClicks("LeftButtonUp") end
 
-        local border = CreateFrame("Frame", nil, tab, "BackdropTemplate")
-        border:SetAllPoints()
-        border:EnableMouse(false)  -- don't eat clicks meant for the button
-        Theme:SetBackdrop(border, "professionTabBorder")
-        tab.border = border
-
-        local icon = tab:CreateTexture(nil, "ARTWORK")
-        icon:SetSize(TAB_SIZE - 4, TAB_SIZE - 4)
-        icon:SetPoint("CENTER")
-        icon:SetTexture(PROF_ICONS[profName] or "Interface\\Icons\\INV_Misc_QuestionMark")
-        tab.icon = icon
-
-        tab.profName = profName
-
-        tab:SetScript("OnEnter", function(self)
-            TSF._isMouseOverTab = true
-            GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-            GameTooltip:SetText(self.profName)
-            GameTooltip:Show()
-        end)
-        tab:SetScript("OnLeave", function()
-            TSF._isMouseOverTab = false
-            GameTooltip:Hide()
-        end)
-
-        -- PostClick: if this is an unknown profession, the secure macro
-        -- silently fails. Open the static-only view instead.
-        tab:SetScript("PostClick", function(self)
-            if self._isUnknown then
-                TSF:OpenWithStatic(self.profName)
-            elseif self.skillLine then
-                addon.Source:OpenProfession(self.skillLine)
+            -- Set secure attributes at creation time -- never touched again
+            -- Use macro type for reliable profession opening
+            -- Gathering profs: Mining opens Smelting, Herbalism/Skinning
+            -- toggle their respective spells
+            local MACRO_OVERRIDES = {
+                ["Mining"]        = "/cast Smelting",
+                ["Find Minerals"] = "/cast Find Minerals",
+                ["Herbalism"]     = "/cast Find Herbs",
+                -- /cast takes the client's own spell name; 2842 is Poisons.
+                ["Poisons"]       = "/cast " .. (GetSpellInfo(2842) or "Poisons"),
+            }
+            -- A flavor that opens professions by skill line gets no macro at
+            -- all: PostClick opens it (WoW: Forever, where several spells
+            -- share a profession's name).
+            if skillLine then
+                tab.skillLine = skillLine
+            else
+                tab:SetAttribute("type", "macro")
+                tab:SetAttribute("macrotext", MACRO_OVERRIDES[profName] or ("/cast " .. profName))
             end
-        end)
 
-        tab:Hide()
-        self.profTabsByName[profName] = tab
+            local bg = tab:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints()
+            Theme:Fill(bg, "professionTab")
+            tab.bg = bg
+
+            local border = CreateFrame("Frame", nil, tab, "BackdropTemplate")
+            border:SetAllPoints()
+            border:EnableMouse(false)  -- don't eat clicks meant for the button
+            Theme:SetBackdrop(border, "professionTabBorder")
+            tab.border = border
+
+            local icon = tab:CreateTexture(nil, "ARTWORK")
+            icon:SetSize(TAB_SIZE - 4, TAB_SIZE - 4)
+            icon:SetPoint("CENTER")
+            icon:SetTexture(PROF_ICONS[profName] or "Interface\\Icons\\INV_Misc_QuestionMark")
+            tab.icon = icon
+
+            tab.profName = profName
+
+            tab:SetScript("OnEnter", function(self)
+                if not strip.isMain then TSF._isMouseOverTab = true end
+                GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+                GameTooltip:SetText(self.profName)
+                GameTooltip:Show()
+            end)
+            tab:SetScript("OnLeave", function()
+                if not strip.isMain then TSF._isMouseOverTab = false end
+                GameTooltip:Hide()
+            end)
+
+            -- PostClick: if this is an unknown profession, the secure macro
+            -- silently fails. Open the static-only view instead.
+            local function afterClick(self)
+                if self._isUnknown then
+                    TSF:OpenWithStatic(self.profName)
+                elseif self.skillLine then
+                    addon.Source:OpenProfession(self.skillLine)
+                end
+            end
+            -- a plain button has no secure click to follow: its own click opens
+            tab:SetScript(secure and "PostClick" or "OnClick", afterClick)
+
+            tab:Hide()
+            strip.byName[profName] = tab
+        end
     end
 
     -- Separator line between known and unknown profession tabs
-    local sep = self.profTabContainer:CreateTexture(nil, "ARTWORK")
+    local sep = strip.container:CreateTexture(nil, "ARTWORK")
     sep:SetSize(2, 20)
     Theme:Fill(sep, "professionTabSeparator")
     sep:Hide()
-    self.profTabSeparator = sep
+    strip.sep = sep
+    return strip
+end
+
+function TSF:BuildProfessionTabs(parent)
+    local strip = self:NewProfStrip(parent, "ProfBuddyProfTab")
+    strip.container:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, -28)
+    self.profStrip = strip
+    self.profTabsByName, self.profTabContainer, self.profTabSeparator = strip.byName, strip.container, strip.sep
 end
 
 function TSF:UpdateProfessionTabs()
@@ -2743,19 +2819,28 @@ function TSF:UpdateProfessionTabs()
     -- during combat. Only update the active highlight (non-protected calls).
     if InCombatLockdown() then
         self:UpdateProfessionTabHighlight()
-        return
+    elseif self.profStrip then
+        self:LayoutProfStrip(self.profStrip, state.profName)
     end
+    -- the main window's strip follows the same professions (TEST-c, N2)
+    if addon.UI and addon.UI.UpdateStrip then addon.UI:UpdateStrip() end
+end
+
+-- Lay out a strip (TSF:NewProfStrip): this character's professions, then,
+-- with "Show all professions in tabs", the rest dimmed after a separator.
+-- activeName is highlighted. Not in combat for a strip of secure buttons.
+function TSF:LayoutProfStrip(strip, activeName)
 
     local TAB_SIZE = 22
     local TAB_GAP = 2
     local SEP_W = 10  -- gap reserved for the separator line
 
     -- Hide all tabs and separator
-    for _, tab in pairs(self.profTabsByName) do
+    for _, tab in pairs(strip.byName) do
         tab:Hide()
         tab._isUnknown = false
     end
-    if self.profTabSeparator then self.profTabSeparator:Hide() end
+    if strip.sep then strip.sep:Hide() end
 
     -- Get current character's professions from DataStore
     local char = DS:GetCharacter()
@@ -2765,12 +2850,12 @@ function TSF:UpdateProfessionTabs()
     local knownSet = {}
     local knownList = {}
     for profName, _ in pairs(char.professions) do
-        if self.profTabsByName[profName] then
+        if strip.byName[profName] then
             knownSet[profName] = true
             table.insert(knownList, profName)
             if profName == "Mining" then
                 knownSet["Find Minerals"] = true
-                if self.profTabsByName["Find Minerals"] then
+                if strip.byName["Find Minerals"] then
                     table.insert(knownList, "Find Minerals")
                 end
                 -- Mining implies Smelting is known
@@ -2789,7 +2874,7 @@ function TSF:UpdateProfessionTabs()
         for profName in pairs(CraftableProfs()) do
             -- Only a profession the static DB can show; a tab for one it
             -- cannot (no recipe data on WoW: Forever yet) would do nothing.
-            if not knownSet[profName] and self.profTabsByName[profName]
+            if not knownSet[profName] and strip.byName[profName]
                and RDB and RDB.data and RDB.data[profName] then
                 table.insert(unknownList, profName)
             end
@@ -2799,7 +2884,6 @@ function TSF:UpdateProfessionTabs()
         end)
     end
 
-    local activeName = state.profName
     -- Smelting is displayed under the Mining tab
     if activeName == "Smelting" then activeName = "Mining" end
 
@@ -2807,10 +2891,10 @@ function TSF:UpdateProfessionTabs()
 
     -- Place known tabs
     for _, profName in ipairs(knownList) do
-        local tab = self.profTabsByName[profName]
+        local tab = strip.byName[profName]
         tab._isUnknown = false
         tab:ClearAllPoints()
-        tab:SetPoint("LEFT", self.profTabContainer, "LEFT", xOffset, 0)
+        tab:SetPoint("LEFT", strip.container, "LEFT", xOffset, 0)
 
         local isActive = (profName == activeName)
             and profName ~= "Find Minerals"
@@ -2830,17 +2914,17 @@ function TSF:UpdateProfessionTabs()
 
     -- Place separator and unknown tabs
     if #unknownList > 0 then
-        local sep = self.profTabSeparator
+        local sep = strip.sep
         sep:ClearAllPoints()
-        sep:SetPoint("LEFT", self.profTabContainer, "LEFT", xOffset + 4, 0)
+        sep:SetPoint("LEFT", strip.container, "LEFT", xOffset + 4, 0)
         sep:Show()
         xOffset = xOffset + SEP_W
 
         for _, profName in ipairs(unknownList) do
-            local tab = self.profTabsByName[profName]
+            local tab = strip.byName[profName]
             tab._isUnknown = true
             tab:ClearAllPoints()
-            tab:SetPoint("LEFT", self.profTabContainer, "LEFT", xOffset, 0)
+            tab:SetPoint("LEFT", strip.container, "LEFT", xOffset, 0)
 
             local isActive = (profName == activeName)
 
@@ -3087,6 +3171,10 @@ function TSF:BuildRecipeList(parent)
         nameText:SetPoint("LEFT", icon, "RIGHT", 4, 0)
         nameText:SetPoint("RIGHT", -40, 0)
         nameText:SetJustifyH("LEFT")
+        -- Two lines at most: a longer name (Profit column on, TBC
+        -- Anniversary's "Enchanted Adamantite Leggings") ends in "..."
+        -- instead of a third line over the next row (TEST-b3, m4ru)
+        nameText:SetMaxLines(2)
         row.nameText = nameText
 
         local rightText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -6072,7 +6160,25 @@ function TSF:BuildSettingsPanel(parent)
     UpdateBesideCB()
     self.replaceCB, self.besideCB = replCB, besideCB
     yLeft = yLeft - 30
-    MakeCheckbox("Remember window state between opens", "rememberWindowState", yLeft)
+    local rememberCB = MakeCheckbox("Remember window state between opens", "rememberWindowState", yLeft)
+    yLeft = yLeft - 30
+    -- TEST-c: kept across a /reload or logout too, with window positions;
+    -- gray while Remember is off (decision D4)
+    local keepCB = MakeCheckbox("Keep after a reload or logout", "keepWindowState", yLeft, COL_LEFT + 20)
+    local function UpdateKeepCB()
+        local on = settings.rememberWindowState ~= false
+        keepCB:SetChecked(settings.keepWindowState ~= false)
+        if on then keepCB:Enable(); keepCB:SetAlpha(1) else keepCB:Disable(); keepCB:SetAlpha(0.4) end
+    end
+    rememberCB:SetScript("OnClick", function(cb)
+        settings.rememberWindowState = cb:GetChecked() and true or false
+        UpdateKeepCB()
+    end)
+    keepCB:SetScript("OnClick", function(cb)
+        settings.keepWindowState = cb:GetChecked() and true or false
+    end)
+    UpdateKeepCB()
+    self.rememberCB, self.keepCB = rememberCB, keepCB
     yLeft = yLeft - 30
     local allProfCB = MakeCheckbox("Show all professions in tabs", "showAllProfessions", yLeft)
     allProfCB:SetScript("OnClick", function(self)
@@ -6215,6 +6321,16 @@ function TSF:BuildSettingsPanel(parent)
         if addon.FriendsPanel and addon.FriendsPanel.Refresh then addon.FriendsPanel:Refresh() end
     end)
     TSF.crossFriendsCB = crossFriendsCB
+    yLeft = yLeft - 26
+    -- TEST-c G2: ask online guildmates for their recipes in the background
+    local guildFillCB = MakeCheckbox("Keep guildmates' recipes up to date", "guildKeepRecipes", yLeft)
+    guildFillCB:SetScript("OnClick", function(self)
+        settings.guildKeepRecipes = self:GetChecked() and true or false
+        if settings.guildKeepRecipes and addon.GuildPanel and addon.GuildPanel.ScheduleFill then
+            addon.GuildPanel:ScheduleFill()
+        end
+    end)
+    TSF.guildFillCB = guildFillCB
     yLeft = yLeft - 28   -- the 24 px check box and 4 px, matching the top
 
     -- ── Prices section (Prices.lua) ───────────────────────────
@@ -7473,8 +7589,38 @@ local function WindowStateKey(profName)
     return profName .. "|" .. view
 end
 
+-- TEST-c: the states kept from the last session (UI/Main.lua KeepOn),
+-- loaded the first time a window state is read or written, after login
+function TSF:LoadKeptStates()
+    if self._keptLoaded then return end
+    self._keptLoaded = true
+    local UI = addon.UI
+    if not (UI and UI:KeepOn()) then return end
+    local w = addon.db.windows and addon.db.windows[addon:PlayerKey()]
+    if type(w) ~= "table" or type(w.states) ~= "table" then return end
+    for k, v in pairs(w.states) do
+        if self._savedStates[k] == nil and type(v) == "table" then self._savedStates[k] = v end
+    end
+end
+
+-- At logout and /reload: this character's states into the saved settings,
+-- or removed while keeping is off
+function TSF:KeepStates()
+    local UI = addon.UI
+    if not UI then return end
+    self:LoadKeptStates()
+    if UI:KeepOn() then
+        local w = UI:CharWindows()
+        if w then w.states = self._savedStates end
+    else
+        local w = addon.db.windows and addon.db.windows[addon:PlayerKey()]
+        if type(w) == "table" then w.states = nil end
+    end
+end
+
 function TSF:SaveWindowState()
     if not addon.db.settings.rememberWindowState then return end
+    self:LoadKeptStates()
     local prof = state.profName
     if not prof then return end
 
@@ -7497,6 +7643,7 @@ end
 -- being opened, so the key matches the one SaveWindowState wrote.
 function TSF:RestoreWindowState(profName)
     if not addon.db.settings.rememberWindowState then return false end
+    self:LoadKeptStates()
     local saved = self._savedStates[WindowStateKey(profName)]
     if not saved then return false end
 
@@ -7595,6 +7742,8 @@ end
 -- Open profession window
 ----------------------------------------------------------------------
 function TSF:OpenWith(profName, rank, maxRank, isCraft)
+    -- a profession opening (Back, or another one) ends a park
+    if self._parked then self:EndPark(false) end
     -- Close the /pb main window if open (mutual exclusion)
     if addon.UI and addon.UI.frame and addon.UI.frame:IsShown() then
         addon.UI:Hide()
@@ -7724,6 +7873,8 @@ end
 -- Shows only missing recipes, no live game data, no skill bar.
 ----------------------------------------------------------------------
 function TSF:OpenWithStatic(profName)
+    -- leaving the parked profession for a read-only list: its session closes
+    if self._parked then self:EndPark(true) end
     if not RDB or not RDB.data[profName] then return end
 
     -- Close the /pb main window if open (mutual exclusion)
@@ -7791,6 +7942,7 @@ end
 -- difficulty colors relative to their skill level.
 ----------------------------------------------------------------------
 function TSF:OpenWithCharacter(charKey, profName)
+    if self._parked then self:EndPark(true) end
     if not RDB or not RDB.data[profName] then return end
     if not DS then return end
 
@@ -8052,4 +8204,59 @@ end
 
 function TSF:Show()
     if self.frame then self.frame:Show() end
+end
+
+----------------------------------------------------------------------
+-- Park and Back (TEST-c, N1, Bran). A bottom tab click parks your open
+-- profession: the window saves its state and hides, the game's session
+-- stays open, and the main window shows "Back to <profession>". Back
+-- reopens it as it was. The park ends when the game closes the session,
+-- another profession or view opens, or the main window closes (that
+-- closes the session too, decision D2).
+----------------------------------------------------------------------
+
+-- Your own open profession, not a friend's, guildmate's, linked or
+-- read-only view
+function TSF:CanPark()
+    return self.frame and self.frame:IsShown() and state.profName ~= nil
+        and not state._viewCharKey and not state._isStaticView and not state._isLinkedView
+        and addon.Source:IsSessionOpen(state.isCraftWindow) and true or false
+end
+
+-- The bottom tabs: park when it can, otherwise close as before
+function TSF:HideForMain()
+    if not self:CanPark() then return self:Hide() end
+    self._parked = { prof = state.profName, display = state.profDisplayName or state.profName,
+                     isCraft = state.isCraftWindow and true or false }
+    self._keepSession = true
+    self:Hide()
+    self._keepSession = nil
+    if addon.UI and addon.UI.UpdateBack then addon.UI:UpdateBack() end
+end
+
+-- closeSession: the main window closed while parked
+function TSF:EndPark(closeSession)
+    local p = self._parked
+    if not p then return end
+    self._parked = nil
+    if closeSession and addon.Source:IsSessionOpen(p.isCraft) then addon.Source:CloseWindow(p.isCraft) end
+    if addon.UI and addon.UI.UpdateBack then addon.UI:UpdateBack() end
+end
+
+-- Back: the main window goes, the profession comes back as it was (its
+-- state was saved when it parked). In combat it waits, as a profession
+-- opening in combat already does.
+function TSF:Unpark()
+    local p = self._parked
+    if not p then return end
+    if not addon.Source:IsSessionOpen(p.isCraft) then return self:EndPark(false) end
+    if InCombatLockdown() then
+        self._pendingOpen = p.isCraft and "craft" or "trade"
+        self._pendingClose = false
+        print("|cff00ccffProfessionBuddy:|r " .. p.display .. " opens when combat ends.")
+        return
+    end
+    self._parked = nil
+    if addon.UI then addon.UI:Hide() end
+    if p.isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
 end

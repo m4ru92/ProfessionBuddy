@@ -106,7 +106,9 @@ function F:HookScript(s, fn)
         error(("%s doesn't have a \"%s\" script"):format(tostring(self._name), s))
     end
     HOOKED[#HOOKED + 1] = tostring(self._name) .. ":" .. s
-    self._h[s] = fn
+    -- several hooks on one script all run, in order, as in the game
+    local prev = self._h[s]
+    self._h[s] = prev and function(...) prev(...); fn(...) end or fn
 end
 function F:RegisterEvent(e)
     if UNKNOWN_EVENTS[e] then error("Attempt to register unknown event \"" .. e .. "\"") end
@@ -115,10 +117,13 @@ function F:RegisterEvent(e)
 end
 function F:UnregisterEvent(e) self._ev[e] = nil end
 function F:UnregisterAllEvents() self._ev = {} end
+-- the script, then its hooks (HookScript), as the game runs them
 function F:Show() if not self._shown then self._shown = true
-    if self._s.OnShow then self._s.OnShow(self) end end end
+    if self._s.OnShow then self._s.OnShow(self) end
+    if self._h.OnShow then self._h.OnShow(self) end end end
 function F:Hide() if self._shown then self._shown = false
-    if self._s.OnHide then self._s.OnHide(self) end end end
+    if self._s.OnHide then self._s.OnHide(self) end
+    if self._h.OnHide then self._h.OnHide(self) end end end
 function F:IsShown() return self._shown end
 function F:SetShown(v) if v then self:Show() else self:Hide() end end
 -- a modifier key held (Shift, Ctrl or Alt); tests set MODIFIER_DOWN
