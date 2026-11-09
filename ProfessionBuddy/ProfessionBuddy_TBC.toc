@@ -42,6 +42,7 @@ Data/Tools.lua
 Data/VendorPrices.lua
 MaterialCalc.lua
 Prices.lua
+AuctionPrices.lua
 UI/Main.lua
 UI/CharacterPanel.lua
 UI/FriendsPanel.lua

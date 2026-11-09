@@ -33,9 +33,31 @@ local SOURCE_NAMES = {
     vendorSeen = "vendor",
 }
 
+-- Recorded auction prices older than this are dropped at login
+P.KEEP_DAYS = 30
+
 function P:Init()
     addon:RegisterEvent("MERCHANT_SHOW", function() P:ScanMerchant() end)
     addon:RegisterEvent("MERCHANT_UPDATE", function() P:ScanMerchant() end)
+    self:PruneRecorded()
+end
+
+-- Drop recorded auction prices older than KEEP_DAYS. Returns how many.
+function P:PruneRecorded()
+    local st = addon.db and addon.db.prices
+    local cutoff = time() - self.KEEP_DAYS * 86400
+    local n = 0
+    for _, house in pairs(st and type(st.auction) == "table" and st.auction or {}) do
+        if type(house) == "table" then
+            for id, e in pairs(house) do
+                if type(e) ~= "table" or not tonumber(e.t) or e.t < cutoff then
+                    house[id] = nil
+                    n = n + 1
+                end
+            end
+        end
+    end
+    return n
 end
 
 local function Settings() return addon.db and addon.db.settings or {} end
@@ -198,8 +220,14 @@ end
 
 -- Prices or price settings changed: redraw what shows them
 function P:Changed()
+    self._listCache = nil
+    -- the scan buttons follow the Auctionator and TSM boxes (AuctionPrices.lua)
+    if addon.AuctionPrices and addon.AuctionPrices.UpdateBar then addon.AuctionPrices:UpdateBar() end
     local tsf = addon.TradeSkillFrame
     if not (tsf and tsf.frame and tsf.frame:IsShown()) then return end
+    if tsf.RefreshRecipeList and tsf.scrollBar and (self:ListProfitOn() or Settings().priceHideLoss) then
+        tsf:RefreshRecipeList()
+    end
     if tsf.RefreshDetailPanel and tsf.state and tsf.state.selected then tsf:RefreshDetailPanel(true) end
     if tsf.calcPanel and tsf.calcPanel:IsShown() and tsf.RefreshCalcPanel then tsf:RefreshCalcPanel() end
 end
@@ -331,16 +359,48 @@ function P:RecipeCost(recipe, profName)
     if itemID then
         r.sell, r.sellSource, r.sellAge = self:AuctionPrice(itemID)
         r.sellStale = self:IsStale(r.sellAge)
-        r.vendorSell = self:VendorSell(itemID)
-        if r.sell then
-            r.profit = r.sell * r.yield * (1 - self.AH_CUT) - r.cost
+        -- Settings > Prices: "Show vendor sale price" (on) and, under it,
+        -- "Only show the better sale price" (off)
+        local showVendor = Settings().priceVendorSell ~= false
+        r.vendorSell = showVendor and self:VendorSell(itemID) or nil
+        local auctionNet = r.sell and r.sell * r.yield * (1 - self.AH_CUT)
+        local vendorTotal = r.vendorSell and r.vendorSell * r.yield
+        r.better = showVendor and Settings().priceBetterSale == true
+        if auctionNet and (not r.better or not vendorTotal or auctionNet >= vendorTotal) then
+            r.profit = auctionNet - r.cost
             r.profitFrom = "auction"
-        elseif r.vendorSell then
-            r.profit = r.vendorSell * r.yield - r.cost
+        elseif vendorTotal then
+            r.profit = vendorTotal - r.cost
             r.profitFrom = "vendor"
         end
     end
     return r
+end
+
+----------------------------------------------------------------------
+-- The recipe list: Profit column, sort and "Hide crafts at a loss"
+-- (Settings > Prices). One cost per recipe per list refresh.
+----------------------------------------------------------------------
+
+function P:ListProfitOn() return self:Enabled() and Settings().priceListProfit == true end
+function P:HideLossOn() return self:Enabled() and Settings().priceHideLoss == true end
+
+-- A new list refresh: forget the costs worked out for the last one
+function P:ResetListCache() self._listCache = nil end
+
+-- A recipe's profit per craft, or nil when it has none (no sale price, a
+-- material without a price, an enchant)
+function P:ListProfit(recipe, profName)
+    if not (recipe and recipe.name) then return nil end
+    self._listCache = self._listCache or {}
+    local key = (profName or "") .. "|" .. recipe.name
+    local v = self._listCache[key]
+    if v == nil then
+        local r = self:RecipeCost(recipe, profName)
+        v = (r and r.profit and r.missing == 0) and r.profit or false
+        self._listCache[key] = v
+    end
+    return v or nil
 end
 
 ----------------------------------------------------------------------
@@ -368,11 +428,11 @@ function P:Money(copper, short)
     return table.concat(out, " ")
 end
 
--- "+85s" green or "-1g 2s" red
-function P:SignedMoney(copper)
+-- "+85s" green or "-1g 2s" red; short as Money
+function P:SignedMoney(copper, short)
     copper = math.floor((tonumber(copper) or 0) + 0.5)
-    if copper < 0 then return "|cffff4444-" .. self:Money(-copper) .. "|r" end
-    return "|cff00ff00+" .. self:Money(copper) .. "|r"
+    if copper < 0 then return "|cffff4444-" .. self:Money(-copper, short) .. "|r" end
+    return "|cff00ff00+" .. self:Money(copper, short) .. "|r"
 end
 
 local GREY = "|cff808080"
@@ -407,12 +467,16 @@ function P:DetailText(r)
     if r.stale then cost = GREY .. cost .. "|r" end
     local line = "Cost: " .. cost
     if r.missing > 0 then line = line .. " " .. GREY .. "(" .. self:MissingText(r.missing) .. ")|r" end
-    if r.sell then
-        local sells = self:Money(r.sell * r.yield)
-        if r.sellStale then sells = GREY .. sells .. "|r" end
-        line = line .. "   Sells: " .. sells
-    elseif r.vendorSell then
-        line = line .. "   Sells: " .. self:Money(r.vendorSell * r.yield) .. " (vendor)"
+    local auction = r.sell and self:Money(r.sell * r.yield)
+    if auction and r.sellStale then auction = GREY .. auction .. "|r" end
+    local vendor = r.vendorSell and self:Money(r.vendorSell * r.yield)
+    if r.better and auction and vendor then
+        -- only the better sale price, labeled
+        line = line .. "   Sells: " .. (r.profitFrom == "vendor" and (vendor .. " (vendor)") or (auction .. " (auction)"))
+    elseif auction then
+        line = line .. "   Sells: " .. auction .. (vendor and (", vendor " .. vendor) or "")
+    elseif vendor then
+        line = line .. "   Sells: " .. vendor .. " (vendor)"
     end
     if r.profit and r.missing == 0 then
         line = line .. "   Profit: " .. self:SignedMoney(r.profit)
@@ -420,9 +484,14 @@ function P:DetailText(r)
     return line
 end
 
--- Bright for the price used, grey for the other
-local function Pick(text, used)
-    return used and ("|cffffffff" .. text .. "|r") or (GREY .. text .. "|r")
+-- A material you craft shows both prices: the one used bright, the other
+-- muted tan. Gray only ever means an old price (TEST-a: gray for both read
+-- the same).
+local TAN = "|cffb59e74"
+P.TAN = TAN
+local function Pick(text, used, stale)
+    if stale then return GREY .. text .. "|r" end
+    return used and ("|cffffffff" .. text .. "|r") or (TAN .. text .. "|r")
 end
 
 -- One material's price for a tooltip line: "40s (Auctionator)" or, for a
@@ -434,7 +503,7 @@ function P:MaterialText(mp, count)
     local buy = mp.buy and (self:Money(mp.buy * count) .. " (" .. self:SourceText(mp.buySource, mp.age) .. ")")
     local craft = mp.craft and ("craft " .. self:Money(mp.craft * count) .. ((mp.craftMissing or 0) > 0 and "+" or ""))
     if buy and craft and Settings().priceIntermediates ~= "cheaper" then
-        return Pick("buy " .. buy, mp.used == "buy" and not mp.stale) .. "  " .. Pick(craft, mp.used == "craft")
+        return Pick("buy " .. buy, mp.used == "buy", mp.stale) .. "  " .. Pick(craft, mp.used == "craft")
     end
     if mp.used == "craft" then return craft end
     return mp.stale and (GREY .. buy .. "|r") or buy
@@ -467,7 +536,8 @@ function P:FillTooltip(tt, r)
     if r.profit then
         local how = r.profitFrom == "auction"
             and "Auction price less the 5% auction house cut, less the cost."
-            or "Vendor price less the cost (no auction price)."
+            or (r.sell and "Vendor price less the cost (better than the auction price less its 5% cut)."
+                or "Vendor price less the cost (no auction price).")
         if r.missing > 0 then
             tt:AddLine("No profit shown: " .. self:MissingText(r.missing) .. ".", 0.5, 0.5, 0.5, true)
         else

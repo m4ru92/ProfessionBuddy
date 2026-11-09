@@ -697,6 +697,10 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         priceTSMSource      = "DBMarket", -- the TSM price source
         priceStaleDays      = 7,    -- prices older than this show gray
         priceIntermediates  = "both", -- a material you craft: "both" (buy and craft) | "cheaper"
+        priceVendorSell     = true, -- show the vendor's sale price beside the auction price
+        priceBetterSale     = false, -- only the better of the two (auction less 5%, vendor)
+        priceListProfit     = false, -- Profit column in the recipe list
+        priceHideLoss       = false, -- hide recipes that lose money
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
@@ -817,7 +821,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.trainerShowRanges == nil then ProfBuddyDB.settings.trainerShowRanges = true end
     -- 2.1.0 prices (Prices.lua)
     local PRICE_DEFAULTS = { showPrices = true, priceAuctionator = true, priceTSM = true,
-        priceTSMSource = "DBMarket", priceStaleDays = 7, priceIntermediates = "both" }
+        priceTSMSource = "DBMarket", priceStaleDays = 7, priceIntermediates = "both",
+        priceVendorSell = true, priceBetterSale = false, priceListProfit = false, priceHideLoss = false }
     for k, v in pairs(PRICE_DEFAULTS) do
         if ProfBuddyDB.settings[k] == nil then ProfBuddyDB.settings[k] = v end
     end

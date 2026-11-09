@@ -4,7 +4,7 @@ Every ProfessionBuddy release, newest first. Each entry lists what is new, what 
 
 ## 2.1.0
 
-Prices, built from players' requests: what a craft costs, what it sells for, and the profit, from Auctionator, TSM, and vendor prices.
+Prices, built from players' requests: what a craft costs, what it sells for, and the profit, from Auctionator, TSM, the auction prices ProfessionBuddy records, and vendor prices.
 
 Thanks to the guild members whose requests shaped this update.
 
@@ -12,20 +12,29 @@ Thanks to the guild members whose requests shaped this update.
 
 - **Craft cost and profit:** under "Can make", the detail panel shows what one craft costs, what it sells for, and the profit. Hover the line to see each material's price and where it came from.
 - **Material Calculator prices:** Price and Cost columns, and what the materials you still need cost to buy.
+- **Profit in the recipe list:** an optional Profit column, a Profit sort, and "Hide crafts at a loss".
 
 <!-- more -->
 
 **Added on both clients**
 
-- **Prices:** ProfessionBuddy reads Auctionator's and TSM's prices when they're installed, then vendor prices. You can switch either one off in Settings, under Prices. A material a vendor sells is never priced above the vendor's price. A material one of your characters crafts costs whichever is cheaper, buying it or crafting it, and the tooltip shows both prices, with the cheaper one bright. A price older than 7 days shows gray. A material with no price shows "?", and the cost reads like "Cost: 1g 20s+ (1 material has no price)".
-- **Profit:** the auction price minus the 5% auction house cut, minus the cost. Without an auction price, PB uses the vendor's price. Enchants show only the cost.
+- **Prices:** ProfessionBuddy reads Auctionator's and TSM's prices when they're installed, then the auction prices it records itself, then vendor prices. You can switch Auctionator and TSM off in Settings, under Prices. A material a vendor sells is never priced above the vendor's price. A material one of your characters crafts costs whichever is cheaper, buying it or crafting it, and the tooltip shows both prices, the cheaper one bright and the other tan. A price older than 7 days shows gray. A material with no price shows "?", and the cost reads like "Cost: 1g 20s+ (1 material has no price)".
+- **Profit:** the auction price minus the 5% auction house cut, minus the cost. Without an auction price, PB uses the vendor's price. The detail panel shows both sale prices ("Sells: 2g 5s, vendor 40s"). With "Only show the better sale price" selected in Settings, it shows the higher of the auction price after the cut and the vendor's price, and profit uses that one. Clear "Show vendor sale price" to leave the vendor's price out everywhere. Enchants show only the cost.
+- **Auction prices ProfessionBuddy records:** while you browse the auction house, PB keeps the lowest price it sees for every material and crafted item of its recipes, for your realm and faction. Prices seen at a neutral auction house aren't recorded, and recorded prices older than 30 days are dropped.
+- **Scan my materials and Full scan:** a bar under the auction house window. "Scan my materials" searches every material and crafted item of the recipes your characters know, one at a time, and you can stop it. "Full scan" reads the whole auction house at once, after a warning: the game can freeze for a few seconds, and it allows one about every 15 minutes. The bar shows only while neither Auctionator nor TSM is installed and switched on in Settings, under Prices; recording while you browse works either way.
+- **Recipe list:** "Profit in the recipe list" adds each recipe's profit to its row and a Profit choice to the Sort menu. "Hide crafts at a loss" hides recipes that lose money.
 - **Vendor prices:** built in for every material a vendor sells, from the cmangos (TBC Anniversary) and VMaNGOS (WoW: Forever) vendor lists and the game's own item prices. When you open a vendor, PB records what it charges you for materials, and that price replaces the built-in one.
 - **Material Calculator:** with prices on, the window is wider, with a Price and a Cost column, and "To buy" and "All materials" totals under the summary.
-- **Settings, Prices section:** Show prices, Auctionator prices, TSM prices with the TSM price source (DBMarket by default), when prices turn gray, how crafted materials show, and Clear recorded prices.
+- **Settings, Prices section:** Show prices, Auctionator prices, TSM prices with the TSM price source (DBMarket by default), when prices turn gray, how crafted materials show, the two sale price boxes, the two recipe list boxes, and Clear recorded prices.
 
 **Changes**
 
 - WoW: Forever recipe data is from game build 1.60.1.70862.
+
+**Fixes**
+
+- With TradeSkillMaster's Crafting window open, clicking a recipe, a material, or a Material Calculator row went to TSM and PB didn't select the recipe. A plain click stays with PB; Shift, Ctrl, and Alt clicks still go to the game and to other addons (chat links, the dressing room).
+- WoW: Forever: pressing K in combat after opening a profession gave an error and opened nothing. K opens the profession book in combat, and it switches to the book page when combat ends.
 
 ## 2.0.2 - 2026-11-07
 

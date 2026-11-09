@@ -313,7 +313,7 @@ do
     TSF.state.selected = "Light Leather"
     TSF:RefreshDetailPanel()
     local line = plain(TSF.detPrice:GetText())
-    EXPECT(TSF.detPrice:IsShown() and line == "Cost: 30c   Sells: 50c   Profit: +18c", "TBC price line: " .. line)
+    EXPECT(TSF.detPrice:IsShown() and line == "Cost: 30c   Sells: 50c, vendor 5c   Profit: +18c", "TBC price line: " .. line)
     ok, err = pcall(TSF.ToggleCalcPanel, TSF)
     EXPECT(ok and TSF.calcCols.price:IsShown(), "calculator with prices: " .. tostring(err))
     ok, err = pcall(TSF.ToggleCalcPanel, TSF)
@@ -324,4 +324,79 @@ do
 end
 print("  PASS " .. TAG .. "10 prices: TBC vendor table, the classic vendor window recorded per item (unlimited, money only), Auctionator line in the detail panel, calculator columns, Settings")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 10)")
+-- U11: auction prices on TBC Anniversary (AuctionPrices.lua, 2.1.0):
+-- the classic auction house's pages, Scan my materials by exact name with
+-- cheapest first, the game's search and full-scan limits, a full scan
+-- read from index 1, another addon's full scan left alone
+do
+    local P, AP = PB.Prices, PB.AuctionPrices
+    P:ClearRecorded()
+    local LIST, canQuery, canAll, queries, sorts = {}, true, false, {}, {}
+    GetNumAuctionItems = function() return #LIST, #LIST end
+    GetAuctionItemInfo = function(_, i)
+        local e = LIST[i]
+        return "x", "icon", e[2], 1, true, 1, nil, 0, 0, e[3], 0, nil, nil, nil, nil, 0, e[1], true
+    end
+    CanSendAuctionQuery = function() return canQuery, canAll end
+    SortAuctionSetSort = function(_, how) sorts[#sorts + 1] = how end
+    QueryAuctionItems = function(name, _, _, page, _, _, getAll, exact)
+        queries[#queries + 1] = tostring(name) .. "|" .. tostring(page) .. "|" .. tostring(getAll) .. "|" .. tostring(exact)
+        if not getAll then
+            LIST = { { 2934, 5, 40 }, { 2934, 2, 30 } }
+            FIRE("AUCTION_ITEM_LIST_UPDATE")
+        end
+    end
+    local said
+    local keepDialogs = rawget(_G, "StaticPopupDialogs")
+    StaticPopupDialogs = {}
+    local keepPopup = StaticPopup_Show
+    StaticPopup_Show = function(n) said = n end
+    local AF = CreateFrame("Frame", "AuctionFrame", UIParent)
+    local house = P:HouseKey()
+    local function rec(id) local h = PB.db.prices and PB.db.prices.auction[house]; return h and h[id] and h[id].p end
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    EXPECT(AP.bar and AP.bar:IsShown(), "no scan bar on TBC Anniversary")
+    -- a page you browse: lowest per item (40c for 5 = 8c; 30c for 2 = 15c)
+    LIST = { { 2934, 5, 40 }, { 2934, 2, 30 }, { 99999, 1, 1 } }
+    FIRE("AUCTION_ITEM_LIST_UPDATE")
+    EXPECT(rec(2934) == 8 and rec(99999) == nil, "page prices: " .. tostring(rec(2934)))
+    -- another addon's full scan (more than a page) is left alone
+    LIST = {}
+    for i = 1, 60 do LIST[i] = { 2318, 1, 1 } end
+    FIRE("AUCTION_ITEM_LIST_UPDATE")
+    EXPECT(rec(2318) == nil, "another addon's full scan was read")
+    -- Scan my materials: exact names, cheapest per item first, only when the game takes a search
+    canQuery = false
+    AP:StartTargeted()
+    EXPECT(#queries == 0, "searched while the game refused searches")
+    canQuery = true
+    FLUSH()
+    FLUSH()
+    EXPECT(#queries > 0 and queries[1]:match("|0|false|true$") and sorts[1] == "unitprice",
+           "scan queries: " .. table.concat(queries, ", ") .. " / " .. tostring(sorts[1]))
+    EXPECT(AP._scan == nil, "scan did not finish")
+    -- full scan: refused while the game says no, then read from index 1
+    queries = {}
+    StaticPopupDialogs.PROFBUDDY_FULL_SCAN = nil
+    AP.bar.full:GetScript("OnClick")(AP.bar.full)
+    EXPECT(said == "PROFBUDDY_FULL_SCAN", "no full scan warning")
+    PRINTS = {}
+    StaticPopupDialogs.PROFBUDDY_FULL_SCAN.OnAccept()
+    EXPECT(#queries == 0 and PRINTED("does not allow a full scan yet"), "full scan sent while the game said no")
+    canAll = true
+    StaticPopupDialogs.PROFBUDDY_FULL_SCAN.OnAccept()
+    EXPECT(queries[1] == "|0|true|false", "full scan query: " .. tostring(queries[1]))
+    LIST = {}
+    for i = 1, 120 do LIST[i] = { 2318, 2, 90 } end
+    LIST[120] = { 2318, 1, 20 }
+    FIRE("AUCTION_ITEM_LIST_UPDATE")
+    FLUSH()
+    EXPECT(rec(2318) == 20, "full scan prices: " .. tostring(rec(2318)))
+    FIRE("AUCTION_HOUSE_CLOSED")
+    StaticPopup_Show, StaticPopupDialogs = keepPopup, keepDialogs
+    P:ClearRecorded()
+end
+print("  PASS " .. TAG .. "11 auction prices on TBC Anniversary: browsed pages, Scan my materials by exact name cheapest first, the game's search and full-scan limits, full scan read from index 1, another addon's full scan left alone")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 11)")

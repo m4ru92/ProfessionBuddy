@@ -1752,12 +1752,33 @@ function TSF:SuppressDefaultFrames()
             UIPanelWindows[frameName] = nil
         end
         local realShow = frame.Show
-        frame.Show = function(f, ...)
+        local function GatedShow(f, ...)
             if SharedFrameAllowed(frameName) then
                 if S.BeforeSharedShow then S:BeforeSharedShow(f) end
                 return realShow(f, ...)
             end
         end
+        frame.Show = GatedShow
+        -- WoW: Forever's K in combat (2.1.0, option C): any call from PB's
+        -- gate is addon code, and the game blocks showing the profession
+        -- book from it in combat (ADDON_ACTION_BLOCKED, nothing opened). So
+        -- during combat the frame keeps its own Show and K runs Blizzard's
+        -- code alone; the gate comes back when combat ends, and a book left
+        -- on its recipe page switches to the book page then.
+        addon:RegisterEvent("PLAYER_REGEN_DISABLED", function()
+            if rawget(frame, "Show") == GatedShow then frame.Show = nil end
+        end)
+        addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+            if rawget(frame, "Show") == nil then frame.Show = GatedShow end
+            if frame:IsShown() then
+                if SharedFrameAllowed(frameName) then
+                    if S.BeforeSharedShow then S:BeforeSharedShow(frame) end
+                else
+                    -- a profession opened during combat: PB's window has it
+                    QuietHide(frame)
+                end
+            end
+        end)
         table.insert(UISpecialFrames, frameName)
     end
 
@@ -2878,7 +2899,7 @@ function TSF:BuildToolbar(parent)
         return "Sort: " .. state.sortBy .. arrow
     end
     self.sortDropdown = CreateDropdown(parent, 140,
-        {"Category", "Skill-ups", "Name"}, "Category",
+        {"Category", "Skill-ups", "Name", "Profit"}, "Category",
         function(val)
             if state.sortBy == val then
                 state.sortAsc = not state.sortAsc
@@ -3089,13 +3110,15 @@ function TSF:BuildRecipeList(parent)
             end
             -- Other modified clicks (alt: AH search, ctrl: dressing room)
             -- through the client's own handler, the same way reagent and
-            -- calculator rows do. It no-ops on an unmodified click, so
-            -- selection below still runs.
+            -- calculator rows do. Only with a modifier key held: another
+            -- addon hooked into that handler (TradeSkillMaster's Crafting
+            -- window) took plain clicks for itself, so PB never selected.
             local link = entry.itemLink
             if not link and entry.itemID and entry.itemID ~= 0 then
                 link = select(2, GetItemInfo(entry.itemID))
             end
-            if link and not IsModifiedClick("CHATLINK") and HandleModifiedItemClick(link) then return end
+            if link and IsModifierKeyDown() and not IsModifiedClick("CHATLINK")
+               and HandleModifiedItemClick(link) then return end
 
             state.selected = entry.name
             self:UpdateListHighlights()
@@ -3231,6 +3254,16 @@ function TSF:BuildRecipeList(parent)
     self.scrollBar = scrollBar
 end
 
+-- Prices.lua: a recipe row's profit before its right-hand text (Settings >
+-- Prices > Profit in the recipe list); a dash when it has none
+local function ProfitPrefix(entry)
+    local P = addon.Prices
+    if not (P and P:ListProfitOn()) then return "" end
+    local v = P:ListProfit(entry, state.profName)
+    if not v then return "|cff666666-|r  " end
+    return P:SignedMoney(v, true) .. "  "
+end
+
 function TSF:UpdateListRows()
     local recipes = state.recipes
     local offset = state.scrollOffset
@@ -3346,9 +3379,9 @@ function TSF:UpdateListRows()
                     end
 
                     if avail > 0 then
-                        row.rightText:SetText(rangeStr .. "|cff00ff00[" .. avail .. "]|r")
+                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. "|cff00ff00[" .. avail .. "]|r")
                     else
-                        row.rightText:SetText(rangeStr)
+                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr)
                     end
                 else
                     local vis = ShownSources(entry)
@@ -3370,7 +3403,14 @@ function TSF:UpdateListRows()
                                 .. (addon:ColorblindMarkers() and " low" or "") .. "]|r"
                         end
                     end
-                    row.rightText:SetText(c .. displaySrc .. "|r" .. skillText)
+                    row.rightText:SetText(ProfitPrefix(entry) .. c .. displaySrc .. "|r" .. skillText)
+                end
+                -- the name stops short of the right-hand text when the
+                -- Profit column makes it longer
+                if addon.Prices and addon.Prices:ListProfitOn() then
+                    row.nameText:SetPoint("RIGHT", row.rightText, "LEFT", -4, 0)
+                else
+                    row.nameText:SetPoint("RIGHT", -40, 0)
                 end
 
                 row._dc = dc
@@ -3760,11 +3800,11 @@ function TSF:BuildDetailPanel(parent)
         end)
         rFrame:SetScript("OnLeave", function() GameTooltip:Hide() end)
         -- Shift-click a material -> chat link / AH search / socket, via the
-        -- client's own router (HandleModifiedItemClick no-ops on an unmodified
-        -- click). Rows carry itemID, not a link; GetItemInfo's link is nil until
+        -- client's own router, only with a modifier key held (as recipe
+        -- rows). Rows carry itemID, not a link; GetItemInfo's link is nil until
         -- the item is cached, so the first click on an uncached item no-ops.
         rFrame:SetScript("OnMouseUp", function(self)
-            if self.itemID then
+            if self.itemID and IsModifierKeyDown() then
                 local link = select(2, GetItemInfo(self.itemID))
                 if link then HandleModifiedItemClick(link) end
             end
@@ -4660,7 +4700,7 @@ function TSF:BuildCalcPanel()
         -- Shift-click a material -> chat link / AH search / socket (same as the
         -- detail-panel reagent rows).
         row:SetScript("OnMouseUp", function(r)
-            if r.itemID then
+            if r.itemID and IsModifierKeyDown() then
                 local link = select(2, GetItemInfo(r.itemID))
                 if link then HandleModifiedItemClick(link) end
             end
@@ -6162,11 +6202,18 @@ function TSF:BuildSettingsPanel(parent)
     local aucCB = MakeCheckbox(P and P:HasAuctionator() and "Auctionator prices"
         or "Auctionator prices (not installed)", "priceAuctionator", yLeft, COL_LEFT + 20)
     yLeft = yLeft - 26
-    local tsmCB = MakeCheckbox(P and P:HasTSM() and "TSM prices:" or "TSM prices (not installed)",
+    local tsmCB = MakeCheckbox(P and P:HasTSM() and "TSM prices" or "TSM prices (not installed)",
         "priceTSM", yLeft, COL_LEFT + 20)
+    yLeft = yLeft - 26
+    -- The price source on its own line: "TSM prices (not installed)" ran
+    -- under a box placed beside it (TEST-a)
+    local tsmLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    tsmLabel:SetPoint("TOPLEFT", COL_LEFT + 48, yLeft - 4)
+    tsmLabel:SetText("TSM price source:")
+    tsmLabel:SetTextColor(0.9, 0.9, 0.9)
     local tsmBox = CreateFrame("EditBox", nil, content, "InputBoxTemplate")
     tsmBox:SetSize(120, 20)
-    tsmBox:SetPoint("TOPLEFT", COL_LEFT + 150, yLeft - 2)
+    tsmBox:SetPoint("LEFT", tsmLabel, "RIGHT", 10, 0)
     tsmBox:SetAutoFocus(false)
     tsmBox:SetText(settings.priceTSMSource or "DBMarket")
     tsmBox:SetCursorPosition(0)
@@ -6228,6 +6275,22 @@ function TSF:BuildSettingsPanel(parent)
     self.priceInterDD = interDD
     yLeft = yLeft - 30
 
+    -- What the crafted item sells for: the vendor's price beside the
+    -- auction price, or only the better of the two (auction less 5%)
+    local vendorSellCB = MakeCheckbox("Show vendor sale price", "priceVendorSell", yLeft)
+    yLeft = yLeft - 26
+    local betterCB = MakeCheckbox("Only show the better sale price", "priceBetterSale", yLeft, COL_LEFT + 20)
+    yLeft = yLeft - 26
+    -- The recipe list: a Profit column (also a Sort choice) and a filter
+    local listProfitCB = MakeCheckbox("Profit in the recipe list", "priceListProfit", yLeft)
+    yLeft = yLeft - 26
+    local hideLossCB = MakeCheckbox("Hide crafts at a loss", "priceHideLoss", yLeft)
+    yLeft = yLeft - 30
+    local function ListChanged()
+        PricesChanged()
+        if TSF.scrollBar then TSF:RefreshRecipeList() end
+    end
+
     local clearBtn = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     clearBtn:SetSize(160, 22)
     clearBtn:SetPoint("TOPLEFT", COL_LEFT + 4, yLeft)
@@ -6267,14 +6330,19 @@ function TSF:BuildSettingsPanel(parent)
         Set(aucCB, on and P and P:HasAuctionator())
         Set(tsmCB, on and P and P:HasTSM())
         Set(tsmBox, on and P and P:HasTSM() and settings.priceTSM ~= false)
+        tsmLabel:SetAlpha((on and P and P:HasTSM() and settings.priceTSM ~= false) and 1 or 0.4)
         Set(clearBtn, on)
+        Set(vendorSellCB, on)
+        Set(betterCB, on and settings.priceVendorSell ~= false)
+        Set(listProfitCB, on)
+        Set(hideLossCB, on)
         staleDD:SetAlpha(on and 1 or 0.4)
         interDD:SetAlpha(on and 1 or 0.4)
     end
     showPricesCB:SetScript("OnClick", function(cb)
         settings.showPrices = cb:GetChecked() and true or false
         UpdatePriceSub()
-        PricesChanged()
+        ListChanged()
     end)
     aucCB:SetScript("OnClick", function(cb)
         settings.priceAuctionator = cb:GetChecked() and true or false
@@ -6285,8 +6353,27 @@ function TSF:BuildSettingsPanel(parent)
         UpdatePriceSub()
         PricesChanged()
     end)
+    vendorSellCB:SetScript("OnClick", function(cb)
+        settings.priceVendorSell = cb:GetChecked() and true or false
+        UpdatePriceSub()
+        ListChanged()
+    end)
+    betterCB:SetScript("OnClick", function(cb)
+        settings.priceBetterSale = cb:GetChecked() and true or false
+        ListChanged()
+    end)
+    listProfitCB:SetScript("OnClick", function(cb)
+        settings.priceListProfit = cb:GetChecked() and true or false
+        ListChanged()
+    end)
+    hideLossCB:SetScript("OnClick", function(cb)
+        settings.priceHideLoss = cb:GetChecked() and true or false
+        ListChanged()
+    end)
     UpdatePriceSub()
     self.showPricesCB, self.priceAucCB, self.priceTSMCB = showPricesCB, aucCB, tsmCB
+    self.priceVendorSellCB, self.priceBetterCB = vendorSellCB, betterCB
+    self.priceListProfitCB, self.priceHideLossCB, self.priceTSMLabel = listProfitCB, hideLossCB, tsmLabel
 
 
     -- ════════════════════════════════════════════════════════════
@@ -7008,6 +7095,8 @@ function TSF:LoadRecipes(unknown)
     -- option list above would silently match nothing.
     local srcMap  = { Trainer = "trainer", Vendor = "vendor", Drop = "drop", Quest = "quest", Reputation = "reputation", Discovery = "discovery", Automatic = "automatic", Undetermined = "undetermined" }
 
+    local PR = addon.Prices
+    local hideLoss = PR and PR:HideLossOn()
     for _, r in ipairs(rawList) do
         local passSearch = true
         local passDiff   = true
@@ -7053,7 +7142,14 @@ function TSF:LoadRecipes(unknown)
             end
         end
 
-        if passSearch and passDiff and passCat and passFaction then
+        -- Settings > Prices > Hide crafts at a loss
+        local passLoss = true
+        if hideLoss then
+            local profit = PR:ListProfit(r, state.profName)
+            passLoss = not (profit and profit < 0)
+        end
+
+        if passSearch and passDiff and passCat and passFaction and passLoss then
             table.insert(filtered, r)
         end
     end
@@ -7144,6 +7240,15 @@ function TSF:LoadRecipes(unknown)
             elseif sortBy == "Name" then
                 if asc then return a.name < b.name
                 else return a.name > b.name end
+            elseif sortBy == "Profit" then
+                -- Prices.lua: most profit first (^), least first (v);
+                -- recipes with no profit last either way
+                local pa = PR and PR:ListProfit(a, state.profName)
+                local pb = PR and PR:ListProfit(b, state.profName)
+                if pa and pb and pa ~= pb then
+                    if asc then return pa > pb else return pa < pb end
+                end
+                if (pa ~= nil) ~= (pb ~= nil) then return pa ~= nil end
             end
             return a.name < b.name
         end)
@@ -7241,6 +7346,8 @@ function TSF:RefreshRecipeList()
     -- times over.
     local unknown = self:GetUnknownForView()
 
+    -- Prices.lua: one cost per recipe per refresh (Profit column, sort, loss filter)
+    if addon.Prices then addon.Prices:ResetListCache() end
     self:LoadRecipes(unknown)
 
     local maxScroll = math.max(0, #state.recipes - VISIBLE_ROWS)
