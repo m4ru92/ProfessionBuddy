@@ -13,6 +13,7 @@
 ## X-Category: Professions
 
 Libs/libs.xml
+Libs/LibAHTab/LibAHTab.lua
 Core.lua
 UI/Theme.lua
 Source/Source.lua

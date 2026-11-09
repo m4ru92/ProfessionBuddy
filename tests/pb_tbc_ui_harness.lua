@@ -352,11 +352,31 @@ do
     local keepPopup = StaticPopup_Show
     StaticPopup_Show = function(n) said = n end
     local AF = CreateFrame("Frame", "AuctionFrame", UIParent)
+    -- the classic auction house's three tabs and its tab click (Blizzard_AuctionUI)
+    rawset(AF, "numTabs", 3)
+    for i = 1, 3 do CreateFrame("Button", "AuctionFrameTab" .. i, AF):SetID(i) end
+    local numTabs
+    PanelTemplates_SetNumTabs = function(f, n) numTabs = n; rawset(f, "numTabs", n) end
+    PanelTemplates_TabResize = function() end
+    PanelTemplates_EnableTab = function() end
+    AuctionFrameTab_OnClick = function(tab) rawset(AF, "_tab", tab:GetID()) end
+    local keepSub, keepMap = GetSubZoneText, rawget(_G, "C_Map")
+    local SUB = ""
+    GetSubZoneText = function() return SUB end
+    C_Map = setmetatable({ GetAreaInfo = function(id) return ({ [35] = "Booty Bay", [976] = "Gadgetzan", [2255] = "Everlook" })[id] end },
+                         { __index = keepMap })
     local house = P:HouseKey()
     local function rec(id) local h = PB.db.prices and PB.db.prices.auction[house]; return h and h[id] and h[id].p end
     FIRE("AUCTION_HOUSE_SHOW")
     FLUSH()
-    EXPECT(AP.bar and AP.bar:IsShown(), "no scan bar on TBC Anniversary")
+    -- the ProfessionBuddy tab: the fourth AuctionFrameTab, its page shown
+    -- by Blizzard's tab click and hidden by another tab
+    EXPECT(AP.tab and AP.tab == AuctionFrameTab4 and AP.tab:GetID() == 4 and numTabs == 4 and AP.tab:IsShown(),
+           "no ProfessionBuddy tab on TBC Anniversary")
+    AuctionFrameTab_OnClick(AP.tab)
+    EXPECT(AP.panel:IsShown() and AF._tab == 4, "PB's page not shown by its tab")
+    AuctionFrameTab_OnClick(AuctionFrameTab1)
+    EXPECT(not AP.panel:IsShown(), "PB's page left over Browse")
     -- a page you browse: lowest per item (40c for 5 = 8c; 30c for 2 = 15c)
     LIST = { { 2934, 5, 40 }, { 2934, 2, 30 }, { 99999, 1, 1 } }
     FIRE("AUCTION_ITEM_LIST_UPDATE")
@@ -379,7 +399,7 @@ do
     -- full scan: refused while the game says no, then read from index 1
     queries = {}
     StaticPopupDialogs.PROFBUDDY_FULL_SCAN = nil
-    AP.bar.full:GetScript("OnClick")(AP.bar.full)
+    AP.panel.full:GetScript("OnClick")(AP.panel.full)
     EXPECT(said == "PROFBUDDY_FULL_SCAN", "no full scan warning")
     PRINTS = {}
     StaticPopupDialogs.PROFBUDDY_FULL_SCAN.OnAccept()
@@ -394,9 +414,23 @@ do
     FLUSH()
     EXPECT(rec(2318) == 20, "full scan prices: " .. tostring(rec(2318)))
     FIRE("AUCTION_HOUSE_CLOSED")
+    -- Gadgetzan's neutral auction house is not recorded
+    SUB = "Gadgetzan"
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    LIST = { { 2934, 1, 1 } }
+    FIRE("AUCTION_ITEM_LIST_UPDATE")
+    EXPECT(not AP._record and rec(2934) == 8, "Gadgetzan's auction house was recorded")
+    FIRE("AUCTION_HOUSE_CLOSED")
+    -- BoP reads GetItemInfo's bindType on this client too
+    local keepGII = GetItemInfo
+    GetItemInfo = function(id) if id == 7276 then return "x", nil, 1, 5, 1, "Armor", "Cloth", 1, "", 1, 64, 4, 1, 1 end return keepGII(id) end
+    EXPECT(P:IsBoP(7276) and not P:IsBoP(2934), "BoP on TBC Anniversary")
+    GetItemInfo = keepGII
+    GetSubZoneText, C_Map = keepSub, keepMap
     StaticPopup_Show, StaticPopupDialogs = keepPopup, keepDialogs
     P:ClearRecorded()
 end
-print("  PASS " .. TAG .. "11 auction prices on TBC Anniversary: browsed pages, Scan my materials by exact name cheapest first, the game's search and full-scan limits, full scan read from index 1, another addon's full scan left alone")
+print("  PASS " .. TAG .. "11 auction prices on TBC Anniversary: browsed pages, Scan my materials by exact name cheapest first, the game's search and full-scan limits, full scan read from index 1, another addon's full scan left alone; PB's tab as the fourth AuctionFrameTab; Gadgetzan not recorded; BoP")
 
 print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 11)")

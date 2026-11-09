@@ -172,6 +172,26 @@ function P:VendorSell(itemID)
     return nil
 end
 
+-- Binds when picked up (GetItemInfo's bindType, the same on both clients):
+-- it can't go to the auction house, so only a vendor buys it. Some crafts
+-- are BoP on WoW: Forever that weren't in the original game, and an old
+-- auction price for them made a loss look like a sale (guild, TEST-b).
+-- An item the game hasn't loaded yet answers nothing: PB asks for it and
+-- notes it in P._unloaded, and the detail panel's price line looks again
+-- (TSF:ShowPriceLine).
+P.BIND_ON_PICKUP = (Enum and Enum.ItemBind and Enum.ItemBind.OnAcquire) or 1
+function P:IsBoP(itemID)
+    local getInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
+    if not (itemID and getInfo) then return false end
+    local bind = select(14, getInfo(itemID))
+    if bind == nil then
+        self._unloaded = true
+        if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(itemID) end
+        return false
+    end
+    return bind == self.BIND_ON_PICKUP
+end
+
 ----------------------------------------------------------------------
 -- Vendors: record the price of every recipe material the open vendor
 -- sells with unlimited stock, for money alone. Price per item (a vendor
@@ -222,7 +242,7 @@ end
 function P:Changed()
     self._listCache = nil
     -- the scan buttons follow the Auctionator and TSM boxes (AuctionPrices.lua)
-    if addon.AuctionPrices and addon.AuctionPrices.UpdateBar then addon.AuctionPrices:UpdateBar() end
+    if addon.AuctionPrices and addon.AuctionPrices.UpdateTab then addon.AuctionPrices:UpdateTab() end
     local tsf = addon.TradeSkillFrame
     if not (tsf and tsf.frame and tsf.frame:IsShown()) then return end
     if tsf.RefreshRecipeList and tsf.scrollBar and (self:ListProfitOn() or Settings().priceHideLoss) then
@@ -266,6 +286,7 @@ end
 -- What one of this material costs:
 --   unit     copper per item, or nil when nothing prices it
 --   used     "buy" or "craft"
+--   bop      it binds when picked up: never an auction price (TEST-b2)
 --   buy, buySource, age, stale
 --   craft    copper per item crafted; craftMissing = its materials with no price
 --   partial  true when unit leaves out materials with no price
@@ -273,7 +294,11 @@ end
 function P:MaterialPrice(itemID, seen, depth)
     seen, depth = seen or {}, depth or 0
     local r = {}
-    local auction, src, age = self:AuctionPrice(itemID)
+    r.bop = self:IsBoP(itemID)
+    -- a BoP material can't be listed, so any auction price for it is old
+    -- data from when it could be traded; a vendor's price still counts
+    local auction, src, age
+    if not r.bop then auction, src, age = self:AuctionPrice(itemID) end
     local vendor, vsrc = self:VendorBuy(itemID)
     if auction then r.buy, r.buySource, r.age = auction, src, age end
     if vendor and (not r.buy or vendor < r.buy) then
@@ -303,10 +328,11 @@ function P:MaterialPrice(itemID, seen, depth)
     return r
 end
 
--- Sum a reagent list: total copper, how many materials have no price, and
--- one part per reagent
+-- Sum a reagent list: total copper, how many materials have no price
+-- (bopMissing of them because they bind when picked up), and one part per
+-- reagent
 function P:ReagentsCost(reagents, seen, depth)
-    local out = { total = 0, missing = 0, missingNames = {}, parts = {}, stale = false }
+    local out = { total = 0, missing = 0, missingNames = {}, bopMissing = 0, bopNames = {}, parts = {}, stale = false }
     for _, rg in ipairs(reagents or {}) do
         local cnt = tonumber(rg.count) or 1
         if cnt < 1 then cnt = 1 end
@@ -316,7 +342,12 @@ function P:ReagentsCost(reagents, seen, depth)
         if mp.unit then out.total = out.total + mp.unit * cnt end
         if not mp.unit or mp.partial then
             out.missing = out.missing + 1
-            out.missingNames[#out.missingNames + 1] = rg.name or "?"
+            if mp.bop and not mp.unit then
+                out.bopMissing = out.bopMissing + 1
+                out.bopNames[#out.bopNames + 1] = rg.name or "?"
+            else
+                out.missingNames[#out.missingNames + 1] = rg.name or "?"
+            end
         end
         if mp.used == "buy" and mp.stale then out.stale = true end
     end
@@ -337,8 +368,10 @@ local function RecipeData(recipe, profName)
 end
 
 -- Cost, sale price and profit of one craft:
---   cost, missing, missingNames, parts, stale    (ReagentsCost)
+--   cost, missing, missingNames, bopMissing, bopNames,
+--   parts, stale                                  (ReagentsCost)
 --   itemID, yield
+--   bop                                           the product binds when picked up
 --   sell, sellSource, sellAge, sellStale          the product's auction price per item
 --   vendorSell                                    what a vendor pays per item
 --   profit                                        per craft; nil without a sale price
@@ -357,7 +390,9 @@ function P:RecipeCost(recipe, profName)
     r.itemID = itemID
     r.yield = Yield(data)
     if itemID then
-        r.sell, r.sellSource, r.sellAge = self:AuctionPrice(itemID)
+        r.bop = self:IsBoP(itemID)
+        -- a BoP product has no auction price, whatever a price addon kept
+        if not r.bop then r.sell, r.sellSource, r.sellAge = self:AuctionPrice(itemID) end
         r.sellStale = self:IsStale(r.sellAge)
         -- Settings > Prices: "Show vendor sale price" (on) and, under it,
         -- "Only show the better sale price" (off)
@@ -389,7 +424,8 @@ function P:HideLossOn() return self:Enabled() and Settings().priceHideLoss == tr
 function P:ResetListCache() self._listCache = nil end
 
 -- A recipe's profit per craft, or nil when it has none (no sale price, a
--- material without a price, an enchant)
+-- material without a price, an enchant); then whether its product binds
+-- when picked up
 function P:ListProfit(recipe, profName)
     if not (recipe and recipe.name) then return nil end
     self._listCache = self._listCache or {}
@@ -397,10 +433,10 @@ function P:ListProfit(recipe, profName)
     local v = self._listCache[key]
     if v == nil then
         local r = self:RecipeCost(recipe, profName)
-        v = (r and r.profit and r.missing == 0) and r.profit or false
+        v = { p = (r and r.profit and r.missing == 0) and r.profit or nil, b = r and r.bop or false }
         self._listCache[key] = v
     end
-    return v or nil
+    return v.p, v.b
 end
 
 ----------------------------------------------------------------------
@@ -453,9 +489,14 @@ function P:SourceText(source, age)
     return a and (name .. ", " .. a) or name
 end
 
--- "1 material has no price" / "2 materials have no price"
-function P:MissingText(n)
-    return n == 1 and "1 material has no price" or (n .. " materials have no price")
+-- "1 material has no price" / "2 materials have no price"; bop of the n
+-- bind when picked up and say so instead ("1 material binds when picked up")
+function P:MissingText(n, bop)
+    bop = bop or 0
+    local plain, out = n - bop, {}
+    if plain > 0 then out[#out + 1] = plain == 1 and "1 material has no price" or (plain .. " materials have no price") end
+    if bop > 0 then out[#out + 1] = bop == 1 and "1 material binds when picked up" or (bop .. " materials bind when picked up") end
+    return table.concat(out, ", ")
 end
 
 -- The detail panel's line under Can make:
@@ -466,11 +507,13 @@ function P:DetailText(r)
     if r.missing > 0 and r.total > 0 then cost = cost .. "+" end
     if r.stale then cost = GREY .. cost .. "|r" end
     local line = "Cost: " .. cost
-    if r.missing > 0 then line = line .. " " .. GREY .. "(" .. self:MissingText(r.missing) .. ")|r" end
+    if r.missing > 0 then line = line .. " " .. GREY .. "(" .. self:MissingText(r.missing, r.bopMissing) .. ")|r" end
     local auction = r.sell and self:Money(r.sell * r.yield)
     if auction and r.sellStale then auction = GREY .. auction .. "|r" end
     local vendor = r.vendorSell and self:Money(r.vendorSell * r.yield)
-    if r.better and auction and vendor then
+    if r.bop then
+        line = line .. (vendor and ("   Sells: " .. vendor .. " (vendor, BoP)") or "   BoP")
+    elseif r.better and auction and vendor then
         -- only the better sale price, labeled
         line = line .. "   Sells: " .. (r.profitFrom == "vendor" and (vendor .. " (vendor)") or (auction .. " (auction)"))
     elseif auction then
@@ -499,7 +542,7 @@ end
 -- bright (Settings: Crafted materials, show both) or only the one used
 function P:MaterialText(mp, count)
     count = count or 1
-    if not mp or not mp.unit then return "|cffff4444?|r" end
+    if not mp or not mp.unit then return (mp and mp.bop) and ("|cffff4444?|r " .. GREY .. "(BoP)|r") or "|cffff4444?|r" end
     local buy = mp.buy and (self:Money(mp.buy * count) .. " (" .. self:SourceText(mp.buySource, mp.age) .. ")")
     local craft = mp.craft and ("craft " .. self:Money(mp.craft * count) .. ((mp.craftMissing or 0) > 0 and "+" or ""))
     if buy and craft and Settings().priceIntermediates ~= "cheaper" then
@@ -517,13 +560,20 @@ function P:FillTooltip(tt, r)
         tt:AddDoubleLine(part.count .. " x " .. (part.name or "?"), self:MaterialText(part.price, part.count),
             0.9, 0.9, 0.9, 1, 1, 1)
     end
-    if r.missing > 0 then
-        tt:AddLine(self:MissingText(r.missing) .. ": " .. table.concat(r.missingNames, ", "), 1, 0.27, 0.27, true)
+    local plain = r.missing - (r.bopMissing or 0)
+    if plain > 0 then
+        tt:AddLine(self:MissingText(plain) .. ": " .. table.concat(r.missingNames, ", "), 1, 0.27, 0.27, true)
+    end
+    if (r.bopMissing or 0) > 0 then
+        tt:AddLine(self:MissingText(r.bopMissing, r.bopMissing) .. ": " .. table.concat(r.bopNames, ", ")
+            .. (r.bopMissing == 1 and ". It can't be bought." or ". They can't be bought."), 0.7, 0.7, 0.7, true)
     end
     if not r.itemID then return end
     tt:AddLine(" ")
     local makes = r.yield > 1 and (" (makes " .. r.yield .. ")") or ""
-    if r.sell then
+    if r.bop then
+        tt:AddLine("Binds when picked up: it can't be sold at auction, only to a vendor.", 0.9, 0.9, 0.9, true)
+    elseif r.sell then
         local t = self:Money(r.sell * r.yield) .. " (" .. self:SourceText(r.sellSource, r.sellAge) .. ")"
         if r.sellStale then t = GREY .. t .. "|r" end
         tt:AddDoubleLine("Sells at auction" .. makes, t, 0.9, 0.9, 0.9, 1, 1, 1)
@@ -536,10 +586,11 @@ function P:FillTooltip(tt, r)
     if r.profit then
         local how = r.profitFrom == "auction"
             and "Auction price less the 5% auction house cut, less the cost."
+            or (r.bop and "Vendor price less the cost.")
             or (r.sell and "Vendor price less the cost (better than the auction price less its 5% cut)."
                 or "Vendor price less the cost (no auction price).")
         if r.missing > 0 then
-            tt:AddLine("No profit shown: " .. self:MissingText(r.missing) .. ".", 0.5, 0.5, 0.5, true)
+            tt:AddLine("No profit shown: " .. self:MissingText(r.missing, r.bopMissing) .. ".", 0.5, 0.5, 0.5, true)
         else
             tt:AddDoubleLine("Profit", self:SignedMoney(r.profit), 0.9, 0.9, 0.9, 1, 1, 1)
             tt:AddLine(how, 0.5, 0.5, 0.5, true)

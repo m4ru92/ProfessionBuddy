@@ -125,6 +125,9 @@ function F:SetShown(v) if v then self:Show() else self:Hide() end end
 function IsModifierKeyDown() return MODIFIER_DOWN == true end
 function F:IsVisible() return self._shown end
 function F:GetName() return self._name end
+-- a tab button's index (PanelTemplates tabs, the classic auction house's)
+function F:SetID(i) rawset(self, "_id", i) end
+function F:GetID() return rawget(self, "_id") or 0 end
 function F:SetAttribute(k, v) self._attr[k] = v end
 function F:GetAttribute(k) return self._attr[k] end
 function F:GetFrameLevel() return 1 end

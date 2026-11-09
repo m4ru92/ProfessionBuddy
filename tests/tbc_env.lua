@@ -38,7 +38,8 @@ function GetItemInfo(id)
     id = tonumber(type(id) == "string" and id:match("item:(%d+)") or id)
     local n = id and ITEM_NAMES[id]
     if not n then return nil end
-    return n, "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. n .. "]|h|r", 1, 5, 1, "Trade Goods", "Leather", 20, "", "icon", 5
+    -- the client's 14th value, bindType: 0 for these (nothing binds)
+    return n, "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. n .. "]|h|r", 1, 5, 1, "Trade Goods", "Leather", 20, "", "icon", 5, 7, 0, 0
 end
 function GetItemCount() return 0 end
 function GetItemIcon() return "icon" end

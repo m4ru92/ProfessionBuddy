@@ -127,7 +127,7 @@ Install [!BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber) and [Bu
 
 ## License
 
-[MIT](LICENSE). Bundled libraries under `Libs/` (LibStub, CallbackHandler-1.0, ChatThrottleLib, and Ace3: AceComm-3.0 and AceSerializer-3.0) retain their own permissive licenses. LibDataBroker-1.1 and LibDBIcon-1.0 (the minimap button) keep their authors' own terms; see [LICENSE](LICENSE).
+[MIT](LICENSE). Bundled libraries under `Libs/` (LibStub, CallbackHandler-1.0, ChatThrottleLib, Ace3: AceComm-3.0 and AceSerializer-3.0, and LibAHTab-1-0, the auction house tab on WoW: Forever) retain their own permissive licenses. LibDataBroker-1.1 and LibDBIcon-1.0 (the minimap button) keep their authors' own terms; see [LICENSE](LICENSE).
 
 ## Credits
 

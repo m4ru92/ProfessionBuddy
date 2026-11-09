@@ -560,7 +560,15 @@ function TSF:Init()
                 C_Timer.After(0.05, function() self:OnTradeSkillShow() end)
             end
         elseif self._awaitingTradeList then
-            C_Timer.After(0.05, function() self:OnTradeSkillShow() end)
+            if InCombatLockdown() then
+                -- PB's window waits and opens when combat ends, also when
+                -- combat started after the show event. TEST-b's combat
+                -- error had stopped it here.
+                self._pendingOpen = self._pendingOpen or "trade"
+                self._pendingClose = false
+            else
+                C_Timer.After(0.05, function() self:OnTradeSkillShow() end)
+            end
         end
     end)
     On(E.CRAFT_SHOW, function()
@@ -1648,8 +1656,13 @@ end
 
 -- A shared frame that was open when PB took a profession (WoW: Forever's
 -- profession book, when a profession is opened from it) goes away quietly.
+-- Never in combat: the game blocks hiding Blizzard's window then (TEST-b:
+-- K in combat shows the book, and Blizzard's book reopens the last
+-- profession). It goes when combat ends (SuppressDefaultFrames,
+-- PLAYER_REGEN_ENABLED).
 function TSF:HideSharedFrames()
     if not (addon.Source.SharedFrameOpen and self._killedFrames) then return end
+    if InCombatLockdown() then return end
     for frameName in pairs(addon.Source.SHARED_FRAMES or {}) do
         local frame = _G[frameName]
         if frame and self._killedFrames[frameName] and frame:IsShown()
@@ -3255,11 +3268,13 @@ function TSF:BuildRecipeList(parent)
 end
 
 -- Prices.lua: a recipe row's profit before its right-hand text (Settings >
--- Prices > Profit in the recipe list); a dash when it has none
+-- Prices > Profit in the recipe list); a dash when it has none, a gray BoP
+-- when its item binds when picked up (only a vendor buys it)
 local function ProfitPrefix(entry)
     local P = addon.Prices
     if not (P and P:ListProfitOn()) then return "" end
-    local v = P:ListProfit(entry, state.profName)
+    local v, bop = P:ListProfit(entry, state.profName)
+    if bop then return "|cff808080BoP|r  " end
     if not v then return "|cff666666-|r  " end
     return P:SignedMoney(v, true) .. "  "
 end
@@ -4220,8 +4235,9 @@ function TSF:CanMakeBottom()
 end
 
 -- Prices.lua: "Cost: 1g 20s   Sells: 2g 5s   Profit: +85s" under Can make
--- (Settings > Prices > Show prices)
-function TSF:ShowPriceLine(recipe)
+-- (Settings > Prices > Show prices). retry: the count of looks again for
+-- an item the game hadn't loaded (below); nil when the recipe is selected.
+function TSF:ShowPriceLine(recipe, retry)
     local line, hover = self.detPrice, self.detPriceHover
     line:SetText("")
     line:Hide()
@@ -4229,7 +4245,21 @@ function TSF:ShowPriceLine(recipe)
     hover:Hide()
     local P = addon.Prices
     if not (P and P:Enabled()) then return end
+    P._unloaded = nil
     local result = P:RecipeCost(recipe, state.profName)
+    -- An item the game hadn't loaded yet (Prices.lua IsBoP asked for it):
+    -- look again shortly, up to three times each time the recipe is
+    -- selected, so a BoP material or product shows as BoP by itself
+    local tries = retry or 0
+    if P._unloaded and recipe.name and tries < 3 then
+        C_Timer.After(0.5, function()
+            if self.frame and self.frame:IsShown() and state.selected == recipe.name then
+                self:ShowPriceLine(recipe, tries + 1)
+                -- the line can wrap differently: refit the scroll area
+                self:UpdateScrollChildHeight()
+            end
+        end)
+    end
     if not result then return end
     line:SetText(P:DetailText(result))
     line:Show()
@@ -4831,7 +4861,7 @@ function TSF:RefreshCalcPanel()
     local P = addon.Prices
     local prices = P and P:Enabled() or false
     self:LayoutCalcColumns(prices)
-    local toBuy, allCost, buyMissing, allMissing = 0, 0, 0, 0
+    local toBuy, allCost, buyMissing, allMissing, allBoP = 0, 0, 0, 0, 0
     if prices then
         for _, entry in ipairs(displayData) do
             if entry.itemID then
@@ -4844,6 +4874,7 @@ function TSF:RefreshCalcPanel()
                     end
                     if not mp.unit or mp.partial then
                         allMissing = allMissing + 1
+                        if mp.bop and not mp.unit then allBoP = allBoP + 1 end
                         if entry.shortfall > 0 then buyMissing = buyMissing + 1 end
                     end
                 end
@@ -4877,7 +4908,7 @@ function TSF:RefreshCalcPanel()
         local buy = (buyMissing > 0 and toBuy == 0) and "?" or (P:Money(toBuy) .. (buyMissing > 0 and "+" or ""))
         local all = (allMissing > 0 and allCost == 0) and "?" or (P:Money(allCost) .. (allMissing > 0 and "+" or ""))
         local text = "To buy: " .. buy .. "   All materials: " .. all
-        if allMissing > 0 then text = text .. "\n|cff888888(" .. P:MissingText(allMissing) .. ")|r" end
+        if allMissing > 0 then text = text .. "\n|cff888888(" .. P:MissingText(allMissing, allBoP) .. ")|r" end
         self.calcSummary:SetText(self.calcSummary:GetText() .. "\n" .. text)
     end
 
@@ -5000,6 +5031,10 @@ function TSF:UpdateCalcRows()
                     local function Fmt(v) return grey and ("|cff808080" .. v .. "|r") or v end
                     row.priceText:SetText(Fmt(P:Money(mp.unit, true) .. plus))
                     row.costText:SetText(Fmt(P:Money(mp.unit * entry.need, true) .. plus))
+                elseif mp and mp.bop then
+                    -- binds when picked up: no price to buy it at (TEST-b2)
+                    row.priceText:SetText("|cff808080BoP|r")
+                    row.costText:SetText("|cff808080BoP|r")
                 elseif mp then
                     row.priceText:SetText("|cffff4444?|r")
                     row.costText:SetText("|cffff4444?|r")
@@ -7145,6 +7180,8 @@ function TSF:LoadRecipes(unknown)
         -- Settings > Prices > Hide crafts at a loss
         local passLoss = true
         if hideLoss then
+            -- a BoP craft at a loss is hidden too (m4ru: this filter is
+            -- for what sells at auction)
             local profit = PR:ListProfit(r, state.profName)
             passLoss = not (profit and profit < 0)
         end
@@ -7242,9 +7279,14 @@ function TSF:LoadRecipes(unknown)
                 else return a.name > b.name end
             elseif sortBy == "Profit" then
                 -- Prices.lua: most profit first (^), least first (v);
-                -- recipes with no profit last either way
-                local pa = PR and PR:ListProfit(a, state.profName)
-                local pb = PR and PR:ListProfit(b, state.profName)
+                -- recipes with no profit, and BoP ones, last either way
+                local pa, ba, pb, bb
+                if PR then
+                    pa, ba = PR:ListProfit(a, state.profName)
+                    pb, bb = PR:ListProfit(b, state.profName)
+                end
+                if ba then pa = nil end
+                if bb then pb = nil end
                 if pa and pb and pa ~= pb then
                     if asc then return pa > pb else return pa < pb end
                 end

@@ -9,11 +9,13 @@
 --   * Full scan: the whole auction house at once, through the game's own
 --     full-scan request, behind a warning (it can freeze the game for a
 --     few seconds, and the game allows one about every 15 minutes).
--- The scan buttons show only while neither Auctionator nor TSM is
+-- The scan buttons sit on a ProfessionBuddy tab at the end of the
+-- auction house's tabs (TEST-b2; a bar under the window covered the
+-- tabs). The tab shows only while neither Auctionator nor TSM is
 -- installed and switched on in Settings > Prices (Decision P10);
 -- recording while you browse runs either way. Prices are stored per
--- realm and faction (Prices.lua); a neutral auction house, one whose
--- auctioneer is not of your faction, is not recorded (Decision P8).
+-- realm and faction (Prices.lua); a neutral auction house (Booty Bay,
+-- Gadgetzan, Everlook) is not recorded (Decision P8).
 -- WoW: Forever runs the modern auction house (C_AuctionHouse,
 -- Blizzard_AuctionHouseUI); TBC Anniversary the classic one
 -- (QueryAuctionItems, Blizzard_AuctionUI).
@@ -76,20 +78,39 @@ function AP:Note(itemID, unit)
     self._noted = self._noted + 1
 end
 
+-- The neutral auction houses' towns, by the game's own area names (any
+-- language): Booty Bay, Gadgetzan, Everlook. Area IDs from AreaTable, the
+-- same on both clients (WoW: Forever 1.60.1.69913, TBC Anniversary
+-- 2.5.6.69795); no smaller area inside those towns has its own name.
+AP.NEUTRAL_AREAS = { 35, 976, 2255 }
+
+-- A neutral auction house (Decision P8). WoW: Forever's auctioneers report
+-- no faction (TEST-b: UnitFactionGroup("npc") is nil there), so the town
+-- decides; an auctioneer that does report a faction other than yours
+-- counts too.
+function AP:AtNeutralHouse()
+    local sub = GetSubZoneText and GetSubZoneText() or ""
+    local zone = GetRealZoneText and GetRealZoneText() or ""
+    local areaName = C_Map and C_Map.GetAreaInfo
+    for _, id in ipairs(self.NEUTRAL_AREAS) do
+        local name = areaName and areaName(id)
+        if name and name ~= "" and (sub == name or zone == name) then return true end
+    end
+    local npc = UnitFactionGroup and UnitFactionGroup("npc")
+    return npc ~= nil and npc ~= UnitFactionGroup("player")
+end
+
 function AP:OnShow()
     self._open = true
     self._visit, self._noted = {}, 0
-    -- a neutral auction house (Decision P8): its auctioneer is not of your faction
-    local npc = UnitFactionGroup and UnitFactionGroup("npc")
-    self._record = npc ~= nil and npc == UnitFactionGroup("player")
+    self._record = not self:AtNeutralHouse()
     -- the auction house window is built as it opens
-    C_Timer.After(0, function() AP:UpdateBar() end)
+    C_Timer.After(0, function() AP:UpdateTab() end)
 end
 
 function AP:OnClose()
     self._open = false
     self:StopScan(true)
-    if self.bar then self.bar:Hide() end
     if (self._noted or 0) > 0 and addon.Prices then addon.Prices:Changed() end
 end
 
@@ -182,7 +203,7 @@ function AP:ReadFull(n, read, first)
         else
             self._full = nil
             self:Status("Full scan done: " .. (self._noted - before) .. " prices recorded.")
-            self:UpdateBar()
+            self:UpdateTab()
         end
     end
     part()
@@ -236,7 +257,7 @@ function AP:StartTargeted()
         return
     end
     self._scan = { list = list, i = 0, before = self._noted }
-    self:UpdateBar()
+    self:UpdateTab()
     self:NextSearch()
 end
 
@@ -287,7 +308,7 @@ function AP:FinishScan()
     local sc = self._scan
     self._scan = nil
     self:Status("Scan done: " .. (self._noted - (sc and sc.before or 0)) .. " prices recorded.")
-    self:UpdateBar()
+    self:UpdateTab()
     if addon.Prices then addon.Prices:Changed() end
 end
 
@@ -295,7 +316,7 @@ function AP:StopScan(quiet)
     if not self._scan then return end
     self._scan = nil
     if not quiet then self:Status("Scan stopped.") end
-    self:UpdateBar()
+    self:UpdateTab()
 end
 
 ----------------------------------------------------------------------
@@ -329,7 +350,7 @@ function AP:StartFull()
     end
     self._full, self._fullPending = true, true
     self:Status("Full scan: waiting for the auction house...")
-    self:UpdateBar()
+    self:UpdateTab()
     if self:Modern() then
         C_AuctionHouse.ReplicateItems()
     else
@@ -339,16 +360,18 @@ function AP:StartFull()
         if AP._fullPending then
             AP._fullPending, AP._full = nil, nil
             AP:Status("No full scan came back (the game allows one about every 15 minutes).")
-            AP:UpdateBar()
+            AP:UpdateTab()
         end
     end)
 end
 
 ----------------------------------------------------------------------
--- The scan bar under the auction house window
+-- The ProfessionBuddy tab at the end of the auction house's tabs
 ----------------------------------------------------------------------
 
--- Hidden while Auctionator or TSM is installed and switched on (P10)
+AP.TAB_ID = "ProfessionBuddy"
+
+-- Shown while neither Auctionator nor TSM is installed and switched on (P10)
 function AP:ScansShown()
     local P = addon.Prices
     return P and P:Enabled() and not (P:UsesAuctionator() or P:UsesTSM()) or false
@@ -356,52 +379,116 @@ end
 
 function AP:Status(text)
     self._status = text
-    if self.bar then self.bar.status:SetText(text or "") end
+    if self.panel then self.panel.status:SetText(text or "") end
 end
 
-function AP:BuildBar()
-    local f = CreateFrame("Frame", "ProfBuddyAuctionBar", UIParent, "BackdropTemplate")
-    f:SetSize(460, 30)
-    f:SetFrameStrata("HIGH")
-    if addon.Theme and addon.Theme.SetBackdrop then
-        addon.Theme:SetBackdrop(f, "dropdownList")
-        addon.Theme:BackdropColor(f, "dropdownList")
-        addon.Theme:BorderColor(f, "dropdownList")
-    end
+-- The tab's page: what the two scans do, their buttons, and the status.
+-- Blizzard's own button template, as the auction house's own buttons.
+function AP:BuildPanel(parent)
+    local f = CreateFrame("Frame", "ProfBuddyAuctionPanel", parent)
+    local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 0, 0)
+    title:SetText("ProfessionBuddy prices")
+    local about = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    about:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
+    about:SetPoint("RIGHT", f, "RIGHT", 0, 0)
+    about:SetJustifyH("LEFT")
+    about:SetText("Scan my materials searches every material and crafted item of the recipes your characters know, one at a time. You can stop it.\n\n"
+        .. "Full scan reads the whole auction house at once. The game can freeze for a few seconds, and it allows one about every 15 minutes.\n\n"
+        .. "ProfessionBuddy also records the prices you see while you browse.")
     local scan = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    scan:SetSize(140, 22)
-    scan:SetPoint("LEFT", 6, 0)
+    scan:SetSize(160, 22)
+    scan:SetPoint("TOPLEFT", about, "BOTTOMLEFT", 0, -16)
     scan:SetScript("OnClick", function()
         if AP._scan then AP:StopScan() else AP:StartTargeted() end
     end)
     local full = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    full:SetSize(80, 22)
-    full:SetPoint("LEFT", scan, "RIGHT", 4, 0)
+    full:SetSize(120, 22)
+    full:SetPoint("LEFT", scan, "RIGHT", 8, 0)
     full:SetText("Full scan")
     full:SetScript("OnClick", function() AP:AskFull() end)
-    local status = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    status:SetPoint("LEFT", full, "RIGHT", 8, 0)
-    status:SetPoint("RIGHT", -6, 0)
+    local status = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    status:SetPoint("TOPLEFT", scan, "BOTTOMLEFT", 0, -12)
+    status:SetPoint("RIGHT", f, "RIGHT", 0, 0)
     status:SetJustifyH("LEFT")
     f.scan, f.full, f.status = scan, full, status
     f:Hide()
-    self.bar = f
+    self.panel = f
+    return f
 end
 
-function AP:UpdateBar()
-    if not self._open or not self:ScansShown() then
-        if self.bar then self.bar:Hide() end
-        return
+-- WoW: Forever, the modern auction house: LibAHTab (MIT, by plusmouse, the
+-- library Auctionator uses). Adding a tab with Blizzard's PanelTemplates
+-- there taints the bags into combat (LibAHTab's README); and addons share
+-- one copy, so PB's tab lines up after theirs.
+function AP:BuildModernTab()
+    local lib = LibStub and LibStub("LibAHTab-1-0", true)
+    if not (lib and AuctionHouseFrame) then return nil end
+    local panel = self:BuildPanel(AuctionHouseFrame)
+    panel:SetPoint("TOPLEFT", AuctionHouseFrame, "TOPLEFT", 24, -70)
+    panel:SetPoint("BOTTOMRIGHT", AuctionHouseFrame, "BOTTOMRIGHT", -24, 40)
+    if not lib:DoesIDExist(self.TAB_ID) then
+        lib:CreateTab(self.TAB_ID, panel, "ProfessionBuddy", "ProfessionBuddy")
     end
-    local ah = AuctionHouseFrame or AuctionFrame
-    if not ah then return end
-    if not self.bar then self:BuildBar() end
-    local f = self.bar
-    f:ClearAllPoints()
-    f:SetPoint("TOPLEFT", ah, "BOTTOMLEFT", 0, -2)
-    f.scan:SetText(self._scan and "Stop scan" or "Scan my materials")
-    if self._full then f.full:Disable() else f.full:Enable() end
-    if self._scan then f.full:Disable() end
-    f.status:SetText(self._status or "ProfessionBuddy prices")
-    f:Show()
+    return lib:GetButton(self.TAB_ID)
+end
+
+-- TBC Anniversary, the classic auction house: one more AuctionFrameTabN,
+-- as the game's own three tabs. Blizzard's AuctionFrameTab_OnClick hides
+-- its three pages for any tab past the third; PB shows its page then.
+function AP:BuildClassicTab()
+    if not AuctionFrame then return nil end
+    local index = (AuctionFrame.numTabs or 3) + 1
+    local tab = CreateFrame("Button", "AuctionFrameTab" .. index, AuctionFrame, "AuctionTabTemplate")
+    tab:SetID(index)
+    tab:SetText("ProfessionBuddy")
+    tab:SetPoint("TOPLEFT", _G["AuctionFrameTab" .. (index - 1)], "TOPRIGHT", -8, 0)
+    PanelTemplates_SetNumTabs(AuctionFrame, index)
+    PanelTemplates_TabResize(tab, 0)
+    PanelTemplates_EnableTab(AuctionFrame, index)
+    local panel = self:BuildPanel(AuctionFrame)
+    panel:SetPoint("TOPLEFT", AuctionFrame, "TOPLEFT", 90, -110)
+    panel:SetPoint("BOTTOMRIGHT", AuctionFrame, "BOTTOMRIGHT", -40, 60)
+    hooksecurefunc("AuctionFrameTab_OnClick", function(clicked)
+        if clicked == tab then
+            -- the Bids tab's plain frame art, as Blizzard sets per tab
+            AuctionFrameTopLeft:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-Bid-TopLeft")
+            AuctionFrameTop:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-Auction-Top")
+            AuctionFrameTopRight:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-Auction-TopRight")
+            AuctionFrameBotLeft:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-Bid-BotLeft")
+            AuctionFrameBot:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-Auction-Bot")
+            AuctionFrameBotRight:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-Bid-BotRight")
+            panel:Show()
+        else
+            panel:Hide()
+        end
+    end)
+    return tab
+end
+
+function AP:UpdateTab()
+    if not self._open then return end
+    local shown = self:ScansShown()
+    if not self.tab and shown then
+        if self:Modern() then self.tab = self:BuildModernTab() else self.tab = self:BuildClassicTab() end
+    end
+    if not self.tab then return end
+    if shown then
+        self.tab:Show()
+    else
+        -- the tab goes (Auctionator or TSM switched on in Settings); on the
+        -- classic auction house its page goes back to Browse. The modern one
+        -- is left on an empty page: clicking Blizzard's tab from PB's code
+        -- would taint it (LibAHTab's README), so you pick a tab yourself.
+        if self.panel and self.panel:IsShown() then
+            self.panel:Hide()
+            if not self:Modern() and AuctionFrameTab1 then AuctionFrameTab_OnClick(AuctionFrameTab1) end
+        end
+        self.tab:Hide()
+    end
+    local p = self.panel
+    if not p then return end
+    p.scan:SetText(self._scan and "Stop scan" or "Scan my materials")
+    if self._full or self._scan then p.full:Disable() else p.full:Enable() end
+    p.status:SetText(self._status or "")
 end
