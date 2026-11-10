@@ -1532,7 +1532,9 @@ function TSF:HookItemTooltip()
         if not need then return end
         local item, count = need[1], need[2]
         local mp = P:MaterialPrice(item)
-        local name = GetItemInfo(item) or ("item:" .. item)
+        -- the baked name until the game has loaded the item (m4ru, TEST-c4:
+        -- "200 x item:8069")
+        local name = GetItemInfo(item) or need[4] or ("item:" .. item)
         local cost = mp.unit and (P:Money(mp.unit * count) .. (mp.partial and "+" or "")) or "|cffff4444?|r"
         tip:AddLine(" ")
         tip:AddDoubleLine("Fill cost (ProfessionBuddy):", cost, 1, 0.82, 0, 1, 1, 1)

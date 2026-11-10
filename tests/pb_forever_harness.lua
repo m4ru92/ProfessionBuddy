@@ -5723,11 +5723,11 @@ do
     local n, ok = 0, true
     for crate, e in pairs(PB.Waylaid or {}) do
         n = n + 1
-        if not (type(e[1]) == "number" and e[2] >= 1 and e[3] > 0) then ok = false end
+        if not (type(e[1]) == "number" and e[2] >= 1 and e[3] > 0 and type(e[4]) == "string" and e[4] ~= "") then ok = false end
     end
     EXPECT(n == 104 and ok and PB.Waylaid[210771][1] == 2840 and PB.Waylaid[210771][2] == 20, "Waylaid table: " .. n)
     local w = 0
-    for _, e in pairs(PB.Writs or {}) do w = w + 1; if not (e[1] > 0 and e[2] >= 1 and e[3] > 0) then ok = false end end
+    for _, e in pairs(PB.Writs or {}) do w = w + 1; if not (e[1] > 0 and e[2] >= 1 and e[3] > 0 and type(e[4]) == "string" and e[4] ~= "") then ok = false end end
     EXPECT(w == 150 and ok and PB.Writs[264037][2] == 200, "Writs table: " .. w)
     -- every item post-call runs, as the game runs them
     local function post(tip)
@@ -5762,6 +5762,13 @@ do
     t = tipFor(264037)
     EXPECT(t:find("Fill cost (ProfessionBuddy): = ?", 1, true) and t:find("200 x ", 1, true)
            and t:find("Writ sells for = 40s", 1, true), "writ tooltip:\n" .. t)
+    -- the item not loaded yet (m4ru, TEST-c4: "200 x item:8069"): the
+    -- baked name
+    local keepGII = GetItemInfo
+    GetItemInfo = function(id, ...) if id == 8069 then return nil end; return keepGII(id, ...) end
+    t = tipFor(264037)
+    GetItemInfo = keepGII
+    EXPECT(t:find("200 x Crafted Solid Shot", 1, true) and not t:find("item:", 1, true), "writ tooltip, item not loaded:\n" .. t)
     -- Show prices off: nothing
     S.showPrices = false
     t = tipFor(210771)
@@ -5771,7 +5778,7 @@ do
     EXPECT(not tipFor(2840):find("Fill cost", 1, true), "fill cost on an ordinary item")
     Auctionator = keepAuc
 end
-print("  PASS F87 TEST-c: Waylaid Supplies and Craftsman's Writs tooltips: fill cost from Prices.lua, ? without a price, the writ's own auction price, the rewards-later line; off with Show prices; the baked tables")
+print("  PASS F87 TEST-c: Waylaid Supplies and Craftsman's Writs tooltips: fill cost from Prices.lua, ? without a price, the writ's own auction price, the rewards-later line; the baked item name before the item loads; off with Show prices; the baked tables")
 
 -- F88 TEST-c rebuild: vendor prices only from vendors placed in the world
 -- (VMaNGOS 17078, unplaced, was the only seller of Heavy Runecloth
