@@ -15,9 +15,6 @@
 local addon = ProfBuddy
 local PL = addon:NewModule("ProfessionLink")
 
--- Seconds PB waits for the poster's recipes before giving up. Longer than
--- a peer's 30 s serve cooldown, as for a manual sync (Comm:RequestSync).
-PL.WAIT = 35
 
 local function Say(text)
     print("|cff00ccffProfessionBuddy:|r " .. text)
@@ -87,9 +84,7 @@ end
 
 -- Stored recipes for this profession?
 function PL:HasRecipes(key, profName)
-    local char = addon.DataStore and addon.DataStore:GetCharacter(key)
-    local prof = char and char.professions and char.professions[profName]
-    return (prof and type(prof.recipes) == "table" and next(prof.recipes)) and true or false
+    return addon.GuildPanel and addon.GuildPanel:HasRecipes(key, profName) or false
 end
 
 function PL:Open(key, profName)
@@ -121,30 +116,11 @@ function PL:OnLink(link, button)
         return
     end
 
-    -- Ask for their recipes every time (the reply refreshes an open
-    -- window), as the Guild tab's profession icons do
-    if C.RequestGuildSync then C:RequestGuildSync(key) end
-    if self:HasRecipes(key, profName) then
-        self._pending = nil
-        self:Open(key, profName)
-        return
-    end
-    Say("Asked " .. who .. " for their " .. profName .. " recipes.")
-    local pending = { key = key, profName = profName }
-    self._pending = pending
-    C_Timer.After(self.WAIT, function()
-        if self._pending ~= pending then return end
-        self._pending = nil
-        Say(who .. " didn't answer (offline or not running ProfessionBuddy).")
-    end)
-end
-
--- Sync data arrived: open the profession PB is waiting for, once
-function PL:CheckPending()
-    local p = self._pending
-    if p and self:HasRecipes(p.key, p.profName) then
-        self._pending = nil
-        self:Open(p.key, p.profName)
+    -- Ask, and open now or when the reply arrives, once: the Guild tab's
+    -- path (GuildPanel AskThenOpen, TEST-c G1), with this module's opener
+    local GP = addon.GuildPanel
+    if GP and GP.AskThenOpen then
+        GP:AskThenOpen(key, profName, function(k, p) PL:Open(k, p) end)
     end
 end
 
@@ -152,8 +128,5 @@ function PL:Init()
     if addon.Source.flavor ~= "forever" then return end
     if type(SetItemRef) == "function" then
         hooksecurefunc("SetItemRef", function(link, _, button) PL:OnLink(link, button) end)
-    end
-    if addon.Comm and type(addon.Comm.NotifyUIRefresh) == "function" then
-        hooksecurefunc(addon.Comm, "NotifyUIRefresh", function() PL:CheckPending() end)
     end
 end

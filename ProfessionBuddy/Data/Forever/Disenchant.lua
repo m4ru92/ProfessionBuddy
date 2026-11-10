@@ -5,7 +5,7 @@
 -- materials[itemID] = { English name, quality }, used until the client
 -- has the item's own name.
 -- estimates: Forever items the database does not list, placed by Forever's
--- own disenchant groups (Forever build 1.60.1.70790); the tooltip says estimate.
+-- own disenchant groups (Forever build 1.60.1.70862); the tooltip says estimate.
 ProfBuddy.Disenchant = {
     source = "VMaNGOS db 4641790",
     materials = {

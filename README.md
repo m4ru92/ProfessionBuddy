@@ -78,6 +78,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 
 - **Cross-character view.** See every character's professions, known recipes, and bag and bank inventory in one place, without logging in and out.
 - **Material calculator.** Resolves the full reagent tree, including intermediate crafts, subtracts what you already own across your characters, and produces a shopping list.
+- **Prices and profit.** What a craft costs, what it sells for, and the profit, from Auctionator, TSM, the auction prices ProfessionBuddy records while you browse, and vendor prices. The recipe list can show and sort by profit, and the Material Calculator prices what you still need to buy.
 - **Crafting orders.** Request a craft from a friend or guildmate running ProfessionBuddy. The request, accept, crafted, and received steps run with chat notifications, a queue, and history. If a friend is offline, the order queues and sends the next time you are both online.
 - **Guild board.** Post an order to your whole guild, claim what others post, and get a chat line when someone posts a recipe you know. Find a crafter searches your guild by recipe or item.
 - **Friends and guild data sharing.** See your contacts', group members' and guildmates' professions, recipes, and materials. On TBC Classic Anniversary, your Battle.net friends' characters can join your contacts as they log in.
@@ -92,6 +93,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 
 - **Show everything or Learn as you go.** List every recipe in the game, or only the ones you, your alts, or your friends have seen at a trainer, at a vendor, or as a recipe item in your bags. ProfessionBuddy asks the first time a profession opens, and Settings changes it later.
 - **Trainers and vendors.** ProfessionBuddy records each trainer and vendor you visit, with learn levels, prices, and stock, and shares them with your friends.
+- **Waylaid Supplies and Craftsman's Writs.** Their tooltips show what filling one costs.
 - **Gathering loot from play.** Ore veins, herbs, and skinnable mobs start from Classic data and switch to what you and your friends gathered once you have gathered them 10 times together.
 
 The profession window covers Blacksmithing, Leatherworking, Tailoring, Engineering, Alchemy, Enchanting, Cooking, First Aid, and Mining and Smelting. Rogues get Poisons on both games. TBC Classic Anniversary adds Jewelcrafting. WoW: Forever adds Herbalism, Skinning, and Fishing. Gathering tooltips cover Mining, Herbalism, and Skinning on both games.
@@ -127,7 +129,7 @@ Install [!BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber) and [Bu
 
 ## License
 
-[MIT](LICENSE). Bundled libraries under `Libs/` (LibStub, CallbackHandler-1.0, ChatThrottleLib, and Ace3: AceComm-3.0 and AceSerializer-3.0) retain their own permissive licenses. LibDataBroker-1.1 and LibDBIcon-1.0 (the minimap button) keep their authors' own terms; see [LICENSE](LICENSE).
+[MIT](LICENSE). Bundled libraries under `Libs/` (LibStub, CallbackHandler-1.0, ChatThrottleLib, Ace3: AceComm-3.0 and AceSerializer-3.0, and LibAHTab-1-0, the auction house tab on WoW: Forever) retain their own permissive licenses. LibDataBroker-1.1 and LibDBIcon-1.0 (the minimap button) keep their authors' own terms; see [LICENSE](LICENSE).
 
 ## Credits
 

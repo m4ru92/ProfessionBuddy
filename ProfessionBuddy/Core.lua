@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "2.0.2"
+addon.version = "2.1.0"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -691,6 +691,16 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         tooltipMaxHeldBy    = 8,    -- "Held by" lines on item tooltips; 21 = "All"
         tooltipShowDisenchant = true, -- "Disenchants into" on item tooltips (Data/Disenchant.lua)
         trainerShowRanges   = true, -- skill-up ranges on a profession trainer's recipes (UI/Trainer.lua)
+        showPrices          = true, -- Prices.lua: craft cost, sale price and profit
+        priceAuctionator    = true, -- read Auctionator's prices when it is installed
+        priceTSM            = true, -- read TSM's prices when it is installed
+        priceTSMSource      = "DBMarket", -- the TSM price source
+        priceStaleDays      = 7,    -- prices older than this show gray
+        priceIntermediates  = "both", -- a material you craft: "both" (buy and craft) | "cheaper"
+        priceVendorSell     = true, -- show the vendor's sale price beside the auction price
+        priceBetterSale     = false, -- only the better of the two (auction less 5%, vendor)
+        priceListProfit     = false, -- Profit column in the recipe list
+        priceHideLoss       = false, -- hide recipes that lose money
         showAltInDetail     = true,
         showAltInTooltips   = true,
         showCrossFactionAlts = false,
@@ -809,6 +819,19 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     if ProfBuddyDB.settings.replaceTradeSkill == nil then ProfBuddyDB.settings.replaceTradeSkill = true end
     if ProfBuddyDB.settings.tooltipShowDisenchant == nil then ProfBuddyDB.settings.tooltipShowDisenchant = true end
     if ProfBuddyDB.settings.trainerShowRanges == nil then ProfBuddyDB.settings.trainerShowRanges = true end
+    -- 2.1.0 prices (Prices.lua)
+    local PRICE_DEFAULTS = { showPrices = true, priceAuctionator = true, priceTSM = true,
+        priceTSMSource = "DBMarket", priceStaleDays = 7, priceIntermediates = "both",
+        priceVendorSell = true, priceBetterSale = false, priceListProfit = false, priceHideLoss = false }
+    for k, v in pairs(PRICE_DEFAULTS) do
+        if ProfBuddyDB.settings[k] == nil then ProfBuddyDB.settings[k] = v end
+    end
+    -- 2.1.0 TEST-c: window state and positions kept across a reload or
+    -- logout (UI/Main.lua), per character in ProfBuddyDB.windows
+    if ProfBuddyDB.settings.keepWindowState == nil then ProfBuddyDB.settings.keepWindowState = true end
+    ProfBuddyDB.windows = ProfBuddyDB.windows or {}
+    -- TEST-c G2: guildmates' recipes filled in the background (UI/GuildPanel.lua)
+    if ProfBuddyDB.settings.guildKeepRecipes == nil then ProfBuddyDB.settings.guildKeepRecipes = true end
     -- 2.0.2: before this setting, Replace off always opened both windows.
     -- Players who had it off keep that; everyone else starts with it off.
     if ProfBuddyDB.settings.openBesideBlizzard == nil then
@@ -974,6 +997,8 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         -- Close profession window if open
         if addon.TradeSkillFrame and addon.TradeSkillFrame.frame
            and addon.TradeSkillFrame.frame:IsShown() then
+            -- in combat the game blocks hiding it: when combat ends (TEST-c6)
+            if addon.TradeSkillFrame:WaitForCombat("Friends opens", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
             addon.TradeSkillFrame:Hide()
         end
         if addon.FriendsPanel then
@@ -1027,8 +1052,14 @@ SlashCmdList["PROFBUDDY"] = function(msg)
             elseif tsfOpen then
                 tsf:OpenSettings("profession")
             elseif mainOpen then
+                -- Settings live in the profession window, which can't show in
+                -- combat: all of this waits for combat to end (TEST-c6)
+                if tsf:WaitForCombat("Settings open", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
                 if addon.OrdersPanel then addon.OrdersPanel:CaptureHistoryState() end
+                -- a parked profession stays parked for the way back (TEST-c2)
+                addon.UI._toSettings = true
                 addon.UI:Hide()
+                addon.UI._toSettings = nil
                 tsf:OpenSettings("main")
             else
                 tsf:OpenSettings("main")
@@ -1060,6 +1091,8 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         if addon.TradeSkillFrame then
             local tsf = addon.TradeSkillFrame
             if tsf.frame and tsf.frame:IsShown() then
+                -- in combat the game blocks hiding it: when combat ends (TEST-c6)
+                if tsf:WaitForCombat("The ProfessionBuddy window opens", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
                 tsf:Hide()
             end
         end

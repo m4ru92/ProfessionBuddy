@@ -151,7 +151,10 @@ C_Item.GetItemInfo = function(id)
     if UNCACHED[id] then return nil end
     local name = FX.items[id]
     if not name then return nil end
-    return name, "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. name .. "]|h|r"
+    -- the client returns bindType 14th for any loaded item (0: nothing
+    -- binds); the values between are not modeled
+    return name, "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. name .. "]|h|r",
+        nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 0
 end
 C_Item.GetItemIconByID = function(id) return 100000 + (id or 0) end
 C_Item.RequestLoadItemDataByID = function(id)

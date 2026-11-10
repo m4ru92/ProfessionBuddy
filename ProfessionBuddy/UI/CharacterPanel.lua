@@ -190,7 +190,9 @@ function CP:Toggle()
     -- profession window covering it). Mirrors FriendsPanel/OrdersPanel.
     local tsf = addon.TradeSkillFrame
     if tsf and tsf.frame and tsf.frame:IsShown() then
-        tsf:Hide()
+        -- in combat the game blocks hiding it: when combat ends (TEST-c6)
+        if tsf:WaitForCombat("Characters opens", function() CP:Toggle() end) then return end
+        tsf:HideForMain()
         addon.UI:Show()
         selectCharacters()
         return

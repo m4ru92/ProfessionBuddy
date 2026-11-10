@@ -2,6 +2,55 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.1.0 - 2026-11-09
+
+Prices, built from players' requests: what a craft costs, what it sells for, and the profit, from Auctionator, TSM, the auction prices ProfessionBuddy records, and vendor prices. Also: your professions in the main window, a Back button to the profession you were in, window positions and filters that stay after a reload, and guildmates' recipes that are there when you click them.
+
+Thanks to Riddles in the Dark, whose requests shaped this update.
+
+**Highlights**
+
+- **Craft cost and profit:** under "Can make", the detail panel shows what one craft costs, what it sells for, and the profit. Hover the line to see each material's price and where it came from.
+- **Material Calculator prices:** Price and Cost columns, and what the materials you still need cost to buy.
+- **Profit in the recipe list:** an optional Profit column, a Profit sort, and "Hide crafts at a loss".
+- **Your professions in the main window:** the profession icons along its top, and "Back to Leatherworking" after a bottom tab took you away from a profession.
+
+<!-- more -->
+
+**Added on both clients**
+
+- **Prices:** ProfessionBuddy reads Auctionator's and TSM's prices when they're installed, then the auction prices it records itself, then vendor prices. You can switch Auctionator and TSM off in Settings, under Prices. A material a vendor sells is never priced above the vendor's price. A material one of your characters crafts costs whichever is cheaper, buying it or crafting it, and the tooltip shows both prices, the cheaper one bright and the other tan. A price older than 7 days shows gray. A material with no price shows "?", and the cost reads like "Cost: 1g 20s+ (1 material has no price)".
+- **Profit:** the auction price minus the 5% auction house cut, minus the cost. Without an auction price, PB uses the vendor's price. The detail panel shows both sale prices ("Sells: 2g 5s, vendor 40s"). With "Only show the better sale price" selected in Settings, it shows the higher of the auction price after the cut and the vendor's price, and profit uses that one. Clear "Show vendor sale price" to leave the vendor's price out everywhere. Enchants show only the cost.
+- **Auction prices ProfessionBuddy records:** while you browse the auction house, PB keeps the lowest price it sees for every material and crafted item of its recipes, for your realm and faction. Prices seen at a neutral auction house (Booty Bay, Gadgetzan, Everlook) aren't recorded, and recorded prices older than 30 days are dropped.
+- **Scan my materials and Full scan:** on a ProfessionBuddy tab after the auction house's own tabs (it reads "PB" when the tabs don't all fit). "Scan my materials" searches every material and crafted item of the recipes your characters know, one at a time, and you can stop it. "Full scan" reads the whole auction house at once, after a warning: the game can freeze for a few seconds, and it allows one about every 15 minutes. The tab shows only while neither Auctionator nor TSM is installed and switched on in Settings, under Prices; recording while you browse works either way.
+- **Recipe list:** "Profit in the recipe list" adds each recipe's profit to its row and a Profit choice to the Sort menu. "Hide crafts at a loss" hides recipes that lose money.
+- **Crafts that bind when picked up:** they can't be sold at auction, so their profit uses the vendor's price alone ("Sells: 25c (vendor, BoP)"). In the recipe list they show a gray "BoP" instead of a profit and sort last by Profit. "Hide crafts at a loss" hides the ones that lose money.
+- **Materials that bind when picked up:** they never take an auction price. One you craft keeps its craft cost, and one a vendor sells keeps the vendor's price. Otherwise it shows "? (BoP)", the cost line reads "(1 material binds when picked up)" instead of "has no price", and the Material Calculator shows BoP in its price columns.
+- **Vendor prices:** built in for every material a vendor sells, from the cmangos (TBC Anniversary) and VMaNGOS (WoW: Forever) vendor lists, counting only vendors placed in the world, and the game's own item prices. When you open a vendor, PB records what it charges you for materials, and that price replaces the built-in one.
+- **Material Calculator:** with prices on, the window is wider, with a Price and a Cost column, and "To buy" and "All materials" totals under the summary.
+- **Settings, Prices section:** Show prices, Auctionator prices, TSM prices with the TSM price source (DBMarket by default), when prices turn gray, how crafted materials show, the two sale price boxes, the two recipe list boxes, and Clear recorded prices.
+- **Profession icons in the main window:** the icons the profession window has, along the top of the main window on every tab. A click opens that profession; one you don't know opens its read-only list. On TBC Anniversary the icons cast the profession, so the main window can't open or close during combat there: it waits until combat ends, with a chat line.
+- **Back to your profession:** the profession window's bottom tabs (Characters, Friends, Guild, Orders) keep your profession open behind the main window, and "Back to Leatherworking" brings it back as you left it: selection, filters, scroll, and the Material Calculator. The profession's own icon in the main window does the same. Closing the main window closes that profession too.
+- **Keep after a reload or logout:** a box under "Remember window state between opens", on by default. The profession window's filters, sort, search, and selection, and where the profession window and the main window sit, stay for each character after a /reload or logout. A window that would land off a smaller screen moves back onto it. With the box cleared, both windows open in the middle of the screen after a /reload.
+- **Guildmates' recipes open by themselves:** clicking a guildmate's profession you have no recipes for asks for them and opens the profession when they arrive. Its tooltip says "Requesting... opens when it arrives" while you wait, and "Recipes from 2h ago" once you have them. If nobody answers in 35 seconds, chat says so.
+- **Keep guildmates' recipes up to date:** a box under Friend data, on by default. After you log in, and when guildmates come online, PB asks online guildmates who run it for their recipes, one every 3 seconds, starting with the guildmates PB has no recipes for, so clicking their profession opens it at once. PB skips anyone whose recipes it got in the last 12 hours.
+
+**Added on WoW: Forever**
+
+- **Waylaid Supplies and Craftsman's Writs:** their tooltips show the fill cost: what the requested items cost ("Fill cost: 6s", "20 x Copper Bar"), priced the same way as a craft's materials. A writ also shows what the writ itself sells for at auction. Reward details (money, experience, reputation) come in a later update.
+
+**Changes**
+
+- WoW: Forever recipe data is from game build 1.60.1.70862.
+
+**Fixes**
+
+- With TradeSkillMaster's Crafting window open, clicking a recipe, a material, or a Material Calculator row went to TSM and PB didn't select the recipe. A plain click stays with PB; Shift, Ctrl, and Alt clicks still go to the game and to other addons (chat links, the dressing room).
+- "Remember window state between opens" lost the View, Skill-up, and Source choices when you closed the profession window with its X button or Escape: only closing it with the profession's own button saved them.
+- WoW: Forever: pressing K in combat after opening a profession gave an error and opened nothing. K works in combat. Blizzard's profession book reopens the profession you last had open, in Blizzard's window, and ProfessionBuddy's window takes over when combat ends. The same goes for any profession you open in combat.
+- In combat, the game doesn't let an addon open, close, or move the profession window. The bottom tabs (Characters, Friends, Guild, Orders), /pb and its commands, Settings, and opening a friend's or guildmate's recipes gave an error there, or left both windows on screen. They wait for combat to end, with one chat line such as "Characters opens when combat ends.", and dragging the window waits too.
+- With a profession window open in combat, a bag change or the game's recipe update redrew the craft bar and gave an error each time. The Enchant button sat on the craft bar, which made the game protect the bar too. The button is placed on the window instead, and it stops taking clicks as combat starts, until combat ends.
+
 ## 2.0.2 - 2026-11-07
 
 A follow-up to the WoW: Forever launch, built from players' requests. It adds disenchant results, skill-up ranges at the trainer, a resize grip, a guild right-click menu, and Battle.net friends and a profession link on Forever. It also fixes the surprise reload.

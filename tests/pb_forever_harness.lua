@@ -1250,7 +1250,7 @@ rawset(GameTooltip, "AddLine", nil)                            -- F21 captured i
 rawset(GameTooltip, "Show", nil)
 local posts = 0
 for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then posts = posts + 1 end end
-EXPECT(posts == 4, "item tooltip post-calls: " .. posts)   -- Used in, Craftable by, Held by, Disenchants into
+EXPECT(posts == 5, "item tooltip post-calls: " .. posts)   -- Used in, Craftable by, Held by, Disenchants into, Fill cost (TEST-c)
 local function has(lines, text)
     for _, l in ipairs(lines) do if type(l) == "string" and l:find(text, 1, true) then return l end end
 end
@@ -4621,7 +4621,8 @@ do
     local osrc = assert(io.open(PB_BASE .. "/UI/OrdersPanel.lua")):read("*a")
     EXPECT(tsrc:find("addon.UI:AfterDrag(fr, { self.calcPanel })", 1, true)
            and msrc:find("UI:AfterDrag(fr, UI.scaleFollowers)", 1, true), "a window's drag does not end with AfterDrag")
-    EXPECT(select(2, tsrc:gsub("UpdateSideClamp%(self%.frame", "")) == 2
+    -- the calculator's show and hide, and its Price columns widening it (2.1.0)
+    EXPECT(select(2, tsrc:gsub("UpdateSideClamp%(self%.frame", "")) == 3
            and select(2, osrc:gsub("UpdateSideClamp%(addon%.UI%.frame", "")) == 4,
            "a side panel's show or hide does not update the clamp area")
 end
@@ -4755,4 +4756,1385 @@ do
 end
 print("  PASS F78 login line: plain in the repo, the test label when a test zip sets addon.BUILD")
 
-print("ALL FOREVER TESTS PASS (78)")
+-- F79: prices (Prices.lua, 2.1.0). Handstitched Leather Cloak: 2 Light
+-- Leather (crafted from 3 Ruined Leather Scraps with a known recipe) and 1
+-- Coarse Thread (a vendor sells it, 10c in the baked table).
+do
+    local PB = ProfBuddy
+    local P, S = PB.Prices, PB.db.settings
+    local TSF = PB.TradeSkillFrame
+    local function plain(t)
+        return ((t or ""):gsub("|T[^|]*|t", function(icon)
+            return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c"
+        end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+    end
+    EXPECT(S.showPrices == true and S.priceAuctionator == true and S.priceTSM == true
+           and S.priceTSMSource == "DBMarket" and S.priceStaleDays == 7 and S.priceIntermediates == "both",
+           "price settings defaults")
+    for _, toc in ipairs({ "ProfessionBuddy_Forever.toc", "ProfessionBuddy_Mainline.toc" }) do
+        local src = assert(io.open(PB_BASE .. "/" .. toc)):read("*a")
+        EXPECT(src:find("## OptionalDeps: Auctionator, TradeSkillMaster", 1, true)
+               and src:find("\nData/Forever/VendorPrices.lua", 1, true) and src:find("\nPrices.lua", 1, true)
+               and not src:find("\nData/VendorPrices.lua", 1, true), toc .. ": prices files or OptionalDeps")
+    end
+    EXPECT(PB.VendorPrices[2320] == 10 and PB.VendorPrices[2321] == 100 and PB.VendorPrices[2318] == nil,
+           "baked Forever vendor prices")
+    EXPECT(plain(P:Money(12345)) == "1g 23s 45c" and plain(P:Money(5)) == "5c" and plain(P:Money(0)) == "0c"
+           and plain(P:Money(12345, true)) == "1g 23s" and plain(P:Money(12399, true)) == "1g 24s"
+           and plain(P:SignedMoney(-150)) == "-1s 50c" and plain(P:SignedMoney(85)) == "+85c", "money text")
+
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+    TSF.state.showTab, TSF.state.searchText = "known", ""
+    TSF:RefreshRecipeList()
+    local function detail(name)
+        TSF.state.selected = name
+        TSF:RefreshDetailPanel()
+        return TSF.detPrice:IsShown() and plain(TSF.detPrice:GetText()) or nil, TSF.detPriceHover.result
+    end
+    local cloak = "Handstitched Leather Cloak"
+
+    -- F21's Test Vendor sells Light Leather (55c, unlimited), so PB has
+    -- recorded it as a vendor price already
+    EXPECT(PB.db.prices.vendor[2318].p == 55, "F21's vendor Light Leather not recorded")
+    P:ClearRecorded()
+    -- neither Auctionator nor TSM, nothing recorded: the thread from the
+    -- baked table, the leather has no price
+    local line, r = detail(cloak)
+    EXPECT(line == "Cost: 10c+ (1 material has no price)", "no auction prices: " .. tostring(line))
+    EXPECT(r.missing == 1 and r.missingNames[1] == "Light Leather" and r.profit == nil, "missing material named")
+
+    -- Auctionator: leather 50c (2 days old), scraps 10c, the cloak 3s (10
+    -- days old, past the 7-day limit). Crafting the leather (3 x 10c) is
+    -- cheaper than buying it. Profit = 3s less 5%, less 70c.
+    local AUC = { [2318] = 50, [2934] = 10, [7276] = 300, [2320] = 25 }
+    local AGE = { [2318] = 2, [7276] = 10 }
+    local calls = {}
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(caller, id) calls[#calls + 1] = caller; return AUC[id] end,
+        GetAuctionAgeByItemID = function(caller, id) return AGE[id] end,
+    } } }
+    line, r = detail(cloak)
+    EXPECT(line == "Cost: 70c   Sells: 3s   Profit: +2s 15c", "Auctionator: " .. tostring(line))
+    EXPECT(TSF.detPrice:GetText():find("|cff808080" .. P:Money(300) .. "|r", 1, true), "an old sale price is not gray")
+    EXPECT(calls[1] == "ProfessionBuddy", "Auctionator called without PB's name")
+    local leather = r.parts[1].price
+    EXPECT(leather.buy == 50 and leather.buySource == "Auctionator" and leather.craft == 30 and leather.used == "craft"
+           and leather.unit == 30, "Light Leather buy 50 / craft 30")
+    -- a vendor material is never priced above the vendor (25c at auction, 10c vendor)
+    local thread = r.parts[2].price
+    EXPECT(thread.unit == 10 and thread.buySource == "vendor", "Coarse Thread above the vendor price")
+    AUC[2320] = 5
+    EXPECT(P:MaterialPrice(2320).unit == 5, "an auction price below the vendor's lost")
+    AUC[2320] = 25
+    -- the tooltip: both prices for the crafted leather, the cheaper bright;
+    -- "Cheaper price only" shows the one used
+    local lines = {}
+    local tt = { AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
+                 AddDoubleLine = function(_, a, b) lines[#lines + 1] = plain(a) .. " = " .. plain(b) end }
+    P:FillTooltip(tt, r)
+    local tip = table.concat(lines, "\n")
+    EXPECT(tip:find("2 x Light Leather = buy 1s (Auctionator, 2 days old)  craft 60c", 1, true)
+           and tip:find("1 x Coarse Thread = 10c (vendor)", 1, true)
+           and tip:find("Sells at auction = 3s (Auctionator, 10 days old)", 1, true)
+           and tip:find("Profit = +2s 15c", 1, true)
+           and tip:find("Auction price less the 5% auction house cut, less the cost.", 1, true), "price tooltip:\n" .. tip)
+    lines = {}
+    P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = t end,
+                    AddDoubleLine = function(_, a, b) lines[#lines + 1] = a .. " = " .. b end }, r)
+    -- the unused price is tan, not gray: gray only means an old price
+    EXPECT(table.concat(lines, "\n"):find(P.TAN .. "buy " .. P:Money(100), 1, true)
+           and table.concat(lines, "\n"):find("|cffffffffcraft " .. P:Money(60), 1, true), "the cheaper is not the bright one")
+    S.priceIntermediates = "cheaper"
+    lines = {}
+    P:FillTooltip(tt, r)
+    EXPECT(table.concat(lines, "\n"):find("2 x Light Leather = craft 60c", 1, true), "cheaper only:\n" .. table.concat(lines, "\n"))
+    S.priceIntermediates = "both"
+
+    -- TSM when Auctionator is switched off: the typed price source, i:<id>
+    local asked = {}
+    TSM_API = { GetCustomPriceValue = function(src, item) asked[#asked + 1] = src .. " " .. item
+        return ({ ["i:2318"] = 40, ["i:2934"] = 20, ["i:7276"] = 500 })[item] end }
+    S.priceAuctionator = false
+    S.priceTSMSource = " DBMinBuyout "
+    line = detail(cloak)
+    EXPECT(asked[1] == "DBMinBuyout i:2318", "TSM asked: " .. tostring(asked[1]))
+    EXPECT(line == "Cost: 90c   Sells: 5s   Profit: +3s 85c", "TSM: " .. tostring(line))
+    S.priceTSMSource = "DBMarket"
+    -- both off: PB's recorded prices (3 days old), the vendor; the cloak
+    -- falls back to the vendor's price
+    S.priceTSM = false
+    local house = P:HouseKey()
+    EXPECT(house == "Realm-Horde", "house key " .. house)
+    P:Store().auction[house] = { [2934] = { p = 12, t = time() - 3 * 86400 } }
+    local keepItem = C_Item.GetItemInfo
+    C_Item.GetItemInfo = function(id) if id == 7276 then return "Cloak", nil, 1, 5, 1, "Armor", "Cloth", 1, "", 1, 64 end end
+    line, r = detail(cloak)
+    EXPECT(line == "Cost: 82c   Sells: 64c (vendor)   Profit: -18c", "recorded + vendor: " .. tostring(line))
+    EXPECT(r.parts[1].price.craftParts[1].price.buySource == "PB" and math.floor(r.parts[1].price.craftParts[1].price.age) == 3,
+           "recorded price source and age")
+    C_Item.GetItemInfo = keepItem
+    P:Store().auction[house] = nil
+    S.priceAuctionator, S.priceTSM = true, true
+
+    -- vendors: a material sold for money with unlimited stock is recorded
+    -- per item (a stack of 4 for 36c is 9c each) and beats the baked price;
+    -- limited stock, a token price and a pattern are not recorded
+    MERCHANT_OPEN(90105)
+    MERCHANT_CLOSE()
+    local V = PB.db.prices.vendor
+    EXPECT(V[2320] and V[2320].p == 9 and V[2321] == nil and V[2678] == nil and V[5083] == nil,
+           "vendor prices recorded: " .. tostring(V[2320] and V[2320].p))
+    EXPECT(P:VendorBuy(2320) == 9, "a recorded vendor price did not beat the baked one")
+    line = detail(cloak)
+    EXPECT(line == "Cost: 69c   Sells: 3s   Profit: +2s 16c", "recorded vendor price: " .. tostring(line))
+
+    -- an enchant (no item): cost only
+    C_TradeSkillUI.OpenTradeSkill(333)
+    TS_LIST_READY()
+    FLUSH()
+    TSF.state.showTab = "known"
+    TSF:RefreshRecipeList()
+    AUC[10940] = 120
+    line, r = detail("Enchant Bracer - Minor Stamina")
+    EXPECT(line == "Cost: 2s 40c" and r.itemID == nil, "enchant: " .. tostring(line))
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+    TSF.state.showTab = "known"
+    TSF:RefreshRecipeList()
+
+    -- the Material Calculator: Price and Cost columns widen it; To buy is
+    -- the shopping list's shortfall
+    TSF.state.selected = cloak
+    TSF:RefreshDetailPanel()
+    TSF.qtyBox:SetText("2")
+    if not TSF.calcPanel then TSF:BuildCalcPanel() end
+    local calcW
+    rawset(TSF.calcPanel, "SetWidth", function(_, w) calcW = w end)
+    rawset(TSF.calcPanel, "GetWidth", function() return calcW end)
+    TSF:RefreshCalcPanel()
+    EXPECT(TSF.calcPanel:GetWidth() == 404 and TSF.calcCols.price:IsShown(), "calculator not widened for prices")
+    local rows = {}
+    for _, row in ipairs(TSF.calcRows) do
+        if row:IsShown() and row.itemID then
+            rows[#rows + 1] = row.itemID .. " " .. plain(row.priceText:GetText()) .. " " .. plain(row.costText:GetText())
+        end
+    end
+    local summary = plain(TSF.calcSummary:GetText())
+    EXPECT(table.concat(rows, "|"):find("2318 30c 1s 20c", 1, true) and table.concat(rows, "|"):find("2320 9c 18c", 1, true),
+           "calculator rows: " .. table.concat(rows, "|"))
+    -- the character has the Light Leather, so the shopping list is the thread
+    EXPECT(summary:find("To buy: 18c   All materials: 18c", 1, true), "calculator summary: " .. summary)
+    -- one thread in the bags: To buy is the one still needed
+    local myInv = PB.db.characters[PB:PlayerKey()].inventory
+    local keepThread = myInv.bags[2320]
+    myInv.bags[2320] = 1
+    TSF:RefreshCalcPanel()
+    summary = plain(TSF.calcSummary:GetText())
+    EXPECT(summary:find("To buy: 9c   All materials: 18c", 1, true), "calculator with a thread in the bags: " .. summary)
+    myInv.bags[2320] = keepThread
+    TSF:RefreshCalcPanel()
+    -- a material with no price: "?" and the count
+    local keepBaked, keepSeen = PB.VendorPrices[2320], PB.db.prices.vendor[2320]
+    PB.VendorPrices[2320], PB.db.prices.vendor[2320], AUC[2320] = nil, nil, nil
+    TSF:RefreshCalcPanel()
+    summary = plain(TSF.calcSummary:GetText())
+    EXPECT(summary:find("To buy: ?   All materials: ?\n(1 material has no price)", 1, true), "missing in calculator: " .. summary)
+    PB.VendorPrices[2320], PB.db.prices.vendor[2320], AUC[2320] = keepBaked, keepSeen, 25
+
+    -- Show prices off: no line, the calculator back to its width
+    S.showPrices = false
+    line = detail(cloak)
+    TSF:RefreshCalcPanel()
+    EXPECT(line == nil and calcW == 280 and not TSF.calcCols.price:IsShown()
+           and not plain(TSF.calcSummary:GetText()):find("To buy", 1, true), "Show prices off")
+    S.showPrices = true
+
+    -- Settings: the Prices section, Auctionator and TSM gray when not installed
+    Auctionator, TSM_API = nil, nil
+    EXPECT(TSF.showPricesCB and TSF.priceAucCB and TSF.priceTSMCB and TSF.priceTSMBox and TSF.priceStaleDD
+           and TSF.priceInterDD and TSF.priceClearBtn, "Settings > Prices controls")
+    EXPECT(not TSF.priceAucCB:IsEnabled() and not TSF.priceTSMCB:IsEnabled(), "Auctionator / TSM box usable while not installed")
+    local tsrc = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(tsrc:find('"Auctionator prices (not installed)"', 1, true) and tsrc:find('"Prices turn gray after: "', 1, true),
+           "Settings labels")
+    P:ClearRecorded()
+    EXPECT(PB.db.prices == nil, "Clear recorded prices")
+    TSF.calcPanel:Hide()
+    rawset(TSF.calcPanel, "SetWidth", nil)
+    rawset(TSF.calcPanel, "GetWidth", nil)
+end
+print("  PASS F79 prices: vendor table, Auctionator (PB's name, ages, gray when old), TSM with the typed source, PB's recorded prices, vendor cap, crafted material at the cheaper of buy and craft, missing materials named, 5% cut, vendor sale fallback, enchant cost only; vendors recorded per item (unlimited, money only); calculator columns and To buy; Show prices off; Settings")
+
+-- F80: TEST-b (2.1.0). Sale price settings, the list's Profit column,
+-- sort and loss filter, plain clicks kept from other addons, the TSM box
+-- on its own line, K in combat, and auction prices PB records itself
+-- (browse, Scan my materials, full scan, neutral towns, the ProfessionBuddy tab).
+do
+    local PB = ProfBuddy
+    local P, S, TSF, AP = PB.Prices, PB.db.settings, PB.TradeSkillFrame, PB.AuctionPrices
+    local st = TSF.state
+    local function plain(t)
+        return ((t or ""):gsub("|T[^|]*|t", function(icon)
+            return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c"
+        end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+    end
+    P:ClearRecorded()
+    local AUC = { [2318] = 50, [2934] = 10, [7276] = 300, [2302] = 10, [2320] = 25 }
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(_, id) return AUC[id] end,
+        GetAuctionAgeByItemID = function() return 0 end,
+    } } }
+    local SELL, BOP = { [7276] = 400, [2318] = 5 }, {}
+    local keepItem = C_Item.GetItemInfo
+    C_Item.GetItemInfo = function(id)
+        if SELL[id] then return "x", nil, 1, 5, 1, "Armor", "Cloth", 1, "", 1, SELL[id], 4, 1, BOP[id] and 1 or 2 end
+    end
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+    st.showTab, st.searchText, st.sortBy, st.sortAsc = "known", "", "Category", true
+    TSF:RefreshRecipeList()
+    local cloak = "Handstitched Leather Cloak"
+    local function line(name)
+        st.selected = name or cloak
+        TSF:RefreshDetailPanel()
+        return plain(TSF.detPrice:GetText())
+    end
+    -- defaults: both sale prices, profit from the auction price (3s less 5%, less 70c)
+    EXPECT(S.priceVendorSell == true and S.priceBetterSale == false and S.priceListProfit == false
+           and S.priceHideLoss == false, "sale and list settings defaults")
+    EXPECT(line() == "Cost: 70c   Sells: 3s, vendor 4s   Profit: +2s 15c", "both sale prices: " .. line())
+    -- only the better: the vendor's 4s beats 3s less 5%
+    S.priceBetterSale = true
+    local r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
+    EXPECT(line() == "Cost: 70c   Sells: 4s (vendor)   Profit: +3s 30c" and r.profitFrom == "vendor", "better sale price: " .. line())
+    AUC[7276] = 500
+    EXPECT(line() == "Cost: 70c   Sells: 5s (auction)   Profit: +4s 05c" or line() == "Cost: 70c   Sells: 5s (auction)   Profit: +4s 5c",
+           "better is the auction price: " .. line())
+    AUC[7276] = 300
+    -- no vendor sale price anywhere
+    S.priceVendorSell = false
+    r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
+    EXPECT(line() == "Cost: 70c   Sells: 3s   Profit: +2s 15c" and r.vendorSell == nil, "vendor sale price off: " .. line())
+    local lines = {}
+    P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
+                    AddDoubleLine = function(_, a, b) lines[#lines + 1] = plain(a) .. " = " .. plain(b) end }, r)
+    EXPECT(not table.concat(lines, "\n"):find("Vendor pays", 1, true), "vendor price in the tooltip while off")
+    S.priceVendorSell, S.priceBetterSale = true, false
+    -- Settings: the better box is gray while the vendor box is off
+    local vcb = TSF.priceVendorSellCB
+    rawset(vcb, "GetChecked", function() return false end)
+    vcb:GetScript("OnClick")(vcb)
+    EXPECT(S.priceVendorSell == false and not TSF.priceBetterCB:IsEnabled(), "better box usable with the vendor box off")
+    rawset(vcb, "GetChecked", function() return true end)
+    vcb:GetScript("OnClick")(vcb)
+    EXPECT(S.priceVendorSell == true and TSF.priceBetterCB:IsEnabled(), "better box gray with the vendor box on")
+    rawset(vcb, "GetChecked", nil)
+    -- the TSM price source sits on its own line, after its label
+    EXPECT(rawget(TSF.priceTSMBox, "_lastPoint")[2] == TSF.priceTSMLabel, "TSM box not placed after its own label")
+
+    -- the recipe list: Profit column, Profit sort, Hide crafts at a loss
+    local function rowsText()
+        local out = {}
+        for _, row in ipairs(TSF.listRows) do
+            if row:IsShown() and rawget(row.nameText, "_text") then
+                out[#out + 1] = plain(rawget(row.nameText, "_text")) .. " | " .. plain(rawget(row.rightText, "_text") or "")
+            end
+        end
+        return table.concat(out, "\n")
+    end
+    S.priceListProfit = true
+    st.sortBy, st.sortAsc = "Profit", true
+    TSF:RefreshRecipeList()
+    local text = rowsText()
+    local iCloak = text:find("Handstitched Leather Cloak | +2s 15c", 1, true)
+    local iBoots = text:find("Handstitched Leather Boots | -", 1, true)
+    EXPECT(iCloak and iBoots and iCloak < iBoots, "Profit column or sort:\n" .. text)
+    EXPECT(text:find("Light Armor Kit | - ", 1, true), "a recipe with no profit has no dash:\n" .. text)
+    S.priceHideLoss = true
+    TSF:RefreshRecipeList()
+    local found = false
+    for _, e in ipairs(st.recipes) do if e.name == "Handstitched Leather Boots" then found = true end end
+    EXPECT(not found, "a craft at a loss still listed")
+    S.priceHideLoss, S.priceListProfit = false, false
+    st.sortBy = "Category"
+    TSF:RefreshRecipeList()
+    EXPECT(not rowsText():find("+2s 15c", 1, true), "Profit column with the box off")
+
+    -- TEST-b2, BoP (guild): a product that binds when picked up has no
+    -- auction price (Auctionator still has 3s for it), only the vendor's;
+    -- a gray BoP in the list, last in the Profit sort, and hidden at a loss
+    BOP[7276] = true
+    r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
+    EXPECT(r.bop and r.sell == nil and line() == "Cost: 70c   Sells: 4s (vendor, BoP)   Profit: +3s 30c",
+           "BoP detail line: " .. line())
+    lines = {}
+    P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
+                    AddDoubleLine = function(_, a, b) lines[#lines + 1] = plain(a) .. " = " .. plain(b) end }, r)
+    local tip = table.concat(lines, "\n")
+    EXPECT(tip:find("Binds when picked up", 1, true) and not tip:find("Sells at auction", 1, true)
+           and tip:find("Vendor price less the cost.", 1, true), "BoP tooltip:\n" .. tip)
+    S.priceVendorSell = false
+    EXPECT(line() == "Cost: 70c   BoP", "BoP with the vendor price off: " .. line())
+    S.priceVendorSell = true
+    S.priceListProfit = true
+    st.sortBy, st.sortAsc = "Profit", true
+    TSF:RefreshRecipeList()
+    text = rowsText()
+    iCloak = text:find("Handstitched Leather Cloak | BoP", 1, true)
+    iBoots = text:find("Handstitched Leather Boots | -", 1, true)
+    EXPECT(iCloak and iBoots and iBoots < iCloak, "BoP not shown or not last in the Profit sort:\n" .. text)
+    S.priceHideLoss = true
+    TSF:RefreshRecipeList()
+    found = false
+    for _, e in ipairs(st.recipes) do if e.name == cloak then found = true end end
+    EXPECT(found, "a BoP craft at a profit was hidden")
+    SELL[7276] = 10
+    TSF:RefreshRecipeList()
+    found = false
+    for _, e in ipairs(st.recipes) do if e.name == cloak then found = true end end
+    EXPECT(not found, "a BoP craft at a loss still listed")
+    SELL[7276], BOP[7276] = 400, nil
+    S.priceHideLoss, S.priceListProfit = false, false
+    st.sortBy = "Category"
+    TSF:RefreshRecipeList()
+
+    ;(function() -- its own function: F80's block is at Lua's 200-locals limit
+    -- TEST-b2, BoP materials: never an auction price (Auctionator has 25c
+    -- for the thread and 50c for the leather). A crafted one keeps its craft
+    -- cost; one nothing prices reads "? (BoP)" and "binds when picked up"
+    -- instead of "has no price".
+    SELL[2318], SELL[2320] = 5, 1
+    BOP[2318], BOP[2320] = true, true
+    local mp = P:MaterialPrice(2318)
+    EXPECT(mp.bop and mp.buy == nil and mp.used == "craft" and mp.unit == 30,
+           "a crafted BoP material: " .. tostring(mp.buy) .. " " .. tostring(mp.used) .. " " .. tostring(mp.unit))
+    local keepVP = PB.VendorPrices[2320]
+    PB.VendorPrices[2320] = nil
+    mp = P:MaterialPrice(2320)
+    EXPECT(mp.bop and mp.unit == nil and mp.buy == nil, "a BoP material kept an auction price")
+    EXPECT(plain(P:MaterialText(mp)) == "? (BoP)", "BoP material text: " .. plain(P:MaterialText(mp)))
+    EXPECT(line() == "Cost: 60c+ (1 material binds when picked up)   Sells: 3s, vendor 4s", "BoP material line: " .. line())
+    r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
+    lines = {}
+    P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
+                    AddDoubleLine = function(_, a, b) lines[#lines + 1] = plain(a) .. " = " .. plain(b) end }, r)
+    tip = table.concat(lines, "\n")
+    EXPECT(tip:find("1 x Coarse Thread = ? (BoP)", 1, true)
+           and tip:find("1 material binds when picked up: Coarse Thread. It can't be bought.", 1, true)
+           and tip:find("No profit shown: 1 material binds when picked up.", 1, true)
+           and not tip:find("has no price", 1, true), "BoP material tooltip:\n" .. tip)
+    EXPECT(P:MissingText(2, 1) == "1 material has no price, 1 material binds when picked up"
+           and P:MissingText(3, 3) == "3 materials bind when picked up" and P:MissingText(2) == "2 materials have no price",
+           "missing texts")
+    -- the Material Calculator: BoP in its price cells, and in the summary
+    if not TSF.calcPanel then TSF:BuildCalcPanel() end
+    TSF.qtyBox:SetText("1")
+    TSF:RefreshCalcPanel()
+    local calcRows = {}
+    for _, row in ipairs(TSF.calcRows) do
+        if row:IsShown() and row.itemID then
+            calcRows[#calcRows + 1] = row.itemID .. " " .. plain(row.priceText:GetText()) .. " " .. plain(row.costText:GetText())
+        end
+    end
+    local sum = plain(TSF.calcSummary:GetText())
+    EXPECT(table.concat(calcRows, "|"):find("2320 BoP BoP", 1, true) and sum:find("(1 material binds when picked up)", 1, true),
+           "calculator BoP: " .. table.concat(calcRows, "|") .. " / " .. sum)
+    -- an item the game hasn't loaded yet: PB asks for it, and the price
+    -- line fills in BoP by itself shortly after
+    local LOADING = { [2320] = true }
+    local keepGII, keepReq = C_Item.GetItemInfo, C_Item.RequestLoadItemDataByID
+    local asked = false
+    C_Item.GetItemInfo = function(id) if LOADING[id] then return nil end return keepGII(id) end
+    C_Item.RequestLoadItemDataByID = function(id) if id == 2320 then asked = true end end
+    st.selected = cloak
+    TSF:RefreshDetailPanel()
+    -- until it loads PB can't tell it binds, so Auctionator's 25c shows
+    EXPECT(asked and plain(TSF.detPrice:GetText()):find("Cost: 85c", 1, true),
+           "an unloaded item: not asked for, or the line: " .. plain(TSF.detPrice:GetText()))
+    LOADING[2320] = nil
+    FLUSH()
+    EXPECT(plain(TSF.detPrice:GetText()):find("(1 material binds when picked up)", 1, true),
+           "the price line did not fill in BoP once the item loaded: " .. plain(TSF.detPrice:GetText()))
+    -- an item that never loads: three more looks, then PB stops
+    local looks = 0
+    LOADING[2320] = true
+    C_Item.RequestLoadItemDataByID = function(id) if id == 2320 then looks = looks + 1 end end
+    TSF:RefreshDetailPanel()
+    FLUSH()
+    EXPECT(looks == 4, "looks for an item that never loads: " .. looks)
+    C_Item.GetItemInfo, C_Item.RequestLoadItemDataByID = keepGII, keepReq
+    if TSF.calcPanel then TSF.calcPanel:Hide() end
+    PB.VendorPrices[2320] = keepVP
+    SELL[2318], SELL[2320], BOP[2318], BOP[2320] = 5, nil, nil, nil
+    end)()
+
+    -- plain clicks stay with PB: another addon's item-click hook (TSM's
+    -- Crafting window) cannot take them; with a modifier held they go there
+    local handled = 0
+    local keepHMIC = HandleModifiedItemClick
+    HandleModifiedItemClick = function() handled = handled + 1; return true end
+    local idx
+    for k, e in ipairs(st.recipes) do if e.name == cloak then idx = k end end
+    st.recipes[idx].itemLink = "|cffffffff|Hitem:7276::::::::|h[Handstitched Leather Cloak]|h|r"
+    st.scrollOffset = idx - 1
+    TSF:UpdateListRows()
+    st.selected = "Light Armor Kit"
+    MODIFIER_DOWN = false
+    TSF.listRows[1]:GetScript("OnClick")(TSF.listRows[1])
+    EXPECT(handled == 0 and st.selected == cloak, "a plain click went to the item-click handler")
+    st.selected = "Light Armor Kit"
+    MODIFIER_DOWN = true
+    TSF.listRows[1]:GetScript("OnClick")(TSF.listRows[1])
+    EXPECT(handled == 1 and st.selected == "Light Armor Kit", "a modified click did not go to the item-click handler")
+    MODIFIER_DOWN = false
+    HandleModifiedItemClick = keepHMIC
+    st.scrollOffset = 0
+    C_Item.GetItemInfo = keepItem
+
+    -- K in combat (WoW: Forever, option C): the book's own Show in combat,
+    -- PB's gate back after it; a profession opened meanwhile hides the book
+    local PF = ProfessionsFrame
+    local gate = rawget(PF, "Show")
+    EXPECT(type(gate) == "function", "ProfessionsFrame has no PB gate")
+    FIRE("PLAYER_REGEN_DISABLED")
+    EXPECT(rawget(PF, "Show") == nil, "PB's gate still on the book in combat")
+    rawset(PF, "_shown", true)
+    FIRE("PLAYER_REGEN_ENABLED")
+    EXPECT(rawget(PF, "Show") == gate and not PF:IsShown(), "after combat: gate not back, or the book over an open profession")
+    C_TradeSkillUI.CloseTradeSkill()
+    FLUSH()
+    FIRE("PLAYER_REGEN_DISABLED")
+    rawset(PF, "_shown", true)
+    PF.BookPage:Hide(); PF.CraftingPage:Show()
+    FIRE("PLAYER_REGEN_ENABLED")
+    EXPECT(PF:IsShown() and PF.BookPage:IsShown() and not PF.CraftingPage:IsShown(),
+           "a book opened in combat did not switch to the book page after it")
+    PF:Hide()
+
+    -- auction prices PB records (WoW: Forever, the modern auction house)
+    local BROWSE, COMM, ITEMS, REPL = {}, {}, {}, {}
+    local READY, sent, replicated = true, {}, false
+    C_AuctionHouse = {
+        GetBrowseResults = function() return BROWSE end,
+        GetNumCommoditySearchResults = function(id) return #(COMM[id] or {}) end,
+        GetCommoditySearchResultInfo = function(id, i)
+            local p = COMM[id] and COMM[id][i]
+            return p and { itemID = id, quantity = 5, unitPrice = p } or nil
+        end,
+        GetNumItemSearchResults = function(key) return #(ITEMS[key.itemID] or {}) end,
+        GetItemSearchResultInfo = function(key, i)
+            local e = ITEMS[key.itemID][i]
+            return { itemKey = key, quantity = e[1], buyoutAmount = e[2] }
+        end,
+        IsThrottledMessageSystemReady = function() return READY end,
+        MakeItemKey = function(id) return { itemID = id, itemLevel = 0, itemSuffix = 0, battlePetSpeciesID = 0 } end,
+        SendSearchQuery = function(key, sorts)
+            sent[#sent + 1] = key.itemID .. ":" .. tostring(sorts[1].sortOrder) .. ":" .. tostring(sorts[1].reverseSort)
+            if COMM[key.itemID] then FIRE("COMMODITY_SEARCH_RESULTS_UPDATED", key.itemID)
+            elseif ITEMS[key.itemID] then FIRE("ITEM_SEARCH_RESULTS_UPDATED", key) end
+        end,
+        ReplicateItems = function() replicated = true end,
+        GetNumReplicateItems = function() return #REPL end,
+        GetReplicateItemInfo = function(i)
+            local e = REPL[i + 1]
+            return nil, nil, e[2], 1, true, 1, nil, 0, 0, e[3], 0, nil, nil, nil, nil, 0, e[1], true
+        end,
+    }
+    Enum = Enum or {}
+    Enum.AuctionHouseSortOrder = Enum.AuctionHouseSortOrder or { Price = 0 }
+    local AHF = CreateFrame("Frame", "AuctionHouseFrame", UIParent)
+    -- what LibAHTab reads: Blizzard's own tabs and the display mode
+    AHF.Tabs = { CreateFrame("Button", "AHTabBuy", AHF), CreateFrame("Button", "AHTabSell", AHF) }
+    rawset(AHF, "SetDisplayMode", function(f, mode) rawset(f, "_mode", mode) end)
+    rawset(AHF, "SetTitle", function(f, t) rawset(f, "_title", t) end)
+    local popup
+    local keepPopup = StaticPopup_Show
+    StaticPopup_Show = function(n) popup = n end
+    Auctionator = nil
+    -- WoW: Forever's auctioneer reports no faction (TEST-b: nothing was
+    -- recorded); outside Booty Bay, Gadgetzan and Everlook PB records
+    local baseFaction = UnitFactionGroup
+    UnitFactionGroup = function(u) if u == "npc" then return nil end return baseFaction(u) end
+    local SUB = ""
+    local keepSub, keepZone, keepMap = GetSubZoneText, GetRealZoneText, rawget(_G, "C_Map")
+    GetSubZoneText = function() return SUB end
+    GetRealZoneText = function() return "Orgrimmar" end
+    local AREAS = { [35] = "Booty Bay", [976] = "Gadgetzan", [2255] = "Everlook" }
+    C_Map = setmetatable({ GetAreaInfo = function(id) return AREAS[id] end }, { __index = keepMap })
+    local house = P:HouseKey()
+    local function rec(id) local h = PB.db.prices and PB.db.prices.auction[house]; return h and h[id] and h[id].p end
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    -- the ProfessionBuddy tab, through LibAHTab, after Blizzard's tabs
+    local LAT = LibStub("LibAHTab-1-0", true)
+    EXPECT(LAT and AP.tab and AP.tab:IsShown() and LAT:GetButton("ProfessionBuddy") == AP.tab,
+           "no ProfessionBuddy tab with neither Auctionator nor TSM")
+    EXPECT(AP.panel and not AP.panel:IsShown(), "PB's page shown before its tab was clicked")
+    AP.tab:GetScript("OnClick")(AP.tab)
+    EXPECT(AP.panel:IsShown() and rawget(AHF, "_title") == "ProfessionBuddy", "PB's page not shown by its tab")
+    EXPECT(AP.panel.scan:GetText() == "Scan my materials" and AP.panel.full:GetText() == "Full scan", "PB's page buttons")
+    EXPECT(AP._record, "nothing recorded where the auctioneer reports no faction")
+    -- browsing: lowest per item this visit, items PB's recipes use or make only
+    BROWSE = { { itemKey = { itemID = 2934 }, minPrice = 12 }, { itemKey = { itemID = 99999 }, minPrice = 5 } }
+    FIRE("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+    EXPECT(rec(2934) == 12 and rec(99999) == nil, "browse prices: " .. tostring(rec(2934)))
+    FIRE("AUCTION_HOUSE_BROWSE_RESULTS_ADDED", { { itemKey = { itemID = 2934 }, minPrice = 15 } })
+    EXPECT(rec(2934) == 12, "a higher price replaced the lowest this visit")
+    FIRE("AUCTION_HOUSE_BROWSE_RESULTS_ADDED", { { itemKey = { itemID = 2934 }, minPrice = 11 } })
+    EXPECT(rec(2934) == 11, "a lower price not kept")
+    -- the recorded price is what PB now uses (Auctionator gone)
+    EXPECT(P:AuctionPrice(2934) == 11 and select(2, P:AuctionPrice(2934)) == "PB", "recorded price not used")
+    -- Scan my materials: one search at a time, cheapest first, only when the game takes one
+    COMM[2934] = { 9, 13 }
+    COMM[2320] = { 30 }
+    ITEMS[7276] = { { 1, 280 }, { 2, 500 } }
+    READY = false
+    AP:StartTargeted()
+    EXPECT(#sent == 0 and AP.panel.scan:GetText() == "Stop scan", "searched before the game was ready")
+    READY = true
+    FLUSH()
+    FLUSH()
+    EXPECT(#sent > 3 and sent[1]:match(":0:false$"), "scan searches: " .. table.concat(sent, ", "))
+    EXPECT(rec(2934) == 9 and rec(2320) == 30 and rec(7276) == 250, "scan prices: "
+           .. tostring(rec(2934)) .. " " .. tostring(rec(2320)) .. " " .. tostring(rec(7276)))
+    EXPECT(AP._scan == nil and AP.panel.scan:GetText() == "Scan my materials", "scan did not finish")
+    -- stopping
+    local n = #sent
+    READY = false
+    AP:StartTargeted()
+    AP:StopScan()
+    READY = true
+    FLUSH()
+    EXPECT(#sent == n, "a stopped scan kept searching")
+    -- full scan: behind a warning, then the whole house, read from index 0
+    AP.panel.full:GetScript("OnClick")(AP.panel.full)
+    EXPECT(popup == "PROFBUDDY_FULL_SCAN", "no warning before a full scan")
+    REPL = { { 2318, 4, 160 }, { 2318, 1, 35 }, { 12345, 1, 1 } }
+    FIRE("REPLICATE_ITEM_LIST_UPDATE")
+    EXPECT(rec(2318) == nil, "another addon's full scan was read")
+    StaticPopupDialogs.PROFBUDDY_FULL_SCAN.OnAccept()
+    EXPECT(replicated, "full scan not requested")
+    FIRE("REPLICATE_ITEM_LIST_UPDATE")
+    FLUSH()
+    EXPECT(rec(2318) == 35 and rec(12345) == nil, "full scan prices: " .. tostring(rec(2318)))
+    -- Auctionator switched on: the tab and PB's page go; recording carries on
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function() return nil end } } }
+    P:Changed()
+    EXPECT(not AP.tab:IsShown() and not AP.panel:IsShown(), "PB's tab shown with Auctionator on")
+    S.priceAuctionator = false
+    P:Changed()
+    EXPECT(AP.tab:IsShown(), "PB's tab not back with Auctionator switched off")
+    S.priceAuctionator = true
+    FIRE("AUCTION_HOUSE_CLOSED")
+    -- a neutral auction house is not recorded: in Booty Bay, Gadgetzan or
+    -- Everlook, or where the auctioneer reports a faction not yours
+    for _, town in ipairs({ "Booty Bay", "Gadgetzan", "Everlook" }) do
+        SUB = town
+        FIRE("AUCTION_HOUSE_SHOW")
+        FLUSH()
+        BROWSE = { { itemKey = { itemID = 2320 }, minPrice = 1 } }
+        FIRE("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+        EXPECT(not AP._record and rec(2320) == 30, town .. "'s auction house was recorded")
+        FIRE("AUCTION_HOUSE_CLOSED")
+    end
+    SUB = ""
+    UnitFactionGroup = function(u) if u == "npc" then return "Alliance" end return baseFaction(u) end
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    FIRE("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+    EXPECT(rec(2320) == 30, "an auctioneer of the other faction was recorded")
+    FIRE("AUCTION_HOUSE_CLOSED")
+    UnitFactionGroup = baseFaction
+    GetSubZoneText, GetRealZoneText, C_Map = keepSub, keepZone, keepMap
+    -- recorded prices older than 30 days go at login
+    PB.db.prices.auction[house][2934].t = time() - 31 * 86400
+    EXPECT(P:PruneRecorded() == 1 and rec(2934) == nil, "an old recorded price not pruned")
+    StaticPopup_Show = keepPopup
+    UnitFactionGroup = baseFaction
+    C_AuctionHouse, Auctionator = nil, nil
+    P:ClearRecorded()
+end
+print("  PASS F80 TEST-b: sale price settings, Profit column, sort and loss filter, BoP crafts and materials, plain clicks kept from TSM, TSM box line, K in combat, auction prices recorded (browse, scan, full scan, neutral towns, PB's auction house tab, pruning)")
+
+-- F81 TEST-b2: a profession that opens in combat (K in combat: Blizzard's
+-- book reopens the last profession) leaves Blizzard's window alone; the
+-- game blocks hiding it then. When combat ends it goes and PB's opens.
+do
+    local TSF = ProfBuddy.TradeSkillFrame
+    local PF = ProfessionsFrame
+    if TSF.frame:IsShown() then TSF.frame:Hide() end
+    C_TradeSkillUI.CloseTradeSkill()
+    FLUSH()
+    local keepICL = InCombatLockdown
+    FIRE("PLAYER_REGEN_DISABLED")
+    InCombatLockdown = function() return true end
+    local hides = 0
+    rawset(PF, "Hide", function(f) hides = hides + 1 end)
+    rawset(PF, "_shown", true)
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+    EXPECT(hides == 0 and PF:IsShown(), "Blizzard's window hidden in combat")
+    EXPECT(not TSF.frame:IsShown() and TSF._pendingOpen == "trade", "PB's window did not wait for combat to end")
+    InCombatLockdown = keepICL
+    rawset(PF, "Hide", nil)
+    FIRE("PLAYER_REGEN_ENABLED")
+    FLUSH()
+    EXPECT(not PF:IsShown() and TSF.frame:IsShown(), "after combat: Blizzard's window still up or PB's not open")
+    TSF.frame:Hide()
+    FLUSH()
+    -- combat starts after the profession opened but before its list
+    -- arrived: PB's window still opens when combat ends
+    C_TradeSkillUI.OpenTradeSkill(165)
+    FLUSH()
+    EXPECT(not TSF.frame:IsShown() and TSF._awaitingTradeList, "PB opened before its list arrived")
+    FIRE("PLAYER_REGEN_DISABLED")
+    InCombatLockdown = function() return true end
+    TS_LIST_READY()
+    FLUSH()
+    EXPECT(not TSF.frame:IsShown() and TSF._pendingOpen == "trade", "a list arriving in combat: PB's window did not wait")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED")
+    FLUSH()
+    EXPECT(TSF.frame:IsShown() and not PF:IsShown(), "a list arriving in combat: PB's window not open after combat")
+    TSF.frame:Hide()
+    FLUSH()
+end
+print("  PASS F81 TEST-b2: a profession opened in combat leaves Blizzard's window alone until combat ends, then PB's window opens; also when combat starts before the list arrives")
+
+-- F82 TEST-b3: the auction house tab reads PB when the tabs don't fit
+-- (Auctionator's four and TSM's ran past the window's edge), with a
+-- tooltip naming ProfessionBuddy; the full name comes back with room
+do
+    local AP = ProfBuddy.AuctionPrices
+    local AHF, tab = AuctionHouseFrame, AP.tab
+    EXPECT(tab and tab:GetText() == "ProfessionBuddy", "the tab before: " .. tostring(tab and tab:GetText()))
+    local R, W = 0, 0
+    rawset(AHF, "GetRight", function() return 975 end)
+    rawset(tab, "GetRight", function() return R end)
+    rawset(tab, "GetWidth", function() return W end)
+    R, W = 1030, 158
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    EXPECT(tab:IsShown() and tab:GetText() == "PB" and AP._tabShort, "crowded: the label is " .. tostring(tab:GetText()))
+    rawset(GameTooltip, "_text", nil)
+    tab._h.OnEnter(tab)
+    EXPECT(rawget(GameTooltip, "_text") == "ProfessionBuddy", "no ProfessionBuddy tooltip on the short tab")
+    GameTooltip:Show()
+    tab._h.OnLeave(tab)
+    EXPECT(not GameTooltip:IsShown() and not AP._tabTip, "the tab's tooltip stayed after leaving it")
+    FIRE("AUCTION_HOUSE_CLOSED")
+    -- still no room for the full name (900 - 70 + 158 = 988, past 975)
+    R, W = 900, 70
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    EXPECT(tab:GetText() == "PB", "the full name came back without room")
+    FIRE("AUCTION_HOUSE_CLOSED")
+    -- room again (800 - 70 + 158 = 888)
+    R, W = 800, 70
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    EXPECT(tab:GetText() == "ProfessionBuddy" and not AP._tabShort, "the full name did not come back with room")
+    rawset(GameTooltip, "_text", nil)
+    tab._h.OnEnter(tab)
+    EXPECT(rawget(GameTooltip, "_text") == nil, "a tooltip on the full-name tab")
+    FIRE("AUCTION_HOUSE_CLOSED")
+    rawset(AHF, "GetRight", nil); rawset(tab, "GetRight", nil); rawset(tab, "GetWidth", nil)
+end
+print("  PASS F82 TEST-b3: the auction house tab reads PB when the tabs don't fit, with a ProfessionBuddy tooltip; the full name comes back when it fits")
+
+-- F83 TEST-c items 9 and 3: closing with the X (or Escape, the same
+-- frame:Hide) saves the window state; states and window positions are
+-- kept across a reload per character, pulled back onto the screen; the
+-- Keep box is gray while Remember is off; keeping off clears them
+do
+    local PB = ProfBuddy
+    local TSF, UI, S = PB.TradeSkillFrame, PB.UI, PB.db.settings
+    local st = TSF.state
+    EXPECT(S.keepWindowState == true and S.rememberWindowState == true, "keep/remember defaults")
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    open()
+    local cats = {}
+    for _, r in ipairs(st.recipes) do if r.isHeader then cats[#cats + 1] = r.name end end
+    st.showTab, st.filterDiff, st.filterCat, st.sortBy = "known", "No Gray", cats[2] or cats[1], "Name"
+    TSF:RefreshRecipeList()
+    local cat = st.filterCat
+    TSF.frame:Hide(); FLUSH()                       -- the X button
+    open()
+    EXPECT(st.filterDiff == "No Gray" and st.filterCat == cat and st.sortBy == "Name",
+           "X close lost the state: " .. tostring(st.filterDiff) .. " " .. tostring(st.filterCat) .. " " .. tostring(st.sortBy))
+    -- Missing view and Source, closed with the X
+    st.showTab, st.filterSource = "missing", "Trainer"
+    TSF:RefreshRecipeList()
+    TSF.frame:Hide(); FLUSH()
+    open()
+    EXPECT(st.showTab == "missing" and st.filterSource == "Trainer", "X close lost View or Source")
+    st.showTab, st.filterSource = "known", "All"
+    TSF:RefreshRecipeList()
+    -- positions: the screen and the windows' sizes
+    rawset(UIParent, "GetWidth", function() return 1920 end)
+    rawset(UIParent, "GetHeight", function() return 1080 end)
+    local F = TSF.frame
+    rawset(F, "GetWidth", function() return 700 end)
+    rawset(F, "GetHeight", function() return 500 end)
+    rawset(F, "GetScale", function() return 1 end)
+    rawset(F, "GetLeft", function() return 300 end)
+    rawset(F, "GetTop", function() return 900 end)
+    F:GetScript("OnDragStop")(F)
+    local key = PB:PlayerKey()
+    local w = PB.db.windows[key]
+    EXPECT(w and w.pos and w.pos.profession and w.pos.profession.x == 300 and w.pos.profession.y == 900,
+           "drag end did not save the position")
+    -- logout: the states go into the saved settings
+    FIRE("PLAYER_LOGOUT")
+    EXPECT(type(w.states) == "table" and w.states["Leatherworking|self"]
+           and w.states["Leatherworking|self"].filterDiff == "No Gray", "states not kept at logout")
+    -- a new session: states and position come back
+    TSF.frame:Hide(); FLUSH()
+    TSF._savedStates, TSF._keptLoaded = {}, nil
+    rawset(F, "_pbPosRestored", false)
+    open()
+    EXPECT(st.filterDiff == "No Gray" and st.filterCat == cat, "states not back after a reload")
+    local lp = rawget(F, "_lastPoint")
+    EXPECT(lp and lp[1] == "TOPLEFT" and lp[2] == UIParent and lp[4] == 300 and lp[5] == 900,
+           "position not back after a reload: " .. tostring(lp and lp[4]) .. "," .. tostring(lp and lp[5]))
+    -- a smaller screen: pulled back on (1920 - 700, at least the height)
+    TSF.frame:Hide(); FLUSH()
+    w.pos.profession = { x = 5000, y = 99 }
+    rawset(F, "_pbPosRestored", false)
+    open()
+    lp = rawget(F, "_lastPoint")
+    EXPECT(lp[4] == 1220 and lp[5] == 500, "off-screen position not pulled back: " .. tostring(lp[4]) .. "," .. tostring(lp[5]))
+    -- the Keep box is gray while Remember is off
+    local rcb, kcb = TSF.rememberCB, TSF.keepCB
+    EXPECT(rcb and kcb and kcb:IsEnabled(), "Keep box missing or gray with Remember on")
+    rawset(rcb, "GetChecked", function() return false end)
+    rcb:GetScript("OnClick")(rcb)
+    EXPECT(S.rememberWindowState == false and not kcb:IsEnabled(), "Keep box usable with Remember off")
+    rawset(rcb, "GetChecked", function() return true end)
+    rcb:GetScript("OnClick")(rcb)
+    rawset(rcb, "GetChecked", nil)
+    EXPECT(S.rememberWindowState == true and kcb:IsEnabled(), "Keep box gray with Remember back on")
+    -- keeping off: nothing of this character's carries over
+    S.keepWindowState = false
+    FIRE("PLAYER_LOGOUT")
+    EXPECT(w.states == nil and w.pos == nil, "kept states or positions with keeping off")
+    S.keepWindowState = true
+    -- the main window keeps its position too
+    UI:Show()
+    local M = UI.frame
+    rawset(M, "GetScale", function() return 1 end)
+    rawset(M, "GetLeft", function() return 40 end)
+    rawset(M, "GetTop", function() return 700 end)
+    M:Hide()
+    EXPECT(PB.db.windows[key].pos and PB.db.windows[key].pos.main and PB.db.windows[key].pos.main.x == 40,
+           "the main window's position not saved on close")
+    for _, k in ipairs({ "GetWidth", "GetHeight", "GetScale", "GetLeft", "GetTop" }) do rawset(F, k, nil); rawset(M, k, nil) end
+    rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+end
+print("  PASS F83 TEST-c: X and Escape save the window state (View, Skill-up, Source, Type, Sort); states and positions kept across a reload per character, pulled onto the screen; Keep gray with Remember off; keeping off clears them; the main window's position")
+
+-- F84 TEST-c items 1 and 2 (N1, N2): a bottom tab parks the profession
+-- (session kept, state kept); Back brings it back; the park ends on the
+-- close event and when the main window closes (closing the session); the
+-- main window's strip is plain buttons on WoW: Forever and opens a
+-- profession by skill line; the tabs' content starts below it
+do
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local st = TSF.state
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local function closes() local n = 0; for _, c in ipairs(TS_CALLS) do if c == "CloseTradeSkill" then n = n + 1 end end; return n end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    EXPECT(UI.profStrip and UI.profStrip.secure == false and UI.backBtn, "no plain strip or Back button in the main window")
+    EXPECT(UI.CONTENT_TOP == 52, "tab content not below the strip")
+    EXPECT(UI.profStrip.byName.Leatherworking and not UI.profStrip.byName["Find Minerals"] and not UI.profStrip.byName.Poisons,
+           "the plain strip kept a cast-only profession")
+    open()
+    st.filterDiff = "No Gray"
+    TSF:RefreshRecipeList()
+    local before = closes()
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])        -- Characters
+    FLUSH()
+    EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "bottom tab: profession not parked or main window not shown")
+    EXPECT(closes() == before and TS.open == "Leatherworking", "parking closed the game's session")
+    EXPECT(TSF._parked and TSF._parked.prof == "Leatherworking" and UI.backBtn:IsShown()
+           and UI.backBtn:GetText() == "Back to Leatherworking", "no Back button: " .. tostring(UI.backBtn:GetText()))
+    EXPECT(UI.profStrip.byName.Leatherworking:IsShown(), "the strip has no Leatherworking icon")
+    UI.backBtn:GetScript("OnClick")(UI.backBtn)
+    FLUSH()
+    EXPECT(TSF.frame:IsShown() and not UI.frame:IsShown() and st.filterDiff == "No Gray" and not TSF._parked,
+           "Back did not bring the profession back as it was")
+    -- the game closes the parked session: the park ends
+    TSF.navTabs[2]:GetScript("OnClick")(TSF.navTabs[2])        -- Friends
+    FLUSH()
+    EXPECT(TSF._parked, "not parked from Friends")
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    EXPECT(not TSF._parked and not UI.backBtn:IsShown(), "the park outlived the game's close event")
+    -- closing the main window while parked closes the session (D2)
+    open()
+    TSF.navTabs[3]:GetScript("OnClick")(TSF.navTabs[3])        -- Guild
+    FLUSH()
+    EXPECT(TSF._parked and TS.open == "Leatherworking", "not parked from Guild")
+    before = closes()
+    UI:Hide()
+    FLUSH()
+    EXPECT(not TSF._parked and TS.open == nil and closes() == before + 1, "closing the main window left the session open")
+    -- the strip opens a profession by skill line, and the main window goes
+    UI:Show()
+    FLUSH()
+    local lw = UI.profStrip.byName.Leatherworking
+    lw:GetScript("OnClick")(lw)
+    TS_LIST_READY(); FLUSH()
+    EXPECT(TS.open == "Leatherworking" and TSF.frame:IsShown() and not UI.frame:IsShown(),
+           "the main window's Leatherworking icon did not open it")
+    -- WoW: Forever: the main window is never locked in combat
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    EXPECT(not UI:Locked(), "main window locked in combat on WoW: Forever")
+    InCombatLockdown = keepICL
+    TSF.frame:Hide(); FLUSH()
+end
+print("  PASS F84 TEST-c: a bottom tab parks the profession (session and state kept), Back brings it back, the park ends on the close event and closing the main window closes the session; the main window's plain strip opens a profession; content below the strip")
+
+-- F85 TEST-c item 6 (G1): a guildmate's profession with no recipes: PB
+-- asks, the icon reads as pending, and the profession opens when the
+-- reply arrives, once; no answer says so after the wait; stored recipes
+-- open at once and still ask
+do
+    local PB = ProfBuddy
+    local GP, C, S = PB.GuildPanel, PB.Comm, PB.db
+    local opened, asked = {}, {}
+    local keepReq, keepOpen = C.RequestGuildSync, PB.TradeSkillFrame.OpenWithCharacter
+    C.RequestGuildSync = function(_, key) asked[#asked + 1] = key end
+    PB.TradeSkillFrame.OpenWithCharacter = function(_, key, prof) opened[#opened + 1] = key .. "|" .. prof end
+    local HIR = PB:NormKey("Hircus Stone")
+    S.characters[HIR] = nil
+    PRINTS = {}
+    EXPECT(GP:AskThenOpen(HIR, "Tailoring") == false and #asked == 1 and #opened == 0, "no recipes: did not ask, or opened")
+    EXPECT(PRINTED("Asked Hircus Stone for their Tailoring recipes. They open when they arrive."), "no asked line")
+    EXPECT(GP:IsPending(HIR, "Tailoring") and not GP:IsPending(HIR, "Cooking"), "not pending")
+    S.characters[HIR] = { isRemote = true, lastSync = time(), professions = { Tailoring = { skillLevel = 80,
+        recipes = { ["Bolt of Linen Cloth"] = true } } } }
+    C:NotifyUIRefresh()
+    C:NotifyUIRefresh()
+    EXPECT(#opened == 1 and opened[1] == HIR .. "|Tailoring" and not GP:IsPending(HIR, "Tailoring"),
+           "the reply did not open the profession once: " .. #opened)
+    -- stored recipes: opens at once and still asks
+    opened, asked = {}, {}
+    EXPECT(GP:AskThenOpen(HIR, "Tailoring") == true and #opened == 1 and #asked == 1, "stored recipes did not open at once")
+    -- nobody answers: one line after the wait, then not pending
+    S.characters[HIR] = nil
+    GP:AskThenOpen(HIR, "Tailoring")
+    PRINTS = {}
+    FLUSH()
+    EXPECT(PRINTED("Hircus Stone didn't answer (offline or not running ProfessionBuddy).") and not GP:IsPending(HIR, "Tailoring"),
+           "no line when nobody answers")
+    C.RequestGuildSync, PB.TradeSkillFrame.OpenWithCharacter = keepReq, keepOpen
+end
+print("  PASS F85 TEST-c: G1, a guildmate's profession with no recipes asks, shows as pending, opens when the reply arrives (once); no answer says so; stored recipes open at once and still ask")
+
+-- F86 TEST-c item 8 (G2): the background fill asks online guildmates who
+-- run PB and have a profession page, no recipes first then the oldest,
+-- one every FILL_GAP seconds, each once; skips fresh, offline, asked in
+-- the last FILL_RETRY, and anyone pulled meanwhile; off with the setting;
+-- starts on a roster change
+do
+    local PB = ProfBuddy
+    local GP, C, S = PB.GuildPanel, PB.Comm, PB.db
+    local keep = { IsInGuild = IsInGuild, GetNumGuildMembers = GetNumGuildMembers, GetGuildRosterInfo = GetGuildRosterInfo }
+    local roster = {
+        { "Amy Stitch", true }, { "Ben Hide", true }, { "Cal Fresh", true },
+        { "Dot Away", false }, { "Eli Herb", true },
+    }
+    IsInGuild = function() return true end
+    GetNumGuildMembers = function() return #roster end
+    GetGuildRosterInfo = function(i) return roster[i][1], "Member", 1, 20, nil, nil, nil, nil, roster[i][2] end
+    C._guildSet = nil
+    local K = {}
+    for _, r in ipairs(roster) do K[r[1]] = PB:NormKey(r[1]) end
+    local now = time()
+    local function tailor(recipes, at)
+        return { isRemote = true, lastSync = at, professions = { Tailoring = { skillLevel = 80,
+            recipes = recipes and { ["Bolt of Linen Cloth"] = true } or nil } } }
+    end
+    S.characters[K["Amy Stitch"]] = tailor(false, 0)                 -- no recipes yet
+    S.characters[K["Ben Hide"]]   = tailor(true, now - 13 * 3600)     -- old
+    S.characters[K["Cal Fresh"]]  = tailor(true, now - 3600)          -- fresh
+    S.characters[K["Dot Away"]]   = tailor(false, 0)                  -- offline
+    S.characters[K["Eli Herb"]]   = { isRemote = true, professions = {} }   -- runs PB, no professions
+    local asked = {}
+    local keepReq = C.RequestGuildSync
+    C.RequestGuildSync = function(_, key) asked[#asked + 1] = key end
+    GP._fillAsked, GP._fill, GP._lastFill, GP._fillTimer = {}, nil, nil, nil
+    EXPECT(PB.db.settings.guildKeepRecipes == true, "the setting is not on by default")
+    local q = GP:FillQueue()
+    EXPECT(#q == 2 and q[1].key == K["Amy Stitch"] and q[2].key == K["Ben Hide"],
+           "fill order: " .. #q .. " " .. tostring(q[1] and q[1].key) .. " " .. tostring(q[2] and q[2].key))
+    GP:StartFill()
+    EXPECT(#asked == 1 and asked[1] == K["Amy Stitch"] and GP._fill, "the fill did not ask the first guildmate at once")
+    FLUSH()
+    EXPECT(#asked == 2 and asked[2] == K["Ben Hide"] and not GP._fill and #GP._lastFill.asked == 2,
+           "the fill did not go on to the next, or did not end")
+    -- asked in the last FILL_RETRY: not again
+    asked = {}
+    GP:StartFill(); FLUSH()
+    EXPECT(#asked == 0, "the fill asked the same guildmates again at once")
+    -- pulled meanwhile (a click): skipped as fresh
+    GP._fillAsked = {}
+    GP:StartFill()
+    S.characters[K["Ben Hide"]].lastSync = time()
+    FLUSH()
+    EXPECT(#asked == 1 and GP._lastFill.skipped[1] and GP._lastFill.skipped[1].why == "fresh", "a guildmate pulled meanwhile was asked")
+    -- the setting off: nothing
+    GP._fillAsked, asked = {}, {}
+    PB.db.settings.guildKeepRecipes = false
+    GP:StartFill(); FLUSH()
+    EXPECT(#asked == 0, "the fill ran with the setting off")
+    PB.db.settings.guildKeepRecipes = true
+    -- a roster change starts one after the delay
+    S.characters[K["Ben Hide"]].lastSync = now - 13 * 3600
+    FIRE("GUILD_ROSTER_UPDATE")
+    FLUSH()
+    EXPECT(#asked == 2, "a roster change did not start a fill: " .. #asked)
+    C.RequestGuildSync = keepReq
+    for k, v in pairs(keep) do _G[k] = v end
+    C._guildSet = nil
+    for _, key in pairs(K) do S.characters[key] = nil end
+    GP._fillAsked, GP._fill, GP._fillTimer = {}, nil, nil
+end
+print("  PASS F86 TEST-c: G2, the background fill asks online PB guildmates with a profession page, no recipes first then the oldest, one at a time, each once; skips fresh, offline, recently asked and pulled-meanwhile; off with the setting; starts on a roster change")
+
+-- F87 TEST-c items 4 and 5: a Waylaid Supplies crate's and a
+-- Craftsman's Writ's tooltip show the fill cost from Prices.lua, "?"
+-- without a price, the writ's own auction price, and the gray rewards
+-- line; nothing with Show prices off; the baked tables are well-formed
+do
+    local PB = ProfBuddy
+    local P, S = PB.Prices, PB.db.settings
+    local n, ok = 0, true
+    for crate, e in pairs(PB.Waylaid or {}) do
+        n = n + 1
+        if not (type(e[1]) == "number" and e[2] >= 1 and e[3] > 0 and type(e[4]) == "string" and e[4] ~= "") then ok = false end
+    end
+    EXPECT(n == 104 and ok and PB.Waylaid[210771][1] == 2840 and PB.Waylaid[210771][2] == 20, "Waylaid table: " .. n)
+    local w = 0
+    for _, e in pairs(PB.Writs or {}) do w = w + 1; if not (e[1] > 0 and e[2] >= 1 and e[3] > 0 and type(e[4]) == "string" and e[4] ~= "") then ok = false end end
+    EXPECT(w == 150 and ok and PB.Writs[264037][2] == 200, "Writs table: " .. w)
+    -- every item post-call runs, as the game runs them
+    local function post(tip)
+        for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then c.fn(tip) end end
+    end
+    local function tipFor(id)
+        local lines = {}
+        local keepGD = TooltipUtil.GetDisplayedItem
+        TooltipUtil.GetDisplayedItem = function() return "x", "|cffffffff|Hitem:" .. id .. "::::::::|h[x]|h|r" end
+        rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = tostring(t) end)
+        rawset(GameTooltip, "AddDoubleLine", function(_, a, b) lines[#lines + 1] = tostring(a) .. " = " .. tostring(b) end)
+        rawset(GameTooltip, "Show", function() end)
+        post(GameTooltip)
+        TooltipUtil.GetDisplayedItem = keepGD
+        rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "Show", nil)
+        local plain = {}
+        for _, l in ipairs(lines) do
+            plain[#plain + 1] = (l:gsub("|T[^|]*|t", function(icon)
+                return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c" end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+        end
+        return table.concat(plain, "\n")
+    end
+    P:ClearRecorded()
+    local AUC = { [2840] = 30, [264037] = 4000 }
+    local keepAuc = Auctionator
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return AUC[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    local t = tipFor(210771)
+    EXPECT(t:find("Fill cost (ProfessionBuddy): = 6s", 1, true) and t:find("20 x ", 1, true)
+           and t:find("Reward details: coming in a later update.", 1, true), "crate tooltip:\n" .. t)
+    -- a writ: its item has no price here, and the writ's own auction price
+    t = tipFor(264037)
+    EXPECT(t:find("Fill cost (ProfessionBuddy): = ?", 1, true) and t:find("200 x ", 1, true)
+           and t:find("Writ sells for = 40s", 1, true), "writ tooltip:\n" .. t)
+    -- the item not loaded yet (m4ru, TEST-c4: "200 x item:8069"): the
+    -- baked name
+    local keepGII = GetItemInfo
+    GetItemInfo = function(id, ...) if id == 8069 then return nil end; return keepGII(id, ...) end
+    t = tipFor(264037)
+    GetItemInfo = keepGII
+    EXPECT(t:find("200 x Crafted Solid Shot", 1, true) and not t:find("item:", 1, true), "writ tooltip, item not loaded:\n" .. t)
+    -- Show prices off: nothing
+    S.showPrices = false
+    t = tipFor(210771)
+    EXPECT(not t:find("Fill cost", 1, true), "fill cost with Show prices off")
+    S.showPrices = true
+    -- an ordinary item: nothing
+    EXPECT(not tipFor(2840):find("Fill cost", 1, true), "fill cost on an ordinary item")
+    Auctionator = keepAuc
+end
+print("  PASS F87 TEST-c: Waylaid Supplies and Craftsman's Writs tooltips: fill cost from Prices.lua, ? without a price, the writ's own auction price, the rewards-later line; the baked item name before the item loads; off with Show prices; the baked tables")
+
+-- F88 TEST-c rebuild: vendor prices only from vendors placed in the world
+-- (VMaNGOS 17078, unplaced, was the only seller of Heavy Runecloth
+-- Bandage); recipe names wrap to two lines at most
+do
+    local P = ProfBuddy.Prices
+    EXPECT(P:VendorBuy(14530) == nil and P:VendorBuy(2320) == 10, "Forever vendor table")
+    local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+    EXPECT(src:find("nameText:SetMaxLines(2)", 1, true), "recipe names not capped at two lines")
+end
+print("  PASS F88 TEST-c: vendor prices only from placed vendors; recipe names at most two lines")
+
+-- F89 TEST-c2: m4ru's TBC Anniversary run, step A6: the /pb window came
+-- back where he dragged it after a /reload with keeping off (the game's
+-- own layout cache). A drag clears the game's mark; with nothing kept the
+-- first open is the middle of the screen. Step 14: Back sits at the right
+-- end of the icon row, the icons at the left.
+local function F89()
+    local PB = ProfBuddy
+    local UI, S = PB.UI, PB.db.settings
+    local M = UI.frame
+    if M:IsShown() then M:Hide() end
+    -- a drag: the game's mark is cleared at its end
+    M:GetScript("OnDragStart")(M)
+    EXPECT(M:IsUserPlaced(), "harness: StartMoving did not mark the window")
+    M:GetScript("OnDragStop")(M)
+    EXPECT(not M:IsUserPlaced(), "a drag left the window marked as placed by you")
+    -- keeping off, and the game put it back from an older build's drag
+    S.keepWindowState = false
+    rawset(M, "_userPlaced", true)
+    M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
+    rawset(M, "_pbPosRestored", false)
+    UI:Show()
+    local lp = rawget(M, "_lastPoint")
+    EXPECT(lp and lp[1] == "CENTER" and rawget(M, "_points") == 1 and not M:IsUserPlaced(),
+           "keeping off: the first open is not the middle: " .. tostring(lp and lp[1]))
+    -- moved during the session: the next open keeps it there
+    M:Hide()
+    M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
+    UI:Show()
+    lp = rawget(M, "_lastPoint")
+    EXPECT(lp and lp[1] == "TOPLEFT", "a second open moved the window")
+    M:Hide()
+    S.keepWindowState = true
+    -- Back at the right end of the row, the icons from the left
+    local bp = rawget(UI.backBtn, "_lastPoint")
+    EXPECT(bp and bp[1] == "TOPRIGHT" and bp[3] == "TOPRIGHT" and bp[4] == -12,
+           "Back not at the right end of the row: " .. tostring(bp and bp[1]))
+    local cp = rawget(UI.profStrip.container, "_lastPoint")
+    EXPECT(cp and cp[1] == "TOPLEFT" and cp[4] == 12, "icons not from the left: " .. tostring(cp and cp[4]))
+end
+F89()
+print("  PASS F89 TEST-c2: a drag clears the game's placed-by-you mark; keeping off opens the window in the middle once per session; Back at the right end of the icon row")
+
+-- F90 TEST-c2: m4ru's TBC Anniversary run, step B5: Settings opened with
+-- the main window's gear while a profession was parked closed the main
+-- window, which ended the park, and Back was gone on the way back. The
+-- way to Settings and back keeps the park; Settings closed with its X
+-- ends it and closes the session (decision D2).
+local function F90()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local function closes() local n = 0; for _, c in ipairs(TS_CALLS) do if c == "CloseTradeSkill" then n = n + 1 end end; return n end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    open()
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])        -- Characters
+    FLUSH()
+    EXPECT(TSF._parked and UI.backBtn:IsShown(), "not parked from Characters")
+    local before = closes()
+    UI.gearBtn:GetScript("OnClick")(UI.gearBtn)
+    FLUSH()
+    EXPECT(TSF.settingsPanel:IsShown() and TSF.frame:IsShown() and not UI.frame:IsShown(), "the gear did not open Settings")
+    EXPECT(TSF._parked and TS.open == "Leatherworking" and closes() == before, "opening Settings ended the park")
+    -- the setting he changed, then back to the main window
+    PB.db.settings.showAllProfessions = true
+    TSF:UpdateProfessionTabs()
+    TSF:CloseSettings()
+    FLUSH()
+    EXPECT(UI.frame:IsShown() and not TSF.frame:IsShown(), "Settings did not go back to the main window")
+    EXPECT(TSF._parked and UI.backBtn:IsShown() and UI.backBtn:GetText() == "Back to Leatherworking"
+           and TS.open == "Leatherworking" and closes() == before, "Back gone after Settings")
+    PB.db.settings.showAllProfessions = false
+    TSF:UpdateProfessionTabs()
+    UI.backBtn:GetScript("OnClick")(UI.backBtn)
+    FLUSH()
+    EXPECT(TSF.frame:IsShown() and not TSF._parked and TS.open == "Leatherworking", "Back after Settings did not bring it back")
+    -- the same through /pb settings
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])
+    FLUSH()
+    SlashCmdList.PROFBUDDY("settings")
+    FLUSH()
+    EXPECT(TSF.settingsPanel:IsShown() and TSF._parked, "/pb settings ended the park")
+    TSF:CloseSettings()
+    FLUSH()
+    EXPECT(UI.frame:IsShown() and TSF._parked and UI.backBtn:IsShown(), "Back gone after /pb settings")
+    UI.backBtn:GetScript("OnClick")(UI.backBtn)
+    FLUSH()
+    -- Settings closed with its X while parked: the session closes (D2)
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])
+    FLUSH()
+    UI.gearBtn:GetScript("OnClick")(UI.gearBtn)
+    FLUSH()
+    before = closes()
+    TSF.frame:Hide()
+    FLUSH()
+    EXPECT(not TSF._parked and TS.open == nil and closes() == before + 1, "Settings closed with the X left a hidden session open")
+    TSF:RestoreContentPanels()
+    if TSF.settingsPanel:IsShown() then TSF.settingsPanel:Hide() end
+end
+F90()
+print("  PASS F90 TEST-c2: Settings from the main window's gear or /pb settings keeps a parked profession and its Back; Settings closed with the X ends the park and closes the session")
+
+-- F91 TEST-c4: the parked profession's own icon in the main window works
+-- as Back (m4ru); with keeping on and nothing saved yet, the first open
+-- leaves the window where it is (a 2.0.2 window the game kept in place
+-- would otherwise jump to the middle once after updating)
+local function F91()
+    local PB = ProfBuddy
+    local TSF, UI, S = PB.TradeSkillFrame, PB.UI, PB.db.settings
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local function closes() local n = 0; for _, c in ipairs(TS_CALLS) do if c == "CloseTradeSkill" then n = n + 1 end end; return n end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    local cover, lw = UI.parkedTab, UI.profStrip.byName.Leatherworking
+    EXPECT(cover and not cover:IsShown(), "the cover shows with nothing parked")
+    open()
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])        -- Characters
+    FLUSH()
+    EXPECT(TSF._parked and cover:IsShown() and rawget(cover, "_allPoints") == lw,
+           "no button over the parked Leatherworking icon")
+    local opened = 0
+    local keepOpen = C_TradeSkillUI.OpenTradeSkill
+    C_TradeSkillUI.OpenTradeSkill = function(...) opened = opened + 1; return keepOpen(...) end
+    local before = closes()
+    cover:GetScript("OnClick")(cover)
+    FLUSH()
+    C_TradeSkillUI.OpenTradeSkill = keepOpen
+    EXPECT(TSF.frame:IsShown() and not UI.frame:IsShown() and not TSF._parked and TS.open == "Leatherworking"
+           and closes() == before and opened == 0, "the parked icon did not work as Back")
+    -- the park ends on the game's close event: the cover goes
+    TSF.navTabs[2]:GetScript("OnClick")(TSF.navTabs[2])        -- Friends
+    FLUSH()
+    EXPECT(cover:IsShown(), "no cover when parked from Friends")
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    EXPECT(not TSF._parked and not cover:IsShown(), "the cover outlived the park")
+    -- another profession's icon is not covered
+    EXPECT(not (cover:IsShown() and rawget(cover, "_allPoints") ~= lw), "the cover sits over another icon")
+    UI.frame:Hide(); FLUSH()
+    -- keeping on, nothing saved: the first open leaves the window put
+    local M = UI.frame
+    local key = PB:PlayerKey()
+    if PB.db.windows[key] then PB.db.windows[key].pos = nil end
+    S.keepWindowState = true
+    rawset(M, "_userPlaced", true)
+    M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
+    rawset(M, "_pbPosRestored", false)
+    UI:Show()
+    local lp = rawget(M, "_lastPoint")
+    EXPECT(lp and lp[1] == "TOPLEFT" and lp[4] == 40 and rawget(M, "_points") == 1 and not M:IsUserPlaced(),
+           "keeping on, nothing saved: the window moved on its first open: " .. tostring(lp and lp[1]))
+    M:Hide()
+end
+F91()
+print("  PASS F91 TEST-c4: the parked profession's icon in the main window works as Back, gone when the park ends; keeping on with nothing saved leaves the window where it is")
+
+-- F92 TEST-c6: m4ru's TEST-c5 run on TBC Anniversary: in combat, a bottom
+-- tab tried to hide the profession window and the game blocked it
+-- (ADDON_ACTION_BLOCKED on ProfBuddyTradeSkillFrame:Hide()). The harness
+-- now blocks what the game blocks (forever_env.lua, BLOCKED). Every way PB
+-- shows, hides or moves the profession window, done in combat: nothing is
+-- blocked, chat says what opens when combat ends, and it does then.
+local function F92()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local keepICL = InCombatLockdown
+    local function fight(on) InCombatLockdown = on and function() return true end or keepICL end
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local function clean()
+        fight(false)
+        if TSF.settingsPanel and TSF.settingsPanel:IsShown() then TSF:CloseSettings() end
+        if TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI.frame:Hide() end
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+        BLOCKED = {}
+    end
+    local function ended() fight(false); FIRE("PLAYER_REGEN_ENABLED"); FLUSH() end
+    local function ok(label) EXPECT(#BLOCKED == 0, label .. ": the game would block " .. table.concat(BLOCKED, ", ")) end
+    clean()
+    -- the profession window holds secure buttons: the game protects it
+    EXPECT(TSF.frame:IsProtected(), "harness: the profession window is not protected")
+    -- the bottom tabs, each in combat
+    local names = { "Characters", "Friends", "Guild", "Orders" }
+    for i, name in ipairs(names) do
+        clean(); open()
+        fight(true); PRINTS = {}
+        TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH()
+        ok(name .. " tab in combat")
+        EXPECT(TSF.frame:IsShown() and not TSF._parked and PRINTED(name .. " opens when combat ends."),
+               name .. " tab in combat: no wait, or something moved")
+        ended()
+        ok(name .. " tab after combat")
+        EXPECT(not TSF.frame:IsShown() and TSF._parked and UI.frame:IsShown(), name .. " did not open when combat ended")
+    end
+    -- /pb, /pb friends with the profession window open
+    -- /pb and /pb friends close the profession; the tab commands park it,
+    -- as each does out of combat
+    local parks = { [""] = false, friends = false, chars = true, guild = true, orders = true }
+    for _, cmd in ipairs({ "", "friends", "chars", "guild", "orders" }) do
+        clean(); open()
+        fight(true); PRINTS = {}
+        SlashCmdList.PROFBUDDY(cmd); FLUSH()
+        ok("/pb " .. cmd .. " in combat")
+        EXPECT(TSF.frame:IsShown() and PRINTED("when combat ends."), "/pb " .. cmd .. " in combat: no wait")
+        ended()
+        ok("/pb " .. cmd .. " after combat")
+        EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "/pb " .. cmd .. " did not open when combat ended")
+        EXPECT((TSF._parked and true or false) == parks[cmd], "/pb " .. cmd .. " after combat: parked " .. tostring(TSF._parked ~= nil))
+    end
+    -- Settings: from the profession window it changes in place; from the
+    -- main window it waits, opening and closing
+    clean(); open()
+    fight(true)
+    SlashCmdList.PROFBUDDY("settings"); FLUSH()
+    ok("/pb settings in the profession window in combat")
+    EXPECT(TSF.settingsPanel:IsShown(), "Settings did not open in place")
+    TSF:ToggleSettings(); FLUSH()
+    ok("closing Settings in the profession window in combat")
+    clean()
+    UI:Show(); FLUSH()
+    fight(true); PRINTS = {}
+    UI.gearBtn:GetScript("OnClick")(UI.gearBtn); FLUSH()
+    ok("the main window's gear in combat")
+    EXPECT(UI.frame:IsShown() and not TSF.frame:IsShown() and PRINTED("Settings open when combat ends."), "the gear in combat: no wait")
+    ended()
+    EXPECT(TSF.settingsPanel:IsShown() and TSF.frame:IsShown() and not UI.frame:IsShown(), "Settings did not open when combat ended")
+    fight(true); PRINTS = {}
+    TSF:CloseSettings(); FLUSH()
+    ok("closing Settings to the main window in combat")
+    EXPECT(TSF.frame:IsShown() and PRINTED("Settings close when combat ends."), "closing Settings in combat: no wait")
+    ended()
+    EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "Settings did not go back to the main window after combat")
+    clean()
+    UI:Show(); FLUSH()
+    fight(true)
+    SlashCmdList.PROFBUDDY("settings"); FLUSH()
+    ok("/pb settings from the main window in combat")
+    EXPECT(UI.frame:IsShown() and not TSF.frame:IsShown(), "/pb settings in combat closed the main window with nothing to show")
+    ended()
+    EXPECT(TSF.settingsPanel:IsShown() and not UI.frame:IsShown(), "/pb settings did not open when combat ended")
+    -- /pb settings with no window open
+    clean()
+    fight(true); PRINTS = {}
+    SlashCmdList.PROFBUDDY("settings"); FLUSH()
+    ok("/pb settings with no window open, in combat")
+    EXPECT(not TSF.frame:IsShown() and PRINTED("Settings open when combat ends."), "/pb settings, no window, in combat: no wait")
+    ended()
+    EXPECT(TSF.settingsPanel:IsShown() and TSF.frame:IsShown(), "/pb settings did not open when combat ended")
+    -- another character's recipes and read-only lists, from a hidden
+    -- window (a guildmate's arriving by themselves comes this way too)
+    clean()
+    fight(true); PRINTS = {}
+    TSF:OpenWithCharacter(PB:PlayerKey(), "Leatherworking"); FLUSH()
+    ok("a character's recipes in combat")
+    EXPECT(not TSF.frame:IsShown() and PRINTED("Leatherworking opens when combat ends."), "a character's recipes in combat: no wait")
+    ended()
+    EXPECT(TSF.frame:IsShown(), "a character's recipes did not open when combat ended")
+    clean()
+    fight(true)
+    TSF:OpenWithStatic("Tailoring"); FLUSH()
+    ok("a read-only list in combat")
+    EXPECT(not TSF.frame:IsShown(), "a read-only list showed in combat")
+    ended()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView, "a read-only list did not open when combat ended")
+    -- with the window open, another list changes in place
+    fight(true)
+    TSF:OpenWithStatic("Blacksmithing"); FLUSH()
+    ok("another read-only list, in place, in combat")
+    TSF:OpenWithCharacter(PB:PlayerKey(), "Leatherworking"); FLUSH()
+    ok("a character's recipes, in place, in combat")
+    -- your own profession, asked to open on a hidden window in combat
+    clean(); open()
+    TSF._keepSession = true; TSF.frame:Hide(); TSF._keepSession = nil; FLUSH()
+    fight(true); PRINTS = {}
+    TSF:OpenWith("Leatherworking", 100, 300, false); FLUSH()
+    ok("your profession opening on a hidden window in combat")
+    EXPECT(not TSF.frame:IsShown() and PRINTED("opens when combat ends."), "your profession in combat: no wait")
+    ended()
+    EXPECT(TSF.frame:IsShown(), "your profession did not open when combat ended")
+    -- dragging it, and PB closing it, in combat
+    fight(true)
+    TSF.frame:GetScript("OnDragStart")(TSF.frame)
+    TSF.frame:GetScript("OnDragStop")(TSF.frame)
+    ok("dragging the profession window in combat")
+    PRINTS = {}
+    TSF:Hide(); FLUSH()
+    ok("PB closing the profession window in combat")
+    EXPECT(TSF.frame:IsShown() and PRINTED("The profession window closes when combat ends."), "closing in combat: no wait")
+    ended()
+    EXPECT(not TSF.frame:IsShown(), "the profession window did not close when combat ended")
+    -- the bottom-tab park itself, called in combat: nothing moves
+    clean(); open()
+    fight(true)
+    TSF:HideForMain(); FLUSH()
+    ok("HideForMain in combat")
+    EXPECT(TSF.frame:IsShown() and not TSF._parked, "HideForMain parked in combat")
+    -- the window's X or Escape in combat (the game's own close): what PB
+    -- does after it is allowed
+    GAME_CLOSE(TSF.frame); FLUSH()
+    ok("the profession window's X in combat")
+    EXPECT(not TSF.frame:IsShown(), "harness: GAME_CLOSE did not close it")
+    ended()
+    ok("after the X in combat")
+    clean()
+end
+F92()
+print("  PASS F92 TEST-c6: in combat, the bottom tabs, /pb and its tab commands, Settings from either window, a character's recipes, read-only lists, dragging, PB closing the profession window, and its X: nothing the game blocks, a chat line, and each runs when combat ends")
+
+-- F93 TEST-c6: m4ru's TEST-c6 run: Leatherworking open in combat, the
+-- game's list update redrew the craft bar and the game blocked its Show:
+-- the secure Enchant button was anchored to it, which protects it too.
+-- The harness protects what the game protects (secure frames, the frames
+-- holding them, the frames they are anchored to) and blocks the calls
+-- Blizzard's API documentation marks protected. In combat, every visible
+-- button of the profession window, its Settings, and each main window tab
+-- is clicked and the game's update events fire: nothing may be blocked,
+-- and no click may error.
+local function F93()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local function clean()
+        if TSF.settingsPanel and TSF.settingsPanel:IsShown() then TSF:CloseSettings() end
+        if TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI.frame:Hide() end
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH(); FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    end
+    local function none(tag, sites, errs)
+        EXPECT(#sites == 0, tag .. ": the game would block:\n  " .. table.concat(sites, "\n  "))
+        EXPECT(#errs == 0, tag .. ": a click errored:\n  " .. table.concat(errs, "\n  "))
+    end
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    clean(); open()
+    none("the profession window", COMBAT_SWEEP({ TSF.frame, TSF.calcPanel },
+        { "TRADE_SKILL_LIST_UPDATE", "TRADE_SKILL_DATA_SOURCE_CHANGED", "BAG_UPDATE_DELAYED" }))
+    clean(); open(); TSF:OpenSettings("profession"); FLUSH()
+    none("Settings", COMBAT_SWEEP({ TSF.frame }, {}))
+    for i = 1, #UI.frame.tabs do
+        clean(); UI:Show(); UI:SelectTab(i); FLUSH()
+        none("the main window, tab " .. i, COMBAT_SWEEP({ UI.frame }, {}))
+    end
+    clean()
+end
+F93()
+print("  PASS F93 TEST-c6: in combat, every visible button of the profession window, its Settings, and each main window tab, and the game's update events: nothing the game blocks (its documented protected calls, on secure frames, their holders, and frames they're anchored to), no errors")
+
+print("ALL FOREVER TESTS PASS (93)")

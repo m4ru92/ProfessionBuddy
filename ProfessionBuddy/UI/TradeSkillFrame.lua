@@ -510,6 +510,8 @@ function TSF:Init()
     end)
     On(E.TRADE_CLOSE, function()
         self._awaitingTradeList = nil
+        -- the game closed the parked session (cast again, walked away)
+        if self._parked and not self._parked.isCraft then self:EndPark(false) end
         if self._isMouseOverTab then return end
         -- A background trade-skill session closing (PB is showing Enchanting,
         -- or PB closed it itself on a switch) must not hide PB.
@@ -560,7 +562,15 @@ function TSF:Init()
                 C_Timer.After(0.05, function() self:OnTradeSkillShow() end)
             end
         elseif self._awaitingTradeList then
-            C_Timer.After(0.05, function() self:OnTradeSkillShow() end)
+            if InCombatLockdown() then
+                -- PB's window waits and opens when combat ends, also when
+                -- combat started after the show event. TEST-b's combat
+                -- error had stopped it here.
+                self._pendingOpen = self._pendingOpen or "trade"
+                self._pendingClose = false
+            else
+                C_Timer.After(0.05, function() self:OnTradeSkillShow() end)
+            end
         end
     end)
     On(E.CRAFT_SHOW, function()
@@ -587,6 +597,7 @@ function TSF:Init()
         end
     end)
     On(E.CRAFT_CLOSE, function()
+        if self._parked and self._parked.isCraft then self:EndPark(false) end
         if self._isMouseOverTab then return end
         -- Same, the other way round: a background Craft session closing while
         -- PB shows a trade skill must not hide PB.
@@ -637,6 +648,21 @@ function TSF:Init()
     -- When combat ends, replay whatever the lockdown blocked: an open, a
     -- close, or just the craft bar (the enchant button's secure attribute
     -- can only be written out of combat, so it sits disabled until now).
+    -- TEST-c: window state and positions kept across a reload or logout;
+    -- PLAYER_LOGOUT fires before the game writes the saved settings
+    addon:RegisterEvent("PLAYER_LOGOUT", function()
+        if self.frame and self.frame:IsShown() then self:SaveWindowState() end
+        self:KeepStates()
+        if addon.UI and addon.UI.SaveAllPositions then addon.UI:SaveAllPositions() end
+    end)
+    -- combat starts: the last moment the Enchant button's mouse can change
+    addon:RegisterEvent("PLAYER_REGEN_DISABLED", function()
+        local eb = self.enchantCraftBtn
+        if eb then
+            eb:EnableMouse(false)
+            if eb:GetAlpha() > 0 then eb.look("disabled") end
+        end
+    end)
     addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if self._pendingOpen then
             local kind = self._pendingOpen
@@ -653,6 +679,10 @@ function TSF:Init()
         elseif self.craftBar and self.frame and self.frame:IsShown() then
             self:UpdateCraftBar()
         end
+        -- what waited for combat to end (TSF:WaitForCombat)
+        local fn = self._afterCombat
+        self._afterCombat, self._saidWait = nil, nil
+        if fn then fn() end
     end)
 
     -- Kill default profession frames by unregistering their events.
@@ -1496,6 +1526,39 @@ function TSF:HookItemTooltip()
         tip:Show()
     end
 
+    -- Waylaid Supplies crates and Craftsman's Writs (WoW: Forever, TEST-c
+    -- items 4 and 5; Data/Forever/Waylaid.lua and Writs.lua): what filling
+    -- one costs, priced by Prices.lua (auction, vendor, or the cheaper of
+    -- buying and crafting), "?" when the item has no price. A writ also
+    -- shows its own auction price. Rewards come in a later update (option A,
+    -- 2026-11-08: no Forever reward data yet). Off with Show prices.
+    HookItemTooltip(function(tip)
+        local P = addon.Prices
+        if not (P and P:Enabled()) then return end
+        if not (addon.Waylaid or addon.Writs) then return end
+        local itemLink = TooltipItemLink(tip)
+        local itemID = itemLink and addon:ItemIDFromLink(itemLink)
+        if not itemID then return end
+        local writ = addon.Writs and addon.Writs[itemID]
+        local need = (addon.Waylaid and addon.Waylaid[itemID]) or writ
+        if not need then return end
+        local item, count = need[1], need[2]
+        local mp = P:MaterialPrice(item)
+        -- the baked name until the game has loaded the item (m4ru, TEST-c4:
+        -- "200 x item:8069")
+        local name = GetItemInfo(item) or need[4] or ("item:" .. item)
+        local cost = mp.unit and (P:Money(mp.unit * count) .. (mp.partial and "+" or "")) or "|cffff4444?|r"
+        tip:AddLine(" ")
+        tip:AddDoubleLine("Fill cost (ProfessionBuddy):", cost, 1, 0.82, 0, 1, 1, 1)
+        tip:AddLine("  " .. count .. " x " .. name, 0.9, 0.9, 0.9)
+        if writ then
+            local sell = P:AuctionPrice(itemID)
+            if sell then tip:AddDoubleLine("  Writ sells for", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
+        end
+        tip:AddLine("  Reward details: coming in a later update.", 0.5, 0.5, 0.5)
+        tip:Show()
+    end)
+
     -- "Held by" tooltip: who holds the hovered item, in bags and bank. You,
     -- your alts, and friends who share their bags, following the same Show in
     -- tooltips boxes as Craftable by (guildmates never share bags or bank).
@@ -1648,8 +1711,13 @@ end
 
 -- A shared frame that was open when PB took a profession (WoW: Forever's
 -- profession book, when a profession is opened from it) goes away quietly.
+-- Never in combat: the game blocks hiding Blizzard's window then (TEST-b:
+-- K in combat shows the book, and Blizzard's book reopens the last
+-- profession). It goes when combat ends (SuppressDefaultFrames,
+-- PLAYER_REGEN_ENABLED).
 function TSF:HideSharedFrames()
     if not (addon.Source.SharedFrameOpen and self._killedFrames) then return end
+    if InCombatLockdown() then return end
     for frameName in pairs(addon.Source.SHARED_FRAMES or {}) do
         local frame = _G[frameName]
         if frame and self._killedFrames[frameName] and frame:IsShown()
@@ -1744,7 +1812,7 @@ function TSF:SuppressDefaultFrames()
             S:AdoptSharedFrame(frame, UIPanelWindows and UIPanelWindows[frameName], function()
                 -- The book's key while PB shows a profession: close PB.
                 if self.frame and self.frame:IsShown() and not SharedFrameAllowed(frameName) then
-                    self:Hide()
+                    self:Hide()   -- in combat, when combat ends (TSF:Hide)
                 end
             end)
         end
@@ -1752,12 +1820,33 @@ function TSF:SuppressDefaultFrames()
             UIPanelWindows[frameName] = nil
         end
         local realShow = frame.Show
-        frame.Show = function(f, ...)
+        local function GatedShow(f, ...)
             if SharedFrameAllowed(frameName) then
                 if S.BeforeSharedShow then S:BeforeSharedShow(f) end
                 return realShow(f, ...)
             end
         end
+        frame.Show = GatedShow
+        -- WoW: Forever's K in combat (2.1.0, option C): any call from PB's
+        -- gate is addon code, and the game blocks showing the profession
+        -- book from it in combat (ADDON_ACTION_BLOCKED, nothing opened). So
+        -- during combat the frame keeps its own Show and K runs Blizzard's
+        -- code alone; the gate comes back when combat ends, and a book left
+        -- on its recipe page switches to the book page then.
+        addon:RegisterEvent("PLAYER_REGEN_DISABLED", function()
+            if rawget(frame, "Show") == GatedShow then frame.Show = nil end
+        end)
+        addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+            if rawget(frame, "Show") == nil then frame.Show = GatedShow end
+            if frame:IsShown() then
+                if SharedFrameAllowed(frameName) then
+                    if S.BeforeSharedShow then S:BeforeSharedShow(frame) end
+                else
+                    -- a profession opened during combat: PB's window has it
+                    QuietHide(frame)
+                end
+            end
+        end)
         table.insert(UISpecialFrames, frameName)
     end
 
@@ -2102,7 +2191,8 @@ function TSF:EnsureFrame()
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", f.StartMoving)
+    -- not in combat, where the game blocks moving it (TSF:Locked)
+    f:SetScript("OnDragStart", function(fr) if not TSF:Locked() then fr:StartMoving() end end)
     -- the Material Calculator, when open, stops at the screen edge with it
     f:SetScript("OnDragStop", function(fr)
         if addon.UI and addon.UI.AfterDrag then addon.UI:AfterDrag(fr, { self.calcPanel })
@@ -2125,6 +2215,11 @@ function TSF:EnsureFrame()
         end
     end)
     f:SetScript("OnHide", function()
+        -- Every way the window closes saves its state: the X button and
+        -- Escape hide the frame directly and never ran TSF:Hide, so View,
+        -- Skill-up, Source and the rest went back on the next open (Sticker,
+        -- TEST-c item 9). Before the calculator closes: its state is saved.
+        self:SaveWindowState()
         CloseAllDropdowns()
         if self.calcPanel then self.calcPanel:Hide() end
         -- Defer RestoreContentPanels to break the taint chain -- when
@@ -2133,7 +2228,14 @@ function TSF:EnsureFrame()
         C_Timer.After(0, function() self:RestoreContentPanels() end)
         -- Close the backend trade skill so the profession icon doesn't
         -- need a double-click to reopen after closing via the X button.
-        if not self._closingFromEvent then
+        -- parking (TEST-c, N1) keeps the game's session open for Back
+        if self._parked then
+            -- Settings, opened from the main window while a profession is
+            -- parked (TEST-c2): back to the main window keeps the park;
+            -- closed with the X or Escape, nothing of PB's is left open, so
+            -- the profession closes too (decision D2)
+            if not self._keepSession and not self._returningToMain then self:EndPark(true) end
+        elseif not self._closingFromEvent and not self._keepSession then
             addon.Source:CloseWindow(state.isCraftWindow)
         end
         -- And never leave the OTHER channel's session open behind a closed PB:
@@ -2164,6 +2266,8 @@ function TSF:EnsureFrame()
     if addon.UI and addon.UI.AddScaleGrip then
         self.scaleGrip = addon.UI:AddScaleGrip(f, "professionWindowScale", { self.calcPanel })
     end
+    -- TEST-c: its position kept across a reload (UI/Main.lua)
+    if addon.UI and addon.UI.TrackPosition then addon.UI:TrackPosition(f, "profession") end
 
     -- Expose state so MaterialCalc can access live recipe data
     self.state = state
@@ -2598,12 +2702,20 @@ local function CraftableProfs()
     return addon.CRAFTABLE_PROFS or {}
 end
 
-function TSF:BuildProfessionTabs(parent)
-    self.profTabsByName = {}
-    self.profTabContainer = CreateFrame("Frame", nil, parent)
-    self.profTabContainer:SetSize(300, 22)
-    self.profTabContainer:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, -28)
-    self.profTabContainer:SetFrameLevel(parent:GetFrameLevel() + 5)
+-- One strip of profession icons. The profession window has one (top
+-- left), and from TEST-c the main window has one too (UI/Main.lua, N2).
+-- namePrefix names the buttons. opts.plain: plain buttons where the client
+-- opens a profession by skill line (WoW: Forever), so the main window
+-- holds no secure button there and can show and hide in combat.
+-- opts.isMain: the main window's strip leaves the profession window's
+-- close-event guard (_isMouseOverTab) alone. Returns the strip:
+-- { container, byName, sep, secure, isMain }.
+function TSF:NewProfStrip(parent, namePrefix, opts)
+    opts = opts or {}
+    local strip = { byName = {}, isMain = opts.isMain and true or false, secure = false }
+    strip.container = CreateFrame("Frame", nil, parent)
+    strip.container:SetSize(300, 22)
+    strip.container:SetFrameLevel(parent:GetFrameLevel() + 5)
 
     local TAB_SIZE = 22
 
@@ -2619,89 +2731,109 @@ function TSF:BuildProfessionTabs(parent)
     -- Pre-create a secure button for every profession with attributes
     -- set NOW (at frame build time, before any taint)
     for idx, profName in ipairs(tabProfs) do
-        local tab = CreateFrame("Button", "ProfBuddyProfTab" .. idx, self.profTabContainer, "SecureActionButtonTemplate")
-        tab:SetSize(TAB_SIZE, TAB_SIZE)
-
-        -- Register for clicks (modern client requires explicit registration).
-        -- DOWN only, matching the enchant craft button: registering both
-        -- edges runs the secure /cast twice per click, and casting a
-        -- profession spell while its window is open toggles it shut, so the
-        -- up edge could close what the down edge opened. PostClick (which
-        -- opens the static view for an unknown profession) also ran twice.
-        tab:RegisterForClicks("AnyDown")
-
-        -- Set secure attributes at creation time -- never touched again
-        -- Use macro type for reliable profession opening
-        -- Gathering profs: Mining opens Smelting, Herbalism/Skinning
-        -- toggle their respective spells
-        local MACRO_OVERRIDES = {
-            ["Mining"]        = "/cast Smelting",
-            ["Find Minerals"] = "/cast Find Minerals",
-            ["Herbalism"]     = "/cast Find Herbs",
-            -- /cast takes the client's own spell name; 2842 is Poisons.
-            ["Poisons"]       = "/cast " .. (GetSpellInfo(2842) or "Poisons"),
-        }
-        -- A flavor that opens professions by skill line gets no macro at
-        -- all: PostClick opens it (WoW: Forever, where several spells
-        -- share a profession's name).
         local skillLine = addon.Source.TabSkillLine and addon.Source:TabSkillLine(profName)
-        if skillLine then
-            tab.skillLine = skillLine
-        else
-            tab:SetAttribute("type", "macro")
-            tab:SetAttribute("macrotext", MACRO_OVERRIDES[profName] or ("/cast " .. profName))
-        end
+        local secure = not (opts.plain and skillLine)
+        -- A plain strip on a client that opens professions by skill line
+        -- (WoW: Forever) leaves out what opens only by casting (Find
+        -- Minerals, Poisons): one secure button would lock the whole window
+        -- in combat.
+        if opts.plain and addon.Source.TabSkillLine and not skillLine then secure = nil end
+        if secure ~= nil then
+            local tab = CreateFrame("Button", namePrefix .. idx, strip.container, secure and "SecureActionButtonTemplate" or nil)
+            tab:SetSize(TAB_SIZE, TAB_SIZE)
+            if secure then strip.secure = true end
 
-        local bg = tab:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        Theme:Fill(bg, "professionTab")
-        tab.bg = bg
+            -- Register for clicks (modern client requires explicit registration).
+            -- DOWN only, matching the enchant craft button: registering both
+            -- edges runs the secure /cast twice per click, and casting a
+            -- profession spell while its window is open toggles it shut, so the
+            -- up edge could close what the down edge opened. PostClick (which
+            -- opens the static view for an unknown profession) also ran twice.
+            if secure then tab:RegisterForClicks("AnyDown") else tab:RegisterForClicks("LeftButtonUp") end
 
-        local border = CreateFrame("Frame", nil, tab, "BackdropTemplate")
-        border:SetAllPoints()
-        border:EnableMouse(false)  -- don't eat clicks meant for the button
-        Theme:SetBackdrop(border, "professionTabBorder")
-        tab.border = border
-
-        local icon = tab:CreateTexture(nil, "ARTWORK")
-        icon:SetSize(TAB_SIZE - 4, TAB_SIZE - 4)
-        icon:SetPoint("CENTER")
-        icon:SetTexture(PROF_ICONS[profName] or "Interface\\Icons\\INV_Misc_QuestionMark")
-        tab.icon = icon
-
-        tab.profName = profName
-
-        tab:SetScript("OnEnter", function(self)
-            TSF._isMouseOverTab = true
-            GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-            GameTooltip:SetText(self.profName)
-            GameTooltip:Show()
-        end)
-        tab:SetScript("OnLeave", function()
-            TSF._isMouseOverTab = false
-            GameTooltip:Hide()
-        end)
-
-        -- PostClick: if this is an unknown profession, the secure macro
-        -- silently fails. Open the static-only view instead.
-        tab:SetScript("PostClick", function(self)
-            if self._isUnknown then
-                TSF:OpenWithStatic(self.profName)
-            elseif self.skillLine then
-                addon.Source:OpenProfession(self.skillLine)
+            -- Set secure attributes at creation time -- never touched again
+            -- Use macro type for reliable profession opening
+            -- Gathering profs: Mining opens Smelting, Herbalism/Skinning
+            -- toggle their respective spells
+            local MACRO_OVERRIDES = {
+                ["Mining"]        = "/cast Smelting",
+                ["Find Minerals"] = "/cast Find Minerals",
+                ["Herbalism"]     = "/cast Find Herbs",
+                -- /cast takes the client's own spell name; 2842 is Poisons.
+                ["Poisons"]       = "/cast " .. (GetSpellInfo(2842) or "Poisons"),
+            }
+            -- A flavor that opens professions by skill line gets no macro at
+            -- all: PostClick opens it (WoW: Forever, where several spells
+            -- share a profession's name).
+            -- false, not unset: the click handler reads it (TBC Anniversary
+            -- tabs have none)
+            tab.skillLine = skillLine or false
+            if not skillLine then
+                tab:SetAttribute("type", "macro")
+                tab:SetAttribute("macrotext", MACRO_OVERRIDES[profName] or ("/cast " .. profName))
             end
-        end)
 
-        tab:Hide()
-        self.profTabsByName[profName] = tab
+            local bg = tab:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints()
+            Theme:Fill(bg, "professionTab")
+            tab.bg = bg
+
+            local border = CreateFrame("Frame", nil, tab, "BackdropTemplate")
+            border:SetAllPoints()
+            border:EnableMouse(false)  -- don't eat clicks meant for the button
+            Theme:SetBackdrop(border, "professionTabBorder")
+            tab.border = border
+
+            local icon = tab:CreateTexture(nil, "ARTWORK")
+            icon:SetSize(TAB_SIZE - 4, TAB_SIZE - 4)
+            icon:SetPoint("CENTER")
+            icon:SetTexture(PROF_ICONS[profName] or "Interface\\Icons\\INV_Misc_QuestionMark")
+            tab.icon = icon
+
+            tab.profName = profName
+
+            tab:SetScript("OnEnter", function(self)
+                if not strip.isMain then TSF._isMouseOverTab = true end
+                GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+                GameTooltip:SetText(self.profName)
+                GameTooltip:Show()
+            end)
+            tab:SetScript("OnLeave", function()
+                if not strip.isMain then TSF._isMouseOverTab = false end
+                GameTooltip:Hide()
+            end)
+
+            -- PostClick: if this is an unknown profession, the secure macro
+            -- silently fails. Open the static-only view instead.
+            local function afterClick(self)
+                if self._isUnknown then
+                    TSF:OpenWithStatic(self.profName)
+                elseif self.skillLine then
+                    addon.Source:OpenProfession(self.skillLine)
+                end
+            end
+            -- a plain button has no secure click to follow: its own click opens
+            tab:SetScript(secure and "PostClick" or "OnClick", afterClick)
+
+            tab:Hide()
+            strip.byName[profName] = tab
+        end
     end
 
     -- Separator line between known and unknown profession tabs
-    local sep = self.profTabContainer:CreateTexture(nil, "ARTWORK")
+    local sep = strip.container:CreateTexture(nil, "ARTWORK")
     sep:SetSize(2, 20)
     Theme:Fill(sep, "professionTabSeparator")
     sep:Hide()
-    self.profTabSeparator = sep
+    strip.sep = sep
+    return strip
+end
+
+function TSF:BuildProfessionTabs(parent)
+    local strip = self:NewProfStrip(parent, "ProfBuddyProfTab")
+    strip.container:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, -28)
+    self.profStrip = strip
+    self.profTabsByName, self.profTabContainer, self.profTabSeparator = strip.byName, strip.container, strip.sep
 end
 
 function TSF:UpdateProfessionTabs()
@@ -2709,19 +2841,28 @@ function TSF:UpdateProfessionTabs()
     -- during combat. Only update the active highlight (non-protected calls).
     if InCombatLockdown() then
         self:UpdateProfessionTabHighlight()
-        return
+    elseif self.profStrip then
+        self:LayoutProfStrip(self.profStrip, state.profName)
     end
+    -- the main window's strip follows the same professions (TEST-c, N2)
+    if addon.UI and addon.UI.UpdateStrip then addon.UI:UpdateStrip() end
+end
+
+-- Lay out a strip (TSF:NewProfStrip): this character's professions, then,
+-- with "Show all professions in tabs", the rest dimmed after a separator.
+-- activeName is highlighted. Not in combat for a strip of secure buttons.
+function TSF:LayoutProfStrip(strip, activeName)
 
     local TAB_SIZE = 22
     local TAB_GAP = 2
     local SEP_W = 10  -- gap reserved for the separator line
 
     -- Hide all tabs and separator
-    for _, tab in pairs(self.profTabsByName) do
+    for _, tab in pairs(strip.byName) do
         tab:Hide()
         tab._isUnknown = false
     end
-    if self.profTabSeparator then self.profTabSeparator:Hide() end
+    if strip.sep then strip.sep:Hide() end
 
     -- Get current character's professions from DataStore
     local char = DS:GetCharacter()
@@ -2731,12 +2872,12 @@ function TSF:UpdateProfessionTabs()
     local knownSet = {}
     local knownList = {}
     for profName, _ in pairs(char.professions) do
-        if self.profTabsByName[profName] then
+        if strip.byName[profName] then
             knownSet[profName] = true
             table.insert(knownList, profName)
             if profName == "Mining" then
                 knownSet["Find Minerals"] = true
-                if self.profTabsByName["Find Minerals"] then
+                if strip.byName["Find Minerals"] then
                     table.insert(knownList, "Find Minerals")
                 end
                 -- Mining implies Smelting is known
@@ -2755,7 +2896,7 @@ function TSF:UpdateProfessionTabs()
         for profName in pairs(CraftableProfs()) do
             -- Only a profession the static DB can show; a tab for one it
             -- cannot (no recipe data on WoW: Forever yet) would do nothing.
-            if not knownSet[profName] and self.profTabsByName[profName]
+            if not knownSet[profName] and strip.byName[profName]
                and RDB and RDB.data and RDB.data[profName] then
                 table.insert(unknownList, profName)
             end
@@ -2765,7 +2906,6 @@ function TSF:UpdateProfessionTabs()
         end)
     end
 
-    local activeName = state.profName
     -- Smelting is displayed under the Mining tab
     if activeName == "Smelting" then activeName = "Mining" end
 
@@ -2773,10 +2913,10 @@ function TSF:UpdateProfessionTabs()
 
     -- Place known tabs
     for _, profName in ipairs(knownList) do
-        local tab = self.profTabsByName[profName]
+        local tab = strip.byName[profName]
         tab._isUnknown = false
         tab:ClearAllPoints()
-        tab:SetPoint("LEFT", self.profTabContainer, "LEFT", xOffset, 0)
+        tab:SetPoint("LEFT", strip.container, "LEFT", xOffset, 0)
 
         local isActive = (profName == activeName)
             and profName ~= "Find Minerals"
@@ -2796,17 +2936,17 @@ function TSF:UpdateProfessionTabs()
 
     -- Place separator and unknown tabs
     if #unknownList > 0 then
-        local sep = self.profTabSeparator
+        local sep = strip.sep
         sep:ClearAllPoints()
-        sep:SetPoint("LEFT", self.profTabContainer, "LEFT", xOffset + 4, 0)
+        sep:SetPoint("LEFT", strip.container, "LEFT", xOffset + 4, 0)
         sep:Show()
         xOffset = xOffset + SEP_W
 
         for _, profName in ipairs(unknownList) do
-            local tab = self.profTabsByName[profName]
+            local tab = strip.byName[profName]
             tab._isUnknown = true
             tab:ClearAllPoints()
-            tab:SetPoint("LEFT", self.profTabContainer, "LEFT", xOffset, 0)
+            tab:SetPoint("LEFT", strip.container, "LEFT", xOffset, 0)
 
             local isActive = (profName == activeName)
 
@@ -2878,7 +3018,7 @@ function TSF:BuildToolbar(parent)
         return "Sort: " .. state.sortBy .. arrow
     end
     self.sortDropdown = CreateDropdown(parent, 140,
-        {"Category", "Skill-ups", "Name"}, "Category",
+        {"Category", "Skill-ups", "Name", "Profit"}, "Category",
         function(val)
             if state.sortBy == val then
                 state.sortAsc = not state.sortAsc
@@ -3053,6 +3193,10 @@ function TSF:BuildRecipeList(parent)
         nameText:SetPoint("LEFT", icon, "RIGHT", 4, 0)
         nameText:SetPoint("RIGHT", -40, 0)
         nameText:SetJustifyH("LEFT")
+        -- Two lines at most: a longer name (Profit column on, TBC
+        -- Anniversary's "Enchanted Adamantite Leggings") ends in "..."
+        -- instead of a third line over the next row (TEST-b3, m4ru)
+        nameText:SetMaxLines(2)
         row.nameText = nameText
 
         local rightText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -3089,13 +3233,15 @@ function TSF:BuildRecipeList(parent)
             end
             -- Other modified clicks (alt: AH search, ctrl: dressing room)
             -- through the client's own handler, the same way reagent and
-            -- calculator rows do. It no-ops on an unmodified click, so
-            -- selection below still runs.
+            -- calculator rows do. Only with a modifier key held: another
+            -- addon hooked into that handler (TradeSkillMaster's Crafting
+            -- window) took plain clicks for itself, so PB never selected.
             local link = entry.itemLink
             if not link and entry.itemID and entry.itemID ~= 0 then
                 link = select(2, GetItemInfo(entry.itemID))
             end
-            if link and not IsModifiedClick("CHATLINK") and HandleModifiedItemClick(link) then return end
+            if link and IsModifierKeyDown() and not IsModifiedClick("CHATLINK")
+               and HandleModifiedItemClick(link) then return end
 
             state.selected = entry.name
             self:UpdateListHighlights()
@@ -3231,6 +3377,18 @@ function TSF:BuildRecipeList(parent)
     self.scrollBar = scrollBar
 end
 
+-- Prices.lua: a recipe row's profit before its right-hand text (Settings >
+-- Prices > Profit in the recipe list); a dash when it has none, a gray BoP
+-- when its item binds when picked up (only a vendor buys it)
+local function ProfitPrefix(entry)
+    local P = addon.Prices
+    if not (P and P:ListProfitOn()) then return "" end
+    local v, bop = P:ListProfit(entry, state.profName)
+    if bop then return "|cff808080BoP|r  " end
+    if not v then return "|cff666666-|r  " end
+    return P:SignedMoney(v, true) .. "  "
+end
+
 function TSF:UpdateListRows()
     local recipes = state.recipes
     local offset = state.scrollOffset
@@ -3346,9 +3504,9 @@ function TSF:UpdateListRows()
                     end
 
                     if avail > 0 then
-                        row.rightText:SetText(rangeStr .. "|cff00ff00[" .. avail .. "]|r")
+                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. "|cff00ff00[" .. avail .. "]|r")
                     else
-                        row.rightText:SetText(rangeStr)
+                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr)
                     end
                 else
                     local vis = ShownSources(entry)
@@ -3370,7 +3528,14 @@ function TSF:UpdateListRows()
                                 .. (addon:ColorblindMarkers() and " low" or "") .. "]|r"
                         end
                     end
-                    row.rightText:SetText(c .. displaySrc .. "|r" .. skillText)
+                    row.rightText:SetText(ProfitPrefix(entry) .. c .. displaySrc .. "|r" .. skillText)
+                end
+                -- the name stops short of the right-hand text when the
+                -- Profit column makes it longer
+                if addon.Prices and addon.Prices:ListProfitOn() then
+                    row.nameText:SetPoint("RIGHT", row.rightText, "LEFT", -4, 0)
+                else
+                    row.nameText:SetPoint("RIGHT", -40, 0)
                 end
 
                 row._dc = dc
@@ -3632,6 +3797,27 @@ function TSF:BuildDetailPanel(parent)
     detCanMake:SetPoint("TOPLEFT", detSource, "BOTTOMLEFT", 0, -8)
     self.detCanMake = detCanMake
 
+    -- Prices.lua: what one craft costs, sells for and makes, under Can make.
+    -- Hovering it lists each material's price and where it came from.
+    local detPrice = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    detPrice:SetPoint("TOPLEFT", detCanMake, "BOTTOMLEFT", 0, -4)
+    detPrice:SetWidth(DETAIL_W - 40)
+    detPrice:SetJustifyH("LEFT")
+    detPrice:Hide()
+    self.detPrice = detPrice
+    local priceHover = CreateFrame("Frame", nil, sc)
+    priceHover:SetAllPoints(detPrice)
+    priceHover:EnableMouse(true)
+    priceHover:SetScript("OnEnter", function(f)
+        if not (f.result and addon.Prices) then return end
+        GameTooltip:SetOwner(f, "ANCHOR_RIGHT")
+        addon.Prices:FillTooltip(GameTooltip, f.result)
+        GameTooltip:Show()
+    end)
+    priceHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    priceHover:Hide()
+    self.detPriceHover = priceHover
+
     -- v6: Embedded item tooltip (shows item stats/effects)
     local itemTooltipHeader = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     itemTooltipHeader:SetText("Item info")
@@ -3739,11 +3925,11 @@ function TSF:BuildDetailPanel(parent)
         end)
         rFrame:SetScript("OnLeave", function() GameTooltip:Hide() end)
         -- Shift-click a material -> chat link / AH search / socket, via the
-        -- client's own router (HandleModifiedItemClick no-ops on an unmodified
-        -- click). Rows carry itemID, not a link; GetItemInfo's link is nil until
+        -- client's own router, only with a modifier key held (as recipe
+        -- rows). Rows carry itemID, not a link; GetItemInfo's link is nil until
         -- the item is cached, so the first click on an uncached item no-ops.
         rFrame:SetScript("OnMouseUp", function(self)
-            if self.itemID then
+            if self.itemID and IsModifierKeyDown() then
                 local link = select(2, GetItemInfo(self.itemID))
                 if link then HandleModifiedItemClick(link) end
             end
@@ -3795,6 +3981,7 @@ function TSF:UpdateScrollChildHeight()
     checkRegion(self.detIcon)
     checkRegion(self.nameDivider)
     checkRegion(self.detCanMake)
+    checkRegion(self.detPrice)
     checkRegion(self.embeddedTip)
     checkRegion(self.reagentDivider)
     checkRegion(self.reagentHeader)
@@ -3830,6 +4017,10 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.detSource:SetText("")
     if self.detSourceHover then self.detSourceHover.spellID = nil end
     self.detCanMake:SetText("")
+    self.detPrice:SetText("")
+    self.detPrice:Hide()
+    self.detPriceHover.result = nil
+    self.detPriceHover:Hide()
     self.nameDivider:Hide()
     self.itemTooltipHeader:Hide()
     self.itemTooltipDivider:Hide()
@@ -3990,13 +4181,16 @@ function TSF:RefreshDetailPanel(preserveScroll)
         end
     end
 
+    self:ShowPriceLine(recipe)
+
     -- v6: Show embedded item tooltip
     self:ShowEmbeddedTooltip(recipe)
 
     local reagents = recipe.reagents
     if reagents and #reagents > 0 then
-        -- Position reagents below the embedded tooltip or below detCanMake
-        local reagentAnchor = self.detCanMake
+        -- Position reagents below the embedded tooltip or below Can make
+        -- (and the price line under it)
+        local reagentAnchor = self:CanMakeBottom()
         if self.embeddedTip:IsShown() then
             reagentAnchor = self.embeddedTip
         end
@@ -4144,6 +4338,45 @@ function TSF:AppendRandomEnchantLine(tip, itemID)
     tip:AddLine(RANDOM_LINE, 0, 1, 0)
 end
 
+-- The lowest line of the Can make block: the price line when it shows
+function TSF:CanMakeBottom()
+    if self.detPrice and self.detPrice:IsShown() then return self.detPrice end
+    return self.detCanMake
+end
+
+-- Prices.lua: "Cost: 1g 20s   Sells: 2g 5s   Profit: +85s" under Can make
+-- (Settings > Prices > Show prices). retry: the count of looks again for
+-- an item the game hadn't loaded (below); nil when the recipe is selected.
+function TSF:ShowPriceLine(recipe, retry)
+    local line, hover = self.detPrice, self.detPriceHover
+    line:SetText("")
+    line:Hide()
+    hover.result = nil
+    hover:Hide()
+    local P = addon.Prices
+    if not (P and P:Enabled()) then return end
+    P._unloaded = nil
+    local result = P:RecipeCost(recipe, state.profName)
+    -- An item the game hadn't loaded yet (Prices.lua IsBoP asked for it):
+    -- look again shortly, up to three times each time the recipe is
+    -- selected, so a BoP material or product shows as BoP by itself
+    local tries = retry or 0
+    if P._unloaded and recipe.name and tries < 3 then
+        C_Timer.After(0.5, function()
+            if self.frame and self.frame:IsShown() and state.selected == recipe.name then
+                self:ShowPriceLine(recipe, tries + 1)
+                -- the line can wrap differently: refit the scroll area
+                self:UpdateScrollChildHeight()
+            end
+        end)
+    end
+    if not result then return end
+    line:SetText(P:DetailText(result))
+    line:Show()
+    hover.result = result
+    hover:Show()
+end
+
 function TSF:ShowEmbeddedTooltip(recipe)
     local tip = self.embeddedTip
     tip:Hide()
@@ -4157,8 +4390,8 @@ function TSF:ShowEmbeddedTooltip(recipe)
     local hasItem = recipe.itemLink or (itemID and itemID ~= 0)
     if not hasItem and not recipe.spellID then return end
 
-    -- Position below detCanMake
-    self.itemTooltipDivider:SetPoint("TOPLEFT", self.detCanMake, "BOTTOMLEFT", 0, -6)
+    -- Position below Can make (and the price line under it)
+    self.itemTooltipDivider:SetPoint("TOPLEFT", self:CanMakeBottom(), "BOTTOMLEFT", 0, -6)
     self.itemTooltipDivider:Show()
     self.itemTooltipHeader:SetPoint("TOPLEFT", self.itemTooltipDivider, "BOTTOMLEFT", 0, -4)
     self.itemTooltipHeader:Show()
@@ -4428,6 +4661,8 @@ end
 ----------------------------------------------------------------------
 local CALC_W = 280
 local CALC_H = FRAME_H
+-- Prices.lua: the Price and Cost columns widen the window by this much
+local CALC_PRICE_W = 124
 
 function TSF:BuildCalcPanel()
     local calc = CreateFrame("Frame", "ProfBuddyCalcWindow", UIParent, "BasicFrameTemplateWithInset")
@@ -4467,6 +4702,8 @@ function TSF:BuildCalcPanel()
     divider:SetSize(CALC_W - 30, 1)
     divider:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -4)
     Theme:Fill(divider, "divider")
+    -- Everything as wide as the window, for LayoutCalcColumns
+    self._calcWide = { divider }
 
     -- Summary line
     local summary = calc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -4474,6 +4711,7 @@ function TSF:BuildCalcPanel()
     summary:SetWidth(CALC_W - 30)
     summary:SetJustifyH("LEFT")
     self.calcSummary = summary
+    table.insert(self._calcWide, summary)
 
     -- Column headers
     local colHeaders = CreateFrame("Frame", nil, calc)
@@ -4500,11 +4738,25 @@ function TSF:BuildCalcPanel()
     colShort:SetText("|cff888888Left|r")
     colShort:SetJustifyH("RIGHT")
 
+    -- Prices.lua: one item's price, and the price of all you need
+    local colPrice = colHeaders:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    colPrice:SetPoint("RIGHT", colHeaders, "RIGHT", -66, 0)
+    colPrice:SetText("|cff888888Price|r")
+    colPrice:SetJustifyH("RIGHT")
+    local colCost = colHeaders:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    colCost:SetPoint("RIGHT", colHeaders, "RIGHT", -2, 0)
+    colCost:SetText("|cff888888Cost|r")
+    colCost:SetJustifyH("RIGHT")
+    self.calcCols = { frame = colHeaders, need = colNeed, have = colHave, short = colShort,
+                      price = colPrice, cost = colCost }
+
     -- Column header divider
     local colDiv = calc:CreateTexture(nil, "ARTWORK")
     colDiv:SetSize(CALC_W - 30, 1)
     colDiv:SetPoint("TOPLEFT", colHeaders, "BOTTOMLEFT", 0, -2)
     Theme:Fill(colDiv, "calcColumnDivider")
+    table.insert(self._calcWide, colHeaders)
+    table.insert(self._calcWide, colDiv)
 
     -- Scroll frame for material rows
     local scrollParent = CreateFrame("Frame", nil, calc)
@@ -4553,6 +4805,17 @@ function TSF:BuildCalcPanel()
         shortText:SetWidth(26)
         row.shortText = shortText
 
+        local priceText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        priceText:SetPoint("RIGHT", row, "RIGHT", -66, 0)
+        priceText:SetJustifyH("RIGHT")
+        priceText:SetWidth(58)
+        row.priceText = priceText
+        local costText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        costText:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+        costText:SetJustifyH("RIGHT")
+        costText:SetWidth(62)
+        row.costText = costText
+
         -- Section divider line (shown only for section headers)
         local divLine = row:CreateTexture(nil, "ARTWORK")
         divLine:SetSize(CALC_W - 36, 1)
@@ -4566,6 +4829,10 @@ function TSF:BuildCalcPanel()
             if r.itemID then
                 GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
                 GameTooltip:SetItemByID(r.itemID)
+                if r.price and addon.Prices then
+                    GameTooltip:AddDoubleLine("ProfessionBuddy price", addon.Prices:MaterialText(r.price),
+                        1, 0.82, 0, 1, 1, 1)
+                end
                 GameTooltip:Show()
             end
         end)
@@ -4573,7 +4840,7 @@ function TSF:BuildCalcPanel()
         -- Shift-click a material -> chat link / AH search / socket (same as the
         -- detail-panel reagent rows).
         row:SetScript("OnMouseUp", function(r)
-            if r.itemID then
+            if r.itemID and IsModifierKeyDown() then
                 local link = select(2, GetItemInfo(r.itemID))
                 if link then HandleModifiedItemClick(link) end
             end
@@ -4592,6 +4859,40 @@ function TSF:BuildCalcPanel()
 
     self.calcPanel = calc
     self.calcData = {}
+    self._calcExtra = nil   -- the first LayoutCalcColumns sets the columns either way
+end
+
+-- Prices.lua: the Price and Cost columns, shown with Settings > Prices >
+-- Show prices. They widen the window; Need, Have and Left move left.
+function TSF:LayoutCalcColumns(prices)
+    local calc = self.calcPanel
+    local extra = prices and CALC_PRICE_W or 0
+    if self._calcExtra == extra then return end
+    self._calcExtra = extra
+    local w = CALC_W + extra
+    calc:SetWidth(w)
+    for _, region in ipairs(self._calcWide) do region:SetWidth(w - 30) end
+    local h = self.calcCols
+    h.need:SetPoint("RIGHT", h.frame, "RIGHT", -64 - extra, 0)
+    h.have:SetPoint("RIGHT", h.frame, "RIGHT", -30 - extra, 0)
+    h.short:SetPoint("RIGHT", h.frame, "RIGHT", -2 - extra, 0)
+    h.price:SetShown(prices)
+    h.cost:SetShown(prices)
+    for _, row in ipairs(self.calcRows) do
+        row:SetWidth(w - 36)
+        row.sectionDivider:SetWidth(w - 36)
+        row.nameText:SetPoint("RIGHT", row, "RIGHT", -100 - extra, 0)
+        row.needText:SetPoint("RIGHT", row, "RIGHT", -64 - extra, 0)
+        row.haveText:SetPoint("RIGHT", row, "RIGHT", -30 - extra, 0)
+        row.shortText:SetPoint("RIGHT", row, "RIGHT", -2 - extra, 0)
+        row.priceText:SetShown(prices)
+        row.costText:SetShown(prices)
+    end
+    -- the window changed width while open: keep it beside the profession window
+    if calc:IsShown() and addon.UI then
+        if addon.UI.MakeRoomBeside then addon.UI:MakeRoomBeside(self.frame, calc) end
+        if addon.UI.UpdateSideClamp then addon.UI:UpdateSideClamp(self.frame, { calc }) end
+    end
 end
 
 -- Populate (or refresh) the calc window for the currently selected recipe.
@@ -4666,6 +4967,31 @@ function TSF:RefreshCalcPanel()
         end
     end
 
+    -- Prices.lua: each material's price, and what the shopping list costs
+    local P = addon.Prices
+    local prices = P and P:Enabled() or false
+    self:LayoutCalcColumns(prices)
+    local toBuy, allCost, buyMissing, allMissing, allBoP = 0, 0, 0, 0, 0
+    if prices then
+        for _, entry in ipairs(displayData) do
+            if entry.itemID then
+                local mp = P:MaterialPrice(entry.itemID, {}, 0)
+                entry.price = mp
+                if entry.isShoppingItem then
+                    if mp.unit then
+                        toBuy = toBuy + mp.unit * entry.shortfall
+                        allCost = allCost + mp.unit * entry.need
+                    end
+                    if not mp.unit or mp.partial then
+                        allMissing = allMissing + 1
+                        if mp.bop and not mp.unit then allBoP = allBoP + 1 end
+                        if entry.shortfall > 0 then buyMissing = buyMissing + 1 end
+                    end
+                end
+            end
+        end
+    end
+
     self.calcData = displayData
     self.calcScrollOffset = 0
 
@@ -4687,6 +5013,13 @@ function TSF:RefreshCalcPanel()
         self.calcSummary:SetText("|cff00ff00All materials available " .. scope .. "!|r")
     else
         self.calcSummary:SetText("|cffff4444Missing " .. totalShort .. " of " .. totalRaw .. " raw materials.|r")
+    end
+    if prices and totalRaw > 0 then
+        local buy = (buyMissing > 0 and toBuy == 0) and "?" or (P:Money(toBuy) .. (buyMissing > 0 and "+" or ""))
+        local all = (allMissing > 0 and allCost == 0) and "?" or (P:Money(allCost) .. (allMissing > 0 and "+" or ""))
+        local text = "To buy: " .. buy .. "   All materials: " .. all
+        if allMissing > 0 then text = text .. "\n|cff888888(" .. P:MissingText(allMissing, allBoP) .. ")|r" end
+        self.calcSummary:SetText(self.calcSummary:GetText() .. "\n" .. text)
     end
 
     self:UpdateCalcRows()
@@ -4737,7 +5070,10 @@ function TSF:UpdateCalcRows()
                 row.needText:SetText("")
                 row.haveText:SetText("")
                 row.shortText:SetText("")
+                row.priceText:SetText("")
+                row.costText:SetText("")
                 row.itemID = nil
+                row.price = nil
                 row.sectionDivider:Hide()
             elseif entry.isSection then
                 -- Section header with divider
@@ -4747,7 +5083,10 @@ function TSF:UpdateCalcRows()
                 row.needText:SetText("")
                 row.haveText:SetText("")
                 row.shortText:SetText("")
+                row.priceText:SetText("")
+                row.costText:SetText("")
                 row.itemID = nil
+                row.price = nil
                 row.sectionDivider:Show()
             else
                 -- Material row
@@ -4788,6 +5127,30 @@ function TSF:UpdateCalcRows()
                 else
                     row.haveText:SetText("|cff888888" .. entry.have .. "|r")
                     row.shortText:SetText("|cffff4444" .. entry.shortfall .. "|r")
+                end
+
+                -- Prices.lua: one item's price and the price of all you need,
+                -- gray when old; "+" when a crafted material's own materials
+                -- are not all priced
+                local mp = entry.price
+                row.price = mp
+                if mp and mp.unit then
+                    local P = addon.Prices
+                    local grey = mp.used == "buy" and mp.stale
+                    local plus = mp.partial and "+" or ""
+                    local function Fmt(v) return grey and ("|cff808080" .. v .. "|r") or v end
+                    row.priceText:SetText(Fmt(P:Money(mp.unit, true) .. plus))
+                    row.costText:SetText(Fmt(P:Money(mp.unit * entry.need, true) .. plus))
+                elseif mp and mp.bop then
+                    -- binds when picked up: no price to buy it at (TEST-b2)
+                    row.priceText:SetText("|cff808080BoP|r")
+                    row.costText:SetText("|cff808080BoP|r")
+                elseif mp then
+                    row.priceText:SetText("|cffff4444?|r")
+                    row.costText:SetText("|cffff4444?|r")
+                else
+                    row.priceText:SetText("")
+                    row.costText:SetText("")
                 end
             end
         else
@@ -4916,8 +5279,11 @@ function TSF:BuildCraftBar(parent)
     -- a secure macro (like /cast), which puts it on the cursor to apply to
     -- a target item. Parented to the main frame (NOT craftBar) so the craft
     -- bar stays free of secure descendants and can still be shown/hidden in
-    -- combat. Visibility is managed via alpha/EnableMouse (non-protected);
-    -- the macrotext is set out of combat in UpdateCraftBar.
+    -- combat. Anchored to the main frame too, at the craft bar's first slot:
+    -- a frame a secure button is anchored to is protected as well, and the
+    -- game blocked the craft bar's Show in combat (TEST-c6, m4ru). Shown by
+    -- alpha; its mouse and macrotext change out of combat only
+    -- (UpdateCraftBar).
     -- SecureActionButtonTemplate ONLY -- combining with UIPanelButtonTemplate
     -- lets its OnClick override the secure click handler, which silently
     -- kills the cast. So it draws the template's own artwork by hand
@@ -4925,7 +5291,9 @@ function TSF:BuildCraftBar(parent)
     local enchantBtn = CreateFrame("Button", "ProfBuddyEnchantCraftBtn", parent,
         "SecureActionButtonTemplate")
     enchantBtn:SetSize(BTN_W, BTN_H)
-    enchantBtn:SetPoint("TOPLEFT", craftBar, "TOPLEFT", x1, ROW1_Y)
+    -- the craft bar's top-left corner is fixed: LIST_W + 18 in, and
+    -- CRAFT_BAR_H above its bottom edge 30 px up
+    enchantBtn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", LIST_W + 18 + x1, 30 + CRAFT_BAR_H + ROW1_Y)
     enchantBtn:SetFrameLevel(craftBar:GetFrameLevel() + 5)
 
     enchantBtn.look = DrawPanelButtonArt(enchantBtn, "Craft")
@@ -4953,7 +5321,7 @@ function TSF:BuildCraftBar(parent)
     -- Hide the secure button whenever the craft bar is hidden
     craftBar:SetScript("OnHide", function()
         enchantBtn:SetAlpha(0)
-        enchantBtn:EnableMouse(false)
+        TSF:SetEnchantMouse(false)
     end)
 
     -- Register craft-completion tracking for qty countdown
@@ -5199,6 +5567,18 @@ function TSF:ReagentCraftCount(recipe)
     return minMake or 0
 end
 
+-- The Enchant button's mouse: a secure button, so the game blocks the
+-- change in combat (Blizzard's API documentation: EnableMouse is
+-- protected; TEST-c6). It goes off as combat starts (PLAYER_REGEN_DISABLED,
+-- the last moment it is allowed), so an enchant chosen before combat can't
+-- be cast onto the next item clicked, and UpdateCraftBar sets it again
+-- when combat ends.
+function TSF:SetEnchantMouse(on)
+    local eb = self.enchantCraftBtn
+    if not eb or InCombatLockdown() then return end
+    eb:EnableMouse(on and true or false)
+end
+
 function TSF:UpdateCraftBar()
     -- Don't show craft bar while settings view is active
     if self.settingsPanel and self.settingsPanel:IsShown() then
@@ -5223,7 +5603,7 @@ function TSF:UpdateCraftBar()
         if self.composerBar then self.composerBar:Hide() end
         if self.enchantCraftBtn then
             self.enchantCraftBtn:SetAlpha(0)
-            self.enchantCraftBtn:EnableMouse(false)
+            self:SetEnchantMouse(false)
         end
         return
     end
@@ -5256,7 +5636,7 @@ function TSF:UpdateCraftBar()
         -- button, one cast per target item, so no quantity controls.
         if eb then
             eb:SetAlpha(0)
-            eb:EnableMouse(false)
+            self:SetEnchantMouse(false)
         end
         for i, btn in ipairs(self.craftBtns) do
             if i == 1 then
@@ -5279,22 +5659,22 @@ function TSF:UpdateCraftBar()
             -- it instead; PLAYER_REGEN_ENABLED re-runs this function.
             eb.look("disabled")
             eb:SetAlpha(1)
-            eb:EnableMouse(false)
+            self:SetEnchantMouse(false)
         else
             eb:SetAttribute("macrotext", "/cast " .. recipe.name)
             eb:SetAlpha(1)
             if canCraft then
                 eb.look("up")
-                eb:EnableMouse(true)
+                self:SetEnchantMouse(true)
             else
                 eb.look("disabled")
-                eb:EnableMouse(false)
+                self:SetEnchantMouse(false)
             end
         end
     else
         if eb then
             eb:SetAlpha(0)
-            eb:EnableMouse(false)
+            self:SetEnchantMouse(false)
         end
         for _, btn in ipairs(self.craftBtns) do
             btn:Show()
@@ -5819,7 +6199,25 @@ function TSF:BuildSettingsPanel(parent)
     UpdateBesideCB()
     self.replaceCB, self.besideCB = replCB, besideCB
     yLeft = yLeft - 30
-    MakeCheckbox("Remember window state between opens", "rememberWindowState", yLeft)
+    local rememberCB = MakeCheckbox("Remember window state between opens", "rememberWindowState", yLeft)
+    yLeft = yLeft - 30
+    -- TEST-c: kept across a /reload or logout too, with window positions;
+    -- gray while Remember is off (decision D4)
+    local keepCB = MakeCheckbox("Keep after a reload or logout", "keepWindowState", yLeft, COL_LEFT + 20)
+    local function UpdateKeepCB()
+        local on = settings.rememberWindowState ~= false
+        keepCB:SetChecked(settings.keepWindowState ~= false)
+        if on then keepCB:Enable(); keepCB:SetAlpha(1) else keepCB:Disable(); keepCB:SetAlpha(0.4) end
+    end
+    rememberCB:SetScript("OnClick", function(cb)
+        settings.rememberWindowState = cb:GetChecked() and true or false
+        UpdateKeepCB()
+    end)
+    keepCB:SetScript("OnClick", function(cb)
+        settings.keepWindowState = cb:GetChecked() and true or false
+    end)
+    UpdateKeepCB()
+    self.rememberCB, self.keepCB = rememberCB, keepCB
     yLeft = yLeft - 30
     local allProfCB = MakeCheckbox("Show all professions in tabs", "showAllProfessions", yLeft)
     allProfCB:SetScript("OnClick", function(self)
@@ -5962,7 +6360,210 @@ function TSF:BuildSettingsPanel(parent)
         if addon.FriendsPanel and addon.FriendsPanel.Refresh then addon.FriendsPanel:Refresh() end
     end)
     TSF.crossFriendsCB = crossFriendsCB
+    yLeft = yLeft - 26
+    -- TEST-c G2: ask online guildmates for their recipes in the background
+    local guildFillCB = MakeCheckbox("Keep guildmates' recipes up to date", "guildKeepRecipes", yLeft)
+    guildFillCB:SetScript("OnClick", function(self)
+        settings.guildKeepRecipes = self:GetChecked() and true or false
+        if settings.guildKeepRecipes and addon.GuildPanel and addon.GuildPanel.ScheduleFill then
+            addon.GuildPanel:ScheduleFill()
+        end
+    end)
+    TSF.guildFillCB = guildFillCB
     yLeft = yLeft - 28   -- the 24 px check box and 4 px, matching the top
+
+    -- ── Prices section (Prices.lua) ───────────────────────────
+    yLeft = yLeft - 20
+
+    local priceHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    priceHeader:SetPoint("TOPLEFT", COL_LEFT, yLeft)
+    priceHeader:SetText("Prices")
+    priceHeader:SetTextColor(1, 0.82, 0)
+    yLeft = yLeft - 20
+
+    yLeft = yLeft - 6
+
+    local P = addon.Prices
+    local function PricesChanged() if P then P:Changed() end end
+    local showPricesCB = MakeCheckbox("Show prices", "showPrices", yLeft)
+    yLeft = yLeft - 26
+    -- Auctionator and TSM are read only when installed; otherwise the box
+    -- is gray and says so
+    local aucCB = MakeCheckbox(P and P:HasAuctionator() and "Auctionator prices"
+        or "Auctionator prices (not installed)", "priceAuctionator", yLeft, COL_LEFT + 20)
+    yLeft = yLeft - 26
+    local tsmCB = MakeCheckbox(P and P:HasTSM() and "TSM prices" or "TSM prices (not installed)",
+        "priceTSM", yLeft, COL_LEFT + 20)
+    yLeft = yLeft - 26
+    -- The price source on its own line: "TSM prices (not installed)" ran
+    -- under a box placed beside it (TEST-a)
+    local tsmLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    tsmLabel:SetPoint("TOPLEFT", COL_LEFT + 48, yLeft - 4)
+    tsmLabel:SetText("TSM price source:")
+    tsmLabel:SetTextColor(0.9, 0.9, 0.9)
+    local tsmBox = CreateFrame("EditBox", nil, content, "InputBoxTemplate")
+    tsmBox:SetSize(120, 20)
+    tsmBox:SetPoint("LEFT", tsmLabel, "RIGHT", 10, 0)
+    tsmBox:SetAutoFocus(false)
+    tsmBox:SetText(settings.priceTSMSource or "DBMarket")
+    tsmBox:SetCursorPosition(0)
+    local function SaveTSMSource(box)
+        local typed = strtrim(box:GetText() or "")
+        if typed == "" then typed = "DBMarket" end
+        box:SetText(typed)
+        box:SetCursorPosition(0)
+        -- red when TSM does not accept the source
+        if P and P:TSMSourceValid(typed) == false then
+            box:SetTextColor(1, 0.27, 0.27)
+        else
+            box:SetTextColor(1, 1, 1)
+        end
+        if settings.priceTSMSource ~= typed then
+            settings.priceTSMSource = typed
+            PricesChanged()
+        end
+    end
+    tsmBox:SetScript("OnEnterPressed", function(box) SaveTSMSource(box); box:ClearFocus() end)
+    tsmBox:SetScript("OnEscapePressed", function(box)
+        box:SetText(settings.priceTSMSource or "DBMarket")
+        box:ClearFocus()
+    end)
+    tsmBox:SetScript("OnEditFocusLost", SaveTSMSource)
+    tsmBox:SetScript("OnEnter", function(box)
+        GameTooltip:SetOwner(box, "ANCHOR_RIGHT")
+        GameTooltip:SetText("TSM price source", 1, 1, 1)
+        GameTooltip:AddLine("Any TSM price source, such as DBMarket or DBMinBuyout. Red when TSM does not accept it.",
+            nil, nil, nil, true)
+        GameTooltip:Show()
+    end)
+    tsmBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.priceTSMBox = tsmBox
+    yLeft = yLeft - 30
+
+    local STALE_ORDER = { 3, 7, 14, 30 }
+    local staleOpts = {}
+    for i, d in ipairs(STALE_ORDER) do staleOpts[i] = d .. " days" end
+    local staleDD = CreateDropdown(content, 322, staleOpts, (settings.priceStaleDays or 7) .. " days",
+        function(val)
+            settings.priceStaleDays = tonumber(val:match("^(%d+)")) or 7
+            PricesChanged()
+        end,
+        "Prices turn gray after: ")
+    staleDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    self.priceStaleDD = staleDD
+    yLeft = yLeft - 30
+
+    local INTER_LABELS = { both = "Buy and craft prices", cheaper = "Cheaper price only" }
+    local interDD = CreateDropdown(content, 322, { INTER_LABELS.both, INTER_LABELS.cheaper },
+        INTER_LABELS[settings.priceIntermediates] or INTER_LABELS.both,
+        function(val)
+            settings.priceIntermediates = (val == INTER_LABELS.cheaper) and "cheaper" or "both"
+            PricesChanged()
+        end,
+        "Crafted materials: ")
+    interDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    self.priceInterDD = interDD
+    yLeft = yLeft - 30
+
+    -- What the crafted item sells for: the vendor's price beside the
+    -- auction price, or only the better of the two (auction less 5%)
+    local vendorSellCB = MakeCheckbox("Show vendor sale price", "priceVendorSell", yLeft)
+    yLeft = yLeft - 26
+    local betterCB = MakeCheckbox("Only show the better sale price", "priceBetterSale", yLeft, COL_LEFT + 20)
+    yLeft = yLeft - 26
+    -- The recipe list: a Profit column (also a Sort choice) and a filter
+    local listProfitCB = MakeCheckbox("Profit in the recipe list", "priceListProfit", yLeft)
+    yLeft = yLeft - 26
+    local hideLossCB = MakeCheckbox("Hide crafts at a loss", "priceHideLoss", yLeft)
+    yLeft = yLeft - 30
+    local function ListChanged()
+        PricesChanged()
+        if TSF.scrollBar then TSF:RefreshRecipeList() end
+    end
+
+    local clearBtn = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    clearBtn:SetSize(160, 22)
+    clearBtn:SetPoint("TOPLEFT", COL_LEFT + 4, yLeft)
+    clearBtn:SetText("Clear recorded prices")
+    clearBtn:SetScript("OnClick", function()
+        if not StaticPopupDialogs["PROFBUDDY_CLEAR_PRICES"] then
+            StaticPopupDialogs["PROFBUDDY_CLEAR_PRICES"] = {
+                text = "Clear every auction and vendor price ProfessionBuddy recorded? Auctionator, TSM and the built-in vendor prices stay.",
+                button1 = "Clear",
+                button2 = "Cancel",
+                OnAccept = function() if P then P:ClearRecorded() end end,
+                timeout = 0,
+                whileDead = true,
+                hideOnEscape = true,
+                preferredIndex = 3,
+            }
+        end
+        StaticPopup_Show("PROFBUDDY_CLEAR_PRICES")
+    end)
+    self.priceClearBtn = clearBtn
+    yLeft = yLeft - 26
+
+    local priceNote = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    priceNote:SetPoint("TOPLEFT", COL_LEFT + 4, yLeft)
+    priceNote:SetWidth(322)
+    priceNote:SetJustifyH("LEFT")
+    priceNote:SetText("|cff888888Order: Auctionator, TSM, prices ProfessionBuddy recorded, then the vendor. A material a vendor sells is never priced above the vendor's price.|r")
+    yLeft = yLeft - 30
+
+    -- The sources and the boxes below Show prices are gray while it is off;
+    -- Auctionator and TSM stay gray while not installed
+    local function UpdatePriceSub()
+        local on = settings.showPrices ~= false
+        local function Set(widget, enabled)
+            if enabled then widget:Enable(); widget:SetAlpha(1) else widget:Disable(); widget:SetAlpha(0.4) end
+        end
+        Set(aucCB, on and P and P:HasAuctionator())
+        Set(tsmCB, on and P and P:HasTSM())
+        Set(tsmBox, on and P and P:HasTSM() and settings.priceTSM ~= false)
+        tsmLabel:SetAlpha((on and P and P:HasTSM() and settings.priceTSM ~= false) and 1 or 0.4)
+        Set(clearBtn, on)
+        Set(vendorSellCB, on)
+        Set(betterCB, on and settings.priceVendorSell ~= false)
+        Set(listProfitCB, on)
+        Set(hideLossCB, on)
+        staleDD:SetAlpha(on and 1 or 0.4)
+        interDD:SetAlpha(on and 1 or 0.4)
+    end
+    showPricesCB:SetScript("OnClick", function(cb)
+        settings.showPrices = cb:GetChecked() and true or false
+        UpdatePriceSub()
+        ListChanged()
+    end)
+    aucCB:SetScript("OnClick", function(cb)
+        settings.priceAuctionator = cb:GetChecked() and true or false
+        PricesChanged()
+    end)
+    tsmCB:SetScript("OnClick", function(cb)
+        settings.priceTSM = cb:GetChecked() and true or false
+        UpdatePriceSub()
+        PricesChanged()
+    end)
+    vendorSellCB:SetScript("OnClick", function(cb)
+        settings.priceVendorSell = cb:GetChecked() and true or false
+        UpdatePriceSub()
+        ListChanged()
+    end)
+    betterCB:SetScript("OnClick", function(cb)
+        settings.priceBetterSale = cb:GetChecked() and true or false
+        ListChanged()
+    end)
+    listProfitCB:SetScript("OnClick", function(cb)
+        settings.priceListProfit = cb:GetChecked() and true or false
+        ListChanged()
+    end)
+    hideLossCB:SetScript("OnClick", function(cb)
+        settings.priceHideLoss = cb:GetChecked() and true or false
+        ListChanged()
+    end)
+    UpdatePriceSub()
+    self.showPricesCB, self.priceAucCB, self.priceTSMCB = showPricesCB, aucCB, tsmCB
+    self.priceVendorSellCB, self.priceBetterCB = vendorSellCB, betterCB
+    self.priceListProfitCB, self.priceHideLossCB, self.priceTSMLabel = listProfitCB, hideLossCB, tsmLabel
 
 
     -- ════════════════════════════════════════════════════════════
@@ -6349,6 +6950,7 @@ function TSF:UpdateForeverSettings()
 end
 
 function TSF:OpenSettings(origin)
+    if self:WaitToShow("Settings open", function() self:OpenSettings(origin) end) then return end
     self:EnsureFrame()
 
     -- Track where we came from so we can return there
@@ -6385,9 +6987,13 @@ function TSF:CloseSettings()
     self._calcOpenBeforeSettings = false
 
     if origin == "main" or origin == "command" then
+        -- the window hides: in combat, when combat ends
+        if self:WaitForCombat("Settings close", function() self:CloseSettings() end) then return end
         -- Return to the /pb main window
         self:RestoreContentPanels()
+        self._returningToMain = true
         self.frame:Hide()
+        self._returningToMain = nil
         if addon.UI then addon.UI:Show() end
         -- Reopen the Order History panel if it was open before settings
         if addon.OrdersPanel then addon.OrdersPanel:RestoreHistoryState() end
@@ -6684,6 +7290,8 @@ function TSF:LoadRecipes(unknown)
     -- option list above would silently match nothing.
     local srcMap  = { Trainer = "trainer", Vendor = "vendor", Drop = "drop", Quest = "quest", Reputation = "reputation", Discovery = "discovery", Automatic = "automatic", Undetermined = "undetermined" }
 
+    local PR = addon.Prices
+    local hideLoss = PR and PR:HideLossOn()
     for _, r in ipairs(rawList) do
         local passSearch = true
         local passDiff   = true
@@ -6729,7 +7337,16 @@ function TSF:LoadRecipes(unknown)
             end
         end
 
-        if passSearch and passDiff and passCat and passFaction then
+        -- Settings > Prices > Hide crafts at a loss
+        local passLoss = true
+        if hideLoss then
+            -- a BoP craft at a loss is hidden too (m4ru: this filter is
+            -- for what sells at auction)
+            local profit = PR:ListProfit(r, state.profName)
+            passLoss = not (profit and profit < 0)
+        end
+
+        if passSearch and passDiff and passCat and passFaction and passLoss then
             table.insert(filtered, r)
         end
     end
@@ -6820,6 +7437,20 @@ function TSF:LoadRecipes(unknown)
             elseif sortBy == "Name" then
                 if asc then return a.name < b.name
                 else return a.name > b.name end
+            elseif sortBy == "Profit" then
+                -- Prices.lua: most profit first (^), least first (v);
+                -- recipes with no profit, and BoP ones, last either way
+                local pa, ba, pb, bb
+                if PR then
+                    pa, ba = PR:ListProfit(a, state.profName)
+                    pb, bb = PR:ListProfit(b, state.profName)
+                end
+                if ba then pa = nil end
+                if bb then pb = nil end
+                if pa and pb and pa ~= pb then
+                    if asc then return pa > pb else return pa < pb end
+                end
+                if (pa ~= nil) ~= (pb ~= nil) then return pa ~= nil end
             end
             return a.name < b.name
         end)
@@ -6917,6 +7548,8 @@ function TSF:RefreshRecipeList()
     -- times over.
     local unknown = self:GetUnknownForView()
 
+    -- Prices.lua: one cost per recipe per refresh (Profit column, sort, loss filter)
+    if addon.Prices then addon.Prices:ResetListCache() end
     self:LoadRecipes(unknown)
 
     local maxScroll = math.max(0, #state.recipes - VISIBLE_ROWS)
@@ -7000,8 +7633,38 @@ local function WindowStateKey(profName)
     return profName .. "|" .. view
 end
 
+-- TEST-c: the states kept from the last session (UI/Main.lua KeepOn),
+-- loaded the first time a window state is read or written, after login
+function TSF:LoadKeptStates()
+    if self._keptLoaded then return end
+    self._keptLoaded = true
+    local UI = addon.UI
+    if not (UI and UI:KeepOn()) then return end
+    local w = addon.db.windows and addon.db.windows[addon:PlayerKey()]
+    if type(w) ~= "table" or type(w.states) ~= "table" then return end
+    for k, v in pairs(w.states) do
+        if self._savedStates[k] == nil and type(v) == "table" then self._savedStates[k] = v end
+    end
+end
+
+-- At logout and /reload: this character's states into the saved settings,
+-- or removed while keeping is off
+function TSF:KeepStates()
+    local UI = addon.UI
+    if not UI then return end
+    self:LoadKeptStates()
+    if UI:KeepOn() then
+        local w = UI:CharWindows()
+        if w then w.states = self._savedStates end
+    else
+        local w = addon.db.windows and addon.db.windows[addon:PlayerKey()]
+        if type(w) == "table" then w.states = nil end
+    end
+end
+
 function TSF:SaveWindowState()
     if not addon.db.settings.rememberWindowState then return end
+    self:LoadKeptStates()
     local prof = state.profName
     if not prof then return end
 
@@ -7024,6 +7687,7 @@ end
 -- being opened, so the key matches the one SaveWindowState wrote.
 function TSF:RestoreWindowState(profName)
     if not addon.db.settings.rememberWindowState then return false end
+    self:LoadKeptStates()
     local saved = self._savedStates[WindowStateKey(profName)]
     if not saved then return false end
 
@@ -7122,6 +7786,11 @@ end
 -- Open profession window
 ----------------------------------------------------------------------
 function TSF:OpenWith(profName, rank, maxRank, isCraft)
+    if self:WaitToShow(profName .. " opens", function()
+        if isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
+    end) then return end
+    -- a profession opening (Back, or another one) ends a park
+    if self._parked then self:EndPark(false) end
     -- Close the /pb main window if open (mutual exclusion)
     if addon.UI and addon.UI.frame and addon.UI.frame:IsShown() then
         addon.UI:Hide()
@@ -7251,6 +7920,9 @@ end
 -- Shows only missing recipes, no live game data, no skill bar.
 ----------------------------------------------------------------------
 function TSF:OpenWithStatic(profName)
+    if self:WaitToShow(profName .. " opens", function() self:OpenWithStatic(profName) end) then return end
+    -- leaving the parked profession for a read-only list: its session closes
+    if self._parked then self:EndPark(true) end
     if not RDB or not RDB.data[profName] then return end
 
     -- Close the /pb main window if open (mutual exclusion)
@@ -7318,6 +7990,8 @@ end
 -- difficulty colors relative to their skill level.
 ----------------------------------------------------------------------
 function TSF:OpenWithCharacter(charKey, profName)
+    if self:WaitToShow(profName .. " opens", function() self:OpenWithCharacter(charKey, profName) end) then return end
+    if self._parked then self:EndPark(true) end
     if not RDB or not RDB.data[profName] then return end
     if not DS then return end
 
@@ -7567,6 +8241,11 @@ end
 -- backend -- otherwise it stays open and the action-bar profession
 -- button's next cast just toggles it shut instead of reopening PB.
 function TSF:Hide(fromEvent)
+    -- the game blocks it in combat: it closes when combat ends
+    if self.frame and self.frame:IsShown()
+       and self:WaitForCombat("The profession window closes", function() self:Hide(fromEvent) end) then
+        return
+    end
     -- Save window state for this profession before closing
     self:SaveWindowState()
 
@@ -7579,4 +8258,90 @@ end
 
 function TSF:Show()
     if self.frame then self.frame:Show() end
+end
+
+----------------------------------------------------------------------
+-- Combat (TEST-c6, m4ru's TEST-c5 run on TBC Anniversary). This window's
+-- profession icons are secure buttons, on both clients, so in combat the
+-- game won't let PB show, hide or move it, or build it (ADDON_ACTION_
+-- BLOCKED on ProfBuddyTradeSkillFrame:Hide()). Anything that would waits
+-- and runs when combat ends, the latest one; chat says so once per wait.
+----------------------------------------------------------------------
+function TSF:Locked()
+    return InCombatLockdown() and true or false
+end
+
+-- In combat: keep fn for when combat ends and say `what` ("Characters
+-- opens"), then true; out of combat false, and the caller goes on.
+function TSF:WaitForCombat(what, fn)
+    if not self:Locked() then return false end
+    self._afterCombat = fn
+    if what and self._saidWait ~= what then
+        self._saidWait = what
+        print("|cff00ccffProfessionBuddy:|r " .. what .. " when combat ends.")
+    end
+    return true
+end
+
+-- The same, only when the window would have to show (built and shown
+-- already: what it shows changes in place, as in combat before)
+function TSF:WaitToShow(what, fn)
+    if self.frame and self.frame:IsShown() then return false end
+    return self:WaitForCombat(what, fn)
+end
+
+----------------------------------------------------------------------
+-- Park and Back (TEST-c, N1, Bran). A bottom tab click parks your open
+-- profession: the window saves its state and hides, the game's session
+-- stays open, and the main window shows "Back to <profession>". Back
+-- reopens it as it was. The park ends when the game closes the session,
+-- another profession or view opens, or the main window closes (that
+-- closes the session too, decision D2).
+----------------------------------------------------------------------
+
+-- Your own open profession, not a friend's, guildmate's, linked or
+-- read-only view
+function TSF:CanPark()
+    return self.frame and self.frame:IsShown() and state.profName ~= nil
+        and not state._viewCharKey and not state._isStaticView and not state._isLinkedView
+        and addon.Source:IsSessionOpen(state.isCraftWindow) and true or false
+end
+
+-- The bottom tabs: park when it can, otherwise close as before
+function TSF:HideForMain()
+    if self:Locked() then return end   -- the callers wait for combat to end
+    if not self:CanPark() then return self:Hide() end
+    self._parked = { prof = state.profName, display = state.profDisplayName or state.profName,
+                     isCraft = state.isCraftWindow and true or false }
+    self._keepSession = true
+    self:Hide()
+    self._keepSession = nil
+    if addon.UI and addon.UI.UpdateBack then addon.UI:UpdateBack() end
+end
+
+-- closeSession: the main window closed while parked
+function TSF:EndPark(closeSession)
+    local p = self._parked
+    if not p then return end
+    self._parked = nil
+    if closeSession and addon.Source:IsSessionOpen(p.isCraft) then addon.Source:CloseWindow(p.isCraft) end
+    if addon.UI and addon.UI.UpdateBack then addon.UI:UpdateBack() end
+end
+
+-- Back: the main window goes, the profession comes back as it was (its
+-- state was saved when it parked). In combat it waits, as a profession
+-- opening in combat already does.
+function TSF:Unpark()
+    local p = self._parked
+    if not p then return end
+    if not addon.Source:IsSessionOpen(p.isCraft) then return self:EndPark(false) end
+    if InCombatLockdown() then
+        self._pendingOpen = p.isCraft and "craft" or "trade"
+        self._pendingClose = false
+        print("|cff00ccffProfessionBuddy:|r " .. p.display .. " opens when combat ends.")
+        return
+    end
+    self._parked = nil
+    if addon.UI then addon.UI:Hide() end
+    if p.isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
 end

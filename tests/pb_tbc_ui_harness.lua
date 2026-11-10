@@ -267,4 +267,426 @@ do
 end
 print("  PASS " .. TAG .. "9 trainer ranges on TBC Anniversary: numbers on the Requires line when they fit, none when too long, tooltip line, nothing for a known recipe, the setting off or a class trainer")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 9)")
+-- U10: prices on TBC Anniversary (Prices.lua, 2.1.0): the TBC vendor
+-- table, the classic vendor API, Auctionator, the detail line, the
+-- calculator and Settings
+do
+    local P = PB.Prices
+    EXPECT(P and PB.VendorPrices and PB.VendorPrices[2320] == 10 and PB.VendorPrices[14341] == 5000,
+           "TBC vendor prices (Coarse Thread 10c, Rune Thread 50s)")
+    local tocSrc = assert(io.open(PB_BASE .. "/ProfessionBuddy_TBC.toc")):read("*a")
+    EXPECT(tocSrc:find("## OptionalDeps: Auctionator, TradeSkillMaster", 1, true)
+           and tocSrc:find("\nData/VendorPrices.lua", 1, true) and tocSrc:find("\nPrices.lua", 1, true),
+           "TBC toc: prices files or OptionalDeps")
+    local function plain(t)
+        return ((t or ""):gsub("|T[^|]*|t", function(icon)
+            return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c"
+        end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+    end
+    -- the classic vendor window: GetMerchantItemInfo, no C_MerchantFrame.GetItemInfo
+    local ITEMS = {
+        { 2320, 40, 4, -1, false },   -- Coarse Thread, a stack of 4 for 40c
+        { 2321, 100, 1, 3, false },   -- Fine Thread, limited stock
+        { 2604, 50, 1, -1, true },    -- Red Dye for tokens
+    }
+    local keep = { C_MerchantFrame = rawget(_G, "C_MerchantFrame") }
+    C_MerchantFrame = { GetBuybackItemID = function() end }
+    GetMerchantNumItems = function() return #ITEMS end
+    GetMerchantItemID = function(i) return ITEMS[i] and ITEMS[i][1] end
+    GetMerchantItemInfo = function(i)
+        local it = ITEMS[i]
+        return "x", "icon", it[2], it[3], it[4], true, true, it[5]
+    end
+    FIRE("MERCHANT_SHOW")
+    local V = PB.db.prices and PB.db.prices.vendor or {}
+    EXPECT(V[2320] and V[2320].p == 10 and V[2321] == nil and V[2604] == nil,
+           "TBC vendor scan: " .. tostring(V[2320] and V[2320].p))
+    GetMerchantNumItems = function() return 0 end
+    C_MerchantFrame = keep.C_MerchantFrame
+
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(_, id) return ({ [2934] = 10, [2318] = 50 })[id] end,
+        GetAuctionAgeByItemID = function() return 0 end,
+    } } }
+    ok, err = pcall(OPEN_TRADE)
+    EXPECT(ok, "trade skill reopen: " .. tostring(err))
+    TSF.state.selected = "Light Leather"
+    TSF:RefreshDetailPanel()
+    local line = plain(TSF.detPrice:GetText())
+    EXPECT(TSF.detPrice:IsShown() and line == "Cost: 30c   Sells: 50c, vendor 5c   Profit: +18c", "TBC price line: " .. line)
+    ok, err = pcall(TSF.ToggleCalcPanel, TSF)
+    EXPECT(ok and TSF.calcCols.price:IsShown(), "calculator with prices: " .. tostring(err))
+    ok, err = pcall(TSF.ToggleCalcPanel, TSF)
+    EXPECT(ok, "calculator close: " .. tostring(err))
+    EXPECT(TSF.showPricesCB and TSF.priceAucCB and TSF.priceTSMBox, "Settings > Prices on TBC Anniversary")
+    Auctionator = nil
+    pcall(CLOSE_TRADE)
+end
+print("  PASS " .. TAG .. "10 prices: TBC vendor table, the classic vendor window recorded per item (unlimited, money only), Auctionator line in the detail panel, calculator columns, Settings")
+
+-- U11: auction prices on TBC Anniversary (AuctionPrices.lua, 2.1.0):
+-- the classic auction house's pages, Scan my materials by exact name with
+-- cheapest first, the game's search and full-scan limits, a full scan
+-- read from index 1, another addon's full scan left alone
+do
+    local P, AP = PB.Prices, PB.AuctionPrices
+    P:ClearRecorded()
+    local LIST, canQuery, canAll, queries, sorts = {}, true, false, {}, {}
+    GetNumAuctionItems = function() return #LIST, #LIST end
+    GetAuctionItemInfo = function(_, i)
+        local e = LIST[i]
+        return "x", "icon", e[2], 1, true, 1, nil, 0, 0, e[3], 0, nil, nil, nil, nil, 0, e[1], true
+    end
+    CanSendAuctionQuery = function() return canQuery, canAll end
+    SortAuctionSetSort = function(_, how) sorts[#sorts + 1] = how end
+    QueryAuctionItems = function(name, _, _, page, _, _, getAll, exact)
+        queries[#queries + 1] = tostring(name) .. "|" .. tostring(page) .. "|" .. tostring(getAll) .. "|" .. tostring(exact)
+        if not getAll then
+            LIST = { { 2934, 5, 40 }, { 2934, 2, 30 } }
+            FIRE("AUCTION_ITEM_LIST_UPDATE")
+        end
+    end
+    local said
+    local keepDialogs = rawget(_G, "StaticPopupDialogs")
+    StaticPopupDialogs = {}
+    local keepPopup = StaticPopup_Show
+    StaticPopup_Show = function(n) said = n end
+    local AF = CreateFrame("Frame", "AuctionFrame", UIParent)
+    -- the classic auction house's three tabs and its tab click (Blizzard_AuctionUI)
+    rawset(AF, "numTabs", 3)
+    for i = 1, 3 do CreateFrame("Button", "AuctionFrameTab" .. i, AF):SetID(i) end
+    local numTabs
+    PanelTemplates_SetNumTabs = function(f, n) numTabs = n; rawset(f, "numTabs", n) end
+    PanelTemplates_TabResize = function() end
+    PanelTemplates_EnableTab = function() end
+    AuctionFrameTab_OnClick = function(tab) rawset(AF, "_tab", tab:GetID()) end
+    local keepSub, keepMap = GetSubZoneText, rawget(_G, "C_Map")
+    local SUB = ""
+    GetSubZoneText = function() return SUB end
+    C_Map = setmetatable({ GetAreaInfo = function(id) return ({ [35] = "Booty Bay", [976] = "Gadgetzan", [2255] = "Everlook" })[id] end },
+                         { __index = keepMap })
+    local house = P:HouseKey()
+    local function rec(id) local h = PB.db.prices and PB.db.prices.auction[house]; return h and h[id] and h[id].p end
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    -- the ProfessionBuddy tab: the fourth AuctionFrameTab, its page shown
+    -- by Blizzard's tab click and hidden by another tab
+    EXPECT(AP.tab and AP.tab == AuctionFrameTab4 and AP.tab:GetID() == 4 and numTabs == 4 and AP.tab:IsShown(),
+           "no ProfessionBuddy tab on TBC Anniversary")
+    AuctionFrameTab_OnClick(AP.tab)
+    EXPECT(AP.panel:IsShown() and AF._tab == 4, "PB's page not shown by its tab")
+    AuctionFrameTab_OnClick(AuctionFrameTab1)
+    EXPECT(not AP.panel:IsShown(), "PB's page left over Browse")
+    -- the tan bar over the corner art's empty button wells, on PB's page
+    -- (the harness has no textures; where it sits is checked in game)
+    local apSrc = assert(io.open(PB_BASE .. "/AuctionPrices.lua")):read("*a")
+    EXPECT(rawget(AP.panel, "bottomBar") ~= nil and apSrc:find('bar:SetPoint("TOPLEFT", AuctionFrame, "TOPLEFT", 673, -411)', 1, true),
+           "no bar over the bottom-right wells")
+    -- TEST-b3: PB when the tabs run past the window's edge (Auctionator's)
+    rawset(AF, "GetRight", function() return 840 end)
+    rawset(AP.tab, "GetRight", function() return 900 end)
+    rawset(AP.tab, "GetWidth", function() return 120 end)
+    AP:FitTab()
+    EXPECT(AP.tab:GetText() == "PB", "TBC Anniversary crowded tab: " .. tostring(AP.tab:GetText()))
+    rawset(AP.tab, "GetRight", function() return 700 end)
+    rawset(AP.tab, "GetWidth", function() return 60 end)
+    AP:FitTab()
+    EXPECT(AP.tab:GetText() == "ProfessionBuddy", "TBC Anniversary tab with room: " .. tostring(AP.tab:GetText()))
+    rawset(AF, "GetRight", nil); rawset(AP.tab, "GetRight", nil); rawset(AP.tab, "GetWidth", nil)
+    -- a page you browse: lowest per item (40c for 5 = 8c; 30c for 2 = 15c)
+    LIST = { { 2934, 5, 40 }, { 2934, 2, 30 }, { 99999, 1, 1 } }
+    FIRE("AUCTION_ITEM_LIST_UPDATE")
+    EXPECT(rec(2934) == 8 and rec(99999) == nil, "page prices: " .. tostring(rec(2934)))
+    -- another addon's full scan (more than a page) is left alone
+    LIST = {}
+    for i = 1, 60 do LIST[i] = { 2318, 1, 1 } end
+    FIRE("AUCTION_ITEM_LIST_UPDATE")
+    EXPECT(rec(2318) == nil, "another addon's full scan was read")
+    -- Scan my materials: exact names, cheapest per item first, only when the game takes a search
+    canQuery = false
+    AP:StartTargeted()
+    EXPECT(#queries == 0, "searched while the game refused searches")
+    canQuery = true
+    FLUSH()
+    FLUSH()
+    EXPECT(#queries > 0 and queries[1]:match("|0|false|true$") and sorts[1] == "unitprice",
+           "scan queries: " .. table.concat(queries, ", ") .. " / " .. tostring(sorts[1]))
+    EXPECT(AP._scan == nil, "scan did not finish")
+    -- full scan: refused while the game says no, then read from index 1
+    queries = {}
+    StaticPopupDialogs.PROFBUDDY_FULL_SCAN = nil
+    AP.panel.full:GetScript("OnClick")(AP.panel.full)
+    EXPECT(said == "PROFBUDDY_FULL_SCAN", "no full scan warning")
+    PRINTS = {}
+    StaticPopupDialogs.PROFBUDDY_FULL_SCAN.OnAccept()
+    EXPECT(#queries == 0 and PRINTED("does not allow a full scan yet"), "full scan sent while the game said no")
+    canAll = true
+    StaticPopupDialogs.PROFBUDDY_FULL_SCAN.OnAccept()
+    EXPECT(queries[1] == "|0|true|false", "full scan query: " .. tostring(queries[1]))
+    LIST = {}
+    for i = 1, 120 do LIST[i] = { 2318, 2, 90 } end
+    LIST[120] = { 2318, 1, 20 }
+    FIRE("AUCTION_ITEM_LIST_UPDATE")
+    FLUSH()
+    EXPECT(rec(2318) == 20, "full scan prices: " .. tostring(rec(2318)))
+    FIRE("AUCTION_HOUSE_CLOSED")
+    -- Gadgetzan's neutral auction house is not recorded
+    SUB = "Gadgetzan"
+    FIRE("AUCTION_HOUSE_SHOW")
+    FLUSH()
+    LIST = { { 2934, 1, 1 } }
+    FIRE("AUCTION_ITEM_LIST_UPDATE")
+    EXPECT(not AP._record and rec(2934) == 8, "Gadgetzan's auction house was recorded")
+    FIRE("AUCTION_HOUSE_CLOSED")
+    -- BoP reads GetItemInfo's bindType on this client too
+    local keepGII = GetItemInfo
+    GetItemInfo = function(id) if id == 7276 then return "x", nil, 1, 5, 1, "Armor", "Cloth", 1, "", 1, 64, 4, 1, 1 end return keepGII(id) end
+    EXPECT(P:IsBoP(7276) and not P:IsBoP(2934), "BoP on TBC Anniversary")
+    -- TEST-c: the vendor table counts only vendors placed in the world;
+    -- cmangos's test vendor 26304 had every primal at 1g 60s (TEST-b3 B10)
+    EXPECT(P:VendorBuy(23572) == nil and P:VendorBuy(22450) == nil and P:VendorBuy(2320) == 10,
+           "vendor table: Primal Nether, Void Crystal or Coarse Thread")
+    GetItemInfo = function(id) if id == 23572 then return "Primal Nether", nil, 2, 1, 1, "Trade Goods", "Elemental", 20, "", 1, 0, 7, 0, 1 end return keepGII(id) end
+    local nether = P:MaterialPrice(23572)
+    EXPECT(nether.bop and nether.unit == nil, "Primal Nether is not ? (BoP)")
+    GetItemInfo = keepGII
+    GetSubZoneText, C_Map = keepSub, keepMap
+    StaticPopup_Show, StaticPopupDialogs = keepPopup, keepDialogs
+    P:ClearRecorded()
+end
+print("  PASS " .. TAG .. "11 auction prices on TBC Anniversary: browsed pages, Scan my materials by exact name cheapest first, the game's search and full-scan limits, full scan read from index 1, another addon's full scan left alone; PB's tab as the fourth AuctionFrameTab, PB when crowded; Gadgetzan not recorded; BoP; no vendor price from unplaced vendors")
+
+-- U12 TEST-c (N1, N2): the main window's strip on TBC Anniversary is
+-- secure buttons with the same /cast macros, so the window waits for
+-- combat to end to open or close (decision D3), with one chat line; a
+-- bottom tab parks the open profession and Back brings it back
+do
+    local UI, TSF = PB.UI, PB.TradeSkillFrame
+    local strip = UI.profStrip
+    EXPECT(strip and strip.secure, "no secure strip in the main window on TBC Anniversary")
+    local lw = strip.byName.Leatherworking
+    EXPECT(lw and lw:GetAttribute("type") == "macro" and lw:GetAttribute("macrotext") == "/cast Leatherworking",
+           "the strip's Leatherworking macro: " .. tostring(lw and lw:GetAttribute("macrotext")))
+    if UI.frame:IsShown() then UI:Hide() end
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    PRINTS = {}
+    UI:Show()
+    EXPECT(not UI.frame:IsShown() and PRINTED("opens when combat ends"), "the main window opened in combat")
+    UI:Show()
+    local n = 0
+    for _, l in ipairs(PRINTS) do if l:find("when combat ends", 1, true) then n = n + 1 end end
+    EXPECT(n == 1, "the combat line said " .. n .. " times")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED")
+    EXPECT(UI.frame:IsShown(), "the main window did not open when combat ended")
+    InCombatLockdown = function() return true end
+    UI:Hide()
+    EXPECT(UI.frame:IsShown(), "the main window closed in combat")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED")
+    EXPECT(not UI.frame:IsShown(), "the main window did not close when combat ended")
+    EXPECT(UI.backBtn and not UI.backBtn:IsShown(), "Back shown with nothing parked")
+end
+-- G1 on TBC Anniversary too: the reply opens the guildmate's profession
+do
+    local GP, C, S = PB.GuildPanel, PB.Comm, PB.db
+    local opened = 0
+    local keepReq = C.RequestGuildSync
+    C.RequestGuildSync = function() end
+    local K = PB:NormKey("Sticker-Realm")
+    S.characters[K] = nil
+    GP:AskThenOpen(K, "Tailoring", function() opened = opened + 1 end)
+    S.characters[K] = { isRemote = true, professions = { Tailoring = { recipes = { ["Bolt of Linen Cloth"] = true } } } }
+    C:NotifyUIRefresh()
+    EXPECT(opened == 1, "G1 did not open on TBC Anniversary")
+    S.characters[K] = nil
+    C.RequestGuildSync = keepReq
+end
+print("  PASS " .. TAG .. "12 the main window's strip on TBC Anniversary: secure /cast buttons; the window opens and closes when combat ends, one chat line; G1 opens a guildmate's profession when the reply arrives")
+
+-- U13 TEST-c4: the parked profession's icon in the main window works as
+-- Back. Its /cast would close a profession whose window is open, so a
+-- plain button sits over it, also through combat
+local function U13()
+    local UI, TSF = PB.UI, PB.TradeSkillFrame
+    local cover, lw = UI.parkedTab, UI.profStrip.byName.Leatherworking
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+    OPEN_TRADE()
+    EXPECT(TSF.frame:IsShown() and TSF.state.profName == "Leatherworking", "Leatherworking did not open")
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])        -- Characters
+    FLUSH()
+    EXPECT(TSF._parked and UI.frame:IsShown() and lw:IsShown(), "not parked, or no Leatherworking icon")
+    EXPECT(cover:IsShown() and rawget(cover, "_allPoints") == lw, "no button over the parked icon")
+    cover:GetScript("OnClick")(cover)
+    FLUSH()
+    EXPECT(TSF.frame:IsShown() and not UI.frame:IsShown() and not TSF._parked and TBC.open == "trade",
+           "the parked icon did not work as Back")
+    -- in combat: the button stays over the icon and Back waits for combat
+    TSF.navTabs[2]:GetScript("OnClick")(TSF.navTabs[2])        -- Friends
+    FLUSH()
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    UI:UpdateBack()
+    EXPECT(cover:IsShown() and rawget(cover, "_allPoints") == lw, "the button left the icon in combat")
+    PRINTS = {}
+    cover:GetScript("OnClick")(cover)
+    EXPECT(PRINTED("opens when combat ends") and TBC.open == "trade", "the parked icon in combat")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not TSF._parked and not UI.frame:IsShown(), "Back did not open when combat ended")
+    -- the park ends: the button goes
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])
+    FLUSH()
+    CLOSE_TRADE()
+    EXPECT(not TSF._parked and not cover:IsShown(), "the button outlived the park")
+    -- Smelting (Mining's window on TBC Anniversary) sits under the Mining icon
+    local mining = UI.profStrip.byName.Mining
+    local wasShown = mining:IsShown()
+    rawset(mining, "_shown", true)
+    TSF._parked = { prof = "Smelting", display = "Smelting", isCraft = false }
+    UI:UpdateParkedTab()
+    EXPECT(cover:IsShown() and rawget(cover, "_allPoints") == mining, "no button over Mining for parked Smelting")
+    TSF._parked = nil
+    UI:UpdateParkedTab()
+    rawset(mining, "_shown", wasShown)
+    EXPECT(not cover:IsShown(), "the button stayed with nothing parked")
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+end
+U13()
+print("  PASS " .. TAG .. "13 the parked profession's icon in the main window works as Back on TBC Anniversary, in combat too, Smelting under Mining; gone when the park ends")
+
+-- U14 TEST-c6: m4ru's TEST-c5 run: Leatherworking open, in combat, he
+-- clicked Characters, and the game blocked ProfBuddyTradeSkillFrame:Hide().
+-- The harness blocks what the game blocks (BLOCKED). In combat: the
+-- bottom tabs (also from Enchanting), /pb, and dragging either window.
+local function U14()
+    local UI, TSF = PB.UI, PB.TradeSkillFrame
+    local keepICL = InCombatLockdown
+    local function fight(on) InCombatLockdown = on and function() return true end or keepICL end
+    local function ended() fight(false); FIRE("PLAYER_REGEN_ENABLED"); FLUSH() end
+    local function ok(label) EXPECT(#BLOCKED == 0, label .. ": the game would block " .. table.concat(BLOCKED, ", ")) end
+    local function clean()
+        fight(false)
+        if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI:Hide() end
+        FLUSH(); BLOCKED = {}
+        if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    end
+    clean()
+    EXPECT(TSF.frame:IsProtected() and UI.frame:IsProtected(), "harness: the windows are not protected")
+    -- his case, and each other tab
+    for i, name in ipairs({ "Characters", "Friends", "Guild", "Orders" }) do
+        clean(); OPEN_TRADE()
+        fight(true); PRINTS = {}
+        TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH()
+        ok(name .. " in combat")
+        EXPECT(TSF.frame:IsShown() and not TSF._parked and not UI.frame:IsShown()
+               and PRINTED(name .. " opens when combat ends."), name .. " in combat: no wait")
+        ended()
+        ok(name .. " after combat")
+        EXPECT(not TSF.frame:IsShown() and TSF._parked and UI.frame:IsShown() and UI.backBtn:IsShown(),
+               name .. " did not open, parked, when combat ended")
+    end
+    -- from Enchanting (the craft window)
+    clean(); OPEN_CRAFT()
+    EXPECT(TSF.frame:IsShown() and TSF.state.isCraftWindow, "Enchanting did not open")
+    fight(true)
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    ok("Characters from Enchanting in combat")
+    ended()
+    EXPECT(TSF._parked and TSF._parked.isCraft and UI.frame:IsShown(), "Enchanting not parked after combat")
+    -- /pb with the profession window open
+    clean(); OPEN_TRADE()
+    fight(true)
+    SlashCmdList.PROFBUDDY(""); FLUSH()
+    ok("/pb in combat")
+    ended()
+    EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "/pb did not open when combat ended")
+    -- dragging either window in combat
+    fight(true)
+    UI.frame:GetScript("OnDragStart")(UI.frame); UI.frame:GetScript("OnDragStop")(UI.frame)
+    ok("dragging the main window in combat")
+    clean(); OPEN_TRADE()
+    fight(true)
+    TSF.frame:GetScript("OnDragStart")(TSF.frame); TSF.frame:GetScript("OnDragStop")(TSF.frame)
+    ok("dragging the profession window in combat")
+    -- each window's X or Escape in combat (the game's own close), parked too
+    GAME_CLOSE(TSF.frame); FLUSH()
+    ok("the profession window's X in combat")
+    ended()
+    clean(); OPEN_TRADE()
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    EXPECT(TSF._parked and UI.frame:IsShown(), "not parked before the X test")
+    fight(true)
+    GAME_CLOSE(UI.frame); FLUSH()
+    ok("the main window's X in combat, parked")
+    EXPECT(not TSF._parked, "the park outlived the main window's X in combat")
+    ended()
+    ok("after the main window's X in combat")
+    clean()
+end
+U14()
+print("  PASS " .. TAG .. "14 in combat on TBC Anniversary: the bottom tabs (from Enchanting too), /pb, dragging either window, and either window's X (parked too): nothing the game blocks; each runs when combat ends")
+
+-- U15 TEST-c6: m4ru's TEST-c6 run: Leatherworking open, in combat, the
+-- game's TRADE_SKILL_UPDATE redrew the craft bar and the game blocked
+-- Frame:Show() 9 times (the secure Enchant button was anchored to the
+-- craft bar, which protects it). His case first, then every visible
+-- button of both windows in combat, with Enchanting's craft button set
+-- as combat starts.
+local function U15()
+    local UI, TSF = PB.UI, PB.TradeSkillFrame
+    local keepICL = InCombatLockdown
+    local function clean()
+        InCombatLockdown = keepICL
+        if TSF.settingsPanel and TSF.settingsPanel:IsShown() then TSF:CloseSettings() end
+        if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI:Hide() end
+        FLUSH(); FIRE("PLAYER_REGEN_ENABLED"); FLUSH(); BLOCKED = {}
+        if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    end
+    local function none(tag, sites, errs)
+        EXPECT(#sites == 0, tag .. ": the game would block:\n  " .. table.concat(sites, "\n  "))
+        EXPECT(#errs == 0, tag .. ": a click errored:\n  " .. table.concat(errs, "\n  "))
+    end
+    -- his case
+    clean(); OPEN_TRADE()
+    TSF.state.selected = "Light Leather"; TSF:RefreshDetailPanel(); TSF:UpdateCraftBar()
+    InCombatLockdown = function() return true end
+    FIRE("TRADE_SKILL_UPDATE"); FLUSH()
+    EXPECT(#BLOCKED == 0, "TRADE_SKILL_UPDATE in combat: " .. table.concat(BLOCKED, ", "))
+    InCombatLockdown = keepICL
+    -- the Enchant button goes off as combat starts, and back after
+    clean(); OPEN_CRAFT()
+    for _, e in ipairs(TSF.state.recipes or {}) do if not e.isHeader then TSF.state.selected = e.name; break end end
+    TSF:RefreshDetailPanel(); TSF:UpdateCraftBar()
+    TSF.enchantCraftBtn:EnableMouse(true)          -- as with materials in the bags
+    FIRE("PLAYER_REGEN_DISABLED")
+    EXPECT(not TSF.enchantCraftBtn:IsMouseEnabled(), "the Enchant button still takes clicks as combat starts")
+    InCombatLockdown = function() return true end
+    FIRE("CRAFT_UPDATE"); FLUSH()
+    EXPECT(#BLOCKED == 0, "CRAFT_UPDATE in combat: " .. table.concat(BLOCKED, ", "))
+    InCombatLockdown = keepICL
+    -- every visible button, each window
+    clean(); OPEN_TRADE(); TSF.state.selected = "Light Leather"; TSF:RefreshDetailPanel(); TSF:UpdateCraftBar()
+    none("Leatherworking", COMBAT_SWEEP({ TSF.frame, TSF.calcPanel }, { "TRADE_SKILL_UPDATE", "BAG_UPDATE", "BAG_UPDATE_DELAYED" }))
+    clean(); OPEN_CRAFT()
+    for _, e in ipairs(TSF.state.recipes or {}) do if not e.isHeader then TSF.state.selected = e.name; break end end
+    TSF:RefreshDetailPanel(); TSF:UpdateCraftBar(); FIRE("PLAYER_REGEN_DISABLED")
+    none("Enchanting", COMBAT_SWEEP({ TSF.frame, TSF.calcPanel }, { "CRAFT_UPDATE", "BAG_UPDATE", "BAG_UPDATE_DELAYED" }))
+    clean(); OPEN_TRADE(); TSF:OpenSettings("profession"); FLUSH()
+    none("Settings", COMBAT_SWEEP({ TSF.frame }, {}))
+    for i = 1, #UI.frame.tabs do
+        clean(); UI:Show(); UI:SelectTab(i); FLUSH()
+        none("the main window, tab " .. i, COMBAT_SWEEP({ UI.frame }, {}))
+    end
+    clean(); OPEN_TRADE(); TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    none("the main window, parked", COMBAT_SWEEP({ UI.frame }, {}))
+    clean()
+end
+U15()
+print("  PASS " .. TAG .. "15 in combat on TBC Anniversary: his TRADE_SKILL_UPDATE case, Enchanting's craft update, then every visible button of both windows (parked too) and Settings: nothing the game blocks, no errors")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 15)")

@@ -38,7 +38,8 @@ function GetItemInfo(id)
     id = tonumber(type(id) == "string" and id:match("item:(%d+)") or id)
     local n = id and ITEM_NAMES[id]
     if not n then return nil end
-    return n, "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. n .. "]|h|r", 1, 5, 1, "Trade Goods", "Leather", 20, "", "icon", 5
+    -- the client's 14th value, bindType: 0 for these (nothing binds)
+    return n, "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. n .. "]|h|r", 1, 5, 1, "Trade Goods", "Leather", 20, "", "icon", 5, 7, 0, 0
 end
 function GetItemCount() return 0 end
 function GetItemIcon() return "icon" end
@@ -83,6 +84,7 @@ end
 function ExpandSkillHeader() end
 function CollapseSkillHeader() end
 function IsTradeSkillLinked() return false end
+function IsCraftLinked() return false end
 function CraftIsPetTraining() return false end
 function CraftIsEnchanting() return true end
 function GetTradeSkillLine() return TBC.trade[1], TBC.trade[2], TBC.trade[3] end
@@ -105,7 +107,8 @@ end
 function GetTradeSkillTools() return nil end
 function SelectTradeSkill() end
 function DoTradeSkill(i, n) CALLS[#CALLS + 1] = "DoTradeSkill:" .. tostring(i) .. ":" .. tostring(n) end
-function CloseTradeSkill() TBC.open = nil end
+-- each closes its own session only, as in the game
+function CloseTradeSkill() if TBC.open == "trade" then TBC.open = nil end end
 function GetCraftDisplaySkillLine() return TBC.craft[1], TBC.craft[2], TBC.craft[3] end
 function GetCraftName() return TBC.craft[1] end
 function GetNumCrafts() return TBC.open == "craft" and #TBC.craftRows or 0 end
@@ -124,7 +127,7 @@ end
 function GetCraftSpellFocus() return nil end
 function SelectCraft() end
 function DoCraft(i) CALLS[#CALLS + 1] = "DoCraft:" .. tostring(i) end
-function CloseCraft() TBC.open = nil end
+function CloseCraft() if TBC.open == "craft" then TBC.open = nil end end
 
 -- Open a profession window the way the client does.
 function OPEN_TRADE()

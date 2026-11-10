@@ -272,7 +272,9 @@ function OP:Toggle()
     if not addon.UI then return end
     if addon.TradeSkillFrame and addon.TradeSkillFrame.frame
        and addon.TradeSkillFrame.frame:IsShown() then
-        addon.TradeSkillFrame:Hide()
+        -- in combat the game blocks hiding it: when combat ends (TEST-c6)
+        if addon.TradeSkillFrame:WaitForCombat("Orders opens", function() OP:Toggle() end) then return end
+        addon.TradeSkillFrame:HideForMain()
     end
     if not addon.UI.frame:IsShown() then
         addon.UI:Show()

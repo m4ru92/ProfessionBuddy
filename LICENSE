@@ -29,6 +29,7 @@ directory, each distributed under its own permissive license:
   - CallbackHandler-1.0
   - ChatThrottleLib
   - Ace3 (AceComm-3.0, AceSerializer-3.0)
+  - LibAHTab-1-0 by plusmouse (MIT; its license is in Libs/LibAHTab/)
 
 These libraries retain their original licenses and copyrights.
 

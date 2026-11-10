@@ -1,0 +1,1352 @@
+[
+ {
+  "writ": 264011,
+  "quest": 94004,
+  "item": 3391,
+  "name": "Elixir of Ogre Strength",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264012,
+  "quest": 94212,
+  "item": 3383,
+  "name": "Elixir of Wisdom",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264013,
+  "quest": 94213,
+  "item": 3385,
+  "name": "Lesser Mana Potion",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264014,
+  "quest": 94214,
+  "item": 6048,
+  "name": "Shadow Protection Potion",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264015,
+  "quest": 94215,
+  "item": 5634,
+  "name": "Free Action Potion",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264016,
+  "quest": 94216,
+  "item": 3390,
+  "name": "Elixir of Lesser Agility",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264017,
+  "quest": 94217,
+  "item": 3388,
+  "name": "Lesser Troll's Blood Elixir",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264018,
+  "quest": 94218,
+  "item": 8951,
+  "name": "Elixir of Defense",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264019,
+  "quest": 94219,
+  "item": 5996,
+  "name": "Draught of Water Breathing",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264020,
+  "quest": 94220,
+  "item": 5540,
+  "name": "Pearl-handled Dagger",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264021,
+  "quest": 94221,
+  "item": 11128,
+  "name": "Golden Rod",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264022,
+  "quest": 94222,
+  "item": 5541,
+  "name": "Iridescent Hammer",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264023,
+  "quest": 94223,
+  "item": 15869,
+  "name": "Silver Skeleton Key",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264024,
+  "quest": 94224,
+  "item": 3491,
+  "name": "Heavy Bronze Mace",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264025,
+  "quest": 94225,
+  "item": 2865,
+  "name": "Rough Bronze Leggings",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264026,
+  "quest": 94226,
+  "item": 3485,
+  "name": "Green Iron Gauntlets",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264027,
+  "quest": 94227,
+  "item": 3848,
+  "name": "Big Bronze Knife",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264028,
+  "quest": 94228,
+  "item": 3484,
+  "name": "Green Iron Boots",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264029,
+  "quest": 94229,
+  "item": 5507,
+  "name": "Ornate Spyglass",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264030,
+  "quest": 94230,
+  "item": 4384,
+  "name": "Explosive Sheep",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264031,
+  "quest": 94231,
+  "item": 4383,
+  "name": "Moonsight Rifle",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264032,
+  "quest": 94232,
+  "item": 4381,
+  "name": "Minor Recombobulator",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264033,
+  "quest": 94233,
+  "item": 6712,
+  "name": "Practice Lock",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264034,
+  "quest": 94234,
+  "item": 4373,
+  "name": "Shadow Goggles",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264035,
+  "quest": 94235,
+  "item": 7506,
+  "name": "Gnomish Universal Remote",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264036,
+  "quest": 94236,
+  "item": 4380,
+  "name": "Big Bronze Bomb",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264037,
+  "quest": 94237,
+  "item": 8069,
+  "name": "Crafted Solid Shot",
+  "count": 200,
+  "reward": 284584,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264038,
+  "quest": 94238,
+  "item": 18662,
+  "name": "Heavy Leather Ball",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264039,
+  "quest": 94239,
+  "item": 5958,
+  "name": "Fine Leather Pants",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264040,
+  "quest": 94240,
+  "item": 7349,
+  "name": "Herbalist's Gloves",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264041,
+  "quest": 94241,
+  "item": 2317,
+  "name": "Dark Leather Tunic",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264042,
+  "quest": 94242,
+  "item": 7358,
+  "name": "Pilferer's Gloves",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264043,
+  "quest": 94243,
+  "item": 7371,
+  "name": "Heavy Quiver",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264044,
+  "quest": 94244,
+  "item": 4252,
+  "name": "Dark Leather Shoulders",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264045,
+  "quest": 94245,
+  "item": 4254,
+  "name": "Barbaric Gloves",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264046,
+  "quest": 94246,
+  "item": 7284,
+  "name": "Red Whelp Gloves",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264047,
+  "quest": 94247,
+  "item": 5766,
+  "name": "Lesser Wizard's Robe",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264048,
+  "quest": 94248,
+  "item": 6263,
+  "name": "Blue Overalls",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264049,
+  "quest": 94249,
+  "item": 7048,
+  "name": "Azure Silk Hood",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264050,
+  "quest": 94250,
+  "item": 4245,
+  "name": "Small Silk Pack",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264051,
+  "quest": 94251,
+  "item": 4317,
+  "name": "Phoenix Pants",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264052,
+  "quest": 94252,
+  "item": 4313,
+  "name": "Red Woolen Boots",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264053,
+  "quest": 94253,
+  "item": 10048,
+  "name": "Colorful Kilt",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264054,
+  "quest": 94254,
+  "item": 6264,
+  "name": "Greater Adept's Robe",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264055,
+  "quest": 94255,
+  "item": 4321,
+  "name": "Spider Silk Slippers",
+  "count": 1,
+  "reward": 284584,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264056,
+  "quest": 94256,
+  "item": 6050,
+  "name": "Frost Protection Potion",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264057,
+  "quest": 94257,
+  "item": 3823,
+  "name": "Lesser Invisibility Potion",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264058,
+  "quest": 94258,
+  "item": 4623,
+  "name": "Lesser Stoneshield Potion",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264059,
+  "quest": 94259,
+  "item": 6052,
+  "name": "Nature Protection Potion",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264060,
+  "quest": 94260,
+  "item": 10592,
+  "name": "Catseye Draught",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264061,
+  "quest": 94261,
+  "item": 5633,
+  "name": "Great Rage Potion",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264062,
+  "quest": 94262,
+  "item": 3827,
+  "name": "Mana Potion",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264063,
+  "quest": 94263,
+  "item": 6049,
+  "name": "Fire Protection Potion",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264064,
+  "quest": 94264,
+  "item": 3824,
+  "name": "Shadow Oil",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264065,
+  "quest": 94265,
+  "item": 9061,
+  "name": "Goblin Rocket Fuel",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264066,
+  "quest": 94266,
+  "item": 8949,
+  "name": "Elixir of Agility",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264067,
+  "quest": 94267,
+  "item": 9144,
+  "name": "Wildvine Potion",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264068,
+  "quest": 94268,
+  "item": 7922,
+  "name": "Steel Plate Helm",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264069,
+  "quest": 94269,
+  "item": 9060,
+  "name": "Inlaid Mithril Cylinder",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264070,
+  "quest": 94270,
+  "item": 6041,
+  "name": "Steel Weapon Chain",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264071,
+  "quest": 94271,
+  "item": 7928,
+  "name": "Ornate Mithril Shoulders",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264072,
+  "quest": 94272,
+  "item": 7942,
+  "name": "Blue Glittering Axe",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264073,
+  "quest": 94273,
+  "item": 3853,
+  "name": "Moonsteel Broadsword",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264074,
+  "quest": 94274,
+  "item": 3837,
+  "name": "Golden Scale Coif",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264075,
+  "quest": 94275,
+  "item": 7964,
+  "name": "Solid Sharpening Stone",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264076,
+  "quest": 94276,
+  "item": 7943,
+  "name": "Wicked Mithril Blade",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264077,
+  "quest": 94277,
+  "item": 11144,
+  "name": "Truesilver Rod",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264078,
+  "quest": 94278,
+  "item": 9366,
+  "name": "Golden Scale Gauntlets",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264079,
+  "quest": 94279,
+  "item": 7941,
+  "name": "Heavy Mithril Axe",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264080,
+  "quest": 94280,
+  "item": 4396,
+  "name": "Mechanical Dragonling",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264081,
+  "quest": 94281,
+  "item": 4392,
+  "name": "Advanced Target Dummy",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264082,
+  "quest": 94282,
+  "item": 4393,
+  "name": "Craftsman's Monocle",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264083,
+  "quest": 94283,
+  "item": 4395,
+  "name": "Goblin Land Mine",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264084,
+  "quest": 94284,
+  "item": 10501,
+  "name": "Catseye Ultra Goggles",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264085,
+  "quest": 94285,
+  "item": 10560,
+  "name": "Unstable Trigger",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264086,
+  "quest": 94286,
+  "item": 4852,
+  "name": "Flash Bomb",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264087,
+  "quest": 94287,
+  "item": 10500,
+  "name": "Fire Goggles",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264088,
+  "quest": 94288,
+  "item": 10514,
+  "name": "Mithril Frag Bomb",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264089,
+  "quest": 94289,
+  "item": 10498,
+  "name": "Gyromatic Micro-Adjustor",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264090,
+  "quest": 94290,
+  "item": 11590,
+  "name": "Mechanical Repair Kit",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264091,
+  "quest": 94291,
+  "item": 16005,
+  "name": "Dark Iron Bomb",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264092,
+  "quest": 94292,
+  "item": 8174,
+  "name": "Comfortable Leather Hat",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264093,
+  "quest": 94293,
+  "item": 5965,
+  "name": "Guardian Cloak",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264094,
+  "quest": 94294,
+  "item": 7378,
+  "name": "Dusky Bracers",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264095,
+  "quest": 94295,
+  "item": 8214,
+  "name": "Wild Leather Helmet",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264096,
+  "quest": 94296,
+  "item": 8210,
+  "name": "Wild Leather Shoulders",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264097,
+  "quest": 94297,
+  "item": 8217,
+  "name": "Quickdraw Quiver",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264098,
+  "quest": 94298,
+  "item": 7391,
+  "name": "Swift Boots",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264099,
+  "quest": 94299,
+  "item": 8192,
+  "name": "Nightscape Shoulders",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264100,
+  "quest": 94300,
+  "item": 8201,
+  "name": "Big Voodoo Mask",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264101,
+  "quest": 94301,
+  "item": 8200,
+  "name": "Big Voodoo Robe",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264102,
+  "quest": 94302,
+  "item": 8189,
+  "name": "Turtle Scale Breastplate",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264103,
+  "quest": 94303,
+  "item": 8218,
+  "name": "Thick Leather Ammo Pouch",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264104,
+  "quest": 94304,
+  "item": 10050,
+  "name": "Mageweave Bag",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264105,
+  "quest": 94305,
+  "item": 10023,
+  "name": "Shadoweave Gloves",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264106,
+  "quest": 94306,
+  "item": 7063,
+  "name": "Crimson Silk Robe",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264107,
+  "quest": 94307,
+  "item": 10004,
+  "name": "Shadoweave Robe",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264108,
+  "quest": 94308,
+  "item": 22246,
+  "name": "Enchanted Mageweave Pouch",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264109,
+  "quest": 94309,
+  "item": 4329,
+  "name": "Star Belt",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264110,
+  "quest": 94310,
+  "item": 9998,
+  "name": "Black Mageweave Vest",
+  "count": 1,
+  "reward": 284585,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264111,
+  "quest": 94311,
+  "item": 10009,
+  "name": "Red Mageweave Pants",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264112,
+  "quest": 94312,
+  "item": 10052,
+  "name": "Orange Martial Shirt",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264113,
+  "quest": 94313,
+  "item": 10008,
+  "name": "White Bandit Mask",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264114,
+  "quest": 94314,
+  "item": 10042,
+  "name": "Cindercloth Robe",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264115,
+  "quest": 94315,
+  "item": 7061,
+  "name": "Earthen Silk Belt",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264116,
+  "quest": 94316,
+  "item": 9224,
+  "name": "Potion of Demon Slaying",
+  "count": 1,
+  "reward": null,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264117,
+  "quest": 94317,
+  "item": 12190,
+  "name": "Dreamless Sleep Potion",
+  "count": 1,
+  "reward": null,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264118,
+  "quest": 94318,
+  "item": 13457,
+  "name": "Greater Fire Protection Potion",
+  "count": 1,
+  "reward": null,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264119,
+  "quest": 94319,
+  "item": 9233,
+  "name": "Draught of Detect Demon",
+  "count": 1,
+  "reward": null,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264120,
+  "quest": 94320,
+  "item": 9088,
+  "name": "Gift of Arthas",
+  "count": 1,
+  "reward": null,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264121,
+  "quest": 94321,
+  "item": 13513,
+  "name": "Flask of Chromatic Resistance",
+  "count": 1,
+  "reward": null,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264122,
+  "quest": 94322,
+  "item": 3387,
+  "name": "Limited Invulnerability Potion",
+  "count": 1,
+  "reward": null,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264123,
+  "quest": 94323,
+  "item": 18253,
+  "name": "Major Rejuvenation Potion",
+  "count": 1,
+  "reward": null,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264124,
+  "quest": 94324,
+  "item": 246948,
+  "name": "Distilled Firewater",
+  "count": 1,
+  "reward": null,
+  "prof": "Alchemy"
+ },
+ {
+  "writ": 264125,
+  "quest": 94325,
+  "item": 12417,
+  "name": "Radiant Circlet",
+  "count": 1,
+  "reward": null,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264126,
+  "quest": 94326,
+  "item": 12416,
+  "name": "Radiant Belt",
+  "count": 1,
+  "reward": null,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264127,
+  "quest": 94327,
+  "item": 7929,
+  "name": "Orcish War Leggings",
+  "count": 1,
+  "reward": null,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264128,
+  "quest": 94328,
+  "item": 7969,
+  "name": "Mithril Spurs",
+  "count": 1,
+  "reward": null,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264129,
+  "quest": 94329,
+  "item": 12422,
+  "name": "Imperial Plate Chest",
+  "count": 1,
+  "reward": null,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264130,
+  "quest": 94330,
+  "item": 20549,
+  "name": "Darkrune Gauntlets",
+  "count": 1,
+  "reward": null,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264131,
+  "quest": 94331,
+  "item": 12775,
+  "name": "Huge Thorium Battleaxe",
+  "count": 1,
+  "reward": null,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264132,
+  "quest": 94332,
+  "item": 15872,
+  "name": "Arcanite Skeleton Key",
+  "count": 1,
+  "reward": null,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264133,
+  "quest": 94333,
+  "item": 7947,
+  "name": "Ebon Shiv",
+  "count": 1,
+  "reward": null,
+  "prof": "Blacksmithing"
+ },
+ {
+  "writ": 264134,
+  "quest": 94334,
+  "item": 16023,
+  "name": "Masterwork Target Dummy",
+  "count": 1,
+  "reward": null,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264135,
+  "quest": 94335,
+  "item": 10504,
+  "name": "Green Lens",
+  "count": 1,
+  "reward": null,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264136,
+  "quest": 94336,
+  "item": 15996,
+  "name": "Lifelike Mechanical Toad",
+  "count": 1,
+  "reward": null,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264137,
+  "quest": 94337,
+  "item": 18645,
+  "name": "Gnomish Alarm-O-Bot",
+  "count": 1,
+  "reward": null,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264138,
+  "quest": 94338,
+  "item": 18587,
+  "name": "Goblin Jumper Cables XL",
+  "count": 1,
+  "reward": null,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264139,
+  "quest": 94339,
+  "item": 18232,
+  "name": "Field Repair Bot 74A",
+  "count": 1,
+  "reward": null,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264140,
+  "quest": 94340,
+  "item": 18631,
+  "name": "Truesilver Transformer",
+  "count": 1,
+  "reward": null,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264141,
+  "quest": 94341,
+  "item": 10548,
+  "name": "Sniper Scope",
+  "count": 1,
+  "reward": null,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264142,
+  "quest": 94342,
+  "item": 21277,
+  "name": "Tranquil Mechanical Yeti",
+  "count": 1,
+  "reward": null,
+  "prof": "Engineering"
+ },
+ {
+  "writ": 264143,
+  "quest": 94343,
+  "item": 15087,
+  "name": "Wicked Leather Pants",
+  "count": 1,
+  "reward": null,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264144,
+  "quest": 94344,
+  "item": 18258,
+  "name": "Gordok Ogre Suit",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264145,
+  "quest": 94345,
+  "item": 15053,
+  "name": "Volcanic Breastplate",
+  "count": 1,
+  "reward": null,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264146,
+  "quest": 94346,
+  "item": 15094,
+  "name": "Runic Leather Headband",
+  "count": 1,
+  "reward": null,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264147,
+  "quest": 94347,
+  "item": 15084,
+  "name": "Wicked Leather Bracers",
+  "count": 1,
+  "reward": null,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264148,
+  "quest": 94348,
+  "item": 15075,
+  "name": "Chimeric Vest",
+  "count": 1,
+  "reward": null,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264149,
+  "quest": 94349,
+  "item": 15080,
+  "name": "Heavy Scorpid Helm",
+  "count": 1,
+  "reward": null,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264150,
+  "quest": 94350,
+  "item": 15092,
+  "name": "Runic Leather Bracers",
+  "count": 1,
+  "reward": null,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264151,
+  "quest": 94351,
+  "item": 15071,
+  "name": "Frostsaber Boots",
+  "count": 1,
+  "reward": null,
+  "prof": "Leatherworking"
+ },
+ {
+  "writ": 264152,
+  "quest": 94352,
+  "item": 14130,
+  "name": "Wizardweave Turban",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264153,
+  "quest": 94353,
+  "item": 14046,
+  "name": "Runecloth Bag",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264154,
+  "quest": 94354,
+  "item": 13864,
+  "name": "Runecloth Boots",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264155,
+  "quest": 94355,
+  "item": 10036,
+  "name": "Tuxedo Jacket",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264156,
+  "quest": 94356,
+  "item": 14108,
+  "name": "Felcloth Boots",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264157,
+  "quest": 94357,
+  "item": 22251,
+  "name": "Cenarion Herb Bag",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264158,
+  "quest": 94358,
+  "item": 10025,
+  "name": "Shadoweave Mask",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264159,
+  "quest": 94359,
+  "item": 14141,
+  "name": "Ghostweave Vest",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ },
+ {
+  "writ": 264160,
+  "quest": 94360,
+  "item": 21340,
+  "name": "Soul Pouch",
+  "count": 1,
+  "reward": null,
+  "prof": "Tailoring"
+ }
+]
