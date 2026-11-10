@@ -6140,7 +6140,7 @@ print("  PASS F93 TEST-c6: in combat, every visible button of the profession win
 -- F94 2.1.1: a craft that makes more than one (Hircus: Smelt Bronze
 -- makes 2 bars and PB didn't say). The count from the game's spell table
 -- (tools/yield_db.py) on the detail panel's icon, after the category, and
--- in Can make; a random amount as a range, priced "~".
+-- in Can make; a random amount as a range, "priced as" the middle.
 local function F94()
     local PB = ProfBuddy
     local TSF, P, RDB = PB.TradeSkillFrame, PB.Prices, PB.RecipeDB
@@ -6168,7 +6168,8 @@ local function F94()
     TSF:RefreshDetailPanel()
     EXPECT(TSF.detCount:GetText() == "" and not (TSF.detCat:GetText() or ""):find("Makes", 1, true)
            and (TSF.detCanMake:GetText() or ""):find("Can make: 4|r", 1, true), "a single item shows a count")
-    -- a random amount: a range everywhere, the price "~"
+    -- a random amount: a range everywhere, "priced as" the middle on the
+    -- Category line, no mark on the price line
     local keepProf = st.profName
     st.profName = "Engineering"
     local made = TSF:Made({ name = "Coarse Dynamite" })
@@ -6179,6 +6180,21 @@ local function F94()
     TSF:RefreshDetailPanel()
     EXPECT(TSF.detCount:GetText() == "1-3" and (TSF.detCanMake:GetText() or ""):find("Can make: 2 (2-6)", 1, true),
            "the range: " .. tostring(TSF.detCount:GetText()) .. " / " .. tostring(TSF.detCanMake:GetText()))
+    local keepShowP = PB.db.settings.showPrices
+    PB.db.settings.showPrices = true
+    TSF:RefreshDetailPanel()
+    EXPECT((TSF.detCat:GetText() or ""):find("Makes 1-3 (priced as 2)", 1, true), "no priced as: " .. tostring(TSF.detCat:GetText()))
+    PB.db.settings.showPrices = false
+    TSF:RefreshDetailPanel()
+    EXPECT((TSF.detCat:GetText() or ""):find("Makes 1-3|r", 1, true) and not (TSF.detCat:GetText() or ""):find("priced", 1, true),
+           "priced as with prices off: " .. tostring(TSF.detCat:GetText()))
+    PB.db.settings.showPrices = keepShowP
+    st.selected = fake.name
+    PB.db.settings.showPrices = true
+    TSF:RefreshDetailPanel()
+    EXPECT(not (TSF.detCat:GetText() or ""):find("priced", 1, true), "a fixed count says priced as")
+    PB.db.settings.showPrices = keepShowP
+    st.selected = dyn.name
     st.profName = keepProf
     local keepAuc, keepAucOn, keepShow = Auctionator, PB.db.settings.priceAuctionator, PB.db.settings.showPrices
     PB.db.settings.priceAuctionator, PB.db.settings.showPrices = true, true
@@ -6187,9 +6203,10 @@ local function F94()
     local r = P:RecipeCost({ name = "Coarse Dynamite" }, "Engineering")
     EXPECT(r and r.yield == 2 and r.yieldMin == 1 and r.yieldMax == 3, "the price's range")
     local line = P:DetailText(r)
-    EXPECT(line:find("Sells: ~", 1, true) and line:find("Profit: ~", 1, true) and not line:find("about", 1, true), "no ~: " .. line)
+    EXPECT(line:find("Sells: ", 1, true) and line:find("Profit: ", 1, true) and not line:find("~", 1, true)
+           and not line:find("about", 1, true), "a mark on the price line: " .. line)
     r = P:RecipeCost({ name = "Cured Rugged Hide" }, "Leatherworking")
-    EXPECT(r and r.yieldMin == nil and not P:DetailText(r):find("~", 1, true), "a fixed count priced ~")
+    EXPECT(r and r.yieldMin == nil and not P:DetailText(r):find("~", 1, true), "a fixed count marked")
     Auctionator, PB.db.settings.priceAuctionator, PB.db.settings.showPrices = keepAuc, keepAucOn, keepShow
     for _, e in ipairs({ fake, one, dyn }) do
         for i, x in ipairs(st.recipes) do if x == e then table.remove(st.recipes, i); break end end
@@ -6198,6 +6215,6 @@ local function F94()
     TSF.frame:Hide(); FLUSH()
 end
 F94()
-print("  PASS F94 2.1.1: a craft that makes more than one: the count on the detail panel's icon, Makes after the category, Can make with the items (3 (6)), none for one item; a random amount as 1-3, Can make 2 (2-6), sale and profit '~'; the data's counts and ranges")
+print("  PASS F94 2.1.1: a craft that makes more than one: the count on the detail panel's icon, Makes after the category, Can make with the items (3 (6)), none for one item; a random amount as 1-3, Can make 2 (2-6), 'priced as 2' on the Category line, no mark on the price line; the data's counts and ranges")
 
 print("ALL FOREVER TESTS PASS (94)")

@@ -4154,6 +4154,13 @@ function TSF:RefreshDetailPanel(preserveScroll)
     self.detCount:SetText(made and made.text or "")
     if self.detIcon:IsShown() then self.detCount:Show() else self.detCount:Hide() end
     local makesText = made and ("|cffffd100Makes " .. made.text .. "|r") or nil
+    -- a random amount: the prices below are for the middle of the range,
+    -- said here so the price line needs no mark (TEST-a2's "~" sat at the
+    -- top of the line, "about" made it wrap)
+    local Pr = addon.Prices
+    if made and made.lo ~= made.hi and Pr and Pr:Enabled() then
+        makesText = "|cffffd100Makes " .. made.text .. " (priced as " .. made.mid .. ")|r"
+    end
     if recipe.category then
         self.detCat:SetText("|cff888888Category: " .. recipe.category .. "|r"
             .. (makesText and ("    " .. makesText) or ""))
