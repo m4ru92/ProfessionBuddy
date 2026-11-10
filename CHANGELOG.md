@@ -2,11 +2,11 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
-## 2.1.0
+## 2.1.0 - 2026-11-09
 
 Prices, built from players' requests: what a craft costs, what it sells for, and the profit, from Auctionator, TSM, the auction prices ProfessionBuddy records, and vendor prices. Also: your professions in the main window, a Back button to the profession you were in, window positions and filters that stay after a reload, and guildmates' recipes that are there when you click them.
 
-Thanks to the guild members whose requests shaped this update.
+Thanks to Riddles in the Dark, whose requests shaped this update.
 
 **Highlights**
 
