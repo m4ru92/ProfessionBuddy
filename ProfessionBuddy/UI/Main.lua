@@ -99,6 +99,10 @@ function UI:Init()
     gearBtn:SetScript("OnClick", function()
         -- Remember if the Order History panel is open so we can reopen
         -- it when settings returns here (the Hide below closes it).
+        -- Settings live in the profession window, which can't show in
+        -- combat: the click waits for combat to end (TEST-c6)
+        local tsf = addon.TradeSkillFrame
+        if tsf and tsf:WaitForCombat("Settings open", function() gearBtn:GetScript("OnClick")(gearBtn) end) then return end
         if addon.OrdersPanel then addon.OrdersPanel:CaptureHistoryState() end
         -- Hide the /pb window and open settings in the profession window;
         -- a parked profession stays parked for the way back
@@ -496,6 +500,10 @@ end
 -- A drag ended: an open side panel past the screen's right edge moves the
 -- window left, should the clamp area not have held it (in combat, say).
 function UI:AfterDrag(frame, followers)
+    -- the profession window, and this one on TBC Anniversary, can't be
+    -- moved in combat; their drag never started then (TEST-c6)
+    local tsf = addon.TradeSkillFrame
+    if InCombatLockdown() and ((tsf and frame == tsf.frame) or (frame == self.frame and self:Locked())) then return end
     frame:StopMovingOrSizing()
     -- a drag marks the window as placed by you, and the game then puts it
     -- back after a /reload by itself, past "Keep after a reload or logout"

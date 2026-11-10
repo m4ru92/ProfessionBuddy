@@ -180,12 +180,58 @@ function F:GetMinMaxValues() return 0, 0 end
 function F:GetParent() return self._parent end
 function F:GetChildren() return end
 function F:GetRegions() return end
-function CreateFrame(kind, name, parent)
+function CreateFrame(kind, name, parent, template)
     local f = setmetatable({ _s = {}, _h = {}, _attr = {}, _ev = {}, _name = name, _shown = false,
-        _parent = parent, _tooltip = (kind == "GameTooltip") }, F)
+        _parent = parent, _tooltip = (kind == "GameTooltip"), _kids = {},
+        _secure = (type(template) == "string" and template:find("Secure", 1, true)) and true or false }, F)
     FRAMES[#FRAMES + 1] = f
     if name then rawset(_G, name, f) end
+    if type(parent) == "table" and type(rawget(parent, "_kids")) == "table" then
+        local k = rawget(parent, "_kids"); k[#k + 1] = f
+    end
     return f
+end
+
+-- Protected frames, as the game has them: a frame made from a secure
+-- template, and every frame that holds one (m4ru's TEST-c5 run: the game
+-- blocked ProfBuddyTradeSkillFrame:Hide() in combat, a plain frame whose
+-- profession icons are secure buttons). In combat, an addon can't show,
+-- hide, move or size one: the game blocks the call (ADDON_ACTION_BLOCKED).
+-- BLOCKED records each one, and the call errors, so a test fails on it.
+BLOCKED = {}
+function F:IsProtected()
+    if rawget(self, "_secure") then return true, true end
+    for _, k in ipairs(rawget(self, "_kids") or {}) do
+        if k:IsProtected() then return true, false end
+    end
+    return false, false
+end
+-- The game's own close paths (a window's X, Escape) are secure code, so
+-- their Hide goes through; what PB's own OnHide then does is checked.
+-- GAME_CLOSE(frame) closes a window that way.
+local secureCall
+function GAME_CLOSE(f)
+    secureCall = f
+    f:Hide()
+    secureCall = nil
+end
+local function Guard(f, op)
+    if secureCall == f and op == "Hide" then secureCall = nil; return end
+    if InCombatLockdown() and f:IsProtected() then
+        local what = tostring(rawget(f, "_name") or "frame") .. ":" .. op .. "()"
+        BLOCKED[#BLOCKED + 1] = what
+        error("ADDON_ACTION_BLOCKED: " .. what, 3)
+    end
+end
+for _, op in ipairs({ "Show", "Hide", "SetPoint", "ClearAllPoints", "SetAllPoints", "SetSize",
+                      "SetHeight", "SetWidth", "SetScale", "StartMoving", "StopMovingOrSizing",
+                      "SetUserPlaced" }) do
+    local orig = rawget(F, op)
+    F[op] = function(self, ...)
+        Guard(self, op)
+        if orig then return orig(self, ...) end
+        if op == "SetScale" then rawset(self, "_scale", (...)) end
+    end
 end
 UIParent = CreateFrame("Frame", "UIParent")
 GameTooltip = CreateFrame("GameTooltip", "GameTooltip", UIParent)

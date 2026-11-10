@@ -5948,4 +5948,156 @@ end
 F91()
 print("  PASS F91 TEST-c4: the parked profession's icon in the main window works as Back, gone when the park ends; keeping on with nothing saved leaves the window where it is")
 
-print("ALL FOREVER TESTS PASS (91)")
+-- F92 TEST-c6: m4ru's TEST-c5 run on TBC Anniversary: in combat, a bottom
+-- tab tried to hide the profession window and the game blocked it
+-- (ADDON_ACTION_BLOCKED on ProfBuddyTradeSkillFrame:Hide()). The harness
+-- now blocks what the game blocks (forever_env.lua, BLOCKED). Every way PB
+-- shows, hides or moves the profession window, done in combat: nothing is
+-- blocked, chat says what opens when combat ends, and it does then.
+local function F92()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local keepICL = InCombatLockdown
+    local function fight(on) InCombatLockdown = on and function() return true end or keepICL end
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local function clean()
+        fight(false)
+        if TSF.settingsPanel and TSF.settingsPanel:IsShown() then TSF:CloseSettings() end
+        if TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI.frame:Hide() end
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+        BLOCKED = {}
+    end
+    local function ended() fight(false); FIRE("PLAYER_REGEN_ENABLED"); FLUSH() end
+    local function ok(label) EXPECT(#BLOCKED == 0, label .. ": the game would block " .. table.concat(BLOCKED, ", ")) end
+    clean()
+    -- the profession window holds secure buttons: the game protects it
+    EXPECT(TSF.frame:IsProtected(), "harness: the profession window is not protected")
+    -- the bottom tabs, each in combat
+    local names = { "Characters", "Friends", "Guild", "Orders" }
+    for i, name in ipairs(names) do
+        clean(); open()
+        fight(true); PRINTS = {}
+        TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH()
+        ok(name .. " tab in combat")
+        EXPECT(TSF.frame:IsShown() and not TSF._parked and PRINTED(name .. " opens when combat ends."),
+               name .. " tab in combat: no wait, or something moved")
+        ended()
+        ok(name .. " tab after combat")
+        EXPECT(not TSF.frame:IsShown() and TSF._parked and UI.frame:IsShown(), name .. " did not open when combat ended")
+    end
+    -- /pb, /pb friends with the profession window open
+    -- /pb and /pb friends close the profession; the tab commands park it,
+    -- as each does out of combat
+    local parks = { [""] = false, friends = false, chars = true, guild = true, orders = true }
+    for _, cmd in ipairs({ "", "friends", "chars", "guild", "orders" }) do
+        clean(); open()
+        fight(true); PRINTS = {}
+        SlashCmdList.PROFBUDDY(cmd); FLUSH()
+        ok("/pb " .. cmd .. " in combat")
+        EXPECT(TSF.frame:IsShown() and PRINTED("when combat ends."), "/pb " .. cmd .. " in combat: no wait")
+        ended()
+        ok("/pb " .. cmd .. " after combat")
+        EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "/pb " .. cmd .. " did not open when combat ended")
+        EXPECT((TSF._parked and true or false) == parks[cmd], "/pb " .. cmd .. " after combat: parked " .. tostring(TSF._parked ~= nil))
+    end
+    -- Settings: from the profession window it changes in place; from the
+    -- main window it waits, opening and closing
+    clean(); open()
+    fight(true)
+    SlashCmdList.PROFBUDDY("settings"); FLUSH()
+    ok("/pb settings in the profession window in combat")
+    EXPECT(TSF.settingsPanel:IsShown(), "Settings did not open in place")
+    TSF:ToggleSettings(); FLUSH()
+    ok("closing Settings in the profession window in combat")
+    clean()
+    UI:Show(); FLUSH()
+    fight(true); PRINTS = {}
+    UI.gearBtn:GetScript("OnClick")(UI.gearBtn); FLUSH()
+    ok("the main window's gear in combat")
+    EXPECT(UI.frame:IsShown() and not TSF.frame:IsShown() and PRINTED("Settings open when combat ends."), "the gear in combat: no wait")
+    ended()
+    EXPECT(TSF.settingsPanel:IsShown() and TSF.frame:IsShown() and not UI.frame:IsShown(), "Settings did not open when combat ended")
+    fight(true); PRINTS = {}
+    TSF:CloseSettings(); FLUSH()
+    ok("closing Settings to the main window in combat")
+    EXPECT(TSF.frame:IsShown() and PRINTED("Settings close when combat ends."), "closing Settings in combat: no wait")
+    ended()
+    EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "Settings did not go back to the main window after combat")
+    clean()
+    UI:Show(); FLUSH()
+    fight(true)
+    SlashCmdList.PROFBUDDY("settings"); FLUSH()
+    ok("/pb settings from the main window in combat")
+    EXPECT(UI.frame:IsShown() and not TSF.frame:IsShown(), "/pb settings in combat closed the main window with nothing to show")
+    ended()
+    EXPECT(TSF.settingsPanel:IsShown() and not UI.frame:IsShown(), "/pb settings did not open when combat ended")
+    -- /pb settings with no window open
+    clean()
+    fight(true); PRINTS = {}
+    SlashCmdList.PROFBUDDY("settings"); FLUSH()
+    ok("/pb settings with no window open, in combat")
+    EXPECT(not TSF.frame:IsShown() and PRINTED("Settings open when combat ends."), "/pb settings, no window, in combat: no wait")
+    ended()
+    EXPECT(TSF.settingsPanel:IsShown() and TSF.frame:IsShown(), "/pb settings did not open when combat ended")
+    -- another character's recipes and read-only lists, from a hidden
+    -- window (a guildmate's arriving by themselves comes this way too)
+    clean()
+    fight(true); PRINTS = {}
+    TSF:OpenWithCharacter(PB:PlayerKey(), "Leatherworking"); FLUSH()
+    ok("a character's recipes in combat")
+    EXPECT(not TSF.frame:IsShown() and PRINTED("Leatherworking opens when combat ends."), "a character's recipes in combat: no wait")
+    ended()
+    EXPECT(TSF.frame:IsShown(), "a character's recipes did not open when combat ended")
+    clean()
+    fight(true)
+    TSF:OpenWithStatic("Tailoring"); FLUSH()
+    ok("a read-only list in combat")
+    EXPECT(not TSF.frame:IsShown(), "a read-only list showed in combat")
+    ended()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView, "a read-only list did not open when combat ended")
+    -- with the window open, another list changes in place
+    fight(true)
+    TSF:OpenWithStatic("Blacksmithing"); FLUSH()
+    ok("another read-only list, in place, in combat")
+    TSF:OpenWithCharacter(PB:PlayerKey(), "Leatherworking"); FLUSH()
+    ok("a character's recipes, in place, in combat")
+    -- your own profession, asked to open on a hidden window in combat
+    clean(); open()
+    TSF._keepSession = true; TSF.frame:Hide(); TSF._keepSession = nil; FLUSH()
+    fight(true); PRINTS = {}
+    TSF:OpenWith("Leatherworking", 100, 300, false); FLUSH()
+    ok("your profession opening on a hidden window in combat")
+    EXPECT(not TSF.frame:IsShown() and PRINTED("opens when combat ends."), "your profession in combat: no wait")
+    ended()
+    EXPECT(TSF.frame:IsShown(), "your profession did not open when combat ended")
+    -- dragging it, and PB closing it, in combat
+    fight(true)
+    TSF.frame:GetScript("OnDragStart")(TSF.frame)
+    TSF.frame:GetScript("OnDragStop")(TSF.frame)
+    ok("dragging the profession window in combat")
+    PRINTS = {}
+    TSF:Hide(); FLUSH()
+    ok("PB closing the profession window in combat")
+    EXPECT(TSF.frame:IsShown() and PRINTED("The profession window closes when combat ends."), "closing in combat: no wait")
+    ended()
+    EXPECT(not TSF.frame:IsShown(), "the profession window did not close when combat ended")
+    -- the bottom-tab park itself, called in combat: nothing moves
+    clean(); open()
+    fight(true)
+    TSF:HideForMain(); FLUSH()
+    ok("HideForMain in combat")
+    EXPECT(TSF.frame:IsShown() and not TSF._parked, "HideForMain parked in combat")
+    -- the window's X or Escape in combat (the game's own close): what PB
+    -- does after it is allowed
+    GAME_CLOSE(TSF.frame); FLUSH()
+    ok("the profession window's X in combat")
+    EXPECT(not TSF.frame:IsShown(), "harness: GAME_CLOSE did not close it")
+    ended()
+    ok("after the X in combat")
+    clean()
+end
+F92()
+print("  PASS F92 TEST-c6: in combat, the bottom tabs, /pb and its tab commands, Settings from either window, a character's recipes, read-only lists, dragging, PB closing the profession window, and its X: nothing the game blocks, a chat line, and each runs when combat ends")
+
+print("ALL FOREVER TESTS PASS (92)")

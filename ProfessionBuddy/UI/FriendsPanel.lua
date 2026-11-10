@@ -232,6 +232,8 @@ function FP:Toggle()
     -- Close profession window if open
     if addon.TradeSkillFrame and addon.TradeSkillFrame.frame
        and addon.TradeSkillFrame.frame:IsShown() then
+        -- in combat the game blocks hiding it: when combat ends (TEST-c6)
+        if addon.TradeSkillFrame:WaitForCombat("Friends opens", function() FP:Toggle() end) then return end
         addon.TradeSkillFrame:HideForMain()
     end
 

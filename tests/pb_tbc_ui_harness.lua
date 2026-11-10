@@ -557,4 +557,77 @@ end
 U13()
 print("  PASS " .. TAG .. "13 the parked profession's icon in the main window works as Back on TBC Anniversary, in combat too, Smelting under Mining; gone when the park ends")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 13)")
+-- U14 TEST-c6: m4ru's TEST-c5 run: Leatherworking open, in combat, he
+-- clicked Characters, and the game blocked ProfBuddyTradeSkillFrame:Hide().
+-- The harness blocks what the game blocks (BLOCKED). In combat: the
+-- bottom tabs (also from Enchanting), /pb, and dragging either window.
+local function U14()
+    local UI, TSF = PB.UI, PB.TradeSkillFrame
+    local keepICL = InCombatLockdown
+    local function fight(on) InCombatLockdown = on and function() return true end or keepICL end
+    local function ended() fight(false); FIRE("PLAYER_REGEN_ENABLED"); FLUSH() end
+    local function ok(label) EXPECT(#BLOCKED == 0, label .. ": the game would block " .. table.concat(BLOCKED, ", ")) end
+    local function clean()
+        fight(false)
+        if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI:Hide() end
+        FLUSH(); BLOCKED = {}
+        if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    end
+    clean()
+    EXPECT(TSF.frame:IsProtected() and UI.frame:IsProtected(), "harness: the windows are not protected")
+    -- his case, and each other tab
+    for i, name in ipairs({ "Characters", "Friends", "Guild", "Orders" }) do
+        clean(); OPEN_TRADE()
+        fight(true); PRINTS = {}
+        TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH()
+        ok(name .. " in combat")
+        EXPECT(TSF.frame:IsShown() and not TSF._parked and not UI.frame:IsShown()
+               and PRINTED(name .. " opens when combat ends."), name .. " in combat: no wait")
+        ended()
+        ok(name .. " after combat")
+        EXPECT(not TSF.frame:IsShown() and TSF._parked and UI.frame:IsShown() and UI.backBtn:IsShown(),
+               name .. " did not open, parked, when combat ended")
+    end
+    -- from Enchanting (the craft window)
+    clean(); OPEN_CRAFT()
+    EXPECT(TSF.frame:IsShown() and TSF.state.isCraftWindow, "Enchanting did not open")
+    fight(true)
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    ok("Characters from Enchanting in combat")
+    ended()
+    EXPECT(TSF._parked and TSF._parked.isCraft and UI.frame:IsShown(), "Enchanting not parked after combat")
+    -- /pb with the profession window open
+    clean(); OPEN_TRADE()
+    fight(true)
+    SlashCmdList.PROFBUDDY(""); FLUSH()
+    ok("/pb in combat")
+    ended()
+    EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "/pb did not open when combat ended")
+    -- dragging either window in combat
+    fight(true)
+    UI.frame:GetScript("OnDragStart")(UI.frame); UI.frame:GetScript("OnDragStop")(UI.frame)
+    ok("dragging the main window in combat")
+    clean(); OPEN_TRADE()
+    fight(true)
+    TSF.frame:GetScript("OnDragStart")(TSF.frame); TSF.frame:GetScript("OnDragStop")(TSF.frame)
+    ok("dragging the profession window in combat")
+    -- each window's X or Escape in combat (the game's own close), parked too
+    GAME_CLOSE(TSF.frame); FLUSH()
+    ok("the profession window's X in combat")
+    ended()
+    clean(); OPEN_TRADE()
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    EXPECT(TSF._parked and UI.frame:IsShown(), "not parked before the X test")
+    fight(true)
+    GAME_CLOSE(UI.frame); FLUSH()
+    ok("the main window's X in combat, parked")
+    EXPECT(not TSF._parked, "the park outlived the main window's X in combat")
+    ended()
+    ok("after the main window's X in combat")
+    clean()
+end
+U14()
+print("  PASS " .. TAG .. "14 in combat on TBC Anniversary: the bottom tabs (from Enchanting too), /pb, dragging either window, and either window's X (parked too): nothing the game blocks; each runs when combat ends")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 14)")

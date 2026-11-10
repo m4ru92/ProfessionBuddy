@@ -316,6 +316,8 @@ function GP:Toggle()
     if not addon.UI then return end
     if addon.TradeSkillFrame and addon.TradeSkillFrame.frame
        and addon.TradeSkillFrame.frame:IsShown() then
+        -- in combat the game blocks hiding it: when combat ends (TEST-c6)
+        if addon.TradeSkillFrame:WaitForCombat("Guild opens", function() GP:Toggle() end) then return end
         addon.TradeSkillFrame:HideForMain()
     end
     if not addon.UI.frame:IsShown() then

@@ -997,6 +997,8 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         -- Close profession window if open
         if addon.TradeSkillFrame and addon.TradeSkillFrame.frame
            and addon.TradeSkillFrame.frame:IsShown() then
+            -- in combat the game blocks hiding it: when combat ends (TEST-c6)
+            if addon.TradeSkillFrame:WaitForCombat("Friends opens", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
             addon.TradeSkillFrame:Hide()
         end
         if addon.FriendsPanel then
@@ -1050,6 +1052,9 @@ SlashCmdList["PROFBUDDY"] = function(msg)
             elseif tsfOpen then
                 tsf:OpenSettings("profession")
             elseif mainOpen then
+                -- Settings live in the profession window, which can't show in
+                -- combat: all of this waits for combat to end (TEST-c6)
+                if tsf:WaitForCombat("Settings open", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
                 if addon.OrdersPanel then addon.OrdersPanel:CaptureHistoryState() end
                 -- a parked profession stays parked for the way back (TEST-c2)
                 addon.UI._toSettings = true
@@ -1086,6 +1091,8 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         if addon.TradeSkillFrame then
             local tsf = addon.TradeSkillFrame
             if tsf.frame and tsf.frame:IsShown() then
+                -- in combat the game blocks hiding it: when combat ends (TEST-c6)
+                if tsf:WaitForCombat("The ProfessionBuddy window opens", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
                 tsf:Hide()
             end
         end

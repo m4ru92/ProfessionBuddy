@@ -671,6 +671,10 @@ function TSF:Init()
         elseif self.craftBar and self.frame and self.frame:IsShown() then
             self:UpdateCraftBar()
         end
+        -- what waited for combat to end (TSF:WaitForCombat)
+        local fn = self._afterCombat
+        self._afterCombat, self._saidWait = nil, nil
+        if fn then fn() end
     end)
 
     -- Kill default profession frames by unregistering their events.
@@ -1800,7 +1804,7 @@ function TSF:SuppressDefaultFrames()
             S:AdoptSharedFrame(frame, UIPanelWindows and UIPanelWindows[frameName], function()
                 -- The book's key while PB shows a profession: close PB.
                 if self.frame and self.frame:IsShown() and not SharedFrameAllowed(frameName) then
-                    self:Hide()
+                    self:Hide()   -- in combat, when combat ends (TSF:Hide)
                 end
             end)
         end
@@ -2179,7 +2183,8 @@ function TSF:EnsureFrame()
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", f.StartMoving)
+    -- not in combat, where the game blocks moving it (TSF:Locked)
+    f:SetScript("OnDragStart", function(fr) if not TSF:Locked() then fr:StartMoving() end end)
     -- the Material Calculator, when open, stops at the screen edge with it
     f:SetScript("OnDragStop", function(fr)
         if addon.UI and addon.UI.AfterDrag then addon.UI:AfterDrag(fr, { self.calcPanel })
@@ -6919,6 +6924,7 @@ function TSF:UpdateForeverSettings()
 end
 
 function TSF:OpenSettings(origin)
+    if self:WaitToShow("Settings open", function() self:OpenSettings(origin) end) then return end
     self:EnsureFrame()
 
     -- Track where we came from so we can return there
@@ -6955,6 +6961,8 @@ function TSF:CloseSettings()
     self._calcOpenBeforeSettings = false
 
     if origin == "main" or origin == "command" then
+        -- the window hides: in combat, when combat ends
+        if self:WaitForCombat("Settings close", function() self:CloseSettings() end) then return end
         -- Return to the /pb main window
         self:RestoreContentPanels()
         self._returningToMain = true
@@ -7752,6 +7760,9 @@ end
 -- Open profession window
 ----------------------------------------------------------------------
 function TSF:OpenWith(profName, rank, maxRank, isCraft)
+    if self:WaitToShow(profName .. " opens", function()
+        if isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
+    end) then return end
     -- a profession opening (Back, or another one) ends a park
     if self._parked then self:EndPark(false) end
     -- Close the /pb main window if open (mutual exclusion)
@@ -7883,6 +7894,7 @@ end
 -- Shows only missing recipes, no live game data, no skill bar.
 ----------------------------------------------------------------------
 function TSF:OpenWithStatic(profName)
+    if self:WaitToShow(profName .. " opens", function() self:OpenWithStatic(profName) end) then return end
     -- leaving the parked profession for a read-only list: its session closes
     if self._parked then self:EndPark(true) end
     if not RDB or not RDB.data[profName] then return end
@@ -7952,6 +7964,7 @@ end
 -- difficulty colors relative to their skill level.
 ----------------------------------------------------------------------
 function TSF:OpenWithCharacter(charKey, profName)
+    if self:WaitToShow(profName .. " opens", function() self:OpenWithCharacter(charKey, profName) end) then return end
     if self._parked then self:EndPark(true) end
     if not RDB or not RDB.data[profName] then return end
     if not DS then return end
@@ -8202,6 +8215,11 @@ end
 -- backend -- otherwise it stays open and the action-bar profession
 -- button's next cast just toggles it shut instead of reopening PB.
 function TSF:Hide(fromEvent)
+    -- the game blocks it in combat: it closes when combat ends
+    if self.frame and self.frame:IsShown()
+       and self:WaitForCombat("The profession window closes", function() self:Hide(fromEvent) end) then
+        return
+    end
     -- Save window state for this profession before closing
     self:SaveWindowState()
 
@@ -8214,6 +8232,36 @@ end
 
 function TSF:Show()
     if self.frame then self.frame:Show() end
+end
+
+----------------------------------------------------------------------
+-- Combat (TEST-c6, m4ru's TEST-c5 run on TBC Anniversary). This window's
+-- profession icons are secure buttons, on both clients, so in combat the
+-- game won't let PB show, hide or move it, or build it (ADDON_ACTION_
+-- BLOCKED on ProfBuddyTradeSkillFrame:Hide()). Anything that would waits
+-- and runs when combat ends, the latest one; chat says so once per wait.
+----------------------------------------------------------------------
+function TSF:Locked()
+    return InCombatLockdown() and true or false
+end
+
+-- In combat: keep fn for when combat ends and say `what` ("Characters
+-- opens"), then true; out of combat false, and the caller goes on.
+function TSF:WaitForCombat(what, fn)
+    if not self:Locked() then return false end
+    self._afterCombat = fn
+    if what and self._saidWait ~= what then
+        self._saidWait = what
+        print("|cff00ccffProfessionBuddy:|r " .. what .. " when combat ends.")
+    end
+    return true
+end
+
+-- The same, only when the window would have to show (built and shown
+-- already: what it shows changes in place, as in combat before)
+function TSF:WaitToShow(what, fn)
+    if self.frame and self.frame:IsShown() then return false end
+    return self:WaitForCombat(what, fn)
 end
 
 ----------------------------------------------------------------------
@@ -8235,6 +8283,7 @@ end
 
 -- The bottom tabs: park when it can, otherwise close as before
 function TSF:HideForMain()
+    if self:Locked() then return end   -- the callers wait for combat to end
     if not self:CanPark() then return self:Hide() end
     self._parked = { prof = state.profName, display = state.profDisplayName or state.profName,
                      isCraft = state.isCraftWindow and true or false }
