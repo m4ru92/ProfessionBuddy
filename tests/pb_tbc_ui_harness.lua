@@ -630,4 +630,63 @@ end
 U14()
 print("  PASS " .. TAG .. "14 in combat on TBC Anniversary: the bottom tabs (from Enchanting too), /pb, dragging either window, and either window's X (parked too): nothing the game blocks; each runs when combat ends")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 14)")
+-- U15 TEST-c6: m4ru's TEST-c6 run: Leatherworking open, in combat, the
+-- game's TRADE_SKILL_UPDATE redrew the craft bar and the game blocked
+-- Frame:Show() 9 times (the secure Enchant button was anchored to the
+-- craft bar, which protects it). His case first, then every visible
+-- button of both windows in combat, with Enchanting's craft button set
+-- as combat starts.
+local function U15()
+    local UI, TSF = PB.UI, PB.TradeSkillFrame
+    local keepICL = InCombatLockdown
+    local function clean()
+        InCombatLockdown = keepICL
+        if TSF.settingsPanel and TSF.settingsPanel:IsShown() then TSF:CloseSettings() end
+        if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI:Hide() end
+        FLUSH(); FIRE("PLAYER_REGEN_ENABLED"); FLUSH(); BLOCKED = {}
+        if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    end
+    local function none(tag, sites, errs)
+        EXPECT(#sites == 0, tag .. ": the game would block:\n  " .. table.concat(sites, "\n  "))
+        EXPECT(#errs == 0, tag .. ": a click errored:\n  " .. table.concat(errs, "\n  "))
+    end
+    -- his case
+    clean(); OPEN_TRADE()
+    TSF.state.selected = "Light Leather"; TSF:RefreshDetailPanel(); TSF:UpdateCraftBar()
+    InCombatLockdown = function() return true end
+    FIRE("TRADE_SKILL_UPDATE"); FLUSH()
+    EXPECT(#BLOCKED == 0, "TRADE_SKILL_UPDATE in combat: " .. table.concat(BLOCKED, ", "))
+    InCombatLockdown = keepICL
+    -- the Enchant button goes off as combat starts, and back after
+    clean(); OPEN_CRAFT()
+    for _, e in ipairs(TSF.state.recipes or {}) do if not e.isHeader then TSF.state.selected = e.name; break end end
+    TSF:RefreshDetailPanel(); TSF:UpdateCraftBar()
+    TSF.enchantCraftBtn:EnableMouse(true)          -- as with materials in the bags
+    FIRE("PLAYER_REGEN_DISABLED")
+    EXPECT(not TSF.enchantCraftBtn:IsMouseEnabled(), "the Enchant button still takes clicks as combat starts")
+    InCombatLockdown = function() return true end
+    FIRE("CRAFT_UPDATE"); FLUSH()
+    EXPECT(#BLOCKED == 0, "CRAFT_UPDATE in combat: " .. table.concat(BLOCKED, ", "))
+    InCombatLockdown = keepICL
+    -- every visible button, each window
+    clean(); OPEN_TRADE(); TSF.state.selected = "Light Leather"; TSF:RefreshDetailPanel(); TSF:UpdateCraftBar()
+    none("Leatherworking", COMBAT_SWEEP({ TSF.frame, TSF.calcPanel }, { "TRADE_SKILL_UPDATE", "BAG_UPDATE", "BAG_UPDATE_DELAYED" }))
+    clean(); OPEN_CRAFT()
+    for _, e in ipairs(TSF.state.recipes or {}) do if not e.isHeader then TSF.state.selected = e.name; break end end
+    TSF:RefreshDetailPanel(); TSF:UpdateCraftBar(); FIRE("PLAYER_REGEN_DISABLED")
+    none("Enchanting", COMBAT_SWEEP({ TSF.frame, TSF.calcPanel }, { "CRAFT_UPDATE", "BAG_UPDATE", "BAG_UPDATE_DELAYED" }))
+    clean(); OPEN_TRADE(); TSF:OpenSettings("profession"); FLUSH()
+    none("Settings", COMBAT_SWEEP({ TSF.frame }, {}))
+    for i = 1, #UI.frame.tabs do
+        clean(); UI:Show(); UI:SelectTab(i); FLUSH()
+        none("the main window, tab " .. i, COMBAT_SWEEP({ UI.frame }, {}))
+    end
+    clean(); OPEN_TRADE(); TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    none("the main window, parked", COMBAT_SWEEP({ UI.frame }, {}))
+    clean()
+end
+U15()
+print("  PASS " .. TAG .. "15 in combat on TBC Anniversary: his TRADE_SKILL_UPDATE case, Enchanting's craft update, then every visible button of both windows (parked too) and Settings: nothing the game blocks, no errors")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 15)")

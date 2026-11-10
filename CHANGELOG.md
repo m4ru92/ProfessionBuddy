@@ -49,6 +49,7 @@ Thanks to the guild members whose requests shaped this update.
 - "Remember window state between opens" lost the View, Skill-up, and Source choices when you closed the profession window with its X button or Escape: only closing it with the profession's own button saved them.
 - WoW: Forever: pressing K in combat after opening a profession gave an error and opened nothing. K works in combat. Blizzard's profession book reopens the profession you last had open, in Blizzard's window, and ProfessionBuddy's window takes over when combat ends. The same goes for any profession you open in combat.
 - In combat, the game doesn't let an addon open, close, or move the profession window. The bottom tabs (Characters, Friends, Guild, Orders), /pb and its commands, Settings, and opening a friend's or guildmate's recipes gave an error there, or left both windows on screen. They wait for combat to end, with one chat line such as "Characters opens when combat ends.", and dragging the window waits too.
+- With a profession window open in combat, a bag change or the game's recipe update redrew the craft bar and gave an error each time. The Enchant button sat on the craft bar, which made the game protect the bar too. The button is placed on the window instead, and it stops taking clicks as combat starts, until combat ends.
 
 ## 2.0.2 - 2026-11-07
 

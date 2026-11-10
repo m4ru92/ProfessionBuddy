@@ -655,6 +655,14 @@ function TSF:Init()
         self:KeepStates()
         if addon.UI and addon.UI.SaveAllPositions then addon.UI:SaveAllPositions() end
     end)
+    -- combat starts: the last moment the Enchant button's mouse can change
+    addon:RegisterEvent("PLAYER_REGEN_DISABLED", function()
+        local eb = self.enchantCraftBtn
+        if eb then
+            eb:EnableMouse(false)
+            if eb:GetAlpha() > 0 then eb.look("disabled") end
+        end
+    end)
     addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if self._pendingOpen then
             local kind = self._pendingOpen
@@ -2757,9 +2765,10 @@ function TSF:NewProfStrip(parent, namePrefix, opts)
             -- A flavor that opens professions by skill line gets no macro at
             -- all: PostClick opens it (WoW: Forever, where several spells
             -- share a profession's name).
-            if skillLine then
-                tab.skillLine = skillLine
-            else
+            -- false, not unset: the click handler reads it (TBC Anniversary
+            -- tabs have none)
+            tab.skillLine = skillLine or false
+            if not skillLine then
                 tab:SetAttribute("type", "macro")
                 tab:SetAttribute("macrotext", MACRO_OVERRIDES[profName] or ("/cast " .. profName))
             end
@@ -5270,8 +5279,11 @@ function TSF:BuildCraftBar(parent)
     -- a secure macro (like /cast), which puts it on the cursor to apply to
     -- a target item. Parented to the main frame (NOT craftBar) so the craft
     -- bar stays free of secure descendants and can still be shown/hidden in
-    -- combat. Visibility is managed via alpha/EnableMouse (non-protected);
-    -- the macrotext is set out of combat in UpdateCraftBar.
+    -- combat. Anchored to the main frame too, at the craft bar's first slot:
+    -- a frame a secure button is anchored to is protected as well, and the
+    -- game blocked the craft bar's Show in combat (TEST-c6, m4ru). Shown by
+    -- alpha; its mouse and macrotext change out of combat only
+    -- (UpdateCraftBar).
     -- SecureActionButtonTemplate ONLY -- combining with UIPanelButtonTemplate
     -- lets its OnClick override the secure click handler, which silently
     -- kills the cast. So it draws the template's own artwork by hand
@@ -5279,7 +5291,9 @@ function TSF:BuildCraftBar(parent)
     local enchantBtn = CreateFrame("Button", "ProfBuddyEnchantCraftBtn", parent,
         "SecureActionButtonTemplate")
     enchantBtn:SetSize(BTN_W, BTN_H)
-    enchantBtn:SetPoint("TOPLEFT", craftBar, "TOPLEFT", x1, ROW1_Y)
+    -- the craft bar's top-left corner is fixed: LIST_W + 18 in, and
+    -- CRAFT_BAR_H above its bottom edge 30 px up
+    enchantBtn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", LIST_W + 18 + x1, 30 + CRAFT_BAR_H + ROW1_Y)
     enchantBtn:SetFrameLevel(craftBar:GetFrameLevel() + 5)
 
     enchantBtn.look = DrawPanelButtonArt(enchantBtn, "Craft")
@@ -5307,7 +5321,7 @@ function TSF:BuildCraftBar(parent)
     -- Hide the secure button whenever the craft bar is hidden
     craftBar:SetScript("OnHide", function()
         enchantBtn:SetAlpha(0)
-        enchantBtn:EnableMouse(false)
+        TSF:SetEnchantMouse(false)
     end)
 
     -- Register craft-completion tracking for qty countdown
@@ -5553,6 +5567,18 @@ function TSF:ReagentCraftCount(recipe)
     return minMake or 0
 end
 
+-- The Enchant button's mouse: a secure button, so the game blocks the
+-- change in combat (Blizzard's API documentation: EnableMouse is
+-- protected; TEST-c6). It goes off as combat starts (PLAYER_REGEN_DISABLED,
+-- the last moment it is allowed), so an enchant chosen before combat can't
+-- be cast onto the next item clicked, and UpdateCraftBar sets it again
+-- when combat ends.
+function TSF:SetEnchantMouse(on)
+    local eb = self.enchantCraftBtn
+    if not eb or InCombatLockdown() then return end
+    eb:EnableMouse(on and true or false)
+end
+
 function TSF:UpdateCraftBar()
     -- Don't show craft bar while settings view is active
     if self.settingsPanel and self.settingsPanel:IsShown() then
@@ -5577,7 +5603,7 @@ function TSF:UpdateCraftBar()
         if self.composerBar then self.composerBar:Hide() end
         if self.enchantCraftBtn then
             self.enchantCraftBtn:SetAlpha(0)
-            self.enchantCraftBtn:EnableMouse(false)
+            self:SetEnchantMouse(false)
         end
         return
     end
@@ -5610,7 +5636,7 @@ function TSF:UpdateCraftBar()
         -- button, one cast per target item, so no quantity controls.
         if eb then
             eb:SetAlpha(0)
-            eb:EnableMouse(false)
+            self:SetEnchantMouse(false)
         end
         for i, btn in ipairs(self.craftBtns) do
             if i == 1 then
@@ -5633,22 +5659,22 @@ function TSF:UpdateCraftBar()
             -- it instead; PLAYER_REGEN_ENABLED re-runs this function.
             eb.look("disabled")
             eb:SetAlpha(1)
-            eb:EnableMouse(false)
+            self:SetEnchantMouse(false)
         else
             eb:SetAttribute("macrotext", "/cast " .. recipe.name)
             eb:SetAlpha(1)
             if canCraft then
                 eb.look("up")
-                eb:EnableMouse(true)
+                self:SetEnchantMouse(true)
             else
                 eb.look("disabled")
-                eb:EnableMouse(false)
+                self:SetEnchantMouse(false)
             end
         end
     else
         if eb then
             eb:SetAlpha(0)
-            eb:EnableMouse(false)
+            self:SetEnchantMouse(false)
         end
         for _, btn in ipairs(self.craftBtns) do
             btn:Show()

@@ -118,10 +118,10 @@ end
 function F:UnregisterEvent(e) self._ev[e] = nil end
 function F:UnregisterAllEvents() self._ev = {} end
 -- the script, then its hooks (HookScript), as the game runs them
-function F:Show() if not self._shown then self._shown = true
+function F:Show() rawset(self, "_vis", true); if not self._shown then self._shown = true
     if self._s.OnShow then self._s.OnShow(self) end
     if self._h.OnShow then self._h.OnShow(self) end end end
-function F:Hide() if self._shown then self._shown = false
+function F:Hide() rawset(self, "_vis", false); if self._shown then self._shown = false
     if self._s.OnHide then self._s.OnHide(self) end
     if self._h.OnHide then self._h.OnHide(self) end end end
 function F:IsShown() return self._shown end
@@ -152,15 +152,22 @@ function F:GetVerticalScrollRange() return 0 end
 function F:SetPoint(...)
     rawset(self, "_points", (rawget(self, "_points") or 0) + 1)
     rawset(self, "_lastPoint", { ... })
+    local rel = select(2, ...)
+    if type(rel) == "string" then rel = rawget(_G, rel) end
+    if type(rel) == "table" and getmetatable(rel) == F then ANCHOR(self, rel) end
 end
 -- sizes and scroll state, recorded for layout checks (getters stay fixed)
 function F:SetSize(w, h) rawset(self, "_size", { w, h }) end
 function F:SetHeight(h) local sz = rawget(self, "_size") or {}; sz[2] = h; rawset(self, "_size", sz) end
 function F:SetScrollChild(c) rawset(self, "_child", c) end
 function F:SetVerticalScroll(v) rawset(self, "_scroll", v) end
-function F:ClearAllPoints() rawset(self, "_points", 0); rawset(self, "_allPoints", nil) end
+function F:ClearAllPoints() rawset(self, "_points", 0); rawset(self, "_allPoints", nil); UNANCHOR(self) end
 -- the frame it covers, for checks that a button sits over another
-function F:SetAllPoints(rel) rawset(self, "_points", 2); rawset(self, "_allPoints", rel or self._parent) end
+function F:SetAllPoints(rel)
+    rawset(self, "_points", 2); rawset(self, "_allPoints", rel or self._parent)
+    local r = rel or rawget(self, "_parent")
+    if type(r) == "table" and getmetatable(r) == F then ANCHOR(self, r) end
+end
 -- the game marks a window you drag as placed by you, and puts it back
 -- there after a /reload (its layout cache) while the mark stays
 function F:StartMoving() rawset(self, "_userPlaced", true) end
@@ -176,6 +183,11 @@ function F:Disable() rawset(self, "_disabled", true) end
 function F:Enable() rawset(self, "_disabled", false) end
 function F:IsEnabled() return rawget(self, "_disabled") ~= true end
 function F:GetValue() return 0 end
+-- alpha is not protected (SetAlpha isn't in the game's protected list)
+function F:SetAlpha(a) rawset(self, "_alpha", a) end
+function F:GetAlpha() return rawget(self, "_alpha") or 1 end
+function F:EnableMouse(on) rawset(self, "_mouse", on and true or false) end
+function F:IsMouseEnabled() return rawget(self, "_mouse") == true end
 function F:GetMinMaxValues() return 0, 0 end
 function F:GetParent() return self._parent end
 function F:GetChildren() return end
@@ -198,13 +210,42 @@ end
 -- profession icons are secure buttons). In combat, an addon can't show,
 -- hide, move or size one: the game blocks the call (ADDON_ACTION_BLOCKED).
 -- BLOCKED records each one, and the call errors, so a test fails on it.
-BLOCKED = {}
+BLOCKED, BLOCKED_TRACE = {}, {}
+-- Anchors: ANCHORED_TO[r] holds the frames anchored to r. The game also
+-- protects a frame that a protected frame is anchored to (moving it would
+-- move the protected one): m4ru's TEST-c6 run, Frame:Show() blocked on the
+-- craft bar, which the secure Enchant button is anchored to.
+ANCHORED_TO = setmetatable({}, { __mode = "k" })
+function ANCHOR(f, r)
+    local list = rawget(f, "_anchoredTo")
+    if not list then list = {}; rawset(f, "_anchoredTo", list) end
+    list[#list + 1] = r
+    ANCHORED_TO[r] = ANCHORED_TO[r] or {}
+    ANCHORED_TO[r][f] = true
+end
+function UNANCHOR(f)
+    for _, r in ipairs(rawget(f, "_anchoredTo") or {}) do
+        if ANCHORED_TO[r] then ANCHORED_TO[r][f] = nil end
+    end
+    rawset(f, "_anchoredTo", nil)
+end
+-- Protected: made from a secure template, or holding a protected frame,
+-- or a protected frame is anchored to it
+local function Prot(f, seen)
+    if seen[f] then return false end
+    seen[f] = true
+    if rawget(f, "_secure") then return true end
+    for _, k in ipairs(rawget(f, "_kids") or {}) do
+        if Prot(k, seen) then return true end
+    end
+    for g in pairs(ANCHORED_TO[f] or {}) do
+        if Prot(g, seen) then return true end
+    end
+    return false
+end
 function F:IsProtected()
     if rawget(self, "_secure") then return true, true end
-    for _, k in ipairs(rawget(self, "_kids") or {}) do
-        if k:IsProtected() then return true, false end
-    end
-    return false, false
+    return Prot(self, {}), false
 end
 -- The game's own close paths (a window's X, Escape) are secure code, so
 -- their Hide goes through; what PB's own OnHide then does is checked.
@@ -215,20 +256,106 @@ function GAME_CLOSE(f)
     f:Hide()
     secureCall = nil
 end
+-- BLOCK_RECORD: the blocked call does nothing, as in the game, and is
+-- only recorded (COMBAT_SWEEP lists them all); otherwise it errors.
+BLOCK_RECORD = false
 local function Guard(f, op)
-    if secureCall == f and op == "Hide" then secureCall = nil; return end
+    if secureCall == f and op == "Hide" then secureCall = nil; return false end
     if InCombatLockdown() and f:IsProtected() then
         local what = tostring(rawget(f, "_name") or "frame") .. ":" .. op .. "()"
         BLOCKED[#BLOCKED + 1] = what
+        BLOCKED_TRACE[#BLOCKED_TRACE + 1] = debug.traceback(what, 3)
+        if BLOCK_RECORD then return true end
         error("ADDON_ACTION_BLOCKED: " .. what, 3)
     end
+    return false
 end
-for _, op in ipairs({ "Show", "Hide", "SetPoint", "ClearAllPoints", "SetAllPoints", "SetSize",
-                      "SetHeight", "SetWidth", "SetScale", "StartMoving", "StopMovingOrSizing",
-                      "SetUserPlaced" }) do
+
+-- Where a blocked call came from: the first ProfessionBuddy line of its trace
+function BLOCKED_SITE(trace)
+    for line in trace:gmatch("[^\n]+") do
+        local at = line:match("(ProfessionBuddy/[%w_/]+%.lua:%d+: in [^\n]*)")
+        if at then return trace:match("^[^\n]+") .. " at " .. at end
+    end
+    return trace:match("^[^\n]+")
+end
+
+-- Is f on screen: neither it nor a parent hidden. A new frame is shown in
+-- the game until something hides it; here _shown starts false, so only an
+-- explicit Hide (_vis false) counts as hidden.
+local function Visible(f)
+    while f do
+        if rawget(f, "_vis") == false then return false end
+        f = rawget(f, "_parent")
+        if f == UIParent then return true end
+    end
+    return true
+end
+local function Under(f, root)
+    while f do
+        if f == root then return true end
+        f = rawget(f, "_parent")
+    end
+    return false
+end
+
+-- In combat, click every visible button under the given windows (OnClick,
+-- PostClick, OnMouseDown, OnMouseUp; a secure one's own click is the
+-- game's, so only its PostClick), fire the game's update events, and
+-- collect what the game would block. Returns the distinct sites.
+function COMBAT_SWEEP(roots, events)
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    BLOCK_RECORD = true
+    BLOCKED, BLOCKED_TRACE = {}, {}
+    local errors = {}
+    for _, e in ipairs(events or {}) do
+        local ok, err = pcall(FIRE, e); if not ok then errors[#errors + 1] = e .. ": " .. tostring(err) end
+        pcall(FLUSH)
+    end
+    local list = {}
+    for _, f in ipairs(FRAMES) do
+        for _, root in ipairs(roots) do
+            if root and Under(f, root) then list[#list + 1] = f; break end
+        end
+    end
+    for _, f in ipairs(list) do
+        if Visible(f) then
+            for _, sc in ipairs({ "OnMouseDown", "OnClick", "PostClick", "OnMouseUp" }) do
+                local fn = rawget(f, "_s") and f._s[sc]
+                if fn and not (sc == "OnClick" and rawget(f, "_secure")) then
+                    local ok, err = pcall(fn, f, "LeftButton", true)
+                    if not ok then errors[#errors + 1] = tostring(rawget(f, "_name") or "frame") .. " " .. sc .. ": " .. tostring(err) end
+                    pcall(FLUSH)
+                end
+            end
+        end
+    end
+    for _, e in ipairs(events or {}) do pcall(FIRE, e); pcall(FLUSH) end
+    InCombatLockdown = keepICL
+    BLOCK_RECORD = false
+    local sites, seen = {}, {}
+    for _, t in ipairs(BLOCKED_TRACE) do
+        local site = BLOCKED_SITE(t)
+        if not seen[site] then seen[site] = true; sites[#sites + 1] = site end
+    end
+    BLOCKED, BLOCKED_TRACE = {}, {}
+    return sites, errors
+end
+-- The calls Blizzard's API documentation marks IsProtectedFunction
+-- (Simple*APIDocumentation, classic_era and classic, 2026-11-10) that PB
+-- can reach, plus SetAttribute, which the secure environment guards.
+for _, op in ipairs({ "Show", "Hide", "SetShown", "SetPoint", "ClearAllPoints", "SetAllPoints",
+                      "SetSize", "SetHeight", "SetWidth", "SetScale", "SetParent",
+                      "SetFrameLevel", "SetFrameStrata", "Raise", "Lower", "SetToplevel",
+                      "EnableMouse", "EnableMouseWheel", "EnableKeyboard", "SetMouseClickEnabled",
+                      "SetMouseMotionEnabled", "SetClampRectInsets", "SetClampedToScreen",
+                      "SetHitRectInsets", "SetID", "SetIgnoreParentScale", "StartMoving",
+                      "StartSizing", "StopMovingOrSizing", "Enable", "Disable", "SetEnabled",
+                      "RegisterForClicks", "RegisterForMouse", "SetAttribute" }) do
     local orig = rawget(F, op)
     F[op] = function(self, ...)
-        Guard(self, op)
+        if Guard(self, op) then return end
         if orig then return orig(self, ...) end
         if op == "SetScale" then rawset(self, "_scale", (...)) end
     end

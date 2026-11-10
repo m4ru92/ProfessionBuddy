@@ -6100,4 +6100,41 @@ end
 F92()
 print("  PASS F92 TEST-c6: in combat, the bottom tabs, /pb and its tab commands, Settings from either window, a character's recipes, read-only lists, dragging, PB closing the profession window, and its X: nothing the game blocks, a chat line, and each runs when combat ends")
 
-print("ALL FOREVER TESTS PASS (92)")
+-- F93 TEST-c6: m4ru's TEST-c6 run: Leatherworking open in combat, the
+-- game's list update redrew the craft bar and the game blocked its Show:
+-- the secure Enchant button was anchored to it, which protects it too.
+-- The harness protects what the game protects (secure frames, the frames
+-- holding them, the frames they are anchored to) and blocks the calls
+-- Blizzard's API documentation marks protected. In combat, every visible
+-- button of the profession window, its Settings, and each main window tab
+-- is clicked and the game's update events fire: nothing may be blocked,
+-- and no click may error.
+local function F93()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local function clean()
+        if TSF.settingsPanel and TSF.settingsPanel:IsShown() then TSF:CloseSettings() end
+        if TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI.frame:Hide() end
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH(); FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    end
+    local function none(tag, sites, errs)
+        EXPECT(#sites == 0, tag .. ": the game would block:\n  " .. table.concat(sites, "\n  "))
+        EXPECT(#errs == 0, tag .. ": a click errored:\n  " .. table.concat(errs, "\n  "))
+    end
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    clean(); open()
+    none("the profession window", COMBAT_SWEEP({ TSF.frame, TSF.calcPanel },
+        { "TRADE_SKILL_LIST_UPDATE", "TRADE_SKILL_DATA_SOURCE_CHANGED", "BAG_UPDATE_DELAYED" }))
+    clean(); open(); TSF:OpenSettings("profession"); FLUSH()
+    none("Settings", COMBAT_SWEEP({ TSF.frame }, {}))
+    for i = 1, #UI.frame.tabs do
+        clean(); UI:Show(); UI:SelectTab(i); FLUSH()
+        none("the main window, tab " .. i, COMBAT_SWEEP({ UI.frame }, {}))
+    end
+    clean()
+end
+F93()
+print("  PASS F93 TEST-c6: in combat, every visible button of the profession window, its Settings, and each main window tab, and the game's update events: nothing the game blocks (its documented protected calls, on secure frames, their holders, and frames they're anchored to), no errors")
+
+print("ALL FOREVER TESTS PASS (93)")
