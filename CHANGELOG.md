@@ -16,7 +16,7 @@ Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two 
 **Changes**
 
 - **Items per craft from the game's own data, on both clients:** 103 recipes on WoW: Forever and 98 on TBC Anniversary make more than one, from 2 Bronze Bars to 200 Crafted Solid Shot.
-- **A random amount:** seven explosives make a random number (Coarse Dynamite 1-3, Heavy Dynamite 1-5). The detail panel shows the range, and prices use the middle of it, marked "about".
+- **A random amount:** seven explosives make a random number (Coarse Dynamite 1-3, Heavy Dynamite 1-5). The detail panel shows the range, and prices use the middle of it, marked "~" (the tooltip says "about").
 
 **Fixes**
 

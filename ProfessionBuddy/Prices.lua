@@ -390,7 +390,7 @@ function P:RecipeCost(recipe, profName)
     r.itemID = itemID
     r.yield = Yield(data)
     -- a random amount (Coarse Dynamite 1 to 3): yield is the middle, so the
-    -- sale and profit are "about" (2.1.1)
+    -- sale and profit are marked "~" (2.1.1)
     local lo, hi = data and tonumber(data.yieldMin), data and tonumber(data.yieldMax)
     if lo and hi and lo ~= hi then r.yieldMin, r.yieldMax = lo, hi end
     if itemID then
@@ -512,8 +512,9 @@ function P:DetailText(r)
     if r.stale then cost = GREY .. cost .. "|r" end
     local line = "Cost: " .. cost
     if r.missing > 0 then line = line .. " " .. GREY .. "(" .. self:MissingText(r.missing, r.bopMissing) .. ")|r" end
-    -- a random amount: the sale and profit are for the middle of the range
-    local about = r.yieldMin and "about " or ""
+    -- a random amount: the sale and profit are for the middle of the range,
+    -- marked "~" ("about" made the line wrap, TEST-a)
+    local about = r.yieldMin and "~" or ""
     local auction = r.sell and (about .. self:Money(r.sell * r.yield))
     if auction and r.sellStale then auction = GREY .. auction .. "|r" end
     local vendor = r.vendorSell and (about .. self:Money(r.vendorSell * r.yield))
