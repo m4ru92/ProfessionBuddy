@@ -53,6 +53,8 @@ REQUIRED_FIELDS = ["spellID", "itemID", "skillReq", "sources",
                    "skillRange", "category", "reagents"]
 KNOWN_FIELDS = set(REQUIRED_FIELDS) | {
     "subcategory", "yield", "rod", "source", "sourceDetail", "name", "note",
+    # a random amount (tools/yield_db.py, 2.1.1): yield is the middle
+    "yieldMin", "yieldMax",
     "reqLevel",
     # WoW: Forever (tools/bake_forever_db2.py): the items that teach a
     # recipe, and where its learn level came from
@@ -500,6 +502,11 @@ def lint_dir(data_dir, forever):
             if not isint(y) or y <= 0:
                 rows.append("%s / %r: yield = %r (MaterialCalc.lua:103 divides by it)"
                             % (prof, name, y))
+                continue
+            lo, hi = r.get("yieldMin"), r.get("yieldMax")
+            if (lo is None) != (hi is None) or (lo is not None and not (isint(lo) and isint(hi) and 1 <= lo <= y <= hi)):
+                rows.append("%s / %r: yieldMin %r / yield %r / yieldMax %r out of order"
+                            % (prof, name, lo, y, hi))
     rep.add("yield values that would break MaterialCalc", rows)
 
     # --------------------------------------------- 9. itemID / spellID collisions

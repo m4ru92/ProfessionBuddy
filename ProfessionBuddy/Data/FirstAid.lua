@@ -183,6 +183,7 @@ local recipes = {
         },
         category = "Anti-Venom",
         skillRange = {  80, 80, 115, 150 },
+        yield = 3,
         reagents = {
             { itemID = 1475, count = 1, name = "Small Venom Sac" },
         },
@@ -196,6 +197,7 @@ local recipes = {
         },
         category = "Anti-Venom",
         skillRange = {  130, 130, 165, 200 },
+        yield = 3,
         reagents = {
             { itemID = 1288, count = 1, name = "Large Venom Sac" },
         },

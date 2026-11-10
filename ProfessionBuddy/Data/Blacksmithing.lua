@@ -89,6 +89,7 @@ local recipes = {
         },
         category = "Consumable",
         skillRange = { 275, 275, 280, 285 },
+        yield = 2,
         reagents = {
             { itemID = 12360, count = 1, name = "Arcanite Bar" },
             { itemID = 12644, count = 1, name = "Dense Grinding Stone" },
@@ -269,6 +270,7 @@ local recipes = {
         },
         category = "Consumable",
         skillRange = { 150, 150, 160, 170 },
+        yield = 2,
         reagents = {
             { itemID = 3577, count = 1, name = "Gold Bar" },
             { itemID = 3486, count = 1, name = "Heavy Grinding Stone" },
@@ -471,6 +473,7 @@ local recipes = {
         },
         category = "Consumable",
         skillRange = { 100, 100, 110, 120 },
+        yield = 2,
         reagents = {
             { itemID = 2842, count = 1, name = "Silver Bar" },
             { itemID = 3470, count = 1, name = "Rough Grinding Stone" },
@@ -565,6 +568,7 @@ local recipes = {
         },
         category = "Consumable",
         skillRange = { 200, 200, 210, 220 },
+        yield = 2,
         reagents = {
             { itemID = 6037, count = 1, name = "Truesilver Bar" },
             { itemID = 7966, count = 1, name = "Solid Grinding Stone" },
@@ -3964,6 +3968,7 @@ local recipes = {
         },
         category = "Trade Good",
         skillRange = { 150, 150, 152, 155 },
+        yield = 2,
         reagents = { { itemID = 3575, count = 1, name = "Iron Bar" } },
     },
 

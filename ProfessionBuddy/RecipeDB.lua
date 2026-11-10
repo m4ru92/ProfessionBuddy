@@ -41,7 +41,10 @@
 --   reagents     = { { itemID = X, count = N, name = "Display Name" }, ... }
 --                  name is required: the material calculator shows ??? without it.
 --   yield        = optional units produced per craft, greater than 0. Absent
---                  means 1.
+--                  means 1. tools/yield_db.py writes it from the game's
+--                  spell table (2.1.1).
+--   yieldMin, yieldMax = a random amount (Coarse Dynamite 1 to 3); yield is
+--                  then the middle, what prices and the calculator use.
 --   rod          = optional, Enchanting only: a rod name from
 --                  ProfBuddy.EnchantingRods.
 --

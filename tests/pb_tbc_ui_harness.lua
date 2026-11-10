@@ -689,4 +689,45 @@ end
 U15()
 print("  PASS " .. TAG .. "15 in combat on TBC Anniversary: his TRADE_SKILL_UPDATE case, Enchanting's craft update, then every visible button of both windows (parked too) and Settings: nothing the game blocks, no errors")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 15)")
+-- U16 2.1.1: TBC Anniversary's recipe data had a count per craft only
+-- for Smelt Bronze; 97 others read 1 (tools/yield_db.py). The data, the
+-- bolts (1, not 2 and 3), a price per craft of 4, and the Material
+-- Calculator planning one craft of Elemental Blasting Powder (makes 4)
+-- for 3, not three
+local function U16()
+    local RDB, MC, TSF = PB.RecipeDB, PB.MaterialCalc, PB.TradeSkillFrame
+    local E = RDB.data.Engineering
+    EXPECT(E["Elemental Blasting Powder"].yield == 4 and E["Crafted Heavy Shot"].yield == 200
+           and E["Coarse Dynamite"].yieldMin == 1 and E["Coarse Dynamite"].yieldMax == 3,
+           "TBC counts in the data")
+    EXPECT(E["Handful of Copper Bolts"].yield == nil and E["Handful of Fel Iron Bolts"].yield == nil, "the bolts make 1")
+    EXPECT(RDB.data.Smelting["Smelt Bronze"].yield == 2, "Smelt Bronze still makes 2")
+    -- an engineer alt who makes the powder
+    local chars = PB.db.characters
+    chars["Gnome-Realm"] = { professions = { Engineering = { recipes = { ["Elemental Blasting Powder"] = {} } } } }
+    local list = MC:GetShoppingList("Gnomish Flame Turret", "Engineering", 1)
+    local need = {}
+    for _, e in ipairs(list) do need[e.itemID] = e.need end
+    EXPECT(need[22574] == 1 and need[22573] == 2, "the calculator planned powder crafts: Mote of Fire "
+           .. tostring(need[22574]) .. ", Mote of Earth " .. tostring(need[22573]))
+    chars["Gnome-Realm"] = nil
+    -- the detail panel on TBC Anniversary too
+    OPEN_TRADE()
+    local st = TSF.state
+    local keepProf = st.profName
+    st.profName = "Engineering"
+    local fake = { name = "Elemental Blasting Powder", isKnown = true, numAvail = 5, itemID = 23781, spellID = 30303, category = "Parts" }
+    table.insert(st.recipes, 1, fake)
+    st.selected = fake.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.detCount:GetText() == "4" and (TSF.detCanMake:GetText() or ""):find("Can make: 5 (20)", 1, true),
+           "TBC detail: " .. tostring(TSF.detCount:GetText()) .. " / " .. tostring(TSF.detCanMake:GetText()))
+    table.remove(st.recipes, 1)
+    st.profName, st.selected = keepProf, nil
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() end
+end
+U16()
+print("  PASS " .. TAG .. "16 2.1.1: TBC Anniversary counts per craft from the game's table (powder 4, shot 200, dynamite 1-3, bolts 1), the calculator plans one powder craft for 3, the detail panel shows 4 and Can make 5 (20)")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 16)")

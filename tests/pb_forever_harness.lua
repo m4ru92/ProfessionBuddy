@@ -6137,4 +6137,67 @@ end
 F93()
 print("  PASS F93 TEST-c6: in combat, every visible button of the profession window, its Settings, and each main window tab, and the game's update events: nothing the game blocks (its documented protected calls, on secure frames, their holders, and frames they're anchored to), no errors")
 
-print("ALL FOREVER TESTS PASS (93)")
+-- F94 2.1.1: a craft that makes more than one (Hircus: Smelt Bronze
+-- makes 2 bars and PB didn't say). The count from the game's spell table
+-- (tools/yield_db.py) on the detail panel's icon, after the category, and
+-- in Can make; a random amount as a range, priced "about".
+local function F94()
+    local PB = ProfBuddy
+    local TSF, P, RDB = PB.TradeSkillFrame, PB.Prices, PB.RecipeDB
+    local st = TSF.state
+    local cd = RDB.data.Engineering["Coarse Dynamite"]
+    EXPECT(cd.yield == 2 and cd.yieldMin == 1 and cd.yieldMax == 3, "Coarse Dynamite's range in the data")
+    EXPECT(RDB.data.Mining["Smelt Bronze"].yield == 2, "Smelt Bronze makes 2 in the data")
+    EXPECT(RDB.data.Engineering["Handful of Copper Bolts"].yield == nil, "Handful of Copper Bolts makes 1")
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    open()
+    -- a known craft that makes 2, 3 of them in the bags' worth
+    local fake = { name = "Cured Rugged Hide", isKnown = true, numAvail = 3, itemID = 15407, spellID = 19047,
+                   category = "Leather" }
+    table.insert(st.recipes, 1, fake)
+    st.selected = fake.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.detCount:GetText() == "2", "the icon count: " .. tostring(TSF.detCount:GetText()))
+    EXPECT((TSF.detCat:GetText() or ""):find("Makes 2", 1, true), "no Makes 2: " .. tostring(TSF.detCat:GetText()))
+    EXPECT((TSF.detCanMake:GetText() or ""):find("Can make: 3 (6)", 1, true), "Can make: " .. tostring(TSF.detCanMake:GetText()))
+    -- one item: no count anywhere
+    local one = { name = "Light Armor Kit", isKnown = true, numAvail = 4, itemID = 2304, spellID = 2152, category = "Armor Kit" }
+    table.insert(st.recipes, 1, one)
+    st.selected = one.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.detCount:GetText() == "" and not (TSF.detCat:GetText() or ""):find("Makes", 1, true)
+           and (TSF.detCanMake:GetText() or ""):find("Can make: 4|r", 1, true), "a single item shows a count")
+    -- a random amount: a range everywhere, the price "about"
+    local keepProf = st.profName
+    st.profName = "Engineering"
+    local made = TSF:Made({ name = "Coarse Dynamite" })
+    EXPECT(made and made.text == "1-3" and made.mid == 2, "Coarse Dynamite's range")
+    local dyn = { name = "Coarse Dynamite", isKnown = true, numAvail = 2, itemID = 4365, spellID = 3931, category = "Explosives" }
+    table.insert(st.recipes, 1, dyn)
+    st.selected = dyn.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.detCount:GetText() == "1-3" and (TSF.detCanMake:GetText() or ""):find("Can make: 2 (2-6)", 1, true),
+           "the range: " .. tostring(TSF.detCount:GetText()) .. " / " .. tostring(TSF.detCanMake:GetText()))
+    st.profName = keepProf
+    local keepAuc, keepAucOn, keepShow = Auctionator, PB.db.settings.priceAuctionator, PB.db.settings.showPrices
+    PB.db.settings.priceAuctionator, PB.db.settings.showPrices = true, true
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return ({ [4365] = 50, [4364] = 5, [2589] = 1 })[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    local r = P:RecipeCost({ name = "Coarse Dynamite" }, "Engineering")
+    EXPECT(r and r.yield == 2 and r.yieldMin == 1 and r.yieldMax == 3, "the price's range")
+    local line = P:DetailText(r)
+    EXPECT(line:find("Sells: about", 1, true) and line:find("Profit: about", 1, true), "no about: " .. line)
+    r = P:RecipeCost({ name = "Cured Rugged Hide" }, "Leatherworking")
+    EXPECT(r and r.yieldMin == nil and not P:DetailText(r):find("about", 1, true), "a fixed count priced about")
+    Auctionator, PB.db.settings.priceAuctionator, PB.db.settings.showPrices = keepAuc, keepAucOn, keepShow
+    for _, e in ipairs({ fake, one, dyn }) do
+        for i, x in ipairs(st.recipes) do if x == e then table.remove(st.recipes, i); break end end
+    end
+    st.selected = nil
+    TSF.frame:Hide(); FLUSH()
+end
+F94()
+print("  PASS F94 2.1.1: a craft that makes more than one: the count on the detail panel's icon, Makes after the category, Can make with the items (3 (6)), none for one item; a random amount as 1-3, Can make 2 (2-6), sale and profit 'about'; the data's counts and ranges")
+
+print("ALL FOREVER TESTS PASS (94)")

@@ -3247,6 +3247,7 @@ local recipes = {
         },
         category = "Trade Good",
         skillRange = {  315, 315, 325, 335},
+        yield = 3,
         reagents = { { itemID = 22449, count = 1, name = "Large Prismatic Shard" } },
     },
     ["Smoking Heart of the Mountain"] = {
@@ -3274,6 +3275,7 @@ local recipes = {
         },
         category = "Trade Good",
         skillRange = {  360, 360, 362, 365},
+        yield = 2,
         reagents = { { itemID = 22450, count = 1, name = "Void Crystal" } },
     },
     ["Void Sphere"] = {

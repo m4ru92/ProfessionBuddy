@@ -2,6 +2,27 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.1.1
+
+Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two bars, and ProfessionBuddy didn't say so anywhere.
+
+**Highlights**
+
+- **How many a craft makes:** the detail panel shows it on the item's icon, as Blizzard's window does, and after the category ("Makes 2"). "Can make" counts the items too: "Can make: 54 (108)".
+- **TBC Anniversary prices and the Material Calculator:** 97 recipes that make more than one were counted as making one, so their sale and profit were too low and the Material Calculator planned too many crafts of them.
+
+<!-- more -->
+
+**Changes**
+
+- **Items per craft from the game's own data, on both clients:** 103 recipes on WoW: Forever and 98 on TBC Anniversary make more than one, from 2 Bronze Bars to 200 Crafted Solid Shot.
+- **A random amount:** seven explosives make a random number (Coarse Dynamite 1-3, Heavy Dynamite 1-5). The detail panel shows the range, and prices use the middle of it, marked "about".
+
+**Fixes**
+
+- TBC Anniversary: PB's recipe data had the count per craft for Smelt Bronze alone. Elemental Blasting Powder (4), Fel Iron Shells (200), Goldthorn Tea (4) and 94 more read 1, so their sale and profit were for one item, and the Material Calculator asked for several times the crafts and materials when one of them (Elemental Blasting Powder, Silver Contact, Gold Power Core) was a step in a bigger craft.
+- TBC Anniversary: Handful of Copper Bolts and Handful of Fel Iron Bolts make 1, not 2 and 3.
+
 ## 2.1.0 - 2026-11-09
 
 Prices, built from players' requests: what a craft costs, what it sells for, and the profit, from Auctionator, TSM, the auction prices ProfessionBuddy records, and vendor prices. Also: your professions in the main window, a Back button to the profession you were in, window positions and filters that stay after a reload, and guildmates' recipes that are there when you click them.

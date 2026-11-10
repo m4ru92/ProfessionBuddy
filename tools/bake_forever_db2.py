@@ -242,10 +242,17 @@ def build(csvdir, carry_dir=None):
     rods.sort()
     bonus_items = {I(r["ItemID"]) for r in read(csvdir, "ItemXBonusTree")}
 
+    # (item, count, low, high): a random amount is the count plus or minus
+    # count x Variance / 2 (tools/yield_db.py, 2.1.1)
+    def made(r):
+        base = float(r.get("EffectBasePointsF") or 0)
+        half = base * float(r.get("Variance") or 0) / 2
+        return (I(r["EffectItemType"]), max(I(r.get("EffectBasePointsF")), 1),
+                max(int(round(base - half)), 1), max(int(round(base + half)), 1))
     created = {}
     for r in read(csvdir, "SpellEffect"):
         if I(r["Effect"]) == 24 and I(r.get("EffectItemType")):
-            created[I(r["SpellID"])] = (I(r["EffectItemType"]), max(I(r.get("EffectBasePointsF")), 1))
+            created[I(r["SpellID"])] = made(r)
 
     abilities = read(csvdir, "SkillLineAbility")
     if carry_dir:
@@ -263,7 +270,7 @@ def build(csvdir, carry_dir=None):
         old_created = {}
         for r in read(carry_dir, "SpellEffect"):
             if I(r["Effect"]) == 24 and I(r.get("EffectItemType")):
-                old_created[I(r["SpellID"])] = (I(r["EffectItemType"]), max(I(r.get("EffectBasePointsF")), 1))
+                old_created[I(r["SpellID"])] = made(r)
         for r in read(carry_dir, "SkillLineAbility"):
             spell = I(r["Spell"])
             if (I(r["SkillLine"]), spell) in have or not I(r["TradeSkillCategoryID"]):
@@ -351,6 +358,7 @@ def build(csvdir, carry_dir=None):
             "teachKnown": any(i in items for i in tinv),
             "teachItems": tinv,
             "yield": out[1] if out else 1,
+            "yieldRange": (out[2], out[3]) if out and len(out) > 3 and out[2] != out[3] else None,
             "skillReq": learn,
             "learnFrom": learn_from,
             "skillRange": [learn if learn is not None else False, yellow,
@@ -482,6 +490,9 @@ def emit(prof, recs, build_id, rods=()):
         L.append("        itemID     = %d," % r["itemID"])
         if r["yield"] > 1:
             L.append("        yield      = %d," % r["yield"])
+        if r.get("yieldRange"):
+            L.append("        yieldMin   = %d," % r["yieldRange"][0])
+            L.append("        yieldMax   = %d," % r["yieldRange"][1])
         if r["skillReq"] is not None:
             L.append("        skillReq   = %d," % r["skillReq"])
             L.append("        learnFrom  = %s," % lua_str(r["learnFrom"]))

@@ -3722,6 +3722,12 @@ function TSF:BuildDetailPanel(parent)
     detIcon:SetPoint("TOPLEFT", 6, -6)
     detIcon:Hide()
     self.detIcon = detIcon
+    -- how many one craft makes, on the icon as Blizzard's window shows it
+    -- ("2", "1-3"; 2.1.1, Hircus)
+    local detCount = sc:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+    detCount:SetPoint("BOTTOMRIGHT", detIcon, "BOTTOMRIGHT", -1, 2)
+    detCount:SetJustifyH("RIGHT")
+    self.detCount = detCount
 
     -- Share: opens the chat box on a channel with the recipe's link typed.
     local shareBtn = CreateFrame("Button", nil, sc, "UIPanelButtonTemplate")
@@ -4009,6 +4015,7 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.detPlaceholder:Show()
     if self.detScrollFrame then self.detScrollFrame:Hide() end
     self.detIcon:Hide()
+    if self.detCount then self.detCount:SetText("") end
     self.detName:SetText("")
     self.detDiff:SetText("")
     self.detRange:SetText("")
@@ -4031,6 +4038,23 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.altHeader:Hide()
     for _, row in ipairs(self.reagentRows) do row:Hide() end
     for _, line in ipairs(self.altLines) do line:Hide() end
+end
+
+-- How many items one craft of `recipe` makes, from the recipe data
+-- (tools/yield_db.py, 2.1.1): { lo, hi, mid, text = "2" or "1-3" }, or nil
+-- for one item
+function TSF:Made(recipe)
+    if not recipe then return nil end
+    local data = RDB and RDB.data and state.profName and RDB.data[state.profName]
+        and RDB.data[state.profName][recipe.name]
+    if not data and recipe.spellID and RDB and RDB.GetRecipeBySpell then
+        data = RDB:GetRecipeBySpell(recipe.spellID)
+    end
+    local mid = tonumber(data and data.yield) or tonumber(recipe.yield) or 1
+    local lo = tonumber(data and data.yieldMin) or mid
+    local hi = tonumber(data and data.yieldMax) or mid
+    if hi <= 1 then return nil end
+    return { lo = lo, hi = hi, mid = mid, text = (lo == hi) and tostring(lo) or (lo .. "-" .. hi) }
 end
 
 function TSF:RefreshDetailPanel(preserveScroll)
@@ -4124,10 +4148,17 @@ function TSF:RefreshDetailPanel(preserveScroll)
         self.detSkill:SetText("")
     end
 
+    -- how many one craft makes (2.1.1): on the icon, after the category,
+    -- and in Can make below
+    local made = self:Made(recipe)
+    self.detCount:SetText(made and made.text or "")
+    if self.detIcon:IsShown() then self.detCount:Show() else self.detCount:Hide() end
+    local makesText = made and ("|cffffd100Makes " .. made.text .. "|r") or nil
     if recipe.category then
-        self.detCat:SetText("|cff888888Category: " .. recipe.category .. "|r")
+        self.detCat:SetText("|cff888888Category: " .. recipe.category .. "|r"
+            .. (makesText and ("    " .. makesText) or ""))
     else
-        self.detCat:SetText("")
+        self.detCat:SetText(makesText or "")
     end
 
     local vis = ShownSources(recipe)
@@ -4170,7 +4201,13 @@ function TSF:RefreshDetailPanel(preserveScroll)
         end
         local cdSuffix = self:CooldownSuffix(recipe)
         if avail > 0 then
-            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. "|r" .. cdSuffix)
+            -- crafts, then the items they make: "Can make: 54 (108)"
+            local items = ""
+            if made then
+                items = made.lo == made.hi and (" (" .. avail * made.lo .. ")")
+                    or (" (" .. avail * made.lo .. "-" .. avail * made.hi .. ")")
+            end
+            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. items .. "|r" .. cdSuffix)
         elseif cdSuffix ~= "" then
             -- A recipe on cooldown reports 0 whatever is in the bags, so
             -- naming reagents as the reason would contradict the very next
