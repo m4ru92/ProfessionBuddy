@@ -159,6 +159,12 @@ function F:SetHeight(h) local sz = rawget(self, "_size") or {}; sz[2] = h; rawse
 function F:SetScrollChild(c) rawset(self, "_child", c) end
 function F:SetVerticalScroll(v) rawset(self, "_scroll", v) end
 function F:ClearAllPoints() rawset(self, "_points", 0) end
+-- the game marks a window you drag as placed by you, and puts it back
+-- there after a /reload (its layout cache) while the mark stays
+function F:StartMoving() rawset(self, "_userPlaced", true) end
+function F:StopMovingOrSizing() end
+function F:SetUserPlaced(v) rawset(self, "_userPlaced", v and true or false) end
+function F:IsUserPlaced() return rawget(self, "_userPlaced") == true end
 function F:GetNumPoints() return rawget(self, "_points") or 0 end
 function F:NumLines() return 0 end
 function F:IsMouseOver() return false end

@@ -277,8 +277,10 @@ end
 -- The profession strip and Back (TEST-c, N1 and N2, Bran). The icons the
 -- profession window has, in this window's top-left corner on every tab:
 -- a click opens that profession (an unknown one opens its read-only list).
--- Left of them, in a fixed spot, "Back to <profession>" while one is
--- parked (decision D1). The tabs' content starts below them.
+-- At the right end of the same row, where the profession window has its
+-- search box, "Back to <profession>" while one is parked: a fixed spot
+-- that never moves (decision D1; TEST-c2, m4ru). The tabs' content starts
+-- below them.
 ----------------------------------------------------------------------
 UI.CONTENT_TOP = 52        -- was 42; the strip needs the room
 UI.BACK_W = 160
@@ -289,7 +291,7 @@ function UI:BuildStrip(f)
     -- "Back to Leatherworking" fits in the smaller font
     back:SetNormalFontObject(GameFontNormalSmall)
     back:SetHighlightFontObject(GameFontHighlightSmall)
-    back:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -27)
+    back:SetPoint("TOPRIGHT", f, "TOPRIGHT", -12, -27)
     back:SetFrameLevel(f:GetFrameLevel() + 5)
     back:SetScript("OnClick", function()
         if addon.TradeSkillFrame then addon.TradeSkillFrame:Unpark() end
@@ -303,7 +305,7 @@ function UI:BuildStrip(f)
     -- profession: secure buttons, and the window waits for combat to end
     -- (UI:Locked, decision D3).
     local strip = tsf:NewProfStrip(f, "ProfBuddyMainProfTab", { plain = true, isMain = true })
-    strip.container:SetPoint("TOPLEFT", f, "TOPLEFT", 12 + self.BACK_W + 6, -28)
+    strip.container:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -28)
     self.profStrip = strip
     f:HookScript("OnShow", function()
         UI:UpdateStrip()
@@ -444,6 +446,10 @@ end
 -- window left, should the clamp area not have held it (in combat, say).
 function UI:AfterDrag(frame, followers)
     frame:StopMovingOrSizing()
+    -- a drag marks the window as placed by you, and the game then puts it
+    -- back after a /reload by itself, past "Keep after a reload or logout"
+    -- (TEST-c, m4ru's step A6). PB keeps positions itself (SavePosition).
+    if not InCombatLockdown() then frame:SetUserPlaced(false) end
     for _, f in ipairs(followers or {}) do
         if type(f.IsShown) == "function" and f:IsShown() then self:MakeRoomBeside(frame, f) end
     end
@@ -485,14 +491,15 @@ function UI:SavePosition(frame)
     w.pos[key] = { x = left * s, y = top * s }
 end
 
--- Back where it was, pulled onto the screen if the screen got smaller
+-- Back where it was, pulled onto the screen if the screen got smaller.
+-- True when it put the window somewhere.
 function UI:RestorePosition(frame)
     local key = frame and frame._pbPosKey
-    if not (key and self:KeepOn()) then return end
+    if not (key and self:KeepOn()) then return false end
     local w = addon.db.windows and addon.db.windows[addon:PlayerKey() or ""]
     local p = w and w.pos and w.pos[key]
     local x, y = p and tonumber(p.x), p and tonumber(p.y)
-    if not (x and y) then return end
+    if not (x and y) then return false end
     local s = frame:GetScale() or 1
     local sw, sh = UIParent:GetWidth(), UIParent:GetHeight()
     local fw, fh = (frame:GetWidth() or 0) * s, (frame:GetHeight() or 0) * s
@@ -502,6 +509,7 @@ function UI:RestorePosition(frame)
     end
     frame:ClearAllPoints()
     frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+    return true
 end
 
 -- Keep this window's position under key: put back the first time it
@@ -512,9 +520,15 @@ function UI:TrackPosition(frame, key)
     self._tracked = self._tracked or {}
     self._tracked[#self._tracked + 1] = frame
     frame:HookScript("OnShow", function(f)
-        if f._pbPosRestored then return end
+        -- moving it in combat is blocked on TBC Anniversary: the next open
+        if f._pbPosRestored or InCombatLockdown() then return end
         f._pbPosRestored = true
-        UI:RestorePosition(f)
+        if UI:RestorePosition(f) then return end
+        -- nothing kept: the middle of the screen, also over a spot the
+        -- game kept from an older build's drag (see UI:AfterDrag)
+        f:SetUserPlaced(false)
+        f:ClearAllPoints()
+        f:SetPoint("CENTER")
     end)
     frame:HookScript("OnHide", function(f) UI:SavePosition(f) end)
 end

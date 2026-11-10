@@ -5784,4 +5784,46 @@ do
 end
 print("  PASS F88 TEST-c: vendor prices only from placed vendors; recipe names at most two lines")
 
-print("ALL FOREVER TESTS PASS (88)")
+-- F89 TEST-c2: m4ru's TBC Anniversary run, step A6: the /pb window came
+-- back where he dragged it after a /reload with keeping off (the game's
+-- own layout cache). A drag clears the game's mark; with nothing kept the
+-- first open is the middle of the screen. Step 14: Back sits at the right
+-- end of the icon row, the icons at the left.
+local function F89()
+    local PB = ProfBuddy
+    local UI, S = PB.UI, PB.db.settings
+    local M = UI.frame
+    if M:IsShown() then M:Hide() end
+    -- a drag: the game's mark is cleared at its end
+    M:GetScript("OnDragStart")(M)
+    EXPECT(M:IsUserPlaced(), "harness: StartMoving did not mark the window")
+    M:GetScript("OnDragStop")(M)
+    EXPECT(not M:IsUserPlaced(), "a drag left the window marked as placed by you")
+    -- keeping off, and the game put it back from an older build's drag
+    S.keepWindowState = false
+    rawset(M, "_userPlaced", true)
+    M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
+    rawset(M, "_pbPosRestored", false)
+    UI:Show()
+    local lp = rawget(M, "_lastPoint")
+    EXPECT(lp and lp[1] == "CENTER" and rawget(M, "_points") == 1 and not M:IsUserPlaced(),
+           "keeping off: the first open is not the middle: " .. tostring(lp and lp[1]))
+    -- moved during the session: the next open keeps it there
+    M:Hide()
+    M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
+    UI:Show()
+    lp = rawget(M, "_lastPoint")
+    EXPECT(lp and lp[1] == "TOPLEFT", "a second open moved the window")
+    M:Hide()
+    S.keepWindowState = true
+    -- Back at the right end of the row, the icons from the left
+    local bp = rawget(UI.backBtn, "_lastPoint")
+    EXPECT(bp and bp[1] == "TOPRIGHT" and bp[3] == "TOPRIGHT" and bp[4] == -12,
+           "Back not at the right end of the row: " .. tostring(bp and bp[1]))
+    local cp = rawget(UI.profStrip.container, "_lastPoint")
+    EXPECT(cp and cp[1] == "TOPLEFT" and cp[4] == 12, "icons not from the left: " .. tostring(cp and cp[4]))
+end
+F89()
+print("  PASS F89 TEST-c2: a drag clears the game's placed-by-you mark; keeping off opens the window in the middle once per session; Back at the right end of the icon row")
+
+print("ALL FOREVER TESTS PASS (89)")
