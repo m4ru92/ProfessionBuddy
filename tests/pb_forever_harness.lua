@@ -5887,4 +5887,58 @@ end
 F90()
 print("  PASS F90 TEST-c2: Settings from the main window's gear or /pb settings keeps a parked profession and its Back; Settings closed with the X ends the park and closes the session")
 
-print("ALL FOREVER TESTS PASS (90)")
+-- F91 TEST-c4: the parked profession's own icon in the main window works
+-- as Back (m4ru); with keeping on and nothing saved yet, the first open
+-- leaves the window where it is (a 2.0.2 window the game kept in place
+-- would otherwise jump to the middle once after updating)
+local function F91()
+    local PB = ProfBuddy
+    local TSF, UI, S = PB.TradeSkillFrame, PB.UI, PB.db.settings
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local function closes() local n = 0; for _, c in ipairs(TS_CALLS) do if c == "CloseTradeSkill" then n = n + 1 end end; return n end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    local cover, lw = UI.parkedTab, UI.profStrip.byName.Leatherworking
+    EXPECT(cover and not cover:IsShown(), "the cover shows with nothing parked")
+    open()
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])        -- Characters
+    FLUSH()
+    EXPECT(TSF._parked and cover:IsShown() and rawget(cover, "_allPoints") == lw,
+           "no button over the parked Leatherworking icon")
+    local opened = 0
+    local keepOpen = C_TradeSkillUI.OpenTradeSkill
+    C_TradeSkillUI.OpenTradeSkill = function(...) opened = opened + 1; return keepOpen(...) end
+    local before = closes()
+    cover:GetScript("OnClick")(cover)
+    FLUSH()
+    C_TradeSkillUI.OpenTradeSkill = keepOpen
+    EXPECT(TSF.frame:IsShown() and not UI.frame:IsShown() and not TSF._parked and TS.open == "Leatherworking"
+           and closes() == before and opened == 0, "the parked icon did not work as Back")
+    -- the park ends on the game's close event: the cover goes
+    TSF.navTabs[2]:GetScript("OnClick")(TSF.navTabs[2])        -- Friends
+    FLUSH()
+    EXPECT(cover:IsShown(), "no cover when parked from Friends")
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    EXPECT(not TSF._parked and not cover:IsShown(), "the cover outlived the park")
+    -- another profession's icon is not covered
+    EXPECT(not (cover:IsShown() and rawget(cover, "_allPoints") ~= lw), "the cover sits over another icon")
+    UI.frame:Hide(); FLUSH()
+    -- keeping on, nothing saved: the first open leaves the window put
+    local M = UI.frame
+    local key = PB:PlayerKey()
+    if PB.db.windows[key] then PB.db.windows[key].pos = nil end
+    S.keepWindowState = true
+    rawset(M, "_userPlaced", true)
+    M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
+    rawset(M, "_pbPosRestored", false)
+    UI:Show()
+    local lp = rawget(M, "_lastPoint")
+    EXPECT(lp and lp[1] == "TOPLEFT" and lp[4] == 40 and rawget(M, "_points") == 1 and not M:IsUserPlaced(),
+           "keeping on, nothing saved: the window moved on its first open: " .. tostring(lp and lp[1]))
+    M:Hide()
+end
+F91()
+print("  PASS F91 TEST-c4: the parked profession's icon in the main window works as Back, gone when the park ends; keeping on with nothing saved leaves the window where it is")
+
+print("ALL FOREVER TESTS PASS (91)")

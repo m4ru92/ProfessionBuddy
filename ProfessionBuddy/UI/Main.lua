@@ -303,6 +303,26 @@ function UI:BuildStrip(f)
     end)
     back:Hide()
     self.backBtn = back
+    -- The parked profession's own icon works as Back (TEST-c4, m4ru): a
+    -- plain button over it, so the icon's /cast on TBC Anniversary, which
+    -- closes a profession whose window is open, never runs then
+    local cover = CreateFrame("Button", nil, f)
+    cover:SetFrameLevel(f:GetFrameLevel() + 10)
+    cover:RegisterForClicks("LeftButtonUp")
+    cover:SetScript("OnClick", function()
+        if addon.TradeSkillFrame then addon.TradeSkillFrame:Unpark() end
+    end)
+    cover:SetScript("OnEnter", function(c)
+        local p = addon.TradeSkillFrame and addon.TradeSkillFrame._parked
+        if not p then return end
+        GameTooltip:SetOwner(c, "ANCHOR_BOTTOM")
+        GameTooltip:SetText("Back to " .. p.display)
+        GameTooltip:Show()
+    end)
+    cover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    cover:Hide()
+    cover._tab = false
+    self.parkedTab = cover
     local tsf = addon.TradeSkillFrame
     if not (tsf and tsf.NewProfStrip) then return end
     -- WoW: Forever opens a profession by skill line: plain buttons, so this
@@ -322,9 +342,35 @@ end
 function UI:UpdateStrip()
     local strip, tsf = self.profStrip, addon.TradeSkillFrame
     if not (strip and tsf) then return end
-    if strip.secure and InCombatLockdown() then self._stripDirty = true; return end
-    self._stripDirty = nil
-    tsf:LayoutProfStrip(strip, tsf._parked and tsf._parked.prof)
+    if strip.secure and InCombatLockdown() then
+        self._stripDirty = true
+    else
+        self._stripDirty = nil
+        tsf:LayoutProfStrip(strip, tsf._parked and tsf._parked.prof)
+    end
+    self:UpdateParkedTab()
+end
+
+-- The button over the parked profession's icon: on it while one is
+-- parked, gone otherwise. In combat on TBC Anniversary the icons can't
+-- move: a button last placed over that icon shows there again, and any
+-- other case waits for the layout after combat.
+function UI:UpdateParkedTab()
+    local cover, strip, tsf = self.parkedTab, self.profStrip, addon.TradeSkillFrame
+    if not (cover and strip and tsf) then return end
+    local p = tsf._parked
+    -- Smelting shows under the Mining icon
+    local tab = p and (strip.byName[p.prof] or (p.prof == "Smelting" and strip.byName.Mining))
+    if not (tab and tab:IsShown()) then cover:Hide(); return end
+    if strip.secure and InCombatLockdown() then
+        -- still anchored to that icon from the last layout
+        if cover._tab == tab then cover:Show() else cover:Hide() end
+        return
+    end
+    cover:ClearAllPoints()
+    cover:SetAllPoints(tab)
+    cover._tab = tab
+    cover:Show()
 end
 
 function UI:UpdateBack()
@@ -337,7 +383,7 @@ function UI:UpdateBack()
     else
         back:Hide()
     end
-    if self.frame and self.frame:IsShown() then self:UpdateStrip() end
+    if self.frame and self.frame:IsShown() then self:UpdateStrip() else self:UpdateParkedTab() end
 end
 
 -- TBC Anniversary: the strip's secure buttons make this window one the
@@ -529,9 +575,12 @@ function UI:TrackPosition(frame, key)
         if f._pbPosRestored or InCombatLockdown() then return end
         f._pbPosRestored = true
         if UI:RestorePosition(f) then return end
-        -- nothing kept: the middle of the screen, also over a spot the
-        -- game kept from an older build's drag (see UI:AfterDrag)
         f:SetUserPlaced(false)
+        -- Keep on with nothing saved yet (first open after updating): it
+        -- stays where it is, where the game may have kept it from your
+        -- last drag; PB saves it from here (TEST-c4). Keep off: the middle
+        -- of the screen, also over a spot the game kept (see UI:AfterDrag)
+        if UI:KeepOn() then return end
         f:ClearAllPoints()
         f:SetPoint("CENTER")
     end)

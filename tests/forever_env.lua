@@ -158,7 +158,9 @@ function F:SetSize(w, h) rawset(self, "_size", { w, h }) end
 function F:SetHeight(h) local sz = rawget(self, "_size") or {}; sz[2] = h; rawset(self, "_size", sz) end
 function F:SetScrollChild(c) rawset(self, "_child", c) end
 function F:SetVerticalScroll(v) rawset(self, "_scroll", v) end
-function F:ClearAllPoints() rawset(self, "_points", 0) end
+function F:ClearAllPoints() rawset(self, "_points", 0); rawset(self, "_allPoints", nil) end
+-- the frame it covers, for checks that a button sits over another
+function F:SetAllPoints(rel) rawset(self, "_points", 2); rawset(self, "_allPoints", rel or self._parent) end
 -- the game marks a window you drag as placed by you, and puts it back
 -- there after a /reload (its layout cache) while the mark stays
 function F:StartMoving() rawset(self, "_userPlaced", true) end

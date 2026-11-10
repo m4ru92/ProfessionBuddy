@@ -505,4 +505,56 @@ do
 end
 print("  PASS " .. TAG .. "12 the main window's strip on TBC Anniversary: secure /cast buttons; the window opens and closes when combat ends, one chat line; G1 opens a guildmate's profession when the reply arrives")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 12)")
+-- U13 TEST-c4: the parked profession's icon in the main window works as
+-- Back. Its /cast would close a profession whose window is open, so a
+-- plain button sits over it, also through combat
+local function U13()
+    local UI, TSF = PB.UI, PB.TradeSkillFrame
+    local cover, lw = UI.parkedTab, UI.profStrip.byName.Leatherworking
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+    OPEN_TRADE()
+    EXPECT(TSF.frame:IsShown() and TSF.state.profName == "Leatherworking", "Leatherworking did not open")
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])        -- Characters
+    FLUSH()
+    EXPECT(TSF._parked and UI.frame:IsShown() and lw:IsShown(), "not parked, or no Leatherworking icon")
+    EXPECT(cover:IsShown() and rawget(cover, "_allPoints") == lw, "no button over the parked icon")
+    cover:GetScript("OnClick")(cover)
+    FLUSH()
+    EXPECT(TSF.frame:IsShown() and not UI.frame:IsShown() and not TSF._parked and TBC.open == "trade",
+           "the parked icon did not work as Back")
+    -- in combat: the button stays over the icon and Back waits for combat
+    TSF.navTabs[2]:GetScript("OnClick")(TSF.navTabs[2])        -- Friends
+    FLUSH()
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    UI:UpdateBack()
+    EXPECT(cover:IsShown() and rawget(cover, "_allPoints") == lw, "the button left the icon in combat")
+    PRINTS = {}
+    cover:GetScript("OnClick")(cover)
+    EXPECT(PRINTED("opens when combat ends") and TBC.open == "trade", "the parked icon in combat")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not TSF._parked and not UI.frame:IsShown(), "Back did not open when combat ended")
+    -- the park ends: the button goes
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])
+    FLUSH()
+    CLOSE_TRADE()
+    EXPECT(not TSF._parked and not cover:IsShown(), "the button outlived the park")
+    -- Smelting (Mining's window on TBC Anniversary) sits under the Mining icon
+    local mining = UI.profStrip.byName.Mining
+    local wasShown = mining:IsShown()
+    rawset(mining, "_shown", true)
+    TSF._parked = { prof = "Smelting", display = "Smelting", isCraft = false }
+    UI:UpdateParkedTab()
+    EXPECT(cover:IsShown() and rawget(cover, "_allPoints") == mining, "no button over Mining for parked Smelting")
+    TSF._parked = nil
+    UI:UpdateParkedTab()
+    rawset(mining, "_shown", wasShown)
+    EXPECT(not cover:IsShown(), "the button stayed with nothing parked")
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+end
+U13()
+print("  PASS " .. TAG .. "13 the parked profession's icon in the main window works as Back on TBC Anniversary, in combat too, Smelting under Mining; gone when the park ends")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 13)")
