@@ -2214,7 +2214,13 @@ function TSF:EnsureFrame()
         -- Close the backend trade skill so the profession icon doesn't
         -- need a double-click to reopen after closing via the X button.
         -- parking (TEST-c, N1) keeps the game's session open for Back
-        if not self._closingFromEvent and not self._keepSession then
+        if self._parked then
+            -- Settings, opened from the main window while a profession is
+            -- parked (TEST-c2): back to the main window keeps the park;
+            -- closed with the X or Escape, nothing of PB's is left open, so
+            -- the profession closes too (decision D2)
+            if not self._keepSession and not self._returningToMain then self:EndPark(true) end
+        elseif not self._closingFromEvent and not self._keepSession then
             addon.Source:CloseWindow(state.isCraftWindow)
         end
         -- And never leave the OTHER channel's session open behind a closed PB:
@@ -6949,7 +6955,9 @@ function TSF:CloseSettings()
     if origin == "main" or origin == "command" then
         -- Return to the /pb main window
         self:RestoreContentPanels()
+        self._returningToMain = true
         self.frame:Hide()
+        self._returningToMain = nil
         if addon.UI then addon.UI:Show() end
         -- Reopen the Order History panel if it was open before settings
         if addon.OrdersPanel then addon.OrdersPanel:RestoreHistoryState() end

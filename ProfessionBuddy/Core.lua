@@ -1051,7 +1051,10 @@ SlashCmdList["PROFBUDDY"] = function(msg)
                 tsf:OpenSettings("profession")
             elseif mainOpen then
                 if addon.OrdersPanel then addon.OrdersPanel:CaptureHistoryState() end
+                -- a parked profession stays parked for the way back (TEST-c2)
+                addon.UI._toSettings = true
                 addon.UI:Hide()
+                addon.UI._toSettings = nil
                 tsf:OpenSettings("main")
             else
                 tsf:OpenSettings("main")

@@ -64,9 +64,10 @@ function UI:Init()
     f:HookScript("OnHide", function()
         addon.CloseAllPopups()
         -- closing it while a profession is parked closes that profession
-        -- too, so no hidden session stays open (TEST-c, decision D2)
+        -- too, so no hidden session stays open (TEST-c, decision D2). Not
+        -- on the way to Settings, which comes back here (TEST-c2, m4ru)
         local tsf = addon.TradeSkillFrame
-        if tsf and tsf._parked then tsf:EndPark(true) end
+        if tsf and tsf._parked and not UI._toSettings then tsf:EndPark(true) end
     end)
 
     -- Title
@@ -83,6 +84,7 @@ function UI:Init()
     gearIcon:SetTexture("Interface\\Icons\\Trade_Engineering")
     gearIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     gearBtn.icon = gearIcon
+    self.gearBtn = gearBtn
 
     gearBtn:SetScript("OnEnter", function(self)
         self.icon:SetVertexColor(1, 1, 0.6)
@@ -98,8 +100,11 @@ function UI:Init()
         -- Remember if the Order History panel is open so we can reopen
         -- it when settings returns here (the Hide below closes it).
         if addon.OrdersPanel then addon.OrdersPanel:CaptureHistoryState() end
-        -- Hide the /pb window and open settings in the profession window
+        -- Hide the /pb window and open settings in the profession window;
+        -- a parked profession stays parked for the way back
+        UI._toSettings = true
         UI:Hide()
+        UI._toSettings = nil
         if addon.TradeSkillFrame then
             addon.TradeSkillFrame:OpenSettings("main")
         end

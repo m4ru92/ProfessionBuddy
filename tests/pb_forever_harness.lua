@@ -5826,4 +5826,65 @@ end
 F89()
 print("  PASS F89 TEST-c2: a drag clears the game's placed-by-you mark; keeping off opens the window in the middle once per session; Back at the right end of the icon row")
 
-print("ALL FOREVER TESTS PASS (89)")
+-- F90 TEST-c2: m4ru's TBC Anniversary run, step B5: Settings opened with
+-- the main window's gear while a profession was parked closed the main
+-- window, which ended the park, and Back was gone on the way back. The
+-- way to Settings and back keeps the park; Settings closed with its X
+-- ends it and closes the session (decision D2).
+local function F90()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local function closes() local n = 0; for _, c in ipairs(TS_CALLS) do if c == "CloseTradeSkill" then n = n + 1 end end; return n end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    open()
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])        -- Characters
+    FLUSH()
+    EXPECT(TSF._parked and UI.backBtn:IsShown(), "not parked from Characters")
+    local before = closes()
+    UI.gearBtn:GetScript("OnClick")(UI.gearBtn)
+    FLUSH()
+    EXPECT(TSF.settingsPanel:IsShown() and TSF.frame:IsShown() and not UI.frame:IsShown(), "the gear did not open Settings")
+    EXPECT(TSF._parked and TS.open == "Leatherworking" and closes() == before, "opening Settings ended the park")
+    -- the setting he changed, then back to the main window
+    PB.db.settings.showAllProfessions = true
+    TSF:UpdateProfessionTabs()
+    TSF:CloseSettings()
+    FLUSH()
+    EXPECT(UI.frame:IsShown() and not TSF.frame:IsShown(), "Settings did not go back to the main window")
+    EXPECT(TSF._parked and UI.backBtn:IsShown() and UI.backBtn:GetText() == "Back to Leatherworking"
+           and TS.open == "Leatherworking" and closes() == before, "Back gone after Settings")
+    PB.db.settings.showAllProfessions = false
+    TSF:UpdateProfessionTabs()
+    UI.backBtn:GetScript("OnClick")(UI.backBtn)
+    FLUSH()
+    EXPECT(TSF.frame:IsShown() and not TSF._parked and TS.open == "Leatherworking", "Back after Settings did not bring it back")
+    -- the same through /pb settings
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])
+    FLUSH()
+    SlashCmdList.PROFBUDDY("settings")
+    FLUSH()
+    EXPECT(TSF.settingsPanel:IsShown() and TSF._parked, "/pb settings ended the park")
+    TSF:CloseSettings()
+    FLUSH()
+    EXPECT(UI.frame:IsShown() and TSF._parked and UI.backBtn:IsShown(), "Back gone after /pb settings")
+    UI.backBtn:GetScript("OnClick")(UI.backBtn)
+    FLUSH()
+    -- Settings closed with its X while parked: the session closes (D2)
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1])
+    FLUSH()
+    UI.gearBtn:GetScript("OnClick")(UI.gearBtn)
+    FLUSH()
+    before = closes()
+    TSF.frame:Hide()
+    FLUSH()
+    EXPECT(not TSF._parked and TS.open == nil and closes() == before + 1, "Settings closed with the X left a hidden session open")
+    TSF:RestoreContentPanels()
+    if TSF.settingsPanel:IsShown() then TSF.settingsPanel:Hide() end
+end
+F90()
+print("  PASS F90 TEST-c2: Settings from the main window's gear or /pb settings keeps a parked profession and its Back; Settings closed with the X ends the park and closes the session")
+
+print("ALL FOREVER TESTS PASS (90)")
