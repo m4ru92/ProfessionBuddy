@@ -2,14 +2,15 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
-## 2.1.1
+## 2.1.1 - 2026-11-10
 
-Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two bars, and ProfessionBuddy didn't say so anywhere.
+Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two bars, and ProfessionBuddy didn't say so anywhere. Also the crafting station a recipe needs, asked for by Sushicats.
 
 **Highlights**
 
 - **How many a craft makes:** the detail panel shows it on the item's icon, as Blizzard's window does, and after the category ("Makes 2"). "Can make" counts the items too: "Can make: 54 (108)".
 - **TBC Anniversary prices and the Material Calculator:** 97 recipes that make more than one were counted as making one, so their sale and profit were too low and the Material Calculator planned too many crafts of them.
+- **Crafting stations:** a recipe that needs a Tanning Rack, an Anvil, a Loom or another station says so with its tools.
 
 <!-- more -->
 
@@ -20,7 +21,7 @@ Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two 
 - **The price line wraps in whole pieces:** when cost, sale and profit don't fit on one line, the profit (or the sale) moves down whole, so an amount never splits across two lines.
 - **Crafting stations, asked for by Sushicats:** a recipe that needs a station (a Tanning Rack, an Anvil, a Loom) shows it with its tools: "Tool: Tanning Rack". On WoW: Forever, on the known recipes of your open profession, it's green at one and red "(not nearby)" when you're not, from the game's own check, and the detail panel follows you as you walk. Elsewhere it's white, and always on TBC Anniversary, whose game says you're at a station from any distance. From the game's data, on both clients: 1,039 recipes on WoW: Forever and 639 on TBC Anniversary.
 - **The price of one item:** the price line's tooltip says what one item sells for when a craft makes more than one: "One item: 2g 99s 93c at auction, 5c from a vendor".
-- **The login line shows with ElvUI:** "ProfessionBuddy v2.1.1 loaded" prints at login. It printed earlier before, and ElvUI's chat setup dropped it.
+- **The login line shows with ElvUI:** "ProfessionBuddy v2.1.1 loaded" prints at login. It used to print while the addon loaded, and ElvUI's chat setup dropped it.
 - WoW: Forever recipe data is from game build 1.60.1.70888. The recipes are unchanged; Berdun's Trusty Rifle gains disenchant estimates.
 
 **Fixes**
