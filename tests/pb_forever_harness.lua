@@ -887,7 +887,7 @@ KN._asked = nil
 local shownPopup
 StaticPopupDialogs = {}
 StaticPopup_Show = function(which) shownPopup = which end
-C_TradeSkillUI.OpenTradeSkill(165)
+TS_REOPEN(165)
 TS_LIST_READY()
 FLUSH()
 EXPECT(shownPopup == "PROFBUDDY_FOREVER_RECIPES", "no first-open prompt")
@@ -6259,4 +6259,45 @@ end
 F94()
 print("  PASS F94 2.1.1: a craft that makes more than one: the count on the detail panel's icon, Makes after the category, Can make with the items (3 (6)), none for one item; a random amount as 1-3, Can make 2 (2-6), 'priced as 2' on the Category line, no mark on the price line; whole pieces of the price line wrap; the tooltip names one item's price; the data's counts and ranges")
 
-print("ALL FOREVER TESTS PASS (94)")
+-- F95 2.1.1 (m4ru 2026-11-11): Leatherworking open, a greyed-out
+-- profession, then the Leatherworking icon did nothing: the game's session
+-- stayed open behind the read-only list, and the game does nothing for
+-- the profession already open. The list closes the session; the icon
+-- opens it again with one click. A character's stored recipes the same.
+local function F95()
+    local TSF, S = ProfBuddy.TradeSkillFrame, ProfBuddyDB.settings
+    local keepAll = S.showAllProfessions
+    S.showAllProfessions = true
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state.profName == "Leatherworking", "Leatherworking did not open")
+    TSF:UpdateProfessionTabs()
+    local dim
+    for _, t in pairs(TSF.profTabsByName) do if t._isUnknown and t:IsShown() and not dim then dim = t end end
+    EXPECT(dim, "no greyed-out profession icon")
+    dim:GetScript("PostClick")(dim); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView and TSF.state.profName == dim.profName,
+           "the greyed-out profession: " .. tostring(TSF.state.profName))
+    EXPECT(TS.open == nil, "the Leatherworking session stayed open behind " .. dim.profName)
+    -- the game's close event can come a moment later: the list stays
+    FIRE("TRADE_SKILL_CLOSE"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView, "a late close event closed the read-only list")
+    local lw = TSF.profTabsByName.Leatherworking
+    lw:GetScript("PostClick")(lw); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state.profName == "Leatherworking" and not TSF.state._isStaticView,
+           "the Leatherworking icon after a greyed-out profession: " .. tostring(TSF.state.profName))
+    -- a character's stored recipes, then the icon
+    TSF:OpenWithCharacter(ProfBuddy:PlayerKey(), "Leatherworking"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._viewCharKey and TS.open == nil,
+           "a character's recipes left the session open, or closed the window")
+    lw:GetScript("PostClick")(lw); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not TSF.state._viewCharKey and not TSF.state._isStaticView
+           and TSF.state.profName == "Leatherworking", "the Leatherworking icon after a character's recipes")
+    S.showAllProfessions = keepAll
+    TSF:UpdateProfessionTabs()
+    TSF.frame:Hide(); FLUSH()
+end
+F95()
+print("  PASS F95 2.1.1: your open profession's icon, after a greyed-out profession or a character's stored recipes, opens it with one click (the list closes the game's session; the game does nothing for the one already open)")
+
+print("ALL FOREVER TESTS PASS (95)")

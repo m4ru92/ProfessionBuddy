@@ -512,6 +512,14 @@ function TSF:Init()
         self._awaitingTradeList = nil
         -- the game closed the parked session (cast again, walked away)
         if self._parked and not self._parked.isCraft then self:EndPark(false) end
+        -- PB shows a list the session doesn't feed (TSF:CloseSessionsForView):
+        -- the session closing leaves the window as it is
+        if state._isStaticView or state._viewCharKey then
+            if self._bagTracker and self._bagTrackerUpdate then
+                self._bagTracker:SetScript("OnUpdate", self._bagTrackerUpdate)
+            end
+            return
+        end
         if self._isMouseOverTab then return end
         -- A background trade-skill session closing (PB is showing Enchanting,
         -- or PB closed it itself on a switch) must not hide PB.
@@ -7969,6 +7977,21 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
 end
 
 ----------------------------------------------------------------------
+-- A list the game's session doesn't feed (a greyed-out profession, a
+-- character's stored recipes) closes your open profession, after the
+-- state says what PB shows (TRADE_CLOSE then leaves the window as it is).
+-- Left open behind it, its icon did nothing on WoW: Forever, where the
+-- game doesn't reopen what is open, and closed it on TBC Anniversary,
+-- where the icon's /cast toggles, so it took a second click (m4ru
+-- 2026-11-11).
+----------------------------------------------------------------------
+function TSF:CloseSessionsForView()
+    for _, isCraft in ipairs({ false, true }) do
+        if addon.Source:IsSessionOpen(isCraft) then addon.Source:CloseWindow(isCraft) end
+    end
+end
+
+----------------------------------------------------------------------
 -- Open a profession the player doesn't know (static DB only)
 -- Shows only missing recipes, no live game data, no skill bar.
 ----------------------------------------------------------------------
@@ -8009,6 +8032,7 @@ function TSF:OpenWithStatic(profName)
     state.collapsed     = {}
     state._isStaticView = true
     state._viewCharKey  = nil
+    self:CloseSessionsForView()
 
     -- Skill bar: show profession name but hide the progress bar
     if self.titleText then self.titleText:SetText(profName) end
@@ -8086,6 +8110,7 @@ function TSF:OpenWithCharacter(charKey, profName)
     state.collapsed     = {}
     state._isStaticView = false
     state._viewCharKey  = charKey
+    self:CloseSessionsForView()
 
     -- Populate known recipes from stored character data
     local staticProf = RDB.data[profName] or {}
@@ -8229,9 +8254,11 @@ function TSF:OnTradeSkillShow()
     state._isLinkedView = LinkedView(false)
 
     -- If already showing this profession, just refresh data in place
-    -- without resetting filters/sort/scroll (TRADE_SKILL_UPDATE fires often)
+    -- without resetting filters/sort/scroll (TRADE_SKILL_UPDATE fires often).
+    -- A character's stored list of the same profession is not it: the live
+    -- one opens (2.1.1)
     if self.frame and self.frame:IsShown() and state.profName == profName
-       and not state.isCraftWindow then
+       and not state.isCraftWindow and not state._viewCharKey and not state._isStaticView then
         self:RefreshTradeData(profName, rank, maxRank, false)
         return
     end

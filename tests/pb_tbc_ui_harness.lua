@@ -774,4 +774,41 @@ end
 U16()
 print("  PASS " .. TAG .. "16 2.1.1: TBC Anniversary counts per craft from the game's table (powder 4, shot 200, dynamite 1-3, bolts 1), the calculator plans one powder craft for 3, the detail panel shows 4 and Can make 5 (20); a long price line wraps whole pieces (his powder: the profit moves down whole)")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 16)")
+-- U17 2.1.1 (m4ru 2026-11-11): on TBC Anniversary the icon's /cast
+-- closed the Leatherworking session left open behind a greyed-out
+-- profession, so it took a second click. The list closes the session (the
+-- window stays), so the /cast opens it.
+local function U17()
+    local TSF = PB.TradeSkillFrame
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    EXPECT(TSF.frame:IsShown() and TBC.open == "trade", "Leatherworking did not open")
+    TSF:OpenWithStatic("Alchemy"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView and TSF.state.profName == "Alchemy",
+           "the greyed-out profession: " .. tostring(TSF.state.profName))
+    EXPECT(TBC.open == nil, "the Leatherworking session stayed open behind it (its /cast would close it)")
+    -- the game's close event can come a moment later: the list stays
+    FIRE("TRADE_SKILL_CLOSE"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView, "a late close event closed the read-only list")
+    OPEN_TRADE()                        -- the icon's /cast opens it
+    EXPECT(TSF.frame:IsShown() and TSF.state.profName == "Leatherworking" and not TSF.state._isStaticView,
+           "Leatherworking after the greyed-out profession")
+    -- Enchanting's window (the craft session) the same
+    TSF.frame:Hide(); FLUSH()
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_CRAFT()
+    TSF:OpenWithStatic("Alchemy"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TBC.open == nil, "the Enchanting session stayed open, or the window closed")
+    -- a character's stored recipes
+    TSF.frame:Hide(); FLUSH()
+    OPEN_TRADE()
+    TSF:OpenWithCharacter(PB:PlayerKey(), "Leatherworking"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._viewCharKey and TBC.open == nil,
+           "a character's recipes left the session open, or closed the window")
+    TSF.frame:Hide(); FLUSH()
+end
+U17()
+print("  PASS " .. TAG .. "17 2.1.1: a greyed-out profession or a character's recipes closes your open profession (trade and Enchanting) and keeps the window, so its icon's /cast opens it with one click")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 17)")

@@ -26,6 +26,7 @@ Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two 
 
 - TBC Anniversary: PB's recipe data had the count per craft for Smelt Bronze alone. Elemental Blasting Powder (4), Fel Iron Shells (200), Goldthorn Tea (4) and 94 more read 1, so their sale and profit were for one item, and the Material Calculator asked for several times the crafts and materials when one of them (Elemental Blasting Powder, Silver Contact, Gold Power Core) was a step in a bigger craft.
 - TBC Anniversary: Handful of Copper Bolts and Handful of Fel Iron Bolts make 1, not 2 and 3.
+- Your open profession's icon did nothing after you looked at a greyed-out profession or a character's stored recipes (WoW: Forever), or took a second click (TBC Anniversary). Those lists close your open profession now, so its icon opens it with one click.
 
 ## 2.1.0 - 2026-11-09
 
