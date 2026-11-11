@@ -6300,4 +6300,68 @@ end
 F95()
 print("  PASS F95 2.1.1: your open profession's icon, after a greyed-out profession or a character's stored recipes, opens it with one click (the list closes the game's session; the game does nothing for the one already open)")
 
-print("ALL FOREVER TESTS PASS (95)")
+-- F96 2.1.1 (Sushicats): a recipe that needs a crafting station shows it
+-- with the tools, "Tool: Tanning Rack": green at one, red "(not nearby)"
+-- when not (the game's GetRecipeRequirements on a known recipe of your
+-- open profession), white where the game can't tell; the detail panel
+-- follows you as you walk to one
+local function F96()
+    local TSF, st = ProfBuddy.TradeSkillFrame, ProfBuddy.TradeSkillFrame.state
+    EXPECT(ProfBuddy.Stations and ProfBuddy.Stations[2249] == "Tanning Rack"
+           and ProfBuddy.RecipeStations[1255075] == 2249, "no Tanning Rack for Mender's Leather Belt in the data")
+    EXPECT(TSF:StationFor(1255075) == "Tanning Rack" and TSF:StationFor(2152) == nil, "StationFor")
+    local function toolLines(entry)
+        local tip, out = CreateFrame("GameTooltip"), {}
+        rawset(tip, "AddLine", function(_, t, r, g, b) if t ~= " " then out[#out + 1] = { t, r, g, b } end end)
+        TSF:AppendRodLine(tip, entry)
+        return out
+    end
+    local belt = { name = "Mender's Leather Belt", spellID = 1255075, itemID = 252523, gameIndex = 1255075, isKnown = true }
+    -- a read-only list: the game can't tell, white
+    TSF:OpenWithStatic("Tailoring"); FLUSH()
+    local l = toolLines(belt)
+    EXPECT(#l == 1 and l[1][1] == "Tool: Tanning Rack" and l[1][2] == 1 and l[1][3] == 1, "read-only list: " .. tostring(l[1] and l[1][1]))
+    -- your open Leatherworking: the game's check
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    local met
+    C_TradeSkillUI.GetRecipeRequirements = function(id)
+        if id == 1255075 then return { { name = "Tanning Rack", met = met, type = 0 } } end
+        return {}
+    end
+    met = false
+    l = toolLines(belt)
+    EXPECT(#l == 1 and l[1][1] == "Tool: Tanning Rack (not nearby)" and l[1][2] == 1 and l[1][3] == 0.4, "not nearby: " .. tostring(l[1] and l[1][1]))
+    met = true
+    l = toolLines(belt)
+    EXPECT(#l == 1 and l[1][1] == "Tool: Tanning Rack" and l[1][2] == 0.4 and l[1][3] == 1, "at one: " .. tostring(l[1] and l[1][1]))
+    -- someone else's linked profession: not your check
+    st._isLinkedView = true
+    EXPECT(TSF:StationMet(belt, "Tanning Rack") == nil, "a linked profession checked your station")
+    st._isLinkedView = false
+    -- a recipe with no station: no line
+    EXPECT(#toolLines({ name = "Light Armor Kit", spellID = 2152, itemID = 2304, gameIndex = 2152, isKnown = true }) == 0, "a station line with none")
+    -- the detail panel follows you
+    table.insert(st.recipes, 1, belt)
+    st.selected = belt.name
+    met = false
+    rawset(TSF.embeddedTip, "_lines", {})
+    TSF:RefreshDetailPanel()
+    local function has(t) for _, x in ipairs(rawget(TSF.embeddedTip, "_lines")) do if x == t then return true end end end
+    EXPECT(has("Tool: Tanning Rack (not nearby)"), "the detail panel: no (not nearby)")
+    met = true
+    rawset(TSF.embeddedTip, "_lines", {})
+    TSF._stationTicker:GetScript("OnUpdate")(TSF._stationTicker, 1.1)
+    EXPECT(has("Tool: Tanning Rack") and not has("Tool: Tanning Rack (not nearby)"), "the panel did not follow you to the station")
+    -- unchanged: no refresh
+    rawset(TSF.embeddedTip, "_lines", {})
+    TSF._stationTicker:GetScript("OnUpdate")(TSF._stationTicker, 1.1)
+    EXPECT(#rawget(TSF.embeddedTip, "_lines") == 0, "the panel refreshed with nothing changed")
+    table.remove(st.recipes, 1)
+    st.selected = nil
+    C_TradeSkillUI.GetRecipeRequirements = nil
+    TSF.frame:Hide(); FLUSH()
+end
+F96()
+print("  PASS F96 2.1.1: a crafting station shows with the tools (Tanning Rack): white on a read-only list, red (not nearby) or green from the game's check on your open profession, none for a recipe without one; the detail panel follows you")
+
+print("ALL FOREVER TESTS PASS (96)")

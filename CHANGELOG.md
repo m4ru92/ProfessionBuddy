@@ -18,6 +18,7 @@ Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two 
 - **Items per craft from the game's own data, on both clients:** 103 recipes on WoW: Forever and 98 on TBC Anniversary make more than one, from 2 Bronze Bars to 200 Crafted Solid Shot.
 - **A random amount:** seven explosives make a random number (Coarse Dynamite 1-3, Heavy Dynamite 1-5). The detail panel shows the range, and prices use the middle of it: "Makes 1-3 (priced as 2)".
 - **The price line wraps in whole pieces:** when cost, sale and profit don't fit on one line, the profit (or the sale) moves down whole, so an amount never splits across two lines.
+- **Crafting stations, asked for by Sushicats:** a recipe that needs a station (a Tanning Rack, an Anvil, a Loom) shows it with its tools: "Tool: Tanning Rack". On the known recipes of your open profession it's green at one and red "(not nearby)" when you're not, from the game's own check, and the detail panel follows you as you walk. Elsewhere it's white. From the game's data, on both clients: 1,039 recipes on WoW: Forever and 639 on TBC Anniversary.
 - **The price of one item:** the price line's tooltip says what one item sells for when a craft makes more than one: "One item: 2g 99s 93c at auction, 5c from a vendor".
 - **The login line shows with ElvUI:** "ProfessionBuddy v2.1.1 loaded" prints at login. It printed earlier before, and ElvUI's chat setup dropped it.
 - WoW: Forever recipe data is from game build 1.60.1.70888. The recipes are unchanged; Berdun's Trusty Rifle gains disenchant estimates.

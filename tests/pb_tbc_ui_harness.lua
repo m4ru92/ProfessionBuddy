@@ -811,4 +811,44 @@ end
 U17()
 print("  PASS " .. TAG .. "17 2.1.1: a greyed-out profession or a character's recipes closes your open profession (trade and Enchanting) and keeps the window, so its icon's /cast opens it with one click")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 17)")
+-- U18 2.1.1 (Sushicats): crafting stations on TBC Anniversary, from
+-- Data/Tools.lua; the live check is GetTradeSkillTools (name, met pairs,
+-- as Blizzard's window reads it) or GetCraftSpellFocus
+local function U18()
+    local TSF = PB.TradeSkillFrame
+    EXPECT(TSF:StationFor(2661) == "Anvil", "no Anvil for Copper Chain Belt: " .. tostring(TSF:StationFor(2661)))
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    local keep = GetTradeSkillTools
+    local near
+    GetTradeSkillTools = function(i) if i == 7 then return "Anvil", near, "Blacksmith Hammer", 1 end end
+    local belt = { name = "Copper Chain Belt", spellID = 2661, itemID = 2851, gameIndex = 7, isKnown = true }
+    near = nil
+    EXPECT(TSF:StationMet(belt, "Anvil") == false, "not at an anvil")
+    near = 1
+    EXPECT(TSF:StationMet(belt, "Anvil") == true, "at an anvil")
+    local tip, out = CreateFrame("GameTooltip"), {}
+    rawset(tip, "AddLine", function(_, t) if t ~= " " then out[#out + 1] = t end end)
+    near = nil
+    TSF:AppendRodLine(tip, belt)
+    local found
+    for _, t in ipairs(out) do if t == "Tool: Anvil (not nearby)" then found = true end end
+    EXPECT(found, "no Tool: Anvil (not nearby): " .. table.concat(out, " / "))
+    GetTradeSkillTools = keep
+    -- a read-only list can't tell
+    TSF:OpenWithStatic("Alchemy"); FLUSH()
+    EXPECT(TSF:StationMet(belt, "Anvil") == nil, "a read-only list checked a station")
+    TSF.frame:Hide(); FLUSH()
+    -- the craft window reads GetCraftSpellFocus
+    local keepF = GetCraftSpellFocus
+    GetCraftSpellFocus = function(i) if i == 3 then return "Black Forge", nil end end
+    OPEN_CRAFT()
+    EXPECT(TSF.state.isCraftWindow and TSF:StationMet({ gameIndex = 3 }, "Black Forge") == false, "the craft window's station")
+    GetCraftSpellFocus = keepF
+    TSF.frame:Hide(); FLUSH()
+end
+U18()
+print("  PASS " .. TAG .. "18 2.1.1: crafting stations on TBC Anniversary (Copper Chain Belt needs an Anvil): GetTradeSkillTools and GetCraftSpellFocus, Tool: Anvil (not nearby); none checked on a read-only list")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 18)")

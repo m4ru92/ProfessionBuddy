@@ -371,6 +371,24 @@ function Source:Craft(index, qty, isCraft)
     C_TradeSkillUI.CraftRecipe(index, qty or 1)
 end
 
+-- What a known recipe needs, as Blizzard's window reads it
+-- (Blizzard_ProfessionsRecipeSchematicForm: "Required tools: Tanning
+-- Rack", red when not met). The 09-22 probe: it answers for learned
+-- recipes only.
+function Source:Requirements(index)
+    local T = C_TradeSkillUI
+    if not (index and T and T.GetRecipeRequirements) then return nil end
+    local ok, req = pcall(T.GetRecipeRequirements, index)
+    if not ok or type(req) ~= "table" then return nil end
+    local out = {}
+    for _, r in ipairs(req) do
+        if type(r) == "table" and type(r.name) == "string" then
+            out[#out + 1] = { name = r.name, met = r.met and true or false }
+        end
+    end
+    return out
+end
+
 function Source:CloseWindow(isCraft)
     if isCraft then return end
     if C_TradeSkillUI and C_TradeSkillUI.CloseTradeSkill then

@@ -4237,6 +4237,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
 
     -- v6: Show embedded item tooltip
     self:ShowEmbeddedTooltip(recipe)
+    self:WatchStation(recipe)
 
     local reagents = recipe.reagents
     if reagents and #reagents > 0 then
@@ -4564,9 +4565,13 @@ end
 -- (Blacksmith Hammer, Arclight Spanner, Philosopher's Stone, a specific item
 -- such as a Jeweler's Kit; data: ProfBuddy.RecipeTools and ToolCategories,
 -- Data/Tools.lua and Data/Forever/Tools.lua). Green if the viewed character
--- has one in its bags or bank, red + "(missing)" if not. No-op for a recipe
--- that needs no tool. The static entry is resolved by spellID (locale-
--- stable) with a name fallback.
+-- has one in its bags or bank, red + "(missing)" if not. Then the crafting
+-- station it needs (a Tanning Rack, an Anvil; ProfBuddy.RecipeStations,
+-- Sushicats 2.1.1): green at one, red "(not nearby)" when not, from the
+-- game's own check on your open profession's known recipes; white where
+-- the game can't tell (a recipe you don't know, another character's).
+-- No-op for a recipe that needs neither. The static entry is resolved by
+-- spellID (locale-stable) with a name fallback.
 function TSF:AppendRodLine(tip, recipe)
     if not (recipe and RDB) then return end
     -- Resolve the static entry: by spellID first (locale-stable), then by name
@@ -4598,15 +4603,66 @@ function TSF:AppendRodLine(tip, recipe)
             lines[#lines + 1] = { name, self:HasAnyItem({ itemID }, charKey) }
         end
     end
+    local station = self:StationFor(spellID)
+    if station then
+        lines[#lines + 1] = { station, self:StationMet(recipe, station), station = true }
+    end
     if #lines == 0 then return end
     tip:AddLine(" ")
     for _, l in ipairs(lines) do
-        if l[2] then
+        if l.station and l[2] == nil then
+            tip:AddLine("Tool: " .. l[1], 1, 1, 1)
+        elseif l[2] then
             tip:AddLine("Tool: " .. l[1], 0.4, 1, 0.4)
         else
-            tip:AddLine("Tool: " .. l[1] .. " (missing)", 1, 0.4, 0.4)
+            tip:AddLine("Tool: " .. l[1] .. (l.station and " (not nearby)" or " (missing)"), 1, 0.4, 0.4)
         end
     end
+end
+
+-- The selected recipe's station line follows you, as Blizzard's window
+-- does: checked once a second while the window shows it, and the panel
+-- refreshes when you walk to a station or away from one
+function TSF:WatchStation(recipe)
+    self._stationWatch = nil
+    local info = recipe and recipe.spellID and RDB and RDB:GetRecipeBySpell(recipe.spellID)
+    local station = self:StationFor((info and info.spellID) or (recipe and recipe.spellID))
+    local met = station and self:StationMet(recipe, station)
+    if met == nil then return end
+    self._stationWatch = { sel = state.selected, station = station, met = met }
+    if self._stationTicker then return end
+    local ticker, elapsed = CreateFrame("Frame"), 0
+    ticker:SetScript("OnUpdate", function(_, dt)
+        elapsed = elapsed + (dt or 0)
+        if elapsed < 1 then return end
+        elapsed = 0
+        local w = self._stationWatch
+        if not (w and self.frame and self.frame:IsShown() and state.selected == w.sel) then return end
+        local now = self:StationMet(self:GetSelectedRecipe(), w.station)
+        if now ~= nil and now ~= w.met then self:RefreshDetailPanel(true) end
+    end)
+    self._stationTicker = ticker
+end
+
+-- The crafting station a recipe needs, by spellID, or nil
+function TSF:StationFor(spellID)
+    local id = spellID and addon.RecipeStations and addon.RecipeStations[spellID]
+    return id and addon.Stations and addon.Stations[id] or nil
+end
+
+-- Whether you stand at `station` for `recipe`: the game's own check
+-- (Source:Requirements) on a known recipe of your open profession, nil
+-- where the game can't tell (a recipe you don't know, another character's
+-- or a read-only list, a station name the game spells differently)
+function TSF:StationMet(recipe, station)
+    if state._isStaticView or state._viewCharKey or state._isLinkedView then return nil end
+    local index = recipe and (recipe.gameIndex or recipe.index)
+    local S = addon.Source
+    if not (index and S.Requirements and S:IsSessionOpen(state.isCraftWindow)) then return nil end
+    for _, r in ipairs(S:Requirements(index, state.isCraftWindow) or {}) do
+        if r.name == station then return r.met end
+    end
+    return nil
 end
 
 function TSF:ShowAltMaterials(recipe)
