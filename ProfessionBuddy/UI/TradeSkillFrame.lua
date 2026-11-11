@@ -4415,7 +4415,16 @@ function TSF:ShowPriceLine(recipe, retry)
         end)
     end
     if not result then return end
-    line:SetText(P:DetailText(result))
+    -- whole pieces wrap ("Profit: +7g 83s 3c" moves down as one), measured
+    -- as Trainer.lua's SetIfFits does; a client that can't measure keeps
+    -- one line and the game's own wrap
+    local function fits(text)
+        line:SetText(text)
+        local width = tonumber(line:GetWidth())
+        local used = tonumber(line.GetUnboundedStringWidth and line:GetUnboundedStringWidth() or line:GetStringWidth())
+        return not (width and used) or used <= width
+    end
+    line:SetText(P:DetailText(result, fits))
     line:Show()
     hover.result = result
     hover:Show()

@@ -6205,6 +6205,18 @@ local function F94()
     local line = P:DetailText(r)
     EXPECT(line:find("Sells: ", 1, true) and line:find("Profit: ", 1, true) and not line:find("~", 1, true)
            and not line:find("about", 1, true), "a mark on the price line: " .. line)
+    -- TEST-a4: fits() moves a whole piece down; without it, one line as
+    -- before. The harness has no vendor price for it: give it the game's 75c
+    r = setmetatable({ vendorSell = 75 }, { __index = r })
+    local pc = P:DetailPieces(r)
+    local flat = pc[1].text
+    for i = 2, #pc do flat = flat .. pc[i].sep .. pc[i].text end
+    EXPECT(#pc == 4 and pc[3].sep == ", " and pc[3].text:find("^vendor ") and P:DetailText(r) == flat and P:DetailText(r, function() return true end) == flat, "one line: " .. P:DetailText(r))
+    local wrapped = P:DetailText(r, function(t) return not t:find("Profit", 1, true) end)
+    EXPECT(wrapped == flat:gsub("   Profit: ", "\nProfit: "), "the profit moves down whole: " .. wrapped)
+    local each = P:DetailText(r, function() return false end)
+    EXPECT(select(2, each:gsub("\n", "")) == #pc - 1 and not each:find(", \n", 1, true) and not each:find("   ", 1, true),
+           "a piece per line: " .. each)
     r = P:RecipeCost({ name = "Cured Rugged Hide" }, "Leatherworking")
     EXPECT(r and r.yieldMin == nil and not P:DetailText(r):find("~", 1, true), "a fixed count marked")
     Auctionator, PB.db.settings.priceAuctionator, PB.db.settings.showPrices = keepAuc, keepAucOn, keepShow
@@ -6215,6 +6227,6 @@ local function F94()
     TSF.frame:Hide(); FLUSH()
 end
 F94()
-print("  PASS F94 2.1.1: a craft that makes more than one: the count on the detail panel's icon, Makes after the category, Can make with the items (3 (6)), none for one item; a random amount as 1-3, Can make 2 (2-6), 'priced as 2' on the Category line, no mark on the price line; the data's counts and ranges")
+print("  PASS F94 2.1.1: a craft that makes more than one: the count on the detail panel's icon, Makes after the category, Can make with the items (3 (6)), none for one item; a random amount as 1-3, Can make 2 (2-6), 'priced as 2' on the Category line, no mark on the price line; whole pieces of the price line wrap; the data's counts and ranges")
 
 print("ALL FOREVER TESTS PASS (94)")

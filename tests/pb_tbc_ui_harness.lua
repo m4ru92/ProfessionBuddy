@@ -722,12 +722,54 @@ local function U16()
     TSF:RefreshDetailPanel()
     EXPECT(TSF.detCount:GetText() == "4" and (TSF.detCanMake:GetText() or ""):find("Can make: 5 (20)", 1, true),
            "TBC detail: " .. tostring(TSF.detCount:GetText()) .. " / " .. tostring(TSF.detCanMake:GetText()))
+    -- TEST-a4: a long price line wraps whole pieces, his powder line
+    -- (image 149) put "3c" of the profit alone on the second line
+    local function plain(t)
+        return ((t or ""):gsub("|T[^|]*|t", function(icon)
+            return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c"
+        end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+    end
+    local keepAuc, S = Auctionator, PB.db.settings
+    local keepShow, keepAucOn = S.showPrices, S.priceAuctionator
+    S.showPrices, S.priceAuctionator = true, true
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(_, id) return ({ [23781] = 29993, [22574] = 15000, [22573] = 10335 })[id] end,
+        GetAuctionAgeByItemID = function() return 0 end,
+    } } }
+    if PB.Prices.ResetListCache then PB.Prices:ResetListCache() end
+    local line, charW, width = TSF.detPrice, 4, 0
+    rawset(line, "GetWidth", function() return width end)
+    rawset(line, "GetUnboundedStringWidth", function(self) return #plain(self:GetText()) * charW end)
+    local r = PB.Prices:RecipeCost(fake, "Engineering")
+    local pc = PB.Prices:DetailPieces(r)
+    -- his figures; the harness has no vendor price for the powder (F94
+    -- covers the vendor piece)
+    EXPECT(#pc == 3 and plain(pc[1].text) == "Cost: 3g 56s 70c" and plain(pc[2].text) == "Sells: 11g 99s 72c"
+           and plain(pc[3].text) == "Profit: +7g 83s 3c",
+           "the powder's pieces: " .. #pc .. " " .. plain(pc[1].text) .. " / " .. plain(pc[2].text) .. " / " .. plain(pc[#pc].text))
+    local one = plain(pc[1].text .. "   " .. pc[2].text)
+    -- room for everything but the profit: the profit moves down whole
+    width = (#one + 4) * charW
+    TSF:RefreshDetailPanel()
+    EXPECT(plain(line:GetText()) == one .. "\n" .. plain(pc[3].text), "wrapped: " .. plain(line:GetText()))
+    -- wide: one line, as before
+    width = 1000
+    TSF:RefreshDetailPanel()
+    EXPECT(plain(line:GetText()) == one .. "   " .. plain(pc[3].text), "wide: " .. plain(line:GetText()))
+    -- narrow: each piece on its own line
+    width = 20 * charW
+    TSF:RefreshDetailPanel()
+    EXPECT(plain(line:GetText()) == table.concat({ plain(pc[1].text), plain(pc[2].text), plain(pc[3].text) }, "\n"),
+           "narrow: " .. plain(line:GetText()))
+    rawset(line, "GetWidth", nil); rawset(line, "GetUnboundedStringWidth", nil)
+    Auctionator, S.showPrices, S.priceAuctionator = keepAuc, keepShow, keepAucOn
+    if PB.Prices.ResetListCache then PB.Prices:ResetListCache() end
     table.remove(st.recipes, 1)
     st.profName, st.selected = keepProf, nil
     if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
     if TBC.open == "trade" then CLOSE_TRADE() end
 end
 U16()
-print("  PASS " .. TAG .. "16 2.1.1: TBC Anniversary counts per craft from the game's table (powder 4, shot 200, dynamite 1-3, bolts 1), the calculator plans one powder craft for 3, the detail panel shows 4 and Can make 5 (20)")
+print("  PASS " .. TAG .. "16 2.1.1: TBC Anniversary counts per craft from the game's table (powder 4, shot 200, dynamite 1-3, bolts 1), the calculator plans one powder craft for 3, the detail panel shows 4 and Can make 5 (20); a long price line wraps whole pieces (his powder: the profit moves down whole)")
 
 print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 16)")
