@@ -84,7 +84,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 - **Friends and guild data sharing.** See your contacts', group members' and guildmates' professions, recipes, and materials. On TBC Classic Anniversary, your Battle.net friends' characters can join your contacts as they log in.
 - **Search by name or material.** The Search box finds recipes by name or by any material they use. Learnable now lists what you can learn at your current skill.
 - **Tooltips.** "Craftable by" shows who can make an item, "Used in" shows which recipes use a reagent, and gathering nodes and skinnable mobs show the skill they need and what they drop.
-- **Recipe tools.** Every tool a recipe needs shows in the detail panel, from Enchanting rods to a Blacksmith Hammer, green when a character has one and red when not.
+- **Recipe tools.** Every tool a recipe needs shows in the detail panel, from Enchanting rods to a Blacksmith Hammer, green when a character has one and red when not, with the crafting station it needs, such as a Tanning Rack or an Anvil.
 - **Batch crafting.** Craft 1, 5, 10, 20, or all, with a live countdown and skill-bar updates.
 - **Share a recipe.** Open the chat box on guild, party, raid, or say with a recipe's link typed.
 - **State preservation.** Window position, filters, sort, search, and selection persist between sessions.

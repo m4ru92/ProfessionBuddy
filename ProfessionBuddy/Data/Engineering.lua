@@ -22,6 +22,7 @@ local recipes = {
         },
         category = "Ammunition",
         skillRange = { 75, 85, 90, 95 },
+        yield = 200,
         reagents = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
             { itemID = 2840, count = 1, name = "Copper Bar" },
@@ -36,6 +37,7 @@ local recipes = {
         },
         category = "Ammunition",
         skillRange = { 30, 30, 45, 60 },
+        yield = 200,
         reagents = {
             { itemID = 4357, count = 1, name = "Rough Blasting Powder" },
             { itemID = 2840, count = 1, name = "Copper Bar" },
@@ -50,6 +52,7 @@ local recipes = {
         },
         category = "Ammunition",
         skillRange = { 125, 125, 135, 145 },
+        yield = 200,
         reagents = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
             { itemID = 2841, count = 1, name = "Bronze Bar" },
@@ -64,6 +67,7 @@ local recipes = {
         },
         category = "Ammunition",
         skillRange = { 310, 310, 320, 330 },
+        yield = 200,
         reagents = {
             { itemID = 23445, count = 2, name = "Fel Iron Bar" },
             { itemID = 23781, count = 1, name = "Elemental Blasting Powder" },
@@ -78,6 +82,7 @@ local recipes = {
         },
         category = "Ammunition",
         skillRange = { 210, 210, 230, 250 },
+        yield = 200,
         reagents = {
             { itemID = 3860, count = 1, name = "Mithril Bar" },
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
@@ -92,6 +97,7 @@ local recipes = {
         },
         category = "Ammunition",
         skillRange = { 245, 245, 265, 285 },
+        yield = 200,
         reagents = {
             { itemID = 3860, count = 2, name = "Mithril Bar" },
             { itemID = 10505, count = 2, name = "Solid Blasting Powder" },
@@ -107,6 +113,7 @@ local recipes = {
         },
         category = "Ammunition",
         skillRange = { 285, 295, 300, 305 },
+        yield = 200,
         reagents = {
             { itemID = 12359, count = 2, name = "Thorium Bar" },
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
@@ -1095,6 +1102,7 @@ local recipes = {
         },
         category = "Companion",
         skillRange = { 360, 370, 380, 390 },
+        yield = 5,
         reagents = {
             { itemID = 23446, count = 8, name = "Adamantite Bar" },
             { itemID = 23783, count = 8, name = "Handful of Fel Iron Bolts" },
@@ -1221,6 +1229,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 150, 150, 160, 170 },
+        yield = 3,
         reagents = {
             { itemID = 2841, count = 2, name = "Bronze Bar" },
             { itemID = 6530, count = 1, name = "Nightcrawlers" },
@@ -1236,6 +1245,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 150, 150, 162, 175 },
+        yield = 3,
         reagents = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
             { itemID = 4234, count = 1, name = "Heavy Leather" },
@@ -1376,6 +1386,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 300, 300, 310, 320 },
+        yield = 4,
         reagents = {
             { itemID = 22574, count = 1, name = "Mote of Fire" },
             { itemID = 22573, count = 2, name = "Mote of Earth" },
@@ -1523,6 +1534,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 325, 335, 345, 355 },
+        yield = 3,
         reagents = {
             { itemID = 23784, count = 1, name = "Adamantite Frame" },
             { itemID = 23783, count = 2, name = "Handful of Fel Iron Bolts" },
@@ -1554,6 +1566,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 150, 150, 170, 190 },
+        yield = 3,
         reagents = { { itemID = 3577, count = 1, name = "Gold Bar" } },
     },
     ["Green Firework"] = {
@@ -1565,6 +1578,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 150, 150, 162, 175 },
+        yield = 3,
         reagents = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
             { itemID = 4234, count = 1, name = "Heavy Leather" },
@@ -1579,6 +1593,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 335, 335, 345, 355 },
+        yield = 3,
         reagents = {
             { itemID = 23781, count = 1, name = "Elemental Blasting Powder" },
             { itemID = 21877, count = 1, name = "Netherweave Cloth" },
@@ -1619,7 +1634,6 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 30, 45, 52, 60 },
-        yield = 2,
         reagents = { { itemID = 2840, count = 1, name = "Copper Bar" } },
     },
     ["Handful of Fel Iron Bolts"] = {
@@ -1631,7 +1645,6 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 300, 300, 305, 310 },
-        yield = 3,
         reagents = { { itemID = 23445, count = 1, name = "Fel Iron Bar" } },
     },
     ["Hardened Adamantite Tube"] = {
@@ -1654,6 +1667,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 330, 330, 340, 350 },
+        yield = 20,
         reagents = {
             { itemID = 23782, count = 1, name = "Fel Iron Casing" },
             { itemID = 23783, count = 1, name = "Handful of Fel Iron Bolts" },
@@ -1695,6 +1709,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 335, 335, 340, 345 },
+        yield = 10,
         reagents = {
             { itemID = 21885, count = 1, name = "Primal Water" },
             { itemID = 23781, count = 2, name = "Elemental Blasting Powder" },
@@ -1782,6 +1797,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 345, 345, 355, 365 },
+        yield = 20,
         reagents = {
             { itemID = 23782, count = 1, name = "Fel Iron Casing" },
             { itemID = 23783, count = 1, name = "Handful of Fel Iron Bolts" },
@@ -1885,6 +1901,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 335, 335, 345, 355 },
+        yield = 3,
         reagents = {
             { itemID = 23781, count = 1, name = "Elemental Blasting Powder" },
             { itemID = 21877, count = 1, name = "Netherweave Cloth" },
@@ -1900,6 +1917,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 150, 150, 162, 175 },
+        yield = 3,
         reagents = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
             { itemID = 4234, count = 1, name = "Heavy Leather" },
@@ -1941,6 +1959,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 90, 110, 125, 140 },
+        yield = 5,
         reagents = { { itemID = 2842, count = 1, name = "Silver Bar" } },
     },
     ["Snake Burst Firework"] = {
@@ -1952,6 +1971,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 250, 250, 260, 270 },
+        yield = 4,
         reagents = {
             { itemID = 15992, count = 2, name = "Dense Blasting Powder" },
             { itemID = 14047, count = 2, name = "Runecloth" },
@@ -2025,6 +2045,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 235, 235, 255, 275 },
+        yield = 2,
         reagents = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
             { itemID = 9061, count = 1, name = "Goblin Rocket Fuel" },
@@ -2041,6 +2062,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 325, 325, 335, 345 },
+        yield = 3,
         reagents = {
             { itemID = 23782, count = 3, name = "Fel Iron Casing" },
             { itemID = 23781, count = 6, name = "Elemental Blasting Powder" },
@@ -2142,6 +2164,7 @@ local recipes = {
         },
         category = "Device",
         skillRange = { 335, 335, 345, 355 },
+        yield = 3,
         reagents = {
             { itemID = 23781, count = 1, name = "Elemental Blasting Powder" },
             { itemID = 21877, count = 1, name = "Netherweave Cloth" },
@@ -2332,6 +2355,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 325, 335, 345, 355 },
+        yield = 3,
         reagents = {
             { itemID = 23446, count = 4, name = "Adamantite Bar" },
             { itemID = 23783, count = 2, name = "Handful of Fel Iron Bolts" },
@@ -2347,6 +2371,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 300, 320, 330, 340 },
+        yield = 3,
         reagents = {
             { itemID = 16006, count = 1, name = "Delicate Arcanite Converter" },
             { itemID = 12359, count = 3, name = "Thorium Bar" },
@@ -2362,6 +2387,9 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 140, 140, 165, 190 },
+        yield = 3,
+        yieldMin = 2,
+        yieldMax = 4,
         reagents = {
             { itemID = 4377, count = 2, name = "Heavy Blasting Powder" },
             { itemID = 2841, count = 3, name = "Bronze Bar" },
@@ -2377,6 +2405,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 190, 190, 210, 230 },
+        yield = 2,
         reagents = {
             { itemID = 3575, count = 3, name = "Iron Bar" },
             { itemID = 4377, count = 3, name = "Heavy Blasting Powder" },
@@ -2392,6 +2421,9 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 75, 90, 97, 105 },
+        yield = 2,
+        yieldMin = 1,
+        yieldMax = 3,
         reagents = {
             { itemID = 4364, count = 3, name = "Coarse Blasting Powder" },
             { itemID = 2589, count = 1, name = "Linen Cloth" },
@@ -2406,6 +2438,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 285, 305, 315, 325 },
+        yield = 3,
         reagents = {
             { itemID = 15994, count = 2, name = "Thorium Widget" },
             { itemID = 11371, count = 1, name = "Dark Iron Bar" },
@@ -2422,6 +2455,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 250, 250, 260, 270 },
+        yield = 2,
         reagents = {
             { itemID = 15992, count = 2, name = "Dense Blasting Powder" },
             { itemID = 14047, count = 3, name = "Runecloth" },
@@ -2436,6 +2470,9 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 100, 115, 122, 130 },
+        yield = 2,
+        yieldMin = 1,
+        yieldMax = 3,
         reagents = {
             { itemID = 4364, count = 4, name = "Coarse Blasting Powder" },
             { itemID = 2592, count = 1, name = "Wool Cloth" },
@@ -2464,6 +2501,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 350, 350, 355, 360 },
+        yield = 2,
         reagents = {
             { itemID = 23781, count = 2, name = "Elemental Blasting Powder" },
             { itemID = 23782, count = 1, name = "Fel Iron Casing" },
@@ -2479,6 +2517,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 300, 320, 330, 340 },
+        yield = 4,
         reagents = {
             { itemID = 23782, count = 1, name = "Fel Iron Casing" },
             { itemID = 23783, count = 2, name = "Handful of Fel Iron Bolts" },
@@ -2510,6 +2549,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 335, 345, 355, 365 },
+        yield = 5,
         reagents = {
             { itemID = 32423, count = 1, name = "Icy Blasting Primers" },
             { itemID = 23782, count = 1, name = "Fel Iron Casing" },
@@ -2540,6 +2580,9 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 125, 125, 135, 145 },
+        yield = 3,
+        yieldMin = 1,
+        yieldMax = 5,
         reagents = {
             { itemID = 4377, count = 2, name = "Heavy Blasting Powder" },
             { itemID = 2592, count = 1, name = "Wool Cloth" },
@@ -2554,6 +2597,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 235, 235, 255, 275 },
+        yield = 4,
         reagents = {
             { itemID = 10561, count = 2, name = "Mithril Casing" },
             { itemID = 10560, count = 1, name = "Unstable Trigger" },
@@ -2569,6 +2613,9 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 175, 175, 195, 215 },
+        yield = 3,
+        yieldMin = 2,
+        yieldMax = 4,
         reagents = {
             { itemID = 3575, count = 1, name = "Iron Bar" },
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
@@ -2584,6 +2631,9 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 105, 105, 130, 155 },
+        yield = 3,
+        yieldMin = 2,
+        yieldMax = 4,
         reagents = {
             { itemID = 2840, count = 3, name = "Copper Bar" },
             { itemID = 4364, count = 4, name = "Coarse Blasting Powder" },
@@ -2614,6 +2664,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 215, 215, 235, 255 },
+        yield = 3,
         reagents = {
             { itemID = 10561, count = 1, name = "Mithril Casing" },
             { itemID = 10560, count = 1, name = "Unstable Trigger" },
@@ -2661,6 +2712,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 30, 60, 75, 90 },
+        yield = 2,
         reagents = {
             { itemID = 2840, count = 1, name = "Copper Bar" },
             { itemID = 4359, count = 1, name = "Handful of Copper Bolts" },
@@ -2677,6 +2729,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 1, 30, 45, 60 },
+        yield = 2,
         reagents = {
             { itemID = 4357, count = 2, name = "Rough Blasting Powder" },
             { itemID = 2589, count = 1, name = "Linen Cloth" },
@@ -2691,6 +2744,9 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 120, 120, 145, 170 },
+        yield = 2,
+        yieldMin = 1,
+        yieldMax = 3,
         reagents = {
             { itemID = 4364, count = 4, name = "Coarse Blasting Powder" },
             { itemID = 2841, count = 2, name = "Bronze Bar" },
@@ -2723,6 +2779,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 175, 175, 185, 195 },
+        yield = 2,
         reagents = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
             { itemID = 4306, count = 1, name = "Silk Cloth" },
@@ -2737,6 +2794,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 340, 340, 350, 360 },
+        yield = 2,
         reagents = {
             { itemID = 21877, count = 4, name = "Netherweave Cloth" },
             { itemID = 23781, count = 4, name = "Elemental Blasting Powder" },
@@ -2752,6 +2810,7 @@ local recipes = {
         },
         category = "Explosive",
         skillRange = { 260, 280, 290, 300 },
+        yield = 3,
         reagents = {
             { itemID = 15994, count = 1, name = "Thorium Widget" },
             { itemID = 12359, count = 3, name = "Thorium Bar" },
@@ -2788,6 +2847,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 225, 225, 237, 250 },
+        yield = 3,
         reagents = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
             { itemID = 4304, count = 1, name = "Thick Leather" },
@@ -2852,6 +2912,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 225, 225, 237, 250 },
+        yield = 3,
         reagents = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
             { itemID = 4304, count = 1, name = "Thick Leather" },
@@ -2866,6 +2927,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 175, 175, 187, 200 },
+        yield = 3,
         reagents = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
             { itemID = 4234, count = 1, name = "Heavy Leather" },
@@ -2880,6 +2942,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 275, 275, 280, 285 },
+        yield = 3,
         reagents = {
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
             { itemID = 8170, count = 1, name = "Rugged Leather" },
@@ -2894,6 +2957,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 175, 175, 187, 200 },
+        yield = 3,
         reagents = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
             { itemID = 4234, count = 1, name = "Heavy Leather" },
@@ -2908,6 +2972,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 275, 275, 280, 285 },
+        yield = 3,
         reagents = {
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
             { itemID = 8170, count = 1, name = "Rugged Leather" },
@@ -2922,6 +2987,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 175, 175, 187, 200 },
+        yield = 3,
         reagents = {
             { itemID = 4377, count = 1, name = "Heavy Blasting Powder" },
             { itemID = 4234, count = 1, name = "Heavy Leather" },
@@ -2936,6 +3002,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 275, 275, 280, 285 },
+        yield = 3,
         reagents = {
             { itemID = 15992, count = 1, name = "Dense Blasting Powder" },
             { itemID = 8170, count = 1, name = "Rugged Leather" },
@@ -2981,6 +3048,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 225, 225, 237, 250 },
+        yield = 3,
         reagents = {
             { itemID = 10505, count = 1, name = "Solid Blasting Powder" },
             { itemID = 4304, count = 1, name = "Thick Leather" },
@@ -2995,6 +3063,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 125, 125, 137, 150 },
+        yield = 3,
         reagents = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
             { itemID = 2319, count = 1, name = "Medium Leather" },
@@ -3009,6 +3078,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 125, 125, 137, 150 },
+        yield = 3,
         reagents = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
             { itemID = 2319, count = 1, name = "Medium Leather" },
@@ -3023,6 +3093,7 @@ local recipes = {
         },
         category = "Gadget",
         skillRange = { 125, 125, 137, 150 },
+        yield = 3,
         reagents = {
             { itemID = 4364, count = 1, name = "Coarse Blasting Powder" },
             { itemID = 2319, count = 1, name = "Medium Leather" },

@@ -389,6 +389,10 @@ function P:RecipeCost(recipe, profName)
     r.cost = r.total
     r.itemID = itemID
     r.yield = Yield(data)
+    -- a random amount (Coarse Dynamite 1 to 3): yield is the middle, so the
+    -- sale and profit are for the middle; the detail panel says "priced as 2" (2.1.1)
+    local lo, hi = data and tonumber(data.yieldMin), data and tonumber(data.yieldMax)
+    if lo and hi and lo ~= hi then r.yieldMin, r.yieldMax = lo, hi end
     if itemID then
         r.bop = self:IsBoP(itemID)
         -- a BoP product has no auction price, whatever a price addon kept
@@ -501,30 +505,57 @@ end
 
 -- The detail panel's line under Can make:
 -- "Cost: 1g 20s   Sells: 2g 5s   Profit: +85s", or with a material that
--- has no price, "Cost: 1g 20s+ (1 material has no price)" and no profit
-function P:DetailText(r)
+-- has no price, "Cost: 1g 20s+ (1 material has no price)" and no profit.
+-- fits(text), when given, says whether text fits on one line of the panel:
+-- a piece that doesn't fit starts a new line, so a price never splits
+-- across two lines (TEST-a4: "Profit: +7g 83s" above "3c").
+function P:DetailText(r, fits)
+    local pieces = self:DetailPieces(r)
+    local out, cur = pieces[1].text, pieces[1].text
+    for i = 2, #pieces do
+        local p = pieces[i]
+        local joined = cur .. p.sep .. p.text
+        if fits and not fits(joined) then
+            out, cur = out .. "\n" .. p.text, p.text
+        else
+            out, cur = out .. p.sep .. p.text, joined
+        end
+    end
+    return out
+end
+
+-- DetailText's pieces, in order: { text, sep }, sep being what joins the
+-- piece to the one before it on the same line
+function P:DetailPieces(r)
+    local pieces = {}
+    local function add(text, sep) pieces[#pieces + 1] = { text = text, sep = sep or "   " } end
     local cost = (r.missing > 0 and r.total == 0) and "?" or self:Money(r.cost)
     if r.missing > 0 and r.total > 0 then cost = cost .. "+" end
     if r.stale then cost = GREY .. cost .. "|r" end
     local line = "Cost: " .. cost
     if r.missing > 0 then line = line .. " " .. GREY .. "(" .. self:MissingText(r.missing, r.bopMissing) .. ")|r" end
+    add(line)
+    -- a random amount: the sale and profit are for the middle of the range;
+    -- the Category line above says so ("Makes 1-3 (priced as 2)"), so this
+    -- line carries no mark and fits on one line (TEST-a3)
     local auction = r.sell and self:Money(r.sell * r.yield)
     if auction and r.sellStale then auction = GREY .. auction .. "|r" end
     local vendor = r.vendorSell and self:Money(r.vendorSell * r.yield)
     if r.bop then
-        line = line .. (vendor and ("   Sells: " .. vendor .. " (vendor, BoP)") or "   BoP")
+        add(vendor and ("Sells: " .. vendor .. " (vendor, BoP)") or "BoP")
     elseif r.better and auction and vendor then
         -- only the better sale price, labeled
-        line = line .. "   Sells: " .. (r.profitFrom == "vendor" and (vendor .. " (vendor)") or (auction .. " (auction)"))
+        add("Sells: " .. (r.profitFrom == "vendor" and (vendor .. " (vendor)") or (auction .. " (auction)")))
     elseif auction then
-        line = line .. "   Sells: " .. auction .. (vendor and (", vendor " .. vendor) or "")
+        add("Sells: " .. auction)
+        if vendor then add("vendor " .. vendor, ", ") end
     elseif vendor then
-        line = line .. "   Sells: " .. vendor .. " (vendor)"
+        add("Sells: " .. vendor .. " (vendor)")
     end
     if r.profit and r.missing == 0 then
-        line = line .. "   Profit: " .. self:SignedMoney(r.profit)
+        add("Profit: " .. self:SignedMoney(r.profit))
     end
-    return line
+    return pieces
 end
 
 -- A material you craft shows both prices: the one used bright, the other
@@ -571,6 +602,7 @@ function P:FillTooltip(tt, r)
     if not r.itemID then return end
     tt:AddLine(" ")
     local makes = r.yield > 1 and (" (makes " .. r.yield .. ")") or ""
+    if r.yieldMin then makes = " (makes " .. r.yieldMin .. "-" .. r.yieldMax .. ", about " .. r.yield .. ")" end
     if r.bop then
         tt:AddLine("Binds when picked up: it can't be sold at auction, only to a vendor.", 0.9, 0.9, 0.9, true)
     elseif r.sell then
@@ -582,6 +614,16 @@ function P:FillTooltip(tt, r)
     end
     if r.vendorSell then
         tt:AddDoubleLine("Vendor pays", self:Money(r.vendorSell * r.yield), 0.9, 0.9, 0.9, 1, 1, 1)
+    end
+    -- a craft that makes more than one: what one item sells for (2.1.1,
+    -- m4ru couldn't find one Elemental Blasting Powder's price)
+    if r.yield > 1 and (r.sell or r.vendorSell) then
+        local each = {}
+        if r.sell and not r.bop then each[#each + 1] = self:Money(r.sell) .. " at auction" end
+        if r.vendorSell then each[#each + 1] = self:Money(r.vendorSell) .. " from a vendor" end
+        if #each > 0 then
+            tt:AddLine("One item: " .. table.concat(each, ", "), 0.5, 0.5, 0.5, true)
+        end
     end
     if r.profit then
         local how = r.profitFrom == "auction"

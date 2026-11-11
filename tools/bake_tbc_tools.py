@@ -3,12 +3,14 @@
 
     python tools/bake_tbc_tools.py <csvdir> [--build 2.5.6.69795] [--fetch]
 
-<csvdir> holds the TBC Anniversary build's SpellTotems, TotemCategory and
-ItemSparse as CSV from wago.tools (product wow_anniversary); --fetch
-downloads them. The recipes are the spellIDs in ProfessionBuddy/Data/*.lua.
-Every tool a recipe needs other than its Enchanting rod (the hand-kept
-`rod` field) goes in, with the items that satisfy each; the rule is
-tool_tables in bake_forever_db2.py, shared with WoW: Forever.
+<csvdir> holds the TBC Anniversary build's SpellTotems, TotemCategory,
+ItemSparse, SpellCastingRequirements and SpellFocusObject as CSV from
+wago.tools (product wow_anniversary); --fetch downloads them. The recipes
+are the spellIDs in ProfessionBuddy/Data/*.lua. Every tool a recipe needs
+other than its Enchanting rod (the hand-kept `rod` field) goes in, with
+the items that satisfy each, and the crafting station it needs (an Anvil,
+a Forge); the rules are tool_tables and station_table in
+bake_forever_db2.py, shared with WoW: Forever.
 """
 import argparse, glob, os, re, sys, urllib.request
 
@@ -18,7 +20,7 @@ import bake_forever_db2 as bf   # noqa: E402
 
 REPO = os.path.normpath(os.path.join(HERE, ".."))
 DATA = os.path.join(REPO, "ProfessionBuddy", "Data")
-TABLES = ["SpellTotems", "TotemCategory", "ItemSparse"]
+TABLES = ["SpellTotems", "TotemCategory", "ItemSparse", "SpellCastingRequirements", "SpellFocusObject"]
 
 
 def recipe_spells(data_dir):
@@ -46,11 +48,13 @@ def main():
             print("fetched", t)
     spells = recipe_spells(DATA)
     rt, cats, inames = bf.tool_tables(a.csvdir, spells)
+    st, snames = bf.station_table(a.csvdir, spells)
     out = os.path.join(DATA, "Tools.lua")
     with open(out, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(bf.emit_tools(rt, cats, inames, a.build, "Data/Tools.lua",
-                               "TBC Anniversary's SpellTotems, TotemCategory and ItemSparse"))
-    print("%d of %d recipes need a tool -> %s" % (len(rt), len(spells), out))
+                               "TBC Anniversary's SpellTotems, TotemCategory, ItemSparse,\n"
+                               "-- SpellCastingRequirements and SpellFocusObject", st, snames))
+    print("%d of %d recipes need a tool, %d a station -> %s" % (len(rt), len(spells), len(st), out))
     for cid in sorted(cats):
         print("  %-28s %d items satisfy it" % (cats[cid]["name"], len(cats[cid]["items"])))
     for iid in sorted(inames):

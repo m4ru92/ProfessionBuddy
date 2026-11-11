@@ -512,6 +512,14 @@ function TSF:Init()
         self._awaitingTradeList = nil
         -- the game closed the parked session (cast again, walked away)
         if self._parked and not self._parked.isCraft then self:EndPark(false) end
+        -- PB shows a list the session doesn't feed (TSF:CloseSessionsForView):
+        -- the session closing leaves the window as it is
+        if state._isStaticView or state._viewCharKey then
+            if self._bagTracker and self._bagTrackerUpdate then
+                self._bagTracker:SetScript("OnUpdate", self._bagTrackerUpdate)
+            end
+            return
+        end
         if self._isMouseOverTab then return end
         -- A background trade-skill session closing (PB is showing Enchanting,
         -- or PB closed it itself on a switch) must not hide PB.
@@ -3722,6 +3730,12 @@ function TSF:BuildDetailPanel(parent)
     detIcon:SetPoint("TOPLEFT", 6, -6)
     detIcon:Hide()
     self.detIcon = detIcon
+    -- how many one craft makes, on the icon as Blizzard's window shows it
+    -- ("2", "1-3"; 2.1.1, Hircus)
+    local detCount = sc:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+    detCount:SetPoint("BOTTOMRIGHT", detIcon, "BOTTOMRIGHT", -1, 2)
+    detCount:SetJustifyH("RIGHT")
+    self.detCount = detCount
 
     -- Share: opens the chat box on a channel with the recipe's link typed.
     local shareBtn = CreateFrame("Button", nil, sc, "UIPanelButtonTemplate")
@@ -4009,6 +4023,7 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.detPlaceholder:Show()
     if self.detScrollFrame then self.detScrollFrame:Hide() end
     self.detIcon:Hide()
+    if self.detCount then self.detCount:SetText("") end
     self.detName:SetText("")
     self.detDiff:SetText("")
     self.detRange:SetText("")
@@ -4031,6 +4046,23 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.altHeader:Hide()
     for _, row in ipairs(self.reagentRows) do row:Hide() end
     for _, line in ipairs(self.altLines) do line:Hide() end
+end
+
+-- How many items one craft of `recipe` makes, from the recipe data
+-- (tools/yield_db.py, 2.1.1): { lo, hi, mid, text = "2" or "1-3" }, or nil
+-- for one item
+function TSF:Made(recipe)
+    if not recipe then return nil end
+    local data = RDB and RDB.data and state.profName and RDB.data[state.profName]
+        and RDB.data[state.profName][recipe.name]
+    if not data and recipe.spellID and RDB and RDB.GetRecipeBySpell then
+        data = RDB:GetRecipeBySpell(recipe.spellID)
+    end
+    local mid = tonumber(data and data.yield) or tonumber(recipe.yield) or 1
+    local lo = tonumber(data and data.yieldMin) or mid
+    local hi = tonumber(data and data.yieldMax) or mid
+    if hi <= 1 then return nil end
+    return { lo = lo, hi = hi, mid = mid, text = (lo == hi) and tostring(lo) or (lo .. "-" .. hi) }
 end
 
 function TSF:RefreshDetailPanel(preserveScroll)
@@ -4124,10 +4156,24 @@ function TSF:RefreshDetailPanel(preserveScroll)
         self.detSkill:SetText("")
     end
 
+    -- how many one craft makes (2.1.1): on the icon, after the category,
+    -- and in Can make below
+    local made = self:Made(recipe)
+    self.detCount:SetText(made and made.text or "")
+    if self.detIcon:IsShown() then self.detCount:Show() else self.detCount:Hide() end
+    local makesText = made and ("|cffffd100Makes " .. made.text .. "|r") or nil
+    -- a random amount: the prices below are for the middle of the range,
+    -- said here so the price line needs no mark (TEST-a2's "~" sat at the
+    -- top of the line, "about" made it wrap)
+    local Pr = addon.Prices
+    if made and made.lo ~= made.hi and Pr and Pr:Enabled() then
+        makesText = "|cffffd100Makes " .. made.text .. " (priced as " .. made.mid .. ")|r"
+    end
     if recipe.category then
-        self.detCat:SetText("|cff888888Category: " .. recipe.category .. "|r")
+        self.detCat:SetText("|cff888888Category: " .. recipe.category .. "|r"
+            .. (makesText and ("    " .. makesText) or ""))
     else
-        self.detCat:SetText("")
+        self.detCat:SetText(makesText or "")
     end
 
     local vis = ShownSources(recipe)
@@ -4170,7 +4216,13 @@ function TSF:RefreshDetailPanel(preserveScroll)
         end
         local cdSuffix = self:CooldownSuffix(recipe)
         if avail > 0 then
-            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. "|r" .. cdSuffix)
+            -- crafts, then the items they make: "Can make: 54 (108)"
+            local items = ""
+            if made then
+                items = made.lo == made.hi and (" (" .. avail * made.lo .. ")")
+                    or (" (" .. avail * made.lo .. "-" .. avail * made.hi .. ")")
+            end
+            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. items .. "|r" .. cdSuffix)
         elseif cdSuffix ~= "" then
             -- A recipe on cooldown reports 0 whatever is in the bags, so
             -- naming reagents as the reason would contradict the very next
@@ -4185,6 +4237,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
 
     -- v6: Show embedded item tooltip
     self:ShowEmbeddedTooltip(recipe)
+    self:WatchStation(recipe)
 
     local reagents = recipe.reagents
     if reagents and #reagents > 0 then
@@ -4371,7 +4424,16 @@ function TSF:ShowPriceLine(recipe, retry)
         end)
     end
     if not result then return end
-    line:SetText(P:DetailText(result))
+    -- whole pieces wrap ("Profit: +7g 83s 3c" moves down as one), measured
+    -- as Trainer.lua's SetIfFits does; a client that can't measure keeps
+    -- one line and the game's own wrap
+    local function fits(text)
+        line:SetText(text)
+        local width = tonumber(line:GetWidth())
+        local used = tonumber(line.GetUnboundedStringWidth and line:GetUnboundedStringWidth() or line:GetStringWidth())
+        return not (width and used) or used <= width
+    end
+    line:SetText(P:DetailText(result, fits))
     line:Show()
     hover.result = result
     hover:Show()
@@ -4503,9 +4565,14 @@ end
 -- (Blacksmith Hammer, Arclight Spanner, Philosopher's Stone, a specific item
 -- such as a Jeweler's Kit; data: ProfBuddy.RecipeTools and ToolCategories,
 -- Data/Tools.lua and Data/Forever/Tools.lua). Green if the viewed character
--- has one in its bags or bank, red + "(missing)" if not. No-op for a recipe
--- that needs no tool. The static entry is resolved by spellID (locale-
--- stable) with a name fallback.
+-- has one in its bags or bank, red + "(missing)" if not. Then the crafting
+-- station it needs (a Tanning Rack, an Anvil; ProfBuddy.RecipeStations,
+-- Sushicats 2.1.1): green at one, red "(not nearby)" when not, from the
+-- game's own check on your open profession's known recipes (WoW: Forever);
+-- white where the game can't tell (a recipe you don't know, another
+-- character's, and on TBC Anniversary, whose check ignores distance).
+-- No-op for a recipe that needs neither. The static entry is resolved by
+-- spellID (locale-stable) with a name fallback.
 function TSF:AppendRodLine(tip, recipe)
     if not (recipe and RDB) then return end
     -- Resolve the static entry: by spellID first (locale-stable), then by name
@@ -4537,15 +4604,66 @@ function TSF:AppendRodLine(tip, recipe)
             lines[#lines + 1] = { name, self:HasAnyItem({ itemID }, charKey) }
         end
     end
+    local station = self:StationFor(spellID)
+    if station then
+        lines[#lines + 1] = { station, self:StationMet(recipe, station), station = true }
+    end
     if #lines == 0 then return end
     tip:AddLine(" ")
     for _, l in ipairs(lines) do
-        if l[2] then
+        if l.station and l[2] == nil then
+            tip:AddLine("Tool: " .. l[1], 1, 1, 1)
+        elseif l[2] then
             tip:AddLine("Tool: " .. l[1], 0.4, 1, 0.4)
         else
-            tip:AddLine("Tool: " .. l[1] .. " (missing)", 1, 0.4, 0.4)
+            tip:AddLine("Tool: " .. l[1] .. (l.station and " (not nearby)" or " (missing)"), 1, 0.4, 0.4)
         end
     end
+end
+
+-- The selected recipe's station line follows you, as Blizzard's window
+-- does: checked once a second while the window shows it, and the panel
+-- refreshes when you walk to a station or away from one
+function TSF:WatchStation(recipe)
+    self._stationWatch = nil
+    local info = recipe and recipe.spellID and RDB and RDB:GetRecipeBySpell(recipe.spellID)
+    local station = self:StationFor((info and info.spellID) or (recipe and recipe.spellID))
+    local met = station and self:StationMet(recipe, station)
+    if met == nil then return end
+    self._stationWatch = { sel = state.selected, station = station, met = met }
+    if self._stationTicker then return end
+    local ticker, elapsed = CreateFrame("Frame"), 0
+    ticker:SetScript("OnUpdate", function(_, dt)
+        elapsed = elapsed + (dt or 0)
+        if elapsed < 1 then return end
+        elapsed = 0
+        local w = self._stationWatch
+        if not (w and self.frame and self.frame:IsShown() and state.selected == w.sel) then return end
+        local now = self:StationMet(self:GetSelectedRecipe(), w.station)
+        if now ~= nil and now ~= w.met then self:RefreshDetailPanel(true) end
+    end)
+    self._stationTicker = ticker
+end
+
+-- The crafting station a recipe needs, by spellID, or nil
+function TSF:StationFor(spellID)
+    local id = spellID and addon.RecipeStations and addon.RecipeStations[spellID]
+    return id and addon.Stations and addon.Stations[id] or nil
+end
+
+-- Whether you stand at `station` for `recipe`: the game's own check
+-- (Source:Requirements) on a known recipe of your open profession, nil
+-- where the game can't tell (a recipe you don't know, another character's
+-- or a read-only list, a station name the game spells differently)
+function TSF:StationMet(recipe, station)
+    if state._isStaticView or state._viewCharKey or state._isLinkedView then return nil end
+    local index = recipe and (recipe.gameIndex or recipe.index)
+    local S = addon.Source
+    if not (index and S.Requirements and S:IsSessionOpen(state.isCraftWindow)) then return nil end
+    for _, r in ipairs(S:Requirements(index, state.isCraftWindow) or {}) do
+        if r.name == station then return r.met end
+    end
+    return nil
 end
 
 function TSF:ShowAltMaterials(recipe)
@@ -7916,6 +8034,21 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
 end
 
 ----------------------------------------------------------------------
+-- A list the game's session doesn't feed (a greyed-out profession, a
+-- character's stored recipes) closes your open profession, after the
+-- state says what PB shows (TRADE_CLOSE then leaves the window as it is).
+-- Left open behind it, its icon did nothing on WoW: Forever, where the
+-- game doesn't reopen what is open, and closed it on TBC Anniversary,
+-- where the icon's /cast toggles, so it took a second click (m4ru
+-- 2026-11-11).
+----------------------------------------------------------------------
+function TSF:CloseSessionsForView()
+    for _, isCraft in ipairs({ false, true }) do
+        if addon.Source:IsSessionOpen(isCraft) then addon.Source:CloseWindow(isCraft) end
+    end
+end
+
+----------------------------------------------------------------------
 -- Open a profession the player doesn't know (static DB only)
 -- Shows only missing recipes, no live game data, no skill bar.
 ----------------------------------------------------------------------
@@ -7956,6 +8089,7 @@ function TSF:OpenWithStatic(profName)
     state.collapsed     = {}
     state._isStaticView = true
     state._viewCharKey  = nil
+    self:CloseSessionsForView()
 
     -- Skill bar: show profession name but hide the progress bar
     if self.titleText then self.titleText:SetText(profName) end
@@ -8033,6 +8167,7 @@ function TSF:OpenWithCharacter(charKey, profName)
     state.collapsed     = {}
     state._isStaticView = false
     state._viewCharKey  = charKey
+    self:CloseSessionsForView()
 
     -- Populate known recipes from stored character data
     local staticProf = RDB.data[profName] or {}
@@ -8176,9 +8311,11 @@ function TSF:OnTradeSkillShow()
     state._isLinkedView = LinkedView(false)
 
     -- If already showing this profession, just refresh data in place
-    -- without resetting filters/sort/scroll (TRADE_SKILL_UPDATE fires often)
+    -- without resetting filters/sort/scroll (TRADE_SKILL_UPDATE fires often).
+    -- A character's stored list of the same profession is not it: the live
+    -- one opens (2.1.1)
     if self.frame and self.frame:IsShown() and state.profName == profName
-       and not state.isCraftWindow then
+       and not state.isCraftWindow and not state._viewCharKey and not state._isStaticView then
         self:RefreshTradeData(profName, rank, maxRank, false)
         return
     end

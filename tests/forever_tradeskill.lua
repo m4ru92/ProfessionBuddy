@@ -55,11 +55,22 @@ function T.OpenTradeSkill(skillLine)
     TS_CALLS[#TS_CALLS + 1] = "OpenTradeSkill:" .. tostring(skillLine)
     local name = profBySkillLine(skillLine)
     if not name then return false end
+    -- the game does nothing for the profession already open: no event
+    -- (m4ru 2026-11-11: the icon of the open profession did nothing)
+    if TS.open == name then return true end
     if TS.open and TS.open ~= name then fire("TRADE_SKILL_CLOSE") end
     TS.open, TS.ready = name, false
     ShowProfessionsFrame()           -- GameEvent.HandleTradeSkillShow
     fire("TRADE_SKILL_SHOW")
     return true
+end
+
+-- A test that opens the profession already open: the game would do
+-- nothing, so this closes it first, as a player closing and reopening it
+function TS_REOPEN(skillLine)
+    local name = profBySkillLine(skillLine)
+    if name and TS.open == name then T.CloseTradeSkill() end
+    return T.OpenTradeSkill(skillLine)
 end
 
 function TS_LIST_READY()

@@ -237,6 +237,10 @@ function Source:Craft(index, qty, isCraft)
     end
 end
 
+-- No Source:Requirements here: TBC Anniversary's GetTradeSkillTools says a
+-- crafting station is met at any distance ("Forge 1" far away and at the
+-- forge, m4ru 2026-11-11), so the station line stays white on this client.
+
 function Source:CloseWindow(isCraft)
     if isCraft then
         CloseCraft()

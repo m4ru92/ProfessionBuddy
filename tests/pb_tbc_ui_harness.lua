@@ -26,6 +26,8 @@ EXPECT(hasClassic, "the TBC toc does not load Source/Classic.lua")
 
 ProfBuddyDB = { settings = { windowStyle = LOOK } }
 FIRE("ADDON_LOADED", "ProfessionBuddy")
+-- 2.1.1: the login line waits for PLAYER_LOGIN (ElvUI drops earlier lines)
+EXPECT(not PRINTED("loaded. Type /pb or /profbuddy."), "the loaded line printed at ADDON_LOADED")
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
@@ -689,4 +691,154 @@ end
 U15()
 print("  PASS " .. TAG .. "15 in combat on TBC Anniversary: his TRADE_SKILL_UPDATE case, Enchanting's craft update, then every visible button of both windows (parked too) and Settings: nothing the game blocks, no errors")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 15)")
+-- U16 2.1.1: TBC Anniversary's recipe data had a count per craft only
+-- for Smelt Bronze; 97 others read 1 (tools/yield_db.py). The data, the
+-- bolts (1, not 2 and 3), a price per craft of 4, and the Material
+-- Calculator planning one craft of Elemental Blasting Powder (makes 4)
+-- for 3, not three
+local function U16()
+    local RDB, MC, TSF = PB.RecipeDB, PB.MaterialCalc, PB.TradeSkillFrame
+    local E = RDB.data.Engineering
+    EXPECT(E["Elemental Blasting Powder"].yield == 4 and E["Crafted Heavy Shot"].yield == 200
+           and E["Coarse Dynamite"].yieldMin == 1 and E["Coarse Dynamite"].yieldMax == 3,
+           "TBC counts in the data")
+    EXPECT(E["Handful of Copper Bolts"].yield == nil and E["Handful of Fel Iron Bolts"].yield == nil, "the bolts make 1")
+    EXPECT(RDB.data.Smelting["Smelt Bronze"].yield == 2, "Smelt Bronze still makes 2")
+    -- an engineer alt who makes the powder
+    local chars = PB.db.characters
+    chars["Gnome-Realm"] = { professions = { Engineering = { recipes = { ["Elemental Blasting Powder"] = {} } } } }
+    local list = MC:GetShoppingList("Gnomish Flame Turret", "Engineering", 1)
+    local need = {}
+    for _, e in ipairs(list) do need[e.itemID] = e.need end
+    EXPECT(need[22574] == 1 and need[22573] == 2, "the calculator planned powder crafts: Mote of Fire "
+           .. tostring(need[22574]) .. ", Mote of Earth " .. tostring(need[22573]))
+    chars["Gnome-Realm"] = nil
+    -- the detail panel on TBC Anniversary too
+    OPEN_TRADE()
+    local st = TSF.state
+    local keepProf = st.profName
+    st.profName = "Engineering"
+    local fake = { name = "Elemental Blasting Powder", isKnown = true, numAvail = 5, itemID = 23781, spellID = 30303, category = "Parts" }
+    table.insert(st.recipes, 1, fake)
+    st.selected = fake.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.detCount:GetText() == "4" and (TSF.detCanMake:GetText() or ""):find("Can make: 5 (20)", 1, true),
+           "TBC detail: " .. tostring(TSF.detCount:GetText()) .. " / " .. tostring(TSF.detCanMake:GetText()))
+    -- TEST-a4: a long price line wraps whole pieces, his powder line
+    -- (image 149) put "3c" of the profit alone on the second line
+    local function plain(t)
+        return ((t or ""):gsub("|T[^|]*|t", function(icon)
+            return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c"
+        end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+    end
+    local keepAuc, S = Auctionator, PB.db.settings
+    local keepShow, keepAucOn = S.showPrices, S.priceAuctionator
+    S.showPrices, S.priceAuctionator = true, true
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(_, id) return ({ [23781] = 29993, [22574] = 15000, [22573] = 10335 })[id] end,
+        GetAuctionAgeByItemID = function() return 0 end,
+    } } }
+    if PB.Prices.ResetListCache then PB.Prices:ResetListCache() end
+    local line, charW, width = TSF.detPrice, 4, 0
+    rawset(line, "GetWidth", function() return width end)
+    rawset(line, "GetUnboundedStringWidth", function(self) return #plain(self:GetText()) * charW end)
+    local r = PB.Prices:RecipeCost(fake, "Engineering")
+    local pc = PB.Prices:DetailPieces(r)
+    -- his figures; the harness has no vendor price for the powder (F94
+    -- covers the vendor piece)
+    EXPECT(#pc == 3 and plain(pc[1].text) == "Cost: 3g 56s 70c" and plain(pc[2].text) == "Sells: 11g 99s 72c"
+           and plain(pc[3].text) == "Profit: +7g 83s 3c",
+           "the powder's pieces: " .. #pc .. " " .. plain(pc[1].text) .. " / " .. plain(pc[2].text) .. " / " .. plain(pc[#pc].text))
+    local one = plain(pc[1].text .. "   " .. pc[2].text)
+    -- room for everything but the profit: the profit moves down whole
+    width = (#one + 4) * charW
+    TSF:RefreshDetailPanel()
+    EXPECT(plain(line:GetText()) == one .. "\n" .. plain(pc[3].text), "wrapped: " .. plain(line:GetText()))
+    -- wide: one line, as before
+    width = 1000
+    TSF:RefreshDetailPanel()
+    EXPECT(plain(line:GetText()) == one .. "   " .. plain(pc[3].text), "wide: " .. plain(line:GetText()))
+    -- narrow: each piece on its own line
+    width = 20 * charW
+    TSF:RefreshDetailPanel()
+    EXPECT(plain(line:GetText()) == table.concat({ plain(pc[1].text), plain(pc[2].text), plain(pc[3].text) }, "\n"),
+           "narrow: " .. plain(line:GetText()))
+    rawset(line, "GetWidth", nil); rawset(line, "GetUnboundedStringWidth", nil)
+    Auctionator, S.showPrices, S.priceAuctionator = keepAuc, keepShow, keepAucOn
+    if PB.Prices.ResetListCache then PB.Prices:ResetListCache() end
+    table.remove(st.recipes, 1)
+    st.profName, st.selected = keepProf, nil
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() end
+end
+U16()
+print("  PASS " .. TAG .. "16 2.1.1: TBC Anniversary counts per craft from the game's table (powder 4, shot 200, dynamite 1-3, bolts 1), the calculator plans one powder craft for 3, the detail panel shows 4 and Can make 5 (20); a long price line wraps whole pieces (his powder: the profit moves down whole)")
+
+-- U17 2.1.1 (m4ru 2026-11-11): on TBC Anniversary the icon's /cast
+-- closed the Leatherworking session left open behind a greyed-out
+-- profession, so it took a second click. The list closes the session (the
+-- window stays), so the /cast opens it.
+local function U17()
+    local TSF = PB.TradeSkillFrame
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    EXPECT(TSF.frame:IsShown() and TBC.open == "trade", "Leatherworking did not open")
+    TSF:OpenWithStatic("Alchemy"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView and TSF.state.profName == "Alchemy",
+           "the greyed-out profession: " .. tostring(TSF.state.profName))
+    EXPECT(TBC.open == nil, "the Leatherworking session stayed open behind it (its /cast would close it)")
+    -- the game's close event can come a moment later: the list stays
+    FIRE("TRADE_SKILL_CLOSE"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView, "a late close event closed the read-only list")
+    OPEN_TRADE()                        -- the icon's /cast opens it
+    EXPECT(TSF.frame:IsShown() and TSF.state.profName == "Leatherworking" and not TSF.state._isStaticView,
+           "Leatherworking after the greyed-out profession")
+    -- Enchanting's window (the craft session) the same
+    TSF.frame:Hide(); FLUSH()
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_CRAFT()
+    TSF:OpenWithStatic("Alchemy"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TBC.open == nil, "the Enchanting session stayed open, or the window closed")
+    -- a character's stored recipes
+    TSF.frame:Hide(); FLUSH()
+    OPEN_TRADE()
+    TSF:OpenWithCharacter(PB:PlayerKey(), "Leatherworking"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._viewCharKey and TBC.open == nil,
+           "a character's recipes left the session open, or closed the window")
+    TSF.frame:Hide(); FLUSH()
+end
+U17()
+print("  PASS " .. TAG .. "17 2.1.1: a greyed-out profession or a character's recipes closes your open profession (trade and Enchanting) and keeps the window, so its icon's /cast opens it with one click")
+
+-- U18 2.1.1 (Sushicats): crafting stations on TBC Anniversary, from
+-- Data/Tools.lua, always white: the game's GetTradeSkillTools says a
+-- station is met at any distance ("Forge 1" far away and at the forge,
+-- m4ru TEST-a7), so PB doesn't ask it
+local function U18()
+    local TSF = PB.TradeSkillFrame
+    EXPECT(TSF:StationFor(2661) == "Anvil", "no Anvil for Copper Chain Belt: " .. tostring(TSF:StationFor(2661)))
+    EXPECT(TSF:StationFor(2657) == "Forge", "no Forge for Smelt Copper: " .. tostring(TSF:StationFor(2657)))
+    EXPECT(PB.Source.Requirements == nil, "TBC Anniversary asks the game about stations")
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    local keep, keepF = GetTradeSkillTools, GetCraftSpellFocus
+    GetTradeSkillTools = function() return "Anvil", nil, "Blacksmith Hammer", 1 end
+    GetCraftSpellFocus = function() return "Black Forge", nil end
+    local belt = { name = "Copper Chain Belt", spellID = 2661, itemID = 2851, gameIndex = 7, isKnown = true }
+    EXPECT(TSF:StationMet(belt, "Anvil") == nil, "a station checked on TBC Anniversary")
+    local tip, out = CreateFrame("GameTooltip"), {}
+    rawset(tip, "AddLine", function(_, t, r, g, b) if t ~= " " then out[#out + 1] = { t, r, g, b } end end)
+    TSF:AppendRodLine(tip, belt)
+    local anvil
+    for _, l in ipairs(out) do if l[1]:find("Anvil", 1, true) then anvil = l end end
+    EXPECT(anvil and anvil[1] == "Tool: Anvil" and anvil[2] == 1 and anvil[3] == 1 and anvil[4] == 1,
+           "the Anvil line: " .. tostring(anvil and anvil[1]))
+    GetTradeSkillTools, GetCraftSpellFocus = keep, keepF
+    TSF.frame:Hide(); FLUSH()
+end
+U18()
+print("  PASS " .. TAG .. "18 2.1.1: crafting stations on TBC Anniversary (Copper Chain Belt an Anvil, Smelt Copper a Forge), always white: the game's check ignores distance, so PB doesn't ask it")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 18)")

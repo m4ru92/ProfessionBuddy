@@ -276,6 +276,7 @@ local recipes = {
         },
         category = "Transmute",
         skillRange = {  300, 300, 300, 300 },
+        yield = 10,
         reagents = {
             { itemID = 22452, count = 1, name = "Primal Earth" },
         },
@@ -289,6 +290,7 @@ local recipes = {
         },
         category = "Transmute",
         skillRange = {  300, 300, 300, 300 },
+        yield = 10,
         reagents = {
             { itemID = 21884, count = 1, name = "Primal Fire" },
         },

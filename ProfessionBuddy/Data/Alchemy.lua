@@ -1691,6 +1691,7 @@ local recipes = {
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
+        yield = 5,
         reagents = {
             { itemID = 22457, count = 1, name = "Primal Mana" },
             { itemID = 22793, count = 3, name = "Mana Thistle" },
@@ -1707,6 +1708,7 @@ local recipes = {
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
+        yield = 5,
         reagents = {
             { itemID = 21884, count = 1, name = "Primal Fire" },
             { itemID = 22793, count = 3, name = "Mana Thistle" },
@@ -1723,6 +1725,7 @@ local recipes = {
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
+        yield = 5,
         reagents = {
             { itemID = 21885, count = 1, name = "Primal Water" },
             { itemID = 22793, count = 3, name = "Mana Thistle" },
@@ -1739,6 +1742,7 @@ local recipes = {
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
+        yield = 5,
         reagents = {
             { itemID = 21886, count = 1, name = "Primal Life" },
             { itemID = 22793, count = 3, name = "Mana Thistle" },
@@ -1755,6 +1759,7 @@ local recipes = {
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
+        yield = 5,
         reagents = {
             { itemID = 21886, count = 1, name = "Primal Life" },
             { itemID = 22793, count = 3, name = "Mana Thistle" },
@@ -1771,6 +1776,7 @@ local recipes = {
         category = "Potion",
         subcategory = "Resistance",
         skillRange = { 360, 375, 382, 390 },
+        yield = 5,
         reagents = {
             { itemID = 22456, count = 1, name = "Primal Shadow" },
             { itemID = 22793, count = 3, name = "Mana Thistle" },
@@ -1997,6 +2003,7 @@ local recipes = {
         category = "Potion",
         subcategory = "Utility",
         skillRange = { 315, 315, 322, 330 },
+        yield = 3,
         reagents = {
             { itemID = 12938, count = 1, name = "Blood of Heroes" },
             { itemID = 19943, count = 1, name = "Massive Mojo" },
@@ -2508,6 +2515,7 @@ local recipes = {
         category = "Transmute",
         subcategory = "Elemental",
         skillRange = { 300, 301, 305, 310 },
+        yield = 3,
         reagents = { { itemID = 7077, count = 1, name = "Heart of Fire" } },
     },
     ["Transmute: Fire to Earth"] = {

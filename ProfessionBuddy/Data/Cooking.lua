@@ -185,6 +185,7 @@ local recipes = {
         },
         category = "No Buff",
         skillRange = { 90, 130, 150, 170 },
+        yield = 2,
         reagents = { { itemID = 5051, count = 1, name = "Dig Rat" } },
     },
     ["Succulent Pork Ribs"] = {
@@ -280,6 +281,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 225, 250, 262, 275 },
+        yield = 2,
         reagents = {
             { itemID = 7974, count = 2, name = "Zesty Clam Meat" },
             { itemID = 2692, count = 1, name = "Hot Spices" },
@@ -403,6 +405,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 375, 375, 380, 385 },
+        yield = 2,
         reagents = {
             { itemID = 27516, count = 1, name = "Enormous Barbed Gill Trout" },
             { itemID = 3713, count = 2, name = "Soothing Spices" },
@@ -496,6 +499,7 @@ local recipes = {
         },
         category = "Utility",
         skillRange = { 100, 100, 105, 110 },
+        yield = 5,
         reagents = {
             { itemID = 2596, count = 1, name = "Skin of Dwarven Stout" },
             { itemID = 2594, count = 1, name = "Flagon of Dwarven Honeymead" },
@@ -539,6 +543,7 @@ local recipes = {
         },
         category = "Utility",
         skillRange = { 175, 175, 190, 205 },
+        yield = 4,
         reagents = {
             { itemID = 3821, count = 1, name = "Goldthorn" },
             { itemID = 159, count = 1, name = "Refreshing Spring Water" },
@@ -711,6 +716,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 35, 75, 95, 115 },
+        yield = 2,
         reagents = {
             { itemID = 5467, count = 1, name = "Kodo Meat" },
             { itemID = 2678, count = 1, name = "Mild Spices" },
@@ -761,6 +767,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 50, 90, 110, 130 },
+        yield = 2,
         reagents = {
             { itemID = 5468, count = 1, name = "Soft Frenzy Flesh" },
             { itemID = 2678, count = 1, name = "Mild Spices" },
@@ -791,6 +798,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 50, 90, 110, 130 },
+        yield = 2,
         reagents = {
             { itemID = 5469, count = 1, name = "Strider Meat" },
             { itemID = 4536, count = 1, name = "Shiny Red Apple" },
@@ -806,6 +814,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 60, 100, 120, 140 },
+        yield = 2,
         reagents = {
             { itemID = 3173, count = 1, name = "Bear Meat" },
             { itemID = 3172, count = 1, name = "Boar Intestines" },
@@ -906,6 +915,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 100, 140, 160, 180 },
+        yield = 2,
         reagents = {
             { itemID = 5470, count = 1, name = "Thunder Lizard Tail" },
             { itemID = 2692, count = 1, name = "Hot Spices" },
@@ -922,6 +932,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 100, 140, 160, 180 },
+        yield = 3,
         reagents = {
             { itemID = 1015, count = 2, name = "Lean Wolf Flank" },
             { itemID = 2665, count = 1, name = "Stormwind Seasoning Herbs" },
@@ -966,6 +977,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 110, 150, 170, 190 },
+        yield = 2,
         reagents = {
             { itemID = 5471, count = 1, name = "Stag Meat" },
             { itemID = 2678, count = 4, name = "Mild Spices" },
@@ -1141,6 +1153,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 175, 215, 235, 255 },
+        yield = 2,
         reagents = {
             { itemID = 12202, count = 1, name = "Tiger Meat" },
             { itemID = 159, count = 1, name = "Refreshing Spring Water" },
@@ -1198,6 +1211,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 200, 225, 237, 250 },
+        yield = 2,
         reagents = {
             { itemID = 12204, count = 2, name = "Heavy Kodo Meat" },
             { itemID = 3713, count = 1, name = "Soothing Spices" },
@@ -1388,6 +1402,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 300, 325, 337, 350 },
+        yield = 5,
         reagents = {
             { itemID = 2692, count = 1, name = "Hot Spices" },
             { itemID = 9061, count = 1, name = "Goblin Rocket Fuel" },
@@ -1404,6 +1419,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 325, 325, 325, 325 },
+        yield = 2,
         reagents = {
             { itemID = 34412, count = 1, name = "Sparkling Apple Cider" },
             { itemID = 17196, count = 1, name = "Holiday Spirits" },
@@ -1629,6 +1645,7 @@ local recipes = {
         },
         category = "Stamina / Spirit",
         skillRange = { 375, 375, 380, 385 },
+        yield = 6,
         reagents = {
             { itemID = 27515, count = 1, name = "Huge Spotted Feltail" },
             { itemID = 4539, count = 5, name = "Goldenbark Apple" },

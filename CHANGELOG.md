@@ -2,6 +2,34 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.1.1 - 2026-11-10
+
+Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two bars, and ProfessionBuddy didn't say so anywhere. Also the crafting station a recipe needs, asked for by Sushicats.
+
+**Highlights**
+
+- **How many a craft makes:** the detail panel shows it on the item's icon, as Blizzard's window does, and after the category ("Makes 2"). "Can make" counts the items too: "Can make: 54 (108)".
+- **TBC Anniversary prices and the Material Calculator:** 97 recipes that make more than one were counted as making one, so their sale and profit were too low and the Material Calculator planned too many crafts of them.
+- **Crafting stations:** a recipe that needs a Tanning Rack, an Anvil, a Loom or another station says so with its tools.
+
+<!-- more -->
+
+**Changes**
+
+- **Items per craft from the game's own data, on both clients:** 103 recipes on WoW: Forever and 98 on TBC Anniversary make more than one, from 2 Bronze Bars to 200 Crafted Solid Shot.
+- **A random amount:** seven explosives make a random number (Coarse Dynamite 1-3, Heavy Dynamite 1-5). The detail panel shows the range, and prices use the middle of it: "Makes 1-3 (priced as 2)".
+- **The price line wraps in whole pieces:** when cost, sale and profit don't fit on one line, the profit (or the sale) moves down whole, so an amount never splits across two lines.
+- **Crafting stations, asked for by Sushicats:** a recipe that needs a station (a Tanning Rack, an Anvil, a Loom) shows it with its tools: "Tool: Tanning Rack". On WoW: Forever, on the known recipes of your open profession, it's green at one and red "(not nearby)" when you're not, from the game's own check, and the detail panel follows you as you walk. Elsewhere it's white, and always on TBC Anniversary, whose game says you're at a station from any distance. From the game's data, on both clients: 1,039 recipes on WoW: Forever and 639 on TBC Anniversary.
+- **The price of one item:** the price line's tooltip says what one item sells for when a craft makes more than one: "One item: 2g 99s 93c at auction, 5c from a vendor".
+- **The login line shows with ElvUI:** "ProfessionBuddy v2.1.1 loaded" prints at login. It used to print while the addon loaded, and ElvUI's chat setup dropped it.
+- WoW: Forever recipe data is from game build 1.60.1.70888. The recipes are unchanged; Berdun's Trusty Rifle gains disenchant estimates.
+
+**Fixes**
+
+- TBC Anniversary: PB's recipe data had the count per craft for Smelt Bronze alone. Elemental Blasting Powder (4), Fel Iron Shells (200), Goldthorn Tea (4) and 94 more read 1, so their sale and profit were for one item, and the Material Calculator asked for several times the crafts and materials when one of them (Elemental Blasting Powder, Silver Contact, Gold Power Core) was a step in a bigger craft.
+- TBC Anniversary: Handful of Copper Bolts and Handful of Fel Iron Bolts make 1, not 2 and 3.
+- Your open profession's icon did nothing after you looked at a greyed-out profession or a character's stored recipes (WoW: Forever), or took a second click (TBC Anniversary). Those lists close your open profession now, so its icon opens it with one click.
+
 ## 2.1.0 - 2026-11-09
 
 Prices, built from players' requests: what a craft costs, what it sells for, and the profit, from Auctionator, TSM, the auction prices ProfessionBuddy records, and vendor prices. Also: your professions in the main window, a Back button to the profession you were in, window positions and filters that stay after a reload, and guildmates' recipes that are there when you click them.

@@ -46,6 +46,7 @@ Before a real upload (not --dry-run), also:
   tools/vendor_db.py --check          vendor prices match the newest databases and game builds
   tools/waylaid_db.py --check         Waylaid crates baked from the Forever recipe data's build
   tools/writs_db.py --check           the writ harvest matches the game's Craftsman's Writs
+  tools/yield_db.py --check           every recipe's count per craft is the game's
   tools/bake_forever_db2.py --check   Forever recipe data is the newest client build
   Core.lua             refuses to build while a dev addon.BUILD stamp is set
   LICENSE              the addon folder's copy is refreshed from the root copy
@@ -553,6 +554,8 @@ def main():
                  "tools/waylaid_db.py --check (Waylaid Supplies crates baked from the Forever recipe data's build)")
         run_gate(os.path.join(tools_dir(), "writs_db.py"), ["--check", "--addon-dir", addon_dir],
                  "tools/writs_db.py --check (Craftsman's Writs harvest matches the game's writs)")
+        run_gate(os.path.join(tools_dir(), "yield_db.py"), ["--check", "--addon-dir", addon_dir],
+                 "tools/yield_db.py --check (items per craft: the game's spell table, both clients)")
         forever = os.path.join(tools_dir(), "bake_forever_db2.py")
         if args.allow_older_forever_data:
             log("Gate: tools/bake_forever_db2.py --check (Forever recipe data build)")

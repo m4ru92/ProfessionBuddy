@@ -73,6 +73,11 @@
 --   Source:TabSkillLine(profName) the skill line a profession tab opens,
 --                                 or nil for a tab that stays a /cast macro
 --   Source:OpenProfession(skillLine)
+--   Source:Requirements(index, isCraft) the open window's live check of
+--                                 what a known recipe needs, { { name, met } },
+--                                 or nil; a crafting station's met is whether
+--                                 you stand at one (2.1.1, WoW: Forever only:
+--                                 TBC Anniversary's answer ignores distance)
 --   ReadOpenWindow may also set win.itemsPending (reagent names still
 --   loading) and give each row a category name.
 ----------------------------------------------------------------------

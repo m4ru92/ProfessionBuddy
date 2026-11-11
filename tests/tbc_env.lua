@@ -107,8 +107,9 @@ end
 function GetTradeSkillTools() return nil end
 function SelectTradeSkill() end
 function DoTradeSkill(i, n) CALLS[#CALLS + 1] = "DoTradeSkill:" .. tostring(i) .. ":" .. tostring(n) end
--- each closes its own session only, as in the game
-function CloseTradeSkill() if TBC.open == "trade" then TBC.open = nil end end
+-- each closes its own session only, and sends its close event, as in the
+-- game (2.1.1: PB closes your profession for a greyed-out one)
+function CloseTradeSkill() if TBC.open == "trade" then TBC.open = nil; FIRE("TRADE_SKILL_CLOSE") end end
 function GetCraftDisplaySkillLine() return TBC.craft[1], TBC.craft[2], TBC.craft[3] end
 function GetCraftName() return TBC.craft[1] end
 function GetNumCrafts() return TBC.open == "craft" and #TBC.craftRows or 0 end
@@ -127,7 +128,7 @@ end
 function GetCraftSpellFocus() return nil end
 function SelectCraft() end
 function DoCraft(i) CALLS[#CALLS + 1] = "DoCraft:" .. tostring(i) end
-function CloseCraft() if TBC.open == "craft" then TBC.open = nil end end
+function CloseCraft() if TBC.open == "craft" then TBC.open = nil; FIRE("CRAFT_CLOSE") end end
 
 -- Open a profession window the way the client does.
 function OPEN_TRADE()

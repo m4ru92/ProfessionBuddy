@@ -33,11 +33,23 @@ print("  PASS F1 Mainline toc loads " .. #files .. " entries with no error, no T
 -- F2: startup runs every module Init without error and records the professions
 ProfBuddyDB = nil
 FIRE("ADDON_LOADED", "ProfessionBuddy")
+-- 2.1.1: the login line waits for PLAYER_LOGIN (ElvUI drops earlier lines)
+EXPECT(not PRINTED("loaded. Type /pb or /profbuddy."), "the loaded line printed at ADDON_LOADED")
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
 for _, l in ipairs(PRINTS) do EXPECT(not l:find("failed to load", 1, true), "module init error: " .. l) end
 EXPECT(PRINTED("loaded. Type /pb or /profbuddy."), "no loaded line")
+do
+    local function count()
+        local n = 0
+        for _, l in ipairs(PRINTS) do if l:find("loaded. Type /pb", 1, true) then n = n + 1 end end
+        return n
+    end
+    EXPECT(count() == 1, "the loaded line " .. count() .. " times")
+    FIRE("PLAYER_LOGIN")
+    EXPECT(count() == 1, "the loaded line again on a second PLAYER_LOGIN")
+end
 EXPECT(not PRINTED("not supported"), "a not-supported line is still printed")
 local DS = ProfBuddy.DataStore
 local lw, sk = DS:GetProfession(nil, "Leatherworking"), DS:GetProfession(nil, "Skinning")
@@ -875,7 +887,7 @@ KN._asked = nil
 local shownPopup
 StaticPopupDialogs = {}
 StaticPopup_Show = function(which) shownPopup = which end
-C_TradeSkillUI.OpenTradeSkill(165)
+TS_REOPEN(165)
 TS_LIST_READY()
 FLUSH()
 EXPECT(shownPopup == "PROFBUDDY_FOREVER_RECIPES", "no first-open prompt")
@@ -6137,4 +6149,219 @@ end
 F93()
 print("  PASS F93 TEST-c6: in combat, every visible button of the profession window, its Settings, and each main window tab, and the game's update events: nothing the game blocks (its documented protected calls, on secure frames, their holders, and frames they're anchored to), no errors")
 
-print("ALL FOREVER TESTS PASS (93)")
+-- F94 2.1.1: a craft that makes more than one (Hircus: Smelt Bronze
+-- makes 2 bars and PB didn't say). The count from the game's spell table
+-- (tools/yield_db.py) on the detail panel's icon, after the category, and
+-- in Can make; a random amount as a range, "priced as" the middle.
+local function F94()
+    local PB = ProfBuddy
+    local TSF, P, RDB = PB.TradeSkillFrame, PB.Prices, PB.RecipeDB
+    local st = TSF.state
+    local cd = RDB.data.Engineering["Coarse Dynamite"]
+    EXPECT(cd.yield == 2 and cd.yieldMin == 1 and cd.yieldMax == 3, "Coarse Dynamite's range in the data")
+    EXPECT(RDB.data.Mining["Smelt Bronze"].yield == 2, "Smelt Bronze makes 2 in the data")
+    EXPECT(RDB.data.Engineering["Handful of Copper Bolts"].yield == nil, "Handful of Copper Bolts makes 1")
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    open()
+    -- a known craft that makes 2, 3 of them in the bags' worth
+    local fake = { name = "Cured Rugged Hide", isKnown = true, numAvail = 3, itemID = 15407, spellID = 19047,
+                   category = "Leather" }
+    table.insert(st.recipes, 1, fake)
+    st.selected = fake.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.detCount:GetText() == "2", "the icon count: " .. tostring(TSF.detCount:GetText()))
+    EXPECT((TSF.detCat:GetText() or ""):find("Makes 2", 1, true), "no Makes 2: " .. tostring(TSF.detCat:GetText()))
+    EXPECT((TSF.detCanMake:GetText() or ""):find("Can make: 3 (6)", 1, true), "Can make: " .. tostring(TSF.detCanMake:GetText()))
+    -- one item: no count anywhere
+    local one = { name = "Light Armor Kit", isKnown = true, numAvail = 4, itemID = 2304, spellID = 2152, category = "Armor Kit" }
+    table.insert(st.recipes, 1, one)
+    st.selected = one.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.detCount:GetText() == "" and not (TSF.detCat:GetText() or ""):find("Makes", 1, true)
+           and (TSF.detCanMake:GetText() or ""):find("Can make: 4|r", 1, true), "a single item shows a count")
+    -- a random amount: a range everywhere, "priced as" the middle on the
+    -- Category line, no mark on the price line
+    local keepProf = st.profName
+    st.profName = "Engineering"
+    local made = TSF:Made({ name = "Coarse Dynamite" })
+    EXPECT(made and made.text == "1-3" and made.mid == 2, "Coarse Dynamite's range")
+    local dyn = { name = "Coarse Dynamite", isKnown = true, numAvail = 2, itemID = 4365, spellID = 3931, category = "Explosives" }
+    table.insert(st.recipes, 1, dyn)
+    st.selected = dyn.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.detCount:GetText() == "1-3" and (TSF.detCanMake:GetText() or ""):find("Can make: 2 (2-6)", 1, true),
+           "the range: " .. tostring(TSF.detCount:GetText()) .. " / " .. tostring(TSF.detCanMake:GetText()))
+    local keepShowP = PB.db.settings.showPrices
+    PB.db.settings.showPrices = true
+    TSF:RefreshDetailPanel()
+    EXPECT((TSF.detCat:GetText() or ""):find("Makes 1-3 (priced as 2)", 1, true), "no priced as: " .. tostring(TSF.detCat:GetText()))
+    PB.db.settings.showPrices = false
+    TSF:RefreshDetailPanel()
+    EXPECT((TSF.detCat:GetText() or ""):find("Makes 1-3|r", 1, true) and not (TSF.detCat:GetText() or ""):find("priced", 1, true),
+           "priced as with prices off: " .. tostring(TSF.detCat:GetText()))
+    PB.db.settings.showPrices = keepShowP
+    st.selected = fake.name
+    PB.db.settings.showPrices = true
+    TSF:RefreshDetailPanel()
+    EXPECT(not (TSF.detCat:GetText() or ""):find("priced", 1, true), "a fixed count says priced as")
+    PB.db.settings.showPrices = keepShowP
+    st.selected = dyn.name
+    st.profName = keepProf
+    local keepAuc, keepAucOn, keepShow = Auctionator, PB.db.settings.priceAuctionator, PB.db.settings.showPrices
+    PB.db.settings.priceAuctionator, PB.db.settings.showPrices = true, true
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return ({ [4365] = 50, [4364] = 5, [2589] = 1 })[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    local r = P:RecipeCost({ name = "Coarse Dynamite" }, "Engineering")
+    EXPECT(r and r.yield == 2 and r.yieldMin == 1 and r.yieldMax == 3, "the price's range")
+    local line = P:DetailText(r)
+    EXPECT(line:find("Sells: ", 1, true) and line:find("Profit: ", 1, true) and not line:find("~", 1, true)
+           and not line:find("about", 1, true), "a mark on the price line: " .. line)
+    -- TEST-a4: fits() moves a whole piece down; without it, one line as
+    -- before. The harness has no vendor price for it: give it the game's 75c
+    r = setmetatable({ vendorSell = 75 }, { __index = r })
+    local pc = P:DetailPieces(r)
+    local flat = pc[1].text
+    for i = 2, #pc do flat = flat .. pc[i].sep .. pc[i].text end
+    EXPECT(#pc == 4 and pc[3].sep == ", " and pc[3].text:find("^vendor ") and P:DetailText(r) == flat and P:DetailText(r, function() return true end) == flat, "one line: " .. P:DetailText(r))
+    local wrapped = P:DetailText(r, function(t) return not t:find("Profit", 1, true) end)
+    EXPECT(wrapped == flat:gsub("   Profit: ", "\nProfit: "), "the profit moves down whole: " .. wrapped)
+    local each = P:DetailText(r, function() return false end)
+    EXPECT(select(2, each:gsub("\n", "")) == #pc - 1 and not each:find(", \n", 1, true) and not each:find("   ", 1, true),
+           "a piece per line: " .. each)
+    -- 2.1.1: the tooltip names one item's price when a craft makes more
+    local function tipLines(res)
+        local tip = CreateFrame("GameTooltip")
+        rawset(tip, "_lines", {})
+        P:FillTooltip(tip, res)
+        local out = {}
+        for _, l in ipairs(rawget(tip, "_lines")) do
+            out[#out + 1] = (l:gsub("|T[^|]*CopperIcon[^|]*|t", "c"):gsub("|T[^|]*SilverIcon[^|]*|t", "s")
+                :gsub("|T[^|]*GoldIcon[^|]*|t", "g"):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+        end
+        return table.concat(out, "\n")
+    end
+    local t = tipLines(r)
+    EXPECT(t:find("One item: 50c at auction, 75c from a vendor", 1, true), "one item's price: " .. t)
+    local t1 = tipLines(setmetatable({ yield = 1, yieldMin = false }, { __index = r }))
+    EXPECT(not t1:find("One item", 1, true), "one item's price on a craft that makes one: " .. t1)
+    local tb = tipLines(setmetatable({ bop = true }, { __index = r }))
+    EXPECT(tb:find("One item: 75c from a vendor", 1, true) and not tb:find("One item: 50c", 1, true), "BoP one item: " .. tb)
+    r = P:RecipeCost({ name = "Cured Rugged Hide" }, "Leatherworking")
+    EXPECT(r and r.yieldMin == nil and not P:DetailText(r):find("~", 1, true), "a fixed count marked")
+    Auctionator, PB.db.settings.priceAuctionator, PB.db.settings.showPrices = keepAuc, keepAucOn, keepShow
+    for _, e in ipairs({ fake, one, dyn }) do
+        for i, x in ipairs(st.recipes) do if x == e then table.remove(st.recipes, i); break end end
+    end
+    st.selected = nil
+    TSF.frame:Hide(); FLUSH()
+end
+F94()
+print("  PASS F94 2.1.1: a craft that makes more than one: the count on the detail panel's icon, Makes after the category, Can make with the items (3 (6)), none for one item; a random amount as 1-3, Can make 2 (2-6), 'priced as 2' on the Category line, no mark on the price line; whole pieces of the price line wrap; the tooltip names one item's price; the data's counts and ranges")
+
+-- F95 2.1.1 (m4ru 2026-11-11): Leatherworking open, a greyed-out
+-- profession, then the Leatherworking icon did nothing: the game's session
+-- stayed open behind the read-only list, and the game does nothing for
+-- the profession already open. The list closes the session; the icon
+-- opens it again with one click. A character's stored recipes the same.
+local function F95()
+    local TSF, S = ProfBuddy.TradeSkillFrame, ProfBuddyDB.settings
+    local keepAll = S.showAllProfessions
+    S.showAllProfessions = true
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state.profName == "Leatherworking", "Leatherworking did not open")
+    TSF:UpdateProfessionTabs()
+    local dim
+    for _, t in pairs(TSF.profTabsByName) do if t._isUnknown and t:IsShown() and not dim then dim = t end end
+    EXPECT(dim, "no greyed-out profession icon")
+    dim:GetScript("PostClick")(dim); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView and TSF.state.profName == dim.profName,
+           "the greyed-out profession: " .. tostring(TSF.state.profName))
+    EXPECT(TS.open == nil, "the Leatherworking session stayed open behind " .. dim.profName)
+    -- the game's close event can come a moment later: the list stays
+    FIRE("TRADE_SKILL_CLOSE"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._isStaticView, "a late close event closed the read-only list")
+    local lw = TSF.profTabsByName.Leatherworking
+    lw:GetScript("PostClick")(lw); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state.profName == "Leatherworking" and not TSF.state._isStaticView,
+           "the Leatherworking icon after a greyed-out profession: " .. tostring(TSF.state.profName))
+    -- a character's stored recipes, then the icon
+    TSF:OpenWithCharacter(ProfBuddy:PlayerKey(), "Leatherworking"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and TSF.state._viewCharKey and TS.open == nil,
+           "a character's recipes left the session open, or closed the window")
+    lw:GetScript("PostClick")(lw); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not TSF.state._viewCharKey and not TSF.state._isStaticView
+           and TSF.state.profName == "Leatherworking", "the Leatherworking icon after a character's recipes")
+    S.showAllProfessions = keepAll
+    TSF:UpdateProfessionTabs()
+    TSF.frame:Hide(); FLUSH()
+end
+F95()
+print("  PASS F95 2.1.1: your open profession's icon, after a greyed-out profession or a character's stored recipes, opens it with one click (the list closes the game's session; the game does nothing for the one already open)")
+
+-- F96 2.1.1 (Sushicats): a recipe that needs a crafting station shows it
+-- with the tools, "Tool: Tanning Rack": green at one, red "(not nearby)"
+-- when not (the game's GetRecipeRequirements on a known recipe of your
+-- open profession), white where the game can't tell; the detail panel
+-- follows you as you walk to one
+local function F96()
+    local TSF, st = ProfBuddy.TradeSkillFrame, ProfBuddy.TradeSkillFrame.state
+    EXPECT(ProfBuddy.Stations and ProfBuddy.Stations[2249] == "Tanning Rack"
+           and ProfBuddy.RecipeStations[1255075] == 2249, "no Tanning Rack for Mender's Leather Belt in the data")
+    EXPECT(TSF:StationFor(1255075) == "Tanning Rack" and TSF:StationFor(2152) == nil, "StationFor")
+    local function toolLines(entry)
+        local tip, out = CreateFrame("GameTooltip"), {}
+        rawset(tip, "AddLine", function(_, t, r, g, b) if t ~= " " then out[#out + 1] = { t, r, g, b } end end)
+        TSF:AppendRodLine(tip, entry)
+        return out
+    end
+    local belt = { name = "Mender's Leather Belt", spellID = 1255075, itemID = 252523, gameIndex = 1255075, isKnown = true }
+    -- a read-only list: the game can't tell, white
+    TSF:OpenWithStatic("Tailoring"); FLUSH()
+    local l = toolLines(belt)
+    EXPECT(#l == 1 and l[1][1] == "Tool: Tanning Rack" and l[1][2] == 1 and l[1][3] == 1, "read-only list: " .. tostring(l[1] and l[1][1]))
+    -- your open Leatherworking: the game's check
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    local met
+    C_TradeSkillUI.GetRecipeRequirements = function(id)
+        if id == 1255075 then return { { name = "Tanning Rack", met = met, type = 0 } } end
+        return {}
+    end
+    met = false
+    l = toolLines(belt)
+    EXPECT(#l == 1 and l[1][1] == "Tool: Tanning Rack (not nearby)" and l[1][2] == 1 and l[1][3] == 0.4, "not nearby: " .. tostring(l[1] and l[1][1]))
+    met = true
+    l = toolLines(belt)
+    EXPECT(#l == 1 and l[1][1] == "Tool: Tanning Rack" and l[1][2] == 0.4 and l[1][3] == 1, "at one: " .. tostring(l[1] and l[1][1]))
+    -- someone else's linked profession: not your check
+    st._isLinkedView = true
+    EXPECT(TSF:StationMet(belt, "Tanning Rack") == nil, "a linked profession checked your station")
+    st._isLinkedView = false
+    -- a recipe with no station: no line
+    EXPECT(#toolLines({ name = "Light Armor Kit", spellID = 2152, itemID = 2304, gameIndex = 2152, isKnown = true }) == 0, "a station line with none")
+    -- the detail panel follows you
+    table.insert(st.recipes, 1, belt)
+    st.selected = belt.name
+    met = false
+    rawset(TSF.embeddedTip, "_lines", {})
+    TSF:RefreshDetailPanel()
+    local function has(t) for _, x in ipairs(rawget(TSF.embeddedTip, "_lines")) do if x == t then return true end end end
+    EXPECT(has("Tool: Tanning Rack (not nearby)"), "the detail panel: no (not nearby)")
+    met = true
+    rawset(TSF.embeddedTip, "_lines", {})
+    TSF._stationTicker:GetScript("OnUpdate")(TSF._stationTicker, 1.1)
+    EXPECT(has("Tool: Tanning Rack") and not has("Tool: Tanning Rack (not nearby)"), "the panel did not follow you to the station")
+    -- unchanged: no refresh
+    rawset(TSF.embeddedTip, "_lines", {})
+    TSF._stationTicker:GetScript("OnUpdate")(TSF._stationTicker, 1.1)
+    EXPECT(#rawget(TSF.embeddedTip, "_lines") == 0, "the panel refreshed with nothing changed")
+    table.remove(st.recipes, 1)
+    st.selected = nil
+    C_TradeSkillUI.GetRecipeRequirements = nil
+    TSF.frame:Hide(); FLUSH()
+end
+F96()
+print("  PASS F96 2.1.1: a crafting station shows with the tools (Tanning Rack): white on a read-only list, red (not nearby) or green from the game's check on your open profession, none for a recipe without one; the detail panel follows you")
+
+print("ALL FOREVER TESTS PASS (96)")

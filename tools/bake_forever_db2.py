@@ -18,7 +18,9 @@ teaches (Knowledge.lua).
 
 Data/Forever/Tools.lua lists every other tool a recipe needs (Blacksmith
 Hammer, Arclight Spanner, Philosopher's Stone, Flint and Tinder and so on),
-from SpellTotems, with the items that satisfy each (tool_tables).
+from SpellTotems, with the items that satisfy each (tool_tables), and the
+crafting station a recipe needs (Tanning Rack, Anvil, Loom and so on), from
+SpellCastingRequirements and SpellFocusObject (station_table).
 
 rod names the Enchanting rod a recipe needs, as on TBC Anniversary: a
 required totem category (SpellTotems) of type 3 (TotemCategory). The rods
@@ -88,6 +90,7 @@ INPUTS = os.path.join(HERE, "forever")
 OUT_DIR = os.path.join(REPO, "ProfessionBuddy", "Data", "Forever")
 TABLES = ["SkillLineAbility", "SkillLine", "SpellName", "SpellEffect", "SpellReagents",
           "SpellTotems", "TotemCategory", "ItemXBonusTree",
+          "SpellCastingRequirements", "SpellFocusObject",
           "TradeSkillCategory", "ItemSparse", "Item", "ItemEffect", "ItemXItemEffect"]
 
 # Skill lines PB does not bake: 2933 is test content, and 3012 is the
@@ -242,10 +245,17 @@ def build(csvdir, carry_dir=None):
     rods.sort()
     bonus_items = {I(r["ItemID"]) for r in read(csvdir, "ItemXBonusTree")}
 
+    # (item, count, low, high): a random amount is the count plus or minus
+    # count x Variance / 2 (tools/yield_db.py, 2.1.1)
+    def made(r):
+        base = float(r.get("EffectBasePointsF") or 0)
+        half = base * float(r.get("Variance") or 0) / 2
+        return (I(r["EffectItemType"]), max(I(r.get("EffectBasePointsF")), 1),
+                max(int(round(base - half)), 1), max(int(round(base + half)), 1))
     created = {}
     for r in read(csvdir, "SpellEffect"):
         if I(r["Effect"]) == 24 and I(r.get("EffectItemType")):
-            created[I(r["SpellID"])] = (I(r["EffectItemType"]), max(I(r.get("EffectBasePointsF")), 1))
+            created[I(r["SpellID"])] = made(r)
 
     abilities = read(csvdir, "SkillLineAbility")
     if carry_dir:
@@ -263,7 +273,7 @@ def build(csvdir, carry_dir=None):
         old_created = {}
         for r in read(carry_dir, "SpellEffect"):
             if I(r["Effect"]) == 24 and I(r.get("EffectItemType")):
-                old_created[I(r["SpellID"])] = (I(r["EffectItemType"]), max(I(r.get("EffectBasePointsF")), 1))
+                old_created[I(r["SpellID"])] = made(r)
         for r in read(carry_dir, "SkillLineAbility"):
             spell = I(r["Spell"])
             if (I(r["SkillLine"]), spell) in have or not I(r["TradeSkillCategoryID"]):
@@ -351,6 +361,7 @@ def build(csvdir, carry_dir=None):
             "teachKnown": any(i in items for i in tinv),
             "teachItems": tinv,
             "yield": out[1] if out else 1,
+            "yieldRange": (out[2], out[3]) if out and len(out) > 3 and out[2] != out[3] else None,
             "skillReq": learn,
             "learnFrom": learn_from,
             "skillRange": [learn if learn is not None else False, yellow,
@@ -432,16 +443,34 @@ def tool_tables(csvdir, spells):
     return recipe_tools, cats, {i: names.get(i) or ("item:%d" % i) for i in used_items}
 
 
-def emit_tools(recipe_tools, cats, item_names, build_id, path_label, source):
+def station_table(csvdir, spells):
+    """The crafting station each recipe in `spells` needs (an Anvil, a
+    Tanning Rack: SpellCastingRequirements.RequiresSpellFocus, named in
+    SpellFocusObject; Sushicats, 2.1.1). Returns (recipe_station, names):
+      recipe_station  spell -> station ID
+      names           station ID -> name
+    Shared with tools/bake_tbc_tools.py."""
+    focus = {I(r["ID"]): r.get("Name_lang") or "" for r in read(csvdir, "SpellFocusObject")}
+    recipe_station = {}
+    for r in read(csvdir, "SpellCastingRequirements"):
+        spell, fid = I(r["SpellID"]), I(r.get("RequiresSpellFocus"))
+        if spell in spells and fid and focus.get(fid):
+            recipe_station[spell] = fid
+    return recipe_station, {fid: focus[fid] for fid in set(recipe_station.values())}
+
+
+def emit_tools(recipe_tools, cats, item_names, build_id, path_label, source,
+               stations=None, station_names=None):
     """Lua source for a Tools.lua file."""
     L = ["-" * 70,
          "-- ProfessionBuddy  --  %s" % path_label,
          "-- Tools a recipe requires, other than Enchanting rods (the recipe's",
-         "-- `rod` field). From %s," % source,
+         "-- `rod` field), and the crafting station it needs. From %s," % source,
          "-- build %s." % build_id,
          "--   RecipeTools[spellID]  = { category ID, or -item ID for one item }",
          "--   ToolCategories[ID]    = { name, items = { items that satisfy it } }",
          "--   ToolItemNames[itemID] = name of a specific required item",
+         "--   RecipeStations[spellID] = station ID; Stations[ID] = its name",
          "--",
          "-- GENERATED. Do not hand-edit.",
          "-" * 70,
@@ -457,6 +486,13 @@ def emit_tools(recipe_tools, cats, item_names, build_id, path_label, source):
     L += ["}", "ProfBuddy.RecipeTools = {"]
     for spell in sorted(recipe_tools):
         L.append("    [%d] = { %s }," % (spell, ", ".join(str(x) for x in recipe_tools[spell])))
+    L.append("}")
+    L.append("ProfBuddy.Stations = {")
+    for fid in sorted(station_names or {}):
+        L.append("    [%d] = %s," % (fid, lua_str(station_names[fid])))
+    L += ["}", "ProfBuddy.RecipeStations = {"]
+    for spell in sorted(stations or {}):
+        L.append("    [%d] = %d," % (spell, stations[spell]))
     L.append("}")
     return "\n".join(L) + "\n"
 
@@ -482,6 +518,9 @@ def emit(prof, recs, build_id, rods=()):
         L.append("        itemID     = %d," % r["itemID"])
         if r["yield"] > 1:
             L.append("        yield      = %d," % r["yield"])
+        if r.get("yieldRange"):
+            L.append("        yieldMin   = %d," % r["yieldRange"][0])
+            L.append("        yieldMax   = %d," % r["yieldRange"][1])
         if r["skillReq"] is not None:
             L.append("        skillReq   = %d," % r["skillReq"])
             L.append("        learnFrom  = %s," % lua_str(r["learnFrom"]))
@@ -618,10 +657,12 @@ def main():
     print("RandomStats.lua  %4d items" % len(random))
     spells = {rec["spell"] for recs in final.values() for rec in recs}
     rt, cats, inames = tool_tables(a.csvdir, spells)
+    st, snames = station_table(a.csvdir, spells)
     with open(os.path.join(a.out, "Tools.lua"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(emit_tools(rt, cats, inames, a.build, "Data/Forever/Tools.lua",
-                            "WoW: Forever's SpellTotems, TotemCategory and ItemSparse"))
-    print("Tools.lua        %4d recipes need a tool" % len(rt))
+                            "WoW: Forever's SpellTotems, TotemCategory, ItemSparse,\n"
+                            "-- SpellCastingRequirements and SpellFocusObject", st, snames))
+    print("Tools.lua        %4d recipes need a tool, %d a station" % (len(rt), len(st)))
     print("\n%d recipes in %d files -> %s" % (total, len(files), a.out))
     for k in sorted(report):
         print("  %-66s %5d" % (k, report[k]))

@@ -4963,6 +4963,7 @@ local recipes = {
         },
         category = "Trade Good",
         skillRange = { 325, 325, 330, 335 },
+        yield = 2,
         reagents = { { itemID = 21877, count = 6, name = "Netherweave Cloth" } },
     },
     ["Mooncloth"] = {
@@ -4999,6 +5000,7 @@ local recipes = {
         },
         category = "Trade Good",
         skillRange = { 300, 300, 310, 320 },
+        yield = 2,
         reagents = { { itemID = 21877, count = 3, name = "Netherweave Cloth" } },
     },
     ["Primal Mooncloth"] = {
