@@ -4568,8 +4568,9 @@ end
 -- has one in its bags or bank, red + "(missing)" if not. Then the crafting
 -- station it needs (a Tanning Rack, an Anvil; ProfBuddy.RecipeStations,
 -- Sushicats 2.1.1): green at one, red "(not nearby)" when not, from the
--- game's own check on your open profession's known recipes; white where
--- the game can't tell (a recipe you don't know, another character's).
+-- game's own check on your open profession's known recipes (WoW: Forever);
+-- white where the game can't tell (a recipe you don't know, another
+-- character's, and on TBC Anniversary, whose check ignores distance).
 -- No-op for a recipe that needs neither. The static entry is resolved by
 -- spellID (locale-stable) with a name fallback.
 function TSF:AppendRodLine(tip, recipe)

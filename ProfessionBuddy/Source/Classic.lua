@@ -237,26 +237,9 @@ function Source:Craft(index, qty, isCraft)
     end
 end
 
--- What a recipe of the open window needs, as Blizzard's window reads it:
--- GetTradeSkillTools and GetCraftSpellFocus return name, met pairs (an
--- Anvil, a Blacksmith Hammer), met being whether you stand at the station
--- or carry the tool.
-local function Pairs(...)
-    local out = {}
-    for i = 1, select("#", ...), 2 do
-        local name, met = select(i, ...)
-        if type(name) == "string" and name ~= "" then out[#out + 1] = { name = name, met = met and true or false } end
-    end
-    return out
-end
-
-function Source:Requirements(index, isCraft)
-    if not index then return nil end
-    if isCraft then
-        return GetCraftSpellFocus and Pairs(GetCraftSpellFocus(index)) or nil
-    end
-    return GetTradeSkillTools and Pairs(GetTradeSkillTools(index)) or nil
-end
+-- No Source:Requirements here: TBC Anniversary's GetTradeSkillTools says a
+-- crafting station is met at any distance ("Forge 1" far away and at the
+-- forge, m4ru 2026-11-11), so the station line stays white on this client.
 
 function Source:CloseWindow(isCraft)
     if isCraft then

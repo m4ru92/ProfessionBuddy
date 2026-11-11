@@ -76,7 +76,8 @@
 --   Source:Requirements(index, isCraft) the open window's live check of
 --                                 what a known recipe needs, { { name, met } },
 --                                 or nil; a crafting station's met is whether
---                                 you stand at one (2.1.1)
+--                                 you stand at one (2.1.1, WoW: Forever only:
+--                                 TBC Anniversary's answer ignores distance)
 --   ReadOpenWindow may also set win.itemsPending (reagent names still
 --   loading) and give each row a category name.
 ----------------------------------------------------------------------
