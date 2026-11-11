@@ -615,6 +615,16 @@ function P:FillTooltip(tt, r)
     if r.vendorSell then
         tt:AddDoubleLine("Vendor pays", self:Money(r.vendorSell * r.yield), 0.9, 0.9, 0.9, 1, 1, 1)
     end
+    -- a craft that makes more than one: what one item sells for (2.1.1,
+    -- m4ru couldn't find one Elemental Blasting Powder's price)
+    if r.yield > 1 and (r.sell or r.vendorSell) then
+        local each = {}
+        if r.sell and not r.bop then each[#each + 1] = self:Money(r.sell) .. " at auction" end
+        if r.vendorSell then each[#each + 1] = self:Money(r.vendorSell) .. " from a vendor" end
+        if #each > 0 then
+            tt:AddLine("One item: " .. table.concat(each, ", "), 0.5, 0.5, 0.5, true)
+        end
+    end
     if r.profit then
         local how = r.profitFrom == "auction"
             and "Auction price less the 5% auction house cut, less the cost."

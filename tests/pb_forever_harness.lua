@@ -33,11 +33,23 @@ print("  PASS F1 Mainline toc loads " .. #files .. " entries with no error, no T
 -- F2: startup runs every module Init without error and records the professions
 ProfBuddyDB = nil
 FIRE("ADDON_LOADED", "ProfessionBuddy")
+-- 2.1.1: the login line waits for PLAYER_LOGIN (ElvUI drops earlier lines)
+EXPECT(not PRINTED("loaded. Type /pb or /profbuddy."), "the loaded line printed at ADDON_LOADED")
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
 for _, l in ipairs(PRINTS) do EXPECT(not l:find("failed to load", 1, true), "module init error: " .. l) end
 EXPECT(PRINTED("loaded. Type /pb or /profbuddy."), "no loaded line")
+do
+    local function count()
+        local n = 0
+        for _, l in ipairs(PRINTS) do if l:find("loaded. Type /pb", 1, true) then n = n + 1 end end
+        return n
+    end
+    EXPECT(count() == 1, "the loaded line " .. count() .. " times")
+    FIRE("PLAYER_LOGIN")
+    EXPECT(count() == 1, "the loaded line again on a second PLAYER_LOGIN")
+end
 EXPECT(not PRINTED("not supported"), "a not-supported line is still printed")
 local DS = ProfBuddy.DataStore
 local lw, sk = DS:GetProfession(nil, "Leatherworking"), DS:GetProfession(nil, "Skinning")
@@ -6217,6 +6229,24 @@ local function F94()
     local each = P:DetailText(r, function() return false end)
     EXPECT(select(2, each:gsub("\n", "")) == #pc - 1 and not each:find(", \n", 1, true) and not each:find("   ", 1, true),
            "a piece per line: " .. each)
+    -- 2.1.1: the tooltip names one item's price when a craft makes more
+    local function tipLines(res)
+        local tip = CreateFrame("GameTooltip")
+        rawset(tip, "_lines", {})
+        P:FillTooltip(tip, res)
+        local out = {}
+        for _, l in ipairs(rawget(tip, "_lines")) do
+            out[#out + 1] = (l:gsub("|T[^|]*CopperIcon[^|]*|t", "c"):gsub("|T[^|]*SilverIcon[^|]*|t", "s")
+                :gsub("|T[^|]*GoldIcon[^|]*|t", "g"):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+        end
+        return table.concat(out, "\n")
+    end
+    local t = tipLines(r)
+    EXPECT(t:find("One item: 50c at auction, 75c from a vendor", 1, true), "one item's price: " .. t)
+    local t1 = tipLines(setmetatable({ yield = 1, yieldMin = false }, { __index = r }))
+    EXPECT(not t1:find("One item", 1, true), "one item's price on a craft that makes one: " .. t1)
+    local tb = tipLines(setmetatable({ bop = true }, { __index = r }))
+    EXPECT(tb:find("One item: 75c from a vendor", 1, true) and not tb:find("One item: 50c", 1, true), "BoP one item: " .. tb)
     r = P:RecipeCost({ name = "Cured Rugged Hide" }, "Leatherworking")
     EXPECT(r and r.yieldMin == nil and not P:DetailText(r):find("~", 1, true), "a fixed count marked")
     Auctionator, PB.db.settings.priceAuctionator, PB.db.settings.showPrices = keepAuc, keepAucOn, keepShow
@@ -6227,6 +6257,6 @@ local function F94()
     TSF.frame:Hide(); FLUSH()
 end
 F94()
-print("  PASS F94 2.1.1: a craft that makes more than one: the count on the detail panel's icon, Makes after the category, Can make with the items (3 (6)), none for one item; a random amount as 1-3, Can make 2 (2-6), 'priced as 2' on the Category line, no mark on the price line; whole pieces of the price line wrap; the data's counts and ranges")
+print("  PASS F94 2.1.1: a craft that makes more than one: the count on the detail panel's icon, Makes after the category, Can make with the items (3 (6)), none for one item; a random amount as 1-3, Can make 2 (2-6), 'priced as 2' on the Category line, no mark on the price line; whole pieces of the price line wrap; the tooltip names one item's price; the data's counts and ranges")
 
 print("ALL FOREVER TESTS PASS (94)")

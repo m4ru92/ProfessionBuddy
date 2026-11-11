@@ -875,11 +875,19 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         end
     end
 
-    print(addon:LoadedLine())
+    -- the login line waits for PLAYER_LOGIN: ElvUI's chat setup drops a
+    -- line printed this early (2.0.2 TEST-d, TBC Anniversary)
+    addon.started = true
 end)
 
 -- The surname may not be readable at ADDON_LOADED; by login it is.
-addon:RegisterEvent("PLAYER_LOGIN", function() addon:MigrateToFullName() end)
+addon:RegisterEvent("PLAYER_LOGIN", function()
+    addon:MigrateToFullName()
+    if addon.started and not addon.saidLoaded then
+        addon.saidLoaded = true
+        print(addon:LoadedLine())
+    end
+end)
 
 -- Full scan on login / reload only. Zoning, instance entry and every other
 -- loading screen fire this event too, and a rescan on each one is wasted work.

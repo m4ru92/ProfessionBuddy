@@ -26,6 +26,8 @@ EXPECT(hasClassic, "the TBC toc does not load Source/Classic.lua")
 
 ProfBuddyDB = { settings = { windowStyle = LOOK } }
 FIRE("ADDON_LOADED", "ProfessionBuddy")
+-- 2.1.1: the login line waits for PLAYER_LOGIN (ElvUI drops earlier lines)
+EXPECT(not PRINTED("loaded. Type /pb or /profbuddy."), "the loaded line printed at ADDON_LOADED")
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
