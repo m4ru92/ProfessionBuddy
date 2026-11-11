@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "2.1.1"
+addon.version = "2.2.0"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering

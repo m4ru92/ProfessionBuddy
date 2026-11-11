@@ -2,6 +2,23 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.2.0
+
+The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for than their materials cost, for your characters, your friends and your guildmates.
+
+**Highlights**
+
+- **Shuffle tab:** a new tab in the main window, and among the profession window's bottom tabs, lists the crafts a vendor pays at least a minimum profit for, best first: the materials' cost, what the vendor pays, the profit, and about how much an hour.
+- **Vendor shuffle view:** the profession window's View menu shows the same for one profession.
+
+<!-- more -->
+
+**Added on both clients**
+
+- **Shuffle tab:** one row per craft, with who knows it (you first, then your alts, friends and guildmates) and four figures: Cost, Vendor pays, Profit and Per hour. Profit is what the vendor pays for everything the craft makes, minus the materials' cost, priced as the detail panel prices them; materials you already have count at their price. Per hour is about: the profit over each craft's cast time (at least 1 second) plus 0.5 seconds between casts. A craft with a material that has no price is left out. Filters: Who (everyone, you and your alts, friends, guild), profession, the minimum profit, and "Vendor materials" for crafts whose every material comes from a vendor. Click Profit or Per hour to sort, hover a row for each material's price, and click it to open the recipe. From a profession window, its Shuffle bottom tab keeps your profession open behind the main window, as the other bottom tabs do.
+- **Vendor shuffle view:** in the profession window's View menu while prices show: the known recipes that earn at least the minimum from a vendor, most profit first, each with its profit and per hour.
+- **Vendor shuffle minimum:** in Settings, under Prices, and in the Shuffle tab: any profit, or from 50c up to 1g. 1s by default.
+
 ## 2.1.1 - 2026-11-10
 
 Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two bars, and ProfessionBuddy didn't say so anywhere. Also the crafting station a recipe needs, asked for by Sushicats.

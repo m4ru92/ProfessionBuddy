@@ -2549,7 +2549,7 @@ function TSF:UpdateLinkButton()
 end
 
 ----------------------------------------------------------------------
--- Persistent bottom nav strip (Characters / Friends / Orders)
+-- Persistent bottom nav strip (Characters / Friends / Guild / Orders / Shuffle)
 -- Mirrors the main /pb window's bottom tabs so navigation is the same
 -- everywhere. From the profession window these navigate by swapping to
 -- the main window on that tab (same behavior the old top Friends icon
@@ -2570,6 +2570,10 @@ function TSF:BuildNavStrip(parent)
         end },
         { text = "Orders", toggle = function()
             if addon.OrdersPanel then addon.OrdersPanel:Toggle() end
+        end },
+        -- the vendor shuffle (2.2.0), as on the main window
+        { text = "Shuffle", toggle = function()
+            if addon.ShufflePanel then addon.ShufflePanel:Toggle() end
         end },
     }
 
@@ -3143,6 +3147,10 @@ function TSF:UpdateViewDropdown(unknown)
         "Learnable now (" .. learnableCount .. ")",
         "All (" .. totalCount .. ")",
     }
+    -- Vendor shuffle (2.2.0, Skeleton): known crafts a vendor pays a
+    -- profit for. Only while prices show.
+    local P = addon.Prices
+    if P and P:Enabled() then opts[5] = "Vendor shuffle" end
     self.viewDropdown:SetOptions(opts)
 
     if state.showTab == "known" then
@@ -3151,6 +3159,8 @@ function TSF:UpdateViewDropdown(unknown)
         self.viewDropdown:SetValue(opts[2])
     elseif state.showTab == "learnable" then
         self.viewDropdown:SetValue(opts[3])
+    elseif state.showTab == "vendor" and opts[5] then
+        self.viewDropdown:SetValue(opts[5])
     else
         self.viewDropdown:SetValue(opts[4])
     end
@@ -3390,6 +3400,12 @@ end
 -- when its item binds when picked up (only a vendor buys it)
 local function ProfitPrefix(entry)
     local P = addon.Prices
+    -- the Vendor shuffle view (2.2.0): profit from a vendor and per hour
+    if state.showTab == "vendor" and P and P:Enabled() then
+        local v = P:ShuffleCached(entry, state.profName)
+        if not (v and v.profit) then return "|cff666666-|r  " end
+        return P:SignedMoney(v.profit, true) .. " |cff888888" .. P:Money(v.perHour, true) .. "/h|r  "
+    end
     if not (P and P:ListProfitOn()) then return "" end
     local v, bop = P:ListProfit(entry, state.profName)
     if bop then return "|cff808080BoP|r  " end
@@ -3483,7 +3499,7 @@ function TSF:UpdateListRows()
                     local rangeStr = ""
                     local sr = GetSkillRange(entry)
 
-                    if RANGE_NUMBERS_HIDDEN[state.profName] then
+                    if RANGE_NUMBERS_HIDDEN[state.profName] or state.showTab == "vendor" then
                         -- Range numbers known-unreliable for this profession
                         -- (smelting); suppress until the 1.0.1 game-sourced
                         -- rework. Name color (from the game) still shows.
@@ -3540,7 +3556,7 @@ function TSF:UpdateListRows()
                 end
                 -- the name stops short of the right-hand text when the
                 -- Profit column makes it longer
-                if addon.Prices and addon.Prices:ListProfitOn() then
+                if addon.Prices and (addon.Prices:ListProfitOn() or state.showTab == "vendor") then
                     row.nameText:SetPoint("RIGHT", row.rightText, "LEFT", -4, 0)
                 else
                     row.nameText:SetPoint("RIGHT", -40, 0)
@@ -6598,6 +6614,23 @@ function TSF:BuildSettingsPanel(parent)
         PricesChanged()
         if TSF.scrollBar then TSF:RefreshRecipeList() end
     end
+    -- Vendor shuffle (2.2.0): the minimum profit a craft needs to be listed
+    -- in the Shuffle tab and the Vendor shuffle view (also set in the tab)
+    local shuffleOpts = {}
+    for i, c in ipairs(P and P.SHUFFLE_MINS or {}) do shuffleOpts[i] = P:ShuffleMinLabel(c) end
+    local shuffleDD = CreateDropdown(content, 322, shuffleOpts,
+        P and P:ShuffleMinLabel(P:ShuffleMin()) or "",
+        function(val)
+            for _, c in ipairs(P.SHUFFLE_MINS) do
+                if P:ShuffleMinLabel(c) == val then settings.shuffleMinProfit = c end
+            end
+            ListChanged()
+            if addon.ShufflePanel and addon.ShufflePanel.parent then addon.ShufflePanel:Repaint() end
+        end,
+        "Vendor shuffle minimum: ")
+    shuffleDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    self.shuffleMinDD = shuffleDD
+    yLeft = yLeft - 30
 
     local clearBtn = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     clearBtn:SetSize(160, 22)
@@ -6646,6 +6679,7 @@ function TSF:BuildSettingsPanel(parent)
         Set(hideLossCB, on)
         staleDD:SetAlpha(on and 1 or 0.4)
         interDD:SetAlpha(on and 1 or 0.4)
+        shuffleDD:SetAlpha(on and 1 or 0.4)
     end
     showPricesCB:SetScript("OnClick", function(cb)
         settings.showPrices = cb:GetChecked() and true or false
@@ -7030,7 +7064,7 @@ function TSF:UpdateFilterVisibility()
         end
     end
     if self.sourceDropdown then
-        if state.showTab == "known" then self.sourceDropdown:Hide() else self.sourceDropdown:Show() end
+        if state.showTab == "known" or state.showTab == "vendor" then self.sourceDropdown:Hide() else self.sourceDropdown:Show() end
     end
 end
 
@@ -7278,7 +7312,7 @@ end
 -- unknown (optional): see UpdateViewDropdown.
 function TSF:LoadRecipes(unknown)
     local rawList = {}
-    local showKnown  = (state.showTab == "known" or state.showTab == "all")
+    local showKnown  = (state.showTab == "known" or state.showTab == "all" or state.showTab == "vendor")
     -- "Learnable now" is the Missing list cut to LearnableNow.
     local learnableOnly = (state.showTab == "learnable")
     local showMissing = (state.showTab == "missing" or state.showTab == "all" or learnableOnly)
@@ -7398,7 +7432,7 @@ function TSF:LoadRecipes(unknown)
     -- A filter counts only in the views that show its dropdown.
     local useDiff = state.showTab ~= "missing" and state.showTab ~= "learnable"
         and state.filterDiff ~= "All"
-    local useSrc  = state.showTab ~= "known" and (state.filterSource or "All") ~= "All"
+    local useSrc  = state.showTab ~= "known" and state.showTab ~= "vendor" and (state.filterSource or "All") ~= "All"
 
     -- Filter
     local filtered = {}
@@ -7410,6 +7444,10 @@ function TSF:LoadRecipes(unknown)
 
     local PR = addon.Prices
     local hideLoss = PR and PR:HideLossOn()
+    -- the Vendor shuffle view (2.2.0): crafts a vendor pays at least the
+    -- minimum profit for, most profit first
+    local vendorView = state.showTab == "vendor" and PR and PR:Enabled() and true or false
+    local shuffleMin = vendorView and PR:ShuffleMin() or 0
     for _, r in ipairs(rawList) do
         local passSearch = true
         local passDiff   = true
@@ -7464,7 +7502,13 @@ function TSF:LoadRecipes(unknown)
             passLoss = not (profit and profit < 0)
         end
 
-        if passSearch and passDiff and passCat and passFaction and passLoss then
+        local passVendor = true
+        if vendorView then
+            local v = PR:ShuffleCached(r, state.profName)
+            passVendor = (v and v.profit and v.profit >= shuffleMin) and true or false
+        end
+
+        if passSearch and passDiff and passCat and passFaction and passLoss and passVendor then
             table.insert(filtered, r)
         end
     end
@@ -7472,7 +7516,7 @@ function TSF:LoadRecipes(unknown)
     -- Sort (v6: secondary sort for all modes; v9: ascending/descending toggle)
     local sortBy = state.sortBy
     local asc = state.sortAsc
-    local useCategories = (sortBy == "Category")
+    local useCategories = (sortBy == "Category") and not vendorView
 
     -- Skill Ups duration helper (shared by Category and Skill Ups sorts)
     local sk = state.skillLevel or 0
@@ -7521,6 +7565,12 @@ function TSF:LoadRecipes(unknown)
         end)
     else
         table.sort(filtered, function(a, b)
+            if vendorView then
+                local va, vb = PR:ShuffleCached(a, state.profName), PR:ShuffleCached(b, state.profName)
+                local pa, pb = va and va.profit or 0, vb and vb.profit or 0
+                if pa ~= pb then return pa > pb end
+                return a.name < b.name
+            end
             if sortBy == "Skill-ups" then
                 -- Known sorts above missing
                 if a.isKnown ~= b.isKnown then return a.isKnown end
@@ -7667,8 +7717,24 @@ function TSF:RefreshRecipeList()
     local unknown = self:GetUnknownForView()
 
     -- Prices.lua: one cost per recipe per refresh (Profit column, sort, loss filter)
-    if addon.Prices then addon.Prices:ResetListCache() end
+    local PR = addon.Prices
+    if PR then PR:ResetListCache() end
+    -- the Vendor shuffle view needs prices on
+    if state.showTab == "vendor" and not (PR and PR:Enabled()) then state.showTab = "known" end
+    if PR then PR._unloaded = nil end
     self:LoadRecipes(unknown)
+    -- a product the game hadn't loaded leaves its craft out of the Vendor
+    -- shuffle view: look again, up to 3 times a second apart
+    if state.showTab == "vendor" and PR and PR._unloaded then
+        self._vendorRetry = (self._vendorRetry or 0) + 1
+        if self._vendorRetry <= 3 then
+            C_Timer.After(1, function()
+                if self.frame and self.frame:IsShown() and state.showTab == "vendor" then self:RefreshRecipeList() end
+            end)
+        end
+    else
+        self._vendorRetry = 0
+    end
 
     local maxScroll = math.max(0, #state.recipes - VISIBLE_ROWS)
     self.scrollBar:SetMinMaxValues(0, maxScroll)
@@ -8123,6 +8189,49 @@ end
 -- Loads their stored data from DataStore and renders it with
 -- difficulty colors relative to their skill level.
 ----------------------------------------------------------------------
+-- The Shuffle tab changed the minimum: Settings' dropdown and the Vendor
+-- shuffle view follow
+function TSF:SyncShuffleMin()
+    local P = addon.Prices
+    if self.shuffleMinDD and P then self.shuffleMinDD:SetValue(P:ShuffleMinLabel(P:ShuffleMin())) end
+    if self.frame and self.frame:IsShown() and state.showTab == "vendor" then self:RefreshRecipeList() end
+end
+
+-- Open a character's profession on one recipe, in the Vendor shuffle
+-- view (the Shuffle tab, 2.2.0): their read-only view, or your own
+-- character's. A filter that would hide the recipe is cleared.
+function TSF:OpenRecipeFor(charKey, profName, recipeName)
+    if self:WaitToShow(recipeName .. " opens", function() self:OpenRecipeFor(charKey, profName, recipeName) end) then return end
+    self:OpenWithCharacter(charKey, profName)
+    if not (self.frame and self.frame:IsShown()) then return end
+    local P = addon.Prices
+    if P and P:Enabled() then state.showTab = "vendor" end
+    local function find()
+        for i, r in ipairs(state.recipes) do
+            if not r.isHeader and r.name == recipeName then return i end
+        end
+    end
+    self:RefreshRecipeList()
+    local idx = find()
+    if not idx then
+        state.searchText = ""
+        if self.searchBox then self.searchBox:SetText("") end
+        state.filterCat, state.filterDiff = "All", "All"
+        if self.catDropdown then self.catDropdown:SetValue("All") end
+        if self.diffDropdown then self.diffDropdown:SetValue("All") end
+        self:RefreshRecipeList()
+        idx = find()
+    end
+    if not idx then return end
+    state.scrollOffset = math.max(0, math.min(idx - 1, #state.recipes - VISIBLE_ROWS))
+    self.scrollBar:SetValue(state.scrollOffset)
+    state.selected = recipeName
+    self:UpdateListRows()
+    self:UpdateListHighlights()
+    self:RefreshDetailPanel()
+    self:UpdateCraftBar()
+end
+
 function TSF:OpenWithCharacter(charKey, profName)
     if self:WaitToShow(profName .. " opens", function() self:OpenWithCharacter(charKey, profName) end) then return end
     if self._parked then self:EndPark(true) end

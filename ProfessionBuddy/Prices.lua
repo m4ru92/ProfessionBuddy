@@ -425,7 +425,7 @@ function P:ListProfitOn() return self:Enabled() and Settings().priceListProfit =
 function P:HideLossOn() return self:Enabled() and Settings().priceHideLoss == true end
 
 -- A new list refresh: forget the costs worked out for the last one
-function P:ResetListCache() self._listCache = nil end
+function P:ResetListCache() self._listCache, self._shuffleCache = nil, nil end
 
 -- A recipe's profit per craft, or nil when it has none (no sale price, a
 -- material without a price, an enchant); then whether its product binds
@@ -441,6 +441,114 @@ function P:ListProfit(recipe, profName)
         self._listCache[key] = v
     end
     return v.p, v.b
+end
+
+----------------------------------------------------------------------
+-- Vendor shuffle (2.2.0, Skeleton): a craft sold straight to a vendor.
+-- Its profit is what the vendor pays minus the materials' cost, priced
+-- as everywhere else (materials you hold count at their price, m4ru
+-- V5); per hour from the craft's cast time plus a gap between casts.
+----------------------------------------------------------------------
+P.SHUFFLE_GAP = 0.5             -- seconds between casts (m4ru V4)
+P.SHUFFLE_MIN_DEFAULT = 100     -- 1s (m4ru V3)
+P.SHUFFLE_MINS = { 0, 50, 100, 500, 1000, 5000, 10000 }
+
+-- A minimum's label: "Any profit", or the amount ("1s")
+function P:ShuffleMinLabel(copper)
+    if (tonumber(copper) or 0) == 0 then return "Any profit" end
+    return self:Money(copper)
+end
+
+-- VendorShuffle, once per recipe per list refresh (false: none)
+function P:ShuffleCached(recipe, profName)
+    if not (recipe and recipe.name) then return nil end
+    self._shuffleCache = self._shuffleCache or {}
+    local key = (profName or "") .. "|" .. recipe.name
+    local v = self._shuffleCache[key]
+    if v == nil then
+        v = self:VendorShuffle(recipe, profName) or false
+        self._shuffleCache[key] = v
+    end
+    return v or nil
+end
+
+-- The minimum profit a craft needs to be listed, in copper
+function P:ShuffleMin()
+    local v = tonumber(Settings().shuffleMinProfit)
+    if v and v >= 0 then return v end
+    return self.SHUFFLE_MIN_DEFAULT
+end
+
+-- Seconds one craft takes: the cast time, at least 1 s (an instant craft
+-- or a spell the game doesn't answer for still takes a global cooldown),
+-- plus the gap
+local function CraftSeconds(spellID)
+    local castMs
+    local id = tonumber(spellID)
+    if id and id > 0 then
+        -- the global where the client still has it (TBC Anniversary), as
+        -- TradeSkillFrame.lua does; WoW: Forever only has C_Spell's
+        if GetSpellInfo then
+            castMs = select(4, GetSpellInfo(id))
+        elseif C_Spell and C_Spell.GetSpellInfo then
+            local info = C_Spell.GetSpellInfo(id)
+            castMs = info and info.castTime
+        end
+    end
+    local cast = (tonumber(castMs) or 0) / 1000
+    if cast < 1 then cast = 1 end
+    return cast + P.SHUFFLE_GAP
+end
+
+-- Every material bought from a vendor, down through crafted materials
+local function FromVendors(parts)
+    for _, part in ipairs(parts or {}) do
+        local mp = part.price or {}
+        if mp.used == "craft" then
+            if not FromVendors(mp.craftParts) then return false end
+        elseif not (mp.used == "buy" and (mp.buySource == "vendor" or mp.buySource == "vendorSeen")) then
+            return false
+        end
+    end
+    return true
+end
+
+-- One craft sold to a vendor:
+--   cost, sell (what the vendor pays for the craft's whole yield), profit,
+--   seconds (per craft), perHour (copper), fromVendors (every material from
+--   a vendor), itemID, yield, parts (ReagentsCost's)
+-- nil when it can't be worked out: no reagents, no product, a material with
+-- no price, or no vendor price. loading = true when the product isn't
+-- loaded yet (PB asked for it; look again).
+function P:VendorShuffle(recipe, profName)
+    if not (recipe and recipe.name) then return nil end
+    local reagents, data = RecipeData(recipe, profName)
+    if not (reagents and #reagents > 0) then return nil end
+    local itemID = tonumber(recipe.itemID) or (data and tonumber(data.itemID))
+    if not itemID or itemID <= 0 then return nil end
+    local unit = self:VendorSell(itemID)
+    if not unit then
+        local getInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
+        if getInfo and getInfo(itemID) == nil then
+            self._unloaded = true
+            if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(itemID) end
+            return { loading = true }
+        end
+        return nil
+    end
+    local seen = { [itemID] = true }
+    local r = self:ReagentsCost(reagents, seen, 0)
+    if r.missing > 0 then return nil end
+    local yield = Yield(data)
+    local out = { cost = r.total, sell = unit * yield, itemID = itemID, yield = yield, parts = r.parts }
+    -- a random amount (2.1.1): the sale is for the middle of the range
+    local lo, hi = data and tonumber(data.yieldMin), data and tonumber(data.yieldMax)
+    if lo and hi and lo ~= hi then out.yieldMin, out.yieldMax = lo, hi end
+    out.profit = out.sell - out.cost
+    out.seconds = CraftSeconds((data and data.spellID) or recipe.spellID)
+    out.perHour = out.profit * 3600 / out.seconds
+    out.fromVendors = FromVendors(r.parts)
+    return out
 end
 
 ----------------------------------------------------------------------

@@ -42,11 +42,12 @@ EXPECT(DS:GetProfession(nil, "Leatherworking") and DS:GetProfession(nil, "Enchan
        "professions not recorded from the skill lines")
 print("  PASS " .. TAG .. "1 TBC toc loads Classic source and no Forever data; every module starts; look " .. LOOK)
 
--- U2: the main window and its four tabs
+-- U2: the main window and its five tabs (Shuffle since 2.2.0)
 local ok, err = pcall(SlashCmdList.PROFBUDDY, "")
 EXPECT(ok, "/pb: " .. tostring(err))
 local UI = PB.UI
-EXPECT(UI.frame and UI.frame:IsShown() and #UI.frame.tabs == 4, "main window not shown with 4 tabs")
+EXPECT(UI.frame and UI.frame:IsShown() and #UI.frame.tabs == 5 and UI.frame.tabs[5].name == "shuffle",
+       "main window not shown with 5 tabs, Shuffle last")
 for i = 1, #UI.frame.tabs do
     ok, err = pcall(UI.SelectTab, UI, i)
     EXPECT(ok, "main tab " .. i .. ": " .. tostring(err))
@@ -63,7 +64,7 @@ end)
 EXPECT(ok and told == "Guildie-Realm", "guild right-click whisper: " .. tostring(err or told))
 ok, err = pcall(UI.Hide, UI)
 EXPECT(ok, "main window hide: " .. tostring(err))
-print("  PASS " .. TAG .. "2 /pb opens; Characters, Friends, Guild and Orders tabs all build and select; guild right-click whispers")
+print("  PASS " .. TAG .. "2 /pb opens; Characters, Friends, Guild, Orders and Shuffle tabs all build and select; guild right-click whispers")
 
 -- U3: a trade skill profession window, a recipe selected
 local TSF = PB.TradeSkillFrame
@@ -79,7 +80,7 @@ ok, err = pcall(function()
     TSF:UpdateListRows()
 end)
 EXPECT(ok, "selecting a recipe: " .. tostring(err))
-EXPECT(TSF.navTabs and #TSF.navTabs == 4, "the profession window's own tabs were not built")
+EXPECT(TSF.navTabs and #TSF.navTabs == 5, "the profession window's own tabs were not built (5 with Shuffle)")
 -- no profession link on TBC Anniversary (a Wrath feature): no button, and
 -- the skill bar keeps its full width
 EXPECT(rawget(TSF, "linkButton") == nil, "a profession link button on TBC Anniversary")
@@ -579,7 +580,7 @@ local function U14()
     clean()
     EXPECT(TSF.frame:IsProtected() and UI.frame:IsProtected(), "harness: the windows are not protected")
     -- his case, and each other tab
-    for i, name in ipairs({ "Characters", "Friends", "Guild", "Orders" }) do
+    for i, name in ipairs({ "Characters", "Friends", "Guild", "Orders", "Shuffle" }) do
         clean(); OPEN_TRADE()
         fight(true); PRINTS = {}
         TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH()
@@ -841,4 +842,62 @@ end
 U18()
 print("  PASS " .. TAG .. "18 2.1.1: crafting stations on TBC Anniversary (Copper Chain Belt an Anvil, Smelt Copper a Forge), always white: the game's check ignores distance, so PB doesn't ask it")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 18)")
+-- U19 2.2.0 TEST-a: the vendor shuffle on TBC Anniversary: the cast time
+-- from GetSpellInfo's 4th value, the Shuffle tab, the profession window's
+-- Vendor shuffle View, and both in combat with rows in them
+local function U19()
+    local UI, TSF, P, SP, S = PB.UI, PB.TradeSkillFrame, PB.Prices, PB.ShufflePanel, PB.db.settings
+    local st = TSF.state
+    local keepAuc, keepSpell = Auctionator, GetSpellInfo
+    local keepMin, keepShow, keepAucOn = S.shuffleMinProfit, S.showPrices, S.priceAuctionator
+    S.showPrices, S.priceAuctionator, S.shuffleMinProfit = true, true, 0
+    -- Ruined Leather Scraps 1c at auction; Light Leather sells for 5c
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return ({ [2934] = 1 })[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    GetSpellInfo = function(id)
+        if id == 2881 then return "Light Leather", nil, "icon", 3000 end
+        return keepSpell(id)
+    end
+    local v = P:VendorShuffle({ name = "Light Leather" }, "Leatherworking")
+    EXPECT(v and v.cost == 3 and v.sell == 5 and v.profit == 2 and v.seconds == 3.5,
+           "Light Leather: " .. tostring(v and v.cost) .. " " .. tostring(v and v.sell) .. " " .. tostring(v and v.seconds))
+    -- the tab
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    UI:Show()
+    UI:SelectTab(5); FLUSH()
+    SP.sortKey, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", "Everyone", nil, false
+    SP:Refresh()
+    local found = false
+    for _, e in ipairs(SP.list) do if e.name == "Light Leather" then found = true end end
+    EXPECT(found, "the Shuffle tab has no Light Leather")
+    local sites, errs = COMBAT_SWEEP({ UI.frame }, {})
+    EXPECT(#sites == 0, "the Shuffle tab in combat, the game would block:\n  " .. table.concat(sites, "\n  "))
+    EXPECT(#errs == 0, "the Shuffle tab in combat, a click errored:\n  " .. table.concat(errs, "\n  "))
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide() end
+    -- the profession window's Vendor shuffle View
+    OPEN_TRADE()
+    st.showTab = "vendor"
+    TSF:RefreshRecipeList()
+    local names = {}
+    for _, r in ipairs(st.recipes) do if not r.isHeader then names[#names + 1] = r.name end end
+    EXPECT(#names == 1 and names[1] == "Light Leather", "the Vendor shuffle View lists: " .. table.concat(names, ", "))
+    local sig = rawget(TSF.viewDropdown, "_optionSig") or ""
+    EXPECT(sig:find("Vendor shuffle", 1, true), "no Vendor shuffle in the View menu")
+    sites, errs = COMBAT_SWEEP({ TSF.frame }, { "TRADE_SKILL_UPDATE" })
+    EXPECT(#sites == 0, "the Vendor shuffle View in combat, the game would block:\n  " .. table.concat(sites, "\n  "))
+    EXPECT(#errs == 0, "the Vendor shuffle View in combat, a click errored:\n  " .. table.concat(errs, "\n  "))
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    st.showTab = "known"
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide() end
+    if TBC.open == "trade" then CLOSE_TRADE() end
+    Auctionator, GetSpellInfo = keepAuc, keepSpell
+    S.shuffleMinProfit, S.showPrices, S.priceAuctionator = keepMin, keepShow, keepAucOn
+    P:ResetListCache()
+end
+U19()
+print("  PASS " .. TAG .. "19 2.2.0 TEST-a: vendor shuffle on TBC Anniversary: cast time from GetSpellInfo, the Shuffle tab, the Vendor shuffle View, both swept in combat with rows")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 19)")

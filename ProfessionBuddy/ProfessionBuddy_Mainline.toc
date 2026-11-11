@@ -3,7 +3,7 @@
 ## Notes: Cross-character profession management for WoW: Forever.
 ## IconTexture: Interface\Icons\INV_Camelot_Camping_WelcomingCampfire
 ## Author: m4ru
-## Version: 2.1.1
+## Version: 2.2.0
 ## SavedVariables: ProfBuddyDB
 ## OptionalDeps: Auctionator, TradeSkillMaster
 ## DefaultState: enabled
@@ -54,6 +54,7 @@ UI/CharacterPanel.lua
 UI/FriendsPanel.lua
 UI/GuildPanel.lua
 UI/OrdersPanel.lua
+UI/ShufflePanel.lua
 UI/MailHelper.lua
 UI/TradeSkillFrame.lua
 UI/Trainer.lua

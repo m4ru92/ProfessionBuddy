@@ -5986,7 +5986,7 @@ local function F92()
     -- the profession window holds secure buttons: the game protects it
     EXPECT(TSF.frame:IsProtected(), "harness: the profession window is not protected")
     -- the bottom tabs, each in combat
-    local names = { "Characters", "Friends", "Guild", "Orders" }
+    local names = { "Characters", "Friends", "Guild", "Orders", "Shuffle" }
     for i, name in ipairs(names) do
         clean(); open()
         fight(true); PRINTS = {}
@@ -5997,6 +5997,7 @@ local function F92()
         ended()
         ok(name .. " tab after combat")
         EXPECT(not TSF.frame:IsShown() and TSF._parked and UI.frame:IsShown(), name .. " did not open when combat ended")
+        EXPECT(UI.frame.tabs[UI.activeTab].name == name:lower(), name .. " opened the main window on tab " .. tostring(UI.frame.tabs[UI.activeTab].name))
     end
     -- /pb, /pb friends with the profession window open
     -- /pb and /pb friends close the profession; the tab commands park it,
@@ -6364,4 +6365,212 @@ end
 F96()
 print("  PASS F96 2.1.1: a crafting station shows with the tools (Tanning Rack): white on a read-only list, red (not nearby) or green from the game's check on your open profession, none for a recipe without one; the detail panel follows you")
 
-print("ALL FOREVER TESTS PASS (96)")
+-- F97 2.2.0 TEST-a: the vendor shuffle (Skeleton). Prices.lua works out
+-- a craft sold to a vendor; the Shuffle tab lists the ones a vendor pays
+-- at least the minimum profit for, for you, your alts, friends and
+-- guildmates, best first; the profession window has a Vendor shuffle View.
+local function F97()
+    local PB = ProfBuddy
+    local P, SP, TSF, UI, S = PB.Prices, PB.ShufflePanel, PB.TradeSkillFrame, PB.UI, PB.db.settings
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    local chars = PB.db.characters
+    local keepChars = {}
+    for k, v in pairs(chars) do keepChars[k] = v end
+    local keepContacts = PB.db.contacts
+    local keepGuild = PB.Comm.IsGuildMember
+    local keepGII, keepSpell = C_Item.GetItemInfo, C_Spell.GetSpellInfo
+    local keepAuc, keepAucOn = Auctionator, S.priceAuctionator
+    S.priceAuctionator = true
+    local keepShow = S.showPrices
+    S.showPrices = true
+    local keepMine = chars[me] and chars[me].professions and chars[me].professions.Poisons
+    -- the people
+    chars["Altie-Realm"] = { professions = { Leatherworking = { recipes = {
+        ["Handstitched Leather Belt"] = {}, ["Light Armor Kit"] = {} } } } }
+    chars["Pal-Realm"] = { isRemote = true, professions = { Leatherworking = { recipes = {
+        ["Handstitched Leather Belt"] = {} } } } }
+    chars["Guildie-Realm"] = { isRemote = true, professions = { Leatherworking = { recipes = {
+        ["Light Armor Kit"] = {} } } } }
+    chars["Stranger-Realm"] = { isRemote = true, professions = { Leatherworking = { recipes = {
+        ["Handstitched Leather Belt"] = {} } } } }
+    chars[me].professions.Poisons = { recipes = { ["Instant Poison"] = {} } }
+    PB.db.contacts = { ["Pal-Realm"] = { name = "Pal" } }
+    PB.Comm.IsGuildMember = function(_, key) return key == "Guildie-Realm" end
+    -- prices: Light Leather 30c at auction; Coarse Thread 10c, Dust of Decay
+    -- 20c and Empty Vial 4c from vendors (baked); what a vendor pays
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return ({ [2318] = 30 })[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    -- the products' vendor prices; the materials load too (sell 0)
+    local SELL = { [4237] = 400, [2304] = 20, [6947] = 224, [2318] = 0, [2320] = 0, [2928] = 0, [3371] = 0 }
+    local LOADING = {}
+    C_Item.GetItemInfo = function(id)
+        if LOADING[id] then return nil end
+        local sell = SELL[id]
+        if not sell then return keepGII(id) end
+        return "item" .. id, nil, 1, 5, 1, "Trade Goods", "x", 20, "", 1, sell, 7, 0, 0
+    end
+    C_Spell.GetSpellInfo = function(id) if id == 3753 then return { name = "Belt", castTime = 5000 } end end
+    S.shuffleMinProfit = nil
+    EXPECT(P:ShuffleMin() == 100 and P:ShuffleMinLabel(0) == "Any profit", "the default minimum is not 1s")
+
+    -- the numbers
+    local v = P:VendorShuffle({ name = "Handstitched Leather Belt" }, "Leatherworking")
+    EXPECT(v and v.cost == 190 and v.sell == 400 and v.profit == 210 and v.seconds == 5.5
+           and math.abs(v.perHour - 210 * 3600 / 5.5) < 0.01 and not v.fromVendors,
+           "the belt: " .. tostring(v and v.cost) .. " " .. tostring(v and v.profit) .. " " .. tostring(v and v.seconds))
+    v = P:VendorShuffle({ name = "Instant Poison" }, "Poisons")
+    EXPECT(v and v.cost == 24 and v.profit == 200 and v.seconds == 1.5 and v.fromVendors,
+           "the poison: " .. tostring(v and v.cost) .. " " .. tostring(v and v.seconds) .. " " .. tostring(v and v.fromVendors))
+    v = P:VendorShuffle({ name = "Light Armor Kit" }, "Leatherworking")
+    EXPECT(v and v.profit == -10, "the armor kit's loss")
+    -- the count per craft, worded as the detail panel (2.1.1): a random
+    -- amount reads "(makes 1-3, priced as 2)", a fixed one "(makes 2)"
+    local function sellLine(vv)
+        local tipLines = {}
+        rawset(GameTooltip, "_lines", tipLines)
+        SP:ShowRowTip({ _entry = { name = "x", prof = "Engineering", v = vv, who = {} } })
+        rawset(GameTooltip, "_lines", nil)
+        for _, l in ipairs(tipLines) do if l:find("^Vendor pays") then return l end end
+    end
+    local dyn = { cost = 10, sell = 150, profit = 140, perHour = 1, seconds = 2, yield = 2, yieldMin = 1, yieldMax = 3, parts = {} }
+    EXPECT((sellLine(dyn) or ""):find("Vendor pays (makes 1-3, priced as 2)", 1, true), "random amount: " .. tostring(sellLine(dyn)))
+    dyn.yieldMin, dyn.yieldMax = nil, nil
+    EXPECT((sellLine(dyn) or ""):find("Vendor pays (makes 2)", 1, true), "fixed count: " .. tostring(sellLine(dyn)))
+    dyn.yield = 1
+    EXPECT((sellLine(dyn) or ""):find("^Vendor pays |"), "one item: " .. tostring(sellLine(dyn)))
+    do
+        local keepAPI2, keepGII2 = Auctionator.API.v1.GetAuctionPriceByItemID, C_Item.GetItemInfo
+        Auctionator.API.v1.GetAuctionPriceByItemID = function() return 1 end
+        C_Item.GetItemInfo = function(id) return "item" .. id, nil, 1, 5, 1, "Trade Goods", "x", 20, "", 1, 75, 7, 0, 0 end
+        P:ResetListCache()
+        local cd = P:VendorShuffle({ name = "Coarse Dynamite" }, "Engineering")
+        EXPECT(cd and cd.yield == 2 and cd.yieldMin == 1 and cd.yieldMax == 3, "Coarse Dynamite's range in the shuffle: "
+               .. tostring(cd and cd.yieldMin) .. "-" .. tostring(cd and cd.yieldMax))
+        Auctionator.API.v1.GetAuctionPriceByItemID, C_Item.GetItemInfo = keepAPI2, keepGII2
+        P:ResetListCache()
+    end
+    -- a material with no price: the craft's profit is unknown, so it's left out
+    local keepAPI = Auctionator.API.v1.GetAuctionPriceByItemID
+    Auctionator.API.v1.GetAuctionPriceByItemID = function() return nil end
+    EXPECT(P:VendorShuffle({ name = "Handstitched Leather Belt" }, "Leatherworking") == nil,
+           "a craft with an unpriced material was worked out")
+    Auctionator.API.v1.GetAuctionPriceByItemID = keepAPI
+
+    -- the tab: the belt (alt first, and a friend) and the poison (you);
+    -- the armor kit loses money; Stranger is neither friend nor guildmate
+    UI:Show()
+    local idx
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then idx = i end end
+    EXPECT(idx == 5, "no Shuffle tab after Orders")
+    UI:SelectTab(idx); FLUSH()
+    -- F93's combat sweep clicked this tab's sort and filters
+    SP.sortKey, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", "Everyone", nil, false
+    SP:Refresh()
+    local names = {}
+    for _, e in ipairs(SP.list) do names[#names + 1] = e.name end
+    EXPECT(#SP.list == 2 and SP.list[1].name == "Handstitched Leather Belt" and SP.list[2].name == "Instant Poison",
+           "Shuffle rows: " .. table.concat(names, ", "))
+    local belt = SP.list[1]
+    EXPECT(#belt.who == 2 and belt.who[1].key == "Altie-Realm" and belt.who[2].key == "Pal-Realm",
+           "the belt's people, nearest first")
+    EXPECT(SP.rows[1].whoText:GetText() == "Altie +1" and SP.rows[1]:IsShown() and not SP.rows[3]:IsShown(),
+           "row 1 who: " .. tostring(SP.rows[1].whoText:GetText()))
+    EXPECT(not SP.empty:IsShown(), "the empty text shows over rows")
+    -- sort by per hour: the poison is quicker
+    SP.headerBtns.hour:GetScript("OnClick")(SP.headerBtns.hour)
+    EXPECT(SP.list[1].name == "Instant Poison", "Per hour sort")
+    SP.headerBtns.profit:GetScript("OnClick")(SP.headerBtns.profit)
+    -- Who: friends only, then guild only (nothing over the minimum)
+    SP.whoFilter = "Friends"; SP:Repaint()
+    EXPECT(#SP.list == 1 and SP:Shown(SP.list[1]).key == "Pal-Realm", "Who: Friends")
+    SP.whoFilter = "Guild"; SP:Repaint()
+    EXPECT(#SP.list == 0 and SP.empty:IsShown(), "Who: Guild should be empty")
+    SP.whoFilter = "Everyone"
+    -- vendor materials only
+    SP.vendorOnly = true; SP:Repaint()
+    EXPECT(#SP.list == 1 and SP.list[1].name == "Instant Poison", "Vendor materials only")
+    SP.vendorOnly = false
+    -- the minimum: 5s leaves nothing, any profit brings the armor kit? (no: a loss)
+    S.shuffleMinProfit = 500; SP:Repaint()
+    EXPECT(#SP.list == 0, "minimum 5s")
+    S.shuffleMinProfit = 0; SP:Repaint()
+    EXPECT(#SP.list == 2, "any profit still leaves out a loss")
+    S.shuffleMinProfit = nil; SP:Repaint()
+    -- a product the game hasn't loaded: loading, then the row
+    LOADING[4237] = true
+    SP:Refresh()
+    EXPECT(SP.loading and #SP.list == 1, "loading not noticed")
+    LOADING[4237] = nil
+    SP:Refresh()
+    -- (other recipes of this test character have no item data here, so the
+    -- tab may still be loading those)
+    EXPECT(#SP.list == 2 and SP.list[1].name == "Handstitched Leather Belt", "the belt did not come back")
+    -- prices off: the tab says so
+    S.showPrices = false; SP:Refresh()
+    EXPECT(#SP.list == 0 and SP.empty:IsShown() and SP.empty:GetText():find("Prices are off", 1, true), "prices off")
+    S.showPrices = true; SP:Refresh()
+
+    -- a click opens the alt's Leatherworking on the belt, Vendor shuffle view
+    SP.rows[1]:GetScript("OnClick")(SP.rows[1])
+    FLUSH()
+    EXPECT(TSF.frame:IsShown() and st._viewCharKey == "Altie-Realm" and st.showTab == "vendor"
+           and st.selected == "Handstitched Leather Belt", "the click did not open the belt: "
+           .. tostring(st._viewCharKey) .. " " .. tostring(st.showTab) .. " " .. tostring(st.selected))
+    local listed = {}
+    for _, r in ipairs(st.recipes) do if not r.isHeader then listed[#listed + 1] = r.name end end
+    EXPECT(#listed == 1 and listed[1] == "Handstitched Leather Belt", "the Vendor shuffle view lists: " .. table.concat(listed, ", "))
+    local rowText = TSF.listRows[1].rightText:GetText() or ""
+    EXPECT(rowText:find("/h", 1, true), "the view's row shows no per hour: " .. rowText)
+    -- Settings' minimum follows the tab
+    S.shuffleMinProfit = 1000
+    TSF:SyncShuffleMin()
+    EXPECT(#st.recipes == 0, "the view kept the belt under a 10s minimum")
+    S.shuffleMinProfit = nil
+    TSF:SyncShuffleMin()
+    -- the View menu has Vendor shuffle while prices show
+    local sig = rawget(TSF.viewDropdown, "_optionSig") or ""
+    EXPECT(sig:find("Vendor shuffle", 1, true), "no Vendor shuffle in the View menu: " .. sig:gsub("\1", " | "))
+    -- prices off: the view falls back to Known
+    S.showPrices = false
+    TSF:RefreshRecipeList()
+    EXPECT(st.showTab == "known", "Vendor shuffle view with prices off")
+    S.showPrices = true
+    TSF.frame:Hide(); FLUSH()
+
+    -- in combat, with rows: every button, and a row click waits
+    UI:Show(); UI:SelectTab(idx); FLUSH()
+    SP.sortKey, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", "Everyone", nil, false
+    SP:Refresh()
+    EXPECT(SP.rows[1]:IsShown(), "no rows for the combat sweep")
+    local sites, errs = COMBAT_SWEEP({ UI.frame }, {})
+    EXPECT(#sites == 0, "the Shuffle tab in combat, the game would block:\n  " .. table.concat(sites, "\n  "))
+    EXPECT(#errs == 0, "the Shuffle tab in combat, a click errored:\n  " .. table.concat(errs, "\n  "))
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    UI:Show(); UI:SelectTab(idx); FLUSH()
+    SP.sortKey, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", "Everyone", nil, false
+    SP:Refresh()
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    PRINTS = {}
+    SP.rows[1]:GetScript("OnClick")(SP.rows[1]); FLUSH()
+    InCombatLockdown = keepICL
+    EXPECT(not TSF.frame:IsShown() and PRINTED("Handstitched Leather Belt opens when combat ends."), "a row click in combat did not wait")
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.selected == "Handstitched Leather Belt", "the row click did not open after combat")
+    TSF.frame:Hide(); FLUSH()
+
+    -- clean up
+    for k in pairs(chars) do if keepChars[k] == nil then chars[k] = nil end end
+    chars[me].professions.Poisons = keepMine
+    PB.db.contacts, PB.Comm.IsGuildMember = keepContacts, keepGuild
+    C_Item.GetItemInfo, C_Spell.GetSpellInfo, Auctionator = keepGII, keepSpell, keepAuc
+    S.priceAuctionator, S.showPrices = keepAucOn, keepShow
+    if UI.frame:IsShown() then UI.frame:Hide() end
+    P:ResetListCache()
+end
+F97()
+print("  PASS F97 2.2.0 TEST-a: vendor shuffle: cost, vendor sale, profit, per hour from the cast time plus 0.5 s; the Shuffle tab after Orders lists crafts over the minimum for you, alts, friends and guildmates, nearest person first; Who, Prof, Vendor materials, minimum, Per hour sort; loading items; prices off; a click opens the recipe in the Vendor shuffle View; Settings' minimum follows")
+
+print("ALL FOREVER TESTS PASS (97)")
