@@ -1,7 +1,8 @@
 -- ProfessionBuddy  --  UI/CratesView.lua
 -- The Shuffle tab's second view on WoW: Forever (2.2.0, Skeleton): every
 -- Waylaid Supplies crate and Craftsman's Writ, what it asks for, how many
--- of that you and your alts hold, what the rest costs to buy, who can
+-- of that you and your alts hold, what the rest costs to buy ("To buy";
+-- the crate's own tooltip keeps 2.1.0's whole "Fill cost"), who can
 -- craft it, and a writ's own auction price, to plan which to fill.
 -- Rewards (money, experience, reputation) have no Forever source yet, so
 -- they come in a later update (WAYLAID-WRITS-PLANNING-scope.md). Data:
@@ -20,7 +21,7 @@ local COLS = {
     { key = "name",  label = "Crate or writ", x = 6,   w = 168 },
     { key = "needs", label = "Needs",         x = 178, w = 132 },
     { key = "hold",  label = "You hold",      x = 314, w = 54  },
-    { key = "cost",  label = "Fill cost",     x = 372, w = 64  },
+    { key = "cost",  label = "To buy",        x = 372, w = 64  },
     { key = "by",    label = "Crafted by",    x = 440, w = 70  },
     { key = "sells", label = "Writ sells",    x = 514, w = 52  },
 }
@@ -129,7 +130,7 @@ function CV:Build()
     for id, need in pairs(addon.Writs or {}) do add(id, need, "writ") end
 end
 
--- The rows that pass the filters, sorted: fill cost (cheapest first, no
+-- The rows that pass the filters, sorted: To buy (cheapest first, no
 -- price last), or ready to fill first
 function CV:Filter()
     local list = {}
@@ -198,6 +199,11 @@ function CV:CreateRow(parent)
         GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(e.id)   -- the crate's or writ's own tooltip, with its fill cost
         GameTooltip:AddLine(" ")
+        -- what's left to buy after what you hold: the column; the crate's
+        -- own Fill cost above is the whole fill (TEST-b review)
+        local P = addon.Prices
+        local toBuy = e.cost and (P:Money(e.cost) .. (e.partial and e.cost > 0 and "+" or "")) or "|cffff4444?|r"
+        GameTooltip:AddDoubleLine("To buy:", toBuy, 1, 0.82, 0, 1, 1, 1)
         GameTooltip:AddLine("You and your alts hold " .. e.held .. " of " .. e.count .. " " .. e.itemName .. ".",
             0.8, 0.8, 0.8, true)
         if e.by then
@@ -258,12 +264,12 @@ function CV:Create(parent)
         cb.label = fs
         return cb
     end
-    self.bagsCheck = check("In my bags", "Only the crates and writs you or your alts hold.",
+    self.bagsCheck = check("You hold one", "Only the crates and writs you or your alts hold, in bags or bank.",
         self.profDD, function(v) self.bagsOnly = v end)
     self.readyCheck = check("Ready to fill", "Only the ones you and your alts hold enough for.",
         self.bagsCheck.label, function(v) self.readyOnly = v end)
 
-    -- Column headers: Fill cost and You hold (ready first) sort
+    -- Column headers: To buy and You hold (ready first) sort
     local headerBar = CreateFrame("Frame", nil, f)
     headerBar:SetPoint("TOPLEFT", 0, -26)
     headerBar:SetPoint("TOPRIGHT", 0, -26)

@@ -24,7 +24,7 @@ The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for t
 
 **Added on WoW: Forever**
 
-- **Crates and writs:** in the Shuffle tab, "Crates and writs" lists every Waylaid Supplies crate and Craftsman's Writ: what it asks for, how many of that you and your alts hold (green when you have enough), the fill cost (what the rest costs to buy, "?" without a price), who can craft it (you first, then your alts, friends and guildmates), and a writ's own auction price. Filters: Type (crates or writs), profession, "In my bags" and "Ready to fill"; click Fill cost or You hold to sort. A click opens the item's recipe. Reward details (money, experience, reputation) come in a later update.
+- **Crates and writs:** in the Shuffle tab, "Crates and writs" lists every Waylaid Supplies crate and Craftsman's Writ: what it asks for, how many of that you and your alts hold (green when you have enough), To buy (what the rest costs, "?" without a price; the crate's own tooltip still shows the whole fill cost), who can craft it (you first, then your alts, friends and guildmates), and a writ's own auction price. Filters: Type (crates or writs), profession, "You hold one" and "Ready to fill"; click To buy or You hold to sort. A click opens the item's recipe. Reward details (money, experience, reputation) come in a later update.
 
 **Changes**
 

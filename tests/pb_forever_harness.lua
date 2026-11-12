@@ -6709,6 +6709,23 @@ local function F99()
     EXPECT((CV.rows[1].holdText:GetText() or ""):find("14/14", 1, true) and (CV.rows[1].holdText:GetText() or ""):find("|cff00ff00", 1, true),
            "ready shows green: " .. tostring(CV.rows[1].holdText:GetText()))
     EXPECT((CV.rows[5].costText:GetText() or ""):find("?", 1, true), "no price shows ?")
+    -- the labels (TEST-b review): To buy, You hold one; the row tooltip's To buy
+    EXPECT(CV.headerBtns.cost.colLabel == "To buy" and CV.bagsCheck.label:GetText() == "You hold one", "labels")
+    do
+        local lines = {}
+        local keepADL, keepAL, keepSID = GameTooltip.AddDoubleLine, GameTooltip.AddLine, GameTooltip.SetItemByID
+        rawset(GameTooltip, "AddDoubleLine", function(_, l, r) lines[#lines + 1] = tostring(l) .. " " .. tostring(r) end)
+        rawset(GameTooltip, "AddLine", function(_, l) lines[#lines + 1] = tostring(l) end)
+        rawset(GameTooltip, "SetItemByID", function() end)
+        CV.rows[1]:GetScript("OnEnter")(CV.rows[1])
+        local all = table.concat(lines, " | ")
+        EXPECT(all:find("To buy: 0", 1, true) and all:find("hold 14 of 14", 1, true), "row 1 tooltip: " .. all)
+        lines = {}
+        CV.rows[5]:GetScript("OnEnter")(CV.rows[5])
+        all = table.concat(lines, " | ")
+        EXPECT(all:find("To buy: |cffff4444?|r", 1, true), "no price tooltip: " .. all)
+        rawset(GameTooltip, "AddDoubleLine", keepADL); rawset(GameTooltip, "AddLine", keepAL); rawset(GameTooltip, "SetItemByID", keepSID)
+    end
     -- filters
     CV.typeFilter = "Crates"; CV:Repaint(); EXPECT(#CV.list == 3, "Type: Crates")
     CV.typeFilter = "Writs"; CV:Repaint(); EXPECT(#CV.list == 2, "Type: Writs")
@@ -6776,7 +6793,7 @@ local function F99()
     if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
 end
 F99()
-print("  PASS F99 2.2.0 TEST-b: Crates and writs: rows, held by you and alts, fill cost (0 ready, ? no price), crafted by, writ price; Type, Prof, In my bags, Ready to fill; sort; the row click opens your recipe live; the view switch, kept through the Shuffle bottom tab; prices off")
+print("  PASS F99 2.2.0 TEST-b: Crates and writs: rows, held by you and alts, To buy (0 ready, ? no price, also in the row tooltip), crafted by, writ price; Type, Prof, You hold one, Ready to fill; sort; the row click opens your recipe live; the view switch, kept through the Shuffle bottom tab; prices off")
 
 -- F100 2.2.0 TEST-b, GitHub #12 (philippeop): the recipe panel's Item info
 -- box: its heading folds it ("- Item info" / "+ Item info", kept), Settings
