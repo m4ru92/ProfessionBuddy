@@ -6592,4 +6592,49 @@ end
 F97()
 print("  PASS F97 2.2.0 TEST-a: vendor shuffle: cost, vendor sale, profit, per hour from the cast time plus 0.5 s; the Shuffle tab after Orders lists crafts over the minimum for you, alts, friends and guildmates, nearest person first; Who, Prof, Vendor materials, minimum, Per hour sort; loading items; prices off; a click opens the recipe in the Vendor shuffle View; Settings' minimum follows")
 
-print("ALL FOREVER TESTS PASS (97)")
+-- F98 2.2.0 TEST-a5 (m4ru): a Shuffle row of your own recipe opened your
+-- saved list, with a Request Craft box for yourself. Now: the live
+-- profession with the recipe selected, opened by skill line when it's
+-- closed; your own saved list (Characters tab View) shows how to craft
+-- instead of Request Craft
+local function F98()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    -- open in the game: shown at once
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    TSF.frame:Hide(); FLUSH()          -- its window closed, the game's session too
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    UI:Show()
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not st._viewCharKey and not st._isStaticView and st.profName == "Leatherworking"
+           and st.selected == "Light Leather", "open profession: " .. tostring(st._viewCharKey) .. " / " .. tostring(st.selected))
+    EXPECT(TSF.craftBar:IsShown() and not TSF.composerBar:IsShown(), "the live profession has no Craft buttons")
+    -- closed in the game: WoW: Forever opens it, then selects the recipe
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    TS_CALLS = {}
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    local opened = false
+    for _, c in ipairs(TS_CALLS) do if c == "OpenTradeSkill:165" then opened = true end end
+    EXPECT(opened, "a closed profession was not opened: " .. table.concat(TS_CALLS, ", "))
+    TS_LIST_READY(); FIRE("TRADE_SKILL_LIST_UPDATE"); FIRE("TRADE_SKILL_UPDATE"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not st._viewCharKey and st.profName == "Leatherworking" and st.selected == "Light Leather"
+           and TSF._pendingSelect == nil, "after opening: " .. tostring(st.selected) .. " pending " .. tostring(TSF._pendingSelect))
+    -- your own saved list: the hint, no Request Craft
+    TSF:OpenWithCharacter(me, "Leatherworking"); FLUSH()
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    EXPECT(TSF.ownHintBar:IsShown() and not TSF.composerBar:IsShown() and not TSF.craftBar:IsShown(),
+           "your saved list: hint " .. tostring(TSF.ownHintBar:IsShown()) .. ", request " .. tostring(TSF.composerBar:IsShown()))
+    EXPECT((TSF.ownHintBar.text:GetText() or ""):find("Open Leatherworking from your spellbook to craft", 1, true), "hint text")
+    -- back to the live profession: the hint goes
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    EXPECT(not TSF.ownHintBar:IsShown(), "the hint stayed on the live profession")
+    TSF.frame:Hide(); FLUSH()
+end
+F98()
+print("  PASS F98 2.2.0 TEST-a5: a Shuffle row of your own recipe opens the live profession with it selected (open: at once; closed: opened by skill line, selected when the list arrives); your own saved list says to open the profession instead of Request Craft")
+
+print("ALL FOREVER TESTS PASS (98)")

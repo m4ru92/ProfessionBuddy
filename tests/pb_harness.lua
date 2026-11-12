@@ -3054,7 +3054,7 @@ do
         assert(not src:find(":SetColorTexture%(%s*[%d.]+"), "T101: " .. f .. " still sets a color by number")
         assert(not src:find(":SetBackdrop%(%s*{"), "T101: " .. f .. " still builds its own backdrop")
     end
-    assert(calls == 144, "T101: " .. calls .. " Theme calls, expected 144")
+    assert(calls == 147, "T101: " .. calls .. " Theme calls, expected 147")   -- +3: the own-list hint bar (2.2.0)
     local got = {}
     local tex = { SetColorTexture = function(_, r, g, b, a) got = { r, g, b, a } end }
     Theme:Fill(tex, "menuHover")

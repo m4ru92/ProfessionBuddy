@@ -5726,9 +5726,18 @@ function TSF:UpdateCraftBar()
     -- composer takes over that footprint instead.
     if state._viewCharKey then
         self.craftBar:Hide()
+        -- your own character's saved list: nobody to request from; say how
+        -- to craft instead (TEST-a5, m4ru)
+        if addon:SameKey(state._viewCharKey, addon:PlayerKey()) then
+            if self.composerBar then self.composerBar:Hide() end
+            self:ShowOwnHint(true)
+            return
+        end
+        self:ShowOwnHint(false)
         self:UpdateComposer()
         return
     end
+    self:ShowOwnHint(false)
 
     -- A linked window is somebody else's profession, opened read-only from
     -- a chat link. Nothing here is craftable, so show no craft controls.
@@ -5959,6 +5968,33 @@ function TSF:BuildComposer(parent)
 
     self.composerBar = bar
     bar:Hide()
+
+    -- Your own saved list in its place: how to craft from it
+    local own = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    own:SetHeight(CRAFT_BAR_H)
+    own:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, 30)
+    own:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30)
+    Theme:SetBackdrop(own, "barPane")
+    Theme:BackdropColor(own, "craftBarPane")
+    Theme:BorderColor(own, "craftBarPane")
+    local ownText = own:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    ownText:SetPoint("LEFT", 12, 0)
+    ownText:SetPoint("RIGHT", -12, 0)
+    ownText:SetJustifyH("CENTER")
+    own.text = ownText
+    own:Hide()
+    self.ownHintBar = own
+end
+
+-- The bar under your own character's saved list: "This is your saved
+-- Cooking list. Open Cooking from your spellbook to craft."
+function TSF:ShowOwnHint(show)
+    local bar = self.ownHintBar
+    if not bar then return end
+    if not show then bar:Hide(); return end
+    local prof = state.profName == "Smelting" and "Mining" or (state.profName or "the profession")
+    bar.text:SetText("This is your saved " .. prof .. " list. Open " .. prof .. " from your spellbook to craft.")
+    bar:Show()
 end
 
 -- Show/hide the composer for the current view. Visible only when
@@ -8202,8 +8238,19 @@ end
 -- character's. A filter that would hide the recipe is cleared.
 function TSF:OpenRecipeFor(charKey, profName, recipeName)
     if self:WaitToShow(recipeName .. " opens", function() self:OpenRecipeFor(charKey, profName, recipeName) end) then return end
+    -- your own character: the live profession when the game has it open, or
+    -- can open it (WoW: Forever); otherwise your saved list, which says to
+    -- open the profession to craft (TEST-a5, m4ru)
+    if addon:SameKey(charKey, addon:PlayerKey()) and self:OpenOwnLive(profName, recipeName) then return end
     self:OpenWithCharacter(charKey, profName)
     if not (self.frame and self.frame:IsShown()) then return end
+    self:SelectRecipeForView(recipeName)
+end
+
+-- Select `recipeName` in the shown list, in the Vendor shuffle View while
+-- prices show: a search or filter that hides it is cleared, and the list
+-- scrolls to it. True when it was found.
+function TSF:SelectRecipeForView(recipeName)
     local P = addon.Prices
     if P and P:Enabled() then state.showTab = "vendor" end
     local function find()
@@ -8222,7 +8269,7 @@ function TSF:OpenRecipeFor(charKey, profName, recipeName)
         self:RefreshRecipeList()
         idx = find()
     end
-    if not idx then return end
+    if not idx then return false end
     state.scrollOffset = math.max(0, math.min(idx - 1, #state.recipes - VISIBLE_ROWS))
     self.scrollBar:SetValue(state.scrollOffset)
     state.selected = recipeName
@@ -8230,6 +8277,7 @@ function TSF:OpenRecipeFor(charKey, profName, recipeName)
     self:UpdateListHighlights()
     self:RefreshDetailPanel()
     self:UpdateCraftBar()
+    return true
 end
 
 function TSF:OpenWithCharacter(charKey, profName)
@@ -8426,10 +8474,12 @@ function TSF:OnTradeSkillShow()
     if self.frame and self.frame:IsShown() and state.profName == profName
        and not state.isCraftWindow and not state._viewCharKey and not state._isStaticView then
         self:RefreshTradeData(profName, rank, maxRank, false)
+        self:ApplyPendingSelect()
         return
     end
 
     self:OpenWith(profName, rank, maxRank, false)
+    self:ApplyPendingSelect()
 end
 
 function TSF:OnCraftShow()
@@ -8457,6 +8507,57 @@ function TSF:OnCraftShow()
     end
 
     self:OpenWith(profName, rank or 0, maxRank or 375, true)
+end
+
+-- Mining's window is Smelting on TBC Anniversary: one name for comparing
+local function SameProf(a, b)
+    local function n(x) return x == "Mining" and "Smelting" or x end
+    return a ~= nil and n(a) == n(b)
+end
+
+-- The profession the game has open on one channel, by PB's name, or nil
+local function OpenProfName(isCraft)
+    if not addon.Source:IsSessionOpen(isCraft) then return nil end
+    local raw = addon.Source:GetOpenSkillLine(isCraft)
+    if not raw or raw == "" or raw == "UNKNOWN" then return nil end
+    return CanonicalProf(raw)
+end
+
+-- A Shuffle row of your own character's recipe (TEST-a5): show the live
+-- profession with the recipe selected. Open in the game: shown at once.
+-- WoW: Forever opens it by skill line, and the recipe is selected when its
+-- list arrives (ApplyPendingSelect). False when neither works (TBC
+-- Anniversary with the profession closed): the caller shows your saved list.
+function TSF:OpenOwnLive(profName, recipeName)
+    for _, isCraft in ipairs({ false, true }) do
+        if SameProf(OpenProfName(isCraft), profName) then
+            if isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
+            if self.frame and self.frame:IsShown() and not state._viewCharKey
+               and SameProf(state.profName, profName) then
+                self:SelectRecipeForView(recipeName)
+                return true
+            end
+        end
+    end
+    local S = addon.Source
+    local skillLine = S.TabSkillLine and S:TabSkillLine(profName == "Smelting" and "Mining" or profName)
+    if skillLine and S.OpenProfession then
+        self._pendingSelect = { prof = profName, recipe = recipeName, at = GetTime and GetTime() or 0 }
+        S:OpenProfession(skillLine)
+        return true
+    end
+    return false
+end
+
+-- The recipe a Shuffle row asked for, selected once its profession shows
+-- (10 seconds at most)
+function TSF:ApplyPendingSelect()
+    local p = self._pendingSelect
+    if not p then return end
+    if (GetTime and GetTime() or 0) - p.at > 10 then self._pendingSelect = nil; return end
+    if not (self.frame and self.frame:IsShown()) or state._viewCharKey or state._isStaticView
+       or not SameProf(state.profName, p.prof) then return end
+    if self:SelectRecipeForView(p.recipe) then self._pendingSelect = nil end
 end
 
 ----------------------------------------------------------------------

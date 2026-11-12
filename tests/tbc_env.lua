@@ -87,7 +87,11 @@ function IsTradeSkillLinked() return false end
 function IsCraftLinked() return false end
 function CraftIsPetTraining() return false end
 function CraftIsEnchanting() return true end
-function GetTradeSkillLine() return TBC.trade[1], TBC.trade[2], TBC.trade[3] end
+-- after TRADE_SKILL_CLOSE the name reads "UNKNOWN" (Source/Classic.lua, measured)
+function GetTradeSkillLine()
+    if TBC.open ~= "trade" then return "UNKNOWN", 0, 0 end
+    return TBC.trade[1], TBC.trade[2], TBC.trade[3]
+end
 function GetNumTradeSkills() return TBC.open == "trade" and #TBC.tradeRows or 0 end
 function GetTradeSkillInfo(i) local r = TBC.tradeRows[i]; if r then return r[1], r[2], r[3], r[4] end end
 function GetTradeSkillItemLink(i) local r = TBC.tradeRows[i]; return r and r[5] end

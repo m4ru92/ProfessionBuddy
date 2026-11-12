@@ -900,4 +900,30 @@ end
 U19()
 print("  PASS " .. TAG .. "19 2.2.0 TEST-a: vendor shuffle on TBC Anniversary: cast time from GetSpellInfo, the Shuffle tab, the Vendor shuffle View, both swept in combat with rows")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 19)")
+-- U20 2.2.0 TEST-a5 (m4ru): your own recipe from the Shuffle tab on TBC
+-- Anniversary: the live window when the profession is open; with it
+-- closed (PB can't open one from a click there), your saved list, saying
+-- to open the profession, without Request Craft
+local function U20()
+    local TSF = PB.TradeSkillFrame
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not st._viewCharKey and st.selected == "Light Leather" and TSF.craftBar:IsShown()
+           and not TSF.ownHintBar:IsShown(), "open: " .. tostring(st._viewCharKey) .. " / " .. tostring(st.selected))
+    TSF.frame:Hide(); FLUSH()
+    if TBC.open then CLOSE_TRADE() end
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st._viewCharKey and st.selected == "Light Leather", "closed: shown " .. tostring(TSF.frame:IsShown()) .. " view " .. tostring(st._viewCharKey) .. " sel " .. tostring(st.selected) .. " tab " .. tostring(st.showTab) .. " n " .. #st.recipes)
+    EXPECT(TSF.ownHintBar:IsShown() and not TSF.composerBar:IsShown() and not TSF.craftBar:IsShown(),
+           "closed: hint " .. tostring(TSF.ownHintBar:IsShown()) .. ", request " .. tostring(TSF.composerBar:IsShown()))
+    EXPECT((TSF.ownHintBar.text:GetText() or ""):find("Open Leatherworking from your spellbook to craft", 1, true), "hint text")
+    TSF.frame:Hide(); FLUSH()
+end
+U20()
+print("  PASS " .. TAG .. "20 2.2.0 TEST-a5: your own recipe from the Shuffle tab: the live window when open; closed, your saved list with how to craft, no Request Craft")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 20)")
