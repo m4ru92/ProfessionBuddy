@@ -6341,7 +6341,8 @@ local function F96()
     st._isLinkedView = false
     -- a recipe with no station: no line
     EXPECT(#toolLines({ name = "Light Armor Kit", spellID = 2152, itemID = 2304, gameIndex = 2152, isKnown = true }) == 0, "a station line with none")
-    -- the detail panel follows you
+    -- the detail panel follows you (the box open: F93's sweep clicks its fold)
+    ProfBuddyDB.settings.itemInfoFolded, ProfBuddyDB.settings.showItemInfo = false, true
     table.insert(st.recipes, 1, belt)
     st.selected = belt.name
     met = false
@@ -6464,9 +6465,10 @@ local function F97()
     for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then idx = i end end
     EXPECT(idx == 5, "no Shuffle tab after Orders")
     UI:SelectTab(idx); FLUSH()
-    -- F93's combat sweep clicked this tab's sort and filters
+    -- F93's combat sweep clicked this tab's sort and filters, and its
+    -- Crates and writs button
     SP.sortKey, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", "Everyone", nil, false
-    SP:Refresh()
+    SP:SetView("shuffle")
     local names = {}
     for _, e in ipairs(SP.list) do names[#names + 1] = e.name end
     EXPECT(#SP.list == 2 and SP.list[1].name == "Handstitched Leather Belt" and SP.list[2].name == "Instant Poison",
@@ -6637,4 +6639,208 @@ end
 F98()
 print("  PASS F98 2.2.0 TEST-a5: a Shuffle row of your own recipe opens the live profession with it selected (open: at once; closed: opened by skill line, selected when the list arrives); your own saved list says to open the profession instead of Request Craft")
 
-print("ALL FOREVER TESTS PASS (98)")
+-- F99 2.2.0 TEST-b: the Shuffle tab's Crates and writs view (Skeleton,
+-- WAYLAID-WRITS-PLANNING-scope.md): one row per crate and writ, what it
+-- needs, what you and your alts hold, the fill cost, who can craft it, a
+-- writ's auction price; filters, sort, the row click, prices off, the
+-- view switch and the profession window's Shuffle bottom tab
+local function F99()
+    local PB = ProfBuddy
+    local SP, CV, TSF, UI, S = PB.ShufflePanel, PB.CratesView, PB.TradeSkillFrame, PB.UI, PB.db.settings
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    local chars = PB.db.characters
+    EXPECT(CV and CV:Available(), "no Crates and writs view on WoW: Forever")
+    local keepW, keepWr = PB.Waylaid, PB.Writs
+    local keepAuc, keepAucOn, keepShow = Auctionator, S.priceAuctionator, S.showPrices
+    local keepAlt = chars["Altie-Realm"]
+    local inv = chars[me].inventory or {}
+    chars[me].inventory = inv
+    inv.bags, inv.bank = inv.bags or {}, inv.bank or {}
+    local keepBags = { [2318] = inv.bags[2318], [900002] = inv.bags[900002], [2447] = inv.bags[2447] }
+    local lw = chars[me].professions.Leatherworking
+    local keepLL = lw and lw.recipes and lw.recipes["Light Leather"]
+    if lw and lw.recipes then lw.recipes["Light Leather"] = lw.recipes["Light Leather"] or {} end
+    -- two crates and a writ; you hold 10 Light Leather, your alt 4 in the
+    -- bank (14 = ready), and you hold the writ
+    -- plus a crate you hold enough for with no price (Peacebloom), and a
+    -- writ with no price
+    PB.Waylaid = { [900001] = { 2318, 14, 211365, "Light Leather" }, [900003] = { 765, 20, 211365, "Silverleaf" },
+                   [900004] = { 2447, 5, 211365, "Peacebloom" } }
+    PB.Writs = { [900002] = { 2304, 1, 94000, "Light Armor Kit" }, [900005] = { 765, 1, 94001, "Silverleaf" } }
+    inv.bags[2318], inv.bags[900002], inv.bags[2447] = 10, 1, 5
+    chars["Altie-Realm"] = { inventory = { bags = {}, bank = { [2318] = 4 } }, professions = {} }
+    S.priceAuctionator, S.showPrices = true, true
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(_, id) return ({ [2318] = 50, [2304] = 200, [900002] = 500 })[id] end,
+        GetAuctionAgeByItemID = function() return 0 end } } }
+    PB.Prices:ResetListCache()
+
+    EXPECT(CV:HeldByYou(2318) == 14, "held: " .. CV:HeldByYou(2318))
+    local by, prof = CV:CraftedBy(2318)
+    EXPECT(by and by.rel == "you" and by.recipe == "Light Leather" and prof == "Leatherworking", "crafted by")
+    EXPECT(select(2, CV:CraftedBy(765)) == nil, "Silverleaf crafted")
+
+    -- the view switch, from the Shuffle tab
+    UI:Show()
+    local idx
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then idx = i end end
+    UI:SelectTab(idx); FLUSH()
+    EXPECT(SP.viewBtns and rawget(SP.viewBtns.crates, "_vis") ~= false, "no Crates and writs button")   -- shown unless hidden (the stand-in starts frames unshown)
+    SP.viewBtns.crates:GetScript("OnClick")(SP.viewBtns.crates); FLUSH()
+    EXPECT(SP.view == "crates" and CV.frame:IsShown() and not SP.filterBar:IsShown() and not SP.listFrame:IsShown(),
+           "the switch did not show Crates and writs")
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly, CV.sortKey = "All", nil, false, false, "cost"
+    CV:Refresh()
+    local byId = {}
+    for _, e in ipairs(CV.all) do byId[e.id] = e end
+    local c1, w2, c3, c4, w5 = byId[900001], byId[900002], byId[900003], byId[900004], byId[900005]
+    EXPECT(#CV.all == 5 and c1 and w2 and c3 and c4 and w5, "rows: " .. #CV.all)
+    EXPECT(c4.ready and c4.cost == 0, "held enough, no price: the fill cost is 0")
+    EXPECT(w5.cost == nil, "the unpriced writ")
+    EXPECT(c1.held == 14 and c1.ready and c1.cost == 0 and c1.by and c1.prof == "Leatherworking", "the leather crate")
+    EXPECT(w2.held == 0 and not w2.ready and w2.cost and w2.cost > 0 and w2.sells == 500 and w2.inBags, "the writ")
+    EXPECT(c3.cost == nil and c3.by == nil and c3.prof == "Not crafted" and c3.sells == nil, "the Silverleaf crate")
+    EXPECT(c1.name:find("Light Leather", 1, true), "an unloaded crate's name: " .. c1.name)
+    -- sort: fill cost, no price last (the unpriced writ's name sorts first,
+    -- and it still comes after every priced row); the rows show it
+    EXPECT(CV.list[1] == c1 and CV.list[2] == c4 and CV.list[3] == w2 and CV.list[4] == w5 and CV.list[5] == c3,
+           "fill cost sort")
+    EXPECT((CV.rows[1].holdText:GetText() or ""):find("14/14", 1, true) and (CV.rows[1].holdText:GetText() or ""):find("|cff00ff00", 1, true),
+           "ready shows green: " .. tostring(CV.rows[1].holdText:GetText()))
+    EXPECT((CV.rows[5].costText:GetText() or ""):find("?", 1, true), "no price shows ?")
+    -- filters
+    CV.typeFilter = "Crates"; CV:Repaint(); EXPECT(#CV.list == 3, "Type: Crates")
+    CV.typeFilter = "Writs"; CV:Repaint(); EXPECT(#CV.list == 2, "Type: Writs")
+    CV.typeFilter = "All"
+    CV.readyOnly = true; CV:Repaint(); EXPECT(#CV.list == 2 and CV.list[1] == c1 and CV.list[2] == c4, "Ready to fill")
+    CV.readyOnly = false
+    CV.bagsOnly = true; CV:Repaint(); EXPECT(#CV.list == 1 and CV.list[1] == w2, "In my bags")
+    CV.bagsOnly = false
+    -- Prof from the dropdown's own list, then All
+    local function pickOpt(dd, v)
+        for _, b in ipairs(dd.optionBtns) do
+            if b.value == v and b:IsShown() then b:GetScript("OnClick")(b); return true end
+        end
+    end
+    EXPECT(pickOpt(CV.profDD, "Leatherworking") and #CV.list == 2, "Prof: Leatherworking")
+    EXPECT(pickOpt(CV.profDD, "All") and CV.profFilter == nil and #CV.list == 5, "Prof: All")
+    -- You hold header: ready first
+    CV.headerBtns.hold:GetScript("OnClick")(CV.headerBtns.hold)
+    EXPECT(CV.sortKey == "ready" and CV.list[1] == c1, "ready first")
+    CV.headerBtns.cost:GetScript("OnClick")(CV.headerBtns.cost)
+    -- the row click opens the requested item's recipe: your own, live
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    CV.rows[1]:GetScript("OnClick")(CV.rows[1])
+    TS_LIST_READY(); FIRE("TRADE_SKILL_LIST_UPDATE"); FIRE("TRADE_SKILL_UPDATE"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.profName == "Leatherworking" and st.selected == "Light Leather" and not st._viewCharKey,
+           "the row click: " .. tostring(st.profName) .. " / " .. tostring(st.selected))
+    -- a View without the recipe goes to Known
+    st.showTab = "missing"; TSF:RefreshRecipeList()
+    EXPECT(TSF:SelectRecipeForView("Light Leather", false) and st.showTab == "known" and st.selected == "Light Leather",
+           "a View without the recipe: " .. tostring(st.showTab))
+    -- a row nobody can craft does nothing
+    TSF.frame:Hide(); FLUSH()
+    UI:Show(); UI:SelectTab(idx); FLUSH()
+    EXPECT(SP.view == "crates" and CV.frame:IsShown(), "the view did not stay Crates and writs")
+    CV.rows[5]:GetScript("OnClick")(CV.rows[5]); FLUSH()
+    EXPECT(not TSF.frame:IsShown(), "a crate nobody crafts opened something")
+    -- the tab's own refresh (its show) works out this view again
+    inv.bags[2318] = 0
+    SP:Refresh()
+    local lc
+    for _, e in ipairs(CV.all) do if e.id == 900001 then lc = e end end
+    EXPECT(lc and lc.held == 4 and not lc.ready, "the tab's refresh did not redo Crates and writs")
+    inv.bags[2318] = 10
+    -- the profession window's Shuffle bottom tab keeps the view
+    UI:Hide(); FLUSH()
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    SP:Toggle(); FLUSH()
+    EXPECT(UI.frame:IsShown() and SP.view == "crates" and CV.frame:IsShown(), "the Shuffle bottom tab lost the view")
+    -- prices off
+    S.showPrices = false; CV:Refresh()
+    EXPECT(#CV.all == 0 and CV.empty:IsShown() and (CV.empty:GetText() or ""):find("Prices are off", 1, true), "prices off")
+    S.showPrices = true
+    -- back to the shuffle
+    SP.viewBtns.shuffle:GetScript("OnClick")(SP.viewBtns.shuffle); FLUSH()
+    EXPECT(SP.view == "shuffle" and not CV.frame:IsShown() and SP.filterBar:IsShown() and SP.listFrame:IsShown(), "back to the shuffle")
+
+    PB.Waylaid, PB.Writs = keepW, keepWr
+    Auctionator, S.priceAuctionator, S.showPrices = keepAuc, keepAucOn, keepShow
+    chars["Altie-Realm"] = keepAlt
+    inv.bags[2318], inv.bags[900002], inv.bags[2447] = keepBags[2318], keepBags[900002], keepBags[2447]
+    if lw and lw.recipes then lw.recipes["Light Leather"] = keepLL end
+    PB.Prices:ResetListCache()
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+end
+F99()
+print("  PASS F99 2.2.0 TEST-b: Crates and writs: rows, held by you and alts, fill cost (0 ready, ? no price), crafted by, writ price; Type, Prof, In my bags, Ready to fill; sort; the row click opens your recipe live; the view switch, kept through the Shuffle bottom tab; prices off")
+
+-- F100 2.2.0 TEST-b, GitHub #12 (philippeop): the recipe panel's Item info
+-- box: its heading folds it ("- Item info" / "+ Item info", kept), Settings
+-- "Show Item info" turns it off; folded or off, the tool and station lines
+-- move under the price line and the Reagents move up
+local function F100()
+    local TSF = ProfBuddy.TradeSkillFrame
+    local st, S = TSF.state, ProfBuddyDB.settings
+    local keepFold, keepShow = S.itemInfoFolded, S.showItemInfo
+    S.itemInfoFolded, S.showItemInfo = false, true
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    local belt = { name = "Mender's Leather Belt", spellID = 1255075, itemID = 252523, isKnown = true,
+                   reagents = { { itemID = 4234, count = 8, name = "Heavy Leather" } } }
+    table.insert(st.recipes, 1, belt)
+    st.selected = belt.name
+    local function anchorOf(region) local pt = rawget(region, "_lastPoint"); return pt and pt[2] end
+    local function vis(f) return rawget(f, "_vis") ~= false and f:IsShown() end
+    -- open
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.embeddedTip:IsShown() and TSF.itemTooltipHeader:IsShown() and TSF.itemTooltipHeader:GetText() == "- Item info"
+           and TSF.itemInfoFold:IsShown() and not TSF.detTools:IsShown(), "open: " .. tostring(TSF.itemTooltipHeader:GetText()))
+    EXPECT(TSF._reagentAnchor == TSF.embeddedTip, "open: Reagents not under the box")
+    -- fold it
+    TSF.itemInfoFold:GetScript("OnClick")(TSF.itemInfoFold); FLUSH()
+    EXPECT(S.itemInfoFolded == true and not TSF.embeddedTip:IsShown() and TSF.itemTooltipHeader:IsShown()
+           and TSF.itemTooltipHeader:GetText() == "+ Item info", "folded: " .. tostring(TSF.itemTooltipHeader:GetText()))
+    EXPECT(TSF.detTools:IsShown() and (TSF.detTools:GetText() or ""):find("Tool: Tanning Rack", 1, true),
+           "folded: the tool line did not move: " .. tostring(TSF.detTools:GetText()))
+    EXPECT(anchorOf(TSF.detTools) == TSF.detPrice or anchorOf(TSF.detTools) == TSF.detCanMake, "folded: the tool line not under the price line")
+    EXPECT(TSF:CanMakeBottom() == TSF.detTools and TSF._reagentAnchor == TSF.itemTooltipHeader,
+           "folded: the heading under the tool line, the Reagents under the heading")
+    -- kept: another recipe, then back, still folded; one with no tool
+    local kit = { name = "Light Armor Kit", spellID = 2152, itemID = 2304, isKnown = true,
+                  reagents = { { itemID = 2318, count = 1, name = "Light Leather" } } }
+    table.insert(st.recipes, 1, kit)
+    st.selected = kit.name; TSF:RefreshDetailPanel()
+    EXPECT(TSF.itemTooltipHeader:GetText() == "+ Item info" and not TSF.detTools:IsShown()
+           and TSF._reagentAnchor == TSF.itemTooltipHeader, "folded, no tool")
+    st.selected = belt.name; TSF:RefreshDetailPanel()
+    -- unfold
+    TSF.itemInfoFold:GetScript("OnClick")(TSF.itemInfoFold); FLUSH()
+    EXPECT(not S.itemInfoFolded and TSF.embeddedTip:IsShown() and not TSF.detTools:IsShown(), "unfolded")
+    -- Settings: Show Item info off
+    EXPECT(TSF.itemInfoCB and TSF.itemInfoCB.settingKey == "showItemInfo", "no Show Item info box in Settings")
+    TSF.itemInfoCB:SetChecked(false); TSF.itemInfoCB:GetScript("OnClick")(TSF.itemInfoCB)
+    EXPECT(S.showItemInfo == false, "the Settings box did not turn it off")
+    TSF:RefreshDetailPanel()
+    EXPECT(not TSF.embeddedTip:IsShown() and not TSF.itemTooltipHeader:IsShown() and not TSF.itemInfoFold:IsShown()
+           and TSF.detTools:IsShown() and TSF._reagentAnchor == TSF.detTools, "off")
+    -- the list's hover tooltip keeps its tool line either way
+    local tip, lines = CreateFrame("GameTooltip"), {}
+    rawset(tip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    TSF:AppendRodLine(tip, belt)
+    EXPECT(table.concat(lines, "|"):find("Tool: Tanning Rack", 1, true), "the hover tooltip lost its tool line")
+    TSF.itemInfoCB:SetChecked(true); TSF.itemInfoCB:GetScript("OnClick")(TSF.itemInfoCB)
+    for _, e in ipairs({ belt, kit }) do
+        for i, x in ipairs(st.recipes) do if x == e then table.remove(st.recipes, i); break end end
+    end
+    st.selected = nil
+    S.itemInfoFolded, S.showItemInfo = keepFold, keepShow
+    TSF.frame:Hide(); FLUSH()
+end
+F100()
+print("  PASS F100 2.2.0 TEST-b #12: Item info: the heading folds it (- / +, kept between recipes), Settings Show Item info turns it off; folded or off the tool lines sit under the price line and the Reagents move up; hover tooltips unchanged")
+
+print("ALL FOREVER TESTS PASS (100)")

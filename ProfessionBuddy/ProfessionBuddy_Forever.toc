@@ -55,6 +55,7 @@ UI/FriendsPanel.lua
 UI/GuildPanel.lua
 UI/OrdersPanel.lua
 UI/ShufflePanel.lua
+UI/CratesView.lua
 UI/MailHelper.lua
 UI/TradeSkillFrame.lua
 UI/Trainer.lua

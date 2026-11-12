@@ -710,6 +710,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         openBesideBlizzard  = false, -- Replace off: also open PB's window beside Blizzard's
         rememberWindowState = true,
         showAllProfessions  = false,
+        showItemInfo        = true,  -- the recipe panel's Item info box (2.2.0, #12)
         includeAltsInCalc   = true,
         showRemoteInDetail  = true,
         showRemoteInTooltips = true,
@@ -775,6 +776,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.showAllProfessions == nil then
         ProfBuddyDB.settings.showAllProfessions = false
+    end
+    if ProfBuddyDB.settings.showItemInfo == nil then
+        ProfBuddyDB.settings.showItemInfo = true
     end
     if ProfBuddyDB.settings.orderHistoryLimit == nil then
         ProfBuddyDB.settings.orderHistoryLimit = 50

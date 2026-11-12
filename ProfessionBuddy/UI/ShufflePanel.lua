@@ -262,6 +262,34 @@ function SP:CreateContent(parent)
     local sub = parent:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     sub:SetPoint("LEFT", self.header, "RIGHT", 10, 0)
     sub:SetText("Crafts a vendor pays more for than their materials cost.")
+    self.sub = sub
+
+    -- WoW: Forever: a second view, Crates and writs (UI/CratesView.lua),
+    -- switched by two buttons in place of the heading
+    local CV = addon.CratesView
+    if CV and CV:Available() then
+        self.header:Hide()
+        local function viewBtn(label, w, view)
+            local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+            b:SetSize(w, 20)
+            b:SetText(label)
+            b:SetNormalFontObject(GameFontNormalSmall)
+            b:SetHighlightFontObject(GameFontHighlightSmall)
+            b:SetScript("OnClick", function() self:SetView(view) end)
+            return b
+        end
+        local shuffleBtn = viewBtn("Vendor shuffle", 104, "shuffle")
+        shuffleBtn:SetPoint("TOPLEFT", 4, -2)
+        local cratesBtn = viewBtn("Crates and writs", 116, "crates")
+        cratesBtn:SetPoint("LEFT", shuffleBtn, "RIGHT", 4, 0)
+        self.viewBtns = { shuffle = shuffleBtn, crates = cratesBtn }
+        sub:ClearAllPoints()
+        sub:SetPoint("LEFT", cratesBtn, "RIGHT", 10, 0)
+        sub:SetPoint("RIGHT", parent, "RIGHT", -6, 0)
+        sub:SetJustifyH("LEFT")
+        sub:SetWordWrap(false)
+        CV:Create(parent)
+    end
 
     local filterBar = CreateFrame("Frame", nil, parent)
     filterBar:SetPoint("TOPLEFT", 0, -26)
@@ -418,12 +446,40 @@ function SP:CreateContent(parent)
 
     self.scrollOffset = 0
     parent.Refresh = function() self:Refresh() end
-    self:Refresh()
+    self:SetView(self.view or "shuffle")
+end
+
+-- The Shuffle tab's view: "shuffle" (this file) or "crates" (Crates and
+-- writs, WoW: Forever only). The choice stays while PB runs.
+function SP:SetView(view)
+    local CV = addon.CratesView
+    if view ~= "crates" or not (CV and CV.frame) then view = "shuffle" end
+    self.view = view
+    local shuffle = view == "shuffle"
+    for _, w in ipairs({ self.filterBar, self.headerBar, self.listFrame }) do
+        if shuffle then w:Show() else w:Hide() end
+    end
+    if self.viewBtns then
+        for v, b in pairs(self.viewBtns) do
+            if v == view then b:LockHighlight() else b:UnlockHighlight() end
+        end
+    end
+    if self.sub then
+        self.sub:SetText(shuffle and "Crafts a vendor pays more for than their materials cost."
+            or "What filling each costs, from what you and your alts hold.")
+    end
+    if shuffle then
+        if CV then CV:Hide() end
+        self:Refresh()
+    else
+        CV:Show()
+    end
 end
 
 -- Work the list out again (on show, and after a product loads)
 function SP:Refresh()
     if not self.parent then return end
+    if self.view == "crates" and addon.CratesView then return addon.CratesView:Refresh() end
     self:Build()
     self:SyncProfDropdown()
     self:Repaint()

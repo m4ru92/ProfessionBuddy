@@ -3850,9 +3850,43 @@ function TSF:BuildDetailPanel(parent)
 
     -- v6: Embedded item tooltip (shows item stats/effects)
     local itemTooltipHeader = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    itemTooltipHeader:SetText("Item info")
+    itemTooltipHeader:SetText("- Item info")
     itemTooltipHeader:SetTextColor(1, 0.82, 0)
     self.itemTooltipHeader = itemTooltipHeader
+
+    -- 2.2.0, GitHub #12 (philippeop): a click on the heading folds the box
+    -- away and back, "- Item info" / "+ Item info" like the recipe list's
+    -- category headers; kept across sessions. Settings has "Show Item info"
+    -- to turn it off altogether.
+    local fold = CreateFrame("Button", nil, sc)
+    fold:SetPoint("TOPLEFT", itemTooltipHeader, "TOPLEFT", -2, 3)
+    fold:SetSize(150, 18)
+    fold:SetScript("OnEnter", function(b)
+        itemTooltipHeader:SetTextColor(1, 1, 1)
+        GameTooltip:SetOwner(b, "ANCHOR_TOP")
+        GameTooltip:SetText(addon.db.settings.itemInfoFolded and "Click to show" or "Click to hide")
+        GameTooltip:Show()
+    end)
+    fold:SetScript("OnLeave", function()
+        itemTooltipHeader:SetTextColor(1, 0.82, 0)
+        GameTooltip:Hide()
+    end)
+    fold:SetScript("OnClick", function()
+        local S = addon.db.settings
+        S.itemInfoFolded = not S.itemInfoFolded
+        GameTooltip:Hide()
+        self:RefreshDetailPanel(true)
+    end)
+    fold:Hide()
+    self.itemInfoFold = fold
+
+    -- The tool and station lines when the Item info box is folded or off
+    -- (they live inside the box otherwise): under the price line
+    local detTools = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    detTools:SetWidth(DETAIL_W - 40)
+    detTools:SetJustifyH("LEFT")
+    detTools:Hide()
+    self.detTools = detTools
 
     local itemTooltipDivider = sc:CreateTexture(nil, "ARTWORK")
     itemTooltipDivider:SetSize(DETAIL_W - 40, 1)
@@ -4012,6 +4046,8 @@ function TSF:UpdateScrollChildHeight()
     checkRegion(self.nameDivider)
     checkRegion(self.detCanMake)
     checkRegion(self.detPrice)
+    checkRegion(self.detTools)
+    checkRegion(self.itemTooltipHeader)
     checkRegion(self.embeddedTip)
     checkRegion(self.reagentDivider)
     checkRegion(self.reagentHeader)
@@ -4056,6 +4092,8 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.itemTooltipHeader:Hide()
     self.itemTooltipDivider:Hide()
     self.embeddedTip:Hide()
+    if self.itemInfoFold then self.itemInfoFold:Hide() end
+    if self.detTools then self.detTools:Hide() end
     self.reagentDivider:Hide()
     self.reagentHeader:Hide()
     self.altDivider:Hide()
@@ -4262,8 +4300,11 @@ function TSF:RefreshDetailPanel(preserveScroll)
         local reagentAnchor = self:CanMakeBottom()
         if self.embeddedTip:IsShown() then
             reagentAnchor = self.embeddedTip
+        elseif self.itemTooltipHeader:IsShown() then
+            reagentAnchor = self.itemTooltipHeader   -- folded (#12)
         end
 
+        self._reagentAnchor = reagentAnchor
         self.reagentDivider:SetPoint("TOPLEFT", reagentAnchor, "BOTTOMLEFT", 0, -8)
         self.reagentDivider:Show()
         self.reagentHeader:SetPoint("TOPLEFT", self.reagentDivider, "BOTTOMLEFT", 0, -4)
@@ -4409,6 +4450,7 @@ end
 
 -- The lowest line of the Can make block: the price line when it shows
 function TSF:CanMakeBottom()
+    if self.detTools and self.detTools:IsShown() then return self.detTools end
     if self.detPrice and self.detPrice:IsShown() then return self.detPrice end
     return self.detCanMake
 end
@@ -4460,6 +4502,14 @@ function TSF:ShowEmbeddedTooltip(recipe)
     tip:Hide()
     self.itemTooltipHeader:Hide()
     self.itemTooltipDivider:Hide()
+    if self.itemInfoFold then self.itemInfoFold:Hide() end
+    if self.detTools then self.detTools:Hide() end
+    -- Settings: Item info off (#12): no box, the tool lines under the price
+    local S = addon.db.settings
+    if S.showItemInfo == false then
+        self:ShowDetailTools(recipe)
+        return
+    end
 
     local itemID = recipe.itemID
     -- Decide what we can embed: a scanned link, a real crafted item, or (for
@@ -4469,10 +4519,16 @@ function TSF:ShowEmbeddedTooltip(recipe)
     if not hasItem and not recipe.spellID then return end
 
     -- Position below Can make (and the price line under it)
+    -- folded (#12): the heading only, and the tool lines above it
+    local folded = S.itemInfoFolded and true or false
+    if folded then self:ShowDetailTools(recipe) end
     self.itemTooltipDivider:SetPoint("TOPLEFT", self:CanMakeBottom(), "BOTTOMLEFT", 0, -6)
     self.itemTooltipDivider:Show()
     self.itemTooltipHeader:SetPoint("TOPLEFT", self.itemTooltipDivider, "BOTTOMLEFT", 0, -4)
+    self.itemTooltipHeader:SetText(folded and "+ Item info" or "- Item info")
     self.itemTooltipHeader:Show()
+    if self.itemInfoFold then self.itemInfoFold:Show() end
+    if folded then return end
 
     tip:SetOwner(self.detailFrame, "ANCHOR_NONE")
     tip:ClearAllPoints()
@@ -4514,6 +4570,7 @@ function TSF:ShowEmbeddedTooltip(recipe)
         tip:Hide()
         self.itemTooltipHeader:Hide()
         self.itemTooltipDivider:Hide()
+        if self.itemInfoFold then self.itemInfoFold:Hide() end
         return
     end
     self:AppendRodLine(tip, recipe)
@@ -4589,8 +4646,8 @@ end
 -- character's, and on TBC Anniversary, whose check ignores distance).
 -- No-op for a recipe that needs neither. The static entry is resolved by
 -- spellID (locale-stable) with a name fallback.
-function TSF:AppendRodLine(tip, recipe)
-    if not (recipe and RDB) then return end
+function TSF:ToolLines(recipe)
+    if not (recipe and RDB) then return nil end
     -- Resolve the static entry: by spellID first (locale-stable), then by name
     -- (profession-agnostic -- own-view live entries may lack a resolvable
     -- spellID and state.profName isn't always the canonical "Enchanting").
@@ -4624,17 +4681,43 @@ function TSF:AppendRodLine(tip, recipe)
     if station then
         lines[#lines + 1] = { station, self:StationMet(recipe, station), station = true }
     end
-    if #lines == 0 then return end
-    tip:AddLine(" ")
+    local out = {}
     for _, l in ipairs(lines) do
         if l.station and l[2] == nil then
-            tip:AddLine("Tool: " .. l[1], 1, 1, 1)
+            out[#out + 1] = { "Tool: " .. l[1], 1, 1, 1 }
         elseif l[2] then
-            tip:AddLine("Tool: " .. l[1], 0.4, 1, 0.4)
+            out[#out + 1] = { "Tool: " .. l[1], 0.4, 1, 0.4 }
         else
-            tip:AddLine("Tool: " .. l[1] .. (l.station and " (not nearby)" or " (missing)"), 1, 0.4, 0.4)
+            out[#out + 1] = { "Tool: " .. l[1] .. (l.station and " (not nearby)" or " (missing)"), 1, 0.4, 0.4 }
         end
     end
+    return out
+end
+
+-- The tool lines in a tooltip, after a blank line
+function TSF:AppendRodLine(tip, recipe)
+    local out = self:ToolLines(recipe)
+    if not out or #out == 0 then return end
+    tip:AddLine(" ")
+    for _, l in ipairs(out) do tip:AddLine(l[1], l[2], l[3], l[4]) end
+end
+
+-- The tool lines under the price line, while the Item info box is folded
+-- or off (#12); hidden when the recipe needs no tool
+function TSF:ShowDetailTools(recipe)
+    local fs = self.detTools
+    if not fs then return end
+    fs:Hide()
+    local out = self:ToolLines(recipe)
+    if not out or #out == 0 then return end
+    local parts = {}
+    for _, l in ipairs(out) do
+        parts[#parts + 1] = string.format("|cff%02x%02x%02x%s|r", l[2] * 255, l[3] * 255, l[4] * 255, l[1])
+    end
+    fs:ClearAllPoints()
+    fs:SetPoint("TOPLEFT", self:CanMakeBottom(), "BOTTOMLEFT", 0, -4)
+    fs:SetText(table.concat(parts, "\n"))
+    fs:Show()
 end
 
 -- The selected recipe's station line follows you, as Blizzard's window
@@ -6394,6 +6477,14 @@ function TSF:BuildSettingsPanel(parent)
         settings.showAllProfessions = self:GetChecked()
         TSF:UpdateProfessionTabs()
     end)
+    yLeft = yLeft - 30
+    -- 2.2.0, GitHub #12: the recipe panel's Item info box (the heading folds
+    -- it too); off, its tool lines sit under the price line
+    local itemInfoCB = MakeCheckbox("Show Item info", "showItemInfo", yLeft)
+    itemInfoCB:SetScript("OnClick", function(cb)
+        settings.showItemInfo = cb:GetChecked() and true or false
+    end)
+    self.itemInfoCB = itemInfoCB
     yLeft = yLeft - 30
 
     -- Recipe-level faction filter. Sits in the general group, not under the
@@ -8236,23 +8327,27 @@ end
 -- Open a character's profession on one recipe, in the Vendor shuffle
 -- view (the Shuffle tab, 2.2.0): their read-only view, or your own
 -- character's. A filter that would hide the recipe is cleared.
-function TSF:OpenRecipeFor(charKey, profName, recipeName)
-    if self:WaitToShow(recipeName .. " opens", function() self:OpenRecipeFor(charKey, profName, recipeName) end) then return end
+-- vendorView: false to keep the View (Crates and writs: the requested
+-- item's recipe need not be a vendor shuffle); the Shuffle tab's rows open
+-- in View: Vendor shuffle
+function TSF:OpenRecipeFor(charKey, profName, recipeName, vendorView)
+    if self:WaitToShow(recipeName .. " opens", function() self:OpenRecipeFor(charKey, profName, recipeName, vendorView) end) then return end
     -- your own character: the live profession when the game has it open, or
     -- can open it (WoW: Forever); otherwise your saved list, which says to
     -- open the profession to craft (TEST-a5, m4ru)
-    if addon:SameKey(charKey, addon:PlayerKey()) and self:OpenOwnLive(profName, recipeName) then return end
+    if addon:SameKey(charKey, addon:PlayerKey()) and self:OpenOwnLive(profName, recipeName, vendorView) then return end
     self:OpenWithCharacter(charKey, profName)
     if not (self.frame and self.frame:IsShown()) then return end
-    self:SelectRecipeForView(recipeName)
+    self:SelectRecipeForView(recipeName, vendorView)
 end
 
 -- Select `recipeName` in the shown list, in the Vendor shuffle View while
--- prices show: a search or filter that hides it is cleared, and the list
--- scrolls to it. True when it was found.
-function TSF:SelectRecipeForView(recipeName)
+-- prices show (vendorView false: the View as it is): a search or filter
+-- that hides it is cleared, a View without it goes to Known, then All, and
+-- the list scrolls to it. True when it was found.
+function TSF:SelectRecipeForView(recipeName, vendorView)
     local P = addon.Prices
-    if P and P:Enabled() then state.showTab = "vendor" end
+    if vendorView ~= false and P and P:Enabled() then state.showTab = "vendor" end
     local function find()
         for i, r in ipairs(state.recipes) do
             if not r.isHeader and r.name == recipeName then return i end
@@ -8268,6 +8363,16 @@ function TSF:SelectRecipeForView(recipeName)
         if self.diffDropdown then self.diffDropdown:SetValue("All") end
         self:RefreshRecipeList()
         idx = find()
+    end
+    -- not in this View (a crate's item in Vendor shuffle, a known recipe in
+    -- Missing): Known, then All (TEST-b)
+    for _, tab in ipairs({ "known", "all" }) do
+        if idx or state._isStaticView then break end
+        if state.showTab ~= tab then
+            state.showTab = tab
+            self:RefreshRecipeList()
+            idx = find()
+        end
     end
     if not idx then return false end
     state.scrollOffset = math.max(0, math.min(idx - 1, #state.recipes - VISIBLE_ROWS))
@@ -8528,13 +8633,13 @@ end
 -- WoW: Forever opens it by skill line, and the recipe is selected when its
 -- list arrives (ApplyPendingSelect). False when neither works (TBC
 -- Anniversary with the profession closed): the caller shows your saved list.
-function TSF:OpenOwnLive(profName, recipeName)
+function TSF:OpenOwnLive(profName, recipeName, vendorView)
     for _, isCraft in ipairs({ false, true }) do
         if SameProf(OpenProfName(isCraft), profName) then
             if isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
             if self.frame and self.frame:IsShown() and not state._viewCharKey
                and SameProf(state.profName, profName) then
-                self:SelectRecipeForView(recipeName)
+                self:SelectRecipeForView(recipeName, vendorView)
                 return true
             end
         end
@@ -8542,7 +8647,8 @@ function TSF:OpenOwnLive(profName, recipeName)
     local S = addon.Source
     local skillLine = S.TabSkillLine and S:TabSkillLine(profName == "Smelting" and "Mining" or profName)
     if skillLine and S.OpenProfession then
-        self._pendingSelect = { prof = profName, recipe = recipeName, at = GetTime and GetTime() or 0 }
+        self._pendingSelect = { prof = profName, recipe = recipeName, vendorView = vendorView,
+                                at = GetTime and GetTime() or 0 }
         S:OpenProfession(skillLine)
         return true
     end
@@ -8557,7 +8663,7 @@ function TSF:ApplyPendingSelect()
     if (GetTime and GetTime() or 0) - p.at > 10 then self._pendingSelect = nil; return end
     if not (self.frame and self.frame:IsShown()) or state._viewCharKey or state._isStaticView
        or not SameProf(state.profName, p.prof) then return end
-    if self:SelectRecipeForView(p.recipe) then self._pendingSelect = nil end
+    if self:SelectRecipeForView(p.recipe, p.vendorView) then self._pendingSelect = nil end
 end
 
 ----------------------------------------------------------------------

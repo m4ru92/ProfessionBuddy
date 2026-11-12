@@ -937,4 +937,51 @@ end
 U20()
 print("  PASS " .. TAG .. "20 2.2.0 TEST-a5: your own recipe from the Shuffle tab: the live window when open; closed, your saved list with how to craft, no Request Craft")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 20)")
+-- U21 2.2.0 TEST-b: TBC Anniversary has no Waylaid Supplies or Craftsman's
+-- Writs: no Crates and writs view, no switch, the Shuffle tab as before
+local function U21()
+    local SP = PB.ShufflePanel
+    EXPECT(PB.CratesView == nil and PB.Waylaid == nil and PB.Writs == nil, "crate data or the view loads on TBC Anniversary")
+    if not SP.parent then
+        PB.UI:Show()
+        for i, tab in ipairs(PB.UI.frame.tabs) do if tab.name == "shuffle" then PB.UI:SelectTab(i) end end
+        FLUSH()
+    end
+    EXPECT(SP.parent and SP.viewBtns == nil and rawget(SP.header, "_vis") ~= false and SP.view == "shuffle", "a view switch on TBC Anniversary")
+    if PB.UI.frame:IsShown() then PB.UI:Hide(); FLUSH() end
+end
+U21()
+print("  PASS " .. TAG .. "21 2.2.0 TEST-b: no Crates and writs view on TBC Anniversary: no switch, the heading as before")
+
+-- U22 2.2.0 TEST-b, GitHub #12: the Item info fold and Show Item info on
+-- TBC Anniversary, with an Anvil and a Blacksmith Hammer as the tool lines
+local function U22()
+    local TSF = PB.TradeSkillFrame
+    local st, S = TSF.state, PB.db.settings
+    local keepFold, keepShow = S.itemInfoFolded, S.showItemInfo
+    S.itemInfoFolded, S.showItemInfo = false, true
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    local belt = { name = "Copper Chain Belt", spellID = 2661, itemID = 2851, isKnown = true,
+                   reagents = { { itemID = 2840, count = 6, name = "Copper Bar" } } }
+    table.insert(st.recipes, 1, belt)
+    st.selected = belt.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.itemTooltipHeader:GetText() == "- Item info" and TSF.itemInfoFold:IsShown(), "open")
+    TSF.itemInfoFold:GetScript("OnClick")(TSF.itemInfoFold); FLUSH()
+    local tools = TSF.detTools:GetText() or ""
+    EXPECT(S.itemInfoFolded and not TSF.embeddedTip:IsShown() and TSF.itemTooltipHeader:GetText() == "+ Item info"
+           and tools:find("Tool: Anvil", 1, true) and tools:find("Blacksmith Hammer", 1, true), "folded: " .. tools)
+    TSF.itemInfoFold:GetScript("OnClick")(TSF.itemInfoFold); FLUSH()
+    S.showItemInfo = false; TSF:RefreshDetailPanel()
+    EXPECT(not TSF.itemTooltipHeader:IsShown() and TSF.detTools:IsShown(), "off")
+    table.remove(st.recipes, 1)
+    st.selected = nil
+    S.itemInfoFolded, S.showItemInfo = keepFold, keepShow
+    TSF.frame:Hide(); FLUSH()
+end
+U22()
+print("  PASS " .. TAG .. "22 2.2.0 TEST-b #12: Item info fold and Show Item info on TBC Anniversary; the Anvil and Hammer lines move under the price line")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 22)")

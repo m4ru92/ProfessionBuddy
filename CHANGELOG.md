@@ -10,6 +10,7 @@ The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for t
 
 - **Shuffle tab:** a new tab in the main window, and among the profession window's bottom tabs, lists the crafts a vendor pays at least a minimum profit for, best first: the materials' cost, what the vendor pays, the profit, and about how much an hour.
 - **Vendor shuffle view:** the profession window's View menu shows the same for one profession.
+- **Crates and writs (WoW: Forever):** the Shuffle tab's second view plans which Waylaid Supplies and Craftsman's Writs to fill: what each needs, what you and your alts hold, and what the rest costs.
 
 <!-- more -->
 
@@ -18,7 +19,12 @@ The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for t
 - **Shuffle tab:** one row per craft, with who knows it (you first, then your alts, friends and guildmates) and four figures: Cost, Vendor pays, Profit and Per hour. Profit is what the vendor pays for everything the craft makes, minus the materials' cost, priced as the detail panel prices them; materials you already have count at their price. Per hour is about: the profit over each craft's cast time (at least 1 second) plus 0.5 seconds between casts. A craft with a material that has no price is left out. Filters: Who (everyone, you and your alts, friends, guild), profession, the minimum profit, and "Vendor materials" for crafts whose every material comes from a vendor. Click Profit or Per hour to sort, hover a row for each material's price, and click it to open the recipe: your own in your profession, ready to craft (on TBC Anniversary when that profession is open), anyone else's in their saved list. From a profession window, its Shuffle bottom tab keeps your profession open behind the main window, as the other bottom tabs do.
 - **Vendor shuffle view:** in the profession window's View menu while prices show: the known recipes that earn at least the minimum from a vendor, most profit first, each with its profit and per hour.
 - **Your own saved list:** opening your current character's saved recipes (the Characters tab's View) shows "Open Cooking from your spellbook to craft" where Request Craft used to be, since there's nobody to request from.
+- **Item info, folded or off (GitHub #12):** click the recipe panel's "- Item info" heading to fold the box away, "+ Item info" to bring it back; it stays folded until you click it again. Settings has "Show Item info" to turn it off. Folded or off, the Tool lines (rods, hammers, crafting stations) sit under the price line, and the Reagents move up.
 - **Vendor shuffle minimum:** in Settings, under Prices, and in the Shuffle tab: any profit, or from 50c up to 1g. 1s by default.
+
+**Added on WoW: Forever**
+
+- **Crates and writs:** in the Shuffle tab, "Crates and writs" lists every Waylaid Supplies crate and Craftsman's Writ: what it asks for, how many of that you and your alts hold (green when you have enough), the fill cost (what the rest costs to buy, "?" without a price), who can craft it (you first, then your alts, friends and guildmates), and a writ's own auction price. Filters: Type (crates or writs), profession, "In my bags" and "Ready to fill"; click Fill cost or You hold to sort. A click opens the item's recipe. Reward details (money, experience, reputation) come in a later update.
 
 **Changes**
 
