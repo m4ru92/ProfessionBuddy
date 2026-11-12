@@ -278,7 +278,10 @@ function SP:CreateContent(parent)
         self.whoDD = whoDD
 
         local profDD = CreateDropdown(filterBar, 150, { "All" }, "All", function(val)
-            self.profFilter = (val == "All") and nil or val
+            -- not `(val == "All") and nil or val`: that always gives val, so
+            -- "All" filtered on a profession named "All" and emptied the
+            -- list (TEST-a3, m4ru)
+            if val == "All" then self.profFilter = nil else self.profFilter = val end
             self:Repaint()
         end, "Prof: ")
         profDD:SetPoint("LEFT", whoDD, "RIGHT", 6, 0)

@@ -6486,7 +6486,26 @@ local function F97()
     EXPECT(#SP.list == 1 and SP:Shown(SP.list[1]).key == "Pal-Realm", "Who: Friends")
     SP.whoFilter = "Guild"; SP:Repaint()
     EXPECT(#SP.list == 0 and SP.empty:IsShown(), "Who: Guild should be empty")
-    SP.whoFilter = "Everyone"
+    SP.whoFilter = "Everyone"; SP:Repaint()
+    -- Prof, picked from the dropdown's own list: one profession, then All
+    -- brings every row back (TEST-a3: All emptied the list)
+    do
+        local dd = SP.profDD
+        local function pickOpt(v)
+            for _, b in ipairs(dd.optionBtns) do
+                if b.value == v and b:IsShown() then b:GetScript("OnClick")(b); return true end
+            end
+        end
+        EXPECT(pickOpt("Poisons") and #SP.list == 1 and SP.list[1].name == "Instant Poison", "Prof: Poisons")
+        EXPECT(pickOpt("All") and SP.profFilter == nil and #SP.list == 2,
+               "Prof: All after a profession: " .. #SP.list .. " rows, filter " .. tostring(SP.profFilter))
+        -- the same trap nowhere else: `x and nil or y` always gives y
+        for _, f in ipairs({ "UI/ShufflePanel.lua", "UI/GuildPanel.lua", "UI/TradeSkillFrame.lua",
+                             "UI/FriendsPanel.lua", "UI/OrdersPanel.lua", "UI/CharacterPanel.lua", "Prices.lua" }) do
+            local src = assert(io.open(PB_BASE .. "/" .. f)):read("*a"):gsub("%-%-[^\n]*", "")
+            EXPECT(not src:find("and nil or", 1, true), f .. " has `and nil or`, which never gives nil")
+        end
+    end
     -- vendor materials only
     SP.vendorOnly = true; SP:Repaint()
     EXPECT(#SP.list == 1 and SP.list[1].name == "Instant Poison", "Vendor materials only")

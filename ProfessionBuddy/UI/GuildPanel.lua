@@ -614,7 +614,10 @@ function GP:CreateContent(parent)
     -- consistent look and single-select behavior.
     if addon.CreateDropdown then
         local profDD = addon.CreateDropdown(filterBar, 150, { "All" }, "All", function(val)
-            self.filterProf = (val == "All") and nil or val
+            -- not `(val == "All") and nil or val`, which always gives val
+            -- (Repaint then dropped "All" as no roster profession; the
+            -- Shuffle tab had no such net, TEST-a3)
+            if val == "All" then self.filterProf = nil else self.filterProf = val end
             self:Repaint()
         end, "Prof: ")
         profDD:SetPoint("LEFT", onlineLabel, "RIGHT", 14, 0)
