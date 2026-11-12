@@ -6000,9 +6000,9 @@ local function F92()
         EXPECT(UI.frame.tabs[UI.activeTab].name == name:lower(), name .. " opened the main window on tab " .. tostring(UI.frame.tabs[UI.activeTab].name))
     end
     -- /pb, /pb friends with the profession window open
-    -- /pb and /pb friends close the profession; the tab commands park it,
-    -- as each does out of combat
-    local parks = { [""] = false, friends = false, chars = true, guild = true, orders = true }
+    -- every one parks it, as each does out of combat (2.2.0: /pb and /pb
+    -- friends closed it until TEST-a6)
+    local parks = { [""] = true, friends = true, chars = true, guild = true, orders = true }
     for _, cmd in ipairs({ "", "friends", "chars", "guild", "orders" }) do
         clean(); open()
         fight(true); PRINTS = {}

@@ -20,6 +20,10 @@ The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for t
 - **Your own saved list:** opening your current character's saved recipes (the Characters tab's View) shows "Open Cooking from your spellbook to craft" where Request Craft used to be, since there's nobody to request from.
 - **Vendor shuffle minimum:** in Settings, under Prices, and in the Shuffle tab: any profit, or from 50c up to 1g. 1s by default.
 
+**Changes**
+
+- **/pb keeps your profession open:** typing /pb or /pb friends with a profession open keeps it open behind the main window, with "Back to Cooking", as the bottom tabs have since 2.1.0. They used to close it.
+
 ## 2.1.1 - 2026-11-10
 
 Crafts that make more than one item, reported by Hircus: Smelt Bronze makes two bars, and ProfessionBuddy didn't say so anywhere. Also the crafting station a recipe needs, asked for by Sushicats.

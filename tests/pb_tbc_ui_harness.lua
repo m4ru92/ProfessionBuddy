@@ -607,6 +607,7 @@ local function U14()
     ok("/pb in combat")
     ended()
     EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "/pb did not open when combat ended")
+    EXPECT(TSF._parked and UI.backBtn:IsShown(), "/pb closed the profession instead of keeping it behind (Back)")
     -- dragging either window in combat
     fight(true)
     UI.frame:GetScript("OnDragStart")(UI.frame); UI.frame:GetScript("OnDragStop")(UI.frame)
@@ -914,6 +915,16 @@ local function U20()
     TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
     EXPECT(TSF.frame:IsShown() and not st._viewCharKey and st.selected == "Light Leather" and TSF.craftBar:IsShown()
            and not TSF.ownHintBar:IsShown(), "open: " .. tostring(st._viewCharKey) .. " / " .. tostring(st.selected))
+    -- open, then /pb (TEST-a6: /pb closed the profession, so the row
+    -- found it closed): /pb keeps it open behind, and the row shows it live
+    TSF.frame:Hide(); FLUSH()
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    SlashCmdList.PROFBUDDY(""); FLUSH()
+    EXPECT(TSF._parked and TBC.open == "trade" and PB.UI.frame:IsShown(), "/pb closed the open profession")
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not st._viewCharKey and st.selected == "Light Leather" and TSF.craftBar:IsShown()
+           and not PB.UI.frame:IsShown() and not TSF._parked, "after /pb: " .. tostring(st._viewCharKey) .. " / " .. tostring(st.selected))
     TSF.frame:Hide(); FLUSH()
     if TBC.open then CLOSE_TRADE() end
     TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()

@@ -1002,12 +1002,13 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         end
 
     elseif msg == "friends" then
-        -- Close profession window if open
+        -- Park the profession window if open
         if addon.TradeSkillFrame and addon.TradeSkillFrame.frame
            and addon.TradeSkillFrame.frame:IsShown() then
             -- in combat the game blocks hiding it: when combat ends (TEST-c6)
             if addon.TradeSkillFrame:WaitForCombat("Friends opens", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
-            addon.TradeSkillFrame:Hide()
+            -- keeps your profession open behind, with Back (2.2.0)
+            addon.TradeSkillFrame:HideForMain()
         end
         if addon.FriendsPanel then
             addon.FriendsPanel:Toggle()
@@ -1095,13 +1096,16 @@ SlashCmdList["PROFBUDDY"] = function(msg)
 
     else
         -- Default: open the /pb main window.
-        -- Close profession window / settings if open first.
+        -- A profession window open first: kept open behind (parked).
         if addon.TradeSkillFrame then
             local tsf = addon.TradeSkillFrame
             if tsf.frame and tsf.frame:IsShown() then
                 -- in combat the game blocks hiding it: when combat ends (TEST-c6)
                 if tsf:WaitForCombat("The ProfessionBuddy window opens", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
-                tsf:Hide()
+                -- keeps your profession open behind the main window, with
+                -- Back, as the bottom tabs do (2.1.0's park; /pb closed it
+                -- until 2.2.0, m4ru TEST-a6)
+                tsf:HideForMain()
             end
         end
         if addon.CharacterPanel then
