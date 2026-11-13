@@ -28,6 +28,13 @@ local COLS = {
 local COL = {}
 for _, c in ipairs(COLS) do COL[c.key] = c end
 
+-- Which way a column sorts on its first click (as the Shuffle tab):
+-- names A to Z, To buy cheapest first, You hold and Writ sells highest
+-- first. A second click reverses it.
+local SORT_DEFAULT_ASC = {
+    name = true, needs = true, hold = false, cost = true, by = true, sells = false,
+}
+
 local TYPES = { "All", "Crates", "Writs" }
 local NOT_CRAFTED = "Not crafted"
 -- who can craft the requested item, nearest first (as the Shuffle tab)
@@ -45,6 +52,7 @@ function CV:Init()
     self.bagsOnly = false
     self.readyOnly = false
     self.sortKey = "cost"
+    self.sortAsc = true
 end
 
 -- Only where the crate and writ data loads (WoW: Forever)
@@ -130,8 +138,31 @@ function CV:Build()
     for id, need in pairs(addon.Writs or {}) do add(id, need, "writ") end
 end
 
--- The rows that pass the filters, sorted: To buy (cheapest first, no
--- price last), or ready to fill first
+-- Click a header: that column, or the other way when it is the sorted one
+function CV:SetSort(key)
+    if self.sortKey == key then
+        self.sortAsc = not self.sortAsc
+    else
+        self.sortKey = key
+        self.sortAsc = SORT_DEFAULT_ASC[key] and true or false
+    end
+    self:Repaint()
+end
+
+-- A row's value in one column, as the row shows it (nil = blank), and a
+-- second one for rows the first ties: Needs by item, then how many; You
+-- hold by how much of the fill you hold, then how many
+function CV:SortValue(e, key)
+    if key == "name" then return e.name end
+    if key == "needs" then return e.itemName, e.count end
+    if key == "hold" then return math.min(e.held, e.count) / math.max(e.count, 1), e.held end
+    if key == "by" then return e.by and addon:ShortName(e.by.key) or nil end
+    if key == "sells" then return e.sells end
+    return e.cost
+end
+
+-- The rows that pass the filters, sorted by the clicked column (blank
+-- last either way), then by name
 function CV:Filter()
     local list = {}
     for _, e in ipairs(self.all or {}) do
@@ -142,12 +173,15 @@ function CV:Filter()
             list[#list + 1] = e
         end
     end
-    local readyFirst = self.sortKey == "ready"
+    local key, asc = self.sortKey, self.sortAsc
+    local cmp = addon.ShufflePanel.CompareCells
+    for _, e in ipairs(list) do e._sortA, e._sortB = self:SortValue(e, key) end
     table.sort(list, function(a, b)
-        if readyFirst and a.ready ~= b.ready then return a.ready end
-        if (a.cost == nil) ~= (b.cost == nil) then return b.cost == nil end
-        if a.cost and b.cost and a.cost ~= b.cost then return a.cost < b.cost end
-        return a.name < b.name
+        local first = cmp(a._sortA, b._sortA, asc)
+        if first == nil then first = cmp(a._sortB, b._sortB, asc) end
+        if first ~= nil then return first end
+        if a.name ~= b.name then return a.name < b.name end
+        return a.id < b.id
     end)
     self.list = list
 end
@@ -269,7 +303,7 @@ function CV:Create(parent)
     self.readyCheck = check("Ready to fill", "Only the ones you and your alts hold enough for.",
         self.bagsCheck.label, function(v) self.readyOnly = v end)
 
-    -- Column headers: To buy and You hold (ready first) sort
+    -- Column headers: each one sorts (CV:SetSort)
     local headerBar = CreateFrame("Frame", nil, f)
     headerBar:SetPoint("TOPLEFT", 0, -26)
     headerBar:SetPoint("TOPRIGHT", 0, -26)
@@ -283,22 +317,19 @@ function CV:Create(parent)
         btn:SetPoint("LEFT", c.x, 0)
         btn:SetSize(c.w, 18)
         local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        fs:SetAllPoints()
         local right = c.key == "hold" or c.key == "cost" or c.key == "sells"
+        -- one side only, no width: the ^ or v never cuts a label short in
+        -- a narrow column ("Writ sells v")
+        fs:SetPoint(right and "RIGHT" or "LEFT", 0, 0)
         fs:SetJustifyH(right and "RIGHT" or "LEFT")
+        fs:SetWordWrap(false)
         btn.label = fs
         btn.colLabel = c.label
-        local sortKey = (c.key == "cost" and "cost") or (c.key == "hold" and "ready") or nil
-        if sortKey then
-            local hl = btn:CreateTexture(nil, "HIGHLIGHT")
-            hl:SetAllPoints()
-            Theme:Fill(hl, "columnHeaderHover")
-            btn:SetScript("OnClick", function()
-                self.sortKey = sortKey
-                self:Repaint()
-            end)
-            btn.sortKey = sortKey
-        end
+        local hl = btn:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints()
+        Theme:Fill(hl, "columnHeaderHover")
+        btn:SetScript("OnClick", function() self:SetSort(c.key) end)
+        btn.sortKey = c.key
         self.headerBtns[c.key] = btn
     end
 
@@ -396,8 +427,7 @@ function CV:Repaint()
     if not self.frame then return end
     self:Filter()
     for _, btn in pairs(self.headerBtns or {}) do
-        local mark = (btn.sortKey and btn.sortKey == self.sortKey) and " v" or ""
-        btn.label:SetText(btn.colLabel .. mark)
+        btn.label:SetText(btn.colLabel .. addon.ShufflePanel.SortMark(btn.sortKey == self.sortKey, self.sortAsc))
     end
     local P = addon.Prices
     local maxScroll = math.max(0, #self.list - VISIBLE_ROWS)

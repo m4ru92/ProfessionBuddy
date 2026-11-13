@@ -35,6 +35,12 @@ local WHO_ALLOWS = {
     ["Guild"]        = { guild = true },
 }
 
+-- Which way a column sorts on its first click: names A to Z, cost
+-- cheapest first, the rest highest first. A second click reverses it.
+local SORT_DEFAULT_ASC = {
+    recipe = true, who = true, cost = true, sell = false, profit = false, hour = false,
+}
+
 -- "1s" style label for a minimum in copper (Prices.lua)
 local function MinLabel(copper)
     local P = addon.Prices
@@ -46,6 +52,7 @@ function SP:Init()
     self.profFilter = nil        -- nil = every profession
     self.vendorOnly = false
     self.sortKey = "profit"
+    self.sortAsc = false
     if addon.UI and addon.UI.AddTab then
         addon.UI:AddTab("shuffle", "Shuffle", function(parent)
             self:CreateContent(parent)
@@ -131,6 +138,55 @@ function SP:Build()
     if P._unloaded then self.loading = true end
 end
 
+----------------------------------------------------------------------
+-- Sorting (2.2.0 TEST-c, m4ru): every column sorts, a second click on it
+-- sorts the other way, and the header shows ^ or v as the recipe list's
+-- Sort does. A blank value (no price, nobody) goes last either way. The
+-- Crates and writs view sorts the same way (CratesView.lua).
+----------------------------------------------------------------------
+
+-- true when x goes before y, false when after, nil when they tie. Names
+-- compare without case; nil is a blank.
+function SP.CompareCells(x, y, asc)
+    if x == nil and y == nil then return nil end
+    if x == nil then return false end
+    if y == nil then return true end
+    if type(x) == "string" and type(y) == "string" then x, y = x:lower(), y:lower() end
+    if x == y then return nil end
+    if asc then return x < y end
+    return x > y
+end
+
+-- The header marker for the sorted column, "" for the rest
+function SP.SortMark(sorted, asc)
+    if not sorted then return "" end
+    return asc and " ^" or " v"
+end
+
+-- Click a header: that column, or the other way when it is the sorted one
+function SP:SetSort(key)
+    if self.sortKey == key then
+        self.sortAsc = not self.sortAsc
+    else
+        self.sortKey = key
+        self.sortAsc = SORT_DEFAULT_ASC[key] and true or false
+    end
+    self:Repaint()
+end
+
+-- A row's value in one column, as the row shows it
+function SP:SortValue(e, key)
+    if key == "recipe" then return e.name end
+    if key == "who" then
+        local w = self:Shown(e)
+        return w and addon:ShortName(w.key) or nil
+    end
+    if key == "cost" then return e.v.cost end
+    if key == "sell" then return e.v.sell end
+    if key == "hour" then return e.v.perHour end
+    return e.v.profit
+end
+
 -- The rows that pass the filters, sorted
 function SP:Filter()
     local P = addon.Prices
@@ -148,12 +204,13 @@ function SP:Filter()
             list[#list + 1] = e
         end
     end
-    local byHour = self.sortKey == "hour"
+    local key, asc = self.sortKey, self.sortAsc
+    for _, e in ipairs(list) do e._sortVal = self:SortValue(e, key) end
     table.sort(list, function(a, b)
-        local x, y = a.v.profit, b.v.profit
-        if byHour then x, y = a.v.perHour, b.v.perHour end
-        if x ~= y then return x > y end
-        return a.name < b.name
+        local first = SP.CompareCells(a._sortVal, b._sortVal, asc)
+        if first ~= nil then return first end
+        if a.name ~= b.name then return a.name < b.name end
+        return a.prof < b.prof
     end)
     self.list = list
 end
@@ -357,7 +414,7 @@ function SP:CreateContent(parent)
     vendorLabel:SetText("Vendor materials")
     self.vendorCheck = vendorCheck
 
-    -- Column headers: Profit and Per hour sort
+    -- Column headers: each one sorts (SP:SetSort)
     local headerBar = CreateFrame("Frame", nil, parent)
     headerBar:SetPoint("TOPLEFT", 0, -52)
     headerBar:SetPoint("TOPRIGHT", 0, -52)
@@ -372,19 +429,18 @@ function SP:CreateContent(parent)
         btn:SetPoint("LEFT", c.x, 0)
         btn:SetSize(c.w, 18)
         local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        fs:SetAllPoints()
-        fs:SetJustifyH((c.key == "recipe" or c.key == "who") and "LEFT" or "RIGHT")
+        local right = not (c.key == "recipe" or c.key == "who")
+        -- one side only, no width: the ^ or v never cuts a label short in
+        -- a narrow column ("Vendor pays v")
+        fs:SetPoint(right and "RIGHT" or "LEFT", 0, 0)
+        fs:SetJustifyH(right and "RIGHT" or "LEFT")
+        fs:SetWordWrap(false)
         btn.label = fs
         btn.colLabel = c.label
-        if c.key == "profit" or c.key == "hour" then
-            local hl = btn:CreateTexture(nil, "HIGHLIGHT")
-            hl:SetAllPoints()
-            Theme:Fill(hl, "columnHeaderHover")
-            btn:SetScript("OnClick", function()
-                self.sortKey = c.key
-                self:Repaint()
-            end)
-        end
+        local hl = btn:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints()
+        Theme:Fill(hl, "columnHeaderHover")
+        btn:SetScript("OnClick", function() self:SetSort(c.key) end)
         if c.key == "hour" then
             btn:SetScript("OnEnter", function(b)
                 GameTooltip:SetOwner(b, "ANCHOR_TOP")
@@ -516,8 +572,7 @@ function SP:Repaint()
     if not self.parent then return end
     self:Filter()
     for key, btn in pairs(self.headerBtns or {}) do
-        local mark = (key == self.sortKey) and " v" or ""
-        btn.label:SetText(btn.colLabel .. mark)
+        btn.label:SetText(btn.colLabel .. SP.SortMark(key == self.sortKey, self.sortAsc))
     end
     if self.minDD and addon.Prices then self.minDD:SetValue(MinLabel(addon.Prices:ShuffleMin())) end
     local P = addon.Prices

@@ -6467,7 +6467,7 @@ local function F97()
     UI:SelectTab(idx); FLUSH()
     -- F93's combat sweep clicked this tab's sort and filters, and its
     -- Crates and writs button
-    SP.sortKey, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", "Everyone", nil, false
+    SP.sortKey, SP.sortAsc, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", false, "Everyone", nil, false
     SP:SetView("shuffle")
     local names = {}
     for _, e in ipairs(SP.list) do names[#names + 1] = e.name end
@@ -6561,7 +6561,7 @@ local function F97()
 
     -- in combat, with rows: every button, and a row click waits
     UI:Show(); UI:SelectTab(idx); FLUSH()
-    SP.sortKey, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", "Everyone", nil, false
+    SP.sortKey, SP.sortAsc, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", false, "Everyone", nil, false
     SP:Refresh()
     EXPECT(SP.rows[1]:IsShown(), "no rows for the combat sweep")
     local sites, errs = COMBAT_SWEEP({ UI.frame }, {})
@@ -6570,7 +6570,7 @@ local function F97()
     FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
     if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
     UI:Show(); UI:SelectTab(idx); FLUSH()
-    SP.sortKey, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", "Everyone", nil, false
+    SP.sortKey, SP.sortAsc, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", false, "Everyone", nil, false
     SP:Refresh()
     local keepICL = InCombatLockdown
     InCombatLockdown = function() return true end
@@ -6690,7 +6690,7 @@ local function F99()
     SP.viewBtns.crates:GetScript("OnClick")(SP.viewBtns.crates); FLUSH()
     EXPECT(SP.view == "crates" and CV.frame:IsShown() and not SP.filterBar:IsShown() and not SP.listFrame:IsShown(),
            "the switch did not show Crates and writs")
-    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly, CV.sortKey = "All", nil, false, false, "cost"
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly, CV.sortKey, CV.sortAsc = "All", nil, false, false, "cost", true
     CV:Refresh()
     local byId = {}
     for _, e in ipairs(CV.all) do byId[e.id] = e end
@@ -6744,7 +6744,7 @@ local function F99()
     EXPECT(pickOpt(CV.profDD, "All") and CV.profFilter == nil and #CV.list == 5, "Prof: All")
     -- You hold header: ready first
     CV.headerBtns.hold:GetScript("OnClick")(CV.headerBtns.hold)
-    EXPECT(CV.sortKey == "ready" and CV.list[1] == c1, "ready first")
+    EXPECT(CV.sortKey == "hold" and not CV.sortAsc and CV.list[1] == c1, "ready first")
     CV.headerBtns.cost:GetScript("OnClick")(CV.headerBtns.cost)
     -- the row click opens the requested item's recipe: your own, live
     if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
@@ -6860,4 +6860,225 @@ end
 F100()
 print("  PASS F100 2.2.0 TEST-b #12: Item info: the heading folds it (- / +, kept between recipes), Settings Show Item info turns it off; folded or off the tool lines sit under the price line and the Reagents move up; hover tooltips unchanged")
 
-print("ALL FOREVER TESTS PASS (100)")
+-- F101 2.2.0 TEST-c (Kluga; m4ru found the way in game): a batch kept
+-- crafting while the profession was parked behind the main window, and
+-- Back stopped the count: Craft 5, one done, Characters, Back, and the box
+-- stayed at 4. Every way back into the profession being crafted keeps
+-- counting: Back after each bottom tab and each /pb command, the parked
+-- icon, a Shuffle row of your own recipe, Back in combat. A batch that
+-- ends while parked, an interrupt, and another profession still stop it.
+local function F101()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    -- FLUSH runs every pending timer at once, the 10-second watchdog too
+    local keepArm = TSF.ArmCraftWatchdog
+    TSF.ArmCraftWatchdog = function() end
+    local keepICL = InCombatLockdown
+    local function cast(event) FIRE(event or "UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 2881) end
+    local function clean()
+        InCombatLockdown = keepICL
+        if TSF.settingsPanel and TSF.settingsPanel:IsShown() then TSF:CloseSettings() end
+        if TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI.frame:Hide() end
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+        TSF:StopCraftTracking()
+    end
+    -- Craft 5 of Light Leather, one done: the box reads 4
+    local function start(label)
+        clean()
+        TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+        st.selected = "Light Leather"; TSF:UpdateCraftBar()
+        TSF:DoCraftImmediate(5)
+        cast()
+        EXPECT(TSF._craftingActive and TSF.qtyBox:GetText() == "4", label .. ": the first craft")
+    end
+    local function tab(i) return function() TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH() end end
+    local function slash(cmd) return function() SlashCmdList.PROFBUDDY(cmd); FLUSH() end end
+    local function backBtn() UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH() end
+    local function cover() UI.parkedTab:GetScript("OnClick")(UI.parkedTab); FLUSH() end
+    local function ownRow() TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH() end
+    -- leave, one more craft while parked, back, one more craft
+    local function run(label, leave, back)
+        start(label)
+        leave()
+        EXPECT(TSF._parked and not TSF.frame:IsShown() and UI.frame:IsShown(), label .. ": not parked")
+        cast()
+        EXPECT(TSF._craftingActive and TSF._craftRemaining == 3, label .. ": a craft while parked did not count")
+        back()
+        EXPECT(TSF.frame:IsShown() and not TSF._parked and st.profName == "Leatherworking", label .. ": not back")
+        EXPECT(TSF._craftingActive and TSF.qtyBox:GetText() == "3", label .. ": back stopped the count at " .. tostring(TSF.qtyBox:GetText()))
+        cast()
+        EXPECT(TSF.qtyBox:GetText() == "2" and TSF._craftRemaining == 2, label .. ": the next craft after back did not count: " .. tostring(TSF.qtyBox:GetText()))
+        cast(); cast()
+        EXPECT(not TSF._craftingActive and TSF.qtyBox:GetText() == "1", label .. ": the batch did not end at zero")
+    end
+    local names = { "Characters", "Friends", "Guild", "Orders", "Shuffle" }
+    for i, name in ipairs(names) do run(name .. " tab, Back", tab(i), backBtn) end
+    for _, cmd in ipairs({ "", "friends", "chars", "guild", "orders" }) do
+        run("/pb " .. cmd .. ", Back", slash(cmd), backBtn)
+    end
+    run("Characters tab, the parked icon", tab(1), cover)
+    run("Friends tab, the parked icon", tab(2), cover)
+    run("Shuffle tab, your own Shuffle row", tab(5), ownRow)
+    -- Back in combat waits, and counts on when combat ends
+    run("Back in combat", tab(1), function()
+        InCombatLockdown = function() return true end
+        PRINTS = {}
+        UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+        EXPECT(PRINTED("Leatherworking opens when combat ends."), "Back in combat: no wait")
+        InCombatLockdown = keepICL
+        FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    end)
+    -- the batch ends while parked: Back shows 1 and counts nothing
+    start("ends while parked")
+    tab(1)()
+    cast(); cast(); cast(); cast()
+    EXPECT(not TSF._craftingActive, "ends while parked: still tracking")
+    backBtn()
+    EXPECT(TSF.frame:IsShown() and not TSF._craftingActive and TSF.qtyBox:GetText() == "1",
+           "ends while parked: the box after Back reads " .. tostring(TSF.qtyBox:GetText()))
+    -- an interrupt while parked: the box keeps what was left, nothing counts
+    start("interrupted while parked")
+    tab(1)()
+    cast("UNIT_SPELLCAST_INTERRUPTED")
+    backBtn()
+    EXPECT(not TSF._craftingActive and TSF.qtyBox:GetText() == "4", "interrupted while parked: " .. tostring(TSF.qtyBox:GetText()))
+    cast()
+    EXPECT(TSF.qtyBox:GetText() == "4", "interrupted while parked: a later cast counted")
+    -- another profession opens: the game's close of Leatherworking ends it
+    start("another profession")
+    tab(1)()
+    local cook = UI.profStrip.byName.Cooking
+    cook:GetScript("OnClick")(cook)
+    TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.profName == "Cooking" and not TSF._craftingActive and not TSF._parked,
+           "another profession: " .. tostring(st.profName) .. " tracking " .. tostring(TSF._craftingActive))
+    -- the same name on the other channel is not the batch's window
+    start("other channel")
+    EXPECT(TSF:IsCraftingIn("Leatherworking", false) and not TSF:IsCraftingIn("Leatherworking", true)
+           and not TSF:IsCraftingIn("Cooking", false), "IsCraftingIn")
+    clean()
+    EXPECT(not TSF:IsCraftingIn("Leatherworking", false) and TSF._craftProf == nil, "IsCraftingIn after the stop")
+    TSF.ArmCraftWatchdog = keepArm
+end
+F101()
+print("  PASS F101 2.2.0 TEST-c: a batch keeps counting down through every way back into its profession (Back after each bottom tab and each /pb command, the parked icon, your own Shuffle row, Back in combat); a batch that ends or is interrupted while parked, or another profession opening, stops it")
+
+-- F102 2.2.0 TEST-c (m4ru): every column of the Shuffle tab and of Crates
+-- and writs sorts, a second click the other way, the header shows ^ or v,
+-- and a blank (no price, nobody) goes last both ways
+local function F102()
+    local PB = ProfBuddy
+    local SP, CV, UI, S = PB.ShufflePanel, PB.CratesView, PB.UI, PB.db.settings
+    local keepMin = S.shuffleMinProfit
+    S.shuffleMinProfit = 0
+    if not UI.frame:IsShown() then UI:Show(); FLUSH() end
+    for i, t in ipairs(UI.frame.tabs) do if t.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    -- a header click: the order follows `get` in `dir`, blanks last, only
+    -- this header marked
+    local function check(mod, key, get, asc, label)
+        local list = mod.list
+        local seenBlank = false
+        for i, e in ipairs(list) do
+            local v = get(e)
+            if v == nil then
+                seenBlank = true
+            else
+                EXPECT(not seenBlank, label .. ": a blank before a value at row " .. i)
+                local prev = i > 1 and get(list[i - 1])
+                if prev ~= nil and i > 1 then
+                    if type(v) == "string" then v, prev = v:lower(), prev:lower() end
+                    EXPECT(asc and prev <= v or (not asc and prev >= v), label .. ": out of order at row " .. i)
+                end
+            end
+        end
+        for k, btn in pairs(mod.headerBtns) do
+            local want = btn.colLabel .. (k == key and (asc and " ^" or " v") or "")
+            EXPECT(btn.label:GetText() == want, label .. ": header " .. k .. " reads " .. tostring(btn.label:GetText()))
+        end
+    end
+    local function click(mod, key) mod.headerBtns[key]:GetScript("OnClick")(mod.headerBtns[key]) end
+    local function both(mod, key, get, firstAsc, label)
+        click(mod, key)
+        EXPECT(mod.sortKey == key and mod.sortAsc == firstAsc, label .. ": first click direction")
+        check(mod, key, get, firstAsc, label .. " first click")
+        click(mod, key)
+        EXPECT(mod.sortAsc == not firstAsc, label .. ": second click did not reverse")
+        check(mod, key, get, not firstAsc, label .. " second click")
+    end
+    -- the Shuffle tab
+    SP:SetView("shuffle")
+    local function sv(name, prof, who, cost, sell, hour)
+        return { name = name, prof = prof, who = { { key = who, rel = "alt" } },
+                 v = { cost = cost, sell = sell, profit = sell - cost, perHour = hour } }
+    end
+    local keepAll, keepBuild = SP.all, SP.Build
+    SP.Build = function() end
+    SP.all = {
+        sv("bolt", "Tailoring", "Zed-Realm", 50, 300, 900),
+        sv("Armor Kit", "Leatherworking", "amy-Realm", 10, 200, 5000),
+        sv("Copper Rod", "Blacksmithing", "Bo-Realm", 99, 100, 10),
+        sv("Armor Kit", "Engineering", "Bo-Realm", 10, 200, 5000),
+    }
+    SP.whoFilter, SP.profFilter, SP.vendorOnly = "Everyone", nil, false
+    SP.sortKey, SP.sortAsc = nil, false
+    SP:Repaint()
+    local short = PB.ShortName and function(k) return PB:ShortName(k) end
+    both(SP, "recipe", function(e) return e.name end, true, "Shuffle Recipe")
+    EXPECT(SP.list[1].name == "Copper Rod" and SP.list[4].name:lower() == "armor kit", "Shuffle Recipe Z to A")
+    both(SP, "who", function(e) return short(SP:Shown(e).key) end, true, "Shuffle Who")
+    both(SP, "cost", function(e) return e.v.cost end, true, "Shuffle Cost")
+    both(SP, "sell", function(e) return e.v.sell end, false, "Shuffle Vendor pays")
+    both(SP, "profit", function(e) return e.v.profit end, false, "Shuffle Profit")
+    both(SP, "hour", function(e) return e.v.perHour end, false, "Shuffle Per hour")
+    -- another column starts in its own direction
+    click(SP, "profit")
+    EXPECT(SP.sortKey == "profit" and SP.sortAsc == false and SP.list[1].name == "bolt", "Profit after Per hour")
+    SP.all, SP.Build = keepAll, keepBuild
+    SP.sortKey, SP.sortAsc = "profit", false
+    -- Crates and writs
+    SP:SetView("crates")
+    local function cv(id, name, item, count, held, cost, by, sells)
+        return { id = id, kind = sells and "writ" or "crate", item = 1, count = count, name = name, itemName = item,
+                 held = held, ready = held >= count, cost = cost, by = by and { key = by, rel = "alt" } or nil,
+                 prof = "Leatherworking", sells = sells, inBags = false }
+    end
+    local keepCV, keepCVBuild = CV.all, CV.Build
+    CV.Build = function() end
+    CV.all = {
+        cv(1, "Waylaid Supplies: Light Leather", "Light Leather", 10, 10, 0, "Altie-Realm", nil),
+        cv(2, "Craftsman's Writ: Heavy Armor Kit", "heavy armor kit", 4, 1, 3000, nil, 500),
+        cv(3, "Waylaid Supplies: Bolt", "Bolt of Linen", 10, 0, nil, "bo-Realm", nil),
+        cv(4, "Craftsman's Writ: Bolt", "Bolt of Linen", 12, 2, 120, "Altie-Realm", 50),
+        cv(5, "craftsman's Writ: Belt", "Belt", 1, 0, nil, nil, nil),
+    }
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly = "All", nil, false, false
+    CV.sortKey, CV.sortAsc = nil, true
+    CV:Repaint()
+    both(CV, "name", function(e) return e.name end, true, "Crates name")
+    both(CV, "needs", function(e) return e.itemName end, true, "Crates Needs")
+    click(CV, "needs")   -- back to A to Z: the two Bolt of Linen rows by how many
+    EXPECT(CV.list[2].itemName == "Bolt of Linen" and CV.list[2].count == 10 and CV.list[3].count == 12, "Needs: count second")
+    both(CV, "hold", function(e) return math.min(e.held, e.count) / e.count end, false, "Crates You hold")
+    click(CV, "hold")   -- back to highest first
+    EXPECT(CV.list[1].id == 1 and CV.list[2].id == 2 and CV.list[3].id == 4, "You hold: ready first, then the most of the fill")
+    both(CV, "cost", function(e) return e.cost end, true, "Crates To buy")
+    EXPECT(CV.list[1].cost == 3000 and CV.list[4].cost == nil and CV.list[5].cost == nil, "To buy highest first: ? still last")
+    click(CV, "cost")
+    EXPECT(CV.list[1].cost == 0 and CV.list[5].cost == nil, "To buy: 0 first, ? last")
+    both(CV, "by", function(e) return e.by and short(e.by.key) or nil end, true, "Crates Crafted by")
+    both(CV, "sells", function(e) return e.sells end, false, "Crates Writ sells")
+    EXPECT(CV.list[4].sells == nil and CV.list[5].sells == nil and CV.list[1].sells == 50, "Writ sells: lowest first after the second click, blanks last")
+    CV.all, CV.Build = keepCV, keepCVBuild
+    CV.sortKey, CV.sortAsc = "cost", true
+    SP:SetView("shuffle")
+    S.shuffleMinProfit = keepMin
+    UI:Hide(); FLUSH()
+end
+F102()
+print("  PASS F102 2.2.0 TEST-c: every column of the Shuffle tab and of Crates and writs sorts, names A to Z and prices cheapest or highest first, a second click the other way; ^ or v on the sorted header only; a blank goes last both ways")
+
+print("ALL FOREVER TESTS PASS (102)")

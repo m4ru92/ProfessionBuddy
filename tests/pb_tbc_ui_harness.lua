@@ -866,7 +866,7 @@ local function U19()
     if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
     UI:Show()
     UI:SelectTab(5); FLUSH()
-    SP.sortKey, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", "Everyone", nil, false
+    SP.sortKey, SP.sortAsc, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", false, "Everyone", nil, false
     SP:Refresh()
     local found = false
     for _, e in ipairs(SP.list) do if e.name == "Light Leather" then found = true end end
@@ -984,4 +984,98 @@ end
 U22()
 print("  PASS " .. TAG .. "22 2.2.0 TEST-b #12: Item info fold and Show Item info on TBC Anniversary; the Anvil and Hammer lines move under the price line")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 22)")
+-- U23 2.2.0 TEST-c (Kluga; m4ru): on TBC Anniversary too, a batch keeps
+-- counting down through every way back into its profession: Back after a
+-- bottom tab and /pb, the parked icon, your own Shuffle row. The Shuffle
+-- tab's columns all sort, a second click the other way, with ^ or v
+local function U23()
+    local UI, TSF, SP, S = PB.UI, PB.TradeSkillFrame, PB.ShufflePanel, PB.db.settings
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    -- FLUSH runs every pending timer at once, the 10-second watchdog too
+    local keepArm, keepName = TSF.ArmCraftWatchdog, SPELL_NAMES[2881]
+    TSF.ArmCraftWatchdog = function() end
+    SPELL_NAMES[2881] = "Light Leather"   -- the cast's name: TBC Anniversary matches the craft by name
+    local row = TBC.tradeRows[2]
+    local keepAvail = row[3]
+    row[3] = 10
+    local function cast(ev) FIRE(ev or "UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 2881) end
+    local function clean()
+        if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+        if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+        if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+        TSF:StopCraftTracking()
+    end
+    local function tab(i) return function() TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH() end end
+    local function backBtn() UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH() end
+    local function cover() UI.parkedTab:GetScript("OnClick")(UI.parkedTab); FLUSH() end
+    local function run(label, leave, back)
+        clean(); OPEN_TRADE()
+        st.selected = "Light Leather"; TSF:UpdateCraftBar()
+        TSF:DoCraftImmediate(5)
+        cast()
+        EXPECT(TSF._craftingActive and TSF.qtyBox:GetText() == "4", label .. ": the first craft")
+        leave()
+        EXPECT(TSF._parked and UI.frame:IsShown() and TBC.open == "trade", label .. ": not parked")
+        cast()
+        back()
+        EXPECT(TSF.frame:IsShown() and not TSF._parked and TSF._craftingActive and TSF.qtyBox:GetText() == "3",
+               label .. ": back stopped the count at " .. tostring(TSF.qtyBox:GetText()))
+        cast()
+        EXPECT(TSF.qtyBox:GetText() == "2", label .. ": the next craft after back did not count")
+    end
+    run("Characters tab, Back", tab(1), backBtn)
+    run("Shuffle tab, Back", tab(5), backBtn)
+    run("/pb, Back", function() SlashCmdList.PROFBUDDY(""); FLUSH() end, backBtn)
+    run("Friends tab, the parked icon", tab(2), cover)
+    run("Characters tab, your own Shuffle row", tab(1),
+        function() TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH() end)
+    -- the game closes the profession while parked: the count stops
+    clean(); OPEN_TRADE()
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    TSF:DoCraftImmediate(5)
+    tab(1)()
+    CLOSE_TRADE()
+    EXPECT(not TSF._craftingActive and not TSF._parked, "the close while parked did not stop the count")
+    clean()
+    row[3] = keepAvail
+    TSF.ArmCraftWatchdog, SPELL_NAMES[2881] = keepArm, keepName
+
+    -- the Shuffle tab's columns
+    local keepMin = S.shuffleMinProfit
+    S.shuffleMinProfit = 0
+    UI:Show(); UI:SelectTab(5); FLUSH()
+    local keepAll, keepBuild = SP.all, SP.Build
+    SP.Build = function() end
+    local function sv(name, who, cost, sell, hour)
+        return { name = name, prof = "Leatherworking", who = { { key = who, rel = "alt" } },
+                 v = { cost = cost, sell = sell, profit = sell - cost, perHour = hour } }
+    end
+    SP.all = { sv("bolt", "Zed-Realm", 50, 300, 900), sv("Armor Kit", "amy-Realm", 10, 200, 5000),
+               sv("Copper Rod", "Bo-Realm", 99, 100, 10) }
+    SP.whoFilter, SP.profFilter, SP.vendorOnly = "Everyone", nil, false
+    SP.sortKey, SP.sortAsc = "profit", false
+    SP:Repaint()
+    local function click(key) SP.headerBtns[key]:GetScript("OnClick")(SP.headerBtns[key]) end
+    local function order() local t = {}; for _, e in ipairs(SP.list) do t[#t + 1] = e.name end; return table.concat(t, ",") end
+    EXPECT(order() == "bolt,Armor Kit,Copper Rod" and SP.headerBtns.profit.label:GetText() == "Profit v", "Profit: " .. order())
+    click("recipe")
+    EXPECT(order() == "Armor Kit,bolt,Copper Rod" and SP.headerBtns.recipe.label:GetText() == "Recipe ^"
+           and SP.headerBtns.profit.label:GetText() == "Profit", "Recipe A to Z: " .. order())
+    click("recipe")
+    EXPECT(order() == "Copper Rod,bolt,Armor Kit" and SP.headerBtns.recipe.label:GetText() == "Recipe v", "Recipe Z to A: " .. order())
+    click("who")
+    EXPECT(order() == "Armor Kit,Copper Rod,bolt", "Who: " .. order())
+    click("cost")
+    EXPECT(order() == "Armor Kit,bolt,Copper Rod" and SP.headerBtns.cost.label:GetText() == "Cost ^", "Cost: " .. order())
+    click("hour"); click("hour")
+    EXPECT(order() == "Copper Rod,bolt,Armor Kit" and SP.headerBtns.hour.label:GetText() == "Per hour ^", "Per hour lowest first: " .. order())
+    SP.all, SP.Build = keepAll, keepBuild
+    SP.sortKey, SP.sortAsc = "profit", false
+    S.shuffleMinProfit = keepMin
+    UI:Hide(); FLUSH()
+end
+U23()
+print("  PASS " .. TAG .. "23 2.2.0 TEST-c: the craft count keeps going through Back (bottom tab, /pb, the parked icon, your own Shuffle row) on TBC Anniversary and stops when the game closes the profession; the Shuffle tab's columns sort both ways with ^ or v")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 23)")

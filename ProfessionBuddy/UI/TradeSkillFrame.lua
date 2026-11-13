@@ -5573,6 +5573,9 @@ function TSF:BeginCraftTracking(spellName, qty, craftIndex, spellID)
     self._craftSpellName = spellName
     self._craftSpellID   = spellID
     self._craftIndex     = craftIndex
+    -- the profession it runs in: going Back to it keeps counting (OpenWith)
+    self._craftProf      = state.profName
+    self._craftIsCraft   = state.isCraftWindow and true or false
     self:ArmCraftWatchdog()
 end
 
@@ -5582,8 +5585,16 @@ function TSF:StopCraftTracking()
     self._craftSpellName = nil
     self._craftSpellID   = nil
     self._craftIndex     = nil
+    self._craftProf      = nil
+    self._craftIsCraft   = nil
     -- Invalidates any watchdog still pending for the craft we just ended.
     self._craftToken     = (self._craftToken or 0) + 1
+end
+
+-- Is a batch running in this profession's window (the same channel)?
+function TSF:IsCraftingIn(profName, isCraft)
+    return self._craftingActive and self._craftProf ~= nil and self._craftProf == profName
+        and self._craftIsCraft == (isCraft and true or false) or false
 end
 
 -- Is this cast the recipe being crafted? By name, or by spell ID where the
@@ -8112,8 +8123,11 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
     self:EnsureFrame()
     self:RestoreContentPanels()
 
-    -- A fresh window means any craft we were tracking is over.
-    self:StopCraftTracking()
+    -- A fresh window means any craft we were tracking is over, except the
+    -- profession being crafted coming back (Back, its icon in the main
+    -- window): the game kept crafting behind the main window, so the box
+    -- keeps counting down (Kluga; 2.2.0 TEST-c, m4ru found the way in game)
+    if not self:IsCraftingIn(profName, isCraft) then self:StopCraftTracking() end
 
     state.profName      = profName
     state.skillLevel    = rank or 0
