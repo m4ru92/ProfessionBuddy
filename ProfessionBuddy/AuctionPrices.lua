@@ -2,10 +2,14 @@
 -- ProfessionBuddy  --  AuctionPrices.lua
 -- Auction prices PB records itself (2.1.0, SCOPE-2.1.0.md S3 and S4).
 --   * While you browse: every auction price the auction house shows for
---     an item PB's recipes use or make, the lowest per item this visit.
+--     an item PB's recipes use or make, or a Craftsman's Writ, a Waylaid
+--     Crate, or an item a crate or writ asks for (WoW: Forever), the
+--     lowest per item this visit.
 --   * Scan my materials: PB searches each material and product of the
---     recipes your characters know, one at a time, within the game's
---     search limits. It can be stopped.
+--     recipes your characters know, and on WoW: Forever the writs and
+--     Waylaid Crates your characters hold and what their crates and writs
+--     ask for, one at a time, within the game's search limits. It can be
+--     stopped.
 --   * Full scan: the whole auction house at once, through the game's own
 --     full-scan request, behind a warning (it can freeze the game for a
 --     few seconds, and the game allows one about every 15 minutes).
@@ -58,8 +62,33 @@ end
 
 -- An item PB has a reason to price: a material or a product of its recipes
 function AP:Wanted(itemID)
+    if not itemID then return false end
     local RDB = addon.RecipeDB
-    return (itemID and RDB and (RDB.reagentUsedIn[itemID] or RDB.itemToRecipe[itemID])) and true or false
+    if RDB and (RDB.reagentUsedIn[itemID] or RDB.itemToRecipe[itemID]) then return true end
+    return self:CrateItems()[itemID] ~= nil
+end
+
+-- WoW: Forever's crates and writs (Data/Forever/Waylaid.lua, Writs.lua):
+-- { [itemID] = name or true } for every writ and Waylaid Crate, opened
+-- or not (they sell at auction; Waylaid Supplies bind when picked up),
+-- and every item a crate or writ asks for. Without them PB never recorded a writ's price,
+-- so Sells stayed blank without Auctionator or TSM (2.2.0 TEST-c3,
+-- Hircus).
+function AP:CrateItems()
+    if self._crateItems then return self._crateItems end
+    local set = {}
+    for writ, need in pairs(addon.Writs or {}) do
+        set[writ] = true
+        set[need[1]] = need[4] or true
+    end
+    for _, need in pairs(addon.Waylaid or {}) do set[need[1]] = need[4] or true end
+    for crate, list in pairs(addon.WaylaidBundles or {}) do
+        set[crate] = true
+        for _, b in ipairs(list) do set[b[1]] = b[3] or true end
+    end
+    for item, u in pairs(addon.WaylaidUnopened or {}) do set[item] = u[2] or true end
+    self._crateItems = set
+    return set
 end
 
 -- One price seen: kept when it is the lowest for the item this visit
@@ -214,7 +243,9 @@ end
 ----------------------------------------------------------------------
 
 -- Every material and product of the recipes your own characters know,
--- with the name the classic auction house searches by
+-- with the name the classic auction house searches by. On WoW: Forever
+-- also the writs and Waylaid Crates your characters hold, and what each
+-- crate and writ they hold asks for (every bundle of a Waylaid Crate)
 function AP:MaterialList()
     local RDB, DS = addon.RecipeDB, addon.DataStore
     local list, seen = {}, {}
@@ -234,6 +265,23 @@ function AP:MaterialList()
                     if r then
                         for _, rg in ipairs(r.reagents or {}) do add(rg.itemID, rg.name) end
                         add(r.itemID)
+                    end
+                end
+            end
+        end
+        if type(char) == "table" and not char.isRemote and type(char.inventory) == "table" then
+            for _, where in ipairs({ "bags", "bank" }) do
+                for id, n in pairs(type(char.inventory[where]) == "table" and char.inventory[where] or {}) do
+                    id = tonumber(id)
+                    if id and (tonumber(n) or 0) > 0 then
+                        local writ = addon.Writs and addon.Writs[id]
+                        local need = writ or (addon.Waylaid and addon.Waylaid[id])
+                        local bundles = addon.WaylaidBundles and addon.WaylaidBundles[id]
+                        local unopened = addon.WaylaidUnopened and addon.WaylaidUnopened[id]
+                        if writ or bundles then add(id) end
+                        if unopened then add(id, unopened[2]) end
+                        if need then add(need[1], need[4]) end
+                        for _, b in ipairs(bundles or {}) do add(b[1], b[3]) end
                     end
                 end
             end
@@ -397,7 +445,8 @@ function AP:BuildPanel(parent)
     about:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
     about:SetPoint("RIGHT", f, "RIGHT", 0, 0)
     about:SetJustifyH("LEFT")
-    about:SetText("Scan my materials searches every material and crafted item of the recipes your characters know, one at a time. You can stop it.\n\n"
+    about:SetText("Scan my materials searches every material and crafted item of the recipes your characters know, one at a time. You can stop it."
+        .. (addon.Writs and " It also searches the writs and Waylaid Crates your characters hold, and what their crates and writs ask for." or "") .. "\n\n"
         .. "Full scan reads the whole auction house at once. The game can freeze for a few seconds, and it allows one about every 15 minutes.\n\n"
         .. "ProfessionBuddy also records the prices you see while you browse.")
     local scan = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")

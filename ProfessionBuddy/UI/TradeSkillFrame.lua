@@ -1540,13 +1540,53 @@ function TSF:HookItemTooltip()
     -- buying and crafting), "?" when the item has no price. A writ also
     -- shows its own auction price. Rewards come in a later update (option A,
     -- 2026-11-08: no Forever reward data yet). Off with Show prices.
+    -- A Waylaid Crate takes any one bundle from a list (2.2.0 TEST-c2,
+    -- Hircus): each bundle with its cost, and the cheapest is the fill cost.
     HookItemTooltip(function(tip)
         local P = addon.Prices
         if not (P and P:Enabled()) then return end
-        if not (addon.Waylaid or addon.Writs) then return end
+        if not (addon.Waylaid or addon.Writs or addon.WaylaidBundles) then return end
         local itemLink = TooltipItemLink(tip)
         local itemID = itemLink and addon:ItemIDFromLink(itemLink)
         if not itemID then return end
+        -- unopened (a plain Waylaid Crate, a Sealed writ; TEST-c5): it asks
+        -- for nothing yet, so only what it sells for, when PB has a price
+        if addon.WaylaidUnopened and addon.WaylaidUnopened[itemID] then
+            local sell = P:AuctionPrice(itemID)
+            if sell then
+                tip:AddLine(" ")
+                tip:AddDoubleLine("Sells for (ProfessionBuddy):", P:Money(sell), 1, 0.82, 0, 1, 1, 1)
+                tip:Show()
+            end
+            return
+        end
+        local bundles = addon.WaylaidBundles and addon.WaylaidBundles[itemID]
+        if bundles then
+            local rows, best = {}, nil
+            for _, b in ipairs(bundles) do
+                local mp = P:MaterialPrice(b[1])
+                local row = { b = b, cost = mp.unit and mp.unit * b[2], partial = mp.partial }
+                rows[#rows + 1] = row
+                if row.cost and (not best or row.cost < best.cost) then best = row end
+            end
+            local function money(row)
+                if not row.cost then return "|cffff4444?|r" end
+                return P:Money(row.cost) .. (row.partial and "+" or "")
+            end
+            tip:AddLine(" ")
+            tip:AddDoubleLine("Fill cost (ProfessionBuddy):", best and money(best) or "|cffff4444?|r", 1, 0.82, 0, 1, 1, 1)
+            for _, row in ipairs(rows) do
+                local name = GetItemInfo(row.b[1]) or row.b[3]
+                tip:AddDoubleLine("  " .. row.b[2] .. " x " .. name, money(row), 0.9, 0.9, 0.9, 1, 1, 1)
+            end
+            tip:AddLine("  Any one of these fills it; the cheapest is the fill cost.", 0.5, 0.5, 0.5, true)
+            -- it sells at auction too (TEST-c4): fill it or sell it
+            local sell = P:AuctionPrice(itemID)
+            if sell then tip:AddDoubleLine("  Crate sells for", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
+            tip:AddLine("  Reward details: coming in a later update.", 0.5, 0.5, 0.5)
+            tip:Show()
+            return
+        end
         local writ = addon.Writs and addon.Writs[itemID]
         local need = (addon.Waylaid and addon.Waylaid[itemID]) or writ
         if not need then return end

@@ -6651,7 +6651,8 @@ local function F99()
     local me = PB:PlayerKey()
     local chars = PB.db.characters
     EXPECT(CV and CV:Available(), "no Crates and writs view on WoW: Forever")
-    local keepW, keepWr = PB.Waylaid, PB.Writs
+    local keepW, keepWr, keepWB, keepWU = PB.Waylaid, PB.Writs, PB.WaylaidBundles, PB.WaylaidUnopened
+    PB.WaylaidBundles, PB.WaylaidUnopened = nil, nil   -- F103 and F105 cover them
     local keepAuc, keepAucOn, keepShow = Auctionator, S.priceAuctionator, S.showPrices
     local keepAlt = chars["Altie-Realm"]
     local inv = chars[me].inventory or {}
@@ -6783,7 +6784,7 @@ local function F99()
     SP.viewBtns.shuffle:GetScript("OnClick")(SP.viewBtns.shuffle); FLUSH()
     EXPECT(SP.view == "shuffle" and not CV.frame:IsShown() and SP.filterBar:IsShown() and SP.listFrame:IsShown(), "back to the shuffle")
 
-    PB.Waylaid, PB.Writs = keepW, keepWr
+    PB.Waylaid, PB.Writs, PB.WaylaidBundles, PB.WaylaidUnopened = keepW, keepWr, keepWB, keepWU
     Auctionator, S.priceAuctionator, S.showPrices = keepAuc, keepAucOn, keepShow
     chars["Altie-Realm"] = keepAlt
     inv.bags[2318], inv.bags[900002], inv.bags[2447] = keepBags[2318], keepBags[900002], keepBags[2447]
@@ -7070,8 +7071,8 @@ local function F102()
     click(CV, "cost")
     EXPECT(CV.list[1].cost == 0 and CV.list[5].cost == nil, "To buy: 0 first, ? last")
     both(CV, "by", function(e) return e.by and short(e.by.key) or nil end, true, "Crates Crafted by")
-    both(CV, "sells", function(e) return e.sells end, false, "Crates Writ sells")
-    EXPECT(CV.list[4].sells == nil and CV.list[5].sells == nil and CV.list[1].sells == 50, "Writ sells: lowest first after the second click, blanks last")
+    both(CV, "sells", function(e) return e.sells end, false, "Crates Sells")
+    EXPECT(CV.list[4].sells == nil and CV.list[5].sells == nil and CV.list[1].sells == 50, "Sells: lowest first after the second click, blanks last")
     CV.all, CV.Build = keepCV, keepCVBuild
     CV.sortKey, CV.sortAsc = "cost", true
     SP:SetView("shuffle")
@@ -7081,4 +7082,313 @@ end
 F102()
 print("  PASS F102 2.2.0 TEST-c: every column of the Shuffle tab and of Crates and writs sorts, names A to Z and prices cheapest or highest first, a second click the other way; ^ or v on the sorted header only; a blank goes last both ways")
 
-print("ALL FOREVER TESTS PASS (102)")
+-- F103 2.2.0 TEST-c2 (Hircus): a "Waylaid Crate: <kind>" takes any one
+-- bundle from a list, and PB had no data for it: no Fill cost on its
+-- tooltip, no row in Crates and writs, so "You hold one" showed nothing for
+-- the crates he held. The bundles come from the game's tables
+-- (tools/waylaid_db.py); the tooltip prices each, the cheapest is the fill
+-- cost; the row shows the bundle cheapest to fill from what you hold
+local function F103()
+    local PB = ProfBuddy
+    local P, S, CV, SP, UI = PB.Prices, PB.db.settings, PB.CratesView, PB.ShufflePanel, PB.UI
+    local WB = PB.WaylaidBundles
+    -- the baked table
+    local n, ok = 0, true
+    for crate, list in pairs(WB or {}) do
+        n = n + 1
+        if not (type(list.name) == "string" and #list >= 2) then ok = false end
+        for _, b in ipairs(list) do
+            if not (type(b[1]) == "number" and b[2] >= 1 and type(b[3]) == "string" and b[3] ~= "") then ok = false end
+        end
+        if PB.Waylaid[crate] or PB.Writs[crate] then ok = false end
+    end
+    local eh = WB and WB[248690]
+    EXPECT(n == 30 and ok and eh and eh.name == "Earthly Expert Herbs" and #eh == 4
+           and eh[1][1] == 3357 and eh[1][2] == 20 and eh[2][1] == 3818 and eh[2][2] == 10
+           and eh[3][1] == 3821 and eh[4][1] == 3358, "WaylaidBundles table: " .. n)
+    -- the bag tooltip: each bundle priced, the cheapest is the fill cost
+    local function tipFor(id)
+        local lines = {}
+        local keepGD = TooltipUtil.GetDisplayedItem
+        TooltipUtil.GetDisplayedItem = function() return "x", "|cffffffff|Hitem:" .. id .. "::::::::|h[x]|h|r" end
+        rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = tostring(t) end)
+        rawset(GameTooltip, "AddDoubleLine", function(_, a, b) lines[#lines + 1] = tostring(a) .. " = " .. tostring(b) end)
+        rawset(GameTooltip, "Show", function() end)
+        for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then c.fn(GameTooltip) end end
+        TooltipUtil.GetDisplayedItem = keepGD
+        rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "Show", nil)
+        local plain = {}
+        for _, l in ipairs(lines) do
+            plain[#plain + 1] = (l:gsub("|T[^|]*|t", function(icon)
+                return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c" end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+        end
+        return table.concat(plain, "\n")
+    end
+    local keepAuc, keepAucOn, keepShow = Auctionator, S.priceAuctionator, S.showPrices
+    S.priceAuctionator, S.showPrices = true, true
+    local AUC = { [3357] = 10, [3818] = 50, [3358] = 5, [248690] = 900 }    -- Goldthorn: no price
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return AUC[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    P:ClearRecorded(); P:ResetListCache()
+    local t = tipFor(248690)
+    EXPECT(t:find("Fill cost (ProfessionBuddy): = 50c", 1, true) and t:find("20 x Liferoot = 2s", 1, true)
+           and t:find("10 x Fadeleaf = 5s", 1, true) and t:find("10 x Goldthorn = ?", 1, true)
+           and t:find("10 x Khadgar's Whisker = 50c", 1, true)
+           and t:find("Any one of these fills it", 1, true) and t:find("Reward details", 1, true)
+           and t:find("Crate sells for = 9s", 1, true), "bundle tooltip:\n" .. t)
+    -- no bundle priced: ?
+    AUC = {}
+    P:ClearRecorded(); P:ResetListCache()
+    t = tipFor(248690)
+    EXPECT(t:find("Fill cost (ProfessionBuddy): = ?", 1, true) and not t:find("Crate sells", 1, true), "bundle tooltip, no prices:\n" .. t)
+    S.showPrices = false
+    EXPECT(not tipFor(248690):find("Fill cost", 1, true), "bundle fill cost with Show prices off")
+    S.showPrices = true
+    AUC = { [3357] = 10, [3818] = 50, [3358] = 5, [248690] = 900 }
+    P:ClearRecorded(); P:ResetListCache()
+
+    -- Crates and writs: Hircus holds the crate in his bank
+    local chars, me = PB.db.characters, PB:PlayerKey()
+    local inv = chars[me].inventory or {}
+    chars[me].inventory = inv
+    inv.bags, inv.bank = inv.bags or {}, inv.bank or {}
+    local keepBank, keepFade = inv.bank[248690], inv.bags[3818]
+    local keepAlt = chars["Altie-Realm"]
+    inv.bank[248690] = 1
+    chars["Altie-Realm"] = { inventory = { bags = { [3818] = 8 }, bank = {} }, professions = {} }
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    SP:SetView("crates")
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly, CV.sortKey, CV.sortAsc = "All", nil, false, false, "cost", true
+    CV:Refresh()
+    local function row()
+        for _, e in ipairs(CV.all) do if e.id == 248690 then return e end end
+    end
+    local e = row()
+    -- Liferoot 20 x 10c = 2s; Fadeleaf 2 more x 50c = 1s; Goldthorn no
+    -- price; Khadgar's Whisker 10 x 5c = 50c: the cheapest
+    EXPECT(e and e.item == 3358 and e.cost == 50 and not e.ready and e.more == 3 and e.inBags and e.kind == "crate"
+           and e.sells == 900,
+           "the bundle row: " .. tostring(e and e.item) .. " " .. tostring(e and e.cost))
+    CV.bagsOnly = true; CV:Repaint()
+    EXPECT(#CV.list >= 1 and CV.list[1].id == 248690, "You hold one: the crate in the bank is not listed")
+    local shown
+    for _, r in ipairs(CV.rows) do if r._entry == e then shown = r end end
+    EXPECT(shown and shown.needsText:GetText() == "10 x Khadgar's Whisker (or 3 more)", "Needs: " .. tostring(shown and shown.needsText:GetText()))
+    -- the row tooltip says which bundle the row shows
+    local lines = {}
+    rawset(GameTooltip, "AddDoubleLine", function(_, l, r) lines[#lines + 1] = tostring(l) .. " " .. tostring(r) end)
+    rawset(GameTooltip, "AddLine", function(_, l) lines[#lines + 1] = tostring(l) end)
+    rawset(GameTooltip, "SetItemByID", function() end)
+    shown:GetScript("OnEnter")(shown)
+    rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "SetItemByID", nil)
+    local lt = table.concat(lines, "\n")
+    EXPECT(lt:find("hold 0 of 10 Khadgar's Whisker", 1, true) and lt:find("cheapest to fill from what you hold", 1, true), "row tooltip:\n" .. lt)
+    CV.bagsOnly = false
+    -- Type: a Waylaid Crate is a crate
+    CV.typeFilter = "Writs"; CV:Repaint()
+    local inWrits = false
+    for _, x in ipairs(CV.list) do if x == e then inWrits = true end end
+    CV.typeFilter = "Crates"; CV:Repaint()
+    local inCrates = false
+    for _, x in ipairs(CV.list) do if x == e then inCrates = true end end
+    EXPECT(inCrates and not inWrits, "Type: the Waylaid Crate")
+    CV.typeFilter = "All"
+    -- enough Fadeleaf: that bundle, ready, To buy 0, kept by Ready to fill
+    chars["Altie-Realm"].inventory.bags[3818] = 10
+    CV:Refresh()
+    e = row()
+    EXPECT(e and e.item == 3818 and e.ready and e.cost == 0 and e.held == 10, "ready bundle: " .. tostring(e and e.item))
+    CV.readyOnly = true; CV:Repaint()
+    local found = false
+    for _, x in ipairs(CV.list) do if x == e then found = true end end
+    EXPECT(found, "Ready to fill dropped the ready crate")
+    CV.readyOnly = false
+    -- no prices: the bundle you hold the most of
+    chars["Altie-Realm"].inventory.bags[3818] = 4
+    AUC = {}
+    P:ClearRecorded(); P:ResetListCache()
+    CV:Refresh()
+    e = row()
+    EXPECT(e and e.item == 3818 and e.cost == nil and e.held == 4 and e.sells == nil, "no prices: " .. tostring(e and e.item))
+    inv.bank[248690], inv.bags[3818] = keepBank, keepFade
+    chars["Altie-Realm"] = keepAlt
+    Auctionator, S.priceAuctionator, S.showPrices = keepAuc, keepAucOn, keepShow
+    P:ClearRecorded(); P:ResetListCache()
+    SP:SetView("shuffle")
+    UI:Hide(); FLUSH()
+end
+F103()
+print("  PASS F103 2.2.0 TEST-c2: Waylaid Crates (any one bundle from a list): 30 baked from the game's tables; the tooltip prices each bundle and the cheapest is the fill cost; Crates and writs lists each, You hold one finds one in the bank, the row shows the bundle you hold enough for, else the cheapest to fill, else the one you hold most of")
+
+-- F104 2.2.0 TEST-c3 (Hircus, step 7): with only PB's own auction prices,
+-- Writ sells stayed blank. PB recorded only what its recipes use or make,
+-- and a writ is neither. It records writs and what crates and writs ask
+-- for now, and Scan my materials searches the writs your characters hold
+-- and what their crates and writs ask for (every bundle of a Waylaid Crate)
+local function F104()
+    local PB = ProfBuddy
+    local AP, P = PB.AuctionPrices, PB.Prices
+    -- recorded while you browse
+    EXPECT(AP:Wanted(264037) and AP:Wanted(3357) and AP:Wanted(15869) and AP:Wanted(248690) and not AP:Wanted(211826)
+           and not AP:Wanted(99999)
+           and not AP:Wanted(nil), "Wanted: a writ, a bundle's herb, a crate's item")
+    local keepOpen, keepRec, keepVisit, keepNoted = AP._open, AP._record, AP._visit, AP._noted
+    local keepAuc, keepTSM = Auctionator, TSM_API
+    Auctionator, TSM_API = nil, nil
+    AP._open, AP._record, AP._visit, AP._noted = true, true, {}, 0
+    AP:Note(264037, 4200)
+    AP._open, AP._record, AP._visit, AP._noted = keepOpen, keepRec, keepVisit, keepNoted
+    local price, src = P:AuctionPrice(264037)
+    EXPECT(price == 4200 and src == "PB", "a writ's price PB saw: " .. tostring(price) .. " " .. tostring(src))
+    -- Scan my materials: what your characters hold, not your friends
+    local chars, me = PB.db.characters, PB:PlayerKey()
+    local inv = chars[me].inventory or {}
+    chars[me].inventory = inv
+    inv.bags, inv.bank = inv.bags or {}, inv.bank or {}
+    local keepB, keepK = inv.bags[264037], inv.bank[248690]
+    local keepAlt, keepPal = chars["Altie-Realm"], chars["Remote-Realm"]
+    inv.bags[264037], inv.bank[248690] = 1, 1
+    chars["Altie-Realm"] = { inventory = { bags = { [211826] = 1 }, bank = {} }, professions = {} }
+    chars["Remote-Realm"] = { isRemote = true, inventory = { bags = { [264011] = 1 }, bank = {} }, professions = {} }
+    local ids = {}
+    for _, e in ipairs(AP:MaterialList()) do ids[e.id] = e.name or true end
+    EXPECT(ids[248690] and not ids[211826], "Scan my materials: the held Waylaid Crate, not the bound Waylaid Supplies")
+    EXPECT(ids[264037] and ids[8069] and ids[3357] and ids[3818] and ids[3821] and ids[3358] and ids[15869],
+           "Scan my materials left out a held writ, its item, a held crate's bundles or an alt's crate item")
+    EXPECT(not ids[264011] and not ids[3391], "Scan my materials searched a friend's writ")
+    EXPECT(ids[2318], "Scan my materials lost a recipe material")
+    EXPECT(ids[3357] == "Liferoot", "a bundle item without its name: " .. tostring(ids[3357]))
+    inv.bags[264037], inv.bank[248690] = keepB, keepK
+    chars["Altie-Realm"], chars["Remote-Realm"] = keepAlt, keepPal
+    Auctionator, TSM_API = keepAuc, keepTSM
+    P:ClearRecorded()
+end
+F104()
+print("  PASS F104 2.2.0 TEST-c3: PB records a writ's auction price and what crates and writs ask for; Scan my materials adds the writs your characters hold and what their crates and writs ask for, not your friends'")
+
+-- F105 2.2.0 TEST-c5 (m4ru): the unopened ones, a plain Waylaid Crate and
+-- the Sealed writs. They ask for nothing until used and sell at auction:
+-- Crates and writs lists each with what it sells for, its bag tooltip
+-- shows that price, PB records it, and Scan my materials searches the ones
+-- your characters hold
+local function F105()
+    local PB = ProfBuddy
+    local P, S, CV, SP, UI, AP = PB.Prices, PB.db.settings, PB.CratesView, PB.ShufflePanel, PB.UI, PB.AuctionPrices
+    local U = PB.WaylaidUnopened or {}
+    local n = 0
+    for _ in pairs(U) do n = n + 1 end
+    EXPECT(n == 6 and U[248549] and U[248549][1] == "crate" and U[248206] and U[248206][1] == "writ"
+           and U[262887] and U[262888] and U[262889] and U[262890] and U[262890][2] == "Sealed Artisan's Writ",
+           "WaylaidUnopened table: " .. n)
+    local keepAuc, keepAucOn, keepShow = Auctionator, S.priceAuctionator, S.showPrices
+    S.priceAuctionator, S.showPrices = true, true
+    local AUC = { [262889] = 1200, [248549] = 300 }
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return AUC[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    P:ClearRecorded(); P:ResetListCache()
+    -- the bag tooltip: its price, and nothing without one
+    local function tipFor(id)
+        local lines = {}
+        local keepGD = TooltipUtil.GetDisplayedItem
+        TooltipUtil.GetDisplayedItem = function() return "x", "|cffffffff|Hitem:" .. id .. "::::::::|h[x]|h|r" end
+        rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = tostring(t) end)
+        rawset(GameTooltip, "AddDoubleLine", function(_, a, b) lines[#lines + 1] = tostring(a) .. " = " .. tostring(b) end)
+        rawset(GameTooltip, "Show", function() end)
+        for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then c.fn(GameTooltip) end end
+        TooltipUtil.GetDisplayedItem = keepGD
+        rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "Show", nil)
+        local plain = {}
+        for _, l in ipairs(lines) do
+            plain[#plain + 1] = (l:gsub("|T[^|]*|t", function(icon)
+                return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c" end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+        end
+        return table.concat(plain, "\n")
+    end
+    local t = tipFor(262889)
+    EXPECT(t:find("Sells for (ProfessionBuddy): = 12s", 1, true) and not t:find("Fill cost", 1, true), "sealed writ tooltip:\n" .. t)
+    EXPECT(not tipFor(262888):find("ProfessionBuddy", 1, true), "an unpriced sealed writ showed a PB line")
+    -- recorded and scanned
+    EXPECT(AP:Wanted(262889) and AP:Wanted(248549), "Wanted: the unopened ones")
+    local chars, me = PB.db.characters, PB:PlayerKey()
+    local inv = chars[me].inventory or {}
+    chars[me].inventory = inv
+    inv.bags, inv.bank = inv.bags or {}, inv.bank or {}
+    local keepB, keepK = inv.bags[262889], inv.bank[248549]
+    inv.bags[262889], inv.bank[248549] = 2, 1
+    local ids = {}
+    for _, e in ipairs(AP:MaterialList()) do ids[e.id] = true end
+    EXPECT(ids[262889] and ids[248549] and not ids[262888], "Scan my materials and the unopened ones")
+    -- Crates and writs
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    SP:SetView("crates")
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly, CV.sortKey, CV.sortAsc = "All", nil, false, false, "cost", true
+    CV:Refresh()
+    local rows = {}
+    for _, e in ipairs(CV.all) do if e.unopened then rows[e.id] = e end end
+    local w, c = rows[262889], rows[248549]
+    EXPECT(w and c and rows[262888] and w.kind == "writ" and c.kind == "crate" and w.sells == 1200 and c.sells == 300
+           and w.inBags and c.inBags and not rows[262888].inBags, "unopened rows")
+    -- You hold one: the two held, among the rest
+    CV.bagsOnly = true; CV:Repaint()
+    local seen = {}
+    for _, e in ipairs(CV.list) do seen[e.id] = true end
+    EXPECT(seen[262889] and seen[248549] and not seen[262888], "You hold one and the unopened ones")
+    -- Type
+    CV.bagsOnly = false; CV.typeFilter = "Writs"; CV:Repaint()
+    seen = {}
+    for _, e in ipairs(CV.list) do seen[e.id] = true end
+    EXPECT(seen[262889] and not seen[248549], "Type: Writs")
+    CV.typeFilter = "All"
+    -- Ready to fill leaves them out
+    CV.readyOnly = true; CV:Repaint()
+    for _, e in ipairs(CV.list) do EXPECT(not e.unopened, "Ready to fill listed an unopened one") end
+    CV.readyOnly = false
+    -- blanks sort last both ways on Needs, You hold, To buy, Crafted by;
+    -- Sells sorts them by price
+    for _, key in ipairs({ "needs", "hold", "cost", "by" }) do
+        for _, asc in ipairs({ true, false }) do
+            CV.sortKey, CV.sortAsc = key, asc; CV:Repaint()
+            local blank = false
+            for _, e in ipairs(CV.list) do
+                if e.unopened then blank = true
+                elseif CV:SortValue(e, key) ~= nil then
+                    EXPECT(not blank, key .. " " .. tostring(asc) .. ": an unopened row before a filled one")
+                end
+            end
+        end
+    end
+    CV.sortKey, CV.sortAsc = "sells", false; CV:Repaint()
+    local wi, ci
+    for i, e in ipairs(CV.list) do if e == w then wi = i elseif e == c then ci = i end end
+    EXPECT(wi and ci and wi < ci, "Sells: the 12s writ before the 3s crate")
+    -- the row shows Unopened and only its price; the tooltip how many you hold
+    CV.sortKey, CV.sortAsc = "sells", false; CV:Repaint()
+    local shown
+    for _, r in ipairs(CV.rows) do if r._entry == w then shown = r end end
+    EXPECT(shown and shown.needsText:GetText():find("Unopened", 1, true) and shown.holdText:GetText() == ""
+           and shown.costText:GetText() == "" and shown.byText:GetText() == "" and shown.sellsText:GetText() ~= "",
+           "the unopened row")
+    local lines = {}
+    rawset(GameTooltip, "AddDoubleLine", function(_, l, r) lines[#lines + 1] = tostring(l) .. " " .. tostring(r) end)
+    rawset(GameTooltip, "AddLine", function(_, l) lines[#lines + 1] = tostring(l) end)
+    rawset(GameTooltip, "SetItemByID", function() end)
+    shown:GetScript("OnEnter")(shown)
+    shown:GetScript("OnClick")(shown)   -- nothing to open, no error
+    rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "SetItemByID", nil)
+    local lt = table.concat(lines, "\n")
+    EXPECT(lt:find("You and your alts hold 2.", 1, true) and not lt:find("To buy", 1, true), "unopened row tooltip:\n" .. lt)
+    inv.bags[262889], inv.bank[248549] = keepB, keepK
+    Auctionator, S.priceAuctionator, S.showPrices = keepAuc, keepAucOn, keepShow
+    P:ClearRecorded(); P:ResetListCache()
+    CV.sortKey, CV.sortAsc = "cost", true
+    SP:SetView("shuffle")
+    UI:Hide(); FLUSH()
+end
+F105()
+print("  PASS F105 2.2.0 TEST-c5: the unopened Waylaid Crate and Sealed writs: listed in Crates and writs with what they sell for (Unopened, blank columns sorting last), You hold one, Type, their tooltip price, recorded and scanned when held")
+
+print("ALL FOREVER TESTS PASS (105)")

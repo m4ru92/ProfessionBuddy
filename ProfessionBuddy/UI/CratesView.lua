@@ -3,7 +3,12 @@
 -- Waylaid Supplies crate and Craftsman's Writ, what it asks for, how many
 -- of that you and your alts hold, what the rest costs to buy ("To buy";
 -- the crate's own tooltip keeps 2.1.0's whole "Fill cost"), who can
--- craft it, and a writ's own auction price, to plan which to fill.
+-- craft it, and the auction price of a writ or a Waylaid Crate (Sells),
+-- to plan which to fill and which to sell.
+-- A Waylaid Crate takes any one bundle from a list (2.2.0 TEST-c2,
+-- Hircus): its row shows the bundle cheapest to fill from what you hold.
+-- Unopened ones (a plain Waylaid Crate, the Sealed writs; TEST-c5) ask
+-- for nothing until used: their row shows only what they sell for.
 -- Rewards (money, experience, reputation) have no Forever source yet, so
 -- they come in a later update (WAYLAID-WRITS-PLANNING-scope.md). Data:
 -- Data/Forever/Waylaid.lua and Writs.lua, Forever tocs only.
@@ -23,13 +28,13 @@ local COLS = {
     { key = "hold",  label = "You hold",      x = 314, w = 54  },
     { key = "cost",  label = "To buy",        x = 372, w = 64  },
     { key = "by",    label = "Crafted by",    x = 440, w = 70  },
-    { key = "sells", label = "Writ sells",    x = 514, w = 52  },
+    { key = "sells", label = "Sells",         x = 514, w = 52  },
 }
 local COL = {}
 for _, c in ipairs(COLS) do COL[c.key] = c end
 
 -- Which way a column sorts on its first click (as the Shuffle tab):
--- names A to Z, To buy cheapest first, You hold and Writ sells highest
+-- names A to Z, To buy cheapest first, You hold and Sells highest
 -- first. A second click reverses it.
 local SORT_DEFAULT_ASC = {
     name = true, needs = true, hold = false, cost = true, by = true, sells = false,
@@ -57,7 +62,8 @@ end
 
 -- Only where the crate and writ data loads (WoW: Forever)
 function CV:Available()
-    return (addon.Waylaid ~= nil) or (addon.Writs ~= nil)
+    return (addon.Waylaid ~= nil) or (addon.Writs ~= nil) or (addon.WaylaidBundles ~= nil)
+        or (addon.WaylaidUnopened ~= nil)
 end
 
 ----------------------------------------------------------------------
@@ -136,6 +142,59 @@ function CV:Build()
     end
     for id, need in pairs(addon.Waylaid or {}) do add(id, need, "crate") end
     for id, need in pairs(addon.Writs or {}) do add(id, need, "writ") end
+    -- a Waylaid Crate: the row is its best bundle, the one you hold enough
+    -- for (the first in the game's order), else the cheapest to fill from
+    -- what you hold, else with no prices the one you hold the most of
+    for id, list in pairs(addon.WaylaidBundles or {}) do
+        local best, bestKey
+        for _, b in ipairs(list) do
+            local held = self:HeldByYou(b[1])
+            local rest = math.max(0, b[2] - held)
+            local mp = P:MaterialPrice(b[1])
+            local cost
+            if rest == 0 then cost = 0
+            elseif mp and mp.unit then cost = mp.unit * rest end
+            -- lower is better: priced by cost (a bundle you hold enough for
+            -- costs 0), then unpriced by the share you hold
+            local key = cost and 1 or 2
+            local tie = cost or -(held / b[2])
+            if not best or key < bestKey[1] or (key == bestKey[1] and tie < bestKey[2]) then
+                best = { b = b, held = held, cost = cost, partial = mp and mp.partial }
+                bestKey = { key, tie }
+            end
+        end
+        local b = best.b
+        local name = GetItemInfo(id)
+        if not name then
+            self.loading = true
+            if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(id) end
+            name = "Waylaid Crate: " .. (list.name or ("item:" .. id))
+        end
+        local by, prof = self:CraftedBy(b[1])
+        self.all[#self.all + 1] = {
+            id = id, kind = "crate", item = b[1], count = b[2], name = name,
+            itemName = GetItemInfo(b[1]) or b[3], more = #list - 1,
+            held = best.held, ready = best.held >= b[2], cost = best.cost, partial = best.partial,
+            by = by, prof = prof or NOT_CRAFTED, inBags = self:HeldByYou(id) > 0,
+            -- a Waylaid Crate sells at auction (it doesn't bind): fill it
+            -- for the reward, or sell it (m4ru, TEST-c4)
+            sells = P:AuctionPrice(id),
+        }
+    end
+    -- unopened: sell it as it is, or open it (m4ru, TEST-c5). Nothing to
+    -- fill, hold or buy, so those columns stay blank and sort last
+    for id, u in pairs(addon.WaylaidUnopened or {}) do
+        local name = GetItemInfo(id)
+        if not name then
+            self.loading = true
+            if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(id) end
+            name = u[2] or ("item:" .. id)
+        end
+        self.all[#self.all + 1] = {
+            id = id, kind = u[1], name = name, unopened = true, held = 0, ready = false,
+            prof = NOT_CRAFTED, inBags = self:HeldByYou(id) > 0, sells = P:AuctionPrice(id),
+        }
+    end
 end
 
 -- Click a header: that column, or the other way when it is the sorted one
@@ -154,6 +213,9 @@ end
 -- hold by how much of the fill you hold, then how many
 function CV:SortValue(e, key)
     if key == "name" then return e.name end
+    -- an unopened one holds nothing: blank (its Needs, To buy and Crafted
+    -- by are nil already)
+    if e.unopened and key == "hold" then return nil end
     if key == "needs" then return e.itemName, e.count end
     if key == "hold" then return math.min(e.held, e.count) / math.max(e.count, 1), e.held end
     if key == "by" then return e.by and addon:ShortName(e.by.key) or nil end
@@ -233,6 +295,11 @@ function CV:CreateRow(parent)
         GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(e.id)   -- the crate's or writ's own tooltip, with its fill cost
         GameTooltip:AddLine(" ")
+        if e.unopened then
+            GameTooltip:AddLine("You and your alts hold " .. self:HeldByYou(e.id) .. ".", 0.8, 0.8, 0.8, true)
+            GameTooltip:Show()
+            return
+        end
         -- what's left to buy after what you hold: the column; the crate's
         -- own Fill cost above is the whole fill (TEST-b review)
         local P = addon.Prices
@@ -240,6 +307,9 @@ function CV:CreateRow(parent)
         GameTooltip:AddDoubleLine("To buy:", toBuy, 1, 0.82, 0, 1, 1, 1)
         GameTooltip:AddLine("You and your alts hold " .. e.held .. " of " .. e.count .. " " .. e.itemName .. ".",
             0.8, 0.8, 0.8, true)
+        if (e.more or 0) > 0 then
+            GameTooltip:AddLine("This row shows the bundle cheapest to fill from what you hold.", 0.8, 0.8, 0.8, true)
+        end
         if e.by then
             GameTooltip:AddLine("Click to open " .. e.by.recipe .. " (" .. addon:ShortName(e.by.key) .. ").", 0.5, 0.5, 0.5)
         end
@@ -319,7 +389,7 @@ function CV:Create(parent)
         local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         local right = c.key == "hold" or c.key == "cost" or c.key == "sells"
         -- one side only, no width: the ^ or v never cuts a label short in
-        -- a narrow column ("Writ sells v")
+        -- a narrow column ("Vendor pays v" in the Shuffle tab)
         fs:SetPoint(right and "RIGHT" or "LEFT", 0, 0)
         fs:SetJustifyH(right and "RIGHT" or "LEFT")
         fs:SetWordWrap(false)
@@ -454,15 +524,23 @@ function CV:UpdateRows()
         if e and P then
             row.icon:SetTexture(ItemIcon(e.id) or "Interface\\Icons\\INV_Misc_QuestionMark")
             row.nameText:SetText(e.name)
-            row.needsText:SetText(e.count .. " x " .. e.itemName)
-            local hold = e.held .. "/" .. e.count
-            row.holdText:SetText(e.ready and ("|cff00ff00" .. hold .. "|r") or hold)
-            if e.cost then
-                row.costText:SetText(P:Money(e.cost, true) .. (e.partial and e.cost > 0 and "+" or ""))
+            if e.unopened then
+                row.needsText:SetText("|cff808080Unopened|r")
+                row.holdText:SetText("")
+                row.costText:SetText("")
+                row.byText:SetText("")
             else
-                row.costText:SetText("|cffff4444?|r")
+                local more = (e.more or 0) > 0 and (" (or " .. e.more .. " more)") or ""
+                row.needsText:SetText(e.count .. " x " .. e.itemName .. more)
+                local hold = e.held .. "/" .. e.count
+                row.holdText:SetText(e.ready and ("|cff00ff00" .. hold .. "|r") or hold)
+                if e.cost then
+                    row.costText:SetText(P:Money(e.cost, true) .. (e.partial and e.cost > 0 and "+" or ""))
+                else
+                    row.costText:SetText("|cffff4444?|r")
+                end
+                row.byText:SetText(e.by and addon:ShortName(e.by.key) or "|cff808080-|r")
             end
-            row.byText:SetText(e.by and addon:ShortName(e.by.key) or "|cff808080-|r")
             row.sellsText:SetText(e.sells and P:Money(e.sells, true) or "")
             row:Show()
         else
