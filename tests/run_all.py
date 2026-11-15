@@ -25,11 +25,11 @@ ADDON = "ProfessionBuddy"
 HARNESSES = [
     ("pb_harness.lua", "ALL 102 HARNESS TESTS PASS"),
     ("pb_ghost_harness.lua", "ALL GHOST HARNESS TESTS PASS"),
-    ("pb_forever_harness.lua", "ALL FOREVER TESTS PASS (108)"),
+    ("pb_forever_harness.lua", "ALL FOREVER TESTS PASS (109)"),
     ("pb_forever_replaceoff_harness.lua", "ALL FOREVER REPLACE-OFF TESTS PASS (9)"),
     ("pb_otherclient_harness.lua", "ALL OTHER-CLIENT TESTS PASS (2)"),
-    ("pb_tbc_ui_harness.lua", "ALL TBC WINDOW TESTS PASS (modern, 25)"),
-    ("pb_tbc_ui_classic.lua", "ALL TBC WINDOW TESTS PASS (classic, 25)"),
+    ("pb_tbc_ui_harness.lua", "ALL TBC WINDOW TESTS PASS (modern, 26)"),
+    ("pb_tbc_ui_classic.lua", "ALL TBC WINDOW TESTS PASS (classic, 26)"),
     ("pb_forever_pair.lua", "FOREVER PAIR TEST PASS"),   # driven by forever_pair.py
 ]
 

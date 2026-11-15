@@ -609,10 +609,11 @@ function FP:CreateRow(parent, index)
 
     -- Request Order: deep-link into this friend's profession view (the
     -- order composer). Hidden for friends with no synced craftable
-    -- profession (nothing to request).
+    -- profession (nothing to request). 6 px after the Remove button, as
+    -- before the 740-wide window moved the row right by 96 (TEST-c9).
     local orderBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
     orderBtn:SetSize(72, 18)
-    orderBtn:SetPoint("LEFT", 484, 0)
+    orderBtn:SetPoint("LEFT", 580, 0)
     orderBtn:SetText("Order")
     orderBtn:SetNormalFontObject(GameFontNormalSmall)
     orderBtn:SetHighlightFontObject(GameFontHighlightSmall)

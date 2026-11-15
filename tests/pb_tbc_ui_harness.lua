@@ -1148,4 +1148,43 @@ end
 U25()
 print("  PASS " .. TAG .. "25 2.2.0 TEST-c7: the main and profession windows share one size and one place on TBC Anniversary: Characters and Back open each in the other's space")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 25)")
+-- U26 2.2.0 TEST-c9: on TBC Anniversary too, no two controls in a
+-- Friends row overlap (Order sat over Sync and the Auto-sync box)
+local function rowControls(FP)
+    -- the stand-in's textures and font strings record no width: a fresh
+    -- row is built with recorders, then each control's left and right edge
+    local F = getmetatable(UIParent)
+    rawset(F, "CreateTexture", function(self) return CreateFrame("Texture", nil, self) end)
+    rawset(F, "SetWidth", function(self, w) local sz = rawget(self, "_size") or {}; sz[1] = w; rawset(self, "_size", sz) end)
+    local row = FP:CreateRow(CreateFrame("Frame", nil, UIParent), 1)
+    rawset(F, "CreateTexture", nil); rawset(F, "SetWidth", nil)
+    local list = { { "favorite star", row.favBtn }, { "name", row.nameText }, { "last sync", row.syncText },
+                   { "Auto-sync box", row.autoCB }, { "Sync", row.syncBtn }, { "Remove", row.removeBtn },
+                   { "Order", row.orderBtn } }
+    for i, icon in ipairs(row.profIcons) do list[#list + 1] = { "profession icon " .. i, icon } end
+    local out = {}
+    for _, c in ipairs(list) do
+        local p, sz = rawget(c[2], "_lastPoint"), rawget(c[2], "_size")
+        EXPECT(p and p[1] == "LEFT" and type(p[2]) == "number" and sz and type(sz[1]) == "number",
+               "the Friends row's " .. c[1] .. " has no left point and width")
+        out[#out + 1] = { name = c[1], l = p[2], r = p[2] + sz[1] }
+    end
+    return out
+end
+local function U26()
+    -- every control, Order included (it shows for a friend with a
+    -- profession to order from), ends before the next one starts, and all
+    -- end before the scroll bar: 720 px of content less 16
+    local c = rowControls(PB.FriendsPanel)
+    for i = 1, #c do
+        EXPECT(c[i].r <= 704, "the Friends row's " .. c[i].name .. " ends at " .. c[i].r .. ", under the scroll bar")
+        for j = i + 1, #c do
+            EXPECT(c[i].r <= c[j].l or c[j].r <= c[i].l, "the Friends row's " .. c[i].name .. " (" .. c[i].l .. " to "
+                   .. c[i].r .. ") overlaps its " .. c[j].name .. " (" .. c[j].l .. " to " .. c[j].r .. ")")
+        end
+    end
+end
+U26()
+print("  PASS " .. TAG .. "26 2.2.0 TEST-c9: no two controls in a Friends row overlap on TBC Anniversary, Order included")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 26)")
