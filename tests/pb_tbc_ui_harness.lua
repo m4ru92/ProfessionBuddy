@@ -1078,4 +1078,24 @@ end
 U23()
 print("  PASS " .. TAG .. "23 2.2.0 TEST-c: the craft count keeps going through Back (bottom tab, /pb, the parked icon, your own Shuffle row) on TBC Anniversary and stops when the game closes the profession; the Shuffle tab's columns sort both ways with ^ or v")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 23)")
+-- U24 2.2.0 TEST-c6: the same on TBC Anniversary: the main window is the
+-- profession window's 740 x 540, the Shuffle and Guild lists fill it, and
+-- the Shuffle tab's heading reads Vendor
+local function U24()
+    local UI, TSF, SP, GP = PB.UI, PB.TradeSkillFrame, PB.ShufflePanel, PB.GuildPanel
+    TSF:EnsureFrame()
+    local ws, ts = rawget(UI.frame, "_size"), rawget(TSF.frame, "_size")
+    EXPECT(ws and ts and ws[1] == 740 and ws[2] == 540 and ws[1] == ts[1] and ws[2] == ts[2], "main window size")
+    local contentH = ws[2] - UI.CONTENT_TOP - 10
+    UI:Show()
+    for i in ipairs(UI.frame.tabs) do UI:SelectTab(i) end
+    FLUSH()
+    EXPECT(#SP.rows * 20 <= contentH - 72 and (#SP.rows + 1) * 20 > contentH - 72, "Shuffle rows: " .. #SP.rows)
+    EXPECT(#GP.rows * 20 <= contentH - 72 and (#GP.rows + 1) * 20 > contentH - 72, "Guild rows: " .. #GP.rows)
+    EXPECT(SP.headerBtns.sell.colLabel == "Vendor" and SP.view ~= "crates", "Vendor heading, or a Crates view on TBC Anniversary")
+    UI:Hide(); FLUSH()
+end
+U24()
+print("  PASS " .. TAG .. "24 2.2.0 TEST-c6: the main window is 740 x 540 on TBC Anniversary, the Shuffle and Guild lists fill it, the heading reads Vendor")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 24)")

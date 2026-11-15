@@ -12,15 +12,19 @@ addon.ShufflePanel = SP
 local Theme = addon.Theme
 
 local ROW_HEIGHT   = 20
-local VISIBLE_ROWS = 15
+-- the list: the 540-tall main window's 478 px of content, less the 52 px
+-- above the headings, the 18 px heading bar and a 2 px gap: 406 px
+local VISIBLE_ROWS = 20
 
 local COLS = {
-    { key = "recipe", label = "Recipe",      x = 6,   w = 172 },
-    { key = "who",    label = "Who",         x = 182, w = 86  },
-    { key = "cost",   label = "Cost",        x = 272, w = 68  },
-    { key = "sell",   label = "Vendor pays", x = 344, w = 68  },
-    { key = "profit", label = "Profit",      x = 416, w = 68  },
-    { key = "hour",   label = "Per hour",    x = 488, w = 74  },
+    -- rows are 704 px (the 720 px content less the scroll bar); the last
+    -- column ends 16 px short of the scroll bar (TEST-c6)
+    { key = "recipe", label = "Recipe",      x = 6,   w = 232 },
+    { key = "who",    label = "Who",         x = 242, w = 146 },
+    { key = "cost",   label = "Cost",        x = 392, w = 70  },
+    { key = "sell",   label = "Vendor",      x = 466, w = 66  },
+    { key = "profit", label = "Profit",      x = 536, w = 70  },
+    { key = "hour",   label = "Per hour",    x = 610, w = 78  },
 }
 local COL = {}
 for _, c in ipairs(COLS) do COL[c.key] = c end
@@ -441,6 +445,15 @@ function SP:CreateContent(parent)
         hl:SetAllPoints()
         Theme:Fill(hl, "columnHeaderHover")
         btn:SetScript("OnClick", function() self:SetSort(c.key) end)
+        if c.key == "sell" then
+            btn:SetScript("OnEnter", function(b)
+                GameTooltip:SetOwner(b, "ANCHOR_TOP")
+                GameTooltip:SetText("Vendor")
+                GameTooltip:AddLine("What a vendor pays for what one craft makes.", 1, 1, 1, true)
+                GameTooltip:Show()
+            end)
+            btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        end
         if c.key == "hour" then
             btn:SetScript("OnEnter", function(b)
                 GameTooltip:SetOwner(b, "ANCHOR_TOP")
@@ -510,6 +523,9 @@ end
 function SP:SetView(view)
     local CV = addon.CratesView
     if view ~= "crates" or not (CV and CV.frame) then view = "shuffle" end
+    -- an open list (Who, Prof, Min, Type) belongs to the view going away:
+    -- close it, as switching bottom tabs does (TEST-c6, m4ru)
+    if addon.CloseAllPopups then addon.CloseAllPopups() end
     self.view = view
     local shuffle = view == "shuffle"
     for _, w in ipairs({ self.filterBar, self.headerBar, self.listFrame }) do

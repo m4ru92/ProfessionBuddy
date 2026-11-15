@@ -20,15 +20,20 @@ addon.CratesView = CV
 local Theme = addon.Theme
 
 local ROW_HEIGHT   = 20
-local VISIBLE_ROWS = 14
+-- the list: the Shuffle tab's 478 px less this view's 26 px offset, the
+-- 26 px filter bar, the 18 px heading bar, a 2 px gap and the 18 px
+-- rewards line: 388 px
+local VISIBLE_ROWS = 19
 
 local COLS = {
-    { key = "name",  label = "Crate or writ", x = 6,   w = 168 },
-    { key = "needs", label = "Needs",         x = 178, w = 132 },
-    { key = "hold",  label = "You hold",      x = 314, w = 54  },
-    { key = "cost",  label = "To buy",        x = 372, w = 64  },
-    { key = "by",    label = "Crafted by",    x = 440, w = 70  },
-    { key = "sells", label = "Sells",         x = 514, w = 52  },
+    -- rows are 704 px; the last column ends 8 px short of the scroll bar
+    -- (TEST-c6)
+    { key = "name",  label = "Crate or writ", x = 6,   w = 218 },
+    { key = "needs", label = "Needs",         x = 228, w = 176 },
+    { key = "hold",  label = "You hold",      x = 408, w = 58  },
+    { key = "cost",  label = "To buy",        x = 470, w = 68  },
+    { key = "by",    label = "Crafted by",    x = 542, w = 96  },
+    { key = "sells", label = "Sells",         x = 642, w = 54  },
 }
 local COL = {}
 for _, c in ipairs(COLS) do COL[c.key] = c end

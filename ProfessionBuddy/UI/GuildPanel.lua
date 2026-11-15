@@ -23,7 +23,9 @@ local GuildRoster = GuildRoster or (C_GuildInfo and C_GuildInfo.GuildRoster)
 local GP = addon:NewModule("GuildPanel")
 
 local ROW_HEIGHT   = 20
-local VISIBLE_ROWS = 15
+-- the list: 478 px of content less 52 px above the headings, the 18 px
+-- heading bar and a 2 px gap: 406 px (540-tall window, TEST-c6)
+local VISIBLE_ROWS = 20
 local MAX_PROF_ICONS = 6
 
 -- Profession -> icon (mirrors FriendsPanel).
@@ -46,11 +48,12 @@ local PROF_ICONS = {
 -- Ordered column definitions. x = left offset within the row, w = text width.
 -- Professions is last so its variable-width icon strip absorbs the right side.
 local COLS = {
-    { key = "name",        label = "Name",        x = 22,  w = 104 },
-    { key = "level",       label = "Lvl",         x = 132, w = 34  },
-    { key = "rank",        label = "Rank",        x = 172, w = 110 },
-    { key = "status",      label = "Status",      x = 288, w = 64  },
-    { key = "professions", label = "Professions", x = 356, w = 170 },
+    -- the 740-wide window (TEST-c6): Name and Rank get the room
+    { key = "name",        label = "Name",        x = 22,  w = 170 },
+    { key = "level",       label = "Lvl",         x = 198, w = 34  },
+    { key = "rank",        label = "Rank",        x = 238, w = 170 },
+    { key = "status",      label = "Status",      x = 414, w = 70  },
+    { key = "professions", label = "Professions", x = 490, w = 200 },
 }
 local COL = {}
 for _, c in ipairs(COLS) do COL[c.key] = c end

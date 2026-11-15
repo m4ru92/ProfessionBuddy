@@ -819,7 +819,9 @@ function OP:CreateContent(parent)
     self.directHost = listHost
 
     self.activeCtx = { collapsed = { incoming = false, outgoing = false } }
-    self:BuildList(listHost, self.activeCtx, 9)
+    -- 478 px of content less the 24 px bar and a 2 px gap: 452 px, 12
+    -- rows of 36 (TEST-c6, the 540-tall window; 9 at 450)
+    self:BuildList(listHost, self.activeCtx, 12)
 
     self.activeCtx.rebuild = function(force)
         local ctx = self.activeCtx
@@ -1652,11 +1654,12 @@ function OP:BuildBoard(host)
     self.boardGuildlessMsg = guildlessMsg
 
     self.boardCtx = { collapsed = { mine = false, avail = false } }
-    -- 7 rows of ROW_HEIGHT fit the list: the 450 px window less its title
-    -- bar (42), bottom margin (10), the Direct/Guild Board bar (26) and the
-    -- composer and filter above the list (104) leaves 268 px. 8 rows (288)
-    -- drew the last one below the window (m4ru 2026-10-13).
-    self:BuildBoardList(listHost, self.boardCtx, 7)
+    -- 9 rows of ROW_HEIGHT fit the list: the 540 px window less the space
+    -- above the tabs' content (52), bottom margin (10), the Direct/Guild
+    -- Board bar (26) and the composer and filter above the list (104)
+    -- leaves 348 px (TEST-c6). One row too many draws the last one below
+    -- the window (m4ru 2026-10-13, at 450 px).
+    self:BuildBoardList(listHost, self.boardCtx, 9)
 
     self.boardCtx.rebuild = function(force)
         local ctx = self.boardCtx
@@ -1936,7 +1939,7 @@ function OP:BuildFindPanel()
     if self.findFrame then return end
 
     local f = CreateFrame("Frame", "ProfBuddyFindCrafter", UIParent, "BasicFrameTemplateWithInset")
-    f:SetSize(470, 450)   -- match the History panel and the main window height
+    f:SetSize(470, 540)   -- match the History panel and the main window height
     local function anchorRight()
         f:ClearAllPoints()
         if addon.UI and addon.UI.frame then
@@ -2031,7 +2034,7 @@ function OP:BuildFindPanel()
     listFrame:SetAllPoints()
     ctx.listFrame = listFrame
 
-    local ROWS = 10   -- fits the 450-tall panel; overflow scrolls
+    local ROWS = 13   -- 440 px under the search box in the 540-tall panel; overflow scrolls
     for i = 1, ROWS do
         local row = CreateFrame("Button", nil, listFrame)
         row:SetHeight(FIND_ROW_H)
@@ -2178,7 +2181,7 @@ function OP:BuildHistoryPanel()
     if self.histFrame then return end
 
     local f = CreateFrame("Frame", "ProfBuddyOrderHistory", UIParent, "BasicFrameTemplateWithInset")
-    f:SetSize(470, 450)
+    f:SetSize(470, 540)   -- the main window's height (TEST-c6)
 
     -- Fastened to the right edge of the main /pb window (Material Calc
     -- pattern). Not independently movable, so it can't be dragged loose;
@@ -2223,7 +2226,8 @@ function OP:BuildHistoryPanel()
     content:SetPoint("BOTTOMRIGHT", -10, 10)
 
     self.histCtx = { collapsed = { incoming = false, outgoing = false } }
-    self:BuildList(content, self.histCtx, 10)
+    -- 500 px of content in the 540-tall panel: 13 rows of 36 (TEST-c6)
+    self:BuildList(content, self.histCtx, 13)
 
     self.histCtx.rebuild = function(force)
         local ctx = self.histCtx

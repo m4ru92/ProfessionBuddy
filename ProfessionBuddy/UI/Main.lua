@@ -7,8 +7,10 @@ local addon = ProfBuddy
 local Theme = addon.Theme
 local UI = addon:NewModule("UI")
 
-local FRAME_WIDTH  = 600
-local FRAME_HEIGHT = 450
+-- The profession window's size, so the two swap in place (Back, the
+-- bottom tabs) and the lists have room (2.2.0 TEST-c6, m4ru: was 600 x 450)
+local FRAME_WIDTH  = 740
+local FRAME_HEIGHT = 540
 
 ----------------------------------------------------------------------
 -- Every floating list this window opens lives on UIParent, not on the

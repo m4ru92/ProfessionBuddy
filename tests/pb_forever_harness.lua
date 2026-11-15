@@ -3029,7 +3029,8 @@ print("  PASS F54 Settings scroll: columns in one scroll frame, opens at the top
 
 -- F55: the 2026-10-13 fix wave, Forever side. A crafted item seen without
 -- an item link (a friend's recipe, the Missing list) shows its tool line;
--- the Guild Board list has 7 rows (8 drew one below the window); a friend
+-- the Guild Board list fits the window (7 rows at 450 px, 8 drew one
+-- below it; 9 at 540 px since TEST-c6); a friend
 -- asked for sightings is asked again once 15 minutes have passed.
 do
     local TSF = ProfBuddy.TradeSkillFrame
@@ -3045,7 +3046,10 @@ do
 
     local OP = ProfBuddy.OrdersPanel
     if not OP.boardCtx then OP:Toggle() end
-    EXPECT(OP.boardCtx and #OP.boardCtx.rows == 7, "board rows: " .. tostring(OP.boardCtx and #OP.boardCtx.rows))
+    -- 9 since TEST-c6 (the 540-tall window): as many 36 px rows as fit in
+    -- 540 - 52 - 10 - 26 - 104 = 348 px, none drawn below the window
+    EXPECT(OP.boardCtx and #OP.boardCtx.rows == 9 and 9 * 36 <= 540 - 52 - 10 - 26 - 104,
+           "board rows: " .. tostring(OP.boardCtx and #OP.boardCtx.rows))
 
     local Comm = ProfBuddy.Comm
     local AS = LibStub("AceSerializer-3.0")
@@ -7391,4 +7395,82 @@ end
 F105()
 print("  PASS F105 2.2.0 TEST-c5: the unopened Waylaid Crate and Sealed writs: listed in Crates and writs with what they sell for (Unopened, blank columns sorting last), You hold one, Type, their tooltip price, recorded and scanned when held")
 
-print("ALL FOREVER TESTS PASS (105)")
+-- F106 2.2.0 TEST-c6 (m4ru): the main window was 600 x 450 and its lists
+-- cut names short; it is the profession window's 740 x 540. Every list
+-- fills its taller space without a row below the window, the columns of
+-- the Shuffle tab, Crates and writs and the Guild tab spread over the
+-- wider rows and stop short of the scroll bar; "Vendor pays" is "Vendor"
+-- with a tooltip; switching the Shuffle tab's view closes an open list
+local function F106()
+    local PB = ProfBuddy
+    local UI, TSF, SP, CV, GP, FP, OP = PB.UI, PB.TradeSkillFrame, PB.ShufflePanel, PB.CratesView,
+        PB.GuildPanel, PB.FriendsPanel, PB.OrdersPanel
+    TSF:EnsureFrame()
+    local ws, ts = rawget(UI.frame, "_size"), rawget(TSF.frame, "_size")
+    EXPECT(ws and ts and ws[1] == 740 and ws[2] == 540 and ws[1] == ts[1] and ws[2] == ts[2],
+           "main window " .. tostring(ws and ws[1]) .. " x " .. tostring(ws and ws[2]))
+    local W, H = ws[1], ws[2]
+    local contentW, contentH = W - 20, H - UI.CONTENT_TOP - 10   -- UI:AddTab's content frame
+    local rowW = contentW - 16                                     -- rows stop at the scroll bar
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do UI:SelectTab(i) end   -- builds every tab
+    FLUSH()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    SP:SetView("crates"); SP:SetView("shuffle")
+    -- columns: in order, apart, and 8 px or more short of the scroll bar
+    local function columns(label, btns, order)
+        local prevEnd = -1
+        for _, key in ipairs(order) do
+            local b = btns[key]
+            local x, w = rawget(b, "_lastPoint")[2], rawget(b, "_size")[1]
+            EXPECT(x > prevEnd, label .. ": " .. key .. " overlaps the column before it")
+            prevEnd = x + w
+        end
+        EXPECT(prevEnd <= rowW - 8, label .. ": the last column ends at " .. prevEnd .. ", the scroll bar starts at " .. rowW)
+    end
+    columns("Shuffle", SP.headerBtns, { "recipe", "who", "cost", "sell", "profit", "hour" })
+    columns("Crates and writs", CV.headerBtns, { "name", "needs", "hold", "cost", "by", "sells" })
+    columns("Guild", GP.headerBtns, { "name", "level", "rank", "status", "professions" })
+    EXPECT(rawget(SP.headerBtns.recipe, "_size")[1] > 172 and rawget(SP.headerBtns.who, "_size")[1] > 86
+           and rawget(CV.headerBtns.name, "_size")[1] > 168 and rawget(CV.headerBtns.needs, "_size")[1] > 132
+           and rawget(GP.headerBtns.name, "_size")[1] > 104, "the name columns did not get the room")
+    -- rows: they fill the list, and none hangs below the window
+    local function rows(label, n, rowH, space)
+        EXPECT(n * rowH <= space and (n + 1) * rowH > space,
+               label .. ": " .. n .. " rows of " .. rowH .. " in " .. space .. " px")
+    end
+    rows("Shuffle", #SP.rows, 20, contentH - 52 - 18 - 2)
+    rows("Guild", #GP.rows, 20, contentH - 52 - 18 - 2)
+    rows("Crates and writs", #CV.rows, 20, contentH - 26 - 26 - 18 - 2 - 18)
+    rows("Friends", #FP.rows, 22, contentH - 28 - 4 - 18 - 2)
+    EXPECT(#OP.activeCtx.rows * 36 <= contentH - 24 - 2 and #OP.activeCtx.rows == 12, "Orders: " .. #OP.activeCtx.rows)
+    -- the side panels keep the main window's height
+    OP:BuildHistoryPanel(); OP:BuildFindPanel()
+    for _, f in ipairs({ OP.histFrame, OP.findFrame }) do
+        EXPECT(rawget(f, "_size")[2] == H, "a side panel is not the window's height")
+    end
+    EXPECT(#OP.histCtx.rows * 36 <= H - 30 - 10, "Order history rows")
+    -- Vendor, with its tooltip
+    local sell = SP.headerBtns.sell
+    EXPECT(sell.colLabel == "Vendor", "the heading reads " .. tostring(sell.colLabel))
+    local lines, title = {}, nil
+    rawset(GameTooltip, "SetText", function(_, t) title = t end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    sell:GetScript("OnEnter")(sell)
+    rawset(GameTooltip, "SetText", nil); rawset(GameTooltip, "AddLine", nil)
+    EXPECT(title == "Vendor" and (lines[1] or ""):find("What a vendor pays for what one craft makes", 1, true),
+           "Vendor tooltip: " .. tostring(title) .. " / " .. tostring(lines[1]))
+    -- switching the view closes an open list, both ways
+    SP.whoDD.listFrame:Show()
+    SP.viewBtns.crates:GetScript("OnClick")(SP.viewBtns.crates); FLUSH()
+    EXPECT(SP.view == "crates" and not SP.whoDD.listFrame:IsShown(), "the Who list stayed open on Crates and writs")
+    CV.typeDD.listFrame:Show()
+    SP.viewBtns.shuffle:GetScript("OnClick")(SP.viewBtns.shuffle); FLUSH()
+    EXPECT(SP.view == "shuffle" and not CV.typeDD.listFrame:IsShown(), "the Type list stayed open on Vendor shuffle")
+    UI:Hide(); FLUSH()
+end
+F106()
+print("  PASS F106 2.2.0 TEST-c6: the main window is the profession window's 740 x 540; every list fills it with no row below the window; Shuffle, Crates and writs and Guild columns spread out and stop short of the scroll bar; side panels keep its height; Vendor heading and tooltip; a view switch closes an open list")
+
+print("ALL FOREVER TESTS PASS (106)")

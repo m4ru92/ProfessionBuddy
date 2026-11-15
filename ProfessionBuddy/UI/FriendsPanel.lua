@@ -11,7 +11,9 @@ local DS   -- DataStore ref, set in Init
 local Comm -- Comm ref, set in Init
 
 local ROW_HEIGHT = 22
-local VISIBLE_ROWS = 14
+-- the list: 478 px of content in the 540-tall window less the 28 px add
+-- bar, 4 px, the 18 px heading bar and a 2 px gap: 426 px (TEST-c6)
+local VISIBLE_ROWS = 19
 
 ----------------------------------------------------------------------
 -- Profession icon paths for the summary column
@@ -385,10 +387,11 @@ function FP:CreateContent(parent)
         return fs
     end
 
-    MakeHeader("Name", 22, 124)
-    MakeHeader("Professions", 150, 140)
-    MakeHeader("Last Sync", 294, 80)
-    MakeHeader("Auto-sync", 378, 60)
+    -- the 740-wide window (TEST-c6): Name gets the room, the rest moves right
+    MakeHeader("Name", 22, 220)
+    MakeHeader("Professions", 246, 140)
+    MakeHeader("Last Sync", 390, 80)
+    MakeHeader("Auto-sync", 474, 60)
     -- Actions column implied at the right
 
     -- ── Scrollable contact list ──────────────────────────────────
@@ -506,19 +509,19 @@ function FP:CreateRow(parent, index)
     -- Name
     local name = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     name:SetPoint("LEFT", 22, 0)
-    name:SetWidth(124)
+    name:SetWidth(220)
     name:SetJustifyH("LEFT")
     row.nameText = name
 
     -- Profession icons: up to 7 (2 primaries and up to 5 secondaries, the
     -- most a WoW: Forever character has). 4 dropped the fifth one
     -- alphabetically (Shreks Swamp's Herbalism, m4ru 2026-10-13); 7 end
-    -- at 286 px, before Last Sync at 294.
+    -- at 382 px, before Last Sync at 390.
     row.profIcons = {}
     for i = 1, MAX_FRIEND_PROF_ICONS do
         local icon = row:CreateTexture(nil, "ARTWORK")
         icon:SetSize(16, 16)
-        icon:SetPoint("LEFT", 150 + (i - 1) * 20, 0)
+        icon:SetPoint("LEFT", 246 + (i - 1) * 20, 0)
         icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
         icon:Hide()
         row.profIcons[i] = icon
@@ -526,7 +529,7 @@ function FP:CreateRow(parent, index)
 
     -- Last sync text
     local syncText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    syncText:SetPoint("LEFT", 294, 0)
+    syncText:SetPoint("LEFT", 390, 0)
     syncText:SetWidth(80)
     syncText:SetJustifyH("LEFT")
     row.syncText = syncText
@@ -534,7 +537,7 @@ function FP:CreateRow(parent, index)
     -- Auto-sync checkbox
     local autoCB = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
     autoCB:SetSize(20, 20)
-    autoCB:SetPoint("LEFT", 382, 0)
+    autoCB:SetPoint("LEFT", 478, 0)
     autoCB:SetScript("OnClick", function(self)
         local key = row._contactKey
         if key and addon.db.contacts[key] then
@@ -560,7 +563,7 @@ function FP:CreateRow(parent, index)
     -- Sync Now button
     local syncBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
     syncBtn:SetSize(44, 18)
-    syncBtn:SetPoint("LEFT", 412, 0)
+    syncBtn:SetPoint("LEFT", 508, 0)
     syncBtn:SetText("Sync")
     syncBtn:SetNormalFontObject(GameFontNormalSmall)
     syncBtn:SetHighlightFontObject(GameFontHighlightSmall)
@@ -577,7 +580,7 @@ function FP:CreateRow(parent, index)
     -- Remove button
     local removeBtn = CreateFrame("Button", nil, row)
     removeBtn:SetSize(16, 16)
-    removeBtn:SetPoint("LEFT", 462, 0)
+    removeBtn:SetPoint("LEFT", 558, 0)
 
     local removeIcon = removeBtn:CreateTexture(nil, "ARTWORK")
     removeIcon:SetAllPoints()
