@@ -3526,6 +3526,7 @@ function TSF:UpdateListRows()
                 row.nameText:SetText(addon:DiffMarker(rowDiff) .. entry.name)
                 row.nameText:SetTextColor(dc.r, dc.g, dc.b)
 
+                local longRight = false   -- a bank count after the count
                 if entry.isKnown then
                     local avail = entry.numAvail or 0
                     -- Enchants (itemID 0) report no numAvail, so the list
@@ -3567,10 +3568,20 @@ function TSF:UpdateListRows()
                         rangeStr = "|cff888888" .. SkillRangeCompact(sr) .. "|r "
                     end
 
+                    -- with your bank (2.2.0, Lucido): "[6] [10]", the second
+                    -- in the Reagents list's azure; "[4]" alone when only the
+                    -- bank makes any. Colorblind markers: "[10 bank]", as
+                    -- "[300 low]" below (Blizzard's rule: text where a color
+                    -- alone carries meaning)
+                    local bankAvail = self:BankCraftCount(entry, avail)
+                    local bankStr = bankAvail and ("|cff3fc7ff[" .. bankAvail
+                        .. (addon:ColorblindMarkers() and " bank" or "") .. "]|r") or ""
+                    longRight = bankAvail ~= nil
                     if avail > 0 then
-                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. "|cff00ff00[" .. avail .. "]|r")
+                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. "|cff00ff00[" .. avail .. "]|r"
+                            .. (bankAvail and " " or "") .. bankStr)
                     else
-                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr)
+                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. bankStr)
                     end
                 else
                     local vis = ShownSources(entry)
@@ -3595,8 +3606,8 @@ function TSF:UpdateListRows()
                     row.rightText:SetText(ProfitPrefix(entry) .. c .. displaySrc .. "|r" .. skillText)
                 end
                 -- the name stops short of the right-hand text when the
-                -- Profit column makes it longer
-                if addon.Prices and (addon.Prices:ListProfitOn() or state.showTab == "vendor") then
+                -- Profit column or a bank count makes it longer
+                if longRight or addon.Prices and (addon.Prices:ListProfitOn() or state.showTab == "vendor") then
                     row.nameText:SetPoint("RIGHT", row.rightText, "LEFT", -4, 0)
                 else
                     row.nameText:SetPoint("RIGHT", -40, 0)
@@ -4309,14 +4320,21 @@ function TSF:RefreshDetailPanel(preserveScroll)
             avail = self:ReagentCraftCount(recipe)
         end
         local cdSuffix = self:CooldownSuffix(recipe)
+        -- crafts, then the items they make: "Can make: 54 (108)"
+        local function items(n)
+            if not made then return "" end
+            return made.lo == made.hi and (" (" .. n * made.lo .. ")")
+                or (" (" .. n * made.lo .. "-" .. n * made.hi .. ")")
+        end
+        -- with your bank (2.2.0, Lucido), in the Reagents list's azure:
+        -- "Can make: 6 (12), 10 (20) with bank"
+        local bankAvail = self:BankCraftCount(recipe, avail)
+        local bankPart = bankAvail and ("|cff3fc7ff, " .. bankAvail .. items(bankAvail) .. " with bank|r") or ""
         if avail > 0 then
-            -- crafts, then the items they make: "Can make: 54 (108)"
-            local items = ""
-            if made then
-                items = made.lo == made.hi and (" (" .. avail * made.lo .. ")")
-                    or (" (" .. avail * made.lo .. "-" .. avail * made.hi .. ")")
-            end
-            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. items .. "|r" .. cdSuffix)
+            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. items(avail) .. "|r" .. bankPart .. cdSuffix)
+        elseif bankAvail then
+            -- the bags make none, the bank has the rest: not "missing"
+            self.detCanMake:SetText("|cffff4444Can make: 0|r" .. bankPart)
         elseif cdSuffix ~= "" then
             -- A recipe on cooldown reports 0 whatever is in the bags, so
             -- naming reagents as the reason would contradict the very next
@@ -4421,14 +4439,24 @@ function TSF:RefreshDetailPanel(preserveScroll)
             -- the bank, so a green reagent list never contradicts a
             -- bags-only "Can make". Compact text (bags/need) keeps it
             -- inside the 2-column reagent layout. Exact split is on hover.
+            -- Colorblind markers (2.2.0): azure reads "3/5 bank", since
+            -- "3/5" alone is also how yellow (not enough) reads; the name
+            -- then stops short of the longer count
+            local bankMark = false
             if inBags >= need then
                 row.countText:SetText("|cff00ff00" .. inBags .. "|r")
             elseif total >= need then
-                row.countText:SetText("|cff3fc7ff" .. inBags .. "/" .. need .. "|r")
+                bankMark = addon:ColorblindMarkers()
+                row.countText:SetText("|cff3fc7ff" .. inBags .. "/" .. need .. (bankMark and " bank" or "") .. "|r")
             elseif total > 0 then
                 row.countText:SetText("|cffffff00" .. total .. "/" .. need .. "|r")
             else
                 row.countText:SetText("|cffff4444" .. total .. "/" .. need .. "|r")
+            end
+            if bankMark then
+                row.nameText:SetPoint("RIGHT", row.countText, "LEFT", -4, 0)
+            else
+                row.nameText:SetPoint("RIGHT", row, "RIGHT", -36, 0)
             end
         end
 
@@ -5833,6 +5861,40 @@ function TSF:ReagentCraftCount(recipe)
         end
     end
     return minMake or 0
+end
+
+-- How many your bags and your bank make together (2.2.0, Lucido): the
+-- azure part of Can make. nil when there is none to show: another
+-- character's saved list (its count already holds their bank), a bank PB
+-- has never seen, a recipe on cooldown, a material with no item ID, or a
+-- game count that isn't the bags' reagent count (something else limits
+-- the craft, or the game already counts the bank). Bank = PB's copy from
+-- your last bank visit, as the Reagents list's azure counts.
+function TSF:BankCraftCount(recipe, avail)
+    if state._viewCharKey or not recipe or not recipe.isKnown then return nil end
+    local reagents = recipe.reagents
+    if not reagents or #reagents == 0 then return nil end
+    local char = DS and DS:GetCharacter(addon:PlayerKey())
+    local inv = char and char.inventory
+    if not (inv and inv.bankScanned and inv.bank) then return nil end
+    avail = avail or 0
+    if avail ~= self:ReagentCraftCount(recipe) or self:CooldownSuffix(recipe) ~= "" then return nil end
+    local total
+    for _, r in ipairs(reagents) do
+        if not (r.itemID and r.count and r.count > 0) then return nil end
+        local n = math.floor(((GetItemCount(r.itemID) or 0) + (inv.bank[r.itemID] or 0)) / r.count)
+        if total == nil or n < total then total = n end
+    end
+    if total and total > avail then return total end
+    return nil
+end
+
+-- The bank changed while a profession of yours is open (Scanner:ScanBank):
+-- its counts draw again, as a bag change redraws them.
+function TSF:OnBankScanned()
+    if not (self.frame and self.frame:IsShown()) or state._viewCharKey or not state.recipes then return end
+    self:UpdateListRows()
+    if state.selected then self:RefreshDetailPanel(true) end
 end
 
 -- The Enchant button's mouse: a secure button, so the game blocks the

@@ -7701,4 +7701,131 @@ end
 F109()
 print("  PASS F109 2.2.0 TEST-c9: no two controls in a Friends row overlap, Order included, and none runs under the scroll bar")
 
-print("ALL FOREVER TESTS PASS (109)")
+-- F110 2.2.0 (Lucido): Can make counting your bank. The recipe list's
+-- "[6] [10]" and the detail panel's "Can make: 6, 10 with bank", the bank
+-- part in the Reagents list's azure; none where it would be wrong; the
+-- counts draw again when the bank changes with the profession open
+local function F110()
+    local PB = ProfBuddy
+    if not (TSF.frame and TSF.frame:IsShown()) then C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local TSF, DS = PB.TradeSkillFrame, PB.DataStore
+    local st = TSF.state
+    local inv = DS:GetCharacter().inventory
+    local keepBank, keepScanned, keepOff, keepView = inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey
+    local keepSel = st.selected
+    ITEM_COUNT = {}
+    inv.bank, inv.bankScanned = {}, true
+    st._viewCharKey = nil
+    -- a known craft that takes 1 of a material, the game's count = the bags'
+    local kit = { name = "PB Test Kit", isKnown = true, numAvail = 4, itemID = 2304, spellID = 2152,
+                  category = "Armor Kit", reagents = { { itemID = 2318, count = 1, name = "Light Leather" } } }
+    table.insert(st.recipes, 1, kit)
+    st.scrollOffset, st.selected = 0, kit.name
+    local row = TSF.listRows[1]
+    local function draw() TSF:UpdateListRows(); TSF:RefreshDetailPanel() end
+    local function list() return row.rightText:GetText() or "" end
+    local function can() return TSF.detCanMake:GetText() or "" end
+    local function nameAtCounts()
+        local p = rawget(row.nameText, "_lastPoint")
+        return p and p[1] == "RIGHT" and p[2] == row.rightText
+    end
+    -- bags make 4, the bank holds 6 more: [4] [10], "4, 10 with bank"
+    ITEM_COUNT[2318], inv.bank[2318] = 4, 6
+    draw()
+    EXPECT(list():find("|cff00ff00[4]|r |cff3fc7ff[10]|r", 1, true), "list: " .. list())
+    EXPECT(can():find("|cff00ff00Can make: 4|r|cff3fc7ff, 10 with bank|r", 1, true), "Can make: " .. can())
+    EXPECT(nameAtCounts(), "the name does not stop at the counts")
+    -- Colorblind markers on: "[10 bank]" in the list; in the Reagents list
+    -- azure reads "0/1 bank" (yellow's "x/need" reads the same without it),
+    -- and the material's name stops short of it; off: as before
+    local S = PB.db.settings
+    local keepCBM, keepBag = S.colorblindMarkers, inv.bags[2318]
+    S.colorblindMarkers = "on"
+    inv.bags[2318] = 0
+    draw()
+    local rrow = TSF.reagentRows[1]
+    local function rpoint() return rawget(rrow.nameText, "_lastPoint") or {} end
+    EXPECT(list():find("|cff3fc7ff[10 bank]|r", 1, true), "markers, list: " .. list())
+    EXPECT((rrow.countText:GetText() or "") == "|cff3fc7ff0/1 bank|r", "markers, Reagents: " .. tostring(rrow.countText:GetText()))
+    EXPECT(rpoint()[1] == "RIGHT" and rpoint()[2] == rrow.countText, "markers: the material's name does not stop at its count")
+    S.colorblindMarkers = "off"
+    draw()
+    EXPECT(list():find("|cff3fc7ff[10]|r", 1, true) and (rrow.countText:GetText() or "") == "|cff3fc7ff0/1|r",
+           "markers off: " .. list() .. " / " .. tostring(rrow.countText:GetText()))
+    EXPECT(rpoint()[1] == "RIGHT" and rpoint()[2] == rrow and rpoint()[4] == -36, "markers off: the material's name is not back at -36")
+    S.colorblindMarkers, inv.bags[2318] = keepCBM, keepBag
+    -- the bags make none: the azure count alone, red 0, not "missing"
+    ITEM_COUNT[2318], kit.numAvail = 0, 0
+    draw()
+    EXPECT(list():find("|cff3fc7ff[6]|r", 1, true) and not list():find("cff00ff00[", 1, true), "bank only list: " .. list())
+    EXPECT(can():find("|cffff4444Can make: 0|r|cff3fc7ff, 6 with bank|r", 1, true) and not can():find("missing", 1, true),
+           "bank only Can make: " .. can())
+    -- the bank adds nothing: no azure, the name back at its own edge
+    ITEM_COUNT[2318], kit.numAvail, inv.bank[2318] = 4, 4, nil
+    draw()
+    EXPECT(not list():find("3fc7ff", 1, true) and not can():find("with bank", 1, true), "no bank part: " .. list() .. " / " .. can())
+    EXPECT(not nameAtCounts() or PB.Prices:ListProfitOn(), "the name stops at the counts with no bank count")
+    -- two of a material: the bank's 3 make 1 more, a leftover 1 makes none
+    kit.reagents = { { itemID = 2318, count = 2, name = "Light Leather" } }
+    ITEM_COUNT[2318], kit.numAvail, inv.bank[2318] = 4, 2, 3
+    draw()
+    EXPECT(list():find("|cff3fc7ff[3]|r", 1, true) and can():find(", 3 with bank", 1, true), "two each: " .. list() .. " / " .. can())
+    -- no bank part: never seen the bank, the game's count is not the bags'
+    -- (something else limits it), on cooldown, another character's list
+    inv.bankScanned = false
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "a bank PB never saw counted")
+    inv.bankScanned = true
+    EXPECT(TSF:BankCraftCount(kit, 1) == nil, "counted when the game's count is not the bags'")
+    local keepCD = TSF.CooldownSuffix
+    TSF.CooldownSuffix = function() return "\n|cffff8800On cooldown: ready in 3h|r" end
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "counted on cooldown")
+    TSF.CooldownSuffix = keepCD
+    st._viewCharKey = "Alt-Realm"
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "counted on another character's list")
+    st._viewCharKey = nil
+    kit.reagents[2] = { name = "No ID", count = 1 }
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "counted with a material that has no item ID")
+    kit.reagents[2] = nil
+    EXPECT(TSF:BankCraftCount(kit, 2) == 3, "the count back: " .. tostring(TSF:BankCraftCount(kit, 2)))
+    -- a craft that makes 2: the items after each count
+    local hide = { name = "Cured Rugged Hide", isKnown = true, numAvail = 3, itemID = 15407, spellID = 19047,
+                   category = "Leather", reagents = { { itemID = 8171, count = 1, name = "Rugged Hide" } } }
+    table.insert(st.recipes, 1, hide)
+    st.selected = hide.name
+    ITEM_COUNT[8171], inv.bank[8171] = 3, 2
+    draw()
+    EXPECT(can():find("Can make: 3 (6)|r|cff3fc7ff, 5 (10) with bank|r", 1, true), "makes 2: " .. can())
+    table.remove(st.recipes, 1)
+    -- a recipe as the game lists it (not a test entry): its materials
+    -- carry item IDs. Light Leather, 3 scraps each, the game's count 14
+    local live
+    for _, e in ipairs(st.recipes) do if e.name == "Light Leather" and e.isKnown then live = e end end
+    EXPECT(live and live.reagents and live.reagents[1] and live.reagents[1].itemID == 2934, "the game's Light Leather has no material ID")
+    ITEM_COUNT[2934], inv.bank[2934] = 44, 6
+    EXPECT(TSF:BankCraftCount(live, live.numAvail) == 16, "the game's Light Leather with the bank: "
+           .. tostring(TSF:BankCraftCount(live, live.numAvail)) .. " (game count " .. tostring(live.numAvail) .. ")")
+    ITEM_COUNT[2934], inv.bank[2934] = nil, nil
+    -- the bank opened with the profession open: the counts draw again
+    st.selected = kit.name
+    kit.reagents = { { itemID = 2318, count = 1, name = "Light Leather" } }
+    ITEM_COUNT[2318], kit.numAvail, inv.bank = 4, 4, {}
+    draw()
+    EXPECT(not list():find("3fc7ff", 1, true), "a bank count before the bank opened: " .. list())
+    Enum.BankType = Enum.BankType or { Character = 0, Account = 2 }
+    local keepCB = C_Bank
+    C_Bank = { FetchPurchasedBankTabIDs = function(t) return t == 0 and { 6 } or {} end }
+    BAGS[6] = { [1] = { id = 2318, count = 5 } }
+    FIRE("BANKFRAME_OPENED")
+    EXPECT(list():find("|cff3fc7ff[9]|r", 1, true) and can():find(", 9 with bank", 1, true),
+           "the bank's visit did not redraw: " .. list() .. " / " .. can())
+    FIRE("BANKFRAME_CLOSED")
+    BAGS[6], C_Bank = nil, keepCB
+    table.remove(st.recipes, 1)
+    inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey, st.selected = keepBank, keepScanned, keepOff, keepView, keepSel
+    ITEM_COUNT = nil
+    TSF:UpdateListRows(); TSF:RefreshDetailPanel()
+end
+F110()
+print("  PASS F110 2.2.0: Can make counts your bank: [4] [10] and 'Can make: 4, 10 with bank' in azure, the bank alone as [6] and 'Can make: 0, 6 with bank', the items after each count, the name stops at the counts; none with no bank, an unseen bank, a game count not the bags', a cooldown, another character's list, a material with no ID; the bank's visit redraws")
+
+print("ALL FOREVER TESTS PASS (110)")

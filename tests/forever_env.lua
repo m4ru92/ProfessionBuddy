@@ -568,7 +568,10 @@ function GetNumTrainerServices() return 0 end
 
 CALLS = {}
 local function rec(name, ret) return function(...) CALLS[#CALLS + 1] = name; return ret end end
-C_Item = { GetItemInfo = rec("C_Item.GetItemInfo"), GetItemCount = rec("C_Item.GetItemCount", 0),
+-- GetItemCount: bags only (no includeBank), 0 unless a test sets ITEM_COUNT[id]
+C_Item = { GetItemInfo = rec("C_Item.GetItemInfo"),
+           GetItemCount = function(id) CALLS[#CALLS + 1] = "C_Item.GetItemCount"
+               local t = rawget(_G, "ITEM_COUNT"); return t and t[id] or 0 end,
            GetItemIconByID = rec("C_Item.GetItemIconByID") }
 C_Spell = { GetSpellInfo = rec("C_Spell.GetSpellInfo"), GetSpellLink = rec("C_Spell.GetSpellLink"),
             GetSpellTexture = rec("C_Spell.GetSpellTexture") }

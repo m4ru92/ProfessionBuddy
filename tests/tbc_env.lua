@@ -41,7 +41,8 @@ function GetItemInfo(id)
     -- the client's 14th value, bindType: 0 for these (nothing binds)
     return n, "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. n .. "]|h|r", 1, 5, 1, "Trade Goods", "Leather", 20, "", "icon", 5, 7, 0, 0
 end
-function GetItemCount() return 0 end
+-- bags only (no includeBank), 0 unless a test sets ITEM_COUNT[id]
+function GetItemCount(id) local t = rawget(_G, "ITEM_COUNT"); return t and t[id] or 0 end
 function GetItemIcon() return "icon" end
 function GetSpellInfo(id) local n = SPELL_NAMES[id]; return n, nil, "icon" end
 function GetSpellLink(id) return "|cff71d5ff|Hspell:" .. tostring(id) .. "|h[spell]|h|r" end

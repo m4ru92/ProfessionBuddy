@@ -21,6 +21,7 @@ The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for t
 - **Your own saved list:** opening your current character's saved recipes (the Characters tab's View) shows "Open Cooking from your spellbook to craft" where Request Craft used to be, since there's nobody to request from.
 - **Item info, folded or off (GitHub #12):** click the recipe panel's "- Item info" heading to fold the box away, "+ Item info" to bring it back; it stays folded until you click it again. Settings has "Show Item info" to turn it off. Folded or off, the Tool lines (rods, hammers, crafting stations) sit under the price line, and the Reagents move up.
 - **Vendor shuffle minimum:** in Settings, under Prices, and in the Shuffle tab: any profit, or from 50c up to 1g. 1s by default.
+- **Can make with your bank (Lucido):** when your bank holds more of a recipe's materials, the recipe list shows a second count in azure, the Reagents list's bank color: "[6] [10]", where 10 counts the bank, or "[4]" alone when only the bank makes any. The detail panel reads "Can make: 6, 10 with bank", with the items each makes as before ("6 (12), 10 (20) with bank"). For your own character, from what PB saw at your last bank visit; a recipe on cooldown shows no bank count. With Colorblind markers on, the bank count reads "[10 bank]", and the Reagents list's light blue "3/5" (enough counting your bank) reads "3/5 bank".
 
 **Added on WoW: Forever**
 
