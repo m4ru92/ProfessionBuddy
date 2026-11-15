@@ -55,9 +55,14 @@ function UI:Init()
     -- Order History and Find a Crafter, fastened to this window's right
     -- edge, add themselves here when built and scale with it
     self.scaleFollowers = {}
-    self.scaleGrip = self:AddScaleGrip(f, "mainWindowScale", self.scaleFollowers)
+    -- One size and one place for this window and the profession window,
+    -- so they swap in the same space (TEST-c7, m4ru): the profession
+    -- window's size and position, the ones kept until now, for both.
+    -- The main window's own size setting is gone.
+    addon.db.settings.mainWindowScale = nil
+    self.scaleGrip = self:AddScaleGrip(f, "professionWindowScale", self.scaleFollowers)
     -- after the scale grip, whose OnShow puts the saved size back first
-    self:TrackPosition(f, "main")
+    self:TrackPosition(f, "profession")
 
     -- Close any open dropdown list (e.g. the Guild tab profession filter) and
     -- the Friends tab order menu when the window hides. Those lists are
@@ -539,26 +544,37 @@ function UI:CharWindows()
 end
 
 -- The window's top-left corner in UIParent's units (its own units times
--- its scale), so a scale change does not move it
+-- its scale), so a scale change does not move it. Two windows can share a
+-- key (the main and the profession window, TEST-c7): _livePos holds the
+-- last one for this session, also with keeping off, so the other window
+-- opens there; the saved settings get it with keeping on.
 function UI:SavePosition(frame)
     local key = frame and frame._pbPosKey
-    if not (key and self:KeepOn()) then return end
+    if not key then return end
     local left, top = frame:GetLeft(), frame:GetTop()
     if type(left) ~= "number" or type(top) ~= "number" then return end
+    local s = frame:GetScale() or 1
+    self._livePos = self._livePos or {}
+    self._livePos[key] = { x = left * s, y = top * s }
+    if not self:KeepOn() then return end
     local w = self:CharWindows()
     if not w then return end
-    local s = frame:GetScale() or 1
     w.pos = w.pos or {}
     w.pos[key] = { x = left * s, y = top * s }
 end
 
--- Back where it was, pulled onto the screen if the screen got smaller.
+-- Back where it (or the window sharing its key) was this session, else
+-- where it was kept, pulled onto the screen if the screen got smaller.
 -- True when it put the window somewhere.
 function UI:RestorePosition(frame)
     local key = frame and frame._pbPosKey
-    if not (key and self:KeepOn()) then return false end
-    local w = addon.db.windows and addon.db.windows[addon:PlayerKey() or ""]
-    local p = w and w.pos and w.pos[key]
+    if not key then return false end
+    local p = self._livePos and self._livePos[key]
+    if not p then
+        if not self:KeepOn() then return false end
+        local w = addon.db.windows and addon.db.windows[addon:PlayerKey() or ""]
+        p = w and w.pos and w.pos[key]
+    end
     local x, y = p and tonumber(p.x), p and tonumber(p.y)
     if not (x and y) then return false end
     local s = frame:GetScale() or 1
@@ -573,8 +589,9 @@ function UI:RestorePosition(frame)
     return true
 end
 
--- Keep this window's position under key: put back the first time it
--- shows, saved when it hides, a drag ends (AfterDrag) or you log out
+-- Keep this window's position under key: put back each time it shows
+-- (where the window sharing the key last was, TEST-c7), saved when it
+-- hides, a drag ends (AfterDrag) or you log out
 function UI:TrackPosition(frame, key)
     frame._pbPosKey = key
     frame._pbPosRestored = false
@@ -582,9 +599,12 @@ function UI:TrackPosition(frame, key)
     self._tracked[#self._tracked + 1] = frame
     frame:HookScript("OnShow", function(f)
         -- moving it in combat is blocked on TBC Anniversary: the next open
-        if f._pbPosRestored or InCombatLockdown() then return end
+        if InCombatLockdown() then return end
+        local first = not f._pbPosRestored
         f._pbPosRestored = true
         if UI:RestorePosition(f) then return end
+        -- nothing to put it back to: after its first open it stays put
+        if not first then return end
         f:SetUserPlaced(false)
         -- Keep on with nothing saved yet (first open after updating): it
         -- stays where it is, where the game may have kept it from your

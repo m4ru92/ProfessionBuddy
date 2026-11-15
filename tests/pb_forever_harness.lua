@@ -5515,6 +5515,7 @@ do
     TSF.frame:Hide(); FLUSH()
     TSF._savedStates, TSF._keptLoaded = {}, nil
     rawset(F, "_pbPosRestored", false)
+    UI._livePos = nil   -- a reload starts a new session
     open()
     EXPECT(st.filterDiff == "No Gray" and st.filterCat == cat, "states not back after a reload")
     local lp = rawget(F, "_lastPoint")
@@ -5524,6 +5525,7 @@ do
     TSF.frame:Hide(); FLUSH()
     w.pos.profession = { x = 5000, y = 99 }
     rawset(F, "_pbPosRestored", false)
+    UI._livePos = nil
     open()
     lp = rawget(F, "_lastPoint")
     EXPECT(lp[4] == 1220 and lp[5] == 500, "off-screen position not pulled back: " .. tostring(lp[4]) .. "," .. tostring(lp[5]))
@@ -5549,8 +5551,9 @@ do
     rawset(M, "GetLeft", function() return 40 end)
     rawset(M, "GetTop", function() return 700 end)
     M:Hide()
-    EXPECT(PB.db.windows[key].pos and PB.db.windows[key].pos.main and PB.db.windows[key].pos.main.x == 40,
-           "the main window's position not saved on close")
+    -- under the profession window's key since TEST-c7: one position
+    EXPECT(PB.db.windows[key].pos and PB.db.windows[key].pos.profession and PB.db.windows[key].pos.profession.x == 40
+           and PB.db.windows[key].pos.main == nil, "the main window's position not saved on close")
     for _, k in ipairs({ "GetWidth", "GetHeight", "GetScale", "GetLeft", "GetTop" }) do rawset(F, k, nil); rawset(M, k, nil) end
     rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
     if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
@@ -5827,6 +5830,7 @@ local function F89()
     rawset(M, "_userPlaced", true)
     M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
     rawset(M, "_pbPosRestored", false)
+    UI._livePos = nil   -- a fresh session: no window has been placed yet
     UI:Show()
     local lp = rawget(M, "_lastPoint")
     EXPECT(lp and lp[1] == "CENTER" and rawget(M, "_points") == 1 and not M:IsUserPlaced(),
@@ -5955,6 +5959,7 @@ local function F91()
     rawset(M, "_userPlaced", true)
     M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
     rawset(M, "_pbPosRestored", false)
+    UI._livePos = nil   -- a fresh session
     UI:Show()
     local lp = rawget(M, "_lastPoint")
     EXPECT(lp and lp[1] == "TOPLEFT" and lp[4] == 40 and rawget(M, "_points") == 1 and not M:IsUserPlaced(),
@@ -7473,4 +7478,87 @@ end
 F106()
 print("  PASS F106 2.2.0 TEST-c6: the main window is the profession window's 740 x 540; every list fills it with no row below the window; Shuffle, Crates and writs and Guild columns spread out and stop short of the scroll bar; side panels keep its height; Vendor heading and tooltip; a view switch closes an open list")
 
-print("ALL FOREVER TESTS PASS (106)")
+-- F107 2.2.0 TEST-c7 (m4ru, TEST-c6 step 2): the two windows had their own
+-- size and their own place, so going Back or to a bottom tab moved and
+-- resized PB. They share the profession window's size setting and its
+-- position (the profession window's win, his call), every open, also with
+-- keeping off; the main window's own size setting is gone
+local function F107()
+    local PB = ProfBuddy
+    local UI, TSF, S = PB.UI, PB.TradeSkillFrame, PB.db.settings
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    EXPECT(S.mainWindowScale == nil, "the main window still has its own size setting")
+    -- frames that keep a scale and report where they are put
+    rawset(UIParent, "GetWidth", function() return 1920 end)
+    rawset(UIParent, "GetHeight", function() return 1080 end)
+    local frames = { TSF.frame, UI.frame }
+    for _, f in ipairs(frames) do
+        rawset(f, "GetWidth", function() return 740 end)
+        rawset(f, "GetHeight", function() return 540 end)
+        rawset(f, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+        rawset(f, "GetScale", function(self) return rawget(self, "_scale") or 1 end)
+        rawset(f, "GetLeft", function(self) local p = rawget(self, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[4] or 100 end)
+        rawset(f, "GetTop", function(self) local p = rawget(self, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[5] or 800 end)
+    end
+    local T, M = TSF.frame, UI.frame
+    local function placed(f) local p = rawget(f, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[4], p and p[5] end
+    local keepScale, keepKeep, keepRemember = S.professionWindowScale, S.keepWindowState, S.rememberWindowState
+    S.rememberWindowState = true
+    for _, keep in ipairs({ true, false }) do
+        S.keepWindowState = keep
+        UI._livePos = nil
+        S.professionWindowScale = 1.2
+        -- Leatherworking at 1.2, moved to (300, 900) on screen
+        open()
+        T:ClearAllPoints(); T:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 300 / 1.2, 900 / 1.2)
+        T:GetScript("OnDragStop")(T)
+        EXPECT(math.abs(T:GetScale() - 1.2) < 0.001, "keep " .. tostring(keep) .. ": the profession window's size")
+        -- the Characters bottom tab: the main window in the same space
+        TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+        local x, y = placed(M)
+        EXPECT(M:IsShown() and math.abs(M:GetScale() - 1.2) < 0.001 and x and math.abs(x * 1.2 - 300) < 0.01
+               and math.abs(y * 1.2 - 900) < 0.01,
+               "keep " .. tostring(keep) .. ": the main window is not where Leatherworking was: "
+               .. tostring(x) .. "," .. tostring(y) .. " at " .. tostring(M:GetScale()))
+        -- moved, and the grip right-clicked back to 100%: Back opens
+        -- Leatherworking there, at 100%
+        M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 120, 760)
+        M:GetScript("OnDragStop")(M)
+        UI.scaleGrip:GetScript("OnClick")(UI.scaleGrip)
+        EXPECT(S.professionWindowScale == 1, "keep " .. tostring(keep) .. ": the main window's grip did not set the shared size")
+        UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+        x, y = placed(T)
+        -- the grip keeps the corner on the screen: (120, 760) at 1.2 is
+        -- (144, 912) at 100%
+        EXPECT(T:IsShown() and math.abs(T:GetScale() - 1) < 0.001 and math.abs(x - 144) < 0.01 and math.abs(y - 912) < 0.01,
+               "keep " .. tostring(keep) .. ": Back did not open Leatherworking where the main window was: "
+               .. tostring(x) .. "," .. tostring(y) .. " at " .. tostring(T:GetScale()))
+        T:Hide(); FLUSH()
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    end
+    -- after a reload, keeping on: the main window opens where the profession
+    -- window was kept; an older build's own main position is not used
+    S.keepWindowState = true
+    local w = PB.db.windows[PB:PlayerKey()]
+    w.pos = { profession = { x = 400, y = 950 }, main = { x = 10, y = 300 } }
+    UI._livePos = nil
+    rawset(M, "_pbPosRestored", false)
+    UI:Show(); FLUSH()
+    local x, y = placed(M)
+    EXPECT(x == 400 and y == 950, "after a reload the main window is not at the kept position: " .. tostring(x) .. "," .. tostring(y))
+    UI:Hide(); FLUSH()
+    for _, f in ipairs(frames) do
+        for _, k in ipairs({ "GetWidth", "GetHeight", "SetScale", "GetScale", "GetLeft", "GetTop" }) do rawset(f, k, nil) end
+    end
+    rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
+    S.professionWindowScale, S.keepWindowState, S.rememberWindowState = keepScale, keepKeep, keepRemember
+    w.pos = nil
+    UI._livePos = nil
+end
+F107()
+print("  PASS F107 2.2.0 TEST-c7: the main and profession windows share one size (the profession window's setting, either grip sets it) and one place: a bottom tab and Back open each in the other's space, keeping on or off; after a reload both use the profession window's kept position")
+
+print("ALL FOREVER TESTS PASS (107)")

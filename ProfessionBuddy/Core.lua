@@ -728,7 +728,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         bnetTrust           = false, -- ...and trust them
         colorblindMarkers   = "auto", -- "auto" (follow the game's Colorblind Mode) | "on" | "off"
         windowStyle         = "modern", -- UI/Theme.lua: "modern" | "classic" | "game" (Match the game); applies after /reload
-        mainWindowScale     = 1,    -- UI/Main.lua drag-to-scale grip, 0.75-1.5
+        -- the drag-to-scale grip (UI/Main.lua), 0.75-1.5: one size for the
+        -- profession window and the main window (TEST-c7)
         professionWindowScale = 1,
     }
     -- Migrate old single-slider setting

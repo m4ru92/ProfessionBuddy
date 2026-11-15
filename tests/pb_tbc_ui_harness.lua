@@ -1098,4 +1098,54 @@ end
 U24()
 print("  PASS " .. TAG .. "24 2.2.0 TEST-c6: the main window is 740 x 540 on TBC Anniversary, the Shuffle and Guild lists fill it, the heading reads Vendor")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 24)")
+-- U25 2.2.0 TEST-c7: on TBC Anniversary too, the main and profession
+-- windows share one size and one place: Characters opens the main window
+-- where Cooking was, Back opens Cooking where the main window was
+local function U25()
+    local UI, TSF, S = PB.UI, PB.TradeSkillFrame, PB.db.settings
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    EXPECT(S.mainWindowScale == nil, "the main window still has its own size setting")
+    TSF:EnsureFrame()
+    rawset(UIParent, "GetWidth", function() return 1920 end)
+    rawset(UIParent, "GetHeight", function() return 1080 end)
+    local frames = { TSF.frame, UI.frame }
+    for _, f in ipairs(frames) do
+        rawset(f, "GetWidth", function() return 740 end)
+        rawset(f, "GetHeight", function() return 540 end)
+        rawset(f, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+        rawset(f, "GetScale", function(self) return rawget(self, "_scale") or 1 end)
+        rawset(f, "GetLeft", function(self) local p = rawget(self, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[4] or 100 end)
+        rawset(f, "GetTop", function(self) local p = rawget(self, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[5] or 800 end)
+    end
+    local T, M = TSF.frame, UI.frame
+    local function placed(f) local p = rawget(f, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[4], p and p[5] end
+    local keepScale = S.professionWindowScale
+    UI._livePos = nil
+    S.professionWindowScale = 1.1
+    OPEN_TRADE()
+    T:ClearAllPoints(); T:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 200, 700)
+    T:GetScript("OnDragStop")(T)
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    local x, y = placed(M)
+    EXPECT(M:IsShown() and math.abs(M:GetScale() - 1.1) < 0.001 and x == 200 and y == 700,
+           "the main window is not where Cooking was: " .. tostring(x) .. "," .. tostring(y))
+    M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 150, 650)
+    M:GetScript("OnDragStop")(M)
+    UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+    x, y = placed(T)
+    EXPECT(T:IsShown() and x == 150 and y == 650, "Back did not open Cooking where the main window was: " .. tostring(x) .. "," .. tostring(y))
+    T:Hide(); FLUSH()
+    CLOSE_TRADE()
+    for _, f in ipairs(frames) do
+        for _, k in ipairs({ "GetWidth", "GetHeight", "SetScale", "GetScale", "GetLeft", "GetTop" }) do rawset(f, k, nil) end
+    end
+    rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
+    S.professionWindowScale = keepScale
+    UI._livePos = nil
+end
+U25()
+print("  PASS " .. TAG .. "25 2.2.0 TEST-c7: the main and profession windows share one size and one place on TBC Anniversary: Characters and Back open each in the other's space")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 25)")

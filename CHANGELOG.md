@@ -32,7 +32,7 @@ The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for t
 **Changes**
 
 - **/pb keeps your profession open:** typing /pb or /pb friends with a profession open keeps it open behind the main window, with "Back to Cooking", as the bottom tabs have since 2.1.0. They used to close it.
-- **One window size:** the main window is 740 x 540, the profession window's size, so the two swap in place when you go Back or click a bottom tab. Its lists show more rows, and names have more room: the Shuffle tab, Crates and writs, Guild and Friends spread their columns over the wider window. Order history and Find a Crafter are as tall as the main window.
+- **One window size and place:** the main window is 740 x 540, the profession window's size, and the two share one size grip setting and one position: drag or resize either and the other follows, so they swap in the same space when you go Back or click a bottom tab. Both start from the profession window's size and position. Its lists show more rows, and names have more room: the Shuffle tab, Crates and writs, Guild and Friends spread their columns over the wider window. Order history and Find a Crafter are as tall as the main window.
 
 **Fixes**
 
