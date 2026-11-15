@@ -196,8 +196,9 @@ function CV:Build()
             name = u[2] or ("item:" .. id)
         end
         self.all[#self.all + 1] = {
+            -- no profession: listed under Prof: All only (TEST-c8, m4ru)
             id = id, kind = u[1], name = name, unopened = true, held = 0, ready = false,
-            prof = NOT_CRAFTED, inBags = self:HeldByYou(id) > 0, sells = P:AuctionPrice(id),
+            prof = nil, inBags = self:HeldByYou(id) > 0, sells = P:AuctionPrice(id),
         }
     end
 end
@@ -394,7 +395,7 @@ function CV:Create(parent)
         local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         local right = c.key == "hold" or c.key == "cost" or c.key == "sells"
         -- one side only, no width: the ^ or v never cuts a label short in
-        -- a narrow column ("Vendor pays v" in the Shuffle tab)
+        -- a narrow column
         fs:SetPoint(right and "RIGHT" or "LEFT", 0, 0)
         fs:SetJustifyH(right and "RIGHT" or "LEFT")
         fs:SetWordWrap(false)
@@ -486,7 +487,7 @@ function CV:SyncProfDropdown()
     if not self.profDD then return end
     local seen, opts = {}, { "All" }
     for _, e in ipairs(self.all or {}) do
-        if not seen[e.prof] then seen[e.prof] = true; opts[#opts + 1] = e.prof end
+        if e.prof and not seen[e.prof] then seen[e.prof] = true; opts[#opts + 1] = e.prof end
     end
     table.sort(opts, function(a, b)
         if a == "All" then return true elseif b == "All" then return false end

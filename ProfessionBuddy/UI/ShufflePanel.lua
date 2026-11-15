@@ -435,7 +435,7 @@ function SP:CreateContent(parent)
         local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         local right = not (c.key == "recipe" or c.key == "who")
         -- one side only, no width: the ^ or v never cuts a label short in
-        -- a narrow column ("Vendor pays v")
+        -- a narrow column
         fs:SetPoint(right and "RIGHT" or "LEFT", 0, 0)
         fs:SetJustifyH(right and "RIGHT" or "LEFT")
         fs:SetWordWrap(false)

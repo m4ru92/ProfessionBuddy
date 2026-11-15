@@ -60,6 +60,9 @@ function UI:Init()
     -- window's size and position, the ones kept until now, for both.
     -- The main window's own size setting is gone.
     addon.db.settings.mainWindowScale = nil
+    for _, w in pairs(addon.db.windows or {}) do
+        if type(w) == "table" and type(w.pos) == "table" then w.pos.main = nil end
+    end
     self.scaleGrip = self:AddScaleGrip(f, "professionWindowScale", self.scaleFollowers)
     -- after the scale grip, whose OnShow puts the saved size back first
     self:TrackPosition(f, "profession")
@@ -452,16 +455,25 @@ UI.SIDE_GAP = 4
 
 -- The scale frame gets for s: within the limits, and no bigger than fits
 -- on the screen, so the grip in its corner can always be reached, with room
--- beside it for the widest of its side panels.
+-- beside it for the widest of its side panels. Windows sharing a size
+-- setting (UI:AddScaleGrip's key) count each other's side panels too, so
+-- one setting gives them one size (TEST-c8, m4ru: the main window counted
+-- Order history, the profession window only the Material Calculator).
 function UI:FitScale(frame, s, followers)
     s = self:ClampScale(s)
     local sw, sh = tonumber(UIParent:GetWidth()), tonumber(UIParent:GetHeight())
     local fw, fh = tonumber(frame:GetWidth()), tonumber(frame:GetHeight())
     if sw and sh and fw and fh and fw > 0 and fh > 0 then
         local side = 0
-        for _, f in ipairs(followers or {}) do
-            local w = type(f.GetWidth) == "function" and tonumber(f:GetWidth())
-            if w and w + self.SIDE_GAP > side then side = w + self.SIDE_GAP end
+        local lists = { followers or {} }
+        for _, list in ipairs(self._scaleGroups and self._scaleGroups[frame._pbScaleKey or ""] or {}) do
+            lists[#lists + 1] = list
+        end
+        for _, list in ipairs(lists) do
+            for _, f in ipairs(list) do
+                local w = type(f.GetWidth) == "function" and tonumber(f:GetWidth())
+                if w and w + self.SIDE_GAP > side then side = w + self.SIDE_GAP end
+            end
         end
         local fit = math.floor(math.min(sw / (fw + side), sh / fh) * 100) / 100
         if s > fit then s = math.max(fit, self.SCALE_MIN) end
@@ -658,6 +670,11 @@ end
 
 function UI:AddScaleGrip(frame, key, followers)
     local settings = addon.db.settings
+    -- every window on this setting, by its side panels (UI:FitScale)
+    frame._pbScaleKey = key
+    self._scaleGroups = self._scaleGroups or {}
+    self._scaleGroups[key] = self._scaleGroups[key] or {}
+    table.insert(self._scaleGroups[key], followers or {})
     local grip = CreateFrame("Button", nil, frame)
     grip:SetSize(14, 14)
     grip:SetPoint("BOTTOMRIGHT", 0, 0)

@@ -7561,4 +7561,103 @@ end
 F107()
 print("  PASS F107 2.2.0 TEST-c7: the main and profession windows share one size (the profession window's setting, either grip sets it) and one place: a bottom tab and Back open each in the other's space, keeping on or off; after a reload both use the profession window's kept position")
 
-print("ALL FOREVER TESTS PASS (107)")
+-- F108 2.2.0 TEST-c8 (m4ru, TEST-c7 re-scan and step 6): (1) the shared
+-- size gave the two windows different sizes near the screen's limit: each
+-- counted only its own side panels (the main window Order history, the
+-- profession window the Material Calculator); both count all of them.
+-- (2) the Characters tab's profession rows, 15 px in, had the bars' width
+-- and ran 15 px past them to the scroll bar; every row ends at the scroll
+-- child's right edge, and the scroll bar ends where every other tab's does
+local function F108()
+    local PB = ProfBuddy
+    local UI, TSF, OP, CP = PB.UI, PB.TradeSkillFrame, PB.OrdersPanel, PB.CharacterPanel
+    TSF:EnsureFrame()
+    OP:BuildHistoryPanel(); OP:BuildFindPanel()
+    local sized = { [TSF.frame] = 740, [UI.frame] = 740, [TSF.calcPanel] = 280, [OP.histFrame] = 470, [OP.findFrame] = 470 }
+    for f, w in pairs(sized) do
+        rawset(f, "GetWidth", function() return w end)
+        rawset(f, "GetHeight", function() return 540 end)
+    end
+    local function screen(w, h)
+        rawset(UIParent, "GetWidth", function() return w end)
+        rawset(UIParent, "GetHeight", function() return h end)
+    end
+    for _, case in ipairs({ { 1366, 768, 1.5, 1.12 }, { 1024, 768, 1, 0.84 }, { 1920, 768, 1.3, 1.3 } }) do
+        screen(case[1], case[2])
+        local lw = UI:FitScale(TSF.frame, case[3], { TSF.calcPanel })
+        local main = UI:FitScale(UI.frame, case[3], UI.scaleFollowers)
+        EXPECT(lw == main and math.abs(lw - case[4]) < 0.001,
+               case[1] .. "x" .. case[2] .. " at " .. case[3] .. ": profession window " .. lw .. ", main window " .. main)
+    end
+    for f in pairs(sized) do rawset(f, "GetWidth", nil); rawset(f, "GetHeight", nil) end
+    rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
+    -- the Characters tab: every row, bar and line ends at the same edge
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "characters" then UI:SelectTab(i) end end
+    FLUSH()
+    local W = CP.scrollChild:GetWidth()
+    local kinds = {}
+    local function edges(label)
+        local checked = 0
+        for kind, pool in pairs(CP._pools) do
+            for i = 1, pool.n do
+                local o = pool.objs[i]
+                local sz, p = rawget(o, "_size"), rawget(o, "_lastPoint")
+                if sz and type(sz[1]) == "number" and p and p[1] == "TOPLEFT" and type(p[2]) == "number" then
+                    EXPECT(math.abs(p[2] + sz[1] - W) < 0.001, label .. ": " .. kind .. " at x " .. p[2]
+                           .. " ends at " .. (p[2] + sz[1]) .. ", not at " .. W)
+                    checked = checked + 1
+                    kinds[kind] = true
+                end
+            end
+        end
+        EXPECT(checked >= 3, label .. ": no rows checked: " .. checked)
+    end
+    CP._searchText = nil
+    CP:Refresh()
+    edges("Characters")
+    -- a search: its section lines and result rows too
+    CP._searchText = "light leather"
+    local keepFold = CP._searchFactionCollapsed
+    CP._searchFactionCollapsed = setmetatable({}, { __index = function() return false end })   -- every result open
+    CP:Refresh()
+    -- the stand-in's textures record no size or place: the section lines
+    -- get recorders, and the search draws again
+    for _, t in ipairs(CP._pools.divider and CP._pools.divider.objs or {}) do
+        rawset(t, "SetSize", function(self, w, h) rawset(self, "_size", { w, h }) end)
+        rawset(t, "SetPoint", function(self, ...) rawset(self, "_lastPoint", { ... }) end)
+    end
+    CP:Refresh()
+    edges("Characters search")
+    CP._searchFactionCollapsed = keepFold
+    CP._searchText = nil
+    CP:Refresh()
+    for _, k in ipairs({ "profRow", "divider", "searchCharRow" }) do
+        EXPECT(kinds[k], "no " .. k .. " checked")
+    end
+    UI:Hide(); FLUSH()
+    -- unopened crates and writs: under Prof: All only
+    local SP, CV = PB.ShufflePanel, PB.CratesView
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    local S = PB.db.settings
+    local keepShow = S.showPrices
+    S.showPrices = true   -- the list is empty with prices off
+    SP:SetView("crates")
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly = "All", nil, false, false
+    CV:Refresh()
+    local unopened = 0
+    for _, e in ipairs(CV.list) do if e.unopened then unopened = unopened + 1 end end
+    EXPECT(unopened == 6, "Prof: All lists " .. unopened .. " unopened")
+    CV.profFilter = "Not crafted"; CV:Repaint()
+    for _, e in ipairs(CV.list) do EXPECT(not e.unopened, "Prof: Not crafted lists an unopened one") end
+    CV.profFilter = nil
+    S.showPrices = keepShow
+    SP:SetView("shuffle")
+    UI:Hide(); FLUSH()
+end
+F108()
+print("  PASS F108 2.2.0 TEST-c8: windows on one size setting count each other's side panels, so they get one size at every screen; the Characters tab's rows all end at the same edge")
+
+print("ALL FOREVER TESTS PASS (108)")
