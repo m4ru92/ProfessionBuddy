@@ -1333,4 +1333,67 @@ end
 U27()
 print("  PASS " .. TAG .. "27 2.2.0: Can make counts your bank on TBC Anniversary: [4] [10], 'Can make: 4, 10 with bank', the bank alone, the items after each count; none where it would be wrong")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 27)")
+-- U28 2.2.0 (GitHub #13): on TBC Anniversary a click on a material made in
+-- the open profession goes to its recipe and Back returns; one made by
+-- another of your professions only says so (a click can't open it there)
+local function U28()
+    local TSF, DS, RDB = PB.TradeSkillFrame, PB.DataStore, PB.RecipeDB
+    local st = TSF.state
+    if TBC.open == "trade" then CLOSE_TRADE() end
+    local pack = { "PB Jump Pack", "easy", 0, nil, nil,
+        reagents = { { "Light Leather", 2, 2318 }, { "Copper Bar", 1, 2840 } } }
+    table.insert(TBC.tradeRows, pack)
+    OPEN_TRADE()
+    local inv = DS:GetCharacter().inventory
+    local keepBank, keepScanned = inv.bank, inv.bankScanned
+    ITEM_COUNT = { [2318] = 4 }
+    inv.bank, inv.bankScanned = { [2318] = 2 }, true
+    local function lines(row)
+        local out = {}
+        rawset(GameTooltip, "AddLine", function(_, t) out[#out + 1] = tostring(t) end)
+        rawset(GameTooltip, "Show", function() end)
+        row:GetScript("OnEnter")(row)
+        rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "Show", nil)
+        return table.concat(out, "\n")
+    end
+    local function click(row) row:GetScript("OnMouseUp")(row) end
+    local function rowFor(itemID)
+        for _, r in ipairs(TSF.reagentRows) do if r:IsShown() and r.itemID == itemID then return r end end
+    end
+    for _, r in ipairs(TSF.reagentRows) do
+        rawset(r.hover, "Show", function(x) rawset(x, "_on", true) end)
+        rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
+    end
+    local function back() TSF.detBack:GetScript("OnClick")(TSF.detBack) end
+    EXPECT(TSF:SelectRecipeForView("PB Jump Pack", false), "no PB Jump Pack in the list")
+    TSF.qtyBox:SetText("5")
+    local t = lines(rowFor(2318))
+    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Craft 6|cff3fc7ff, 4 with bank|r", 1, true), "hover:\n" .. t)
+    click(rowFor(2318))
+    EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "6", "jump: " .. tostring(st.selected))
+    EXPECT(TSF.detBack:IsShown() and TSF.detBack:GetText() == "Back to PB Jump Pack", "no Back")
+    back()
+    EXPECT(st.selected == "PB Jump Pack" and TSF.qtyBox:GetText() == "5", "Back: " .. tostring(st.selected))
+    -- Copper Bar from your Smelting: named, no click
+    local me = DS:GetCharacter()
+    local keepSmelt = me.professions.Smelting
+    me.professions.Smelting = { skillLevel = 1, recipes = { ["Smelt Copper"] = {} } }
+    local keepItr = RDB.itemToRecipe[2840]
+    if not (keepItr and keepItr[1]) then RDB.itemToRecipe[2840] = { { recipeName = "Smelt Copper", profName = "Smelting" } } end
+    t = lines(rowFor(2840))
+    EXPECT(t:find("Made with Smelting: Smelt Copper", 1, true) and not t:find("Click", 1, true) and not rawget(rowFor(2840).hover, "_on"),
+           "Copper Bar hover:\n" .. t)
+    click(rowFor(2840))
+    EXPECT(st.selected == "PB Jump Pack" and st.profName ~= "Smelting", "a click opened Smelting")
+    RDB.itemToRecipe[2840] = keepItr
+    me.professions.Smelting = keepSmelt
+    inv.bank, inv.bankScanned = keepBank, keepScanned
+    ITEM_COUNT = nil
+    TSF._jumpStack = nil
+    CLOSE_TRADE()
+    for i, r in ipairs(TBC.tradeRows) do if r == pack then table.remove(TBC.tradeRows, i) break end end
+end
+U28()
+print("  PASS " .. TAG .. "28 2.2.0 #13: on TBC Anniversary a material made in the open profession jumps with the crafts still needed and Back returns; one from another profession says 'Made with Smelting' and doesn't jump")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 28)")

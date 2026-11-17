@@ -3941,6 +3941,16 @@ function TSF:BuildDetailPanel(parent)
     detTools:Hide()
     self.detTools = detTools
 
+    -- "Back to Linen Bag" after a click on a material took you to its
+    -- recipe (2.2.0, GitHub #13): under the price line (ShowBackLine)
+    local detBack = CreateFrame("Button", nil, sc, "UIPanelButtonTemplate")
+    detBack:SetHeight(18)
+    detBack:SetNormalFontObject(GameFontNormalSmall)
+    detBack:SetHighlightFontObject(GameFontHighlightSmall)
+    detBack:SetScript("OnClick", function() self:JumpBack() end)
+    detBack:Hide()
+    self.detBack = detBack
+
     local itemTooltipDivider = sc:CreateTexture(nil, "ARTWORK")
     itemTooltipDivider:SetSize(DETAIL_W - 40, 1)
     Theme:Fill(itemTooltipDivider, "dividerFaint")
@@ -4033,23 +4043,38 @@ function TSF:BuildDetailPanel(parent)
         rCount:SetPoint("RIGHT", -4, 0)
         rFrame.countText = rCount
 
+        -- lit while the mouse is over a material a click goes to (#13)
+        local rHover = rFrame:CreateTexture(nil, "ARTWORK", nil, -8)   -- under the icon
+        rHover:SetAllPoints()
+        Theme:Fill(rHover, "menuHover")
+        rHover:Hide()
+        rFrame.hover = rHover
+
         rFrame:EnableMouse(true)
-        rFrame:SetScript("OnEnter", function(self)
-            if self.itemID then
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetItemByID(self.itemID)
+        rFrame:SetScript("OnEnter", function(row)
+            if row.itemID then
+                GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+                GameTooltip:SetItemByID(row.itemID)
+                if TSF:AddMaterialHint(GameTooltip, row.itemID, TSF:MaterialNeed(row)) then row.hover:Show() end
                 GameTooltip:Show()
             end
         end)
-        rFrame:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        rFrame:SetScript("OnLeave", function(row) row.hover:Hide(); GameTooltip:Hide() end)
         -- Shift-click a material -> chat link / AH search / socket, via the
         -- client's own router, only with a modifier key held (as recipe
         -- rows). Rows carry itemID, not a link; GetItemInfo's link is nil until
         -- the item is cached, so the first click on an uncached item no-ops.
-        rFrame:SetScript("OnMouseUp", function(self)
-            if self.itemID and IsModifierKeyDown() then
-                local link = select(2, GetItemInfo(self.itemID))
+        -- A plain click goes to the recipe that makes it (#13).
+        rFrame:SetScript("OnMouseUp", function(row)
+            if not row.itemID then return end
+            if IsModifierKeyDown() then
+                local link = select(2, GetItemInfo(row.itemID))
                 if link then HandleModifiedItemClick(link) end
+                return
+            end
+            if TSF:JumpToMaterial(row.itemID, TSF:MaterialNeed(row)) then
+                row.hover:Hide()
+                GameTooltip:Hide()
             end
         end)
         rFrame:Hide()
@@ -4148,6 +4173,7 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.embeddedTip:Hide()
     if self.itemInfoFold then self.itemInfoFold:Hide() end
     if self.detTools then self.detTools:Hide() end
+    if self.detBack then self.detBack:Hide() end
     self.reagentDivider:Hide()
     self.reagentHeader:Hide()
     self.altDivider:Hide()
@@ -4349,6 +4375,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
     end
 
     self:ShowPriceLine(recipe)
+    self:ShowBackLine()
 
     -- v6: Show embedded item tooltip
     self:ShowEmbeddedTooltip(recipe)
@@ -4428,6 +4455,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
 
             row.itemID = reagent.itemID
             local need = reagent.count or 1
+            row.perCraft = need
             local inBags, inBank = 0, 0
             if reagent.itemID then
                 inBags = bags[reagent.itemID] or 0
@@ -4523,6 +4551,7 @@ end
 -- The lowest line of the Can make block: the price line when it shows
 function TSF:CanMakeBottom()
     if self.detTools and self.detTools:IsShown() then return self.detTools end
+    if self.detBack and self.detBack:IsShown() then return self.detBack end
     if self.detPrice and self.detPrice:IsShown() then return self.detPrice end
     return self.detCanMake
 end
@@ -5113,6 +5142,12 @@ function TSF:BuildCalcPanel()
         divLine:Hide()
         row.sectionDivider = divLine
 
+        local cHover = row:CreateTexture(nil, "ARTWORK", nil, -8)   -- under the icon
+        cHover:SetAllPoints()
+        Theme:Fill(cHover, "menuHover")
+        cHover:Hide()
+        row.hover = cHover
+
         row:EnableMouse(true)
         row:SetScript("OnEnter", function(r)
             if r.itemID then
@@ -5122,16 +5157,24 @@ function TSF:BuildCalcPanel()
                     GameTooltip:AddDoubleLine("ProfessionBuddy price", addon.Prices:MaterialText(r.price),
                         1, 0.82, 0, 1, 1, 1)
                 end
+                -- the calculator's own count for the quantity (#13)
+                if r.calcNeed and self:AddMaterialHint(GameTooltip, r.itemID, r.calcNeed) then r.hover:Show() end
                 GameTooltip:Show()
             end
         end)
-        row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        row:SetScript("OnLeave", function(r) r.hover:Hide(); GameTooltip:Hide() end)
         -- Shift-click a material -> chat link / AH search / socket (same as the
-        -- detail-panel reagent rows).
+        -- detail-panel reagent rows); a plain click goes to its recipe (#13)
         row:SetScript("OnMouseUp", function(r)
-            if r.itemID and IsModifierKeyDown() then
+            if not r.itemID then return end
+            if IsModifierKeyDown() then
                 local link = select(2, GetItemInfo(r.itemID))
                 if link then HandleModifiedItemClick(link) end
+                return
+            end
+            if r.calcNeed and self:JumpToMaterial(r.itemID, r.calcNeed) then
+                r.hover:Hide()
+                GameTooltip:Hide()
             end
         end)
 
@@ -5392,9 +5435,11 @@ function TSF:UpdateCalcRows()
                         row.icon:Hide()
                     end
                     row.itemID = entry.itemID
+                    row.calcNeed = entry.need
                 else
                     row.icon:Hide()
                     row.itemID = nil
+                    row.calcNeed = nil
                 end
 
                 local namePrefix = ""
@@ -8800,7 +8845,191 @@ function TSF:ApplyPendingSelect()
     if (GetTime and GetTime() or 0) - p.at > 10 then self._pendingSelect = nil; return end
     if not (self.frame and self.frame:IsShown()) or state._viewCharKey or state._isStaticView
        or not SameProf(state.profName, p.prof) then return end
-    if self:SelectRecipeForView(p.recipe, p.vendorView) then self._pendingSelect = nil end
+    if self:SelectRecipeForView(p.recipe, p.vendorView) then
+        self._pendingSelect = nil
+        if p.qty then self:SetJumpQty(p.qty) end
+    end
+end
+
+----------------------------------------------------------------------
+-- Click a material to go to its recipe (2.2.0, GitHub #13, philippeop;
+-- REAGENT-JUMP-scope.md). A material a recipe makes: in the list on show
+-- (your open profession, or the saved list you're viewing), else, from
+-- your own open profession, one of your other professions. WoW: Forever
+-- opens that profession; TBC Anniversary can't open one from a click, so
+-- there the tooltip names it.
+----------------------------------------------------------------------
+
+-- The recipe you know (in your saved data) by its name, or by its spell
+-- when the saved name is another language's: the name the list shows
+local function KnownName(charData, profName, recipeName)
+    local p = charData and charData.professions and charData.professions[profName]
+    local known = p and p.recipes
+    if not known then return nil end
+    if known[recipeName] then return recipeName end
+    local info = RDB and RDB.data[profName] and RDB.data[profName][recipeName]
+    local sid = info and info.spellID
+    if sid then
+        for name, r in pairs(known) do
+            if type(r) == "table" and r.spellID == sid then return name end
+        end
+    end
+    return nil
+end
+
+-- Where a click on this material goes: { prof, name } in the list on
+-- show, or { prof, name, other = true, canOpen } for another of your
+-- professions. nil when nothing you know makes it.
+function TSF:MaterialTarget(itemID)
+    if not itemID or itemID == 0 then return nil end
+    local names = {}
+    for name, r in pairs(state.allRecipes or {}) do
+        if r.itemID == itemID and r.isKnown ~= false and name ~= state.selected then names[#names + 1] = name end
+    end
+    table.sort(names)
+    if names[1] then return { prof = state.profName, name = names[1] } end
+    -- another profession: from your own open profession only, never from
+    -- an alt's or a friend's list
+    if state._viewCharKey or state._isStaticView then return nil end
+    local me = DS and DS:GetCharacter(addon:PlayerKey())
+    for _, e in ipairs(RDB and RDB:GetRecipesForItem(itemID) or {}) do
+        if not SameProf(e.profName, state.profName) then
+            local name = KnownName(me, e.profName, e.recipeName)
+            if name then
+                local S = addon.Source
+                local line = S.TabSkillLine and S.OpenProfession
+                    and S:TabSkillLine(e.profName == "Smelting" and "Mining" or e.profName)
+                return { prof = e.profName, name = name, other = true, canOpen = line ~= nil }
+            end
+        end
+    end
+    return nil
+end
+
+-- The crafts it takes to have `need` of the material: what your bags
+-- lack, over what one craft makes, rounded up; and the same counting your
+-- bank (PB's copy of it), as Can make counts it
+function TSF:CraftsForMaterial(target, itemID, need)
+    local data = RDB and RDB.data[target.prof] and RDB.data[target.prof][target.name]
+    local yield = tonumber(data and data.yield) or 1
+    if yield < 1 then yield = 1 end
+    local bags = GetItemCount(itemID) or 0
+    local me = DS and DS:GetCharacter(addon:PlayerKey())
+    local inv = me and me.inventory
+    local bank = inv and inv.bankScanned and inv.bank and inv.bank[itemID] or 0
+    return math.ceil(math.max(0, need - bags) / yield), math.ceil(math.max(0, need - bags - bank) / yield)
+end
+
+-- The quantity on show: the Craft box on your own profession, the order
+-- box on someone's list
+function TSF:JumpQtyBox()
+    if state._viewCharKey then return self.composerQty end
+    return self.qtyBox
+end
+
+-- What the recipe on show takes of a Reagents row's material, for the
+-- quantity in its box
+function TSF:MaterialNeed(row)
+    local box = self:JumpQtyBox()
+    local qty = box and tonumber(box:GetText()) or 1
+    if qty < 1 then qty = 1 end
+    return (row.perCraft or 1) * qty
+end
+
+-- Fill the quantity after a jump; a batch that is running keeps its count
+function TSF:SetJumpQty(n)
+    local box = self:JumpQtyBox()
+    if not box or (box == self.qtyBox and self._craftingActive) then return end
+    box:SetText(tostring(math.max(1, tonumber(n) or 1)))
+end
+
+-- The material's tooltip lines: where a click goes and how many to craft
+-- (need: what the recipe on show takes of it, for its quantity). The
+-- target when a click goes there, else nil.
+function TSF:AddMaterialHint(tip, itemID, need)
+    local t = self:MaterialTarget(itemID)
+    if not t then return nil end
+    if t.other and not t.canOpen then
+        tip:AddLine("Made with " .. t.prof .. ": " .. t.name, 0.5, 0.5, 0.5)
+        return nil
+    end
+    tip:AddLine("Click: go to " .. t.name .. (t.other and (" (" .. t.prof .. ")") or ""), 0.5, 0.5, 0.5)
+    local crafts, withBank = self:CraftsForMaterial(t, itemID, need)
+    local line = crafts > 0 and ("Craft " .. crafts) or "You have enough"
+    if withBank < crafts then line = line .. "|cff3fc7ff, " .. withBank .. " with bank|r" end
+    tip:AddLine(line, 0.5, 0.5, 0.5)
+    return t
+end
+
+-- Go to the recipe that makes the material, with the crafts you still
+-- need in the quantity box; "Back to <recipe>" returns. True when it went.
+function TSF:JumpToMaterial(itemID, need)
+    local t = self:MaterialTarget(itemID)
+    if not t or (t.other and not t.canOpen) then return false end
+    local crafts = self:CraftsForMaterial(t, itemID, need)
+    local box = self:JumpQtyBox()
+    self._jumpStack = self._jumpStack or {}
+    local stack = self._jumpStack
+    stack[#stack + 1] = { prof = state.profName, name = state.selected, view = state._viewCharKey,
+                          qty = box and box:GetText() or nil,
+                          child = { prof = t.prof, name = t.name, view = not t.other and state._viewCharKey or nil } }
+    while #stack > 10 do table.remove(stack, 1) end
+    if t.other then
+        self:OpenRecipeFor(addon:PlayerKey(), t.prof, t.name, false)
+        local p = self._pendingSelect
+        if p and SameProf(p.prof, t.prof) and p.recipe == t.name then
+            p.qty = math.max(1, crafts)
+            return true
+        end
+    else
+        self:SelectRecipeForView(t.name, false)
+    end
+    self:SetJumpQty(crafts)
+    return true
+end
+
+-- "Back to <recipe>": the recipe the last jump came from, and its quantity
+function TSF:JumpBack()
+    local stack = self._jumpStack
+    local b = stack and stack[#stack]
+    if not b then return end
+    stack[#stack] = nil
+    if SameProf(b.prof, state.profName) and b.view == state._viewCharKey then
+        self:SelectRecipeForView(b.name, false)
+        self:SetJumpQty(b.qty)
+        return
+    end
+    self:OpenRecipeFor(addon:PlayerKey(), b.prof, b.name, false)
+    local p = self._pendingSelect
+    if p and SameProf(p.prof, b.prof) and p.recipe == b.name then
+        p.qty = b.qty
+    else
+        self:SetJumpQty(b.qty)
+    end
+end
+
+-- The Back line under the price line, while the recipe on show is the one
+-- the last jump went to; anything else clears the trail (a jump to
+-- another profession waits for it to open)
+function TSF:ShowBackLine()
+    local btn = self.detBack
+    if not btn then return end
+    btn:Hide()
+    local stack = self._jumpStack
+    local top = stack and stack[#stack]
+    if not top then return end
+    local c = top.child
+    if not (SameProf(c.prof, state.profName) and c.name == state.selected and c.view == state._viewCharKey) then
+        if not self._pendingSelect then self._jumpStack = nil end
+        return
+    end
+    btn:SetText("Back to " .. tostring(top.name))
+    local fs = btn:GetFontString()
+    btn:SetWidth(math.ceil((fs and tonumber(fs:GetStringWidth()) or 100) + 24))
+    btn:ClearAllPoints()
+    local above = self.detPrice:IsShown() and self.detPrice or self.detCanMake
+    btn:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, -4)
+    btn:Show()
 end
 
 ----------------------------------------------------------------------
