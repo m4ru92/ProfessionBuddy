@@ -72,7 +72,7 @@ end
 -- { [itemID] = name or true } for every writ and Waylaid Crate, opened
 -- or not (they sell at auction; Waylaid Supplies bind when picked up),
 -- and every item a crate or writ asks for. Without them PB never recorded a writ's price,
--- so Sells stayed blank without Auctionator or TSM (2.2.0 TEST-c3,
+-- so the Auction column stayed blank without Auctionator or TSM (2.2.0 TEST-c3,
 -- Hircus).
 function AP:CrateItems()
     if self._crateItems then return self._crateItems end

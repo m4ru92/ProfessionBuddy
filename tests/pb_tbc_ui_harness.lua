@@ -316,7 +316,7 @@ do
     TSF.state.selected = "Light Leather"
     TSF:RefreshDetailPanel()
     local line = plain(TSF.detPrice:GetText())
-    EXPECT(TSF.detPrice:IsShown() and line == "Cost: 30c   Sells: 50c, vendor 5c   Profit: +18c", "TBC price line: " .. line)
+    EXPECT(TSF.detPrice:IsShown() and line == "Cost: 30c   Auction: 50c, vendor 5c   Profit: +18c", "TBC price line: " .. line)
     ok, err = pcall(TSF.ToggleCalcPanel, TSF)
     EXPECT(ok and TSF.calcCols.price:IsShown(), "calculator with prices: " .. tostring(err))
     ok, err = pcall(TSF.ToggleCalcPanel, TSF)
@@ -748,7 +748,7 @@ local function U16()
     local pc = PB.Prices:DetailPieces(r)
     -- his figures; the harness has no vendor price for the powder (F94
     -- covers the vendor piece)
-    EXPECT(#pc == 3 and plain(pc[1].text) == "Cost: 3g 56s 70c" and plain(pc[2].text) == "Sells: 11g 99s 72c"
+    EXPECT(#pc == 3 and plain(pc[1].text) == "Cost: 3g 56s 70c" and plain(pc[2].text) == "Auction: 11g 99s 72c"
            and plain(pc[3].text) == "Profit: +7g 83s 3c",
            "the powder's pieces: " .. #pc .. " " .. plain(pc[1].text) .. " / " .. plain(pc[2].text) .. " / " .. plain(pc[#pc].text))
     local one = plain(pc[1].text .. "   " .. pc[2].text)
@@ -1235,6 +1235,39 @@ local function U27()
     EXPECT(list():find("|cff3fc7ff[10]|r", 1, true) and (rrow.countText:GetText() or "") == "|cff3fc7ff0/1|r",
            "markers off: " .. list() .. " / " .. tostring(rrow.countText:GetText()))
     EXPECT(rpoint()[1] == "RIGHT" and rpoint()[2] == rrow and rpoint()[4] == -36, "markers off: the material's name is not back at -36")
+    -- the Classic look's banner behind the material's name: cropped to its
+    -- drawn bar (texels 11-116 of 128) in the same place, and ending 4 px
+    -- before a count wider than the art's gap ("0/1 bank" crossed it)
+    if LOOK == "classic" then
+        EXPECT(rawget(rrow, "banner"), "no banner behind a material in the Classic look")
+        local pts = {}
+        rawset(rrow.banner, "SetPoint", function(_, ...) pts[#pts + 1] = { ... } end)
+        rawset(rrow.banner, "ClearAllPoints", function() pts = {} end)
+        local W = TSF._reagentColW * 2          -- one material: one column, both widths
+        local left = 18 - 10 * 18 / 39
+        local span = W - left
+        local function ends(countW)
+            rawset(rrow.countText, "GetStringWidth", function() return countW end)
+            draw()
+            local L, R
+            for _, p in ipairs(pts) do
+                if p[1] == "LEFT" and p[2] == rrow then L = p[4] elseif p[1] == "RIGHT" and p[2] == rrow and p[3] == "LEFT" then R = p[4] end
+            end
+            return L, R
+        end
+        local L, R = ends(40)
+        EXPECT(L and math.abs(L - (left + span * 11 / 128)) < 0.01 and R and math.abs(R - (W - 48)) < 0.01,
+               "a wide count: the banner " .. tostring(L) .. " to " .. tostring(R) .. ", width " .. W)
+        L, R = ends(10)
+        EXPECT(L and math.abs(L - (left + span * 11 / 128)) < 0.01 and R and math.abs(R - (W - span * 11 / 128)) < 0.01,
+               "a short count: the banner " .. tostring(L) .. " to " .. tostring(R) .. " (the art's own bar ends at "
+               .. (W - span * 11 / 128) .. ")")
+        rawset(rrow.countText, "GetStringWidth", nil)
+        rawset(rrow.banner, "SetPoint", nil); rawset(rrow.banner, "ClearAllPoints", nil)
+        local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+        EXPECT(src:find("banner:SetTexCoord%(BANNER_EDGE, 1 %- BANNER_EDGE, 0, 1%)") and src:find("local BANNER_EDGE   = 11 / 128", 1, true),
+               "the banner is not cropped to its bar")
+    end
     S.colorblindMarkers, inv.bags[2318] = keepCBM, keepBag
     -- the bags make none: the azure count alone, red 0, not "missing"
     ITEM_COUNT[2318], kit.numAvail = 0, 0

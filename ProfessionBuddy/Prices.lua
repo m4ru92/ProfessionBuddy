@@ -612,7 +612,7 @@ function P:MissingText(n, bop)
 end
 
 -- The detail panel's line under Can make:
--- "Cost: 1g 20s   Sells: 2g 5s   Profit: +85s", or with a material that
+-- "Cost: 1g 20s   Auction: 2g 5s   Profit: +85s", or with a material that
 -- has no price, "Cost: 1g 20s+ (1 material has no price)" and no profit.
 -- fits(text), when given, says whether text fits on one line of the panel:
 -- a piece that doesn't fit starts a new line, so a price never splits
@@ -650,15 +650,15 @@ function P:DetailPieces(r)
     if auction and r.sellStale then auction = GREY .. auction .. "|r" end
     local vendor = r.vendorSell and self:Money(r.vendorSell * r.yield)
     if r.bop then
-        add(vendor and ("Sells: " .. vendor .. " (vendor, BoP)") or "BoP")
+        add(vendor and ("Vendor: " .. vendor .. " (BoP)") or "BoP")
     elseif r.better and auction and vendor then
         -- only the better sale price, labeled
-        add("Sells: " .. (r.profitFrom == "vendor" and (vendor .. " (vendor)") or (auction .. " (auction)")))
+        add(r.profitFrom == "vendor" and ("Vendor: " .. vendor) or ("Auction: " .. auction))
     elseif auction then
-        add("Sells: " .. auction)
+        add("Auction: " .. auction)
         if vendor then add("vendor " .. vendor, ", ") end
     elseif vendor then
-        add("Sells: " .. vendor .. " (vendor)")
+        add("Vendor: " .. vendor)
     end
     if r.profit and r.missing == 0 then
         add("Profit: " .. self:SignedMoney(r.profit))

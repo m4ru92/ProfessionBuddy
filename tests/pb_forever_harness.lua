@@ -4832,7 +4832,7 @@ do
         GetAuctionAgeByItemID = function(caller, id) return AGE[id] end,
     } } }
     line, r = detail(cloak)
-    EXPECT(line == "Cost: 70c   Sells: 3s   Profit: +2s 15c", "Auctionator: " .. tostring(line))
+    EXPECT(line == "Cost: 70c   Auction: 3s   Profit: +2s 15c", "Auctionator: " .. tostring(line))
     EXPECT(TSF.detPrice:GetText():find("|cff808080" .. P:Money(300) .. "|r", 1, true), "an old sale price is not gray")
     EXPECT(calls[1] == "ProfessionBuddy", "Auctionator called without PB's name")
     local leather = r.parts[1].price
@@ -4876,7 +4876,7 @@ do
     S.priceTSMSource = " DBMinBuyout "
     line = detail(cloak)
     EXPECT(asked[1] == "DBMinBuyout i:2318", "TSM asked: " .. tostring(asked[1]))
-    EXPECT(line == "Cost: 90c   Sells: 5s   Profit: +3s 85c", "TSM: " .. tostring(line))
+    EXPECT(line == "Cost: 90c   Auction: 5s   Profit: +3s 85c", "TSM: " .. tostring(line))
     S.priceTSMSource = "DBMarket"
     -- both off: PB's recorded prices (3 days old), the vendor; the cloak
     -- falls back to the vendor's price
@@ -4887,7 +4887,7 @@ do
     local keepItem = C_Item.GetItemInfo
     C_Item.GetItemInfo = function(id) if id == 7276 then return "Cloak", nil, 1, 5, 1, "Armor", "Cloth", 1, "", 1, 64 end end
     line, r = detail(cloak)
-    EXPECT(line == "Cost: 82c   Sells: 64c (vendor)   Profit: -18c", "recorded + vendor: " .. tostring(line))
+    EXPECT(line == "Cost: 82c   Vendor: 64c   Profit: -18c", "recorded + vendor: " .. tostring(line))
     EXPECT(r.parts[1].price.craftParts[1].price.buySource == "PB" and math.floor(r.parts[1].price.craftParts[1].price.age) == 3,
            "recorded price source and age")
     C_Item.GetItemInfo = keepItem
@@ -4904,7 +4904,7 @@ do
            "vendor prices recorded: " .. tostring(V[2320] and V[2320].p))
     EXPECT(P:VendorBuy(2320) == 9, "a recorded vendor price did not beat the baked one")
     line = detail(cloak)
-    EXPECT(line == "Cost: 69c   Sells: 3s   Profit: +2s 16c", "recorded vendor price: " .. tostring(line))
+    EXPECT(line == "Cost: 69c   Auction: 3s   Profit: +2s 16c", "recorded vendor price: " .. tostring(line))
 
     -- an enchant (no item): cost only
     C_TradeSkillUI.OpenTradeSkill(333)
@@ -5022,19 +5022,19 @@ do
     -- defaults: both sale prices, profit from the auction price (3s less 5%, less 70c)
     EXPECT(S.priceVendorSell == true and S.priceBetterSale == false and S.priceListProfit == false
            and S.priceHideLoss == false, "sale and list settings defaults")
-    EXPECT(line() == "Cost: 70c   Sells: 3s, vendor 4s   Profit: +2s 15c", "both sale prices: " .. line())
+    EXPECT(line() == "Cost: 70c   Auction: 3s, vendor 4s   Profit: +2s 15c", "both sale prices: " .. line())
     -- only the better: the vendor's 4s beats 3s less 5%
     S.priceBetterSale = true
     local r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
-    EXPECT(line() == "Cost: 70c   Sells: 4s (vendor)   Profit: +3s 30c" and r.profitFrom == "vendor", "better sale price: " .. line())
+    EXPECT(line() == "Cost: 70c   Vendor: 4s   Profit: +3s 30c" and r.profitFrom == "vendor", "better sale price: " .. line())
     AUC[7276] = 500
-    EXPECT(line() == "Cost: 70c   Sells: 5s (auction)   Profit: +4s 05c" or line() == "Cost: 70c   Sells: 5s (auction)   Profit: +4s 5c",
+    EXPECT(line() == "Cost: 70c   Auction: 5s   Profit: +4s 05c" or line() == "Cost: 70c   Auction: 5s   Profit: +4s 5c",
            "better is the auction price: " .. line())
     AUC[7276] = 300
     -- no vendor sale price anywhere
     S.priceVendorSell = false
     r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
-    EXPECT(line() == "Cost: 70c   Sells: 3s   Profit: +2s 15c" and r.vendorSell == nil, "vendor sale price off: " .. line())
+    EXPECT(line() == "Cost: 70c   Auction: 3s   Profit: +2s 15c" and r.vendorSell == nil, "vendor sale price off: " .. line())
     local lines = {}
     P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
                     AddDoubleLine = function(_, a, b) lines[#lines + 1] = plain(a) .. " = " .. plain(b) end }, r)
@@ -5085,7 +5085,7 @@ do
     -- a gray BoP in the list, last in the Profit sort, and hidden at a loss
     BOP[7276] = true
     r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
-    EXPECT(r.bop and r.sell == nil and line() == "Cost: 70c   Sells: 4s (vendor, BoP)   Profit: +3s 30c",
+    EXPECT(r.bop and r.sell == nil and line() == "Cost: 70c   Vendor: 4s (BoP)   Profit: +3s 30c",
            "BoP detail line: " .. line())
     lines = {}
     P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
@@ -5133,7 +5133,7 @@ do
     mp = P:MaterialPrice(2320)
     EXPECT(mp.bop and mp.unit == nil and mp.buy == nil, "a BoP material kept an auction price")
     EXPECT(plain(P:MaterialText(mp)) == "? (BoP)", "BoP material text: " .. plain(P:MaterialText(mp)))
-    EXPECT(line() == "Cost: 60c+ (1 material binds when picked up)   Sells: 3s, vendor 4s", "BoP material line: " .. line())
+    EXPECT(line() == "Cost: 60c+ (1 material binds when picked up)   Auction: 3s, vendor 4s", "BoP material line: " .. line())
     r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
     lines = {}
     P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
@@ -5780,7 +5780,7 @@ do
     -- a writ: its item has no price here, and the writ's own auction price
     t = tipFor(264037)
     EXPECT(t:find("Fill cost (ProfessionBuddy): = ?", 1, true) and t:find("200 x ", 1, true)
-           and t:find("Writ sells for = 40s", 1, true), "writ tooltip:\n" .. t)
+           and t:find("Writ at auction = 40s", 1, true), "writ tooltip:\n" .. t)
     -- the item not loaded yet (m4ru, TEST-c4: "200 x item:8069"): the
     -- baked name
     local keepGII = GetItemInfo
@@ -6225,7 +6225,7 @@ local function F94()
     local r = P:RecipeCost({ name = "Coarse Dynamite" }, "Engineering")
     EXPECT(r and r.yield == 2 and r.yieldMin == 1 and r.yieldMax == 3, "the price's range")
     local line = P:DetailText(r)
-    EXPECT(line:find("Sells: ", 1, true) and line:find("Profit: ", 1, true) and not line:find("~", 1, true)
+    EXPECT(line:find("Auction: ", 1, true) and line:find("Profit: ", 1, true) and not line:find("~", 1, true)
            and not line:find("about", 1, true), "a mark on the price line: " .. line)
     -- TEST-a4: fits() moves a whole piece down; without it, one line as
     -- before. The harness has no vendor price for it: give it the game's 75c
@@ -7080,8 +7080,10 @@ local function F102()
     click(CV, "cost")
     EXPECT(CV.list[1].cost == 0 and CV.list[5].cost == nil, "To buy: 0 first, ? last")
     both(CV, "by", function(e) return e.by and short(e.by.key) or nil end, true, "Crates Crafted by")
-    both(CV, "sells", function(e) return e.sells end, false, "Crates Sells")
-    EXPECT(CV.list[4].sells == nil and CV.list[5].sells == nil and CV.list[1].sells == 50, "Sells: lowest first after the second click, blanks last")
+    both(CV, "sells", function(e) return e.sells end, false, "Crates Auction")
+    EXPECT(CV.list[4].sells == nil and CV.list[5].sells == nil and CV.list[1].sells == 50, "Auction: lowest first after the second click, blanks last")
+    -- the column says where the price comes from (2.2.0, m4ru: "sells" read as vendor)
+    EXPECT((CV.headerBtns.sells.label:GetText() or ""):find("^Auction [%^v]$"), "the Auction heading: " .. tostring(CV.headerBtns.sells.label:GetText()))
     CV.all, CV.Build = keepCV, keepCVBuild
     CV.sortKey, CV.sortAsc = "cost", true
     SP:SetView("shuffle")
@@ -7144,12 +7146,12 @@ local function F103()
            and t:find("10 x Fadeleaf = 5s", 1, true) and t:find("10 x Goldthorn = ?", 1, true)
            and t:find("10 x Khadgar's Whisker = 50c", 1, true)
            and t:find("Any one of these fills it", 1, true) and t:find("Reward details", 1, true)
-           and t:find("Crate sells for = 9s", 1, true), "bundle tooltip:\n" .. t)
+           and t:find("Crate at auction = 9s", 1, true), "bundle tooltip:\n" .. t)
     -- no bundle priced: ?
     AUC = {}
     P:ClearRecorded(); P:ResetListCache()
     t = tipFor(248690)
-    EXPECT(t:find("Fill cost (ProfessionBuddy): = ?", 1, true) and not t:find("Crate sells", 1, true), "bundle tooltip, no prices:\n" .. t)
+    EXPECT(t:find("Fill cost (ProfessionBuddy): = ?", 1, true) and not t:find("Crate at auction", 1, true), "bundle tooltip, no prices:\n" .. t)
     S.showPrices = false
     EXPECT(not tipFor(248690):find("Fill cost", 1, true), "bundle fill cost with Show prices off")
     S.showPrices = true
@@ -7316,7 +7318,7 @@ local function F105()
         return table.concat(plain, "\n")
     end
     local t = tipFor(262889)
-    EXPECT(t:find("Sells for (ProfessionBuddy): = 12s", 1, true) and not t:find("Fill cost", 1, true), "sealed writ tooltip:\n" .. t)
+    EXPECT(t:find("Auction price (ProfessionBuddy): = 12s", 1, true) and not t:find("Fill cost", 1, true), "sealed writ tooltip:\n" .. t)
     EXPECT(not tipFor(262888):find("ProfessionBuddy", 1, true), "an unpriced sealed writ showed a PB line")
     -- recorded and scanned
     EXPECT(AP:Wanted(262889) and AP:Wanted(248549), "Wanted: the unopened ones")

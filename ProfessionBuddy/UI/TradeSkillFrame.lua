@@ -81,6 +81,8 @@ local LINK_BTN      = 23   -- WoW: Forever's profession link button (Blizzard's 
 local LINK_GAP      = 4
 local VISIBLE_ROWS  = 20
 local CRAFT_BAR_H   = 58   -- two 22 px button rows with 6 px above and below: clear of either look's border
+-- the see-through share at each end of the Classic reagent banner's texture
+local BANNER_EDGE   = 11 / 128
 
 -- Seconds the search box waits after the last keystroke before rebuilding.
 local SEARCH_DEBOUNCE = 0.3
@@ -1555,7 +1557,7 @@ function TSF:HookItemTooltip()
             local sell = P:AuctionPrice(itemID)
             if sell then
                 tip:AddLine(" ")
-                tip:AddDoubleLine("Sells for (ProfessionBuddy):", P:Money(sell), 1, 0.82, 0, 1, 1, 1)
+                tip:AddDoubleLine("Auction price (ProfessionBuddy):", P:Money(sell), 1, 0.82, 0, 1, 1, 1)
                 tip:Show()
             end
             return
@@ -1582,7 +1584,7 @@ function TSF:HookItemTooltip()
             tip:AddLine("  Any one of these fills it; the cheapest is the fill cost.", 0.5, 0.5, 0.5, true)
             -- it sells at auction too (TEST-c4): fill it or sell it
             local sell = P:AuctionPrice(itemID)
-            if sell then tip:AddDoubleLine("  Crate sells for", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
+            if sell then tip:AddDoubleLine("  Crate at auction", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
             tip:AddLine("  Reward details: coming in a later update.", 0.5, 0.5, 0.5)
             tip:Show()
             return
@@ -1601,7 +1603,7 @@ function TSF:HookItemTooltip()
         tip:AddLine("  " .. count .. " x " .. name, 0.9, 0.9, 0.9)
         if writ then
             local sell = P:AuctionPrice(itemID)
-            if sell then tip:AddDoubleLine("  Writ sells for", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
+            if sell then tip:AddDoubleLine("  Writ at auction", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
         end
         tip:AddLine("  Reward details: coming in a later update.", 0.5, 0.5, 0.5)
         tip:Show()
@@ -4015,9 +4017,10 @@ function TSF:BuildDetailPanel(parent)
             slot:SetPoint("CENTER", rIcon, "CENTER")
             local banner = rFrame:CreateTexture(nil, "BACKGROUND")
             banner:SetTexture("Interface\\QuestFrame\\UI-QuestItemNameFrame")
-            banner:SetPoint("LEFT", rIcon, "RIGHT", -10 * 18 / 39, 0)
-            banner:SetPoint("RIGHT", rFrame, "RIGHT", 0, 0)
+            -- cropped to its drawn bar; PlaceReagentBanner sets its ends
+            banner:SetTexCoord(BANNER_EDGE, 1 - BANNER_EDGE, 0, 1)
             banner:SetHeight(64 * 18 / 39)
+            rFrame.banner = banner
         end
 
         local rName = rFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -4458,6 +4461,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
             else
                 row.nameText:SetPoint("RIGHT", row, "RIGHT", -36, 0)
             end
+            if row.banner then self:PlaceReagentBanner(row, useTwoCol and colW or colW * 2) end
         end
 
         -- Record the bottom of the reagent block; the reagent grid owns the
@@ -4523,7 +4527,7 @@ function TSF:CanMakeBottom()
     return self.detCanMake
 end
 
--- Prices.lua: "Cost: 1g 20s   Sells: 2g 5s   Profit: +85s" under Can make
+-- Prices.lua: "Cost: 1g 20s   Auction: 2g 5s   Profit: +85s" under Can make
 -- (Settings > Prices > Show prices). retry: the count of looks again for
 -- an item the game hadn't loaded (below); nil when the recipe is selected.
 function TSF:ShowPriceLine(recipe, retry)
@@ -5861,6 +5865,23 @@ function TSF:ReagentCraftCount(recipe)
         end
     end
     return minMake or 0
+end
+
+-- The Classic look's banner behind a material's name: Blizzard's quest
+-- item name frame (Interface\QuestFrame\UI-QuestItemNameFrame, file
+-- 136796), whose bar is texels 11 to 116 of 128. Cropped to the bar, it
+-- spans where the whole texture's bar did (the row's width less the
+-- see-through ends), and ends 4 px before the count when the count is
+-- wider than the gap the art left for it ("0/1 bank", m4ru TEST-d2).
+function TSF:PlaceReagentBanner(row, w)
+    local left = 18 - 10 * 18 / 39        -- where the uncropped texture began
+    local span = w - left
+    local barL, barR = left + span * BANNER_EDGE, w - span * BANNER_EDGE
+    local countLeft = w - 4 - (row.countText:GetStringWidth() or 0)
+    barR = math.min(barR, countLeft - 4)
+    row.banner:ClearAllPoints()
+    row.banner:SetPoint("LEFT", row, "LEFT", barL, 0)
+    row.banner:SetPoint("RIGHT", row, "LEFT", barR, 0)
 end
 
 -- How many your bags and your bank make together (2.2.0, Lucido): the

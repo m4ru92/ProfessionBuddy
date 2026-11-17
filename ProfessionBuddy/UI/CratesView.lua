@@ -33,13 +33,13 @@ local COLS = {
     { key = "hold",  label = "You hold",      x = 408, w = 58  },
     { key = "cost",  label = "To buy",        x = 470, w = 68  },
     { key = "by",    label = "Crafted by",    x = 542, w = 96  },
-    { key = "sells", label = "Sells",         x = 642, w = 54  },
+    { key = "sells", label = "Auction",       x = 642, w = 54  },
 }
 local COL = {}
 for _, c in ipairs(COLS) do COL[c.key] = c end
 
 -- Which way a column sorts on its first click (as the Shuffle tab):
--- names A to Z, To buy cheapest first, You hold and Sells highest
+-- names A to Z, To buy cheapest first, You hold and Auction highest
 -- first. A second click reverses it.
 local SORT_DEFAULT_ASC = {
     name = true, needs = true, hold = false, cost = true, by = true, sells = false,
