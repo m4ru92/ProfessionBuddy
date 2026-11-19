@@ -1438,4 +1438,60 @@ end
 U28()
 print("  PASS " .. TAG .. "28 2.2.0 #13: on TBC Anniversary a material made in the open profession jumps with 'Needs N crafted' and Back under Share returns; a pick or a reopen starts at 1; one from another profession says 'Made with Smelting' and doesn't jump")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 28)")
+-- U29 2.2.0: the craft strip on TBC Anniversary, in both looks: shown from
+-- the craft's first cast, the window rises above it (the Enchant button
+-- too) and the list fits its rows; the main window shows it while parked;
+-- gone at the end of the batch
+local function U29()
+    local UI, TSF, S = PB.UI, PB.TradeSkillFrame, PB.db.settings
+    local st = TSF.state
+    local keepArm, keepName = TSF.ArmCraftWatchdog, SPELL_NAMES[2881]
+    TSF.ArmCraftWatchdog = function() end
+    SPELL_NAMES[2881] = "Light Leather"   -- TBC Anniversary matches the craft by name
+    local row = TBC.tradeRows[2]
+    local keepAvail = row[3]
+    row[3] = 10
+    local function cast(ev) FIRE(ev or "UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 2881) end
+    local function y(frame) local p = rawget(frame, "_lastPoint"); return p and p[#p] end
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    TSF:StopCraftTracking()
+    S.craftBarCast, S.craftBarBatch = true, true
+    OPEN_TRADE()
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    TSF:DoCraftImmediate(5)
+    EXPECT(TSF._craftingActive and not TSF.craftStrip:IsShown() and y(TSF.listPanel) == 30, "a strip before the first cast")
+    CAST_INFO = { "Light Leather", "", 0, 999000, 1001000, true, nil, false, 2881 }
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(TSF.craftStrip:IsShown() and TSF.craftStrip.cast:IsShown() and TSF.craftStrip.batch:IsShown()
+           and y(TSF.listPanel) == 65 and y(TSF.craftBar) == 65 and y(TSF.detailFrame) == 125
+           and y(TSF.enchantCraftBtn) == 117 and TSF:ListRows() == 18,
+           "the window over the strip: list " .. tostring(y(TSF.listPanel)) .. ", rows " .. TSF:ListRows())
+    -- TBC Anniversary's GetSpellInfo here gives no cast time: 1 s, plus 0.5
+    TSF:PaintStrip(TSF.craftStrip)
+    EXPECT(TSF.craftStrip.cast.text:GetText() == "Light Leather"
+           and TSF.craftStrip.batch.text:GetText() == "Crafting 1 of 5, about 7s left",
+           "the bars: " .. tostring(TSF.craftStrip.batch.text:GetText()))
+    CAST_INFO = nil
+    cast()
+    TSF:PaintStrip(TSF.craftStrip)
+    EXPECT(TSF.craftStrip.batch.text:GetText() == "Crafting 2 of 5, about 6s left", "after one: " .. tostring(TSF.craftStrip.batch.text:GetText()))
+    -- parked on the Characters tab: the main window's strip
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    EXPECT(TSF._parked and TSF:MainStrip():IsShown() and y(UI.frame.tabs[1].content) == 45, "no strip in the main window")
+    cast(); cast(); cast(); cast()
+    EXPECT(not TSF._craftingActive and not TSF:MainStrip():IsShown() and not TSF.craftStrip:IsShown()
+           and y(UI.frame.tabs[1].content) == 10, "the strip stayed after the batch")
+    UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+    EXPECT(TSF.frame:IsShown() and y(TSF.listPanel) == 30 and y(TSF.enchantCraftBtn) == 82 and TSF:ListRows() == 20, "the window after the batch")
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() end
+    row[3] = keepAvail
+    SPELL_NAMES[2881] = keepName
+    TSF.ArmCraftWatchdog = keepArm
+end
+U29()
+print("  PASS " .. TAG .. "29 2.2.0: the craft strip on TBC Anniversary from the first cast: the window and the Enchant button rise, 18 rows, 'Crafting 2 of 5, about 6s left', the main window's strip while parked; gone after the batch")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 29)")

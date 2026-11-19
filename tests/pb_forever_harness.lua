@@ -8053,4 +8053,200 @@ end
 F111()
 print("  PASS F111 2.2.0 #13: a click on a material goes to its recipe with 'Needs N crafted' (bags; bank in light blue, 'none with bank'), Back under Share returns with the quantity; a recipe you pick or a reopened window starts at 1; a batch keeps its count; shift-click links; vendor materials don't jump; a search is cleared; another of your professions opens; the calculator's rows; a friend's list jumps within it and fills the order box")
 
-print("ALL FOREVER TESTS PASS (111)")
+-- F112 2.2.0 (Lucido, Kluga): the craft strip. From a craft's first cast to
+-- its end, both windows show a strip across the bottom: the current cast
+-- (UnitCastingInfo) and the whole batch with its time left, each with its
+-- own Settings switch; the recipe list, the craft bar, the detail panel and
+-- every main-window tab rise above it and show the rows that still fit. A
+-- craft the game refuses shows nothing; in combat the change waits.
+local function F112()
+    local PB = ProfBuddy
+    local TSF, UI, P, S = PB.TradeSkillFrame, PB.UI, PB.Prices, PB.db.settings
+    local st = TSF.state
+    local keepArm = TSF.ArmCraftWatchdog
+    TSF.ArmCraftWatchdog = function() end
+    local keepICL = InCombatLockdown
+    local function cast(event) FIRE(event or "UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 2881) end
+    local function clean()
+        InCombatLockdown = keepICL
+        CAST_INFO = nil
+        if TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI.frame:Hide() end
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+        TSF:StopCraftTracking()
+    end
+    local function shownRows()
+        local n = 0
+        for _, r in ipairs(TSF.listRows) do if r:IsShown() then n = n + 1 end end
+        return n
+    end
+    local function y(frame) local p = rawget(frame, "_lastPoint"); return p and p[#p] end
+    local strip = function() return TSF.craftStrip end
+    for _, s0 in ipairs({ TSF.craftStrip, TSF:MainStrip() }) do
+        for _, k in ipairs({ "cast", "batch" }) do
+            rawset(s0[k], "SetValue", function(b, v) rawset(b, "_v", v) end)
+        end
+    end
+    clean()
+    S.craftBarCast, S.craftBarBatch = true, true
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    -- the All view: more than 20 rows to fit
+    local keepTab = st.showTab
+    st.showTab = "all"; TSF:RefreshRecipeList()
+    EXPECT(#st.recipes >= 20 and shownRows() == 20 and TSF:ListRows() == 20, "the list before a craft: " .. shownRows() .. " of " .. #st.recipes .. " tab " .. tostring(st.showTab))
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    -- clicked, not cast yet: no strip
+    TSF:DoCraftImmediate(5)
+    EXPECT(TSF._craftingActive and not strip():IsShown() and y(TSF.listPanel) == 30, "a strip before the first cast")
+    TSF:UpdateCraftStrip()   -- a Settings click before the cast
+    EXPECT(not strip():IsShown() and TSF:StripLift() == 0, "a strip before the first cast, after a refresh")
+    -- the first cast: both bars, 2 x 14 + 3 between, 4 above: everything up 35
+    CAST_INFO = { "Light Leather", "", 0, 999000, 1001000, true, nil, false, 2881 }
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(strip():IsShown() and strip().cast:IsShown() and strip().batch:IsShown()
+           and TSF:StripLift() == 35, "no strip at the first cast: lift " .. TSF:StripLift())
+    EXPECT(y(TSF.listPanel) == 65 and y(TSF.craftBar) == 65 and y(TSF.composerBar) == 65 and y(TSF.ownHintBar) == 65
+           and y(TSF.detailFrame) == 65 + 58 + 2 and y(TSF.enchantCraftBtn) == 65 + 58 - 6
+           and y(TSF.settingsScroll) == 65,
+           "the window did not rise: list " .. tostring(y(TSF.listPanel)) .. ", detail " .. tostring(y(TSF.detailFrame)))
+    -- 540 - 106 - 65 = 369 px of list, 4 of it border: 18 rows of 20
+    EXPECT(TSF:ListRows() == 18 and shownRows() == 18, "rows over the strip: " .. shownRows())
+    -- halfway through a 2 s cast (GetTime 1000 s): the cast bar half full,
+    -- the batch 0.5 of 5 crafts
+    TSF:PaintStrip(strip())
+    local per = P:CraftSeconds(2881)
+    EXPECT(per >= 1.5, "seconds a craft: " .. tostring(per))
+    local function want(n, left) return string.format("Crafting %d of 5, about %s left", n, (function(s0)
+        s0 = math.floor(s0 + 0.5); return s0 >= 60 and string.format("%dm %02ds", math.floor(s0 / 60), s0 % 60) or (s0 .. "s") end)(left)) end
+    EXPECT(rawget(strip().cast, "_v") == 0.5 and strip().cast.text:GetText() == "Light Leather",
+           "cast bar: " .. tostring(rawget(strip().cast, "_v")) .. " " .. tostring(strip().cast.text:GetText()))
+    EXPECT(math.abs(rawget(strip().batch, "_v") - 0.1) < 1e-9 and strip().batch.text:GetText() == want(1, 1 + 4 * per),
+           "batch bar: " .. tostring(rawget(strip().batch, "_v")) .. " " .. tostring(strip().batch.text:GetText()))
+    -- one done, between casts: 2 of 5, four crafts' time
+    CAST_INFO = nil
+    cast()
+    TSF:PaintStrip(strip())
+    EXPECT(strip():IsShown() and rawget(strip().cast, "_v") == 0 and math.abs(rawget(strip().batch, "_v") - 0.2) < 1e-9
+           and strip().batch.text:GetText() == want(2, 4 * per), "after one craft: " .. tostring(strip().batch.text:GetText()))
+    -- another spell casting is not the craft
+    CAST_INFO = { "Hearthstone", "", 0, 999000, 1001000, false, nil, false, 8690 }
+    TSF:PaintStrip(strip())
+    EXPECT(rawget(strip().cast, "_v") == 0, "the cast bar filled for another spell")
+    CAST_INFO = nil
+    -- Settings: the cast bar off leaves the batch bar, 14 + 4 = 18 up, 19 rows
+    S.craftBarCast = false; TSF:UpdateCraftStrip()
+    EXPECT(strip():IsShown() and not strip().cast:IsShown() and strip().batch:IsShown() and TSF:StripLift() == 18
+           and y(TSF.listPanel) == 48 and shownRows() == 19, "the batch bar alone: " .. TSF:StripLift() .. " " .. shownRows())
+    S.craftBarCast, S.craftBarBatch = true, false; TSF:UpdateCraftStrip()
+    EXPECT(strip().cast:IsShown() and not strip().batch:IsShown() and TSF:StripLift() == 18, "the cast bar alone")
+    S.craftBarCast = false; TSF:UpdateCraftStrip()
+    EXPECT(not strip():IsShown() and y(TSF.listPanel) == 30 and shownRows() == 20, "both off: a strip")
+    S.craftBarCast, S.craftBarBatch = true, true; TSF:UpdateCraftStrip()
+    EXPECT(strip():IsShown() and TSF:StripLift() == 35, "both back on")
+    -- parked: the main window shows it, its tabs rise, Friends fits 2 rows
+    -- fewer (22 px rows), Shuffle 2 fewer (20 px)
+    for i = 1, 22 do PB.db.contacts["Pal" .. i .. "-Forever"] = { trusted = true, autoSync = false, lastSync = 0 } end
+    TSF.navTabs[2]:GetScript("OnClick")(TSF.navTabs[2]); FLUSH()
+    EXPECT(TSF._parked and UI.frame:IsShown() and TSF:MainStrip():IsShown(), "no strip in the main window")
+    EXPECT(y(UI.frame.tabs[2].content) == 45 and UI:FitRows(19, 22) == 17 and UI:FitRows(12, 36) == 11,
+           "the main window did not rise: " .. tostring(y(UI.frame.tabs[2].content)))
+    local FP = PB.FriendsPanel
+    local fr = 0
+    for _, r in ipairs(FP.rows) do if r:IsShown() then fr = fr + 1 end end
+    EXPECT(fr == 17, "Friends rows over the strip: " .. fr)
+    -- every main-window list: its rows fit the space less the strip (F106's
+    -- spaces), none hangs over it
+    local SP, CV, GP, OP = PB.ShufflePanel, PB.CratesView, PB.GuildPanel, PB.OrdersPanel
+    local contentH = 540 - UI.CONTENT_TOP - 10 - 35
+    local function fits(label, n, rowH, space)
+        EXPECT(n * rowH <= space and (n + 1) * rowH > space - rowH,
+               label .. ": " .. n .. " rows of " .. rowH .. " in " .. space .. " px")
+    end
+    fits("Shuffle", SP.VisibleRows(), 20, contentH - 52 - 18 - 2)
+    fits("Guild", GP.VisibleRows(), 20, contentH - 52 - 18 - 2)
+    fits("Crates and writs", CV.VisibleRows(), 20, contentH - 26 - 26 - 18 - 2 - 18)
+    fits("Friends", FP.VisibleRows(), 22, contentH - 28 - 4 - 18 - 2)
+    -- the two Orders lists paint the rows that fit; the side panel's keep all
+    local fake = {}
+    for i = 1, 30 do fake[i] = { kind = "empty", text = "x" } end
+    local function painted(ctx, paint)
+        local keepItems, keepOff = ctx.items, ctx.scrollOffset
+        ctx.items, ctx.scrollOffset = fake, 0
+        paint(OP, ctx)
+        local n = 0
+        for _, r in ipairs(ctx.rows) do if r:IsShown() then n = n + 1 end end
+        ctx.items, ctx.scrollOffset = keepItems, keepOff
+        paint(OP, ctx)
+        return n
+    end
+    EXPECT(painted(OP.activeCtx, OP.PaintList) == 11 and 11 * 36 <= contentH - 24 - 2, "Orders rows over the strip")
+    EXPECT(painted(OP.boardCtx, OP.PaintBoardList) == 8, "Guild Board rows over the strip")
+    OP:BuildHistoryPanel()
+    EXPECT(painted(OP.histCtx, OP.PaintList) == #OP.histCtx.rows, "the history side panel lost rows")
+    -- Crates and writs, painted
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    -- (the harness's crate data is 5 rows: 30 unopened stand-ins)
+    SP:SetView("crates")
+    local keepList, keepCOff = CV.list, CV.scrollOffset
+    CV.list, CV.scrollOffset = {}, 0
+    for i = 1, 30 do CV.list[i] = { id = 900100 + i, name = "Crate " .. i, unopened = true } end
+    CV:UpdateRows()
+    local cr = 0
+    for _, r in ipairs(CV.rows) do if r:IsShown() then cr = cr + 1 end end
+    EXPECT(cr == CV.VisibleRows() and cr == 17, "Crates and writs rows over the strip: " .. cr)
+    CV.list, CV.scrollOffset = keepList, keepCOff
+    CV:Refresh()
+    SP:SetView("shuffle")
+    -- the Settings switches themselves (a stand-in check box keeps its tick)
+    for _, cb in ipairs({ TSF.craftCastCB, TSF.craftBatchCB }) do
+        rawset(cb, "SetChecked", function(x, v) rawset(x, "_ck", v and true or false) end)
+        rawset(cb, "GetChecked", function(x) return rawget(x, "_ck") end)
+    end
+    TSF.craftCastCB:SetChecked(false)
+    TSF.craftCastCB:GetScript("OnClick")(TSF.craftCastCB)
+    EXPECT(S.craftBarCast == false and TSF:StripLift() == 18 and y(UI.frame.tabs[2].content) == 28
+           and not TSF:MainStrip().cast:IsShown(), "the cast switch: " .. TSF:StripLift())
+    TSF.craftCastCB:SetChecked(true)
+    TSF.craftCastCB:GetScript("OnClick")(TSF.craftCastCB)
+    TSF.craftBatchCB:SetChecked(false)
+    TSF.craftBatchCB:GetScript("OnClick")(TSF.craftBatchCB)
+    EXPECT(S.craftBarBatch == false and TSF:StripLift() == 18 and not TSF:MainStrip().batch:IsShown(), "the batch switch")
+    TSF.craftBatchCB:SetChecked(true)
+    TSF.craftBatchCB:GetScript("OnClick")(TSF.craftBatchCB)
+    EXPECT(TSF:StripLift() == 35 and y(UI.frame.tabs[2].content) == 45, "both switches back")
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "friends" then UI:SelectTab(i) end end
+    FLUSH()
+    -- the batch ends while parked: gone from both, everything back down
+    cast(); cast(); cast(); cast()
+    EXPECT(not TSF._craftingActive and not TSF:MainStrip():IsShown() and not strip():IsShown()
+           and y(UI.frame.tabs[2].content) == 10 and UI:FitRows(19, 22) == 19, "the strip stayed after the batch")
+    fr = 0
+    for _, r in ipairs(FP.rows) do if r:IsShown() then fr = fr + 1 end end
+    EXPECT(fr == 19, "Friends rows after the batch: " .. fr)
+    for i = 1, 22 do PB.db.contacts["Pal" .. i .. "-Forever"] = nil end
+    UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+    EXPECT(TSF.frame:IsShown() and y(TSF.listPanel) == 30 and TSF:ListRows() == 20 and shownRows() == math.min(20, #st.recipes),
+           "the list after the batch: " .. shownRows())
+    -- a craft the game refuses never casts: no strip
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    TSF:DoCraftImmediate(5)
+    cast("UNIT_SPELLCAST_FAILED")
+    EXPECT(not TSF._craftingActive and not strip():IsShown(), "a strip for a refused craft")
+    -- in combat the strip waits for combat's end
+    TSF:DoCraftImmediate(5)
+    InCombatLockdown = function() return true end
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(not strip():IsShown() and y(TSF.listPanel) == 30, "the strip moved the window in combat")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    EXPECT(strip():IsShown() and y(TSF.listPanel) == 65, "no strip after combat")
+    clean()
+    EXPECT(not strip():IsShown() and not TSF:MainStrip():IsShown() and y(TSF.listPanel) == 30, "the strip after the stop")
+    st.showTab = keepTab
+    TSF.ArmCraftWatchdog = keepArm
+end
+F112()
+print("  PASS F112 2.2.0: the craft strip from the first cast to the end in both windows: the cast bar (UnitCastingInfo, only the craft's), the batch bar 'Crafting 2 of 5, about 8s left', each switch on its own; the list, craft bar, detail panel and main-window tabs rise and fit their rows; none for a refused craft; held in combat")
+
+print("ALL FOREVER TESTS PASS (112)")

@@ -15,6 +15,13 @@ local ROW_HEIGHT = 22
 -- bar, 4 px, the 18 px heading bar and a 2 px gap: 426 px (TEST-c6)
 local VISIBLE_ROWS = 19
 
+-- The rows that fit: fewer while the craft strip shows (UI:FitRows)
+local function Rows()
+    local UI = addon.UI
+    return UI and UI.FitRows and UI:FitRows(VISIBLE_ROWS, ROW_HEIGHT) or VISIBLE_ROWS
+end
+FP.VisibleRows = Rows   -- for the harness
+
 ----------------------------------------------------------------------
 -- Profession icon paths for the summary column
 ----------------------------------------------------------------------
@@ -702,7 +709,7 @@ function FP:Refresh()
     end)
 
     -- Update scroll range
-    local maxScroll = math.max(0, #self.contactKeys - VISIBLE_ROWS)
+    local maxScroll = math.max(0, #self.contactKeys - Rows())
     self.scrollBar:SetMinMaxValues(0, maxScroll)
     if self.scrollOffset > maxScroll then
         self.scrollOffset = maxScroll
@@ -724,9 +731,10 @@ end
 -- UpdateRows: populate visible rows from contactKeys
 ----------------------------------------------------------------------
 function FP:UpdateRows()
+    local shown = Rows()
     for i, row in ipairs(self.rows) do
         local idx = self.scrollOffset + i
-        local key = self.contactKeys[idx]
+        local key = i <= shown and self.contactKeys[idx] or nil
 
         if key then
             row:Show()

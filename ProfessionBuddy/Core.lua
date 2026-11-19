@@ -711,6 +711,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         rememberWindowState = true,
         showAllProfessions  = false,
         showItemInfo        = true,  -- the recipe panel's Item info box (2.2.0, #12)
+        craftBarCast        = true,  -- the craft strip's current cast bar (2.2.0)
+        craftBarBatch       = true,  -- the craft strip's whole batch bar, with time left (2.2.0)
         includeAltsInCalc   = true,
         showRemoteInDetail  = true,
         showRemoteInTooltips = true,
@@ -780,6 +782,12 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.showItemInfo == nil then
         ProfBuddyDB.settings.showItemInfo = true
+    end
+    if ProfBuddyDB.settings.craftBarCast == nil then
+        ProfBuddyDB.settings.craftBarCast = true
+    end
+    if ProfBuddyDB.settings.craftBarBatch == nil then
+        ProfBuddyDB.settings.craftBarBatch = true
     end
     if ProfBuddyDB.settings.orderHistoryLimit == nil then
         ProfBuddyDB.settings.orderHistoryLimit = 50

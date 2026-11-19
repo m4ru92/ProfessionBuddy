@@ -500,6 +500,11 @@ local function CraftSeconds(spellID)
     return cast + P.SHUFFLE_GAP
 end
 
+-- The same for the craft strip's time left (TradeSkillFrame.lua)
+function P:CraftSeconds(spellID)
+    return CraftSeconds(spellID)
+end
+
 -- Every material bought from a vendor, down through crafted materials
 local function FromVendors(parts)
     for _, part in ipairs(parts or {}) do

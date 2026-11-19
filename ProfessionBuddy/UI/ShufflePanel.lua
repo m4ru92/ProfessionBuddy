@@ -16,6 +16,13 @@ local ROW_HEIGHT   = 20
 -- above the headings, the 18 px heading bar and a 2 px gap: 406 px
 local VISIBLE_ROWS = 20
 
+-- The rows that fit: fewer while the craft strip shows (UI:FitRows)
+local function Rows()
+    local UI = addon.UI
+    return UI and UI.FitRows and UI:FitRows(VISIBLE_ROWS, ROW_HEIGHT) or VISIBLE_ROWS
+end
+SP.VisibleRows = Rows   -- for the harness
+
 local COLS = {
     -- rows are 704 px (the 720 px content less the scroll bar); the last
     -- column ends 16 px short of the scroll bar (TEST-c6)
@@ -592,7 +599,7 @@ function SP:Repaint()
     end
     if self.minDD and addon.Prices then self.minDD:SetValue(MinLabel(addon.Prices:ShuffleMin())) end
     local P = addon.Prices
-    local maxScroll = math.max(0, #self.list - VISIBLE_ROWS)
+    local maxScroll = math.max(0, #self.list - Rows())
     self.scrollBar:SetMinMaxValues(0, maxScroll)
     if (self.scrollOffset or 0) > maxScroll then self.scrollOffset = maxScroll end
     self.scrollBar:SetValue(self.scrollOffset or 0)
@@ -613,8 +620,9 @@ end
 
 function SP:UpdateRows()
     local P = addon.Prices
+    local shown = Rows()
     for i, row in ipairs(self.rows or {}) do
-        local e = self.list and self.list[i + (self.scrollOffset or 0)]
+        local e = i <= shown and self.list and self.list[i + (self.scrollOffset or 0)] or nil
         row._entry = e
         if e and P then
             local w = self:Shown(e)

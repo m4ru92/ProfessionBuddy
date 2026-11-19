@@ -199,7 +199,7 @@ function UI:AddTab(name, displayName, createFunc)
     -- bar; -60 left a visibly loose gap above every tab's content.
     local content = CreateFrame("Frame", nil, self.frame)
     content:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 10, -UI.CONTENT_TOP)
-    content:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -10, 10)
+    content:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -10, 10 + (self._stripLift or 0))
     content:Hide()
 
     -- The ONE refresh hook. A tab's content becomes visible when the window
@@ -231,6 +231,32 @@ function UI:AddTab(name, displayName, createFunc)
     end
 
     return content
+end
+
+-- The craft strip (TradeSkillFrame.lua, TSF:UpdateCraftStrip) across the
+-- bottom while a craft runs: every tab's content rises by `L` above it, and
+-- the tab on show repaints its lists with the rows that still fit
+function UI:ApplyStripLayout(L)
+    self._stripLift = L
+    if not self.frame then return end
+    for _, tab in ipairs(self.frame.tabs or {}) do
+        local c = tab.content
+        c:ClearAllPoints()
+        c:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 10, -UI.CONTENT_TOP)
+        c:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -10, 10 + L)
+    end
+    local tab = self.activeTab and self.frame.tabs[self.activeTab]
+    if self.frame:IsShown() and tab and tab.created and tab.content:IsShown() and tab.content.Refresh then
+        tab.content:Refresh()
+    end
+end
+
+-- The rows of a list built for `maxRows` rows `rowH` tall that fit while
+-- the strip shows
+function UI:FitRows(maxRows, rowH)
+    local L = self._stripLift or 0
+    if L <= 0 then return maxRows end
+    return math.max(1, maxRows - math.ceil(L / rowH))
 end
 
 function UI:SelectTab(index)

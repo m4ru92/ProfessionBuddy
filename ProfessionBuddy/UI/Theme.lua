@@ -69,6 +69,7 @@ STYLES.modern = {
         characterRow = { 0.15, 0.15, 0.15, 0.8 },
         columnHeader = { 0.15, 0.15, 0.15, 0.8 },
         columnHeaderHover = { 0.4, 0.4, 0.6, 0.25 },
+        craftStripBg = { 0, 0, 0, 0.6 },   -- under the craft strip's bars, as under Blizzard's cast bar
         divider = { 0.3, 0.3, 0.35, 0.6 },
         dividerFaint = { 0.3, 0.3, 0.35, 0.4 },
         dropdownButton = { 0.12, 0.12, 0.15, 1 },
@@ -168,6 +169,7 @@ STYLES.classic = {
         characterRow = { 0.18, 0.14, 0.08, 0.8 },
         columnHeader = { 0.2, 0.16, 0.08, 0.85 },
         columnHeaderHover = { file = "Interface\\QuestFrame\\UI-QuestTitleHighlight", blend = "ADD", color = { 1, 1, 1, 0.6 } },
+        craftStripBg = { 0, 0, 0, 0.6 },
         divider = { 0.6, 0.5, 0.25, 0.6 },
         dividerFaint = { 0.6, 0.5, 0.25, 0.35 },
         dropdownButton = { 0.08, 0.07, 0.05, 1 },

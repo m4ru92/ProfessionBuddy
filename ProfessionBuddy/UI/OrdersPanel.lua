@@ -574,8 +574,16 @@ local function buildItems(ctx, incoming, outgoing, emptyInc, emptyOut)
     return items
 end
 
+-- The rows of a list in the main window that fit while the craft strip
+-- shows (UI:FitRows); the side panels' lists keep all theirs
+local function ctxRows(ctx)
+    local UI = addon.UI
+    if ctx.fitRows and UI and UI.FitRows then return UI:FitRows(#ctx.rows, ROW_HEIGHT) end
+    return #ctx.rows
+end
+
 local function applyScrollRange(ctx)
-    local maxScroll = math.max(0, #ctx.items - #ctx.rows)
+    local maxScroll = math.max(0, #ctx.items - ctxRows(ctx))
     ctx.scrollBar:SetMinMaxValues(0, maxScroll)
     if ctx.scrollOffset > maxScroll then
         ctx.scrollOffset = maxScroll
@@ -611,8 +619,9 @@ local function relationBadge(counterpartyKey)
 end
 
 function OP:PaintList(ctx)
+    local shown = ctxRows(ctx)
     for i, row in ipairs(ctx.rows) do
-        local item = ctx.items[ctx.scrollOffset + i]
+        local item = i <= shown and ctx.items[ctx.scrollOffset + i] or nil
 
         row._order = nil
         row._isHeader = false
@@ -818,7 +827,7 @@ function OP:CreateContent(parent)
     listHost:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
     self.directHost = listHost
 
-    self.activeCtx = { collapsed = { incoming = false, outgoing = false } }
+    self.activeCtx = { collapsed = { incoming = false, outgoing = false }, fitRows = true }
     -- 478 px of content less the 24 px bar and a 2 px gap: 452 px, 12
     -- rows of 36 (TEST-c6, the 540-tall window; 9 at 450)
     self:BuildList(listHost, self.activeCtx, 12)
@@ -1154,8 +1163,9 @@ function OP:BuildBoardList(parent, ctx, rowCount)
 end
 
 function OP:PaintBoardList(ctx)
+    local shown = ctxRows(ctx)
     for i, row in ipairs(ctx.rows) do
-        local item = ctx.items[ctx.scrollOffset + i]
+        local item = i <= shown and ctx.items[ctx.scrollOffset + i] or nil
 
         row._isHeader = false
         row._section = nil
@@ -1653,7 +1663,7 @@ function OP:BuildBoard(host)
     guildlessMsg:Hide()
     self.boardGuildlessMsg = guildlessMsg
 
-    self.boardCtx = { collapsed = { mine = false, avail = false } }
+    self.boardCtx = { collapsed = { mine = false, avail = false }, fitRows = true }
     -- 9 rows of ROW_HEIGHT fit the list: the 540 px window less the space
     -- above the tabs' content (52), bottom margin (10), the Direct/Guild
     -- Board bar (26) and the composer and filter above the list (104)

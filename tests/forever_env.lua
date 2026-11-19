@@ -527,6 +527,11 @@ function strsplit(sep, s) local out = {}
     for p in (s .. sep):gmatch("(.-)" .. sep:gsub("%p", "%%%0")) do out[#out + 1] = p end
     return unpack(out) end
 function GetTime() return 1000 end
+-- The game's cast bar data: a harness sets CAST_INFO to UnitCastingInfo's
+-- returns (name, text, texture, startMs, endMs, isTradeSkill, castID,
+-- notInterruptible, spellID); nil is no cast
+CAST_INFO = nil
+function UnitCastingInfo(unit) if unit == "player" and CAST_INFO then return unpack(CAST_INFO) end end
 function time() return 5000 end
 function date() return "2026-09-24" end
 function GetLocale() return "enUS" end

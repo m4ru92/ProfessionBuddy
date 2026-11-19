@@ -81,6 +81,12 @@ local LINK_BTN      = 23   -- WoW: Forever's profession link button (Blizzard's 
 local LINK_GAP      = 4
 local VISIBLE_ROWS  = 20
 local CRAFT_BAR_H   = 58   -- two 22 px button rows with 6 px above and below: clear of either look's border
+local LIST_TOP      = -106 -- the recipe list's and the detail panel's top edge
+-- The craft strip (TSF:UpdateCraftStrip): each bar's height, the gap
+-- between the two, and the gap between the strip and what sits above it
+local STRIP_BAR_H   = 14
+local STRIP_GAP     = 3
+local STRIP_PAD     = 4
 -- the see-through share at each end of the Classic reagent banner's texture
 local BANNER_EDGE   = 11 / 128
 
@@ -2312,6 +2318,7 @@ function TSF:EnsureFrame()
     self:BuildCraftBar(f)
     self:BuildComposer(f)
     self:BuildBottomBar(f)
+    self.craftStrip = self:BuildCraftStrip(f, 30)
     self:BuildSettingsPanel(f)
     self:BuildNavStrip(f)
     -- Drag to scale; the Material Calculator, fastened to this window's
@@ -3461,11 +3468,12 @@ end
 function TSF:UpdateListRows()
     local recipes = state.recipes
     local offset = state.scrollOffset
+    local shown = self:ListRows()   -- fewer while the craft strip shows
 
     for i = 1, VISIBLE_ROWS do
         local row = self.listRows[i]
         local dataIdx = i + offset
-        local entry = recipes[dataIdx]
+        local entry = i <= shown and recipes[dataIdx] or nil
 
         row.selectedBg:Hide()
         row.headerBg:Hide()
@@ -5641,6 +5649,7 @@ function TSF:BuildCraftBar(parent)
     -- the craft bar's top-left corner is fixed: LIST_W + 18 in, and
     -- CRAFT_BAR_H above its bottom edge 30 px up
     enchantBtn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", LIST_W + 18 + x1, 30 + CRAFT_BAR_H + ROW1_Y)
+    self._enchantX, self._enchantY = LIST_W + 18 + x1, ROW1_Y   -- for ApplyStripLayout
     enchantBtn:SetFrameLevel(craftBar:GetFrameLevel() + 5)
 
     enchantBtn.look = DrawPanelButtonArt(enchantBtn, "Craft")
@@ -5700,6 +5709,9 @@ end
 function TSF:BeginCraftTracking(spellName, qty, craftIndex, spellID)
     self._craftingActive = true
     self._craftRemaining = qty or 1
+    self._craftTotal     = qty or 1
+    -- the strip waits for the first cast (TSF:UpdateCraftStrip)
+    self._craftCastSeen  = nil
     self._craftSpellName = spellName
     self._craftSpellID   = spellID
     self._craftIndex     = craftIndex
@@ -5712,6 +5724,8 @@ end
 function TSF:StopCraftTracking()
     self._craftingActive = false
     self._craftRemaining = 0
+    self._craftTotal     = nil
+    self._craftCastSeen  = nil
     self._craftSpellName = nil
     self._craftSpellID   = nil
     self._craftIndex     = nil
@@ -5719,6 +5733,7 @@ function TSF:StopCraftTracking()
     self._craftIsCraft   = nil
     -- Invalidates any watchdog still pending for the craft we just ended.
     self._craftToken     = (self._craftToken or 0) + 1
+    self:UpdateCraftStrip()
 end
 
 -- Is a batch running in this profession's window (the same channel)?
@@ -5736,12 +5751,240 @@ function TSF:IsTrackedCast(spellID)
     return GetSpellInfo(spellID) == self._craftSpellName
 end
 
+----------------------------------------------------------------------
+-- Craft strip (2.2.0, Lucido and Kluga): while a craft runs, a strip
+-- across the bottom of the profession window and of the main window (a
+-- parked profession keeps crafting) shows the current cast and the whole
+-- batch with its time left. Settings has a switch for each bar. It shows
+-- from the first cast of the craft to its end, and every list above it
+-- gives up the rows it covers (ApplyStripLayout, UI:FitRows).
+----------------------------------------------------------------------
+
+-- Blizzard's classic cast bar colours (CastingBarFrame.lua, ApplyingCrafting:
+-- CASTBAR_CLASSIC_YELLOW while it fills, CASTBAR_CLASSIC_GREEN when full)
+local function StripRGB(c, r, g, b)
+    if type(c) == "table" and c.GetRGB then return c:GetRGB() end
+    return r, g, b
+end
+
+-- The bars switched on, top to bottom
+function TSF:StripBars()
+    local s = addon.db and addon.db.settings or {}
+    local out = {}
+    if s.craftBarCast ~= false then out[#out + 1] = "cast" end
+    if s.craftBarBatch ~= false then out[#out + 1] = "batch" end
+    return out
+end
+
+-- How far everything above the strip rises while it shows; 0 when it doesn't
+function TSF:StripLift()
+    local n = self._stripBars or 0
+    if n == 0 then return 0 end
+    return n * STRIP_BAR_H + (n - 1) * STRIP_GAP + STRIP_PAD
+end
+
+local function NewStripBar(strip, r, g, b)
+    local bar = CreateFrame("StatusBar", nil, strip)
+    bar:SetHeight(STRIP_BAR_H)
+    bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    bar:SetStatusBarColor(r, g, b)
+    bar:SetMinMaxValues(0, 1)
+    bar:SetValue(0)
+    local bg = bar:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    Theme:Fill(bg, "craftStripBg")
+    local text = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    text:SetPoint("CENTER")
+    bar.text = text
+    bar:Hide()
+    return bar
+end
+
+-- One strip, `y` up from the bottom of `parent`, 10 px in from each side
+function TSF:BuildCraftStrip(parent, y)
+    local strip = CreateFrame("Frame", nil, parent)
+    strip:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 10, y)
+    strip:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, y)
+    strip:SetHeight(STRIP_BAR_H)
+    strip.cast = NewStripBar(strip, StripRGB(CASTBAR_CLASSIC_YELLOW, 1.0, 0.7, 0.0))
+    strip.batch = NewStripBar(strip, StripRGB(CASTBAR_CLASSIC_GREEN, 0.0, 1.0, 0.0))
+    strip:SetScript("OnUpdate", function(st) self:PaintStrip(st) end)
+    strip:Hide()
+    return strip
+end
+
+-- The main window's strip, built the first time it is needed
+function TSF:MainStrip()
+    if not self.mainStrip and addon.UI and addon.UI.frame then
+        self.mainStrip = self:BuildCraftStrip(addon.UI.frame, 10)
+    end
+    return self.mainStrip
+end
+
+-- "1m 05s", "45s"
+local function StripTime(sec)
+    sec = math.max(0, math.floor(sec + 0.5))
+    if sec >= 60 then return string.format("%dm %02ds", math.floor(sec / 60), sec % 60) end
+    return sec .. "s"
+end
+
+-- The cast under way, from the game's cast bar data (UnitCastingInfo, the
+-- same on both clients): its name, the share done and the seconds left.
+-- nil when nothing, or something other than the craft, is casting.
+function TSF:StripCast()
+    if not UnitCastingInfo then return nil end
+    local name, _, _, startMs, endMs, _, _, _, spellID = UnitCastingInfo("player")
+    startMs, endMs = tonumber(startMs), tonumber(endMs)
+    if not (name and startMs and endMs and endMs > startMs) then return nil end
+    if not ((spellID and self:IsTrackedCast(spellID)) or name == self._craftSpellName) then return nil end
+    local now = GetTime() * 1000
+    local frac = math.max(0, math.min(1, (now - startMs) / (endMs - startMs)))
+    return name, frac, math.max(0, (endMs - now) / 1000)
+end
+
+-- The bars' fill and text, each frame while the strip shows
+function TSF:PaintStrip(strip)
+    local name, frac, left = self:StripCast()
+    if strip.cast:IsShown() then
+        strip.cast:SetValue(frac or 0)
+        strip.cast.text:SetText(name or self._craftSpellName or "")
+    end
+    if strip.batch:IsShown() then
+        local total = self._craftTotal or 1
+        local remaining = math.max(0, self._craftRemaining or 0)
+        local done = math.max(0, total - remaining)
+        strip.batch:SetValue(total > 0 and math.min(1, (done + (frac or 0)) / total) or 0)
+        -- the rest of this cast, then each craft still to start
+        local P = addon.Prices
+        local per = P and P.CraftSeconds and P:CraftSeconds(self._craftSpellID) or 0
+        local secs = (left or per) + math.max(0, remaining - 1) * per
+        strip.batch.text:SetText(string.format("Crafting %d of %d, about %s left",
+            math.min(total, done + 1), total, StripTime(secs)))
+    end
+end
+
+-- Stack the bars switched on, top to bottom
+function TSF:LayoutStrip(strip)
+    strip.cast:Hide()
+    strip.batch:Hide()
+    local prev
+    for _, k in ipairs(self._stripBarList or {}) do
+        local b = strip[k]
+        b:ClearAllPoints()
+        if prev then
+            b:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -STRIP_GAP)
+            b:SetPoint("TOPRIGHT", prev, "BOTTOMRIGHT", 0, -STRIP_GAP)
+        else
+            b:SetPoint("TOPLEFT", strip, "TOPLEFT", 0, 0)
+            b:SetPoint("TOPRIGHT", strip, "TOPRIGHT", 0, 0)
+        end
+        b:Show()
+        prev = b
+    end
+    strip:SetHeight(math.max(1, self:StripLift() - STRIP_PAD))
+end
+
+-- Show, change or hide the strip in both windows, and fit what sits above
+-- it. In combat it waits: the Enchant button is a secure frame, which can't
+-- move then (PLAYER_REGEN_ENABLED runs this again).
+function TSF:UpdateCraftStrip()
+    if InCombatLockdown and InCombatLockdown() then
+        self._stripPending = true
+        return
+    end
+    self._stripPending = nil
+    local list = (self._craftingActive and self._craftCastSeen) and self:StripBars() or {}
+    local key = table.concat(list, ",")
+    if key == (self._stripKey or "") then return end
+    self._stripKey = key
+    self._stripBarList = list
+    self._stripBars = #list
+    local L = self:StripLift()
+    for _, strip in ipairs({ self.craftStrip or false, self:MainStrip() or false }) do
+        if strip then
+            if #list > 0 then
+                self:LayoutStrip(strip)
+                self:PaintStrip(strip)
+                strip:Show()
+            else
+                strip:Hide()
+            end
+        end
+    end
+    self:ApplyStripLayout(L)
+    if addon.UI and addon.UI.ApplyStripLayout then addon.UI:ApplyStripLayout(L) end
+end
+
+-- The recipe list's rows that fit above the strip
+function TSF:ListRows()
+    return self._listRowsN or VISIBLE_ROWS
+end
+
+-- The profession window above a strip `L` tall: the recipe list, the craft
+-- bar and the bars that take its place, the detail panel, the Enchant
+-- button and Settings rise by L; the list shows the rows that still fit
+function TSF:ApplyStripLayout(L)
+    if not self.frame then return end
+    local parent = self.frame
+    local y = 30 + L
+    if self.listPanel then
+        self.listPanel:ClearAllPoints()
+        self.listPanel:SetPoint("TOPLEFT", 10, LIST_TOP)
+        self.listPanel:SetPoint("BOTTOMLEFT", 10, y)
+    end
+    for _, bar in ipairs({ self.craftBar or false, self.composerBar or false, self.ownHintBar or false }) do
+        if bar then
+            bar:ClearAllPoints()
+            bar:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, y)
+            bar:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, y)
+        end
+    end
+    if self.detailFrame then
+        self.detailFrame:ClearAllPoints()
+        self.detailFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", LIST_W + 18, LIST_TOP)
+        self.detailFrame:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, y + CRAFT_BAR_H + 2)
+    end
+    if self.enchantCraftBtn and self._enchantX then
+        self.enchantCraftBtn:ClearAllPoints()
+        self.enchantCraftBtn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", self._enchantX, y + CRAFT_BAR_H + self._enchantY)
+    end
+    if self.settingsScroll then
+        self.settingsScroll:SetPoint("BOTTOMRIGHT", -self._settingsBarW, y)
+    end
+    -- the list's own height, 4 px of it border
+    local listH = FRAME_H + LIST_TOP - y
+    self._listRowsN = math.max(1, math.min(VISIBLE_ROWS, math.floor((listH - 4) / ROW_H)))
+    if self.scrollBar and state.recipes then
+        local maxScroll = math.max(0, #state.recipes - self:ListRows())
+        self.scrollBar:SetMinMaxValues(0, maxScroll)
+        if (state.scrollOffset or 0) > maxScroll then state.scrollOffset = maxScroll end
+        self.scrollBar:SetValue(state.scrollOffset or 0)
+        self:UpdateListRows()
+    end
+end
+
 function TSF:RegisterCraftEvents()
     if self._craftEventsRegistered then return end
     self._craftEventsRegistered = true
 
     -- Track craft completion to decrement qty counter.
     -- Filter by spell name so non-craft casts don't decrement.
+    -- combat held a strip change back (UpdateCraftStrip)
+    addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+        if self._stripPending then self:UpdateCraftStrip() end
+    end)
+
+    -- The craft's first cast shows the strip (one the game refuses never
+    -- casts, so nothing shows for it)
+    addon:RegisterEvent("UNIT_SPELLCAST_START", function(_, unit, _, spellID)
+        if unit ~= "player" or not self._craftingActive then return end
+        if not self:IsTrackedCast(spellID) then return end
+        if not self._craftCastSeen then
+            self._craftCastSeen = true
+            self:UpdateCraftStrip()
+        end
+    end)
+
     addon:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(_, unit, _, spellID)
         if unit ~= "player" then return end
         if not self._craftingActive then return end
@@ -5749,6 +5992,11 @@ function TSF:RegisterCraftEvents()
         -- Match the cast against the recipe we're crafting
         if not self:IsTrackedCast(spellID) then return end
 
+        -- an instant craft has no START
+        if not self._craftCastSeen then
+            self._craftCastSeen = true
+            self:UpdateCraftStrip()
+        end
         self._craftRemaining = (self._craftRemaining or 0) - 1
         if self._craftRemaining >= 1 then
             self.qtyBox:SetText(tostring(self._craftRemaining))
@@ -6580,6 +6828,7 @@ function TSF:BuildSettingsPanel(parent)
     -- above and the hint below stay put. The bar shows only when the
     -- columns are taller than the view, and Settings opens at the top.
     local SCROLL_TOP, SCROLL_BAR = -40, 28
+    self._settingsBarW = SCROLL_BAR   -- for ApplyStripLayout
     local sf = CreateFrame("ScrollFrame", nil, panel, "UIPanelScrollFrameTemplate")
     sf.scrollBarHideable = true
     sf:SetPoint("TOPLEFT", 0, SCROLL_TOP)
@@ -6677,6 +6926,21 @@ function TSF:BuildSettingsPanel(parent)
         settings.showItemInfo = cb:GetChecked() and true or false
     end)
     self.itemInfoCB = itemInfoCB
+    yLeft = yLeft - 30
+    -- 2.2.0 (Lucido, Kluga): the craft strip's two bars, each on its own;
+    -- with both off no strip shows (TSF:UpdateCraftStrip)
+    local castCB = MakeCheckbox("Current cast bar while crafting", "craftBarCast", yLeft)
+    castCB:SetScript("OnClick", function(cb)
+        settings.craftBarCast = cb:GetChecked() and true or false
+        TSF:UpdateCraftStrip()
+    end)
+    yLeft = yLeft - 30
+    local batchCB = MakeCheckbox("Whole batch bar, with time left", "craftBarBatch", yLeft)
+    batchCB:SetScript("OnClick", function(cb)
+        settings.craftBarBatch = cb:GetChecked() and true or false
+        TSF:UpdateCraftStrip()
+    end)
+    self.craftCastCB, self.craftBatchCB = castCB, batchCB
     yLeft = yLeft - 30
 
     -- Recipe-level faction filter. Sits in the general group, not under the
@@ -8055,7 +8319,7 @@ function TSF:RefreshRecipeList()
         self._vendorRetry = 0
     end
 
-    local maxScroll = math.max(0, #state.recipes - VISIBLE_ROWS)
+    local maxScroll = math.max(0, #state.recipes - self:ListRows())
     self.scrollBar:SetMinMaxValues(0, maxScroll)
     if state.scrollOffset > maxScroll then
         state.scrollOffset = maxScroll
@@ -8575,7 +8839,7 @@ function TSF:SelectRecipeForView(recipeName, vendorView)
         end
     end
     if not idx then return false end
-    state.scrollOffset = math.max(0, math.min(idx - 1, #state.recipes - VISIBLE_ROWS))
+    state.scrollOffset = math.max(0, math.min(idx - 1, #state.recipes - self:ListRows()))
     self.scrollBar:SetValue(state.scrollOffset)
     state.selected = recipeName
     self:UpdateListRows()
