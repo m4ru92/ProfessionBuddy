@@ -7832,8 +7832,8 @@ print("  PASS F110 2.2.0: Can make counts your bank: [4] [10] and 'Can make: 4, 
 
 -- F111 2.2.0 (GitHub #13, philippeop): click a material to go to the
 -- recipe that makes it, with the crafts you still need in the box (bags
--- only; the bank's count in light blue on the hover line), "Back to
--- <recipe>" to return; another of your professions opens on WoW: Forever;
+-- only; the bank's count in light blue on the hover line), "Back" under
+-- Share to return (its tooltip names the recipe); another of your professions opens on WoW: Forever;
 -- someone's saved list jumps within it and fills the order box; the
 -- Material Calculator's rows do the same
 local function F111()
@@ -7864,6 +7864,27 @@ local function F111()
         rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
     end
     local function back() TSF.detBack:GetScript("OnClick")(TSF.detBack) end
+    -- a recipe you pick yourself in the list, as a click on its row
+    local function pick(name)
+        for idx, e in ipairs(st.recipes) do
+            if not e.isHeader and e.name == name then
+                st.scrollOffset = idx - 1
+                TSF.listRows[1]:GetScript("OnClick")(TSF.listRows[1], "LeftButton")
+                return st.selected == name
+            end
+        end
+        return false
+    end
+    -- the Back button's tooltip
+    local function backTip()
+        local out = {}
+        rawset(GameTooltip, "SetText", function(_, t) out[#out + 1] = tostring(t) end)
+        rawset(GameTooltip, "AddLine", function(_, t) out[#out + 1] = tostring(t) end)
+        rawset(GameTooltip, "Show", function() end)
+        TSF.detBack:GetScript("OnEnter")(TSF.detBack)
+        rawset(GameTooltip, "SetText", nil); rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "Show", nil)
+        return table.concat(out, "\n")
+    end
     -- a craft that makes more than one: Coarse Dynamite makes 2 (1-3), so
     -- 5 with none in bags is 3 crafts
     local c3 = TSF:CraftsForMaterial({ prof = "Engineering", name = "Coarse Dynamite" }, 4365, 5)
@@ -7873,14 +7894,17 @@ local function F111()
     TSF.qtyBox:SetText("5")
     -- 2 Light Leather a cloak, 5 cloaks: 10; 4 in bags, 2 more in the bank
     local t = lines(rowFor(2318))
-    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Craft 6|cff3fc7ff, 4 with bank|r", 1, true), "hover:\n" .. t)
+    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Needs 6 crafted|cff3fc7ff, 4 with bank|r", 1, true), "hover:\n" .. t)
     EXPECT(rawget(rowFor(2318).hover, "_on"), "the Light Leather row is not lit")
     click(rowFor(2318))
     EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "6", "jump: " .. tostring(st.selected) .. " x" .. tostring(TSF.qtyBox:GetText()))
-    EXPECT(TSF.detBack:IsShown() and TSF.detBack:GetText() == "Back to " .. cloak, "no Back: " .. tostring(TSF.detBack:GetText()))
+    EXPECT(TSF.detBack:IsShown() and TSF.detBack:GetText() == "Back", "no Back: " .. tostring(TSF.detBack:GetText()))
+    EXPECT(backTip() == "Back to " .. cloak, "Back's tooltip: " .. backTip())
+    -- under Share, right of the Difficulty line, one size for every recipe
     local bp = rawget(TSF.detBack, "_lastPoint")
-    EXPECT(bp and bp[1] == "TOPLEFT" and (bp[2] == TSF.detPrice or bp[2] == TSF.detCanMake) and bp[5] == -4
-           and (TSF:CanMakeBottom() == TSF.detBack or TSF:CanMakeBottom() == TSF.detTools), "Back is not under the price line")
+    EXPECT(bp and bp[1] == "TOPRIGHT" and bp[2] == TSF.shareBtn and bp[3] == "BOTTOMRIGHT" and bp[4] == 0 and bp[5] == -13
+           and (rawget(TSF.detBack, "_size") or {})[1] == 56 and rawget(TSF.detBack, "_points") == 1
+           and TSF:CanMakeBottom() ~= TSF.detBack, "Back is not under Share")
     back()
     EXPECT(st.selected == cloak and TSF.qtyBox:GetText() == "5" and not TSF.detBack:IsShown(), "Back: " .. tostring(st.selected))
     -- a batch running keeps its count
@@ -7906,9 +7930,47 @@ local function F111()
     TSF:RefreshDetailPanel()
     click(rowFor(2318))
     EXPECT(st.selected == "Light Leather" and (st.searchText or "") == "", "the search kept Light Leather hidden")
-    -- picking another recipe yourself drops the trail
-    TSF:SelectRecipeForView("Light Armor Kit", false)
+    -- picking another recipe yourself drops the trail, and the quantity
+    -- starts at 1, as Blizzard's window does; the same recipe again keeps it
+    TSF.qtyBox:SetText("7")
+    EXPECT(pick("Light Armor Kit"), "no Light Armor Kit to pick")
     EXPECT(not TSF.detBack:IsShown() and TSF._jumpStack == nil, "the trail stayed")
+    EXPECT(TSF.qtyBox:GetText() == "1", "a recipe picked kept the quantity " .. tostring(TSF.qtyBox:GetText()))
+    TSF.qtyBox:SetText("4")
+    TSF:RefreshDetailPanel()
+    pick("Light Armor Kit")
+    EXPECT(TSF.qtyBox:GetText() == "4", "a refresh or the same recipe reset the quantity")
+    -- a batch running keeps its count when you pick another recipe
+    TSF._craftingActive = true
+    TSF.qtyBox:SetText("3")
+    pick(cloak)
+    EXPECT(st.selected == cloak and TSF.qtyBox:GetText() == "3", "a pick during a batch changed the count")
+    TSF._craftingActive = false
+    -- closed and opened again on the same recipe (Remember window state
+    -- on): 1, as Blizzard's OnShow sets it
+    local keepRemember = PB.db.settings.rememberWindowState
+    PB.db.settings.rememberWindowState = true
+    TSF.qtyBox:SetText("8")
+    TSF.frame:Hide(); FLUSH()
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.selected == cloak and TSF.qtyBox:GetText() == "1",
+           "reopened on " .. tostring(st.selected) .. " with the quantity " .. tostring(TSF.qtyBox:GetText()))
+    PB.db.settings.rememberWindowState = keepRemember
+    for _, r in ipairs(TSF.reagentRows) do
+        rawset(r.hover, "Show", function(x) rawset(x, "_on", true) end)
+        rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
+    end
+    -- the bank covers it all: "none with bank"
+    TSF:SelectRecipeForView(cloak, false)
+    TSF.qtyBox:SetText("5")
+    inv.bank = { [2318] = 8 }
+    t = lines(rowFor(2318))
+    EXPECT(t:find("Needs 6 crafted|cff3fc7ff, none with bank|r", 1, true), "bank covers it:\n" .. t)
+    ITEM_COUNT[2318] = 10
+    t = lines(rowFor(2318))
+    EXPECT(t:find("You have enough", 1, true) and not t:find("with bank", 1, true), "bags cover it:\n" .. t)
+    ITEM_COUNT[2318] = 4
+    inv.bank = { [2318] = 2 }
     -- another of your professions (a stand-in: Cooking's Charred Wolf
     -- Meat makes Coarse Thread): WoW: Forever opens Cooking on it
     local keepItr = RDB.itemToRecipe[2320]
@@ -7923,7 +7985,7 @@ local function F111()
     TSF.qtyBox:SetText("3")
     ITEM_COUNT[2320] = 1    -- 3 cloaks take 3 Coarse Thread, 1 in bags: 2 crafts
     t = lines(rowFor(2320))
-    EXPECT(t:find("Click: go to Charred Wolf Meat (Cooking)", 1, true) and t:find("Craft 2", 1, true), "other profession hover:\n" .. t)
+    EXPECT(t:find("Click: go to Charred Wolf Meat (Cooking)", 1, true) and t:find("Needs 2 crafted", 1, true), "other profession hover:\n" .. t)
     TS_CALLS = {}
     click(rowFor(2320))
     local opened = false
@@ -7932,7 +7994,7 @@ local function F111()
     TS_LIST_READY(); FLUSH()
     EXPECT(st.profName == "Cooking" and st.selected == "Charred Wolf Meat" and TSF.qtyBox:GetText() == "2",
            "in Cooking: " .. tostring(st.profName) .. " / " .. tostring(st.selected) .. " x" .. tostring(TSF.qtyBox:GetText()))
-    EXPECT(TSF.detBack:IsShown() and TSF.detBack:GetText() == "Back to " .. cloak, "no Back in Cooking")
+    EXPECT(TSF.detBack:IsShown() and backTip() == "Back to " .. cloak, "no Back in Cooking")
     back()
     TS_LIST_READY(); FLUSH()
     EXPECT(st.profName == "Leatherworking" and st.selected == cloak and TSF.qtyBox:GetText() == "3",
@@ -7952,7 +8014,7 @@ local function F111()
     local pr = rawget(crow, "price")
     if pr == nil or getmetatable(pr) then rawset(crow, "price", false) end
     t = lines(crow)
-    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Craft 6", 1, true) and rawget(crow.hover, "_on"), "calculator hover:\n" .. t)
+    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Needs 6 crafted", 1, true) and rawget(crow.hover, "_on"), "calculator hover:\n" .. t)
     click(crow)
     EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "6", "calculator jump: " .. tostring(st.selected))
     back()
@@ -7977,6 +8039,8 @@ local function F111()
            "friend jump: " .. tostring(st.selected) .. " x" .. tostring(TSF.composerQty:GetText()))
     back()
     EXPECT(st.selected == cloak and TSF.composerQty:GetText() == "3", "friend Back")
+    -- on someone's list the order box starts at 1 for a recipe you pick
+    EXPECT(pick("Light Leather") and TSF.composerQty:GetText() == "1", "friend pick kept the order quantity " .. tostring(TSF.composerQty:GetText()))
     TSF.frame:Hide(); FLUSH()
     PB.db.characters[fk] = nil
     RDB.itemToRecipe[2320] = keepItr
@@ -7987,6 +8051,6 @@ local function F111()
     TSF._jumpStack = nil
 end
 F111()
-print("  PASS F111 2.2.0 #13: a click on a material goes to its recipe with the crafts still needed (bags; bank in light blue), Back returns with the quantity; a batch keeps its count; shift-click links; vendor materials don't jump; a search is cleared; another of your professions opens; the calculator's rows; a friend's list jumps within it and fills the order box")
+print("  PASS F111 2.2.0 #13: a click on a material goes to its recipe with 'Needs N crafted' (bags; bank in light blue, 'none with bank'), Back under Share returns with the quantity; a recipe you pick or a reopened window starts at 1; a batch keeps its count; shift-click links; vendor materials don't jump; a search is cleared; another of your professions opens; the calculator's rows; a friend's list jumps within it and fills the order box")
 
 print("ALL FOREVER TESTS PASS (111)")

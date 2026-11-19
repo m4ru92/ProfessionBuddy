@@ -1365,15 +1365,57 @@ local function U28()
         rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
     end
     local function back() TSF.detBack:GetScript("OnClick")(TSF.detBack) end
+    local function pick(name)
+        for idx, e in ipairs(st.recipes) do
+            if not e.isHeader and e.name == name then
+                st.scrollOffset = idx - 1
+                TSF.listRows[1]:GetScript("OnClick")(TSF.listRows[1], "LeftButton")
+                return st.selected == name
+            end
+        end
+        return false
+    end
+    local function backTip()
+        local out = {}
+        rawset(GameTooltip, "SetText", function(_, t) out[#out + 1] = tostring(t) end)
+        rawset(GameTooltip, "Show", function() end)
+        TSF.detBack:GetScript("OnEnter")(TSF.detBack)
+        rawset(GameTooltip, "SetText", nil); rawset(GameTooltip, "Show", nil)
+        return table.concat(out, "\n")
+    end
     EXPECT(TSF:SelectRecipeForView("PB Jump Pack", false), "no PB Jump Pack in the list")
     TSF.qtyBox:SetText("5")
     local t = lines(rowFor(2318))
-    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Craft 6|cff3fc7ff, 4 with bank|r", 1, true), "hover:\n" .. t)
+    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Needs 6 crafted|cff3fc7ff, 4 with bank|r", 1, true), "hover:\n" .. t)
     click(rowFor(2318))
     EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "6", "jump: " .. tostring(st.selected))
-    EXPECT(TSF.detBack:IsShown() and TSF.detBack:GetText() == "Back to PB Jump Pack", "no Back")
+    EXPECT(TSF.detBack:IsShown() and TSF.detBack:GetText() == "Back" and backTip() == "Back to PB Jump Pack", "no Back")
+    local bp = rawget(TSF.detBack, "_lastPoint")
+    EXPECT(bp and bp[1] == "TOPRIGHT" and bp[2] == TSF.shareBtn and bp[3] == "BOTTOMRIGHT" and bp[5] == -13
+           and (rawget(TSF.detBack, "_size") or {})[1] == 56, "Back is not under Share")
     back()
     EXPECT(st.selected == "PB Jump Pack" and TSF.qtyBox:GetText() == "5", "Back: " .. tostring(st.selected))
+    -- the bank covers it all
+    inv.bank = { [2318] = 8 }
+    t = lines(rowFor(2318))
+    EXPECT(t:find("Needs 6 crafted|cff3fc7ff, none with bank|r", 1, true), "bank covers it:\n" .. t)
+    inv.bank = { [2318] = 2 }
+    -- a recipe you pick starts at 1; the window opened again too
+    TSF.qtyBox:SetText("7")
+    EXPECT(pick("Light Leather") and TSF.qtyBox:GetText() == "1", "a pick kept the quantity " .. tostring(TSF.qtyBox:GetText()))
+    local keepRemember = PB.db.settings.rememberWindowState
+    PB.db.settings.rememberWindowState = true
+    TSF.qtyBox:SetText("8")
+    CLOSE_TRADE()
+    OPEN_TRADE()
+    EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "1",
+           "reopened on " .. tostring(st.selected) .. " with the quantity " .. tostring(TSF.qtyBox:GetText()))
+    PB.db.settings.rememberWindowState = keepRemember
+    for _, r in ipairs(TSF.reagentRows) do
+        rawset(r.hover, "Show", function(x) rawset(x, "_on", true) end)
+        rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
+    end
+    TSF:SelectRecipeForView("PB Jump Pack", false)
     -- Copper Bar from your Smelting: named, no click
     local me = DS:GetCharacter()
     local keepSmelt = me.professions.Smelting
@@ -1394,6 +1436,6 @@ local function U28()
     for i, r in ipairs(TBC.tradeRows) do if r == pack then table.remove(TBC.tradeRows, i) break end end
 end
 U28()
-print("  PASS " .. TAG .. "28 2.2.0 #13: on TBC Anniversary a material made in the open profession jumps with the crafts still needed and Back returns; one from another profession says 'Made with Smelting' and doesn't jump")
+print("  PASS " .. TAG .. "28 2.2.0 #13: on TBC Anniversary a material made in the open profession jumps with 'Needs N crafted' and Back under Share returns; a pick or a reopen starts at 1; one from another profession says 'Made with Smelting' and doesn't jump")
 
 print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 28)")

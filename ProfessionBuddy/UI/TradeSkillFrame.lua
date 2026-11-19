@@ -2272,6 +2272,9 @@ function TSF:EnsureFrame()
         self:SaveWindowState()
         CloseAllDropdowns()
         if self.calcPanel then self.calcPanel:Hide() end
+        -- the next open starts the quantity at 1 (ResetQtyOnPick); a park
+        -- comes back as it was
+        if not self._parked then self._qtyKey = nil end
         -- Defer RestoreContentPanels to break the taint chain -- when
         -- Blizzard's HideUIPanel triggers this OnHide, we're inside a
         -- secure execution path and any Show() call would be blocked.
@@ -3941,13 +3944,23 @@ function TSF:BuildDetailPanel(parent)
     detTools:Hide()
     self.detTools = detTools
 
-    -- "Back to Linen Bag" after a click on a material took you to its
-    -- recipe (2.2.0, GitHub #13): under the price line (ShowBackLine)
+    -- "Back" after a click on a material took you to its recipe (2.2.0,
+    -- GitHub #13): under Share, right of the Difficulty line, the same
+    -- size for every recipe; its tooltip names the recipe (ShowBackLine).
+    -- Share's bottom is 13 above the divider's: just under the divider.
     local detBack = CreateFrame("Button", nil, sc, "UIPanelButtonTemplate")
-    detBack:SetHeight(18)
+    detBack:SetSize(56, 18)
+    detBack:SetPoint("TOPRIGHT", self.shareBtn, "BOTTOMRIGHT", 0, -13)
     detBack:SetNormalFontObject(GameFontNormalSmall)
     detBack:SetHighlightFontObject(GameFontHighlightSmall)
+    detBack:SetText("Back")
     detBack:SetScript("OnClick", function() self:JumpBack() end)
+    detBack:SetScript("OnEnter", function(btn)
+        GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Back to " .. tostring(btn.backTo), 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    detBack:SetScript("OnLeave", function() GameTooltip:Hide() end)
     detBack:Hide()
     self.detBack = detBack
 
@@ -4205,6 +4218,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
 
     local recipe = self:GetSelectedRecipe()
     if not recipe then return end
+    self:ResetQtyOnPick()
 
     self.detPlaceholder:Hide()
     if self.detScrollFrame then self.detScrollFrame:Show() end
@@ -4551,7 +4565,6 @@ end
 -- The lowest line of the Can make block: the price line when it shows
 function TSF:CanMakeBottom()
     if self.detTools and self.detTools:IsShown() then return self.detTools end
-    if self.detBack and self.detBack:IsShown() then return self.detBack end
     if self.detPrice and self.detPrice:IsShown() then return self.detPrice end
     return self.detCanMake
 end
@@ -8279,7 +8292,10 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
     if self:WaitToShow(profName .. " opens", function()
         if isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
     end) then return end
-    -- a profession opening (Back, or another one) ends a park
+    -- a profession opening (Back, or another one) ends a park; the parked
+    -- one coming back keeps its quantity (ResetQtyOnPick)
+    local resumed = self._unparking or (self._parked and self._parked.prof == profName)
+    self._unparking = nil
     if self._parked then self:EndPark(false) end
     -- Close the /pb main window if open (mutual exclusion)
     if addon.UI and addon.UI.frame and addon.UI.frame:IsShown() then
@@ -8296,6 +8312,7 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
     -- window): the game kept crafting behind the main window, so the box
     -- keeps counting down (Kluga; 2.2.0 TEST-c, m4ru found the way in game)
     if not self:IsCraftingIn(profName, isCraft) then self:StopCraftTracking() end
+    if not resumed then self._qtyKey = nil end
 
     state.profName      = profName
     state.skillLevel    = rank or 0
@@ -8441,6 +8458,7 @@ function TSF:OpenWithStatic(profName)
     self:EnsureFrame()
     self:RestoreContentPanels()
     self:StopCraftTracking()
+    self._qtyKey = nil
 
     state.profName      = profName
     -- A static browse has no client skill line, so the canonical name IS
@@ -8586,6 +8604,7 @@ function TSF:OpenWithCharacter(charKey, profName)
     self:EnsureFrame()
     self:RestoreContentPanels()
     self:StopCraftTracking()
+    self._qtyKey = nil
 
     local skill = profData.level or profData.skillLevel or 0
     local maxSkill = profData.maxLevel or profData.maxSkill or 375
@@ -8936,6 +8955,18 @@ function TSF:MaterialNeed(row)
     return (row.perCraft or 1) * qty
 end
 
+-- A recipe picked, or the window opened: the quantity starts at 1, as
+-- Blizzard's TradeSkillFrame_SetSelection and OnShow set it. A batch that
+-- is running keeps its count; a jump and Back fill theirs after this.
+function TSF:ResetQtyOnPick()
+    local key = tostring(state.profName) .. "|" .. tostring(state._viewCharKey) .. "|" .. tostring(state.selected)
+    if key == self._qtyKey then return end
+    self._qtyKey = key
+    local box = self:JumpQtyBox()
+    if not box or (box == self.qtyBox and self._craftingActive) then return end
+    box:SetText("1")
+end
+
 -- Fill the quantity after a jump; a batch that is running keeps its count
 function TSF:SetJumpQty(n)
     local box = self:JumpQtyBox()
@@ -8955,14 +8986,16 @@ function TSF:AddMaterialHint(tip, itemID, need)
     end
     tip:AddLine("Click: go to " .. t.name .. (t.other and (" (" .. t.prof .. ")") or ""), 0.5, 0.5, 0.5)
     local crafts, withBank = self:CraftsForMaterial(t, itemID, need)
-    local line = crafts > 0 and ("Craft " .. crafts) or "You have enough"
-    if withBank < crafts then line = line .. "|cff3fc7ff, " .. withBank .. " with bank|r" end
+    local line = crafts > 0 and ("Needs " .. crafts .. " crafted") or "You have enough"
+    if withBank < crafts then
+        line = line .. "|cff3fc7ff, " .. (withBank > 0 and withBank or "none") .. " with bank|r"
+    end
     tip:AddLine(line, 0.5, 0.5, 0.5)
     return t
 end
 
 -- Go to the recipe that makes the material, with the crafts you still
--- need in the quantity box; "Back to <recipe>" returns. True when it went.
+-- need in the quantity box; "Back" returns. True when it went.
 function TSF:JumpToMaterial(itemID, need)
     local t = self:MaterialTarget(itemID)
     if not t or (t.other and not t.canOpen) then return false end
@@ -8988,7 +9021,7 @@ function TSF:JumpToMaterial(itemID, need)
     return true
 end
 
--- "Back to <recipe>": the recipe the last jump came from, and its quantity
+-- "Back": the recipe the last jump came from, and its quantity
 function TSF:JumpBack()
     local stack = self._jumpStack
     local b = stack and stack[#stack]
@@ -9008,7 +9041,7 @@ function TSF:JumpBack()
     end
 end
 
--- The Back line under the price line, while the recipe on show is the one
+-- The Back button under Share, while the recipe on show is the one
 -- the last jump went to; anything else clears the trail (a jump to
 -- another profession waits for it to open)
 function TSF:ShowBackLine()
@@ -9023,12 +9056,7 @@ function TSF:ShowBackLine()
         if not self._pendingSelect then self._jumpStack = nil end
         return
     end
-    btn:SetText("Back to " .. tostring(top.name))
-    local fs = btn:GetFontString()
-    btn:SetWidth(math.ceil((fs and tonumber(fs:GetStringWidth()) or 100) + 24))
-    btn:ClearAllPoints()
-    local above = self.detPrice:IsShown() and self.detPrice or self.detCanMake
-    btn:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, -4)
+    btn.backTo = top.name
     btn:Show()
 end
 
@@ -9161,6 +9189,8 @@ function TSF:Unpark()
         return
     end
     self._parked = nil
+    self._unparking = true
     if addon.UI then addon.UI:Hide() end
     if p.isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
+    self._unparking = nil
 end
