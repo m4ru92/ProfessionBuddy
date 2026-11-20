@@ -5842,24 +5842,35 @@ function TSF:StripCast()
     return name, frac, math.max(0, (endMs - now) / 1000)
 end
 
--- The bars' fill and text, each frame while the strip shows
+-- The bars' fill and text, each frame while the strip shows. A bar shown
+-- alone also carries what the other bar would: the batch bar the recipe's
+-- name, the cast bar the count (not the time, which goes with the batch bar).
 function TSF:PaintStrip(strip)
     local name, frac, left = self:StripCast()
+    name = name or self._craftSpellName or ""
+    local total = self._craftTotal or 1
+    local remaining = math.max(0, self._craftRemaining or 0)
+    local done = math.max(0, total - remaining)
+    local count = math.min(total, done + 1)
+    local both = strip.cast:IsShown() and strip.batch:IsShown()
     if strip.cast:IsShown() then
         strip.cast:SetValue(frac or 0)
-        strip.cast.text:SetText(name or self._craftSpellName or "")
+        strip.cast.text:SetText(both and name
+            or string.format("%s, %d of %d", name, count, total))
     end
     if strip.batch:IsShown() then
-        local total = self._craftTotal or 1
-        local remaining = math.max(0, self._craftRemaining or 0)
-        local done = math.max(0, total - remaining)
         strip.batch:SetValue(total > 0 and math.min(1, (done + (frac or 0)) / total) or 0)
         -- the rest of this cast, then each craft still to start
         local P = addon.Prices
         local per = P and P.CraftSeconds and P:CraftSeconds(self._craftSpellID) or 0
         local secs = (left or per) + math.max(0, remaining - 1) * per
-        strip.batch.text:SetText(string.format("Crafting %d of %d, about %s left",
-            math.min(total, done + 1), total, StripTime(secs)))
+        if both then
+            strip.batch.text:SetText(string.format("Crafting %d of %d, about %s left",
+                count, total, StripTime(secs)))
+        else
+            strip.batch.text:SetText(string.format("%s: %d of %d, about %s left",
+                name, count, total, StripTime(secs)))
+        end
     end
 end
 

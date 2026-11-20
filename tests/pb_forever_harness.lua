@@ -8137,8 +8137,16 @@ local function F112()
     S.craftBarCast = false; TSF:UpdateCraftStrip()
     EXPECT(strip():IsShown() and not strip().cast:IsShown() and strip().batch:IsShown() and TSF:StripLift() == 18
            and y(TSF.listPanel) == 48 and shownRows() == 19, "the batch bar alone: " .. TSF:StripLift() .. " " .. shownRows())
+    -- a bar alone also carries the other's text: the batch bar the name,
+    -- the cast bar the count
+    TSF:PaintStrip(strip())
+    EXPECT(strip().batch.text:GetText() == "Light Leather: " .. want(2, 4 * per):gsub("^Crafting ", ""),
+           "the batch bar alone reads " .. tostring(strip().batch.text:GetText()))
     S.craftBarCast, S.craftBarBatch = true, false; TSF:UpdateCraftStrip()
     EXPECT(strip().cast:IsShown() and not strip().batch:IsShown() and TSF:StripLift() == 18, "the cast bar alone")
+    TSF:PaintStrip(strip())
+    EXPECT(strip().cast.text:GetText() == "Light Leather, 2 of 5",
+           "the cast bar alone reads " .. tostring(strip().cast.text:GetText()))
     S.craftBarCast = false; TSF:UpdateCraftStrip()
     EXPECT(not strip():IsShown() and y(TSF.listPanel) == 30 and shownRows() == 20, "both off: a strip")
     S.craftBarCast, S.craftBarBatch = true, true; TSF:UpdateCraftStrip()
