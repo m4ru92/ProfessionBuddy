@@ -95,7 +95,9 @@ local SEARCH_DEBOUNCE = 0.3
 -- Seconds before an unanswered craft is assumed dead and tracking is dropped.
 -- The client fires no UNIT_SPELLCAST_* event for a refused craft (a transmute
 -- on cooldown, an enchant cancelled with Escape), so without this the
--- crafting flag would wedge every later refresh for the session.
+-- crafting flag would wedge every later refresh for the session. Each cast
+-- of the craft moves it to that cast's end plus this, as a cast can take
+-- longer (Runecloth Belt: 60 s on WoW: Forever, 25 s on TBC Anniversary).
 local CRAFT_WATCHDOG = 10
 -- Reagent names still loading from the item cache: how often, and how many
 -- times, the window is read again before it settles for the placeholders.
@@ -5693,10 +5695,10 @@ end
 -- BeginCraftTracking, everything that ends it through StopCraftTracking,
 -- and the watchdog catches the cases the client reports no event for.
 ----------------------------------------------------------------------
-function TSF:ArmCraftWatchdog()
+function TSF:ArmCraftWatchdog(seconds)
     self._craftToken = (self._craftToken or 0) + 1
     local token = self._craftToken
-    C_Timer.After(CRAFT_WATCHDOG, function()
+    C_Timer.After(seconds or CRAFT_WATCHDOG, function()
         -- A newer craft (or any stop) has bumped the token: nothing to do.
         if self._craftToken ~= token then return end
         self:StopCraftTracking()
@@ -5994,6 +5996,14 @@ function TSF:RegisterCraftEvents()
             self._craftCastSeen = true
             self:UpdateCraftStrip()
         end
+        -- the watchdog waits out this cast (until 2.2.1 it fired 10 s into
+        -- any longer one and the strip went, Bran)
+        local _, _, left = self:StripCast()
+        if not left then
+            local P = addon.Prices
+            left = P and P.CraftSeconds and P:CraftSeconds(spellID) or 0
+        end
+        self:ArmCraftWatchdog(left + CRAFT_WATCHDOG)
     end)
 
     addon:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(_, unit, _, spellID)
