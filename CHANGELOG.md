@@ -2,7 +2,7 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
-## 2.2.0
+## 2.2.0 - 2026-11-19
 
 The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for than their materials cost, for your characters, your friends and your guildmates.
 
@@ -38,11 +38,13 @@ The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for t
 - **The quantity box starts at 1:** picking a recipe, or opening the profession window, sets the Craft quantity (and on a friend's or an alt's list, the order quantity) to 1, as Blizzard's window does. It used to keep the last number you typed. A batch that is running keeps its count, and Back to a profession you left keeps yours.
 - **/pb keeps your profession open:** typing /pb or /pb friends with a profession open keeps it open behind the main window, with "Back to Cooking", as the bottom tabs have since 2.1.0. They used to close it.
 - **One window size and place:** the main window is 740 x 540, the profession window's size, and the two share one size grip setting and one position: drag or resize either and the other follows, so they swap in the same space when you go Back or click a bottom tab. Both start from the profession window's size and position. The largest size leaves room on screen for the widest side panel either window opens (Order history, Find a Crafter, the Material Calculator), so both windows always get the same size. Its lists show more rows, and names have more room: the Shuffle tab, Crates and writs, Guild and Friends spread their columns over the wider window. Order history and Find a Crafter are as tall as the main window.
+- WoW: Forever recipe data is from game build 1.60.1.70959. Twenty-one recipes (Camp Tent, Camp Chair, Anvil, Tanning Rack, Spinning Wheel and 16 more) go grey at the skill you learn them at, where they used to stay yellow and green for 5 more points. Journeyman Campfire, Expert Campfire and Cookie's Feast go grey 5 to 15 points sooner, Coarse Grinding Stone at 90, not 75, and you learn the Tanning Rack at 125, not 140. Five Tailoring bags take one more bolt: Black Silk Pack 6 Bolts of Silk Cloth, Green Silk Pack 5, Green Woolen Bag and Red Woolen Bag 5 Bolts of Woolen Cloth, and Red Mageweave Bag 5 Bolts of Mageweave. Arcane Salvager needs a Runed Golden Rod, not a Runed Truesilver Rod, and Elixir of Holy Power's source reads "Recipe: Elixir of Holy Power". Gathering, disenchant and vendor data are from VMaNGOS db 70e38cd and unchanged.
 
 **Fixes**
 
 - Characters tab: the profession rows ran 15 pixels past the character and faction bars, with their View buttons up against the scroll bar. Every row ends at the same edge, and the scroll bar lines up with the other tabs'.
 - The Craft quantity box stopped counting down when you went back to a profession during a batch, reported by Kluga: Craft 5, one done, a bottom tab or /pb, then "Back to Leatherworking", and the box stayed at 4 while the crafts went on. Going back to the profession that's crafting, any way (Back, its icon in the main window, a Shuffle row of your own recipe), keeps the count.
+- TBC Anniversary: PB's data had the wrong item for Brilliant Glass (Jewelcrafting) since 1.0.0, so hovering Brilliant Glass didn't show "Craftable by", and PB priced the recipe's sale and profit from a different item. It's item 35945, from the game's own data; the other 1,927 TBC Anniversary recipes match it.
 
 ## 2.1.1 - 2026-11-10
 

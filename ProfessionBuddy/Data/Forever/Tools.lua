@@ -3,7 +3,7 @@
 -- Tools a recipe requires, other than Enchanting rods (the recipe's
 -- `rod` field), and the crafting station it needs. From WoW: Forever's SpellTotems, TotemCategory, ItemSparse,
 -- SpellCastingRequirements and SpellFocusObject,
--- build 1.60.1.70888.
+-- build 1.60.1.70959.
 --   RecipeTools[spellID]  = { category ID, or -item ID for one item }
 --   ToolCategories[ID]    = { name, items = { items that satisfy it } }
 --   ToolItemNames[itemID] = name of a specific required item

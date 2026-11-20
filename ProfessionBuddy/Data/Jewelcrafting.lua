@@ -3029,7 +3029,7 @@ local recipes = {
     -- ================================================================
     ["Brilliant Glass"] = {
         spellID = 47280,
-        itemID = 191061,
+        itemID = 35945,
         skillReq = 350,
         sources = {
             { method = "trainer", faction = "Both" },
