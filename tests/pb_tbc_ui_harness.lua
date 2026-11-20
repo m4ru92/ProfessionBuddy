@@ -42,11 +42,12 @@ EXPECT(DS:GetProfession(nil, "Leatherworking") and DS:GetProfession(nil, "Enchan
        "professions not recorded from the skill lines")
 print("  PASS " .. TAG .. "1 TBC toc loads Classic source and no Forever data; every module starts; look " .. LOOK)
 
--- U2: the main window and its four tabs
+-- U2: the main window and its five tabs (Shuffle since 2.2.0)
 local ok, err = pcall(SlashCmdList.PROFBUDDY, "")
 EXPECT(ok, "/pb: " .. tostring(err))
 local UI = PB.UI
-EXPECT(UI.frame and UI.frame:IsShown() and #UI.frame.tabs == 4, "main window not shown with 4 tabs")
+EXPECT(UI.frame and UI.frame:IsShown() and #UI.frame.tabs == 5 and UI.frame.tabs[5].name == "shuffle",
+       "main window not shown with 5 tabs, Shuffle last")
 for i = 1, #UI.frame.tabs do
     ok, err = pcall(UI.SelectTab, UI, i)
     EXPECT(ok, "main tab " .. i .. ": " .. tostring(err))
@@ -63,7 +64,7 @@ end)
 EXPECT(ok and told == "Guildie-Realm", "guild right-click whisper: " .. tostring(err or told))
 ok, err = pcall(UI.Hide, UI)
 EXPECT(ok, "main window hide: " .. tostring(err))
-print("  PASS " .. TAG .. "2 /pb opens; Characters, Friends, Guild and Orders tabs all build and select; guild right-click whispers")
+print("  PASS " .. TAG .. "2 /pb opens; Characters, Friends, Guild, Orders and Shuffle tabs all build and select; guild right-click whispers")
 
 -- U3: a trade skill profession window, a recipe selected
 local TSF = PB.TradeSkillFrame
@@ -79,7 +80,7 @@ ok, err = pcall(function()
     TSF:UpdateListRows()
 end)
 EXPECT(ok, "selecting a recipe: " .. tostring(err))
-EXPECT(TSF.navTabs and #TSF.navTabs == 4, "the profession window's own tabs were not built")
+EXPECT(TSF.navTabs and #TSF.navTabs == 5, "the profession window's own tabs were not built (5 with Shuffle)")
 -- no profession link on TBC Anniversary (a Wrath feature): no button, and
 -- the skill bar keeps its full width
 EXPECT(rawget(TSF, "linkButton") == nil, "a profession link button on TBC Anniversary")
@@ -315,7 +316,7 @@ do
     TSF.state.selected = "Light Leather"
     TSF:RefreshDetailPanel()
     local line = plain(TSF.detPrice:GetText())
-    EXPECT(TSF.detPrice:IsShown() and line == "Cost: 30c   Sells: 50c, vendor 5c   Profit: +18c", "TBC price line: " .. line)
+    EXPECT(TSF.detPrice:IsShown() and line == "Cost: 30c   Auction: 50c, vendor 5c   Profit: +18c", "TBC price line: " .. line)
     ok, err = pcall(TSF.ToggleCalcPanel, TSF)
     EXPECT(ok and TSF.calcCols.price:IsShown(), "calculator with prices: " .. tostring(err))
     ok, err = pcall(TSF.ToggleCalcPanel, TSF)
@@ -579,7 +580,7 @@ local function U14()
     clean()
     EXPECT(TSF.frame:IsProtected() and UI.frame:IsProtected(), "harness: the windows are not protected")
     -- his case, and each other tab
-    for i, name in ipairs({ "Characters", "Friends", "Guild", "Orders" }) do
+    for i, name in ipairs({ "Characters", "Friends", "Guild", "Orders", "Shuffle" }) do
         clean(); OPEN_TRADE()
         fight(true); PRINTS = {}
         TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH()
@@ -606,6 +607,7 @@ local function U14()
     ok("/pb in combat")
     ended()
     EXPECT(not TSF.frame:IsShown() and UI.frame:IsShown(), "/pb did not open when combat ended")
+    EXPECT(TSF._parked and UI.backBtn:IsShown(), "/pb closed the profession instead of keeping it behind (Back)")
     -- dragging either window in combat
     fight(true)
     UI.frame:GetScript("OnDragStart")(UI.frame); UI.frame:GetScript("OnDragStop")(UI.frame)
@@ -746,7 +748,7 @@ local function U16()
     local pc = PB.Prices:DetailPieces(r)
     -- his figures; the harness has no vendor price for the powder (F94
     -- covers the vendor piece)
-    EXPECT(#pc == 3 and plain(pc[1].text) == "Cost: 3g 56s 70c" and plain(pc[2].text) == "Sells: 11g 99s 72c"
+    EXPECT(#pc == 3 and plain(pc[1].text) == "Cost: 3g 56s 70c" and plain(pc[2].text) == "Auction: 11g 99s 72c"
            and plain(pc[3].text) == "Profit: +7g 83s 3c",
            "the powder's pieces: " .. #pc .. " " .. plain(pc[1].text) .. " / " .. plain(pc[2].text) .. " / " .. plain(pc[#pc].text))
     local one = plain(pc[1].text .. "   " .. pc[2].text)
@@ -841,4 +843,655 @@ end
 U18()
 print("  PASS " .. TAG .. "18 2.1.1: crafting stations on TBC Anniversary (Copper Chain Belt an Anvil, Smelt Copper a Forge), always white: the game's check ignores distance, so PB doesn't ask it")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 18)")
+-- U19 2.2.0 TEST-a: the vendor shuffle on TBC Anniversary: the cast time
+-- from GetSpellInfo's 4th value, the Shuffle tab, the profession window's
+-- Vendor shuffle View, and both in combat with rows in them
+local function U19()
+    local UI, TSF, P, SP, S = PB.UI, PB.TradeSkillFrame, PB.Prices, PB.ShufflePanel, PB.db.settings
+    local st = TSF.state
+    local keepAuc, keepSpell = Auctionator, GetSpellInfo
+    local keepMin, keepShow, keepAucOn = S.shuffleMinProfit, S.showPrices, S.priceAuctionator
+    S.showPrices, S.priceAuctionator, S.shuffleMinProfit = true, true, 0
+    -- Ruined Leather Scraps 1c at auction; Light Leather sells for 5c
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return ({ [2934] = 1 })[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    GetSpellInfo = function(id)
+        if id == 2881 then return "Light Leather", nil, "icon", 3000 end
+        return keepSpell(id)
+    end
+    local v = P:VendorShuffle({ name = "Light Leather" }, "Leatherworking")
+    EXPECT(v and v.cost == 3 and v.sell == 5 and v.profit == 2 and v.seconds == 3.5,
+           "Light Leather: " .. tostring(v and v.cost) .. " " .. tostring(v and v.sell) .. " " .. tostring(v and v.seconds))
+    -- the tab
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    UI:Show()
+    UI:SelectTab(5); FLUSH()
+    SP.sortKey, SP.sortAsc, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", false, "Everyone", nil, false
+    SP:Refresh()
+    local found = false
+    for _, e in ipairs(SP.list) do if e.name == "Light Leather" then found = true end end
+    EXPECT(found, "the Shuffle tab has no Light Leather")
+    local sites, errs = COMBAT_SWEEP({ UI.frame }, {})
+    EXPECT(#sites == 0, "the Shuffle tab in combat, the game would block:\n  " .. table.concat(sites, "\n  "))
+    EXPECT(#errs == 0, "the Shuffle tab in combat, a click errored:\n  " .. table.concat(errs, "\n  "))
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide() end
+    -- the profession window's Vendor shuffle View
+    OPEN_TRADE()
+    st.showTab = "vendor"
+    TSF:RefreshRecipeList()
+    local names = {}
+    for _, r in ipairs(st.recipes) do if not r.isHeader then names[#names + 1] = r.name end end
+    EXPECT(#names == 1 and names[1] == "Light Leather", "the Vendor shuffle View lists: " .. table.concat(names, ", "))
+    local sig = rawget(TSF.viewDropdown, "_optionSig") or ""
+    EXPECT(sig:find("Vendor shuffle", 1, true), "no Vendor shuffle in the View menu")
+    sites, errs = COMBAT_SWEEP({ TSF.frame }, { "TRADE_SKILL_UPDATE" })
+    EXPECT(#sites == 0, "the Vendor shuffle View in combat, the game would block:\n  " .. table.concat(sites, "\n  "))
+    EXPECT(#errs == 0, "the Vendor shuffle View in combat, a click errored:\n  " .. table.concat(errs, "\n  "))
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    st.showTab = "known"
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide() end
+    if TBC.open == "trade" then CLOSE_TRADE() end
+    Auctionator, GetSpellInfo = keepAuc, keepSpell
+    S.shuffleMinProfit, S.showPrices, S.priceAuctionator = keepMin, keepShow, keepAucOn
+    P:ResetListCache()
+end
+U19()
+print("  PASS " .. TAG .. "19 2.2.0 TEST-a: vendor shuffle on TBC Anniversary: cast time from GetSpellInfo, the Shuffle tab, the Vendor shuffle View, both swept in combat with rows")
+
+-- U20 2.2.0 TEST-a5 (m4ru): your own recipe from the Shuffle tab on TBC
+-- Anniversary: the live window when the profession is open; with it
+-- closed (PB can't open one from a click there), your saved list, saying
+-- to open the profession, without Request Craft
+local function U20()
+    local TSF = PB.TradeSkillFrame
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not st._viewCharKey and st.selected == "Light Leather" and TSF.craftBar:IsShown()
+           and not TSF.ownHintBar:IsShown(), "open: " .. tostring(st._viewCharKey) .. " / " .. tostring(st.selected))
+    -- open, then /pb (TEST-a6: /pb closed the profession, so the row
+    -- found it closed): /pb keeps it open behind, and the row shows it live
+    TSF.frame:Hide(); FLUSH()
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    SlashCmdList.PROFBUDDY(""); FLUSH()
+    EXPECT(TSF._parked and TBC.open == "trade" and PB.UI.frame:IsShown(), "/pb closed the open profession")
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not st._viewCharKey and st.selected == "Light Leather" and TSF.craftBar:IsShown()
+           and not PB.UI.frame:IsShown() and not TSF._parked, "after /pb: " .. tostring(st._viewCharKey) .. " / " .. tostring(st.selected))
+    TSF.frame:Hide(); FLUSH()
+    if TBC.open then CLOSE_TRADE() end
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st._viewCharKey and st.selected == "Light Leather", "closed: shown " .. tostring(TSF.frame:IsShown()) .. " view " .. tostring(st._viewCharKey) .. " sel " .. tostring(st.selected) .. " tab " .. tostring(st.showTab) .. " n " .. #st.recipes)
+    EXPECT(TSF.ownHintBar:IsShown() and not TSF.composerBar:IsShown() and not TSF.craftBar:IsShown(),
+           "closed: hint " .. tostring(TSF.ownHintBar:IsShown()) .. ", request " .. tostring(TSF.composerBar:IsShown()))
+    EXPECT((TSF.ownHintBar.text:GetText() or ""):find("Open Leatherworking from your spellbook to craft", 1, true), "hint text")
+    TSF.frame:Hide(); FLUSH()
+end
+U20()
+print("  PASS " .. TAG .. "20 2.2.0 TEST-a5: your own recipe from the Shuffle tab: the live window when open; closed, your saved list with how to craft, no Request Craft")
+
+-- U21 2.2.0 TEST-b: TBC Anniversary has no Waylaid Supplies or Craftsman's
+-- Writs: no Crates and writs view, no switch, the Shuffle tab as before
+local function U21()
+    local SP = PB.ShufflePanel
+    EXPECT(PB.CratesView == nil and PB.Waylaid == nil and PB.Writs == nil, "crate data or the view loads on TBC Anniversary")
+    if not SP.parent then
+        PB.UI:Show()
+        for i, tab in ipairs(PB.UI.frame.tabs) do if tab.name == "shuffle" then PB.UI:SelectTab(i) end end
+        FLUSH()
+    end
+    EXPECT(SP.parent and SP.viewBtns == nil and rawget(SP.header, "_vis") ~= false and SP.view == "shuffle", "a view switch on TBC Anniversary")
+    if PB.UI.frame:IsShown() then PB.UI:Hide(); FLUSH() end
+end
+U21()
+print("  PASS " .. TAG .. "21 2.2.0 TEST-b: no Crates and writs view on TBC Anniversary: no switch, the heading as before")
+
+-- U22 2.2.0 TEST-b, GitHub #12: the Item info fold and Show Item info on
+-- TBC Anniversary, with an Anvil and a Blacksmith Hammer as the tool lines
+local function U22()
+    local TSF = PB.TradeSkillFrame
+    local st, S = TSF.state, PB.db.settings
+    local keepFold, keepShow = S.itemInfoFolded, S.showItemInfo
+    S.itemInfoFolded, S.showItemInfo = false, true
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open then CLOSE_TRADE() end
+    OPEN_TRADE()
+    local belt = { name = "Copper Chain Belt", spellID = 2661, itemID = 2851, isKnown = true,
+                   reagents = { { itemID = 2840, count = 6, name = "Copper Bar" } } }
+    table.insert(st.recipes, 1, belt)
+    st.selected = belt.name
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.itemTooltipHeader:GetText() == "- Item info" and TSF.itemInfoFold:IsShown(), "open")
+    TSF.itemInfoFold:GetScript("OnClick")(TSF.itemInfoFold); FLUSH()
+    local tools = TSF.detTools:GetText() or ""
+    EXPECT(S.itemInfoFolded and not TSF.embeddedTip:IsShown() and TSF.itemTooltipHeader:GetText() == "+ Item info"
+           and tools:find("Tool: Anvil", 1, true) and tools:find("Blacksmith Hammer", 1, true), "folded: " .. tools)
+    TSF.itemInfoFold:GetScript("OnClick")(TSF.itemInfoFold); FLUSH()
+    S.showItemInfo = false; TSF:RefreshDetailPanel()
+    EXPECT(not TSF.itemTooltipHeader:IsShown() and TSF.detTools:IsShown(), "off")
+    table.remove(st.recipes, 1)
+    st.selected = nil
+    S.itemInfoFolded, S.showItemInfo = keepFold, keepShow
+    TSF.frame:Hide(); FLUSH()
+end
+U22()
+print("  PASS " .. TAG .. "22 2.2.0 TEST-b #12: Item info fold and Show Item info on TBC Anniversary; the Anvil and Hammer lines move under the price line")
+
+-- U23 2.2.0 TEST-c (Kluga; m4ru): on TBC Anniversary too, a batch keeps
+-- counting down through every way back into its profession: Back after a
+-- bottom tab and /pb, the parked icon, your own Shuffle row. The Shuffle
+-- tab's columns all sort, a second click the other way, with ^ or v
+local function U23()
+    local UI, TSF, SP, S = PB.UI, PB.TradeSkillFrame, PB.ShufflePanel, PB.db.settings
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    -- FLUSH runs every pending timer at once, the 10-second watchdog too
+    local keepArm, keepName = TSF.ArmCraftWatchdog, SPELL_NAMES[2881]
+    TSF.ArmCraftWatchdog = function() end
+    SPELL_NAMES[2881] = "Light Leather"   -- the cast's name: TBC Anniversary matches the craft by name
+    local row = TBC.tradeRows[2]
+    local keepAvail = row[3]
+    row[3] = 10
+    local function cast(ev) FIRE(ev or "UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 2881) end
+    local function clean()
+        if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+        if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+        if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+        TSF:StopCraftTracking()
+    end
+    local function tab(i) return function() TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH() end end
+    local function backBtn() UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH() end
+    local function cover() UI.parkedTab:GetScript("OnClick")(UI.parkedTab); FLUSH() end
+    local function run(label, leave, back)
+        clean(); OPEN_TRADE()
+        st.selected = "Light Leather"; TSF:UpdateCraftBar()
+        TSF:DoCraftImmediate(5)
+        cast()
+        EXPECT(TSF._craftingActive and TSF.qtyBox:GetText() == "4", label .. ": the first craft")
+        leave()
+        EXPECT(TSF._parked and UI.frame:IsShown() and TBC.open == "trade", label .. ": not parked")
+        cast()
+        back()
+        EXPECT(TSF.frame:IsShown() and not TSF._parked and TSF._craftingActive and TSF.qtyBox:GetText() == "3",
+               label .. ": back stopped the count at " .. tostring(TSF.qtyBox:GetText()))
+        cast()
+        EXPECT(TSF.qtyBox:GetText() == "2", label .. ": the next craft after back did not count")
+    end
+    run("Characters tab, Back", tab(1), backBtn)
+    run("Shuffle tab, Back", tab(5), backBtn)
+    run("/pb, Back", function() SlashCmdList.PROFBUDDY(""); FLUSH() end, backBtn)
+    run("Friends tab, the parked icon", tab(2), cover)
+    run("Characters tab, your own Shuffle row", tab(1),
+        function() TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH() end)
+    -- the game closes the profession while parked: the count stops
+    clean(); OPEN_TRADE()
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    TSF:DoCraftImmediate(5)
+    tab(1)()
+    CLOSE_TRADE()
+    EXPECT(not TSF._craftingActive and not TSF._parked, "the close while parked did not stop the count")
+    clean()
+    row[3] = keepAvail
+    TSF.ArmCraftWatchdog, SPELL_NAMES[2881] = keepArm, keepName
+
+    -- the Shuffle tab's columns
+    local keepMin = S.shuffleMinProfit
+    S.shuffleMinProfit = 0
+    UI:Show(); UI:SelectTab(5); FLUSH()
+    local keepAll, keepBuild = SP.all, SP.Build
+    SP.Build = function() end
+    local function sv(name, who, cost, sell, hour)
+        return { name = name, prof = "Leatherworking", who = { { key = who, rel = "alt" } },
+                 v = { cost = cost, sell = sell, profit = sell - cost, perHour = hour } }
+    end
+    SP.all = { sv("bolt", "Zed-Realm", 50, 300, 900), sv("Armor Kit", "amy-Realm", 10, 200, 5000),
+               sv("Copper Rod", "Bo-Realm", 99, 100, 10) }
+    SP.whoFilter, SP.profFilter, SP.vendorOnly = "Everyone", nil, false
+    SP.sortKey, SP.sortAsc = "profit", false
+    SP:Repaint()
+    local function click(key) SP.headerBtns[key]:GetScript("OnClick")(SP.headerBtns[key]) end
+    local function order() local t = {}; for _, e in ipairs(SP.list) do t[#t + 1] = e.name end; return table.concat(t, ",") end
+    EXPECT(order() == "bolt,Armor Kit,Copper Rod" and SP.headerBtns.profit.label:GetText() == "Profit v", "Profit: " .. order())
+    click("recipe")
+    EXPECT(order() == "Armor Kit,bolt,Copper Rod" and SP.headerBtns.recipe.label:GetText() == "Recipe ^"
+           and SP.headerBtns.profit.label:GetText() == "Profit", "Recipe A to Z: " .. order())
+    click("recipe")
+    EXPECT(order() == "Copper Rod,bolt,Armor Kit" and SP.headerBtns.recipe.label:GetText() == "Recipe v", "Recipe Z to A: " .. order())
+    click("who")
+    EXPECT(order() == "Armor Kit,Copper Rod,bolt", "Who: " .. order())
+    click("cost")
+    EXPECT(order() == "Armor Kit,bolt,Copper Rod" and SP.headerBtns.cost.label:GetText() == "Cost ^", "Cost: " .. order())
+    click("hour"); click("hour")
+    EXPECT(order() == "Copper Rod,bolt,Armor Kit" and SP.headerBtns.hour.label:GetText() == "Per hour ^", "Per hour lowest first: " .. order())
+    SP.all, SP.Build = keepAll, keepBuild
+    SP.sortKey, SP.sortAsc = "profit", false
+    S.shuffleMinProfit = keepMin
+    UI:Hide(); FLUSH()
+end
+U23()
+print("  PASS " .. TAG .. "23 2.2.0 TEST-c: the craft count keeps going through Back (bottom tab, /pb, the parked icon, your own Shuffle row) on TBC Anniversary and stops when the game closes the profession; the Shuffle tab's columns sort both ways with ^ or v")
+
+-- U24 2.2.0 TEST-c6: the same on TBC Anniversary: the main window is the
+-- profession window's 740 x 540, the Shuffle and Guild lists fill it, and
+-- the Shuffle tab's heading reads Vendor
+local function U24()
+    local UI, TSF, SP, GP = PB.UI, PB.TradeSkillFrame, PB.ShufflePanel, PB.GuildPanel
+    TSF:EnsureFrame()
+    local ws, ts = rawget(UI.frame, "_size"), rawget(TSF.frame, "_size")
+    EXPECT(ws and ts and ws[1] == 740 and ws[2] == 540 and ws[1] == ts[1] and ws[2] == ts[2], "main window size")
+    local contentH = ws[2] - UI.CONTENT_TOP - 10
+    UI:Show()
+    for i in ipairs(UI.frame.tabs) do UI:SelectTab(i) end
+    FLUSH()
+    EXPECT(#SP.rows * 20 <= contentH - 72 and (#SP.rows + 1) * 20 > contentH - 72, "Shuffle rows: " .. #SP.rows)
+    EXPECT(#GP.rows * 20 <= contentH - 72 and (#GP.rows + 1) * 20 > contentH - 72, "Guild rows: " .. #GP.rows)
+    EXPECT(SP.headerBtns.sell.colLabel == "Vendor" and SP.view ~= "crates", "Vendor heading, or a Crates view on TBC Anniversary")
+    UI:Hide(); FLUSH()
+end
+U24()
+print("  PASS " .. TAG .. "24 2.2.0 TEST-c6: the main window is 740 x 540 on TBC Anniversary, the Shuffle and Guild lists fill it, the heading reads Vendor")
+
+-- U25 2.2.0 TEST-c7: on TBC Anniversary too, the main and profession
+-- windows share one size and one place: Characters opens the main window
+-- where Cooking was, Back opens Cooking where the main window was
+local function U25()
+    local UI, TSF, S = PB.UI, PB.TradeSkillFrame, PB.db.settings
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    EXPECT(S.mainWindowScale == nil, "the main window still has its own size setting")
+    TSF:EnsureFrame()
+    rawset(UIParent, "GetWidth", function() return 1920 end)
+    rawset(UIParent, "GetHeight", function() return 1080 end)
+    local frames = { TSF.frame, UI.frame }
+    for _, f in ipairs(frames) do
+        rawset(f, "GetWidth", function() return 740 end)
+        rawset(f, "GetHeight", function() return 540 end)
+        rawset(f, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+        rawset(f, "GetScale", function(self) return rawget(self, "_scale") or 1 end)
+        rawset(f, "GetLeft", function(self) local p = rawget(self, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[4] or 100 end)
+        rawset(f, "GetTop", function(self) local p = rawget(self, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[5] or 800 end)
+    end
+    local T, M = TSF.frame, UI.frame
+    local function placed(f) local p = rawget(f, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[4], p and p[5] end
+    local keepScale = S.professionWindowScale
+    UI._livePos = nil
+    S.professionWindowScale = 1.1
+    OPEN_TRADE()
+    T:ClearAllPoints(); T:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 200, 700)
+    T:GetScript("OnDragStop")(T)
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    local x, y = placed(M)
+    EXPECT(M:IsShown() and math.abs(M:GetScale() - 1.1) < 0.001 and x == 200 and y == 700,
+           "the main window is not where Cooking was: " .. tostring(x) .. "," .. tostring(y))
+    M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 150, 650)
+    M:GetScript("OnDragStop")(M)
+    UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+    x, y = placed(T)
+    EXPECT(T:IsShown() and x == 150 and y == 650, "Back did not open Cooking where the main window was: " .. tostring(x) .. "," .. tostring(y))
+    T:Hide(); FLUSH()
+    CLOSE_TRADE()
+    for _, f in ipairs(frames) do
+        for _, k in ipairs({ "GetWidth", "GetHeight", "SetScale", "GetScale", "GetLeft", "GetTop" }) do rawset(f, k, nil) end
+    end
+    rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
+    S.professionWindowScale = keepScale
+    UI._livePos = nil
+end
+U25()
+print("  PASS " .. TAG .. "25 2.2.0 TEST-c7: the main and profession windows share one size and one place on TBC Anniversary: Characters and Back open each in the other's space")
+
+-- U26 2.2.0 TEST-c9: on TBC Anniversary too, no two controls in a
+-- Friends row overlap (Order sat over Sync and the Auto-sync box)
+local function rowControls(FP)
+    -- the stand-in's textures and font strings record no width: a fresh
+    -- row is built with recorders, then each control's left and right edge
+    local F = getmetatable(UIParent)
+    rawset(F, "CreateTexture", function(self) return CreateFrame("Texture", nil, self) end)
+    rawset(F, "SetWidth", function(self, w) local sz = rawget(self, "_size") or {}; sz[1] = w; rawset(self, "_size", sz) end)
+    local row = FP:CreateRow(CreateFrame("Frame", nil, UIParent), 1)
+    rawset(F, "CreateTexture", nil); rawset(F, "SetWidth", nil)
+    local list = { { "favorite star", row.favBtn }, { "name", row.nameText }, { "last sync", row.syncText },
+                   { "Auto-sync box", row.autoCB }, { "Sync", row.syncBtn }, { "Remove", row.removeBtn },
+                   { "Order", row.orderBtn } }
+    for i, icon in ipairs(row.profIcons) do list[#list + 1] = { "profession icon " .. i, icon } end
+    local out = {}
+    for _, c in ipairs(list) do
+        local p, sz = rawget(c[2], "_lastPoint"), rawget(c[2], "_size")
+        EXPECT(p and p[1] == "LEFT" and type(p[2]) == "number" and sz and type(sz[1]) == "number",
+               "the Friends row's " .. c[1] .. " has no left point and width")
+        out[#out + 1] = { name = c[1], l = p[2], r = p[2] + sz[1] }
+    end
+    return out
+end
+local function U26()
+    -- every control, Order included (it shows for a friend with a
+    -- profession to order from), ends before the next one starts, and all
+    -- end before the scroll bar: 720 px of content less 16
+    local c = rowControls(PB.FriendsPanel)
+    for i = 1, #c do
+        EXPECT(c[i].r <= 704, "the Friends row's " .. c[i].name .. " ends at " .. c[i].r .. ", under the scroll bar")
+        for j = i + 1, #c do
+            EXPECT(c[i].r <= c[j].l or c[j].r <= c[i].l, "the Friends row's " .. c[i].name .. " (" .. c[i].l .. " to "
+                   .. c[i].r .. ") overlaps its " .. c[j].name .. " (" .. c[j].l .. " to " .. c[j].r .. ")")
+        end
+    end
+end
+U26()
+print("  PASS " .. TAG .. "26 2.2.0 TEST-c9: no two controls in a Friends row overlap on TBC Anniversary, Order included")
+
+-- U27 2.2.0 (Lucido): Can make counting your bank on TBC Anniversary too
+local function U27()
+    if TBC.open ~= "trade" then OPEN_TRADE() end
+    local TSF, DS = PB.TradeSkillFrame, PB.DataStore
+    local st = TSF.state
+    local inv = DS:GetCharacter().inventory
+    local keepBank, keepScanned, keepOff, keepView = inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey
+    local keepSel = st.selected
+    ITEM_COUNT = {}
+    inv.bank, inv.bankScanned = {}, true
+    st._viewCharKey = nil
+    -- a known craft that takes 1 of a material, the game's count = the bags'
+    local kit = { name = "PB Test Kit", isKnown = true, numAvail = 4, itemID = 2304, spellID = 2152,
+                  category = "Armor Kit", reagents = { { itemID = 2318, count = 1, name = "Light Leather" } } }
+    table.insert(st.recipes, 1, kit)
+    st.scrollOffset, st.selected = 0, kit.name
+    local row = TSF.listRows[1]
+    local function draw() TSF:UpdateListRows(); TSF:RefreshDetailPanel() end
+    local function list() return row.rightText:GetText() or "" end
+    local function can() return TSF.detCanMake:GetText() or "" end
+    local function nameAtCounts()
+        local p = rawget(row.nameText, "_lastPoint")
+        return p and p[1] == "RIGHT" and p[2] == row.rightText
+    end
+    -- bags make 4, the bank holds 6 more: [4] [10], "4, 10 with bank"
+    ITEM_COUNT[2318], inv.bank[2318] = 4, 6
+    draw()
+    EXPECT(list():find("|cff00ff00[4]|r |cff3fc7ff[10]|r", 1, true), "list: " .. list())
+    EXPECT(can():find("|cff00ff00Can make: 4|r|cff3fc7ff, 10 with bank|r", 1, true), "Can make: " .. can())
+    EXPECT(nameAtCounts(), "the name does not stop at the counts")
+    -- Colorblind markers on: "[10 bank]" in the list; in the Reagents list
+    -- azure reads "0/1 bank" (yellow's "x/need" reads the same without it),
+    -- and the material's name stops short of it; off: as before
+    local S = PB.db.settings
+    local keepCBM, keepBag = S.colorblindMarkers, inv.bags[2318]
+    S.colorblindMarkers = "on"
+    inv.bags[2318] = 0
+    draw()
+    local rrow = TSF.reagentRows[1]
+    local function rpoint() return rawget(rrow.nameText, "_lastPoint") or {} end
+    EXPECT(list():find("|cff3fc7ff[10 bank]|r", 1, true), "markers, list: " .. list())
+    EXPECT((rrow.countText:GetText() or "") == "|cff3fc7ff0/1 bank|r", "markers, Reagents: " .. tostring(rrow.countText:GetText()))
+    EXPECT(rpoint()[1] == "RIGHT" and rpoint()[2] == rrow.countText, "markers: the material's name does not stop at its count")
+    S.colorblindMarkers = "off"
+    draw()
+    EXPECT(list():find("|cff3fc7ff[10]|r", 1, true) and (rrow.countText:GetText() or "") == "|cff3fc7ff0/1|r",
+           "markers off: " .. list() .. " / " .. tostring(rrow.countText:GetText()))
+    EXPECT(rpoint()[1] == "RIGHT" and rpoint()[2] == rrow and rpoint()[4] == -36, "markers off: the material's name is not back at -36")
+    -- the Classic look's banner behind the material's name: cropped to its
+    -- drawn bar (texels 11-116 of 128) in the same place, and ending 4 px
+    -- before a count wider than the art's gap ("0/1 bank" crossed it)
+    if LOOK == "classic" then
+        EXPECT(rawget(rrow, "banner"), "no banner behind a material in the Classic look")
+        local pts = {}
+        rawset(rrow.banner, "SetPoint", function(_, ...) pts[#pts + 1] = { ... } end)
+        rawset(rrow.banner, "ClearAllPoints", function() pts = {} end)
+        local W = TSF._reagentColW * 2          -- one material: one column, both widths
+        local left = 18 - 10 * 18 / 39
+        local span = W - left
+        local function ends(countW)
+            rawset(rrow.countText, "GetStringWidth", function() return countW end)
+            draw()
+            local L, R
+            for _, p in ipairs(pts) do
+                if p[1] == "LEFT" and p[2] == rrow then L = p[4] elseif p[1] == "RIGHT" and p[2] == rrow and p[3] == "LEFT" then R = p[4] end
+            end
+            return L, R
+        end
+        local L, R = ends(40)
+        EXPECT(L and math.abs(L - (left + span * 11 / 128)) < 0.01 and R and math.abs(R - (W - 48)) < 0.01,
+               "a wide count: the banner " .. tostring(L) .. " to " .. tostring(R) .. ", width " .. W)
+        L, R = ends(10)
+        EXPECT(L and math.abs(L - (left + span * 11 / 128)) < 0.01 and R and math.abs(R - (W - span * 11 / 128)) < 0.01,
+               "a short count: the banner " .. tostring(L) .. " to " .. tostring(R) .. " (the art's own bar ends at "
+               .. (W - span * 11 / 128) .. ")")
+        rawset(rrow.countText, "GetStringWidth", nil)
+        rawset(rrow.banner, "SetPoint", nil); rawset(rrow.banner, "ClearAllPoints", nil)
+        local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
+        EXPECT(src:find("banner:SetTexCoord%(BANNER_EDGE, 1 %- BANNER_EDGE, 0, 1%)") and src:find("local BANNER_EDGE   = 11 / 128", 1, true),
+               "the banner is not cropped to its bar")
+    end
+    S.colorblindMarkers, inv.bags[2318] = keepCBM, keepBag
+    -- the bags make none: the azure count alone, red 0, not "missing"
+    ITEM_COUNT[2318], kit.numAvail = 0, 0
+    draw()
+    EXPECT(list():find("|cff3fc7ff[6]|r", 1, true) and not list():find("cff00ff00[", 1, true), "bank only list: " .. list())
+    EXPECT(can():find("|cffff4444Can make: 0|r|cff3fc7ff, 6 with bank|r", 1, true) and not can():find("missing", 1, true),
+           "bank only Can make: " .. can())
+    -- the bank adds nothing: no azure, the name back at its own edge
+    ITEM_COUNT[2318], kit.numAvail, inv.bank[2318] = 4, 4, nil
+    draw()
+    EXPECT(not list():find("3fc7ff", 1, true) and not can():find("with bank", 1, true), "no bank part: " .. list() .. " / " .. can())
+    EXPECT(not nameAtCounts() or PB.Prices:ListProfitOn(), "the name stops at the counts with no bank count")
+    -- two of a material: the bank's 3 make 1 more, a leftover 1 makes none
+    kit.reagents = { { itemID = 2318, count = 2, name = "Light Leather" } }
+    ITEM_COUNT[2318], kit.numAvail, inv.bank[2318] = 4, 2, 3
+    draw()
+    EXPECT(list():find("|cff3fc7ff[3]|r", 1, true) and can():find(", 3 with bank", 1, true), "two each: " .. list() .. " / " .. can())
+    -- no bank part: never seen the bank, the game's count is not the bags'
+    -- (something else limits it), on cooldown, another character's list
+    inv.bankScanned = false
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "a bank PB never saw counted")
+    inv.bankScanned = true
+    EXPECT(TSF:BankCraftCount(kit, 1) == nil, "counted when the game's count is not the bags'")
+    local keepCD = TSF.CooldownSuffix
+    TSF.CooldownSuffix = function() return "\n|cffff8800On cooldown: ready in 3h|r" end
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "counted on cooldown")
+    TSF.CooldownSuffix = keepCD
+    st._viewCharKey = "Alt-Realm"
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "counted on another character's list")
+    st._viewCharKey = nil
+    kit.reagents[2] = { name = "No ID", count = 1 }
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "counted with a material that has no item ID")
+    kit.reagents[2] = nil
+    EXPECT(TSF:BankCraftCount(kit, 2) == 3, "the count back: " .. tostring(TSF:BankCraftCount(kit, 2)))
+    -- a craft that makes 2: the items after each count
+    -- (TBC Anniversary's data: Elemental Blasting Powder makes 4)
+    local keepProf = st.profName
+    st.profName = "Engineering"
+    local hide = { name = "Elemental Blasting Powder", isKnown = true, numAvail = 3, itemID = 23781, spellID = 30303,
+                   category = "Parts", reagents = { { itemID = 22574, count = 1, name = "Mote of Fire" } } }
+    table.insert(st.recipes, 1, hide)
+    st.selected = hide.name
+    ITEM_COUNT[22574], inv.bank[22574] = 3, 2
+    draw()
+    EXPECT(can():find("Can make: 3 (12)|r|cff3fc7ff, 5 (20) with bank|r", 1, true), "makes 4: " .. can())
+    table.remove(st.recipes, 1)
+    st.profName = keepProf
+    -- a recipe as the game lists it: Light Leather, 3 scraps each, the
+    -- game's count 3
+    local live
+    for _, e in ipairs(st.recipes) do if e.name == "Light Leather" and e.isKnown then live = e end end
+    EXPECT(live and live.reagents and live.reagents[1] and live.reagents[1].itemID == 2934, "the game's Light Leather has no material ID")
+    ITEM_COUNT[2934], inv.bank[2934] = 9, 6
+    EXPECT(TSF:BankCraftCount(live, live.numAvail) == 5, "the game's Light Leather with the bank: "
+           .. tostring(TSF:BankCraftCount(live, live.numAvail)) .. " (game count " .. tostring(live.numAvail) .. ")")
+    st.selected = kit.name
+    table.remove(st.recipes, 1)
+    inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey, st.selected = keepBank, keepScanned, keepOff, keepView, keepSel
+    ITEM_COUNT = nil
+    TSF:UpdateListRows(); TSF:RefreshDetailPanel()
+    CLOSE_TRADE()
+end
+U27()
+print("  PASS " .. TAG .. "27 2.2.0: Can make counts your bank on TBC Anniversary: [4] [10], 'Can make: 4, 10 with bank', the bank alone, the items after each count; none where it would be wrong")
+
+-- U28 2.2.0 (GitHub #13): on TBC Anniversary a click on a material made in
+-- the open profession goes to its recipe and Back returns; one made by
+-- another of your professions only says so (a click can't open it there)
+local function U28()
+    local TSF, DS, RDB = PB.TradeSkillFrame, PB.DataStore, PB.RecipeDB
+    local st = TSF.state
+    if TBC.open == "trade" then CLOSE_TRADE() end
+    local pack = { "PB Jump Pack", "easy", 0, nil, nil,
+        reagents = { { "Light Leather", 2, 2318 }, { "Copper Bar", 1, 2840 } } }
+    table.insert(TBC.tradeRows, pack)
+    OPEN_TRADE()
+    local inv = DS:GetCharacter().inventory
+    local keepBank, keepScanned = inv.bank, inv.bankScanned
+    ITEM_COUNT = { [2318] = 4 }
+    inv.bank, inv.bankScanned = { [2318] = 2 }, true
+    local function lines(row)
+        local out = {}
+        rawset(GameTooltip, "AddLine", function(_, t) out[#out + 1] = tostring(t) end)
+        rawset(GameTooltip, "Show", function() end)
+        row:GetScript("OnEnter")(row)
+        rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "Show", nil)
+        return table.concat(out, "\n")
+    end
+    local function click(row) row:GetScript("OnMouseUp")(row) end
+    local function rowFor(itemID)
+        for _, r in ipairs(TSF.reagentRows) do if r:IsShown() and r.itemID == itemID then return r end end
+    end
+    for _, r in ipairs(TSF.reagentRows) do
+        rawset(r.hover, "Show", function(x) rawset(x, "_on", true) end)
+        rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
+    end
+    local function back() TSF.detBack:GetScript("OnClick")(TSF.detBack) end
+    local function pick(name)
+        for idx, e in ipairs(st.recipes) do
+            if not e.isHeader and e.name == name then
+                st.scrollOffset = idx - 1
+                TSF.listRows[1]:GetScript("OnClick")(TSF.listRows[1], "LeftButton")
+                return st.selected == name
+            end
+        end
+        return false
+    end
+    local function backTip()
+        local out = {}
+        rawset(GameTooltip, "SetText", function(_, t) out[#out + 1] = tostring(t) end)
+        rawset(GameTooltip, "Show", function() end)
+        TSF.detBack:GetScript("OnEnter")(TSF.detBack)
+        rawset(GameTooltip, "SetText", nil); rawset(GameTooltip, "Show", nil)
+        return table.concat(out, "\n")
+    end
+    EXPECT(TSF:SelectRecipeForView("PB Jump Pack", false), "no PB Jump Pack in the list")
+    TSF.qtyBox:SetText("5")
+    local t = lines(rowFor(2318))
+    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Needs 6 crafted|cff3fc7ff, 4 with bank|r", 1, true), "hover:\n" .. t)
+    click(rowFor(2318))
+    EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "6", "jump: " .. tostring(st.selected))
+    EXPECT(TSF.detBack:IsShown() and TSF.detBack:GetText() == "Back" and backTip() == "Back to PB Jump Pack", "no Back")
+    local bp = rawget(TSF.detBack, "_lastPoint")
+    EXPECT(bp and bp[1] == "TOPRIGHT" and bp[2] == TSF.shareBtn and bp[3] == "BOTTOMRIGHT" and bp[5] == -13
+           and (rawget(TSF.detBack, "_size") or {})[1] == 56, "Back is not under Share")
+    back()
+    EXPECT(st.selected == "PB Jump Pack" and TSF.qtyBox:GetText() == "5", "Back: " .. tostring(st.selected))
+    -- the bank covers it all
+    inv.bank = { [2318] = 8 }
+    t = lines(rowFor(2318))
+    EXPECT(t:find("Needs 6 crafted|cff3fc7ff, none with bank|r", 1, true), "bank covers it:\n" .. t)
+    inv.bank = { [2318] = 2 }
+    -- a recipe you pick starts at 1; the window opened again too
+    TSF.qtyBox:SetText("7")
+    EXPECT(pick("Light Leather") and TSF.qtyBox:GetText() == "1", "a pick kept the quantity " .. tostring(TSF.qtyBox:GetText()))
+    local keepRemember = PB.db.settings.rememberWindowState
+    PB.db.settings.rememberWindowState = true
+    TSF.qtyBox:SetText("8")
+    CLOSE_TRADE()
+    OPEN_TRADE()
+    EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "1",
+           "reopened on " .. tostring(st.selected) .. " with the quantity " .. tostring(TSF.qtyBox:GetText()))
+    PB.db.settings.rememberWindowState = keepRemember
+    for _, r in ipairs(TSF.reagentRows) do
+        rawset(r.hover, "Show", function(x) rawset(x, "_on", true) end)
+        rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
+    end
+    TSF:SelectRecipeForView("PB Jump Pack", false)
+    -- Copper Bar from your Smelting: named, no click
+    local me = DS:GetCharacter()
+    local keepSmelt = me.professions.Smelting
+    me.professions.Smelting = { skillLevel = 1, recipes = { ["Smelt Copper"] = {} } }
+    local keepItr = RDB.itemToRecipe[2840]
+    if not (keepItr and keepItr[1]) then RDB.itemToRecipe[2840] = { { recipeName = "Smelt Copper", profName = "Smelting" } } end
+    t = lines(rowFor(2840))
+    EXPECT(t:find("Made with Smelting: Smelt Copper", 1, true) and not t:find("Click", 1, true) and not rawget(rowFor(2840).hover, "_on"),
+           "Copper Bar hover:\n" .. t)
+    click(rowFor(2840))
+    EXPECT(st.selected == "PB Jump Pack" and st.profName ~= "Smelting", "a click opened Smelting")
+    RDB.itemToRecipe[2840] = keepItr
+    me.professions.Smelting = keepSmelt
+    inv.bank, inv.bankScanned = keepBank, keepScanned
+    ITEM_COUNT = nil
+    TSF._jumpStack = nil
+    CLOSE_TRADE()
+    for i, r in ipairs(TBC.tradeRows) do if r == pack then table.remove(TBC.tradeRows, i) break end end
+end
+U28()
+print("  PASS " .. TAG .. "28 2.2.0 #13: on TBC Anniversary a material made in the open profession jumps with 'Needs N crafted' and Back under Share returns; a pick or a reopen starts at 1; one from another profession says 'Made with Smelting' and doesn't jump")
+
+-- U29 2.2.0: the craft strip on TBC Anniversary, in both looks: shown from
+-- the craft's first cast, the window rises above it (the Enchant button
+-- too) and the list fits its rows; the main window shows it while parked;
+-- gone at the end of the batch
+local function U29()
+    local UI, TSF, S = PB.UI, PB.TradeSkillFrame, PB.db.settings
+    local st = TSF.state
+    local keepArm, keepName = TSF.ArmCraftWatchdog, SPELL_NAMES[2881]
+    TSF.ArmCraftWatchdog = function() end
+    SPELL_NAMES[2881] = "Light Leather"   -- TBC Anniversary matches the craft by name
+    local row = TBC.tradeRows[2]
+    local keepAvail = row[3]
+    row[3] = 10
+    local function cast(ev) FIRE(ev or "UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 2881) end
+    local function y(frame) local p = rawget(frame, "_lastPoint"); return p and p[#p] end
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    TSF:StopCraftTracking()
+    S.craftBarCast, S.craftBarBatch = true, true
+    OPEN_TRADE()
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    TSF:DoCraftImmediate(5)
+    EXPECT(TSF._craftingActive and not TSF.craftStrip:IsShown() and y(TSF.listPanel) == 30, "a strip before the first cast")
+    CAST_INFO = { "Light Leather", "", 0, 999000, 1001000, true, nil, false, 2881 }
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(TSF.craftStrip:IsShown() and TSF.craftStrip.cast:IsShown() and TSF.craftStrip.batch:IsShown()
+           and y(TSF.listPanel) == 65 and y(TSF.craftBar) == 65 and y(TSF.detailFrame) == 125
+           and y(TSF.enchantCraftBtn) == 117 and TSF:ListRows() == 18,
+           "the window over the strip: list " .. tostring(y(TSF.listPanel)) .. ", rows " .. TSF:ListRows())
+    -- TBC Anniversary's GetSpellInfo here gives no cast time: 1 s, plus 0.5
+    TSF:PaintStrip(TSF.craftStrip)
+    EXPECT(TSF.craftStrip.cast.text:GetText() == "Light Leather"
+           and TSF.craftStrip.batch.text:GetText() == "Crafting 1 of 5, about 7s left",
+           "the bars: " .. tostring(TSF.craftStrip.batch.text:GetText()))
+    CAST_INFO = nil
+    cast()
+    TSF:PaintStrip(TSF.craftStrip)
+    EXPECT(TSF.craftStrip.batch.text:GetText() == "Crafting 2 of 5, about 6s left", "after one: " .. tostring(TSF.craftStrip.batch.text:GetText()))
+    -- parked on the Characters tab: the main window's strip
+    TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+    EXPECT(TSF._parked and TSF:MainStrip():IsShown() and y(UI.frame.tabs[1].content) == 45, "no strip in the main window")
+    cast(); cast(); cast(); cast()
+    EXPECT(not TSF._craftingActive and not TSF:MainStrip():IsShown() and not TSF.craftStrip:IsShown()
+           and y(UI.frame.tabs[1].content) == 10, "the strip stayed after the batch")
+    UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+    EXPECT(TSF.frame:IsShown() and y(TSF.listPanel) == 30 and y(TSF.enchantCraftBtn) == 82 and TSF:ListRows() == 20, "the window after the batch")
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() end
+    row[3] = keepAvail
+    SPELL_NAMES[2881] = keepName
+    TSF.ArmCraftWatchdog = keepArm
+end
+U29()
+print("  PASS " .. TAG .. "29 2.2.0: the craft strip on TBC Anniversary from the first cast: the window and the Enchant button rise, 18 rows, 'Crafting 2 of 5, about 6s left', the main window's strip while parked; gone after the batch")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 29)")

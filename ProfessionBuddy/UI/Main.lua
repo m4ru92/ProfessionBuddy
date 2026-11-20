@@ -7,8 +7,10 @@ local addon = ProfBuddy
 local Theme = addon.Theme
 local UI = addon:NewModule("UI")
 
-local FRAME_WIDTH  = 600
-local FRAME_HEIGHT = 450
+-- The profession window's size, so the two swap in place (Back, the
+-- bottom tabs) and the lists have room (2.2.0 TEST-c6, m4ru: was 600 x 450)
+local FRAME_WIDTH  = 740
+local FRAME_HEIGHT = 540
 
 ----------------------------------------------------------------------
 -- Every floating list this window opens lives on UIParent, not on the
@@ -53,9 +55,17 @@ function UI:Init()
     -- Order History and Find a Crafter, fastened to this window's right
     -- edge, add themselves here when built and scale with it
     self.scaleFollowers = {}
-    self.scaleGrip = self:AddScaleGrip(f, "mainWindowScale", self.scaleFollowers)
+    -- One size and one place for this window and the profession window,
+    -- so they swap in the same space (TEST-c7, m4ru): the profession
+    -- window's size and position, the ones kept until now, for both.
+    -- The main window's own size setting is gone.
+    addon.db.settings.mainWindowScale = nil
+    for _, w in pairs(addon.db.windows or {}) do
+        if type(w) == "table" and type(w.pos) == "table" then w.pos.main = nil end
+    end
+    self.scaleGrip = self:AddScaleGrip(f, "professionWindowScale", self.scaleFollowers)
     -- after the scale grip, whose OnShow puts the saved size back first
-    self:TrackPosition(f, "main")
+    self:TrackPosition(f, "profession")
 
     -- Close any open dropdown list (e.g. the Guild tab profession filter) and
     -- the Friends tab order menu when the window hides. Those lists are
@@ -189,7 +199,7 @@ function UI:AddTab(name, displayName, createFunc)
     -- bar; -60 left a visibly loose gap above every tab's content.
     local content = CreateFrame("Frame", nil, self.frame)
     content:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 10, -UI.CONTENT_TOP)
-    content:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -10, 10)
+    content:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -10, 10 + (self._stripLift or 0))
     content:Hide()
 
     -- The ONE refresh hook. A tab's content becomes visible when the window
@@ -221,6 +231,32 @@ function UI:AddTab(name, displayName, createFunc)
     end
 
     return content
+end
+
+-- The craft strip (TradeSkillFrame.lua, TSF:UpdateCraftStrip) across the
+-- bottom while a craft runs: every tab's content rises by `L` above it, and
+-- the tab on show repaints its lists with the rows that still fit
+function UI:ApplyStripLayout(L)
+    self._stripLift = L
+    if not self.frame then return end
+    for _, tab in ipairs(self.frame.tabs or {}) do
+        local c = tab.content
+        c:ClearAllPoints()
+        c:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 10, -UI.CONTENT_TOP)
+        c:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -10, 10 + L)
+    end
+    local tab = self.activeTab and self.frame.tabs[self.activeTab]
+    if self.frame:IsShown() and tab and tab.created and tab.content:IsShown() and tab.content.Refresh then
+        tab.content:Refresh()
+    end
+end
+
+-- The rows of a list built for `maxRows` rows `rowH` tall that fit while
+-- the strip shows
+function UI:FitRows(maxRows, rowH)
+    local L = self._stripLift or 0
+    if L <= 0 then return maxRows end
+    return math.max(1, maxRows - math.ceil(L / rowH))
 end
 
 function UI:SelectTab(index)
@@ -445,16 +481,25 @@ UI.SIDE_GAP = 4
 
 -- The scale frame gets for s: within the limits, and no bigger than fits
 -- on the screen, so the grip in its corner can always be reached, with room
--- beside it for the widest of its side panels.
+-- beside it for the widest of its side panels. Windows sharing a size
+-- setting (UI:AddScaleGrip's key) count each other's side panels too, so
+-- one setting gives them one size (TEST-c8, m4ru: the main window counted
+-- Order history, the profession window only the Material Calculator).
 function UI:FitScale(frame, s, followers)
     s = self:ClampScale(s)
     local sw, sh = tonumber(UIParent:GetWidth()), tonumber(UIParent:GetHeight())
     local fw, fh = tonumber(frame:GetWidth()), tonumber(frame:GetHeight())
     if sw and sh and fw and fh and fw > 0 and fh > 0 then
         local side = 0
-        for _, f in ipairs(followers or {}) do
-            local w = type(f.GetWidth) == "function" and tonumber(f:GetWidth())
-            if w and w + self.SIDE_GAP > side then side = w + self.SIDE_GAP end
+        local lists = { followers or {} }
+        for _, list in ipairs(self._scaleGroups and self._scaleGroups[frame._pbScaleKey or ""] or {}) do
+            lists[#lists + 1] = list
+        end
+        for _, list in ipairs(lists) do
+            for _, f in ipairs(list) do
+                local w = type(f.GetWidth) == "function" and tonumber(f:GetWidth())
+                if w and w + self.SIDE_GAP > side then side = w + self.SIDE_GAP end
+            end
         end
         local fit = math.floor(math.min(sw / (fw + side), sh / fh) * 100) / 100
         if s > fit then s = math.max(fit, self.SCALE_MIN) end
@@ -537,26 +582,37 @@ function UI:CharWindows()
 end
 
 -- The window's top-left corner in UIParent's units (its own units times
--- its scale), so a scale change does not move it
+-- its scale), so a scale change does not move it. Two windows can share a
+-- key (the main and the profession window, TEST-c7): _livePos holds the
+-- last one for this session, also with keeping off, so the other window
+-- opens there; the saved settings get it with keeping on.
 function UI:SavePosition(frame)
     local key = frame and frame._pbPosKey
-    if not (key and self:KeepOn()) then return end
+    if not key then return end
     local left, top = frame:GetLeft(), frame:GetTop()
     if type(left) ~= "number" or type(top) ~= "number" then return end
+    local s = frame:GetScale() or 1
+    self._livePos = self._livePos or {}
+    self._livePos[key] = { x = left * s, y = top * s }
+    if not self:KeepOn() then return end
     local w = self:CharWindows()
     if not w then return end
-    local s = frame:GetScale() or 1
     w.pos = w.pos or {}
     w.pos[key] = { x = left * s, y = top * s }
 end
 
--- Back where it was, pulled onto the screen if the screen got smaller.
+-- Back where it (or the window sharing its key) was this session, else
+-- where it was kept, pulled onto the screen if the screen got smaller.
 -- True when it put the window somewhere.
 function UI:RestorePosition(frame)
     local key = frame and frame._pbPosKey
-    if not (key and self:KeepOn()) then return false end
-    local w = addon.db.windows and addon.db.windows[addon:PlayerKey() or ""]
-    local p = w and w.pos and w.pos[key]
+    if not key then return false end
+    local p = self._livePos and self._livePos[key]
+    if not p then
+        if not self:KeepOn() then return false end
+        local w = addon.db.windows and addon.db.windows[addon:PlayerKey() or ""]
+        p = w and w.pos and w.pos[key]
+    end
     local x, y = p and tonumber(p.x), p and tonumber(p.y)
     if not (x and y) then return false end
     local s = frame:GetScale() or 1
@@ -571,8 +627,9 @@ function UI:RestorePosition(frame)
     return true
 end
 
--- Keep this window's position under key: put back the first time it
--- shows, saved when it hides, a drag ends (AfterDrag) or you log out
+-- Keep this window's position under key: put back each time it shows
+-- (where the window sharing the key last was, TEST-c7), saved when it
+-- hides, a drag ends (AfterDrag) or you log out
 function UI:TrackPosition(frame, key)
     frame._pbPosKey = key
     frame._pbPosRestored = false
@@ -580,9 +637,12 @@ function UI:TrackPosition(frame, key)
     self._tracked[#self._tracked + 1] = frame
     frame:HookScript("OnShow", function(f)
         -- moving it in combat is blocked on TBC Anniversary: the next open
-        if f._pbPosRestored or InCombatLockdown() then return end
+        if InCombatLockdown() then return end
+        local first = not f._pbPosRestored
         f._pbPosRestored = true
         if UI:RestorePosition(f) then return end
+        -- nothing to put it back to: after its first open it stays put
+        if not first then return end
         f:SetUserPlaced(false)
         -- Keep on with nothing saved yet (first open after updating): it
         -- stays where it is, where the game may have kept it from your
@@ -636,6 +696,11 @@ end
 
 function UI:AddScaleGrip(frame, key, followers)
     local settings = addon.db.settings
+    -- every window on this setting, by its side panels (UI:FitScale)
+    frame._pbScaleKey = key
+    self._scaleGroups = self._scaleGroups or {}
+    self._scaleGroups[key] = self._scaleGroups[key] or {}
+    table.insert(self._scaleGroups[key], followers or {})
     local grip = CreateFrame("Button", nil, frame)
     grip:SetSize(14, 14)
     grip:SetPoint("BOTTOMRIGHT", 0, 0)

@@ -41,7 +41,8 @@ function GetItemInfo(id)
     -- the client's 14th value, bindType: 0 for these (nothing binds)
     return n, "|cffffffff|Hitem:" .. id .. "::::::::|h[" .. n .. "]|h|r", 1, 5, 1, "Trade Goods", "Leather", 20, "", "icon", 5, 7, 0, 0
 end
-function GetItemCount() return 0 end
+-- bags only (no includeBank), 0 unless a test sets ITEM_COUNT[id]
+function GetItemCount(id) local t = rawget(_G, "ITEM_COUNT"); return t and t[id] or 0 end
 function GetItemIcon() return "icon" end
 function GetSpellInfo(id) local n = SPELL_NAMES[id]; return n, nil, "icon" end
 function GetSpellLink(id) return "|cff71d5ff|Hspell:" .. tostring(id) .. "|h[spell]|h|r" end
@@ -87,7 +88,11 @@ function IsTradeSkillLinked() return false end
 function IsCraftLinked() return false end
 function CraftIsPetTraining() return false end
 function CraftIsEnchanting() return true end
-function GetTradeSkillLine() return TBC.trade[1], TBC.trade[2], TBC.trade[3] end
+-- after TRADE_SKILL_CLOSE the name reads "UNKNOWN" (Source/Classic.lua, measured)
+function GetTradeSkillLine()
+    if TBC.open ~= "trade" then return "UNKNOWN", 0, 0 end
+    return TBC.trade[1], TBC.trade[2], TBC.trade[3]
+end
 function GetNumTradeSkills() return TBC.open == "trade" and #TBC.tradeRows or 0 end
 function GetTradeSkillInfo(i) local r = TBC.tradeRows[i]; if r then return r[1], r[2], r[3], r[4] end end
 function GetTradeSkillItemLink(i) local r = TBC.tradeRows[i]; return r and r[5] end

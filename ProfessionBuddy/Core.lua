@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "2.1.1"
+addon.version = "2.2.0"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -710,6 +710,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         openBesideBlizzard  = false, -- Replace off: also open PB's window beside Blizzard's
         rememberWindowState = true,
         showAllProfessions  = false,
+        showItemInfo        = true,  -- the recipe panel's Item info box (2.2.0, #12)
+        craftBarCast        = true,  -- the craft strip's current cast bar (2.2.0)
+        craftBarBatch       = true,  -- the craft strip's whole batch bar, with time left (2.2.0)
         includeAltsInCalc   = true,
         showRemoteInDetail  = true,
         showRemoteInTooltips = true,
@@ -727,7 +730,8 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         bnetTrust           = false, -- ...and trust them
         colorblindMarkers   = "auto", -- "auto" (follow the game's Colorblind Mode) | "on" | "off"
         windowStyle         = "modern", -- UI/Theme.lua: "modern" | "classic" | "game" (Match the game); applies after /reload
-        mainWindowScale     = 1,    -- UI/Main.lua drag-to-scale grip, 0.75-1.5
+        -- the drag-to-scale grip (UI/Main.lua), 0.75-1.5: one size for the
+        -- profession window and the main window (TEST-c7)
         professionWindowScale = 1,
     }
     -- Migrate old single-slider setting
@@ -775,6 +779,15 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.showAllProfessions == nil then
         ProfBuddyDB.settings.showAllProfessions = false
+    end
+    if ProfBuddyDB.settings.showItemInfo == nil then
+        ProfBuddyDB.settings.showItemInfo = true
+    end
+    if ProfBuddyDB.settings.craftBarCast == nil then
+        ProfBuddyDB.settings.craftBarCast = true
+    end
+    if ProfBuddyDB.settings.craftBarBatch == nil then
+        ProfBuddyDB.settings.craftBarBatch = true
     end
     if ProfBuddyDB.settings.orderHistoryLimit == nil then
         ProfBuddyDB.settings.orderHistoryLimit = 50
@@ -1002,12 +1015,13 @@ SlashCmdList["PROFBUDDY"] = function(msg)
         end
 
     elseif msg == "friends" then
-        -- Close profession window if open
+        -- Park the profession window if open
         if addon.TradeSkillFrame and addon.TradeSkillFrame.frame
            and addon.TradeSkillFrame.frame:IsShown() then
             -- in combat the game blocks hiding it: when combat ends (TEST-c6)
             if addon.TradeSkillFrame:WaitForCombat("Friends opens", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
-            addon.TradeSkillFrame:Hide()
+            -- keeps your profession open behind, with Back (2.2.0)
+            addon.TradeSkillFrame:HideForMain()
         end
         if addon.FriendsPanel then
             addon.FriendsPanel:Toggle()
@@ -1095,13 +1109,16 @@ SlashCmdList["PROFBUDDY"] = function(msg)
 
     else
         -- Default: open the /pb main window.
-        -- Close profession window / settings if open first.
+        -- A profession window open first: kept open behind (parked).
         if addon.TradeSkillFrame then
             local tsf = addon.TradeSkillFrame
             if tsf.frame and tsf.frame:IsShown() then
                 -- in combat the game blocks hiding it: when combat ends (TEST-c6)
                 if tsf:WaitForCombat("The ProfessionBuddy window opens", function() SlashCmdList.PROFBUDDY(rawMsg) end) then return end
-                tsf:Hide()
+                -- keeps your profession open behind the main window, with
+                -- Back, as the bottom tabs do (2.1.0's park; /pb closed it
+                -- until 2.2.0, m4ru TEST-a6)
+                tsf:HideForMain()
             end
         end
         if addon.CharacterPanel then

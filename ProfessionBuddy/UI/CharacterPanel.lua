@@ -135,6 +135,15 @@ function CP:AcquireSectionHeader(text)
     return fs
 end
 
+-- A row's width for its left offset x: every row, bar and line ends at the
+-- scroll child's right edge, 6 px before the scroll bar (the scroll frame
+-- template's gap). Each used to take the bar's width whatever its offset,
+-- so the profession rows, 15 px in, ran 15 px past the bars, up to the
+-- scroll bar (TEST-c8, m4ru)
+function CP:RowWidth(x)
+    return self.scrollChild:GetWidth() - (x or 0)
+end
+
 -- Hairline under a section title.
 function CP:AcquireDivider()
     local tex = self:Acquire("divider", function()
@@ -143,7 +152,7 @@ function CP:AcquireDivider()
         return t
     end)
     tex:ClearAllPoints()
-    tex:SetSize(self.scrollChild:GetWidth() - 10, 1)
+    tex:SetSize(self:RowWidth(5), 1)   -- placed at x 5
     return tex
 end
 
@@ -288,7 +297,9 @@ function CP:CreateContent(parent)
     -- Refresh button
     local refreshBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     refreshBtn:SetSize(70, 22)
-    refreshBtn:SetPoint("TOPRIGHT", -5, -2)
+    -- right edge under "Back to <profession>" (the main window's -12, less
+    -- the content's 10 px inset; TEST-c8)
+    refreshBtn:SetPoint("TOPRIGHT", -2, -2)
     refreshBtn:SetText("Refresh")
     refreshBtn:SetScript("OnClick", function()
         if addon.Scanner then
@@ -301,7 +312,10 @@ function CP:CreateContent(parent)
     -- Scroll frame for character list
     local scrollFrame = CreateFrame("ScrollFrame", "ProfBuddyCPScroll", parent, "UIPanelScrollFrameTemplate")
     scrollFrame:SetPoint("TOPLEFT", 5, -30)
-    scrollFrame:SetPoint("BOTTOMRIGHT", -28, 5)
+    -- the template's scroll bar sits 6 px right of the frame and is 16
+    -- wide: -22 ends it at the content's right edge, where every other
+    -- tab's scroll bar ends (TEST-c8; -28 left it 6 px further in)
+    scrollFrame:SetPoint("BOTTOMRIGHT", -22, 5)
 
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollChild:SetWidth(scrollFrame:GetWidth())
@@ -501,7 +515,7 @@ function CP:CreateFactionHeader(faction, charCount, isCollapsed, yOffset)
         return f
     end)
 
-    row:SetSize(self.scrollChild:GetWidth() - 10, ROW_HEIGHT)
+    row:SetSize(self:RowWidth(0), ROW_HEIGHT)
     row:ClearAllPoints()
     row:SetPoint("TOPLEFT", 0, yOffset)
 
@@ -541,7 +555,7 @@ function CP:CreateCharacterRow(charKey, charData, isCurrent, yOffset)
         return f
     end)
 
-    row:SetSize(self.scrollChild:GetWidth() - 10, ROW_HEIGHT)
+    row:SetSize(self:RowWidth(0), ROW_HEIGHT)
     row:ClearAllPoints()
     row:SetPoint("TOPLEFT", 0, yOffset)
 
@@ -629,7 +643,7 @@ function CP:CreateProfessionRow(charKey, profName, profData, yOffset, isExpanded
         return f
     end)
 
-    row:SetSize(self.scrollChild:GetWidth() - 10, PROF_ROW_HEIGHT)
+    row:SetSize(self:RowWidth(15), PROF_ROW_HEIGHT)
     row:ClearAllPoints()
     row:SetPoint("TOPLEFT", 15, yOffset)
     row._charKey  = charKey
@@ -823,7 +837,7 @@ function CP:RenderExpandedRecipes(charKey, profName, profData, yOffset)
             return f
         end)
 
-        recipeRow:SetSize(self.scrollChild:GetWidth() - 40, RECIPE_ROW_HEIGHT)
+        recipeRow:SetSize(self:RowWidth(30), RECIPE_ROW_HEIGHT)
         recipeRow:ClearAllPoints()
         recipeRow:SetPoint("TOPLEFT", 30, yOffset)
 
@@ -1082,7 +1096,7 @@ function CP:RefreshSearchResults(characters)
             return f
         end)
 
-        fRow:SetSize(self.scrollChild:GetWidth() - 20, ROW_HEIGHT)
+        fRow:SetSize(self:RowWidth(10), ROW_HEIGHT)
         fRow:ClearAllPoints()
         fRow:SetPoint("TOPLEFT", 10, yOff)
 
@@ -1110,7 +1124,7 @@ function CP:RefreshSearchResults(characters)
             f.nameText:SetPoint("LEFT", 5, 0)
             return f
         end)
-        charRow:SetSize(self.scrollChild:GetWidth() - 30, ROW_HEIGHT)
+        charRow:SetSize(self:RowWidth(20), ROW_HEIGHT)
         charRow:ClearAllPoints()
         charRow:SetPoint("TOPLEFT", 20, yOff)
 
@@ -1162,7 +1176,7 @@ function CP:RefreshSearchResults(characters)
                         f.countText:SetPoint("RIGHT", -5, 0)
                         return f
                     end)
-                    itemRow:SetSize(self.scrollChild:GetWidth() - 40, PROF_ROW_HEIGHT)
+                    itemRow:SetSize(self:RowWidth(30), PROF_ROW_HEIGHT)
                     itemRow:ClearAllPoints()
                     itemRow:SetPoint("TOPLEFT", 30, yOffset)
                     itemRow.itemText:SetText(r.itemName)
@@ -1232,7 +1246,7 @@ function CP:RefreshSearchResults(characters)
                         f.profText:SetPoint("RIGHT", -5, 0)
                         return f
                     end)
-                    recipeRow:SetSize(self.scrollChild:GetWidth() - 40, PROF_ROW_HEIGHT)
+                    recipeRow:SetSize(self:RowWidth(30), PROF_ROW_HEIGHT)
                     recipeRow:ClearAllPoints()
                     recipeRow:SetPoint("TOPLEFT", 30, yOffset)
 

@@ -600,4 +600,7 @@ function Scanner:ScanBank()
     end
 
     DS:SetInventory("bank", items)
+    -- an open profession's Can make counts the bank too (2.2.0)
+    local TSF = addon.TradeSkillFrame
+    if TSF and TSF.OnBankScanned then TSF:OnBankScanned() end
 end

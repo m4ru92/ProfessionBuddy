@@ -79,13 +79,15 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 - **Cross-character view.** See every character's professions, known recipes, and bag and bank inventory in one place, without logging in and out.
 - **Material calculator.** Resolves the full reagent tree, including intermediate crafts, subtracts what you already own across your characters, and produces a shopping list.
 - **Prices and profit.** What a craft costs, what it sells for, and the profit, from Auctionator, TSM, the auction prices ProfessionBuddy records while you browse, and vendor prices. The recipe list can show and sort by profit, and the Material Calculator prices what you still need to buy.
+- **Vendor shuffle.** The Shuffle tab lists the crafts a vendor pays more for than their materials cost, for you, your alts, your friends and your guildmates, with the profit and about how much an hour.
 - **Crafting orders.** Request a craft from a friend or guildmate running ProfessionBuddy. The request, accept, crafted, and received steps run with chat notifications, a queue, and history. If a friend is offline, the order queues and sends the next time you are both online.
 - **Guild board.** Post an order to your whole guild, claim what others post, and get a chat line when someone posts a recipe you know. Find a crafter searches your guild by recipe or item.
 - **Friends and guild data sharing.** See your contacts', group members' and guildmates' professions, recipes, and materials. On TBC Classic Anniversary, your Battle.net friends' characters can join your contacts as they log in.
 - **Search by name or material.** The Search box finds recipes by name or by any material they use. Learnable now lists what you can learn at your current skill.
 - **Tooltips.** "Craftable by" shows who can make an item, "Used in" shows which recipes use a reagent, and gathering nodes and skinnable mobs show the skill they need and what they drop.
 - **Recipe tools.** Every tool a recipe needs shows in the detail panel, from Enchanting rods to a Blacksmith Hammer, green when a character has one and red when not, with the crafting station it needs, such as a Tanning Rack or an Anvil.
-- **Batch crafting.** Craft 1, 5, 10, 20, or all, with a live countdown and skill-bar updates.
+- **Batch crafting.** Craft 1, 5, 10, 20, or all, with a live countdown and skill-bar updates. While a batch runs, bars across the bottom of the window show the current cast and the whole batch: "Crafting 12 of 47, about 1m 05s left".
+- **Can make with your bank.** The recipe list counts what you can make from your bags, and a second count adds your bank when it holds more of the materials. Click a material one of your recipes makes to go to its recipe, with the crafts you need in the quantity box.
 - **Share a recipe.** Open the chat box on guild, party, raid, or say with a recipe's link typed.
 - **State preservation.** Window position, filters, sort, search, and selection persist between sessions.
 
@@ -93,7 +95,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 
 - **Show everything or Learn as you go.** List every recipe in the game, or only the ones you, your alts, or your friends have seen at a trainer, at a vendor, or as a recipe item in your bags. ProfessionBuddy asks the first time a profession opens, and Settings changes it later.
 - **Trainers and vendors.** ProfessionBuddy records each trainer and vendor you visit, with learn levels, prices, and stock, and shares them with your friends.
-- **Waylaid Supplies and Craftsman's Writs.** Their tooltips show what filling one costs.
+- **Waylaid Supplies and Craftsman's Writs.** Their tooltips show what filling one costs, and the Shuffle tab's "Crates and writs" lists every crate and writ with what it asks for, what you and your alts hold, and what the rest costs.
 - **Gathering loot from play.** Ore veins, herbs, and skinnable mobs start from Classic data and switch to what you and your friends gathered once you have gathered them 10 times together.
 
 The profession window covers Blacksmithing, Leatherworking, Tailoring, Engineering, Alchemy, Enchanting, Cooking, First Aid, and Mining and Smelting. Rogues get Poisons on both games. TBC Classic Anniversary adds Jewelcrafting. WoW: Forever adds Herbalism, Skinning, and Fishing. Gathering tooltips cover Mining, Herbalism, and Skinning on both games.

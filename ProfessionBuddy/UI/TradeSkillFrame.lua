@@ -81,6 +81,14 @@ local LINK_BTN      = 23   -- WoW: Forever's profession link button (Blizzard's 
 local LINK_GAP      = 4
 local VISIBLE_ROWS  = 20
 local CRAFT_BAR_H   = 58   -- two 22 px button rows with 6 px above and below: clear of either look's border
+local LIST_TOP      = -106 -- the recipe list's and the detail panel's top edge
+-- The craft strip (TSF:UpdateCraftStrip): each bar's height, the gap
+-- between the two, and the gap between the strip and what sits above it
+local STRIP_BAR_H   = 14
+local STRIP_GAP     = 3
+local STRIP_PAD     = 4
+-- the see-through share at each end of the Classic reagent banner's texture
+local BANNER_EDGE   = 11 / 128
 
 -- Seconds the search box waits after the last keystroke before rebuilding.
 local SEARCH_DEBOUNCE = 0.3
@@ -1540,13 +1548,53 @@ function TSF:HookItemTooltip()
     -- buying and crafting), "?" when the item has no price. A writ also
     -- shows its own auction price. Rewards come in a later update (option A,
     -- 2026-11-08: no Forever reward data yet). Off with Show prices.
+    -- A Waylaid Crate takes any one bundle from a list (2.2.0 TEST-c2,
+    -- Hircus): each bundle with its cost, and the cheapest is the fill cost.
     HookItemTooltip(function(tip)
         local P = addon.Prices
         if not (P and P:Enabled()) then return end
-        if not (addon.Waylaid or addon.Writs) then return end
+        if not (addon.Waylaid or addon.Writs or addon.WaylaidBundles) then return end
         local itemLink = TooltipItemLink(tip)
         local itemID = itemLink and addon:ItemIDFromLink(itemLink)
         if not itemID then return end
+        -- unopened (a plain Waylaid Crate, a Sealed writ; TEST-c5): it asks
+        -- for nothing yet, so only what it sells for, when PB has a price
+        if addon.WaylaidUnopened and addon.WaylaidUnopened[itemID] then
+            local sell = P:AuctionPrice(itemID)
+            if sell then
+                tip:AddLine(" ")
+                tip:AddDoubleLine("Auction price (ProfessionBuddy):", P:Money(sell), 1, 0.82, 0, 1, 1, 1)
+                tip:Show()
+            end
+            return
+        end
+        local bundles = addon.WaylaidBundles and addon.WaylaidBundles[itemID]
+        if bundles then
+            local rows, best = {}, nil
+            for _, b in ipairs(bundles) do
+                local mp = P:MaterialPrice(b[1])
+                local row = { b = b, cost = mp.unit and mp.unit * b[2], partial = mp.partial }
+                rows[#rows + 1] = row
+                if row.cost and (not best or row.cost < best.cost) then best = row end
+            end
+            local function money(row)
+                if not row.cost then return "|cffff4444?|r" end
+                return P:Money(row.cost) .. (row.partial and "+" or "")
+            end
+            tip:AddLine(" ")
+            tip:AddDoubleLine("Fill cost (ProfessionBuddy):", best and money(best) or "|cffff4444?|r", 1, 0.82, 0, 1, 1, 1)
+            for _, row in ipairs(rows) do
+                local name = GetItemInfo(row.b[1]) or row.b[3]
+                tip:AddDoubleLine("  " .. row.b[2] .. " x " .. name, money(row), 0.9, 0.9, 0.9, 1, 1, 1)
+            end
+            tip:AddLine("  Any one of these fills it; the cheapest is the fill cost.", 0.5, 0.5, 0.5, true)
+            -- it sells at auction too (TEST-c4): fill it or sell it
+            local sell = P:AuctionPrice(itemID)
+            if sell then tip:AddDoubleLine("  Crate at auction", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
+            tip:AddLine("  Reward details: coming in a later update.", 0.5, 0.5, 0.5)
+            tip:Show()
+            return
+        end
         local writ = addon.Writs and addon.Writs[itemID]
         local need = (addon.Waylaid and addon.Waylaid[itemID]) or writ
         if not need then return end
@@ -1561,7 +1609,7 @@ function TSF:HookItemTooltip()
         tip:AddLine("  " .. count .. " x " .. name, 0.9, 0.9, 0.9)
         if writ then
             local sell = P:AuctionPrice(itemID)
-            if sell then tip:AddDoubleLine("  Writ sells for", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
+            if sell then tip:AddDoubleLine("  Writ at auction", P:Money(sell), 0.9, 0.9, 0.9, 1, 1, 1) end
         end
         tip:AddLine("  Reward details: coming in a later update.", 0.5, 0.5, 0.5)
         tip:Show()
@@ -2230,6 +2278,9 @@ function TSF:EnsureFrame()
         self:SaveWindowState()
         CloseAllDropdowns()
         if self.calcPanel then self.calcPanel:Hide() end
+        -- the next open starts the quantity at 1 (ResetQtyOnPick); a park
+        -- comes back as it was
+        if not self._parked then self._qtyKey = nil end
         -- Defer RestoreContentPanels to break the taint chain -- when
         -- Blizzard's HideUIPanel triggers this OnHide, we're inside a
         -- secure execution path and any Show() call would be blocked.
@@ -2267,6 +2318,7 @@ function TSF:EnsureFrame()
     self:BuildCraftBar(f)
     self:BuildComposer(f)
     self:BuildBottomBar(f)
+    self.craftStrip = self:BuildCraftStrip(f, 30)
     self:BuildSettingsPanel(f)
     self:BuildNavStrip(f)
     -- Drag to scale; the Material Calculator, fastened to this window's
@@ -2549,7 +2601,7 @@ function TSF:UpdateLinkButton()
 end
 
 ----------------------------------------------------------------------
--- Persistent bottom nav strip (Characters / Friends / Orders)
+-- Persistent bottom nav strip (Characters / Friends / Guild / Orders / Shuffle)
 -- Mirrors the main /pb window's bottom tabs so navigation is the same
 -- everywhere. From the profession window these navigate by swapping to
 -- the main window on that tab (same behavior the old top Friends icon
@@ -2570,6 +2622,10 @@ function TSF:BuildNavStrip(parent)
         end },
         { text = "Orders", toggle = function()
             if addon.OrdersPanel then addon.OrdersPanel:Toggle() end
+        end },
+        -- the vendor shuffle (2.2.0), as on the main window
+        { text = "Shuffle", toggle = function()
+            if addon.ShufflePanel then addon.ShufflePanel:Toggle() end
         end },
     }
 
@@ -3143,6 +3199,10 @@ function TSF:UpdateViewDropdown(unknown)
         "Learnable now (" .. learnableCount .. ")",
         "All (" .. totalCount .. ")",
     }
+    -- Vendor shuffle (2.2.0, Skeleton): known crafts a vendor pays a
+    -- profit for. Only while prices show.
+    local P = addon.Prices
+    if P and P:Enabled() then opts[5] = "Vendor shuffle" end
     self.viewDropdown:SetOptions(opts)
 
     if state.showTab == "known" then
@@ -3151,6 +3211,8 @@ function TSF:UpdateViewDropdown(unknown)
         self.viewDropdown:SetValue(opts[2])
     elseif state.showTab == "learnable" then
         self.viewDropdown:SetValue(opts[3])
+    elseif state.showTab == "vendor" and opts[5] then
+        self.viewDropdown:SetValue(opts[5])
     else
         self.viewDropdown:SetValue(opts[4])
     end
@@ -3390,6 +3452,12 @@ end
 -- when its item binds when picked up (only a vendor buys it)
 local function ProfitPrefix(entry)
     local P = addon.Prices
+    -- the Vendor shuffle view (2.2.0): profit from a vendor and per hour
+    if state.showTab == "vendor" and P and P:Enabled() then
+        local v = P:ShuffleCached(entry, state.profName)
+        if not (v and v.profit) then return "|cff666666-|r  " end
+        return P:SignedMoney(v.profit, true) .. " |cff888888" .. P:Money(v.perHour, true) .. "/h|r  "
+    end
     if not (P and P:ListProfitOn()) then return "" end
     local v, bop = P:ListProfit(entry, state.profName)
     if bop then return "|cff808080BoP|r  " end
@@ -3400,11 +3468,12 @@ end
 function TSF:UpdateListRows()
     local recipes = state.recipes
     local offset = state.scrollOffset
+    local shown = self:ListRows()   -- fewer while the craft strip shows
 
     for i = 1, VISIBLE_ROWS do
         local row = self.listRows[i]
         local dataIdx = i + offset
-        local entry = recipes[dataIdx]
+        local entry = i <= shown and recipes[dataIdx] or nil
 
         row.selectedBg:Hide()
         row.headerBg:Hide()
@@ -3470,6 +3539,7 @@ function TSF:UpdateListRows()
                 row.nameText:SetText(addon:DiffMarker(rowDiff) .. entry.name)
                 row.nameText:SetTextColor(dc.r, dc.g, dc.b)
 
+                local longRight = false   -- a bank count after the count
                 if entry.isKnown then
                     local avail = entry.numAvail or 0
                     -- Enchants (itemID 0) report no numAvail, so the list
@@ -3483,7 +3553,7 @@ function TSF:UpdateListRows()
                     local rangeStr = ""
                     local sr = GetSkillRange(entry)
 
-                    if RANGE_NUMBERS_HIDDEN[state.profName] then
+                    if RANGE_NUMBERS_HIDDEN[state.profName] or state.showTab == "vendor" then
                         -- Range numbers known-unreliable for this profession
                         -- (smelting); suppress until the 1.0.1 game-sourced
                         -- rework. Name color (from the game) still shows.
@@ -3511,10 +3581,20 @@ function TSF:UpdateListRows()
                         rangeStr = "|cff888888" .. SkillRangeCompact(sr) .. "|r "
                     end
 
+                    -- with your bank (2.2.0, Lucido): "[6] [10]", the second
+                    -- in the Reagents list's azure; "[4]" alone when only the
+                    -- bank makes any. Colorblind markers: "[10 bank]", as
+                    -- "[300 low]" below (Blizzard's rule: text where a color
+                    -- alone carries meaning)
+                    local bankAvail = self:BankCraftCount(entry, avail)
+                    local bankStr = bankAvail and ("|cff3fc7ff[" .. bankAvail
+                        .. (addon:ColorblindMarkers() and " bank" or "") .. "]|r") or ""
+                    longRight = bankAvail ~= nil
                     if avail > 0 then
-                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. "|cff00ff00[" .. avail .. "]|r")
+                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. "|cff00ff00[" .. avail .. "]|r"
+                            .. (bankAvail and " " or "") .. bankStr)
                     else
-                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr)
+                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. bankStr)
                     end
                 else
                     local vis = ShownSources(entry)
@@ -3539,8 +3619,8 @@ function TSF:UpdateListRows()
                     row.rightText:SetText(ProfitPrefix(entry) .. c .. displaySrc .. "|r" .. skillText)
                 end
                 -- the name stops short of the right-hand text when the
-                -- Profit column makes it longer
-                if addon.Prices and addon.Prices:ListProfitOn() then
+                -- Profit column or a bank count makes it longer
+                if longRight or addon.Prices and (addon.Prices:ListProfitOn() or state.showTab == "vendor") then
                     row.nameText:SetPoint("RIGHT", row.rightText, "LEFT", -4, 0)
                 else
                     row.nameText:SetPoint("RIGHT", -40, 0)
@@ -3834,9 +3914,63 @@ function TSF:BuildDetailPanel(parent)
 
     -- v6: Embedded item tooltip (shows item stats/effects)
     local itemTooltipHeader = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    itemTooltipHeader:SetText("Item info")
+    itemTooltipHeader:SetText("- Item info")
     itemTooltipHeader:SetTextColor(1, 0.82, 0)
     self.itemTooltipHeader = itemTooltipHeader
+
+    -- 2.2.0, GitHub #12 (philippeop): a click on the heading folds the box
+    -- away and back, "- Item info" / "+ Item info" like the recipe list's
+    -- category headers; kept across sessions. Settings has "Show Item info"
+    -- to turn it off altogether.
+    local fold = CreateFrame("Button", nil, sc)
+    fold:SetPoint("TOPLEFT", itemTooltipHeader, "TOPLEFT", -2, 3)
+    fold:SetSize(150, 18)
+    fold:SetScript("OnEnter", function(b)
+        itemTooltipHeader:SetTextColor(1, 1, 1)
+        GameTooltip:SetOwner(b, "ANCHOR_TOP")
+        GameTooltip:SetText(addon.db.settings.itemInfoFolded and "Click to show" or "Click to hide")
+        GameTooltip:Show()
+    end)
+    fold:SetScript("OnLeave", function()
+        itemTooltipHeader:SetTextColor(1, 0.82, 0)
+        GameTooltip:Hide()
+    end)
+    fold:SetScript("OnClick", function()
+        local S = addon.db.settings
+        S.itemInfoFolded = not S.itemInfoFolded
+        GameTooltip:Hide()
+        self:RefreshDetailPanel(true)
+    end)
+    fold:Hide()
+    self.itemInfoFold = fold
+
+    -- The tool and station lines when the Item info box is folded or off
+    -- (they live inside the box otherwise): under the price line
+    local detTools = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    detTools:SetWidth(DETAIL_W - 40)
+    detTools:SetJustifyH("LEFT")
+    detTools:Hide()
+    self.detTools = detTools
+
+    -- "Back" after a click on a material took you to its recipe (2.2.0,
+    -- GitHub #13): under Share, right of the Difficulty line, the same
+    -- size for every recipe; its tooltip names the recipe (ShowBackLine).
+    -- Share's bottom is 13 above the divider's: just under the divider.
+    local detBack = CreateFrame("Button", nil, sc, "UIPanelButtonTemplate")
+    detBack:SetSize(56, 18)
+    detBack:SetPoint("TOPRIGHT", self.shareBtn, "BOTTOMRIGHT", 0, -13)
+    detBack:SetNormalFontObject(GameFontNormalSmall)
+    detBack:SetHighlightFontObject(GameFontHighlightSmall)
+    detBack:SetText("Back")
+    detBack:SetScript("OnClick", function() self:JumpBack() end)
+    detBack:SetScript("OnEnter", function(btn)
+        GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Back to " .. tostring(btn.backTo), 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    detBack:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    detBack:Hide()
+    self.detBack = detBack
 
     local itemTooltipDivider = sc:CreateTexture(nil, "ARTWORK")
     itemTooltipDivider:SetSize(DETAIL_W - 40, 1)
@@ -3914,9 +4048,10 @@ function TSF:BuildDetailPanel(parent)
             slot:SetPoint("CENTER", rIcon, "CENTER")
             local banner = rFrame:CreateTexture(nil, "BACKGROUND")
             banner:SetTexture("Interface\\QuestFrame\\UI-QuestItemNameFrame")
-            banner:SetPoint("LEFT", rIcon, "RIGHT", -10 * 18 / 39, 0)
-            banner:SetPoint("RIGHT", rFrame, "RIGHT", 0, 0)
+            -- cropped to its drawn bar; PlaceReagentBanner sets its ends
+            banner:SetTexCoord(BANNER_EDGE, 1 - BANNER_EDGE, 0, 1)
             banner:SetHeight(64 * 18 / 39)
+            rFrame.banner = banner
         end
 
         local rName = rFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -3929,23 +4064,38 @@ function TSF:BuildDetailPanel(parent)
         rCount:SetPoint("RIGHT", -4, 0)
         rFrame.countText = rCount
 
+        -- lit while the mouse is over a material a click goes to (#13)
+        local rHover = rFrame:CreateTexture(nil, "ARTWORK", nil, -8)   -- under the icon
+        rHover:SetAllPoints()
+        Theme:Fill(rHover, "menuHover")
+        rHover:Hide()
+        rFrame.hover = rHover
+
         rFrame:EnableMouse(true)
-        rFrame:SetScript("OnEnter", function(self)
-            if self.itemID then
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetItemByID(self.itemID)
+        rFrame:SetScript("OnEnter", function(row)
+            if row.itemID then
+                GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+                GameTooltip:SetItemByID(row.itemID)
+                if TSF:AddMaterialHint(GameTooltip, row.itemID, TSF:MaterialNeed(row)) then row.hover:Show() end
                 GameTooltip:Show()
             end
         end)
-        rFrame:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        rFrame:SetScript("OnLeave", function(row) row.hover:Hide(); GameTooltip:Hide() end)
         -- Shift-click a material -> chat link / AH search / socket, via the
         -- client's own router, only with a modifier key held (as recipe
         -- rows). Rows carry itemID, not a link; GetItemInfo's link is nil until
         -- the item is cached, so the first click on an uncached item no-ops.
-        rFrame:SetScript("OnMouseUp", function(self)
-            if self.itemID and IsModifierKeyDown() then
-                local link = select(2, GetItemInfo(self.itemID))
+        -- A plain click goes to the recipe that makes it (#13).
+        rFrame:SetScript("OnMouseUp", function(row)
+            if not row.itemID then return end
+            if IsModifierKeyDown() then
+                local link = select(2, GetItemInfo(row.itemID))
                 if link then HandleModifiedItemClick(link) end
+                return
+            end
+            if TSF:JumpToMaterial(row.itemID, TSF:MaterialNeed(row)) then
+                row.hover:Hide()
+                GameTooltip:Hide()
             end
         end)
         rFrame:Hide()
@@ -3996,6 +4146,8 @@ function TSF:UpdateScrollChildHeight()
     checkRegion(self.nameDivider)
     checkRegion(self.detCanMake)
     checkRegion(self.detPrice)
+    checkRegion(self.detTools)
+    checkRegion(self.itemTooltipHeader)
     checkRegion(self.embeddedTip)
     checkRegion(self.reagentDivider)
     checkRegion(self.reagentHeader)
@@ -4040,6 +4192,9 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.itemTooltipHeader:Hide()
     self.itemTooltipDivider:Hide()
     self.embeddedTip:Hide()
+    if self.itemInfoFold then self.itemInfoFold:Hide() end
+    if self.detTools then self.detTools:Hide() end
+    if self.detBack then self.detBack:Hide() end
     self.reagentDivider:Hide()
     self.reagentHeader:Hide()
     self.altDivider:Hide()
@@ -4071,6 +4226,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
 
     local recipe = self:GetSelectedRecipe()
     if not recipe then return end
+    self:ResetQtyOnPick()
 
     self.detPlaceholder:Hide()
     if self.detScrollFrame then self.detScrollFrame:Show() end
@@ -4215,14 +4371,21 @@ function TSF:RefreshDetailPanel(preserveScroll)
             avail = self:ReagentCraftCount(recipe)
         end
         local cdSuffix = self:CooldownSuffix(recipe)
+        -- crafts, then the items they make: "Can make: 54 (108)"
+        local function items(n)
+            if not made then return "" end
+            return made.lo == made.hi and (" (" .. n * made.lo .. ")")
+                or (" (" .. n * made.lo .. "-" .. n * made.hi .. ")")
+        end
+        -- with your bank (2.2.0, Lucido), in the Reagents list's azure:
+        -- "Can make: 6 (12), 10 (20) with bank"
+        local bankAvail = self:BankCraftCount(recipe, avail)
+        local bankPart = bankAvail and ("|cff3fc7ff, " .. bankAvail .. items(bankAvail) .. " with bank|r") or ""
         if avail > 0 then
-            -- crafts, then the items they make: "Can make: 54 (108)"
-            local items = ""
-            if made then
-                items = made.lo == made.hi and (" (" .. avail * made.lo .. ")")
-                    or (" (" .. avail * made.lo .. "-" .. avail * made.hi .. ")")
-            end
-            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. items .. "|r" .. cdSuffix)
+            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. items(avail) .. "|r" .. bankPart .. cdSuffix)
+        elseif bankAvail then
+            -- the bags make none, the bank has the rest: not "missing"
+            self.detCanMake:SetText("|cffff4444Can make: 0|r" .. bankPart)
         elseif cdSuffix ~= "" then
             -- A recipe on cooldown reports 0 whatever is in the bags, so
             -- naming reagents as the reason would contradict the very next
@@ -4234,6 +4397,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
     end
 
     self:ShowPriceLine(recipe)
+    self:ShowBackLine()
 
     -- v6: Show embedded item tooltip
     self:ShowEmbeddedTooltip(recipe)
@@ -4246,8 +4410,11 @@ function TSF:RefreshDetailPanel(preserveScroll)
         local reagentAnchor = self:CanMakeBottom()
         if self.embeddedTip:IsShown() then
             reagentAnchor = self.embeddedTip
+        elseif self.itemTooltipHeader:IsShown() then
+            reagentAnchor = self.itemTooltipHeader   -- folded (#12)
         end
 
+        self._reagentAnchor = reagentAnchor
         self.reagentDivider:SetPoint("TOPLEFT", reagentAnchor, "BOTTOMLEFT", 0, -8)
         self.reagentDivider:Show()
         self.reagentHeader:SetPoint("TOPLEFT", self.reagentDivider, "BOTTOMLEFT", 0, -4)
@@ -4310,6 +4477,7 @@ function TSF:RefreshDetailPanel(preserveScroll)
 
             row.itemID = reagent.itemID
             local need = reagent.count or 1
+            row.perCraft = need
             local inBags, inBank = 0, 0
             if reagent.itemID then
                 inBags = bags[reagent.itemID] or 0
@@ -4324,15 +4492,26 @@ function TSF:RefreshDetailPanel(preserveScroll)
             -- the bank, so a green reagent list never contradicts a
             -- bags-only "Can make". Compact text (bags/need) keeps it
             -- inside the 2-column reagent layout. Exact split is on hover.
+            -- Colorblind markers (2.2.0): azure reads "3/5 bank", since
+            -- "3/5" alone is also how yellow (not enough) reads; the name
+            -- then stops short of the longer count
+            local bankMark = false
             if inBags >= need then
                 row.countText:SetText("|cff00ff00" .. inBags .. "|r")
             elseif total >= need then
-                row.countText:SetText("|cff3fc7ff" .. inBags .. "/" .. need .. "|r")
+                bankMark = addon:ColorblindMarkers()
+                row.countText:SetText("|cff3fc7ff" .. inBags .. "/" .. need .. (bankMark and " bank" or "") .. "|r")
             elseif total > 0 then
                 row.countText:SetText("|cffffff00" .. total .. "/" .. need .. "|r")
             else
                 row.countText:SetText("|cffff4444" .. total .. "/" .. need .. "|r")
             end
+            if bankMark then
+                row.nameText:SetPoint("RIGHT", row.countText, "LEFT", -4, 0)
+            else
+                row.nameText:SetPoint("RIGHT", row, "RIGHT", -36, 0)
+            end
+            if row.banner then self:PlaceReagentBanner(row, useTwoCol and colW or colW * 2) end
         end
 
         -- Record the bottom of the reagent block; the reagent grid owns the
@@ -4393,11 +4572,12 @@ end
 
 -- The lowest line of the Can make block: the price line when it shows
 function TSF:CanMakeBottom()
+    if self.detTools and self.detTools:IsShown() then return self.detTools end
     if self.detPrice and self.detPrice:IsShown() then return self.detPrice end
     return self.detCanMake
 end
 
--- Prices.lua: "Cost: 1g 20s   Sells: 2g 5s   Profit: +85s" under Can make
+-- Prices.lua: "Cost: 1g 20s   Auction: 2g 5s   Profit: +85s" under Can make
 -- (Settings > Prices > Show prices). retry: the count of looks again for
 -- an item the game hadn't loaded (below); nil when the recipe is selected.
 function TSF:ShowPriceLine(recipe, retry)
@@ -4444,6 +4624,14 @@ function TSF:ShowEmbeddedTooltip(recipe)
     tip:Hide()
     self.itemTooltipHeader:Hide()
     self.itemTooltipDivider:Hide()
+    if self.itemInfoFold then self.itemInfoFold:Hide() end
+    if self.detTools then self.detTools:Hide() end
+    -- Settings: Item info off (#12): no box, the tool lines under the price
+    local S = addon.db.settings
+    if S.showItemInfo == false then
+        self:ShowDetailTools(recipe)
+        return
+    end
 
     local itemID = recipe.itemID
     -- Decide what we can embed: a scanned link, a real crafted item, or (for
@@ -4453,10 +4641,16 @@ function TSF:ShowEmbeddedTooltip(recipe)
     if not hasItem and not recipe.spellID then return end
 
     -- Position below Can make (and the price line under it)
+    -- folded (#12): the heading only, and the tool lines above it
+    local folded = S.itemInfoFolded and true or false
+    if folded then self:ShowDetailTools(recipe) end
     self.itemTooltipDivider:SetPoint("TOPLEFT", self:CanMakeBottom(), "BOTTOMLEFT", 0, -6)
     self.itemTooltipDivider:Show()
     self.itemTooltipHeader:SetPoint("TOPLEFT", self.itemTooltipDivider, "BOTTOMLEFT", 0, -4)
+    self.itemTooltipHeader:SetText(folded and "+ Item info" or "- Item info")
     self.itemTooltipHeader:Show()
+    if self.itemInfoFold then self.itemInfoFold:Show() end
+    if folded then return end
 
     tip:SetOwner(self.detailFrame, "ANCHOR_NONE")
     tip:ClearAllPoints()
@@ -4498,6 +4692,7 @@ function TSF:ShowEmbeddedTooltip(recipe)
         tip:Hide()
         self.itemTooltipHeader:Hide()
         self.itemTooltipDivider:Hide()
+        if self.itemInfoFold then self.itemInfoFold:Hide() end
         return
     end
     self:AppendRodLine(tip, recipe)
@@ -4573,8 +4768,8 @@ end
 -- character's, and on TBC Anniversary, whose check ignores distance).
 -- No-op for a recipe that needs neither. The static entry is resolved by
 -- spellID (locale-stable) with a name fallback.
-function TSF:AppendRodLine(tip, recipe)
-    if not (recipe and RDB) then return end
+function TSF:ToolLines(recipe)
+    if not (recipe and RDB) then return nil end
     -- Resolve the static entry: by spellID first (locale-stable), then by name
     -- (profession-agnostic -- own-view live entries may lack a resolvable
     -- spellID and state.profName isn't always the canonical "Enchanting").
@@ -4608,17 +4803,43 @@ function TSF:AppendRodLine(tip, recipe)
     if station then
         lines[#lines + 1] = { station, self:StationMet(recipe, station), station = true }
     end
-    if #lines == 0 then return end
-    tip:AddLine(" ")
+    local out = {}
     for _, l in ipairs(lines) do
         if l.station and l[2] == nil then
-            tip:AddLine("Tool: " .. l[1], 1, 1, 1)
+            out[#out + 1] = { "Tool: " .. l[1], 1, 1, 1 }
         elseif l[2] then
-            tip:AddLine("Tool: " .. l[1], 0.4, 1, 0.4)
+            out[#out + 1] = { "Tool: " .. l[1], 0.4, 1, 0.4 }
         else
-            tip:AddLine("Tool: " .. l[1] .. (l.station and " (not nearby)" or " (missing)"), 1, 0.4, 0.4)
+            out[#out + 1] = { "Tool: " .. l[1] .. (l.station and " (not nearby)" or " (missing)"), 1, 0.4, 0.4 }
         end
     end
+    return out
+end
+
+-- The tool lines in a tooltip, after a blank line
+function TSF:AppendRodLine(tip, recipe)
+    local out = self:ToolLines(recipe)
+    if not out or #out == 0 then return end
+    tip:AddLine(" ")
+    for _, l in ipairs(out) do tip:AddLine(l[1], l[2], l[3], l[4]) end
+end
+
+-- The tool lines under the price line, while the Item info box is folded
+-- or off (#12); hidden when the recipe needs no tool
+function TSF:ShowDetailTools(recipe)
+    local fs = self.detTools
+    if not fs then return end
+    fs:Hide()
+    local out = self:ToolLines(recipe)
+    if not out or #out == 0 then return end
+    local parts = {}
+    for _, l in ipairs(out) do
+        parts[#parts + 1] = string.format("|cff%02x%02x%02x%s|r", l[2] * 255, l[3] * 255, l[4] * 255, l[1])
+    end
+    fs:ClearAllPoints()
+    fs:SetPoint("TOPLEFT", self:CanMakeBottom(), "BOTTOMLEFT", 0, -4)
+    fs:SetText(table.concat(parts, "\n"))
+    fs:Show()
 end
 
 -- The selected recipe's station line follows you, as Blizzard's window
@@ -4942,6 +5163,12 @@ function TSF:BuildCalcPanel()
         divLine:Hide()
         row.sectionDivider = divLine
 
+        local cHover = row:CreateTexture(nil, "ARTWORK", nil, -8)   -- under the icon
+        cHover:SetAllPoints()
+        Theme:Fill(cHover, "menuHover")
+        cHover:Hide()
+        row.hover = cHover
+
         row:EnableMouse(true)
         row:SetScript("OnEnter", function(r)
             if r.itemID then
@@ -4951,16 +5178,24 @@ function TSF:BuildCalcPanel()
                     GameTooltip:AddDoubleLine("ProfessionBuddy price", addon.Prices:MaterialText(r.price),
                         1, 0.82, 0, 1, 1, 1)
                 end
+                -- the calculator's own count for the quantity (#13)
+                if r.calcNeed and self:AddMaterialHint(GameTooltip, r.itemID, r.calcNeed) then r.hover:Show() end
                 GameTooltip:Show()
             end
         end)
-        row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        row:SetScript("OnLeave", function(r) r.hover:Hide(); GameTooltip:Hide() end)
         -- Shift-click a material -> chat link / AH search / socket (same as the
-        -- detail-panel reagent rows).
+        -- detail-panel reagent rows); a plain click goes to its recipe (#13)
         row:SetScript("OnMouseUp", function(r)
-            if r.itemID and IsModifierKeyDown() then
+            if not r.itemID then return end
+            if IsModifierKeyDown() then
                 local link = select(2, GetItemInfo(r.itemID))
                 if link then HandleModifiedItemClick(link) end
+                return
+            end
+            if r.calcNeed and self:JumpToMaterial(r.itemID, r.calcNeed) then
+                r.hover:Hide()
+                GameTooltip:Hide()
             end
         end)
 
@@ -5221,9 +5456,11 @@ function TSF:UpdateCalcRows()
                         row.icon:Hide()
                     end
                     row.itemID = entry.itemID
+                    row.calcNeed = entry.need
                 else
                     row.icon:Hide()
                     row.itemID = nil
+                    row.calcNeed = nil
                 end
 
                 local namePrefix = ""
@@ -5412,6 +5649,7 @@ function TSF:BuildCraftBar(parent)
     -- the craft bar's top-left corner is fixed: LIST_W + 18 in, and
     -- CRAFT_BAR_H above its bottom edge 30 px up
     enchantBtn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", LIST_W + 18 + x1, 30 + CRAFT_BAR_H + ROW1_Y)
+    self._enchantX, self._enchantY = LIST_W + 18 + x1, ROW1_Y   -- for ApplyStripLayout
     enchantBtn:SetFrameLevel(craftBar:GetFrameLevel() + 5)
 
     enchantBtn.look = DrawPanelButtonArt(enchantBtn, "Craft")
@@ -5471,20 +5709,37 @@ end
 function TSF:BeginCraftTracking(spellName, qty, craftIndex, spellID)
     self._craftingActive = true
     self._craftRemaining = qty or 1
+    self._craftTotal     = qty or 1
+    -- the strip waits for the first cast (TSF:UpdateCraftStrip)
+    self._craftCastSeen  = nil
     self._craftSpellName = spellName
     self._craftSpellID   = spellID
     self._craftIndex     = craftIndex
+    -- the profession it runs in: going Back to it keeps counting (OpenWith)
+    self._craftProf      = state.profName
+    self._craftIsCraft   = state.isCraftWindow and true or false
     self:ArmCraftWatchdog()
 end
 
 function TSF:StopCraftTracking()
     self._craftingActive = false
     self._craftRemaining = 0
+    self._craftTotal     = nil
+    self._craftCastSeen  = nil
     self._craftSpellName = nil
     self._craftSpellID   = nil
     self._craftIndex     = nil
+    self._craftProf      = nil
+    self._craftIsCraft   = nil
     -- Invalidates any watchdog still pending for the craft we just ended.
     self._craftToken     = (self._craftToken or 0) + 1
+    self:UpdateCraftStrip()
+end
+
+-- Is a batch running in this profession's window (the same channel)?
+function TSF:IsCraftingIn(profName, isCraft)
+    return self._craftingActive and self._craftProf ~= nil and self._craftProf == profName
+        and self._craftIsCraft == (isCraft and true or false) or false
 end
 
 -- Is this cast the recipe being crafted? By name, or by spell ID where the
@@ -5496,12 +5751,251 @@ function TSF:IsTrackedCast(spellID)
     return GetSpellInfo(spellID) == self._craftSpellName
 end
 
+----------------------------------------------------------------------
+-- Craft strip (2.2.0, Lucido and Kluga): while a craft runs, a strip
+-- across the bottom of the profession window and of the main window (a
+-- parked profession keeps crafting) shows the current cast and the whole
+-- batch with its time left. Settings has a switch for each bar. It shows
+-- from the first cast of the craft to its end, and every list above it
+-- gives up the rows it covers (ApplyStripLayout, UI:FitRows).
+----------------------------------------------------------------------
+
+-- Blizzard's classic cast bar colours (CastingBarFrame.lua, ApplyingCrafting:
+-- CASTBAR_CLASSIC_YELLOW while it fills, CASTBAR_CLASSIC_GREEN when full)
+local function StripRGB(c, r, g, b)
+    if type(c) == "table" and c.GetRGB then return c:GetRGB() end
+    return r, g, b
+end
+
+-- The bars switched on, top to bottom
+function TSF:StripBars()
+    local s = addon.db and addon.db.settings or {}
+    local out = {}
+    if s.craftBarCast ~= false then out[#out + 1] = "cast" end
+    if s.craftBarBatch ~= false then out[#out + 1] = "batch" end
+    return out
+end
+
+-- How far everything above the strip rises while it shows; 0 when it doesn't
+function TSF:StripLift()
+    local n = self._stripBars or 0
+    if n == 0 then return 0 end
+    return n * STRIP_BAR_H + (n - 1) * STRIP_GAP + STRIP_PAD
+end
+
+local function NewStripBar(strip, r, g, b)
+    local bar = CreateFrame("StatusBar", nil, strip)
+    bar:SetHeight(STRIP_BAR_H)
+    bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    bar:SetStatusBarColor(r, g, b)
+    bar:SetMinMaxValues(0, 1)
+    bar:SetValue(0)
+    local bg = bar:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    Theme:Fill(bg, "craftStripBg")
+    local text = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    text:SetPoint("CENTER")
+    bar.text = text
+    bar:Hide()
+    return bar
+end
+
+-- One strip, `y` up from the bottom of `parent`, 10 px in from each side
+function TSF:BuildCraftStrip(parent, y)
+    local strip = CreateFrame("Frame", nil, parent)
+    strip:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 10, y)
+    strip:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, y)
+    strip:SetHeight(STRIP_BAR_H)
+    strip.cast = NewStripBar(strip, StripRGB(CASTBAR_CLASSIC_YELLOW, 1.0, 0.7, 0.0))
+    strip.batch = NewStripBar(strip, StripRGB(CASTBAR_CLASSIC_GREEN, 0.0, 1.0, 0.0))
+    strip:SetScript("OnUpdate", function(st) self:PaintStrip(st) end)
+    strip:Hide()
+    return strip
+end
+
+-- The main window's strip, built the first time it is needed
+function TSF:MainStrip()
+    if not self.mainStrip and addon.UI and addon.UI.frame then
+        self.mainStrip = self:BuildCraftStrip(addon.UI.frame, 10)
+    end
+    return self.mainStrip
+end
+
+-- "1m 05s", "45s"
+local function StripTime(sec)
+    sec = math.max(0, math.floor(sec + 0.5))
+    if sec >= 60 then return string.format("%dm %02ds", math.floor(sec / 60), sec % 60) end
+    return sec .. "s"
+end
+
+-- The cast under way, from the game's cast bar data (UnitCastingInfo, the
+-- same on both clients): its name, the share done and the seconds left.
+-- nil when nothing, or something other than the craft, is casting.
+function TSF:StripCast()
+    if not UnitCastingInfo then return nil end
+    local name, _, _, startMs, endMs, _, _, _, spellID = UnitCastingInfo("player")
+    startMs, endMs = tonumber(startMs), tonumber(endMs)
+    if not (name and startMs and endMs and endMs > startMs) then return nil end
+    if not ((spellID and self:IsTrackedCast(spellID)) or name == self._craftSpellName) then return nil end
+    local now = GetTime() * 1000
+    local frac = math.max(0, math.min(1, (now - startMs) / (endMs - startMs)))
+    return name, frac, math.max(0, (endMs - now) / 1000)
+end
+
+-- The bars' fill and text, each frame while the strip shows. A bar shown
+-- alone also carries what the other bar would: the batch bar the recipe's
+-- name, the cast bar the count (not the time, which goes with the batch bar).
+function TSF:PaintStrip(strip)
+    local name, frac, left = self:StripCast()
+    name = name or self._craftSpellName or ""
+    local total = self._craftTotal or 1
+    local remaining = math.max(0, self._craftRemaining or 0)
+    local done = math.max(0, total - remaining)
+    local count = math.min(total, done + 1)
+    local both = strip.cast:IsShown() and strip.batch:IsShown()
+    if strip.cast:IsShown() then
+        strip.cast:SetValue(frac or 0)
+        strip.cast.text:SetText(both and name
+            or string.format("%s, %d of %d", name, count, total))
+    end
+    if strip.batch:IsShown() then
+        strip.batch:SetValue(total > 0 and math.min(1, (done + (frac or 0)) / total) or 0)
+        -- the rest of this cast, then each craft still to start
+        local P = addon.Prices
+        local per = P and P.CraftSeconds and P:CraftSeconds(self._craftSpellID) or 0
+        local secs = (left or per) + math.max(0, remaining - 1) * per
+        if both then
+            strip.batch.text:SetText(string.format("Crafting %d of %d, about %s left",
+                count, total, StripTime(secs)))
+        else
+            strip.batch.text:SetText(string.format("%s: %d of %d, about %s left",
+                name, count, total, StripTime(secs)))
+        end
+    end
+end
+
+-- Stack the bars switched on, top to bottom
+function TSF:LayoutStrip(strip)
+    strip.cast:Hide()
+    strip.batch:Hide()
+    local prev
+    for _, k in ipairs(self._stripBarList or {}) do
+        local b = strip[k]
+        b:ClearAllPoints()
+        if prev then
+            b:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -STRIP_GAP)
+            b:SetPoint("TOPRIGHT", prev, "BOTTOMRIGHT", 0, -STRIP_GAP)
+        else
+            b:SetPoint("TOPLEFT", strip, "TOPLEFT", 0, 0)
+            b:SetPoint("TOPRIGHT", strip, "TOPRIGHT", 0, 0)
+        end
+        b:Show()
+        prev = b
+    end
+    strip:SetHeight(math.max(1, self:StripLift() - STRIP_PAD))
+end
+
+-- Show, change or hide the strip in both windows, and fit what sits above
+-- it. In combat it waits: the Enchant button is a secure frame, which can't
+-- move then (PLAYER_REGEN_ENABLED runs this again).
+function TSF:UpdateCraftStrip()
+    if InCombatLockdown and InCombatLockdown() then
+        self._stripPending = true
+        return
+    end
+    self._stripPending = nil
+    local list = (self._craftingActive and self._craftCastSeen) and self:StripBars() or {}
+    local key = table.concat(list, ",")
+    if key == (self._stripKey or "") then return end
+    self._stripKey = key
+    self._stripBarList = list
+    self._stripBars = #list
+    local L = self:StripLift()
+    for _, strip in ipairs({ self.craftStrip or false, self:MainStrip() or false }) do
+        if strip then
+            if #list > 0 then
+                self:LayoutStrip(strip)
+                self:PaintStrip(strip)
+                strip:Show()
+            else
+                strip:Hide()
+            end
+        end
+    end
+    self:ApplyStripLayout(L)
+    if addon.UI and addon.UI.ApplyStripLayout then addon.UI:ApplyStripLayout(L) end
+end
+
+-- The recipe list's rows that fit above the strip
+function TSF:ListRows()
+    return self._listRowsN or VISIBLE_ROWS
+end
+
+-- The profession window above a strip `L` tall: the recipe list, the craft
+-- bar and the bars that take its place, the detail panel, the Enchant
+-- button and Settings rise by L; the list shows the rows that still fit
+function TSF:ApplyStripLayout(L)
+    if not self.frame then return end
+    local parent = self.frame
+    local y = 30 + L
+    if self.listPanel then
+        self.listPanel:ClearAllPoints()
+        self.listPanel:SetPoint("TOPLEFT", 10, LIST_TOP)
+        self.listPanel:SetPoint("BOTTOMLEFT", 10, y)
+    end
+    for _, bar in ipairs({ self.craftBar or false, self.composerBar or false, self.ownHintBar or false }) do
+        if bar then
+            bar:ClearAllPoints()
+            bar:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, y)
+            bar:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, y)
+        end
+    end
+    if self.detailFrame then
+        self.detailFrame:ClearAllPoints()
+        self.detailFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", LIST_W + 18, LIST_TOP)
+        self.detailFrame:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, y + CRAFT_BAR_H + 2)
+    end
+    if self.enchantCraftBtn and self._enchantX then
+        self.enchantCraftBtn:ClearAllPoints()
+        self.enchantCraftBtn:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", self._enchantX, y + CRAFT_BAR_H + self._enchantY)
+    end
+    if self.settingsScroll then
+        self.settingsScroll:SetPoint("BOTTOMRIGHT", -self._settingsBarW, y)
+    end
+    -- the list's own height, 4 px of it border
+    local listH = FRAME_H + LIST_TOP - y
+    self._listRowsN = math.max(1, math.min(VISIBLE_ROWS, math.floor((listH - 4) / ROW_H)))
+    if self.scrollBar and state.recipes then
+        local maxScroll = math.max(0, #state.recipes - self:ListRows())
+        self.scrollBar:SetMinMaxValues(0, maxScroll)
+        if (state.scrollOffset or 0) > maxScroll then state.scrollOffset = maxScroll end
+        self.scrollBar:SetValue(state.scrollOffset or 0)
+        self:UpdateListRows()
+    end
+end
+
 function TSF:RegisterCraftEvents()
     if self._craftEventsRegistered then return end
     self._craftEventsRegistered = true
 
     -- Track craft completion to decrement qty counter.
     -- Filter by spell name so non-craft casts don't decrement.
+    -- combat held a strip change back (UpdateCraftStrip)
+    addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+        if self._stripPending then self:UpdateCraftStrip() end
+    end)
+
+    -- The craft's first cast shows the strip (one the game refuses never
+    -- casts, so nothing shows for it)
+    addon:RegisterEvent("UNIT_SPELLCAST_START", function(_, unit, _, spellID)
+        if unit ~= "player" or not self._craftingActive then return end
+        if not self:IsTrackedCast(spellID) then return end
+        if not self._craftCastSeen then
+            self._craftCastSeen = true
+            self:UpdateCraftStrip()
+        end
+    end)
+
     addon:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(_, unit, _, spellID)
         if unit ~= "player" then return end
         if not self._craftingActive then return end
@@ -5509,6 +6003,11 @@ function TSF:RegisterCraftEvents()
         -- Match the cast against the recipe we're crafting
         if not self:IsTrackedCast(spellID) then return end
 
+        -- an instant craft has no START
+        if not self._craftCastSeen then
+            self._craftCastSeen = true
+            self:UpdateCraftStrip()
+        end
         self._craftRemaining = (self._craftRemaining or 0) - 1
         if self._craftRemaining >= 1 then
             self.qtyBox:SetText(tostring(self._craftRemaining))
@@ -5685,6 +6184,57 @@ function TSF:ReagentCraftCount(recipe)
     return minMake or 0
 end
 
+-- The Classic look's banner behind a material's name: Blizzard's quest
+-- item name frame (Interface\QuestFrame\UI-QuestItemNameFrame, file
+-- 136796), whose bar is texels 11 to 116 of 128. Cropped to the bar, it
+-- spans where the whole texture's bar did (the row's width less the
+-- see-through ends), and ends 4 px before the count when the count is
+-- wider than the gap the art left for it ("0/1 bank", m4ru TEST-d2).
+function TSF:PlaceReagentBanner(row, w)
+    local left = 18 - 10 * 18 / 39        -- where the uncropped texture began
+    local span = w - left
+    local barL, barR = left + span * BANNER_EDGE, w - span * BANNER_EDGE
+    local countLeft = w - 4 - (row.countText:GetStringWidth() or 0)
+    barR = math.min(barR, countLeft - 4)
+    row.banner:ClearAllPoints()
+    row.banner:SetPoint("LEFT", row, "LEFT", barL, 0)
+    row.banner:SetPoint("RIGHT", row, "LEFT", barR, 0)
+end
+
+-- How many your bags and your bank make together (2.2.0, Lucido): the
+-- azure part of Can make. nil when there is none to show: another
+-- character's saved list (its count already holds their bank), a bank PB
+-- has never seen, a recipe on cooldown, a material with no item ID, or a
+-- game count that isn't the bags' reagent count (something else limits
+-- the craft, or the game already counts the bank). Bank = PB's copy from
+-- your last bank visit, as the Reagents list's azure counts.
+function TSF:BankCraftCount(recipe, avail)
+    if state._viewCharKey or not recipe or not recipe.isKnown then return nil end
+    local reagents = recipe.reagents
+    if not reagents or #reagents == 0 then return nil end
+    local char = DS and DS:GetCharacter(addon:PlayerKey())
+    local inv = char and char.inventory
+    if not (inv and inv.bankScanned and inv.bank) then return nil end
+    avail = avail or 0
+    if avail ~= self:ReagentCraftCount(recipe) or self:CooldownSuffix(recipe) ~= "" then return nil end
+    local total
+    for _, r in ipairs(reagents) do
+        if not (r.itemID and r.count and r.count > 0) then return nil end
+        local n = math.floor(((GetItemCount(r.itemID) or 0) + (inv.bank[r.itemID] or 0)) / r.count)
+        if total == nil or n < total then total = n end
+    end
+    if total and total > avail then return total end
+    return nil
+end
+
+-- The bank changed while a profession of yours is open (Scanner:ScanBank):
+-- its counts draw again, as a bag change redraws them.
+function TSF:OnBankScanned()
+    if not (self.frame and self.frame:IsShown()) or state._viewCharKey or not state.recipes then return end
+    self:UpdateListRows()
+    if state.selected then self:RefreshDetailPanel(true) end
+end
+
 -- The Enchant button's mouse: a secure button, so the game blocks the
 -- change in combat (Blizzard's API documentation: EnableMouse is
 -- protected; TEST-c6). It goes off as combat starts (PLAYER_REGEN_DISABLED,
@@ -5710,9 +6260,18 @@ function TSF:UpdateCraftBar()
     -- composer takes over that footprint instead.
     if state._viewCharKey then
         self.craftBar:Hide()
+        -- your own character's saved list: nobody to request from; say how
+        -- to craft instead (TEST-a5, m4ru)
+        if addon:SameKey(state._viewCharKey, addon:PlayerKey()) then
+            if self.composerBar then self.composerBar:Hide() end
+            self:ShowOwnHint(true)
+            return
+        end
+        self:ShowOwnHint(false)
         self:UpdateComposer()
         return
     end
+    self:ShowOwnHint(false)
 
     -- A linked window is somebody else's profession, opened read-only from
     -- a chat link. Nothing here is craftable, so show no craft controls.
@@ -5943,6 +6502,33 @@ function TSF:BuildComposer(parent)
 
     self.composerBar = bar
     bar:Hide()
+
+    -- Your own saved list in its place: how to craft from it
+    local own = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    own:SetHeight(CRAFT_BAR_H)
+    own:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", LIST_W + 18, 30)
+    own:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -10, 30)
+    Theme:SetBackdrop(own, "barPane")
+    Theme:BackdropColor(own, "craftBarPane")
+    Theme:BorderColor(own, "craftBarPane")
+    local ownText = own:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    ownText:SetPoint("LEFT", 12, 0)
+    ownText:SetPoint("RIGHT", -12, 0)
+    ownText:SetJustifyH("CENTER")
+    own.text = ownText
+    own:Hide()
+    self.ownHintBar = own
+end
+
+-- The bar under your own character's saved list: "This is your saved
+-- Cooking list. Open Cooking from your spellbook to craft."
+function TSF:ShowOwnHint(show)
+    local bar = self.ownHintBar
+    if not bar then return end
+    if not show then bar:Hide(); return end
+    local prof = state.profName == "Smelting" and "Mining" or (state.profName or "the profession")
+    bar.text:SetText("This is your saved " .. prof .. " list. Open " .. prof .. " from your spellbook to craft.")
+    bar:Show()
 end
 
 -- Show/hide the composer for the current view. Visible only when
@@ -6253,6 +6839,7 @@ function TSF:BuildSettingsPanel(parent)
     -- above and the hint below stay put. The bar shows only when the
     -- columns are taller than the view, and Settings opens at the top.
     local SCROLL_TOP, SCROLL_BAR = -40, 28
+    self._settingsBarW = SCROLL_BAR   -- for ApplyStripLayout
     local sf = CreateFrame("ScrollFrame", nil, panel, "UIPanelScrollFrameTemplate")
     sf.scrollBarHideable = true
     sf:SetPoint("TOPLEFT", 0, SCROLL_TOP)
@@ -6342,6 +6929,29 @@ function TSF:BuildSettingsPanel(parent)
         settings.showAllProfessions = self:GetChecked()
         TSF:UpdateProfessionTabs()
     end)
+    yLeft = yLeft - 30
+    -- 2.2.0, GitHub #12: the recipe panel's Item info box (the heading folds
+    -- it too); off, its tool lines sit under the price line
+    local itemInfoCB = MakeCheckbox("Show Item info", "showItemInfo", yLeft)
+    itemInfoCB:SetScript("OnClick", function(cb)
+        settings.showItemInfo = cb:GetChecked() and true or false
+    end)
+    self.itemInfoCB = itemInfoCB
+    yLeft = yLeft - 30
+    -- 2.2.0 (Lucido, Kluga): the craft strip's two bars, each on its own;
+    -- with both off no strip shows (TSF:UpdateCraftStrip)
+    local castCB = MakeCheckbox("Current cast bar while crafting", "craftBarCast", yLeft)
+    castCB:SetScript("OnClick", function(cb)
+        settings.craftBarCast = cb:GetChecked() and true or false
+        TSF:UpdateCraftStrip()
+    end)
+    yLeft = yLeft - 30
+    local batchCB = MakeCheckbox("Whole batch bar, with time left", "craftBarBatch", yLeft)
+    batchCB:SetScript("OnClick", function(cb)
+        settings.craftBarBatch = cb:GetChecked() and true or false
+        TSF:UpdateCraftStrip()
+    end)
+    self.craftCastCB, self.craftBatchCB = castCB, batchCB
     yLeft = yLeft - 30
 
     -- Recipe-level faction filter. Sits in the general group, not under the
@@ -6598,6 +7208,23 @@ function TSF:BuildSettingsPanel(parent)
         PricesChanged()
         if TSF.scrollBar then TSF:RefreshRecipeList() end
     end
+    -- Vendor shuffle (2.2.0): the minimum profit a craft needs to be listed
+    -- in the Shuffle tab and the Vendor shuffle view (also set in the tab)
+    local shuffleOpts = {}
+    for i, c in ipairs(P and P.SHUFFLE_MINS or {}) do shuffleOpts[i] = P:ShuffleMinLabel(c) end
+    local shuffleDD = CreateDropdown(content, 322, shuffleOpts,
+        P and P:ShuffleMinLabel(P:ShuffleMin()) or "",
+        function(val)
+            for _, c in ipairs(P.SHUFFLE_MINS) do
+                if P:ShuffleMinLabel(c) == val then settings.shuffleMinProfit = c end
+            end
+            ListChanged()
+            if addon.ShufflePanel and addon.ShufflePanel.parent then addon.ShufflePanel:Repaint() end
+        end,
+        "Vendor shuffle minimum: ")
+    shuffleDD:SetPoint("TOPLEFT", content, "TOPLEFT", COL_LEFT + 4, yLeft)
+    self.shuffleMinDD = shuffleDD
+    yLeft = yLeft - 30
 
     local clearBtn = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     clearBtn:SetSize(160, 22)
@@ -6646,6 +7273,7 @@ function TSF:BuildSettingsPanel(parent)
         Set(hideLossCB, on)
         staleDD:SetAlpha(on and 1 or 0.4)
         interDD:SetAlpha(on and 1 or 0.4)
+        shuffleDD:SetAlpha(on and 1 or 0.4)
     end
     showPricesCB:SetScript("OnClick", function(cb)
         settings.showPrices = cb:GetChecked() and true or false
@@ -7030,7 +7658,7 @@ function TSF:UpdateFilterVisibility()
         end
     end
     if self.sourceDropdown then
-        if state.showTab == "known" then self.sourceDropdown:Hide() else self.sourceDropdown:Show() end
+        if state.showTab == "known" or state.showTab == "vendor" then self.sourceDropdown:Hide() else self.sourceDropdown:Show() end
     end
 end
 
@@ -7278,7 +7906,7 @@ end
 -- unknown (optional): see UpdateViewDropdown.
 function TSF:LoadRecipes(unknown)
     local rawList = {}
-    local showKnown  = (state.showTab == "known" or state.showTab == "all")
+    local showKnown  = (state.showTab == "known" or state.showTab == "all" or state.showTab == "vendor")
     -- "Learnable now" is the Missing list cut to LearnableNow.
     local learnableOnly = (state.showTab == "learnable")
     local showMissing = (state.showTab == "missing" or state.showTab == "all" or learnableOnly)
@@ -7398,7 +8026,7 @@ function TSF:LoadRecipes(unknown)
     -- A filter counts only in the views that show its dropdown.
     local useDiff = state.showTab ~= "missing" and state.showTab ~= "learnable"
         and state.filterDiff ~= "All"
-    local useSrc  = state.showTab ~= "known" and (state.filterSource or "All") ~= "All"
+    local useSrc  = state.showTab ~= "known" and state.showTab ~= "vendor" and (state.filterSource or "All") ~= "All"
 
     -- Filter
     local filtered = {}
@@ -7410,6 +8038,10 @@ function TSF:LoadRecipes(unknown)
 
     local PR = addon.Prices
     local hideLoss = PR and PR:HideLossOn()
+    -- the Vendor shuffle view (2.2.0): crafts a vendor pays at least the
+    -- minimum profit for, most profit first
+    local vendorView = state.showTab == "vendor" and PR and PR:Enabled() and true or false
+    local shuffleMin = vendorView and PR:ShuffleMin() or 0
     for _, r in ipairs(rawList) do
         local passSearch = true
         local passDiff   = true
@@ -7464,7 +8096,13 @@ function TSF:LoadRecipes(unknown)
             passLoss = not (profit and profit < 0)
         end
 
-        if passSearch and passDiff and passCat and passFaction and passLoss then
+        local passVendor = true
+        if vendorView then
+            local v = PR:ShuffleCached(r, state.profName)
+            passVendor = (v and v.profit and v.profit >= shuffleMin) and true or false
+        end
+
+        if passSearch and passDiff and passCat and passFaction and passLoss and passVendor then
             table.insert(filtered, r)
         end
     end
@@ -7472,7 +8110,7 @@ function TSF:LoadRecipes(unknown)
     -- Sort (v6: secondary sort for all modes; v9: ascending/descending toggle)
     local sortBy = state.sortBy
     local asc = state.sortAsc
-    local useCategories = (sortBy == "Category")
+    local useCategories = (sortBy == "Category") and not vendorView
 
     -- Skill Ups duration helper (shared by Category and Skill Ups sorts)
     local sk = state.skillLevel or 0
@@ -7521,6 +8159,12 @@ function TSF:LoadRecipes(unknown)
         end)
     else
         table.sort(filtered, function(a, b)
+            if vendorView then
+                local va, vb = PR:ShuffleCached(a, state.profName), PR:ShuffleCached(b, state.profName)
+                local pa, pb = va and va.profit or 0, vb and vb.profit or 0
+                if pa ~= pb then return pa > pb end
+                return a.name < b.name
+            end
             if sortBy == "Skill-ups" then
                 -- Known sorts above missing
                 if a.isKnown ~= b.isKnown then return a.isKnown end
@@ -7667,10 +8311,26 @@ function TSF:RefreshRecipeList()
     local unknown = self:GetUnknownForView()
 
     -- Prices.lua: one cost per recipe per refresh (Profit column, sort, loss filter)
-    if addon.Prices then addon.Prices:ResetListCache() end
+    local PR = addon.Prices
+    if PR then PR:ResetListCache() end
+    -- the Vendor shuffle view needs prices on
+    if state.showTab == "vendor" and not (PR and PR:Enabled()) then state.showTab = "known" end
+    if PR then PR._unloaded = nil end
     self:LoadRecipes(unknown)
+    -- a product the game hadn't loaded leaves its craft out of the Vendor
+    -- shuffle view: look again, up to 3 times a second apart
+    if state.showTab == "vendor" and PR and PR._unloaded then
+        self._vendorRetry = (self._vendorRetry or 0) + 1
+        if self._vendorRetry <= 3 then
+            C_Timer.After(1, function()
+                if self.frame and self.frame:IsShown() and state.showTab == "vendor" then self:RefreshRecipeList() end
+            end)
+        end
+    else
+        self._vendorRetry = 0
+    end
 
-    local maxScroll = math.max(0, #state.recipes - VISIBLE_ROWS)
+    local maxScroll = math.max(0, #state.recipes - self:ListRows())
     self.scrollBar:SetMinMaxValues(0, maxScroll)
     if state.scrollOffset > maxScroll then
         state.scrollOffset = maxScroll
@@ -7907,7 +8567,10 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
     if self:WaitToShow(profName .. " opens", function()
         if isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
     end) then return end
-    -- a profession opening (Back, or another one) ends a park
+    -- a profession opening (Back, or another one) ends a park; the parked
+    -- one coming back keeps its quantity (ResetQtyOnPick)
+    local resumed = self._unparking or (self._parked and self._parked.prof == profName)
+    self._unparking = nil
     if self._parked then self:EndPark(false) end
     -- Close the /pb main window if open (mutual exclusion)
     if addon.UI and addon.UI.frame and addon.UI.frame:IsShown() then
@@ -7919,8 +8582,12 @@ function TSF:OpenWith(profName, rank, maxRank, isCraft)
     self:EnsureFrame()
     self:RestoreContentPanels()
 
-    -- A fresh window means any craft we were tracking is over.
-    self:StopCraftTracking()
+    -- A fresh window means any craft we were tracking is over, except the
+    -- profession being crafted coming back (Back, its icon in the main
+    -- window): the game kept crafting behind the main window, so the box
+    -- keeps counting down (Kluga; 2.2.0 TEST-c, m4ru found the way in game)
+    if not self:IsCraftingIn(profName, isCraft) then self:StopCraftTracking() end
+    if not resumed then self._qtyKey = nil end
 
     state.profName      = profName
     state.skillLevel    = rank or 0
@@ -8066,6 +8733,7 @@ function TSF:OpenWithStatic(profName)
     self:EnsureFrame()
     self:RestoreContentPanels()
     self:StopCraftTracking()
+    self._qtyKey = nil
 
     state.profName      = profName
     -- A static browse has no client skill line, so the canonical name IS
@@ -8123,6 +8791,75 @@ end
 -- Loads their stored data from DataStore and renders it with
 -- difficulty colors relative to their skill level.
 ----------------------------------------------------------------------
+-- The Shuffle tab changed the minimum: Settings' dropdown and the Vendor
+-- shuffle view follow
+function TSF:SyncShuffleMin()
+    local P = addon.Prices
+    if self.shuffleMinDD and P then self.shuffleMinDD:SetValue(P:ShuffleMinLabel(P:ShuffleMin())) end
+    if self.frame and self.frame:IsShown() and state.showTab == "vendor" then self:RefreshRecipeList() end
+end
+
+-- Open a character's profession on one recipe, in the Vendor shuffle
+-- view (the Shuffle tab, 2.2.0): their read-only view, or your own
+-- character's. A filter that would hide the recipe is cleared.
+-- vendorView: false to keep the View (Crates and writs: the requested
+-- item's recipe need not be a vendor shuffle); the Shuffle tab's rows open
+-- in View: Vendor shuffle
+function TSF:OpenRecipeFor(charKey, profName, recipeName, vendorView)
+    if self:WaitToShow(recipeName .. " opens", function() self:OpenRecipeFor(charKey, profName, recipeName, vendorView) end) then return end
+    -- your own character: the live profession when the game has it open, or
+    -- can open it (WoW: Forever); otherwise your saved list, which says to
+    -- open the profession to craft (TEST-a5, m4ru)
+    if addon:SameKey(charKey, addon:PlayerKey()) and self:OpenOwnLive(profName, recipeName, vendorView) then return end
+    self:OpenWithCharacter(charKey, profName)
+    if not (self.frame and self.frame:IsShown()) then return end
+    self:SelectRecipeForView(recipeName, vendorView)
+end
+
+-- Select `recipeName` in the shown list, in the Vendor shuffle View while
+-- prices show (vendorView false: the View as it is): a search or filter
+-- that hides it is cleared, a View without it goes to Known, then All, and
+-- the list scrolls to it. True when it was found.
+function TSF:SelectRecipeForView(recipeName, vendorView)
+    local P = addon.Prices
+    if vendorView ~= false and P and P:Enabled() then state.showTab = "vendor" end
+    local function find()
+        for i, r in ipairs(state.recipes) do
+            if not r.isHeader and r.name == recipeName then return i end
+        end
+    end
+    self:RefreshRecipeList()
+    local idx = find()
+    if not idx then
+        state.searchText = ""
+        if self.searchBox then self.searchBox:SetText("") end
+        state.filterCat, state.filterDiff = "All", "All"
+        if self.catDropdown then self.catDropdown:SetValue("All") end
+        if self.diffDropdown then self.diffDropdown:SetValue("All") end
+        self:RefreshRecipeList()
+        idx = find()
+    end
+    -- not in this View (a crate's item in Vendor shuffle, a known recipe in
+    -- Missing): Known, then All (TEST-b)
+    for _, tab in ipairs({ "known", "all" }) do
+        if idx or state._isStaticView then break end
+        if state.showTab ~= tab then
+            state.showTab = tab
+            self:RefreshRecipeList()
+            idx = find()
+        end
+    end
+    if not idx then return false end
+    state.scrollOffset = math.max(0, math.min(idx - 1, #state.recipes - self:ListRows()))
+    self.scrollBar:SetValue(state.scrollOffset)
+    state.selected = recipeName
+    self:UpdateListRows()
+    self:UpdateListHighlights()
+    self:RefreshDetailPanel()
+    self:UpdateCraftBar()
+    return true
+end
+
 function TSF:OpenWithCharacter(charKey, profName)
     if self:WaitToShow(profName .. " opens", function() self:OpenWithCharacter(charKey, profName) end) then return end
     if self._parked then self:EndPark(true) end
@@ -8142,6 +8879,7 @@ function TSF:OpenWithCharacter(charKey, profName)
     self:EnsureFrame()
     self:RestoreContentPanels()
     self:StopCraftTracking()
+    self._qtyKey = nil
 
     local skill = profData.level or profData.skillLevel or 0
     local maxSkill = profData.maxLevel or profData.maxSkill or 375
@@ -8317,10 +9055,12 @@ function TSF:OnTradeSkillShow()
     if self.frame and self.frame:IsShown() and state.profName == profName
        and not state.isCraftWindow and not state._viewCharKey and not state._isStaticView then
         self:RefreshTradeData(profName, rank, maxRank, false)
+        self:ApplyPendingSelect()
         return
     end
 
     self:OpenWith(profName, rank, maxRank, false)
+    self:ApplyPendingSelect()
 end
 
 function TSF:OnCraftShow()
@@ -8348,6 +9088,251 @@ function TSF:OnCraftShow()
     end
 
     self:OpenWith(profName, rank or 0, maxRank or 375, true)
+end
+
+-- Mining's window is Smelting on TBC Anniversary: one name for comparing
+local function SameProf(a, b)
+    local function n(x) return x == "Mining" and "Smelting" or x end
+    return a ~= nil and n(a) == n(b)
+end
+
+-- The profession the game has open on one channel, by PB's name, or nil
+local function OpenProfName(isCraft)
+    if not addon.Source:IsSessionOpen(isCraft) then return nil end
+    local raw = addon.Source:GetOpenSkillLine(isCraft)
+    if not raw or raw == "" or raw == "UNKNOWN" then return nil end
+    return CanonicalProf(raw)
+end
+
+-- A Shuffle row of your own character's recipe (TEST-a5): show the live
+-- profession with the recipe selected. Open in the game: shown at once.
+-- WoW: Forever opens it by skill line, and the recipe is selected when its
+-- list arrives (ApplyPendingSelect). False when neither works (TBC
+-- Anniversary with the profession closed): the caller shows your saved list.
+function TSF:OpenOwnLive(profName, recipeName, vendorView)
+    for _, isCraft in ipairs({ false, true }) do
+        if SameProf(OpenProfName(isCraft), profName) then
+            if isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
+            if self.frame and self.frame:IsShown() and not state._viewCharKey
+               and SameProf(state.profName, profName) then
+                self:SelectRecipeForView(recipeName, vendorView)
+                return true
+            end
+        end
+    end
+    local S = addon.Source
+    local skillLine = S.TabSkillLine and S:TabSkillLine(profName == "Smelting" and "Mining" or profName)
+    if skillLine and S.OpenProfession then
+        self._pendingSelect = { prof = profName, recipe = recipeName, vendorView = vendorView,
+                                at = GetTime and GetTime() or 0 }
+        S:OpenProfession(skillLine)
+        return true
+    end
+    return false
+end
+
+-- The recipe a Shuffle row asked for, selected once its profession shows
+-- (10 seconds at most)
+function TSF:ApplyPendingSelect()
+    local p = self._pendingSelect
+    if not p then return end
+    if (GetTime and GetTime() or 0) - p.at > 10 then self._pendingSelect = nil; return end
+    if not (self.frame and self.frame:IsShown()) or state._viewCharKey or state._isStaticView
+       or not SameProf(state.profName, p.prof) then return end
+    if self:SelectRecipeForView(p.recipe, p.vendorView) then
+        self._pendingSelect = nil
+        if p.qty then self:SetJumpQty(p.qty) end
+    end
+end
+
+----------------------------------------------------------------------
+-- Click a material to go to its recipe (2.2.0, GitHub #13, philippeop;
+-- REAGENT-JUMP-scope.md). A material a recipe makes: in the list on show
+-- (your open profession, or the saved list you're viewing), else, from
+-- your own open profession, one of your other professions. WoW: Forever
+-- opens that profession; TBC Anniversary can't open one from a click, so
+-- there the tooltip names it.
+----------------------------------------------------------------------
+
+-- The recipe you know (in your saved data) by its name, or by its spell
+-- when the saved name is another language's: the name the list shows
+local function KnownName(charData, profName, recipeName)
+    local p = charData and charData.professions and charData.professions[profName]
+    local known = p and p.recipes
+    if not known then return nil end
+    if known[recipeName] then return recipeName end
+    local info = RDB and RDB.data[profName] and RDB.data[profName][recipeName]
+    local sid = info and info.spellID
+    if sid then
+        for name, r in pairs(known) do
+            if type(r) == "table" and r.spellID == sid then return name end
+        end
+    end
+    return nil
+end
+
+-- Where a click on this material goes: { prof, name } in the list on
+-- show, or { prof, name, other = true, canOpen } for another of your
+-- professions. nil when nothing you know makes it.
+function TSF:MaterialTarget(itemID)
+    if not itemID or itemID == 0 then return nil end
+    local names = {}
+    for name, r in pairs(state.allRecipes or {}) do
+        if r.itemID == itemID and r.isKnown ~= false and name ~= state.selected then names[#names + 1] = name end
+    end
+    table.sort(names)
+    if names[1] then return { prof = state.profName, name = names[1] } end
+    -- another profession: from your own open profession only, never from
+    -- an alt's or a friend's list
+    if state._viewCharKey or state._isStaticView then return nil end
+    local me = DS and DS:GetCharacter(addon:PlayerKey())
+    for _, e in ipairs(RDB and RDB:GetRecipesForItem(itemID) or {}) do
+        if not SameProf(e.profName, state.profName) then
+            local name = KnownName(me, e.profName, e.recipeName)
+            if name then
+                local S = addon.Source
+                local line = S.TabSkillLine and S.OpenProfession
+                    and S:TabSkillLine(e.profName == "Smelting" and "Mining" or e.profName)
+                return { prof = e.profName, name = name, other = true, canOpen = line ~= nil }
+            end
+        end
+    end
+    return nil
+end
+
+-- The crafts it takes to have `need` of the material: what your bags
+-- lack, over what one craft makes, rounded up; and the same counting your
+-- bank (PB's copy of it), as Can make counts it
+function TSF:CraftsForMaterial(target, itemID, need)
+    local data = RDB and RDB.data[target.prof] and RDB.data[target.prof][target.name]
+    local yield = tonumber(data and data.yield) or 1
+    if yield < 1 then yield = 1 end
+    local bags = GetItemCount(itemID) or 0
+    local me = DS and DS:GetCharacter(addon:PlayerKey())
+    local inv = me and me.inventory
+    local bank = inv and inv.bankScanned and inv.bank and inv.bank[itemID] or 0
+    return math.ceil(math.max(0, need - bags) / yield), math.ceil(math.max(0, need - bags - bank) / yield)
+end
+
+-- The quantity on show: the Craft box on your own profession, the order
+-- box on someone's list
+function TSF:JumpQtyBox()
+    if state._viewCharKey then return self.composerQty end
+    return self.qtyBox
+end
+
+-- What the recipe on show takes of a Reagents row's material, for the
+-- quantity in its box
+function TSF:MaterialNeed(row)
+    local box = self:JumpQtyBox()
+    local qty = box and tonumber(box:GetText()) or 1
+    if qty < 1 then qty = 1 end
+    return (row.perCraft or 1) * qty
+end
+
+-- A recipe picked, or the window opened: the quantity starts at 1, as
+-- Blizzard's TradeSkillFrame_SetSelection and OnShow set it. A batch that
+-- is running keeps its count; a jump and Back fill theirs after this.
+function TSF:ResetQtyOnPick()
+    local key = tostring(state.profName) .. "|" .. tostring(state._viewCharKey) .. "|" .. tostring(state.selected)
+    if key == self._qtyKey then return end
+    self._qtyKey = key
+    local box = self:JumpQtyBox()
+    if not box or (box == self.qtyBox and self._craftingActive) then return end
+    box:SetText("1")
+end
+
+-- Fill the quantity after a jump; a batch that is running keeps its count
+function TSF:SetJumpQty(n)
+    local box = self:JumpQtyBox()
+    if not box or (box == self.qtyBox and self._craftingActive) then return end
+    box:SetText(tostring(math.max(1, tonumber(n) or 1)))
+end
+
+-- The material's tooltip lines: where a click goes and how many to craft
+-- (need: what the recipe on show takes of it, for its quantity). The
+-- target when a click goes there, else nil.
+function TSF:AddMaterialHint(tip, itemID, need)
+    local t = self:MaterialTarget(itemID)
+    if not t then return nil end
+    if t.other and not t.canOpen then
+        tip:AddLine("Made with " .. t.prof .. ": " .. t.name, 0.5, 0.5, 0.5)
+        return nil
+    end
+    tip:AddLine("Click: go to " .. t.name .. (t.other and (" (" .. t.prof .. ")") or ""), 0.5, 0.5, 0.5)
+    local crafts, withBank = self:CraftsForMaterial(t, itemID, need)
+    local line = crafts > 0 and ("Needs " .. crafts .. " crafted") or "You have enough"
+    if withBank < crafts then
+        line = line .. "|cff3fc7ff, " .. (withBank > 0 and withBank or "none") .. " with bank|r"
+    end
+    tip:AddLine(line, 0.5, 0.5, 0.5)
+    return t
+end
+
+-- Go to the recipe that makes the material, with the crafts you still
+-- need in the quantity box; "Back" returns. True when it went.
+function TSF:JumpToMaterial(itemID, need)
+    local t = self:MaterialTarget(itemID)
+    if not t or (t.other and not t.canOpen) then return false end
+    local crafts = self:CraftsForMaterial(t, itemID, need)
+    local box = self:JumpQtyBox()
+    self._jumpStack = self._jumpStack or {}
+    local stack = self._jumpStack
+    stack[#stack + 1] = { prof = state.profName, name = state.selected, view = state._viewCharKey,
+                          qty = box and box:GetText() or nil,
+                          child = { prof = t.prof, name = t.name, view = not t.other and state._viewCharKey or nil } }
+    while #stack > 10 do table.remove(stack, 1) end
+    if t.other then
+        self:OpenRecipeFor(addon:PlayerKey(), t.prof, t.name, false)
+        local p = self._pendingSelect
+        if p and SameProf(p.prof, t.prof) and p.recipe == t.name then
+            p.qty = math.max(1, crafts)
+            return true
+        end
+    else
+        self:SelectRecipeForView(t.name, false)
+    end
+    self:SetJumpQty(crafts)
+    return true
+end
+
+-- "Back": the recipe the last jump came from, and its quantity
+function TSF:JumpBack()
+    local stack = self._jumpStack
+    local b = stack and stack[#stack]
+    if not b then return end
+    stack[#stack] = nil
+    if SameProf(b.prof, state.profName) and b.view == state._viewCharKey then
+        self:SelectRecipeForView(b.name, false)
+        self:SetJumpQty(b.qty)
+        return
+    end
+    self:OpenRecipeFor(addon:PlayerKey(), b.prof, b.name, false)
+    local p = self._pendingSelect
+    if p and SameProf(p.prof, b.prof) and p.recipe == b.name then
+        p.qty = b.qty
+    else
+        self:SetJumpQty(b.qty)
+    end
+end
+
+-- The Back button under Share, while the recipe on show is the one
+-- the last jump went to; anything else clears the trail (a jump to
+-- another profession waits for it to open)
+function TSF:ShowBackLine()
+    local btn = self.detBack
+    if not btn then return end
+    btn:Hide()
+    local stack = self._jumpStack
+    local top = stack and stack[#stack]
+    if not top then return end
+    local c = top.child
+    if not (SameProf(c.prof, state.profName) and c.name == state.selected and c.view == state._viewCharKey) then
+        if not self._pendingSelect then self._jumpStack = nil end
+        return
+    end
+    btn.backTo = top.name
+    btn:Show()
 end
 
 ----------------------------------------------------------------------
@@ -8479,6 +9464,8 @@ function TSF:Unpark()
         return
     end
     self._parked = nil
+    self._unparking = true
     if addon.UI then addon.UI:Hide() end
     if p.isCraft then self:OnCraftShow() else self:OnTradeSkillShow() end
+    self._unparking = nil
 end

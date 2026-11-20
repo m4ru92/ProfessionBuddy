@@ -23,7 +23,16 @@ local GuildRoster = GuildRoster or (C_GuildInfo and C_GuildInfo.GuildRoster)
 local GP = addon:NewModule("GuildPanel")
 
 local ROW_HEIGHT   = 20
-local VISIBLE_ROWS = 15
+-- the list: 478 px of content less 52 px above the headings, the 18 px
+-- heading bar and a 2 px gap: 406 px (540-tall window, TEST-c6)
+local VISIBLE_ROWS = 20
+
+-- The rows that fit: fewer while the craft strip shows (UI:FitRows)
+local function Rows()
+    local UI = addon.UI
+    return UI and UI.FitRows and UI:FitRows(VISIBLE_ROWS, ROW_HEIGHT) or VISIBLE_ROWS
+end
+GP.VisibleRows = Rows   -- for the harness
 local MAX_PROF_ICONS = 6
 
 -- Profession -> icon (mirrors FriendsPanel).
@@ -46,11 +55,12 @@ local PROF_ICONS = {
 -- Ordered column definitions. x = left offset within the row, w = text width.
 -- Professions is last so its variable-width icon strip absorbs the right side.
 local COLS = {
-    { key = "name",        label = "Name",        x = 22,  w = 104 },
-    { key = "level",       label = "Lvl",         x = 132, w = 34  },
-    { key = "rank",        label = "Rank",        x = 172, w = 110 },
-    { key = "status",      label = "Status",      x = 288, w = 64  },
-    { key = "professions", label = "Professions", x = 356, w = 170 },
+    -- the 740-wide window (TEST-c6): Name and Rank get the room
+    { key = "name",        label = "Name",        x = 22,  w = 170 },
+    { key = "level",       label = "Lvl",         x = 198, w = 34  },
+    { key = "rank",        label = "Rank",        x = 238, w = 170 },
+    { key = "status",      label = "Status",      x = 414, w = 70  },
+    { key = "professions", label = "Professions", x = 490, w = 200 },
 }
 local COL = {}
 for _, c in ipairs(COLS) do COL[c.key] = c end
@@ -614,7 +624,10 @@ function GP:CreateContent(parent)
     -- consistent look and single-select behavior.
     if addon.CreateDropdown then
         local profDD = addon.CreateDropdown(filterBar, 150, { "All" }, "All", function(val)
-            self.filterProf = (val == "All") and nil or val
+            -- not `(val == "All") and nil or val`, which always gives val
+            -- (Repaint then dropped "All" as no roster profession; the
+            -- Shuffle tab had no such net, TEST-a3)
+            if val == "All" then self.filterProf = nil else self.filterProf = val end
             self:Repaint()
         end, "Prof: ")
         profDD:SetPoint("LEFT", onlineLabel, "RIGHT", 14, 0)
@@ -923,7 +936,7 @@ function GP:Repaint()
         self.header:SetText("Guild (" .. #self.members .. " members, " .. online .. " online)" .. partial)
     end
 
-    local maxScroll = math.max(0, #self.filtered - VISIBLE_ROWS)
+    local maxScroll = math.max(0, #self.filtered - Rows())
     self.scrollBar:SetMinMaxValues(0, maxScroll)
     if (self.scrollOffset or 0) > maxScroll then
         self.scrollOffset = maxScroll
@@ -943,8 +956,9 @@ end
 function GP:UpdateRows()
     local members = self.filtered or {}
     local offset = self.scrollOffset or 0
+    local shown = Rows()
     for i, row in ipairs(self.rows) do
-        local m = members[offset + i]
+        local m = i <= shown and members[offset + i] or nil
         if m then
             -- Profession data lands asynchronously (a guildmate's sync reply
             -- can arrive while the tab is open), so the painted rows read the

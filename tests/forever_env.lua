@@ -527,6 +527,11 @@ function strsplit(sep, s) local out = {}
     for p in (s .. sep):gmatch("(.-)" .. sep:gsub("%p", "%%%0")) do out[#out + 1] = p end
     return unpack(out) end
 function GetTime() return 1000 end
+-- The game's cast bar data: a harness sets CAST_INFO to UnitCastingInfo's
+-- returns (name, text, texture, startMs, endMs, isTradeSkill, castID,
+-- notInterruptible, spellID); nil is no cast
+CAST_INFO = nil
+function UnitCastingInfo(unit) if unit == "player" and CAST_INFO then return unpack(CAST_INFO) end end
 function time() return 5000 end
 function date() return "2026-09-24" end
 function GetLocale() return "enUS" end
@@ -568,7 +573,10 @@ function GetNumTrainerServices() return 0 end
 
 CALLS = {}
 local function rec(name, ret) return function(...) CALLS[#CALLS + 1] = name; return ret end end
-C_Item = { GetItemInfo = rec("C_Item.GetItemInfo"), GetItemCount = rec("C_Item.GetItemCount", 0),
+-- GetItemCount: bags only (no includeBank), 0 unless a test sets ITEM_COUNT[id]
+C_Item = { GetItemInfo = rec("C_Item.GetItemInfo"),
+           GetItemCount = function(id) CALLS[#CALLS + 1] = "C_Item.GetItemCount"
+               local t = rawget(_G, "ITEM_COUNT"); return t and t[id] or 0 end,
            GetItemIconByID = rec("C_Item.GetItemIconByID") }
 C_Spell = { GetSpellInfo = rec("C_Spell.GetSpellInfo"), GetSpellLink = rec("C_Spell.GetSpellLink"),
             GetSpellTexture = rec("C_Spell.GetSpellTexture") }

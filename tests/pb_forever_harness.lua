@@ -3029,7 +3029,8 @@ print("  PASS F54 Settings scroll: columns in one scroll frame, opens at the top
 
 -- F55: the 2026-10-13 fix wave, Forever side. A crafted item seen without
 -- an item link (a friend's recipe, the Missing list) shows its tool line;
--- the Guild Board list has 7 rows (8 drew one below the window); a friend
+-- the Guild Board list fits the window (7 rows at 450 px, 8 drew one
+-- below it; 9 at 540 px since TEST-c6); a friend
 -- asked for sightings is asked again once 15 minutes have passed.
 do
     local TSF = ProfBuddy.TradeSkillFrame
@@ -3045,7 +3046,10 @@ do
 
     local OP = ProfBuddy.OrdersPanel
     if not OP.boardCtx then OP:Toggle() end
-    EXPECT(OP.boardCtx and #OP.boardCtx.rows == 7, "board rows: " .. tostring(OP.boardCtx and #OP.boardCtx.rows))
+    -- 9 since TEST-c6 (the 540-tall window): as many 36 px rows as fit in
+    -- 540 - 52 - 10 - 26 - 104 = 348 px, none drawn below the window
+    EXPECT(OP.boardCtx and #OP.boardCtx.rows == 9 and 9 * 36 <= 540 - 52 - 10 - 26 - 104,
+           "board rows: " .. tostring(OP.boardCtx and #OP.boardCtx.rows))
 
     local Comm = ProfBuddy.Comm
     local AS = LibStub("AceSerializer-3.0")
@@ -4828,7 +4832,7 @@ do
         GetAuctionAgeByItemID = function(caller, id) return AGE[id] end,
     } } }
     line, r = detail(cloak)
-    EXPECT(line == "Cost: 70c   Sells: 3s   Profit: +2s 15c", "Auctionator: " .. tostring(line))
+    EXPECT(line == "Cost: 70c   Auction: 3s   Profit: +2s 15c", "Auctionator: " .. tostring(line))
     EXPECT(TSF.detPrice:GetText():find("|cff808080" .. P:Money(300) .. "|r", 1, true), "an old sale price is not gray")
     EXPECT(calls[1] == "ProfessionBuddy", "Auctionator called without PB's name")
     local leather = r.parts[1].price
@@ -4872,7 +4876,7 @@ do
     S.priceTSMSource = " DBMinBuyout "
     line = detail(cloak)
     EXPECT(asked[1] == "DBMinBuyout i:2318", "TSM asked: " .. tostring(asked[1]))
-    EXPECT(line == "Cost: 90c   Sells: 5s   Profit: +3s 85c", "TSM: " .. tostring(line))
+    EXPECT(line == "Cost: 90c   Auction: 5s   Profit: +3s 85c", "TSM: " .. tostring(line))
     S.priceTSMSource = "DBMarket"
     -- both off: PB's recorded prices (3 days old), the vendor; the cloak
     -- falls back to the vendor's price
@@ -4883,7 +4887,7 @@ do
     local keepItem = C_Item.GetItemInfo
     C_Item.GetItemInfo = function(id) if id == 7276 then return "Cloak", nil, 1, 5, 1, "Armor", "Cloth", 1, "", 1, 64 end end
     line, r = detail(cloak)
-    EXPECT(line == "Cost: 82c   Sells: 64c (vendor)   Profit: -18c", "recorded + vendor: " .. tostring(line))
+    EXPECT(line == "Cost: 82c   Vendor: 64c   Profit: -18c", "recorded + vendor: " .. tostring(line))
     EXPECT(r.parts[1].price.craftParts[1].price.buySource == "PB" and math.floor(r.parts[1].price.craftParts[1].price.age) == 3,
            "recorded price source and age")
     C_Item.GetItemInfo = keepItem
@@ -4900,7 +4904,7 @@ do
            "vendor prices recorded: " .. tostring(V[2320] and V[2320].p))
     EXPECT(P:VendorBuy(2320) == 9, "a recorded vendor price did not beat the baked one")
     line = detail(cloak)
-    EXPECT(line == "Cost: 69c   Sells: 3s   Profit: +2s 16c", "recorded vendor price: " .. tostring(line))
+    EXPECT(line == "Cost: 69c   Auction: 3s   Profit: +2s 16c", "recorded vendor price: " .. tostring(line))
 
     -- an enchant (no item): cost only
     C_TradeSkillUI.OpenTradeSkill(333)
@@ -5018,19 +5022,19 @@ do
     -- defaults: both sale prices, profit from the auction price (3s less 5%, less 70c)
     EXPECT(S.priceVendorSell == true and S.priceBetterSale == false and S.priceListProfit == false
            and S.priceHideLoss == false, "sale and list settings defaults")
-    EXPECT(line() == "Cost: 70c   Sells: 3s, vendor 4s   Profit: +2s 15c", "both sale prices: " .. line())
+    EXPECT(line() == "Cost: 70c   Auction: 3s, vendor 4s   Profit: +2s 15c", "both sale prices: " .. line())
     -- only the better: the vendor's 4s beats 3s less 5%
     S.priceBetterSale = true
     local r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
-    EXPECT(line() == "Cost: 70c   Sells: 4s (vendor)   Profit: +3s 30c" and r.profitFrom == "vendor", "better sale price: " .. line())
+    EXPECT(line() == "Cost: 70c   Vendor: 4s   Profit: +3s 30c" and r.profitFrom == "vendor", "better sale price: " .. line())
     AUC[7276] = 500
-    EXPECT(line() == "Cost: 70c   Sells: 5s (auction)   Profit: +4s 05c" or line() == "Cost: 70c   Sells: 5s (auction)   Profit: +4s 5c",
+    EXPECT(line() == "Cost: 70c   Auction: 5s   Profit: +4s 05c" or line() == "Cost: 70c   Auction: 5s   Profit: +4s 5c",
            "better is the auction price: " .. line())
     AUC[7276] = 300
     -- no vendor sale price anywhere
     S.priceVendorSell = false
     r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
-    EXPECT(line() == "Cost: 70c   Sells: 3s   Profit: +2s 15c" and r.vendorSell == nil, "vendor sale price off: " .. line())
+    EXPECT(line() == "Cost: 70c   Auction: 3s   Profit: +2s 15c" and r.vendorSell == nil, "vendor sale price off: " .. line())
     local lines = {}
     P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
                     AddDoubleLine = function(_, a, b) lines[#lines + 1] = plain(a) .. " = " .. plain(b) end }, r)
@@ -5081,7 +5085,7 @@ do
     -- a gray BoP in the list, last in the Profit sort, and hidden at a loss
     BOP[7276] = true
     r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
-    EXPECT(r.bop and r.sell == nil and line() == "Cost: 70c   Sells: 4s (vendor, BoP)   Profit: +3s 30c",
+    EXPECT(r.bop and r.sell == nil and line() == "Cost: 70c   Vendor: 4s (BoP)   Profit: +3s 30c",
            "BoP detail line: " .. line())
     lines = {}
     P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
@@ -5129,7 +5133,7 @@ do
     mp = P:MaterialPrice(2320)
     EXPECT(mp.bop and mp.unit == nil and mp.buy == nil, "a BoP material kept an auction price")
     EXPECT(plain(P:MaterialText(mp)) == "? (BoP)", "BoP material text: " .. plain(P:MaterialText(mp)))
-    EXPECT(line() == "Cost: 60c+ (1 material binds when picked up)   Sells: 3s, vendor 4s", "BoP material line: " .. line())
+    EXPECT(line() == "Cost: 60c+ (1 material binds when picked up)   Auction: 3s, vendor 4s", "BoP material line: " .. line())
     r = P:RecipeCost(TSF:GetSelectedRecipe(), st.profName)
     lines = {}
     P:FillTooltip({ AddLine = function(_, t) lines[#lines + 1] = plain(t) end,
@@ -5511,6 +5515,7 @@ do
     TSF.frame:Hide(); FLUSH()
     TSF._savedStates, TSF._keptLoaded = {}, nil
     rawset(F, "_pbPosRestored", false)
+    UI._livePos = nil   -- a reload starts a new session
     open()
     EXPECT(st.filterDiff == "No Gray" and st.filterCat == cat, "states not back after a reload")
     local lp = rawget(F, "_lastPoint")
@@ -5520,6 +5525,7 @@ do
     TSF.frame:Hide(); FLUSH()
     w.pos.profession = { x = 5000, y = 99 }
     rawset(F, "_pbPosRestored", false)
+    UI._livePos = nil
     open()
     lp = rawget(F, "_lastPoint")
     EXPECT(lp[4] == 1220 and lp[5] == 500, "off-screen position not pulled back: " .. tostring(lp[4]) .. "," .. tostring(lp[5]))
@@ -5545,8 +5551,9 @@ do
     rawset(M, "GetLeft", function() return 40 end)
     rawset(M, "GetTop", function() return 700 end)
     M:Hide()
-    EXPECT(PB.db.windows[key].pos and PB.db.windows[key].pos.main and PB.db.windows[key].pos.main.x == 40,
-           "the main window's position not saved on close")
+    -- under the profession window's key since TEST-c7: one position
+    EXPECT(PB.db.windows[key].pos and PB.db.windows[key].pos.profession and PB.db.windows[key].pos.profession.x == 40
+           and PB.db.windows[key].pos.main == nil, "the main window's position not saved on close")
     for _, k in ipairs({ "GetWidth", "GetHeight", "GetScale", "GetLeft", "GetTop" }) do rawset(F, k, nil); rawset(M, k, nil) end
     rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
     if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
@@ -5773,7 +5780,7 @@ do
     -- a writ: its item has no price here, and the writ's own auction price
     t = tipFor(264037)
     EXPECT(t:find("Fill cost (ProfessionBuddy): = ?", 1, true) and t:find("200 x ", 1, true)
-           and t:find("Writ sells for = 40s", 1, true), "writ tooltip:\n" .. t)
+           and t:find("Writ at auction = 40s", 1, true), "writ tooltip:\n" .. t)
     -- the item not loaded yet (m4ru, TEST-c4: "200 x item:8069"): the
     -- baked name
     local keepGII = GetItemInfo
@@ -5823,6 +5830,7 @@ local function F89()
     rawset(M, "_userPlaced", true)
     M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
     rawset(M, "_pbPosRestored", false)
+    UI._livePos = nil   -- a fresh session: no window has been placed yet
     UI:Show()
     local lp = rawget(M, "_lastPoint")
     EXPECT(lp and lp[1] == "CENTER" and rawget(M, "_points") == 1 and not M:IsUserPlaced(),
@@ -5951,6 +5959,7 @@ local function F91()
     rawset(M, "_userPlaced", true)
     M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 40, 700)
     rawset(M, "_pbPosRestored", false)
+    UI._livePos = nil   -- a fresh session
     UI:Show()
     local lp = rawget(M, "_lastPoint")
     EXPECT(lp and lp[1] == "TOPLEFT" and lp[4] == 40 and rawget(M, "_points") == 1 and not M:IsUserPlaced(),
@@ -5986,7 +5995,7 @@ local function F92()
     -- the profession window holds secure buttons: the game protects it
     EXPECT(TSF.frame:IsProtected(), "harness: the profession window is not protected")
     -- the bottom tabs, each in combat
-    local names = { "Characters", "Friends", "Guild", "Orders" }
+    local names = { "Characters", "Friends", "Guild", "Orders", "Shuffle" }
     for i, name in ipairs(names) do
         clean(); open()
         fight(true); PRINTS = {}
@@ -5997,11 +6006,12 @@ local function F92()
         ended()
         ok(name .. " tab after combat")
         EXPECT(not TSF.frame:IsShown() and TSF._parked and UI.frame:IsShown(), name .. " did not open when combat ended")
+        EXPECT(UI.frame.tabs[UI.activeTab].name == name:lower(), name .. " opened the main window on tab " .. tostring(UI.frame.tabs[UI.activeTab].name))
     end
     -- /pb, /pb friends with the profession window open
-    -- /pb and /pb friends close the profession; the tab commands park it,
-    -- as each does out of combat
-    local parks = { [""] = false, friends = false, chars = true, guild = true, orders = true }
+    -- every one parks it, as each does out of combat (2.2.0: /pb and /pb
+    -- friends closed it until TEST-a6)
+    local parks = { [""] = true, friends = true, chars = true, guild = true, orders = true }
     for _, cmd in ipairs({ "", "friends", "chars", "guild", "orders" }) do
         clean(); open()
         fight(true); PRINTS = {}
@@ -6215,7 +6225,7 @@ local function F94()
     local r = P:RecipeCost({ name = "Coarse Dynamite" }, "Engineering")
     EXPECT(r and r.yield == 2 and r.yieldMin == 1 and r.yieldMax == 3, "the price's range")
     local line = P:DetailText(r)
-    EXPECT(line:find("Sells: ", 1, true) and line:find("Profit: ", 1, true) and not line:find("~", 1, true)
+    EXPECT(line:find("Auction: ", 1, true) and line:find("Profit: ", 1, true) and not line:find("~", 1, true)
            and not line:find("about", 1, true), "a mark on the price line: " .. line)
     -- TEST-a4: fits() moves a whole piece down; without it, one line as
     -- before. The harness has no vendor price for it: give it the game's 75c
@@ -6340,7 +6350,8 @@ local function F96()
     st._isLinkedView = false
     -- a recipe with no station: no line
     EXPECT(#toolLines({ name = "Light Armor Kit", spellID = 2152, itemID = 2304, gameIndex = 2152, isKnown = true }) == 0, "a station line with none")
-    -- the detail panel follows you
+    -- the detail panel follows you (the box open: F93's sweep clicks its fold)
+    ProfBuddyDB.settings.itemInfoFolded, ProfBuddyDB.settings.showItemInfo = false, true
     table.insert(st.recipes, 1, belt)
     st.selected = belt.name
     met = false
@@ -6364,4 +6375,1886 @@ end
 F96()
 print("  PASS F96 2.1.1: a crafting station shows with the tools (Tanning Rack): white on a read-only list, red (not nearby) or green from the game's check on your open profession, none for a recipe without one; the detail panel follows you")
 
-print("ALL FOREVER TESTS PASS (96)")
+-- F97 2.2.0 TEST-a: the vendor shuffle (Skeleton). Prices.lua works out
+-- a craft sold to a vendor; the Shuffle tab lists the ones a vendor pays
+-- at least the minimum profit for, for you, your alts, friends and
+-- guildmates, best first; the profession window has a Vendor shuffle View.
+local function F97()
+    local PB = ProfBuddy
+    local P, SP, TSF, UI, S = PB.Prices, PB.ShufflePanel, PB.TradeSkillFrame, PB.UI, PB.db.settings
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    local chars = PB.db.characters
+    local keepChars = {}
+    for k, v in pairs(chars) do keepChars[k] = v end
+    local keepContacts = PB.db.contacts
+    local keepGuild = PB.Comm.IsGuildMember
+    local keepGII, keepSpell = C_Item.GetItemInfo, C_Spell.GetSpellInfo
+    local keepAuc, keepAucOn = Auctionator, S.priceAuctionator
+    S.priceAuctionator = true
+    local keepShow = S.showPrices
+    S.showPrices = true
+    local keepMine = chars[me] and chars[me].professions and chars[me].professions.Poisons
+    -- the people
+    chars["Altie-Realm"] = { professions = { Leatherworking = { recipes = {
+        ["Handstitched Leather Belt"] = {}, ["Light Armor Kit"] = {} } } } }
+    chars["Pal-Realm"] = { isRemote = true, professions = { Leatherworking = { recipes = {
+        ["Handstitched Leather Belt"] = {} } } } }
+    chars["Guildie-Realm"] = { isRemote = true, professions = { Leatherworking = { recipes = {
+        ["Light Armor Kit"] = {} } } } }
+    chars["Stranger-Realm"] = { isRemote = true, professions = { Leatherworking = { recipes = {
+        ["Handstitched Leather Belt"] = {} } } } }
+    chars[me].professions.Poisons = { recipes = { ["Instant Poison"] = {} } }
+    PB.db.contacts = { ["Pal-Realm"] = { name = "Pal" } }
+    PB.Comm.IsGuildMember = function(_, key) return key == "Guildie-Realm" end
+    -- prices: Light Leather 30c at auction; Coarse Thread 10c, Dust of Decay
+    -- 20c and Empty Vial 4c from vendors (baked); what a vendor pays
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return ({ [2318] = 30 })[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    -- the products' vendor prices; the materials load too (sell 0)
+    local SELL = { [4237] = 400, [2304] = 20, [6947] = 224, [2318] = 0, [2320] = 0, [2928] = 0, [3371] = 0 }
+    local LOADING = {}
+    C_Item.GetItemInfo = function(id)
+        if LOADING[id] then return nil end
+        local sell = SELL[id]
+        if not sell then return keepGII(id) end
+        return "item" .. id, nil, 1, 5, 1, "Trade Goods", "x", 20, "", 1, sell, 7, 0, 0
+    end
+    C_Spell.GetSpellInfo = function(id) if id == 3753 then return { name = "Belt", castTime = 5000 } end end
+    S.shuffleMinProfit = nil
+    EXPECT(P:ShuffleMin() == 100 and P:ShuffleMinLabel(0) == "Any profit", "the default minimum is not 1s")
+
+    -- the numbers
+    local v = P:VendorShuffle({ name = "Handstitched Leather Belt" }, "Leatherworking")
+    EXPECT(v and v.cost == 190 and v.sell == 400 and v.profit == 210 and v.seconds == 5.5
+           and math.abs(v.perHour - 210 * 3600 / 5.5) < 0.01 and not v.fromVendors,
+           "the belt: " .. tostring(v and v.cost) .. " " .. tostring(v and v.profit) .. " " .. tostring(v and v.seconds))
+    v = P:VendorShuffle({ name = "Instant Poison" }, "Poisons")
+    EXPECT(v and v.cost == 24 and v.profit == 200 and v.seconds == 1.5 and v.fromVendors,
+           "the poison: " .. tostring(v and v.cost) .. " " .. tostring(v and v.seconds) .. " " .. tostring(v and v.fromVendors))
+    v = P:VendorShuffle({ name = "Light Armor Kit" }, "Leatherworking")
+    EXPECT(v and v.profit == -10, "the armor kit's loss")
+    -- the count per craft, worded as the detail panel (2.1.1): a random
+    -- amount reads "(makes 1-3, priced as 2)", a fixed one "(makes 2)"
+    local function sellLine(vv)
+        local tipLines = {}
+        rawset(GameTooltip, "_lines", tipLines)
+        SP:ShowRowTip({ _entry = { name = "x", prof = "Engineering", v = vv, who = {} } })
+        rawset(GameTooltip, "_lines", nil)
+        for _, l in ipairs(tipLines) do if l:find("^Vendor pays") then return l end end
+    end
+    local dyn = { cost = 10, sell = 150, profit = 140, perHour = 1, seconds = 2, yield = 2, yieldMin = 1, yieldMax = 3, parts = {} }
+    EXPECT((sellLine(dyn) or ""):find("Vendor pays (makes 1-3, priced as 2)", 1, true), "random amount: " .. tostring(sellLine(dyn)))
+    dyn.yieldMin, dyn.yieldMax = nil, nil
+    EXPECT((sellLine(dyn) or ""):find("Vendor pays (makes 2)", 1, true), "fixed count: " .. tostring(sellLine(dyn)))
+    dyn.yield = 1
+    EXPECT((sellLine(dyn) or ""):find("^Vendor pays |"), "one item: " .. tostring(sellLine(dyn)))
+    do
+        local keepAPI2, keepGII2 = Auctionator.API.v1.GetAuctionPriceByItemID, C_Item.GetItemInfo
+        Auctionator.API.v1.GetAuctionPriceByItemID = function() return 1 end
+        C_Item.GetItemInfo = function(id) return "item" .. id, nil, 1, 5, 1, "Trade Goods", "x", 20, "", 1, 75, 7, 0, 0 end
+        P:ResetListCache()
+        local cd = P:VendorShuffle({ name = "Coarse Dynamite" }, "Engineering")
+        EXPECT(cd and cd.yield == 2 and cd.yieldMin == 1 and cd.yieldMax == 3, "Coarse Dynamite's range in the shuffle: "
+               .. tostring(cd and cd.yieldMin) .. "-" .. tostring(cd and cd.yieldMax))
+        Auctionator.API.v1.GetAuctionPriceByItemID, C_Item.GetItemInfo = keepAPI2, keepGII2
+        P:ResetListCache()
+    end
+    -- a material with no price: the craft's profit is unknown, so it's left out
+    local keepAPI = Auctionator.API.v1.GetAuctionPriceByItemID
+    Auctionator.API.v1.GetAuctionPriceByItemID = function() return nil end
+    EXPECT(P:VendorShuffle({ name = "Handstitched Leather Belt" }, "Leatherworking") == nil,
+           "a craft with an unpriced material was worked out")
+    Auctionator.API.v1.GetAuctionPriceByItemID = keepAPI
+
+    -- the tab: the belt (alt first, and a friend) and the poison (you);
+    -- the armor kit loses money; Stranger is neither friend nor guildmate
+    UI:Show()
+    local idx
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then idx = i end end
+    EXPECT(idx == 5, "no Shuffle tab after Orders")
+    UI:SelectTab(idx); FLUSH()
+    -- F93's combat sweep clicked this tab's sort and filters, and its
+    -- Crates and writs button
+    SP.sortKey, SP.sortAsc, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", false, "Everyone", nil, false
+    SP:SetView("shuffle")
+    local names = {}
+    for _, e in ipairs(SP.list) do names[#names + 1] = e.name end
+    EXPECT(#SP.list == 2 and SP.list[1].name == "Handstitched Leather Belt" and SP.list[2].name == "Instant Poison",
+           "Shuffle rows: " .. table.concat(names, ", "))
+    local belt = SP.list[1]
+    EXPECT(#belt.who == 2 and belt.who[1].key == "Altie-Realm" and belt.who[2].key == "Pal-Realm",
+           "the belt's people, nearest first")
+    EXPECT(SP.rows[1].whoText:GetText() == "Altie +1" and SP.rows[1]:IsShown() and not SP.rows[3]:IsShown(),
+           "row 1 who: " .. tostring(SP.rows[1].whoText:GetText()))
+    EXPECT(not SP.empty:IsShown(), "the empty text shows over rows")
+    -- sort by per hour: the poison is quicker
+    SP.headerBtns.hour:GetScript("OnClick")(SP.headerBtns.hour)
+    EXPECT(SP.list[1].name == "Instant Poison", "Per hour sort")
+    SP.headerBtns.profit:GetScript("OnClick")(SP.headerBtns.profit)
+    -- Who: friends only, then guild only (nothing over the minimum)
+    SP.whoFilter = "Friends"; SP:Repaint()
+    EXPECT(#SP.list == 1 and SP:Shown(SP.list[1]).key == "Pal-Realm", "Who: Friends")
+    SP.whoFilter = "Guild"; SP:Repaint()
+    EXPECT(#SP.list == 0 and SP.empty:IsShown(), "Who: Guild should be empty")
+    SP.whoFilter = "Everyone"; SP:Repaint()
+    -- Prof, picked from the dropdown's own list: one profession, then All
+    -- brings every row back (TEST-a3: All emptied the list)
+    do
+        local dd = SP.profDD
+        local function pickOpt(v)
+            for _, b in ipairs(dd.optionBtns) do
+                if b.value == v and b:IsShown() then b:GetScript("OnClick")(b); return true end
+            end
+        end
+        EXPECT(pickOpt("Poisons") and #SP.list == 1 and SP.list[1].name == "Instant Poison", "Prof: Poisons")
+        EXPECT(pickOpt("All") and SP.profFilter == nil and #SP.list == 2,
+               "Prof: All after a profession: " .. #SP.list .. " rows, filter " .. tostring(SP.profFilter))
+        -- the same trap nowhere else: `x and nil or y` always gives y
+        for _, f in ipairs({ "UI/ShufflePanel.lua", "UI/GuildPanel.lua", "UI/TradeSkillFrame.lua",
+                             "UI/FriendsPanel.lua", "UI/OrdersPanel.lua", "UI/CharacterPanel.lua", "Prices.lua" }) do
+            local src = assert(io.open(PB_BASE .. "/" .. f)):read("*a"):gsub("%-%-[^\n]*", "")
+            EXPECT(not src:find("and nil or", 1, true), f .. " has `and nil or`, which never gives nil")
+        end
+    end
+    -- vendor materials only
+    SP.vendorOnly = true; SP:Repaint()
+    EXPECT(#SP.list == 1 and SP.list[1].name == "Instant Poison", "Vendor materials only")
+    SP.vendorOnly = false
+    -- the minimum: 5s leaves nothing, any profit brings the armor kit? (no: a loss)
+    S.shuffleMinProfit = 500; SP:Repaint()
+    EXPECT(#SP.list == 0, "minimum 5s")
+    S.shuffleMinProfit = 0; SP:Repaint()
+    EXPECT(#SP.list == 2, "any profit still leaves out a loss")
+    S.shuffleMinProfit = nil; SP:Repaint()
+    -- a product the game hasn't loaded: loading, then the row
+    LOADING[4237] = true
+    SP:Refresh()
+    EXPECT(SP.loading and #SP.list == 1, "loading not noticed")
+    LOADING[4237] = nil
+    SP:Refresh()
+    -- (other recipes of this test character have no item data here, so the
+    -- tab may still be loading those)
+    EXPECT(#SP.list == 2 and SP.list[1].name == "Handstitched Leather Belt", "the belt did not come back")
+    -- prices off: the tab says so
+    S.showPrices = false; SP:Refresh()
+    EXPECT(#SP.list == 0 and SP.empty:IsShown() and SP.empty:GetText():find("Prices are off", 1, true), "prices off")
+    S.showPrices = true; SP:Refresh()
+
+    -- a click opens the alt's Leatherworking on the belt, Vendor shuffle view
+    SP.rows[1]:GetScript("OnClick")(SP.rows[1])
+    FLUSH()
+    EXPECT(TSF.frame:IsShown() and st._viewCharKey == "Altie-Realm" and st.showTab == "vendor"
+           and st.selected == "Handstitched Leather Belt", "the click did not open the belt: "
+           .. tostring(st._viewCharKey) .. " " .. tostring(st.showTab) .. " " .. tostring(st.selected))
+    local listed = {}
+    for _, r in ipairs(st.recipes) do if not r.isHeader then listed[#listed + 1] = r.name end end
+    EXPECT(#listed == 1 and listed[1] == "Handstitched Leather Belt", "the Vendor shuffle view lists: " .. table.concat(listed, ", "))
+    local rowText = TSF.listRows[1].rightText:GetText() or ""
+    EXPECT(rowText:find("/h", 1, true), "the view's row shows no per hour: " .. rowText)
+    -- Settings' minimum follows the tab
+    S.shuffleMinProfit = 1000
+    TSF:SyncShuffleMin()
+    EXPECT(#st.recipes == 0, "the view kept the belt under a 10s minimum")
+    S.shuffleMinProfit = nil
+    TSF:SyncShuffleMin()
+    -- the View menu has Vendor shuffle while prices show
+    local sig = rawget(TSF.viewDropdown, "_optionSig") or ""
+    EXPECT(sig:find("Vendor shuffle", 1, true), "no Vendor shuffle in the View menu: " .. sig:gsub("\1", " | "))
+    -- prices off: the view falls back to Known
+    S.showPrices = false
+    TSF:RefreshRecipeList()
+    EXPECT(st.showTab == "known", "Vendor shuffle view with prices off")
+    S.showPrices = true
+    TSF.frame:Hide(); FLUSH()
+
+    -- in combat, with rows: every button, and a row click waits
+    UI:Show(); UI:SelectTab(idx); FLUSH()
+    SP.sortKey, SP.sortAsc, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", false, "Everyone", nil, false
+    SP:Refresh()
+    EXPECT(SP.rows[1]:IsShown(), "no rows for the combat sweep")
+    local sites, errs = COMBAT_SWEEP({ UI.frame }, {})
+    EXPECT(#sites == 0, "the Shuffle tab in combat, the game would block:\n  " .. table.concat(sites, "\n  "))
+    EXPECT(#errs == 0, "the Shuffle tab in combat, a click errored:\n  " .. table.concat(errs, "\n  "))
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    UI:Show(); UI:SelectTab(idx); FLUSH()
+    SP.sortKey, SP.sortAsc, SP.whoFilter, SP.profFilter, SP.vendorOnly = "profit", false, "Everyone", nil, false
+    SP:Refresh()
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    PRINTS = {}
+    SP.rows[1]:GetScript("OnClick")(SP.rows[1]); FLUSH()
+    InCombatLockdown = keepICL
+    EXPECT(not TSF.frame:IsShown() and PRINTED("Handstitched Leather Belt opens when combat ends."), "a row click in combat did not wait")
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.selected == "Handstitched Leather Belt", "the row click did not open after combat")
+    TSF.frame:Hide(); FLUSH()
+
+    -- clean up
+    for k in pairs(chars) do if keepChars[k] == nil then chars[k] = nil end end
+    chars[me].professions.Poisons = keepMine
+    PB.db.contacts, PB.Comm.IsGuildMember = keepContacts, keepGuild
+    C_Item.GetItemInfo, C_Spell.GetSpellInfo, Auctionator = keepGII, keepSpell, keepAuc
+    S.priceAuctionator, S.showPrices = keepAucOn, keepShow
+    if UI.frame:IsShown() then UI.frame:Hide() end
+    P:ResetListCache()
+end
+F97()
+print("  PASS F97 2.2.0 TEST-a: vendor shuffle: cost, vendor sale, profit, per hour from the cast time plus 0.5 s; the Shuffle tab after Orders lists crafts over the minimum for you, alts, friends and guildmates, nearest person first; Who, Prof, Vendor materials, minimum, Per hour sort; loading items; prices off; a click opens the recipe in the Vendor shuffle View; Settings' minimum follows")
+
+-- F98 2.2.0 TEST-a5 (m4ru): a Shuffle row of your own recipe opened your
+-- saved list, with a Request Craft box for yourself. Now: the live
+-- profession with the recipe selected, opened by skill line when it's
+-- closed; your own saved list (Characters tab View) shows how to craft
+-- instead of Request Craft
+local function F98()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    -- open in the game: shown at once
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    TSF.frame:Hide(); FLUSH()          -- its window closed, the game's session too
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    UI:Show()
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not st._viewCharKey and not st._isStaticView and st.profName == "Leatherworking"
+           and st.selected == "Light Leather", "open profession: " .. tostring(st._viewCharKey) .. " / " .. tostring(st.selected))
+    EXPECT(TSF.craftBar:IsShown() and not TSF.composerBar:IsShown(), "the live profession has no Craft buttons")
+    -- closed in the game: WoW: Forever opens it, then selects the recipe
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    TS_CALLS = {}
+    TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH()
+    local opened = false
+    for _, c in ipairs(TS_CALLS) do if c == "OpenTradeSkill:165" then opened = true end end
+    EXPECT(opened, "a closed profession was not opened: " .. table.concat(TS_CALLS, ", "))
+    TS_LIST_READY(); FIRE("TRADE_SKILL_LIST_UPDATE"); FIRE("TRADE_SKILL_UPDATE"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and not st._viewCharKey and st.profName == "Leatherworking" and st.selected == "Light Leather"
+           and TSF._pendingSelect == nil, "after opening: " .. tostring(st.selected) .. " pending " .. tostring(TSF._pendingSelect))
+    -- your own saved list: the hint, no Request Craft
+    TSF:OpenWithCharacter(me, "Leatherworking"); FLUSH()
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    EXPECT(TSF.ownHintBar:IsShown() and not TSF.composerBar:IsShown() and not TSF.craftBar:IsShown(),
+           "your saved list: hint " .. tostring(TSF.ownHintBar:IsShown()) .. ", request " .. tostring(TSF.composerBar:IsShown()))
+    EXPECT((TSF.ownHintBar.text:GetText() or ""):find("Open Leatherworking from your spellbook to craft", 1, true), "hint text")
+    -- back to the live profession: the hint goes
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    EXPECT(not TSF.ownHintBar:IsShown(), "the hint stayed on the live profession")
+    TSF.frame:Hide(); FLUSH()
+end
+F98()
+print("  PASS F98 2.2.0 TEST-a5: a Shuffle row of your own recipe opens the live profession with it selected (open: at once; closed: opened by skill line, selected when the list arrives); your own saved list says to open the profession instead of Request Craft")
+
+-- F99 2.2.0 TEST-b: the Shuffle tab's Crates and writs view (Skeleton,
+-- WAYLAID-WRITS-PLANNING-scope.md): one row per crate and writ, what it
+-- needs, what you and your alts hold, the fill cost, who can craft it, a
+-- writ's auction price; filters, sort, the row click, prices off, the
+-- view switch and the profession window's Shuffle bottom tab
+local function F99()
+    local PB = ProfBuddy
+    local SP, CV, TSF, UI, S = PB.ShufflePanel, PB.CratesView, PB.TradeSkillFrame, PB.UI, PB.db.settings
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    local chars = PB.db.characters
+    EXPECT(CV and CV:Available(), "no Crates and writs view on WoW: Forever")
+    local keepW, keepWr, keepWB, keepWU = PB.Waylaid, PB.Writs, PB.WaylaidBundles, PB.WaylaidUnopened
+    PB.WaylaidBundles, PB.WaylaidUnopened = nil, nil   -- F103 and F105 cover them
+    local keepAuc, keepAucOn, keepShow = Auctionator, S.priceAuctionator, S.showPrices
+    local keepAlt = chars["Altie-Realm"]
+    local inv = chars[me].inventory or {}
+    chars[me].inventory = inv
+    inv.bags, inv.bank = inv.bags or {}, inv.bank or {}
+    local keepBags = { [2318] = inv.bags[2318], [900002] = inv.bags[900002], [2447] = inv.bags[2447] }
+    local lw = chars[me].professions.Leatherworking
+    local keepLL = lw and lw.recipes and lw.recipes["Light Leather"]
+    if lw and lw.recipes then lw.recipes["Light Leather"] = lw.recipes["Light Leather"] or {} end
+    -- two crates and a writ; you hold 10 Light Leather, your alt 4 in the
+    -- bank (14 = ready), and you hold the writ
+    -- plus a crate you hold enough for with no price (Peacebloom), and a
+    -- writ with no price
+    PB.Waylaid = { [900001] = { 2318, 14, 211365, "Light Leather" }, [900003] = { 765, 20, 211365, "Silverleaf" },
+                   [900004] = { 2447, 5, 211365, "Peacebloom" } }
+    PB.Writs = { [900002] = { 2304, 1, 94000, "Light Armor Kit" }, [900005] = { 765, 1, 94001, "Silverleaf" } }
+    inv.bags[2318], inv.bags[900002], inv.bags[2447] = 10, 1, 5
+    chars["Altie-Realm"] = { inventory = { bags = {}, bank = { [2318] = 4 } }, professions = {} }
+    S.priceAuctionator, S.showPrices = true, true
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(_, id) return ({ [2318] = 50, [2304] = 200, [900002] = 500 })[id] end,
+        GetAuctionAgeByItemID = function() return 0 end } } }
+    PB.Prices:ResetListCache()
+
+    EXPECT(CV:HeldByYou(2318) == 14, "held: " .. CV:HeldByYou(2318))
+    local by, prof = CV:CraftedBy(2318)
+    EXPECT(by and by.rel == "you" and by.recipe == "Light Leather" and prof == "Leatherworking", "crafted by")
+    EXPECT(select(2, CV:CraftedBy(765)) == nil, "Silverleaf crafted")
+
+    -- the view switch, from the Shuffle tab
+    UI:Show()
+    local idx
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then idx = i end end
+    UI:SelectTab(idx); FLUSH()
+    EXPECT(SP.viewBtns and rawget(SP.viewBtns.crates, "_vis") ~= false, "no Crates and writs button")   -- shown unless hidden (the stand-in starts frames unshown)
+    SP.viewBtns.crates:GetScript("OnClick")(SP.viewBtns.crates); FLUSH()
+    EXPECT(SP.view == "crates" and CV.frame:IsShown() and not SP.filterBar:IsShown() and not SP.listFrame:IsShown(),
+           "the switch did not show Crates and writs")
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly, CV.sortKey, CV.sortAsc = "All", nil, false, false, "cost", true
+    CV:Refresh()
+    local byId = {}
+    for _, e in ipairs(CV.all) do byId[e.id] = e end
+    local c1, w2, c3, c4, w5 = byId[900001], byId[900002], byId[900003], byId[900004], byId[900005]
+    EXPECT(#CV.all == 5 and c1 and w2 and c3 and c4 and w5, "rows: " .. #CV.all)
+    EXPECT(c4.ready and c4.cost == 0, "held enough, no price: the fill cost is 0")
+    EXPECT(w5.cost == nil, "the unpriced writ")
+    EXPECT(c1.held == 14 and c1.ready and c1.cost == 0 and c1.by and c1.prof == "Leatherworking", "the leather crate")
+    EXPECT(w2.held == 0 and not w2.ready and w2.cost and w2.cost > 0 and w2.sells == 500 and w2.inBags, "the writ")
+    EXPECT(c3.cost == nil and c3.by == nil and c3.prof == "Not crafted" and c3.sells == nil, "the Silverleaf crate")
+    EXPECT(c1.name:find("Light Leather", 1, true), "an unloaded crate's name: " .. c1.name)
+    -- sort: fill cost, no price last (the unpriced writ's name sorts first,
+    -- and it still comes after every priced row); the rows show it
+    EXPECT(CV.list[1] == c1 and CV.list[2] == c4 and CV.list[3] == w2 and CV.list[4] == w5 and CV.list[5] == c3,
+           "fill cost sort")
+    EXPECT((CV.rows[1].holdText:GetText() or ""):find("14/14", 1, true) and (CV.rows[1].holdText:GetText() or ""):find("|cff00ff00", 1, true),
+           "ready shows green: " .. tostring(CV.rows[1].holdText:GetText()))
+    EXPECT((CV.rows[5].costText:GetText() or ""):find("?", 1, true), "no price shows ?")
+    -- the labels (TEST-b review): To buy, You hold one; the row tooltip's To buy
+    EXPECT(CV.headerBtns.cost.colLabel == "To buy" and CV.bagsCheck.label:GetText() == "You hold one", "labels")
+    do
+        local lines = {}
+        local keepADL, keepAL, keepSID = GameTooltip.AddDoubleLine, GameTooltip.AddLine, GameTooltip.SetItemByID
+        rawset(GameTooltip, "AddDoubleLine", function(_, l, r) lines[#lines + 1] = tostring(l) .. " " .. tostring(r) end)
+        rawset(GameTooltip, "AddLine", function(_, l) lines[#lines + 1] = tostring(l) end)
+        rawset(GameTooltip, "SetItemByID", function() end)
+        CV.rows[1]:GetScript("OnEnter")(CV.rows[1])
+        local all = table.concat(lines, " | ")
+        EXPECT(all:find("To buy: 0", 1, true) and all:find("hold 14 of 14", 1, true), "row 1 tooltip: " .. all)
+        lines = {}
+        CV.rows[5]:GetScript("OnEnter")(CV.rows[5])
+        all = table.concat(lines, " | ")
+        EXPECT(all:find("To buy: |cffff4444?|r", 1, true), "no price tooltip: " .. all)
+        rawset(GameTooltip, "AddDoubleLine", keepADL); rawset(GameTooltip, "AddLine", keepAL); rawset(GameTooltip, "SetItemByID", keepSID)
+    end
+    -- filters
+    CV.typeFilter = "Crates"; CV:Repaint(); EXPECT(#CV.list == 3, "Type: Crates")
+    CV.typeFilter = "Writs"; CV:Repaint(); EXPECT(#CV.list == 2, "Type: Writs")
+    CV.typeFilter = "All"
+    CV.readyOnly = true; CV:Repaint(); EXPECT(#CV.list == 2 and CV.list[1] == c1 and CV.list[2] == c4, "Ready to fill")
+    CV.readyOnly = false
+    CV.bagsOnly = true; CV:Repaint(); EXPECT(#CV.list == 1 and CV.list[1] == w2, "In my bags")
+    CV.bagsOnly = false
+    -- Prof from the dropdown's own list, then All
+    local function pickOpt(dd, v)
+        for _, b in ipairs(dd.optionBtns) do
+            if b.value == v and b:IsShown() then b:GetScript("OnClick")(b); return true end
+        end
+    end
+    EXPECT(pickOpt(CV.profDD, "Leatherworking") and #CV.list == 2, "Prof: Leatherworking")
+    EXPECT(pickOpt(CV.profDD, "All") and CV.profFilter == nil and #CV.list == 5, "Prof: All")
+    -- You hold header: ready first
+    CV.headerBtns.hold:GetScript("OnClick")(CV.headerBtns.hold)
+    EXPECT(CV.sortKey == "hold" and not CV.sortAsc and CV.list[1] == c1, "ready first")
+    CV.headerBtns.cost:GetScript("OnClick")(CV.headerBtns.cost)
+    -- the row click opens the requested item's recipe: your own, live
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    CV.rows[1]:GetScript("OnClick")(CV.rows[1])
+    TS_LIST_READY(); FIRE("TRADE_SKILL_LIST_UPDATE"); FIRE("TRADE_SKILL_UPDATE"); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.profName == "Leatherworking" and st.selected == "Light Leather" and not st._viewCharKey,
+           "the row click: " .. tostring(st.profName) .. " / " .. tostring(st.selected))
+    -- a View without the recipe goes to Known
+    st.showTab = "missing"; TSF:RefreshRecipeList()
+    EXPECT(TSF:SelectRecipeForView("Light Leather", false) and st.showTab == "known" and st.selected == "Light Leather",
+           "a View without the recipe: " .. tostring(st.showTab))
+    -- a row nobody can craft does nothing
+    TSF.frame:Hide(); FLUSH()
+    UI:Show(); UI:SelectTab(idx); FLUSH()
+    EXPECT(SP.view == "crates" and CV.frame:IsShown(), "the view did not stay Crates and writs")
+    CV.rows[5]:GetScript("OnClick")(CV.rows[5]); FLUSH()
+    EXPECT(not TSF.frame:IsShown(), "a crate nobody crafts opened something")
+    -- the tab's own refresh (its show) works out this view again
+    inv.bags[2318] = 0
+    SP:Refresh()
+    local lc
+    for _, e in ipairs(CV.all) do if e.id == 900001 then lc = e end end
+    EXPECT(lc and lc.held == 4 and not lc.ready, "the tab's refresh did not redo Crates and writs")
+    inv.bags[2318] = 10
+    -- the profession window's Shuffle bottom tab keeps the view
+    UI:Hide(); FLUSH()
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    SP:Toggle(); FLUSH()
+    EXPECT(UI.frame:IsShown() and SP.view == "crates" and CV.frame:IsShown(), "the Shuffle bottom tab lost the view")
+    -- prices off
+    S.showPrices = false; CV:Refresh()
+    EXPECT(#CV.all == 0 and CV.empty:IsShown() and (CV.empty:GetText() or ""):find("Prices are off", 1, true), "prices off")
+    S.showPrices = true
+    -- back to the shuffle
+    SP.viewBtns.shuffle:GetScript("OnClick")(SP.viewBtns.shuffle); FLUSH()
+    EXPECT(SP.view == "shuffle" and not CV.frame:IsShown() and SP.filterBar:IsShown() and SP.listFrame:IsShown(), "back to the shuffle")
+
+    PB.Waylaid, PB.Writs, PB.WaylaidBundles, PB.WaylaidUnopened = keepW, keepWr, keepWB, keepWU
+    Auctionator, S.priceAuctionator, S.showPrices = keepAuc, keepAucOn, keepShow
+    chars["Altie-Realm"] = keepAlt
+    inv.bags[2318], inv.bags[900002], inv.bags[2447] = keepBags[2318], keepBags[900002], keepBags[2447]
+    if lw and lw.recipes then lw.recipes["Light Leather"] = keepLL end
+    PB.Prices:ResetListCache()
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+end
+F99()
+print("  PASS F99 2.2.0 TEST-b: Crates and writs: rows, held by you and alts, To buy (0 ready, ? no price, also in the row tooltip), crafted by, writ price; Type, Prof, You hold one, Ready to fill; sort; the row click opens your recipe live; the view switch, kept through the Shuffle bottom tab; prices off")
+
+-- F100 2.2.0 TEST-b, GitHub #12 (philippeop): the recipe panel's Item info
+-- box: its heading folds it ("- Item info" / "+ Item info", kept), Settings
+-- "Show Item info" turns it off; folded or off, the tool and station lines
+-- move under the price line and the Reagents move up
+local function F100()
+    local TSF = ProfBuddy.TradeSkillFrame
+    local st, S = TSF.state, ProfBuddyDB.settings
+    local keepFold, keepShow = S.itemInfoFolded, S.showItemInfo
+    S.itemInfoFolded, S.showItemInfo = false, true
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    local belt = { name = "Mender's Leather Belt", spellID = 1255075, itemID = 252523, isKnown = true,
+                   reagents = { { itemID = 4234, count = 8, name = "Heavy Leather" } } }
+    table.insert(st.recipes, 1, belt)
+    st.selected = belt.name
+    local function anchorOf(region) local pt = rawget(region, "_lastPoint"); return pt and pt[2] end
+    local function vis(f) return rawget(f, "_vis") ~= false and f:IsShown() end
+    -- open
+    TSF:RefreshDetailPanel()
+    EXPECT(TSF.embeddedTip:IsShown() and TSF.itemTooltipHeader:IsShown() and TSF.itemTooltipHeader:GetText() == "- Item info"
+           and TSF.itemInfoFold:IsShown() and not TSF.detTools:IsShown(), "open: " .. tostring(TSF.itemTooltipHeader:GetText()))
+    EXPECT(TSF._reagentAnchor == TSF.embeddedTip, "open: Reagents not under the box")
+    -- fold it
+    TSF.itemInfoFold:GetScript("OnClick")(TSF.itemInfoFold); FLUSH()
+    EXPECT(S.itemInfoFolded == true and not TSF.embeddedTip:IsShown() and TSF.itemTooltipHeader:IsShown()
+           and TSF.itemTooltipHeader:GetText() == "+ Item info", "folded: " .. tostring(TSF.itemTooltipHeader:GetText()))
+    EXPECT(TSF.detTools:IsShown() and (TSF.detTools:GetText() or ""):find("Tool: Tanning Rack", 1, true),
+           "folded: the tool line did not move: " .. tostring(TSF.detTools:GetText()))
+    EXPECT(anchorOf(TSF.detTools) == TSF.detPrice or anchorOf(TSF.detTools) == TSF.detCanMake, "folded: the tool line not under the price line")
+    EXPECT(TSF:CanMakeBottom() == TSF.detTools and TSF._reagentAnchor == TSF.itemTooltipHeader,
+           "folded: the heading under the tool line, the Reagents under the heading")
+    -- kept: another recipe, then back, still folded; one with no tool
+    local kit = { name = "Light Armor Kit", spellID = 2152, itemID = 2304, isKnown = true,
+                  reagents = { { itemID = 2318, count = 1, name = "Light Leather" } } }
+    table.insert(st.recipes, 1, kit)
+    st.selected = kit.name; TSF:RefreshDetailPanel()
+    EXPECT(TSF.itemTooltipHeader:GetText() == "+ Item info" and not TSF.detTools:IsShown()
+           and TSF._reagentAnchor == TSF.itemTooltipHeader, "folded, no tool")
+    st.selected = belt.name; TSF:RefreshDetailPanel()
+    -- unfold
+    TSF.itemInfoFold:GetScript("OnClick")(TSF.itemInfoFold); FLUSH()
+    EXPECT(not S.itemInfoFolded and TSF.embeddedTip:IsShown() and not TSF.detTools:IsShown(), "unfolded")
+    -- Settings: Show Item info off
+    EXPECT(TSF.itemInfoCB and TSF.itemInfoCB.settingKey == "showItemInfo", "no Show Item info box in Settings")
+    TSF.itemInfoCB:SetChecked(false); TSF.itemInfoCB:GetScript("OnClick")(TSF.itemInfoCB)
+    EXPECT(S.showItemInfo == false, "the Settings box did not turn it off")
+    TSF:RefreshDetailPanel()
+    EXPECT(not TSF.embeddedTip:IsShown() and not TSF.itemTooltipHeader:IsShown() and not TSF.itemInfoFold:IsShown()
+           and TSF.detTools:IsShown() and TSF._reagentAnchor == TSF.detTools, "off")
+    -- the list's hover tooltip keeps its tool line either way
+    local tip, lines = CreateFrame("GameTooltip"), {}
+    rawset(tip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    TSF:AppendRodLine(tip, belt)
+    EXPECT(table.concat(lines, "|"):find("Tool: Tanning Rack", 1, true), "the hover tooltip lost its tool line")
+    TSF.itemInfoCB:SetChecked(true); TSF.itemInfoCB:GetScript("OnClick")(TSF.itemInfoCB)
+    for _, e in ipairs({ belt, kit }) do
+        for i, x in ipairs(st.recipes) do if x == e then table.remove(st.recipes, i); break end end
+    end
+    st.selected = nil
+    S.itemInfoFolded, S.showItemInfo = keepFold, keepShow
+    TSF.frame:Hide(); FLUSH()
+end
+F100()
+print("  PASS F100 2.2.0 TEST-b #12: Item info: the heading folds it (- / +, kept between recipes), Settings Show Item info turns it off; folded or off the tool lines sit under the price line and the Reagents move up; hover tooltips unchanged")
+
+-- F101 2.2.0 TEST-c (Kluga; m4ru found the way in game): a batch kept
+-- crafting while the profession was parked behind the main window, and
+-- Back stopped the count: Craft 5, one done, Characters, Back, and the box
+-- stayed at 4. Every way back into the profession being crafted keeps
+-- counting: Back after each bottom tab and each /pb command, the parked
+-- icon, a Shuffle row of your own recipe, Back in combat. A batch that
+-- ends while parked, an interrupt, and another profession still stop it.
+local function F101()
+    local PB = ProfBuddy
+    local TSF, UI = PB.TradeSkillFrame, PB.UI
+    local st = TSF.state
+    local me = PB:PlayerKey()
+    -- FLUSH runs every pending timer at once, the 10-second watchdog too
+    local keepArm = TSF.ArmCraftWatchdog
+    TSF.ArmCraftWatchdog = function() end
+    local keepICL = InCombatLockdown
+    local function cast(event) FIRE(event or "UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 2881) end
+    local function clean()
+        InCombatLockdown = keepICL
+        if TSF.settingsPanel and TSF.settingsPanel:IsShown() then TSF:CloseSettings() end
+        if TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI.frame:Hide() end
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+        TSF:StopCraftTracking()
+    end
+    -- Craft 5 of Light Leather, one done: the box reads 4
+    local function start(label)
+        clean()
+        TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+        st.selected = "Light Leather"; TSF:UpdateCraftBar()
+        TSF:DoCraftImmediate(5)
+        cast()
+        EXPECT(TSF._craftingActive and TSF.qtyBox:GetText() == "4", label .. ": the first craft")
+    end
+    local function tab(i) return function() TSF.navTabs[i]:GetScript("OnClick")(TSF.navTabs[i]); FLUSH() end end
+    local function slash(cmd) return function() SlashCmdList.PROFBUDDY(cmd); FLUSH() end end
+    local function backBtn() UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH() end
+    local function cover() UI.parkedTab:GetScript("OnClick")(UI.parkedTab); FLUSH() end
+    local function ownRow() TSF:OpenRecipeFor(me, "Leatherworking", "Light Leather"); FLUSH() end
+    -- leave, one more craft while parked, back, one more craft
+    local function run(label, leave, back)
+        start(label)
+        leave()
+        EXPECT(TSF._parked and not TSF.frame:IsShown() and UI.frame:IsShown(), label .. ": not parked")
+        cast()
+        EXPECT(TSF._craftingActive and TSF._craftRemaining == 3, label .. ": a craft while parked did not count")
+        back()
+        EXPECT(TSF.frame:IsShown() and not TSF._parked and st.profName == "Leatherworking", label .. ": not back")
+        EXPECT(TSF._craftingActive and TSF.qtyBox:GetText() == "3", label .. ": back stopped the count at " .. tostring(TSF.qtyBox:GetText()))
+        cast()
+        EXPECT(TSF.qtyBox:GetText() == "2" and TSF._craftRemaining == 2, label .. ": the next craft after back did not count: " .. tostring(TSF.qtyBox:GetText()))
+        cast(); cast()
+        EXPECT(not TSF._craftingActive and TSF.qtyBox:GetText() == "1", label .. ": the batch did not end at zero")
+    end
+    local names = { "Characters", "Friends", "Guild", "Orders", "Shuffle" }
+    for i, name in ipairs(names) do run(name .. " tab, Back", tab(i), backBtn) end
+    for _, cmd in ipairs({ "", "friends", "chars", "guild", "orders" }) do
+        run("/pb " .. cmd .. ", Back", slash(cmd), backBtn)
+    end
+    run("Characters tab, the parked icon", tab(1), cover)
+    run("Friends tab, the parked icon", tab(2), cover)
+    run("Shuffle tab, your own Shuffle row", tab(5), ownRow)
+    -- Back in combat waits, and counts on when combat ends
+    run("Back in combat", tab(1), function()
+        InCombatLockdown = function() return true end
+        PRINTS = {}
+        UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+        EXPECT(PRINTED("Leatherworking opens when combat ends."), "Back in combat: no wait")
+        InCombatLockdown = keepICL
+        FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    end)
+    -- the batch ends while parked: Back shows 1 and counts nothing
+    start("ends while parked")
+    tab(1)()
+    cast(); cast(); cast(); cast()
+    EXPECT(not TSF._craftingActive, "ends while parked: still tracking")
+    backBtn()
+    EXPECT(TSF.frame:IsShown() and not TSF._craftingActive and TSF.qtyBox:GetText() == "1",
+           "ends while parked: the box after Back reads " .. tostring(TSF.qtyBox:GetText()))
+    -- an interrupt while parked: the box keeps what was left, nothing counts
+    start("interrupted while parked")
+    tab(1)()
+    cast("UNIT_SPELLCAST_INTERRUPTED")
+    backBtn()
+    EXPECT(not TSF._craftingActive and TSF.qtyBox:GetText() == "4", "interrupted while parked: " .. tostring(TSF.qtyBox:GetText()))
+    cast()
+    EXPECT(TSF.qtyBox:GetText() == "4", "interrupted while parked: a later cast counted")
+    -- another profession opens: the game's close of Leatherworking ends it
+    start("another profession")
+    tab(1)()
+    local cook = UI.profStrip.byName.Cooking
+    cook:GetScript("OnClick")(cook)
+    TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.profName == "Cooking" and not TSF._craftingActive and not TSF._parked,
+           "another profession: " .. tostring(st.profName) .. " tracking " .. tostring(TSF._craftingActive))
+    -- the same name on the other channel is not the batch's window
+    start("other channel")
+    EXPECT(TSF:IsCraftingIn("Leatherworking", false) and not TSF:IsCraftingIn("Leatherworking", true)
+           and not TSF:IsCraftingIn("Cooking", false), "IsCraftingIn")
+    clean()
+    EXPECT(not TSF:IsCraftingIn("Leatherworking", false) and TSF._craftProf == nil, "IsCraftingIn after the stop")
+    TSF.ArmCraftWatchdog = keepArm
+end
+F101()
+print("  PASS F101 2.2.0 TEST-c: a batch keeps counting down through every way back into its profession (Back after each bottom tab and each /pb command, the parked icon, your own Shuffle row, Back in combat); a batch that ends or is interrupted while parked, or another profession opening, stops it")
+
+-- F102 2.2.0 TEST-c (m4ru): every column of the Shuffle tab and of Crates
+-- and writs sorts, a second click the other way, the header shows ^ or v,
+-- and a blank (no price, nobody) goes last both ways
+local function F102()
+    local PB = ProfBuddy
+    local SP, CV, UI, S = PB.ShufflePanel, PB.CratesView, PB.UI, PB.db.settings
+    local keepMin = S.shuffleMinProfit
+    S.shuffleMinProfit = 0
+    if not UI.frame:IsShown() then UI:Show(); FLUSH() end
+    for i, t in ipairs(UI.frame.tabs) do if t.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    -- a header click: the order follows `get` in `dir`, blanks last, only
+    -- this header marked
+    local function check(mod, key, get, asc, label)
+        local list = mod.list
+        local seenBlank = false
+        for i, e in ipairs(list) do
+            local v = get(e)
+            if v == nil then
+                seenBlank = true
+            else
+                EXPECT(not seenBlank, label .. ": a blank before a value at row " .. i)
+                local prev = i > 1 and get(list[i - 1])
+                if prev ~= nil and i > 1 then
+                    if type(v) == "string" then v, prev = v:lower(), prev:lower() end
+                    EXPECT(asc and prev <= v or (not asc and prev >= v), label .. ": out of order at row " .. i)
+                end
+            end
+        end
+        for k, btn in pairs(mod.headerBtns) do
+            local want = btn.colLabel .. (k == key and (asc and " ^" or " v") or "")
+            EXPECT(btn.label:GetText() == want, label .. ": header " .. k .. " reads " .. tostring(btn.label:GetText()))
+        end
+    end
+    local function click(mod, key) mod.headerBtns[key]:GetScript("OnClick")(mod.headerBtns[key]) end
+    local function both(mod, key, get, firstAsc, label)
+        click(mod, key)
+        EXPECT(mod.sortKey == key and mod.sortAsc == firstAsc, label .. ": first click direction")
+        check(mod, key, get, firstAsc, label .. " first click")
+        click(mod, key)
+        EXPECT(mod.sortAsc == not firstAsc, label .. ": second click did not reverse")
+        check(mod, key, get, not firstAsc, label .. " second click")
+    end
+    -- the Shuffle tab
+    SP:SetView("shuffle")
+    local function sv(name, prof, who, cost, sell, hour)
+        return { name = name, prof = prof, who = { { key = who, rel = "alt" } },
+                 v = { cost = cost, sell = sell, profit = sell - cost, perHour = hour } }
+    end
+    local keepAll, keepBuild = SP.all, SP.Build
+    SP.Build = function() end
+    SP.all = {
+        sv("bolt", "Tailoring", "Zed-Realm", 50, 300, 900),
+        sv("Armor Kit", "Leatherworking", "amy-Realm", 10, 200, 5000),
+        sv("Copper Rod", "Blacksmithing", "Bo-Realm", 99, 100, 10),
+        sv("Armor Kit", "Engineering", "Bo-Realm", 10, 200, 5000),
+    }
+    SP.whoFilter, SP.profFilter, SP.vendorOnly = "Everyone", nil, false
+    SP.sortKey, SP.sortAsc = nil, false
+    SP:Repaint()
+    local short = PB.ShortName and function(k) return PB:ShortName(k) end
+    both(SP, "recipe", function(e) return e.name end, true, "Shuffle Recipe")
+    EXPECT(SP.list[1].name == "Copper Rod" and SP.list[4].name:lower() == "armor kit", "Shuffle Recipe Z to A")
+    both(SP, "who", function(e) return short(SP:Shown(e).key) end, true, "Shuffle Who")
+    both(SP, "cost", function(e) return e.v.cost end, true, "Shuffle Cost")
+    both(SP, "sell", function(e) return e.v.sell end, false, "Shuffle Vendor pays")
+    both(SP, "profit", function(e) return e.v.profit end, false, "Shuffle Profit")
+    both(SP, "hour", function(e) return e.v.perHour end, false, "Shuffle Per hour")
+    -- another column starts in its own direction
+    click(SP, "profit")
+    EXPECT(SP.sortKey == "profit" and SP.sortAsc == false and SP.list[1].name == "bolt", "Profit after Per hour")
+    SP.all, SP.Build = keepAll, keepBuild
+    SP.sortKey, SP.sortAsc = "profit", false
+    -- Crates and writs
+    SP:SetView("crates")
+    local function cv(id, name, item, count, held, cost, by, sells)
+        return { id = id, kind = sells and "writ" or "crate", item = 1, count = count, name = name, itemName = item,
+                 held = held, ready = held >= count, cost = cost, by = by and { key = by, rel = "alt" } or nil,
+                 prof = "Leatherworking", sells = sells, inBags = false }
+    end
+    local keepCV, keepCVBuild = CV.all, CV.Build
+    CV.Build = function() end
+    CV.all = {
+        cv(1, "Waylaid Supplies: Light Leather", "Light Leather", 10, 10, 0, "Altie-Realm", nil),
+        cv(2, "Craftsman's Writ: Heavy Armor Kit", "heavy armor kit", 4, 1, 3000, nil, 500),
+        cv(3, "Waylaid Supplies: Bolt", "Bolt of Linen", 10, 0, nil, "bo-Realm", nil),
+        cv(4, "Craftsman's Writ: Bolt", "Bolt of Linen", 12, 2, 120, "Altie-Realm", 50),
+        cv(5, "craftsman's Writ: Belt", "Belt", 1, 0, nil, nil, nil),
+    }
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly = "All", nil, false, false
+    CV.sortKey, CV.sortAsc = nil, true
+    CV:Repaint()
+    both(CV, "name", function(e) return e.name end, true, "Crates name")
+    both(CV, "needs", function(e) return e.itemName end, true, "Crates Needs")
+    click(CV, "needs")   -- back to A to Z: the two Bolt of Linen rows by how many
+    EXPECT(CV.list[2].itemName == "Bolt of Linen" and CV.list[2].count == 10 and CV.list[3].count == 12, "Needs: count second")
+    both(CV, "hold", function(e) return math.min(e.held, e.count) / e.count end, false, "Crates You hold")
+    click(CV, "hold")   -- back to highest first
+    EXPECT(CV.list[1].id == 1 and CV.list[2].id == 2 and CV.list[3].id == 4, "You hold: ready first, then the most of the fill")
+    both(CV, "cost", function(e) return e.cost end, true, "Crates To buy")
+    EXPECT(CV.list[1].cost == 3000 and CV.list[4].cost == nil and CV.list[5].cost == nil, "To buy highest first: ? still last")
+    click(CV, "cost")
+    EXPECT(CV.list[1].cost == 0 and CV.list[5].cost == nil, "To buy: 0 first, ? last")
+    both(CV, "by", function(e) return e.by and short(e.by.key) or nil end, true, "Crates Crafted by")
+    both(CV, "sells", function(e) return e.sells end, false, "Crates Auction")
+    EXPECT(CV.list[4].sells == nil and CV.list[5].sells == nil and CV.list[1].sells == 50, "Auction: lowest first after the second click, blanks last")
+    -- the column says where the price comes from (2.2.0, m4ru: "sells" read as vendor)
+    EXPECT((CV.headerBtns.sells.label:GetText() or ""):find("^Auction [%^v]$"), "the Auction heading: " .. tostring(CV.headerBtns.sells.label:GetText()))
+    CV.all, CV.Build = keepCV, keepCVBuild
+    CV.sortKey, CV.sortAsc = "cost", true
+    SP:SetView("shuffle")
+    S.shuffleMinProfit = keepMin
+    UI:Hide(); FLUSH()
+end
+F102()
+print("  PASS F102 2.2.0 TEST-c: every column of the Shuffle tab and of Crates and writs sorts, names A to Z and prices cheapest or highest first, a second click the other way; ^ or v on the sorted header only; a blank goes last both ways")
+
+-- F103 2.2.0 TEST-c2 (Hircus): a "Waylaid Crate: <kind>" takes any one
+-- bundle from a list, and PB had no data for it: no Fill cost on its
+-- tooltip, no row in Crates and writs, so "You hold one" showed nothing for
+-- the crates he held. The bundles come from the game's tables
+-- (tools/waylaid_db.py); the tooltip prices each, the cheapest is the fill
+-- cost; the row shows the bundle cheapest to fill from what you hold
+local function F103()
+    local PB = ProfBuddy
+    local P, S, CV, SP, UI = PB.Prices, PB.db.settings, PB.CratesView, PB.ShufflePanel, PB.UI
+    local WB = PB.WaylaidBundles
+    -- the baked table
+    local n, ok = 0, true
+    for crate, list in pairs(WB or {}) do
+        n = n + 1
+        if not (type(list.name) == "string" and #list >= 2) then ok = false end
+        for _, b in ipairs(list) do
+            if not (type(b[1]) == "number" and b[2] >= 1 and type(b[3]) == "string" and b[3] ~= "") then ok = false end
+        end
+        if PB.Waylaid[crate] or PB.Writs[crate] then ok = false end
+    end
+    local eh = WB and WB[248690]
+    EXPECT(n == 30 and ok and eh and eh.name == "Earthly Expert Herbs" and #eh == 4
+           and eh[1][1] == 3357 and eh[1][2] == 20 and eh[2][1] == 3818 and eh[2][2] == 10
+           and eh[3][1] == 3821 and eh[4][1] == 3358, "WaylaidBundles table: " .. n)
+    -- the bag tooltip: each bundle priced, the cheapest is the fill cost
+    local function tipFor(id)
+        local lines = {}
+        local keepGD = TooltipUtil.GetDisplayedItem
+        TooltipUtil.GetDisplayedItem = function() return "x", "|cffffffff|Hitem:" .. id .. "::::::::|h[x]|h|r" end
+        rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = tostring(t) end)
+        rawset(GameTooltip, "AddDoubleLine", function(_, a, b) lines[#lines + 1] = tostring(a) .. " = " .. tostring(b) end)
+        rawset(GameTooltip, "Show", function() end)
+        for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then c.fn(GameTooltip) end end
+        TooltipUtil.GetDisplayedItem = keepGD
+        rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "Show", nil)
+        local plain = {}
+        for _, l in ipairs(lines) do
+            plain[#plain + 1] = (l:gsub("|T[^|]*|t", function(icon)
+                return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c" end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+        end
+        return table.concat(plain, "\n")
+    end
+    local keepAuc, keepAucOn, keepShow = Auctionator, S.priceAuctionator, S.showPrices
+    S.priceAuctionator, S.showPrices = true, true
+    local AUC = { [3357] = 10, [3818] = 50, [3358] = 5, [248690] = 900 }    -- Goldthorn: no price
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return AUC[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    P:ClearRecorded(); P:ResetListCache()
+    local t = tipFor(248690)
+    EXPECT(t:find("Fill cost (ProfessionBuddy): = 50c", 1, true) and t:find("20 x Liferoot = 2s", 1, true)
+           and t:find("10 x Fadeleaf = 5s", 1, true) and t:find("10 x Goldthorn = ?", 1, true)
+           and t:find("10 x Khadgar's Whisker = 50c", 1, true)
+           and t:find("Any one of these fills it", 1, true) and t:find("Reward details", 1, true)
+           and t:find("Crate at auction = 9s", 1, true), "bundle tooltip:\n" .. t)
+    -- no bundle priced: ?
+    AUC = {}
+    P:ClearRecorded(); P:ResetListCache()
+    t = tipFor(248690)
+    EXPECT(t:find("Fill cost (ProfessionBuddy): = ?", 1, true) and not t:find("Crate at auction", 1, true), "bundle tooltip, no prices:\n" .. t)
+    S.showPrices = false
+    EXPECT(not tipFor(248690):find("Fill cost", 1, true), "bundle fill cost with Show prices off")
+    S.showPrices = true
+    AUC = { [3357] = 10, [3818] = 50, [3358] = 5, [248690] = 900 }
+    P:ClearRecorded(); P:ResetListCache()
+
+    -- Crates and writs: Hircus holds the crate in his bank
+    local chars, me = PB.db.characters, PB:PlayerKey()
+    local inv = chars[me].inventory or {}
+    chars[me].inventory = inv
+    inv.bags, inv.bank = inv.bags or {}, inv.bank or {}
+    local keepBank, keepFade = inv.bank[248690], inv.bags[3818]
+    local keepAlt = chars["Altie-Realm"]
+    inv.bank[248690] = 1
+    chars["Altie-Realm"] = { inventory = { bags = { [3818] = 8 }, bank = {} }, professions = {} }
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    SP:SetView("crates")
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly, CV.sortKey, CV.sortAsc = "All", nil, false, false, "cost", true
+    CV:Refresh()
+    local function row()
+        for _, e in ipairs(CV.all) do if e.id == 248690 then return e end end
+    end
+    local e = row()
+    -- Liferoot 20 x 10c = 2s; Fadeleaf 2 more x 50c = 1s; Goldthorn no
+    -- price; Khadgar's Whisker 10 x 5c = 50c: the cheapest
+    EXPECT(e and e.item == 3358 and e.cost == 50 and not e.ready and e.more == 3 and e.inBags and e.kind == "crate"
+           and e.sells == 900,
+           "the bundle row: " .. tostring(e and e.item) .. " " .. tostring(e and e.cost))
+    CV.bagsOnly = true; CV:Repaint()
+    EXPECT(#CV.list >= 1 and CV.list[1].id == 248690, "You hold one: the crate in the bank is not listed")
+    local shown
+    for _, r in ipairs(CV.rows) do if r._entry == e then shown = r end end
+    EXPECT(shown and shown.needsText:GetText() == "10 x Khadgar's Whisker (or 3 more)", "Needs: " .. tostring(shown and shown.needsText:GetText()))
+    -- the row tooltip says which bundle the row shows
+    local lines = {}
+    rawset(GameTooltip, "AddDoubleLine", function(_, l, r) lines[#lines + 1] = tostring(l) .. " " .. tostring(r) end)
+    rawset(GameTooltip, "AddLine", function(_, l) lines[#lines + 1] = tostring(l) end)
+    rawset(GameTooltip, "SetItemByID", function() end)
+    shown:GetScript("OnEnter")(shown)
+    rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "SetItemByID", nil)
+    local lt = table.concat(lines, "\n")
+    EXPECT(lt:find("hold 0 of 10 Khadgar's Whisker", 1, true) and lt:find("cheapest to fill from what you hold", 1, true), "row tooltip:\n" .. lt)
+    CV.bagsOnly = false
+    -- Type: a Waylaid Crate is a crate
+    CV.typeFilter = "Writs"; CV:Repaint()
+    local inWrits = false
+    for _, x in ipairs(CV.list) do if x == e then inWrits = true end end
+    CV.typeFilter = "Crates"; CV:Repaint()
+    local inCrates = false
+    for _, x in ipairs(CV.list) do if x == e then inCrates = true end end
+    EXPECT(inCrates and not inWrits, "Type: the Waylaid Crate")
+    CV.typeFilter = "All"
+    -- enough Fadeleaf: that bundle, ready, To buy 0, kept by Ready to fill
+    chars["Altie-Realm"].inventory.bags[3818] = 10
+    CV:Refresh()
+    e = row()
+    EXPECT(e and e.item == 3818 and e.ready and e.cost == 0 and e.held == 10, "ready bundle: " .. tostring(e and e.item))
+    CV.readyOnly = true; CV:Repaint()
+    local found = false
+    for _, x in ipairs(CV.list) do if x == e then found = true end end
+    EXPECT(found, "Ready to fill dropped the ready crate")
+    CV.readyOnly = false
+    -- no prices: the bundle you hold the most of
+    chars["Altie-Realm"].inventory.bags[3818] = 4
+    AUC = {}
+    P:ClearRecorded(); P:ResetListCache()
+    CV:Refresh()
+    e = row()
+    EXPECT(e and e.item == 3818 and e.cost == nil and e.held == 4 and e.sells == nil, "no prices: " .. tostring(e and e.item))
+    inv.bank[248690], inv.bags[3818] = keepBank, keepFade
+    chars["Altie-Realm"] = keepAlt
+    Auctionator, S.priceAuctionator, S.showPrices = keepAuc, keepAucOn, keepShow
+    P:ClearRecorded(); P:ResetListCache()
+    SP:SetView("shuffle")
+    UI:Hide(); FLUSH()
+end
+F103()
+print("  PASS F103 2.2.0 TEST-c2: Waylaid Crates (any one bundle from a list): 30 baked from the game's tables; the tooltip prices each bundle and the cheapest is the fill cost; Crates and writs lists each, You hold one finds one in the bank, the row shows the bundle you hold enough for, else the cheapest to fill, else the one you hold most of")
+
+-- F104 2.2.0 TEST-c3 (Hircus, step 7): with only PB's own auction prices,
+-- Writ sells stayed blank. PB recorded only what its recipes use or make,
+-- and a writ is neither. It records writs and what crates and writs ask
+-- for now, and Scan my materials searches the writs your characters hold
+-- and what their crates and writs ask for (every bundle of a Waylaid Crate)
+local function F104()
+    local PB = ProfBuddy
+    local AP, P = PB.AuctionPrices, PB.Prices
+    -- recorded while you browse
+    EXPECT(AP:Wanted(264037) and AP:Wanted(3357) and AP:Wanted(15869) and AP:Wanted(248690) and not AP:Wanted(211826)
+           and not AP:Wanted(99999)
+           and not AP:Wanted(nil), "Wanted: a writ, a bundle's herb, a crate's item")
+    local keepOpen, keepRec, keepVisit, keepNoted = AP._open, AP._record, AP._visit, AP._noted
+    local keepAuc, keepTSM = Auctionator, TSM_API
+    Auctionator, TSM_API = nil, nil
+    AP._open, AP._record, AP._visit, AP._noted = true, true, {}, 0
+    AP:Note(264037, 4200)
+    AP._open, AP._record, AP._visit, AP._noted = keepOpen, keepRec, keepVisit, keepNoted
+    local price, src = P:AuctionPrice(264037)
+    EXPECT(price == 4200 and src == "PB", "a writ's price PB saw: " .. tostring(price) .. " " .. tostring(src))
+    -- Scan my materials: what your characters hold, not your friends
+    local chars, me = PB.db.characters, PB:PlayerKey()
+    local inv = chars[me].inventory or {}
+    chars[me].inventory = inv
+    inv.bags, inv.bank = inv.bags or {}, inv.bank or {}
+    local keepB, keepK = inv.bags[264037], inv.bank[248690]
+    local keepAlt, keepPal = chars["Altie-Realm"], chars["Remote-Realm"]
+    inv.bags[264037], inv.bank[248690] = 1, 1
+    chars["Altie-Realm"] = { inventory = { bags = { [211826] = 1 }, bank = {} }, professions = {} }
+    chars["Remote-Realm"] = { isRemote = true, inventory = { bags = { [264011] = 1 }, bank = {} }, professions = {} }
+    local ids = {}
+    for _, e in ipairs(AP:MaterialList()) do ids[e.id] = e.name or true end
+    EXPECT(ids[248690] and not ids[211826], "Scan my materials: the held Waylaid Crate, not the bound Waylaid Supplies")
+    EXPECT(ids[264037] and ids[8069] and ids[3357] and ids[3818] and ids[3821] and ids[3358] and ids[15869],
+           "Scan my materials left out a held writ, its item, a held crate's bundles or an alt's crate item")
+    EXPECT(not ids[264011] and not ids[3391], "Scan my materials searched a friend's writ")
+    EXPECT(ids[2318], "Scan my materials lost a recipe material")
+    EXPECT(ids[3357] == "Liferoot", "a bundle item without its name: " .. tostring(ids[3357]))
+    inv.bags[264037], inv.bank[248690] = keepB, keepK
+    chars["Altie-Realm"], chars["Remote-Realm"] = keepAlt, keepPal
+    Auctionator, TSM_API = keepAuc, keepTSM
+    P:ClearRecorded()
+end
+F104()
+print("  PASS F104 2.2.0 TEST-c3: PB records a writ's auction price and what crates and writs ask for; Scan my materials adds the writs your characters hold and what their crates and writs ask for, not your friends'")
+
+-- F105 2.2.0 TEST-c5 (m4ru): the unopened ones, a plain Waylaid Crate and
+-- the Sealed writs. They ask for nothing until used and sell at auction:
+-- Crates and writs lists each with what it sells for, its bag tooltip
+-- shows that price, PB records it, and Scan my materials searches the ones
+-- your characters hold
+local function F105()
+    local PB = ProfBuddy
+    local P, S, CV, SP, UI, AP = PB.Prices, PB.db.settings, PB.CratesView, PB.ShufflePanel, PB.UI, PB.AuctionPrices
+    local U = PB.WaylaidUnopened or {}
+    local n = 0
+    for _ in pairs(U) do n = n + 1 end
+    EXPECT(n == 6 and U[248549] and U[248549][1] == "crate" and U[248206] and U[248206][1] == "writ"
+           and U[262887] and U[262888] and U[262889] and U[262890] and U[262890][2] == "Sealed Artisan's Writ",
+           "WaylaidUnopened table: " .. n)
+    local keepAuc, keepAucOn, keepShow = Auctionator, S.priceAuctionator, S.showPrices
+    S.priceAuctionator, S.showPrices = true, true
+    local AUC = { [262889] = 1200, [248549] = 300 }
+    Auctionator = { API = { v1 = { GetAuctionPriceByItemID = function(_, id) return AUC[id] end,
+                                   GetAuctionAgeByItemID = function() return 0 end } } }
+    P:ClearRecorded(); P:ResetListCache()
+    -- the bag tooltip: its price, and nothing without one
+    local function tipFor(id)
+        local lines = {}
+        local keepGD = TooltipUtil.GetDisplayedItem
+        TooltipUtil.GetDisplayedItem = function() return "x", "|cffffffff|Hitem:" .. id .. "::::::::|h[x]|h|r" end
+        rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = tostring(t) end)
+        rawset(GameTooltip, "AddDoubleLine", function(_, a, b) lines[#lines + 1] = tostring(a) .. " = " .. tostring(b) end)
+        rawset(GameTooltip, "Show", function() end)
+        for _, c in ipairs(TOOLTIP_POSTCALLS) do if c.type == Enum.TooltipDataType.Item then c.fn(GameTooltip) end end
+        TooltipUtil.GetDisplayedItem = keepGD
+        rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "Show", nil)
+        local plain = {}
+        for _, l in ipairs(lines) do
+            plain[#plain + 1] = (l:gsub("|T[^|]*|t", function(icon)
+                return icon:find("GoldIcon") and "g" or icon:find("SilverIcon") and "s" or "c" end):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+        end
+        return table.concat(plain, "\n")
+    end
+    local t = tipFor(262889)
+    EXPECT(t:find("Auction price (ProfessionBuddy): = 12s", 1, true) and not t:find("Fill cost", 1, true), "sealed writ tooltip:\n" .. t)
+    EXPECT(not tipFor(262888):find("ProfessionBuddy", 1, true), "an unpriced sealed writ showed a PB line")
+    -- recorded and scanned
+    EXPECT(AP:Wanted(262889) and AP:Wanted(248549), "Wanted: the unopened ones")
+    local chars, me = PB.db.characters, PB:PlayerKey()
+    local inv = chars[me].inventory or {}
+    chars[me].inventory = inv
+    inv.bags, inv.bank = inv.bags or {}, inv.bank or {}
+    local keepB, keepK = inv.bags[262889], inv.bank[248549]
+    inv.bags[262889], inv.bank[248549] = 2, 1
+    local ids = {}
+    for _, e in ipairs(AP:MaterialList()) do ids[e.id] = true end
+    EXPECT(ids[262889] and ids[248549] and not ids[262888], "Scan my materials and the unopened ones")
+    -- Crates and writs
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    SP:SetView("crates")
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly, CV.sortKey, CV.sortAsc = "All", nil, false, false, "cost", true
+    CV:Refresh()
+    local rows = {}
+    for _, e in ipairs(CV.all) do if e.unopened then rows[e.id] = e end end
+    local w, c = rows[262889], rows[248549]
+    EXPECT(w and c and rows[262888] and w.kind == "writ" and c.kind == "crate" and w.sells == 1200 and c.sells == 300
+           and w.inBags and c.inBags and not rows[262888].inBags, "unopened rows")
+    -- You hold one: the two held, among the rest
+    CV.bagsOnly = true; CV:Repaint()
+    local seen = {}
+    for _, e in ipairs(CV.list) do seen[e.id] = true end
+    EXPECT(seen[262889] and seen[248549] and not seen[262888], "You hold one and the unopened ones")
+    -- Type
+    CV.bagsOnly = false; CV.typeFilter = "Writs"; CV:Repaint()
+    seen = {}
+    for _, e in ipairs(CV.list) do seen[e.id] = true end
+    EXPECT(seen[262889] and not seen[248549], "Type: Writs")
+    CV.typeFilter = "All"
+    -- Ready to fill leaves them out
+    CV.readyOnly = true; CV:Repaint()
+    for _, e in ipairs(CV.list) do EXPECT(not e.unopened, "Ready to fill listed an unopened one") end
+    CV.readyOnly = false
+    -- blanks sort last both ways on Needs, You hold, To buy, Crafted by;
+    -- Sells sorts them by price
+    for _, key in ipairs({ "needs", "hold", "cost", "by" }) do
+        for _, asc in ipairs({ true, false }) do
+            CV.sortKey, CV.sortAsc = key, asc; CV:Repaint()
+            local blank = false
+            for _, e in ipairs(CV.list) do
+                if e.unopened then blank = true
+                elseif CV:SortValue(e, key) ~= nil then
+                    EXPECT(not blank, key .. " " .. tostring(asc) .. ": an unopened row before a filled one")
+                end
+            end
+        end
+    end
+    CV.sortKey, CV.sortAsc = "sells", false; CV:Repaint()
+    local wi, ci
+    for i, e in ipairs(CV.list) do if e == w then wi = i elseif e == c then ci = i end end
+    EXPECT(wi and ci and wi < ci, "Sells: the 12s writ before the 3s crate")
+    -- the row shows Unopened and only its price; the tooltip how many you hold
+    CV.sortKey, CV.sortAsc = "sells", false; CV:Repaint()
+    local shown
+    for _, r in ipairs(CV.rows) do if r._entry == w then shown = r end end
+    EXPECT(shown and shown.needsText:GetText():find("Unopened", 1, true) and shown.holdText:GetText() == ""
+           and shown.costText:GetText() == "" and shown.byText:GetText() == "" and shown.sellsText:GetText() ~= "",
+           "the unopened row")
+    local lines = {}
+    rawset(GameTooltip, "AddDoubleLine", function(_, l, r) lines[#lines + 1] = tostring(l) .. " " .. tostring(r) end)
+    rawset(GameTooltip, "AddLine", function(_, l) lines[#lines + 1] = tostring(l) end)
+    rawset(GameTooltip, "SetItemByID", function() end)
+    shown:GetScript("OnEnter")(shown)
+    shown:GetScript("OnClick")(shown)   -- nothing to open, no error
+    rawset(GameTooltip, "AddDoubleLine", nil); rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "SetItemByID", nil)
+    local lt = table.concat(lines, "\n")
+    EXPECT(lt:find("You and your alts hold 2.", 1, true) and not lt:find("To buy", 1, true), "unopened row tooltip:\n" .. lt)
+    inv.bags[262889], inv.bank[248549] = keepB, keepK
+    Auctionator, S.priceAuctionator, S.showPrices = keepAuc, keepAucOn, keepShow
+    P:ClearRecorded(); P:ResetListCache()
+    CV.sortKey, CV.sortAsc = "cost", true
+    SP:SetView("shuffle")
+    UI:Hide(); FLUSH()
+end
+F105()
+print("  PASS F105 2.2.0 TEST-c5: the unopened Waylaid Crate and Sealed writs: listed in Crates and writs with what they sell for (Unopened, blank columns sorting last), You hold one, Type, their tooltip price, recorded and scanned when held")
+
+-- F106 2.2.0 TEST-c6 (m4ru): the main window was 600 x 450 and its lists
+-- cut names short; it is the profession window's 740 x 540. Every list
+-- fills its taller space without a row below the window, the columns of
+-- the Shuffle tab, Crates and writs and the Guild tab spread over the
+-- wider rows and stop short of the scroll bar; "Vendor pays" is "Vendor"
+-- with a tooltip; switching the Shuffle tab's view closes an open list
+local function F106()
+    local PB = ProfBuddy
+    local UI, TSF, SP, CV, GP, FP, OP = PB.UI, PB.TradeSkillFrame, PB.ShufflePanel, PB.CratesView,
+        PB.GuildPanel, PB.FriendsPanel, PB.OrdersPanel
+    TSF:EnsureFrame()
+    local ws, ts = rawget(UI.frame, "_size"), rawget(TSF.frame, "_size")
+    EXPECT(ws and ts and ws[1] == 740 and ws[2] == 540 and ws[1] == ts[1] and ws[2] == ts[2],
+           "main window " .. tostring(ws and ws[1]) .. " x " .. tostring(ws and ws[2]))
+    local W, H = ws[1], ws[2]
+    local contentW, contentH = W - 20, H - UI.CONTENT_TOP - 10   -- UI:AddTab's content frame
+    local rowW = contentW - 16                                     -- rows stop at the scroll bar
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do UI:SelectTab(i) end   -- builds every tab
+    FLUSH()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    SP:SetView("crates"); SP:SetView("shuffle")
+    -- columns: in order, apart, and 8 px or more short of the scroll bar
+    local function columns(label, btns, order)
+        local prevEnd = -1
+        for _, key in ipairs(order) do
+            local b = btns[key]
+            local x, w = rawget(b, "_lastPoint")[2], rawget(b, "_size")[1]
+            EXPECT(x > prevEnd, label .. ": " .. key .. " overlaps the column before it")
+            prevEnd = x + w
+        end
+        EXPECT(prevEnd <= rowW - 8, label .. ": the last column ends at " .. prevEnd .. ", the scroll bar starts at " .. rowW)
+    end
+    columns("Shuffle", SP.headerBtns, { "recipe", "who", "cost", "sell", "profit", "hour" })
+    columns("Crates and writs", CV.headerBtns, { "name", "needs", "hold", "cost", "by", "sells" })
+    columns("Guild", GP.headerBtns, { "name", "level", "rank", "status", "professions" })
+    EXPECT(rawget(SP.headerBtns.recipe, "_size")[1] > 172 and rawget(SP.headerBtns.who, "_size")[1] > 86
+           and rawget(CV.headerBtns.name, "_size")[1] > 168 and rawget(CV.headerBtns.needs, "_size")[1] > 132
+           and rawget(GP.headerBtns.name, "_size")[1] > 104, "the name columns did not get the room")
+    -- rows: they fill the list, and none hangs below the window
+    local function rows(label, n, rowH, space)
+        EXPECT(n * rowH <= space and (n + 1) * rowH > space,
+               label .. ": " .. n .. " rows of " .. rowH .. " in " .. space .. " px")
+    end
+    rows("Shuffle", #SP.rows, 20, contentH - 52 - 18 - 2)
+    rows("Guild", #GP.rows, 20, contentH - 52 - 18 - 2)
+    rows("Crates and writs", #CV.rows, 20, contentH - 26 - 26 - 18 - 2 - 18)
+    rows("Friends", #FP.rows, 22, contentH - 28 - 4 - 18 - 2)
+    EXPECT(#OP.activeCtx.rows * 36 <= contentH - 24 - 2 and #OP.activeCtx.rows == 12, "Orders: " .. #OP.activeCtx.rows)
+    -- the side panels keep the main window's height
+    OP:BuildHistoryPanel(); OP:BuildFindPanel()
+    for _, f in ipairs({ OP.histFrame, OP.findFrame }) do
+        EXPECT(rawget(f, "_size")[2] == H, "a side panel is not the window's height")
+    end
+    EXPECT(#OP.histCtx.rows * 36 <= H - 30 - 10, "Order history rows")
+    -- Vendor, with its tooltip
+    local sell = SP.headerBtns.sell
+    EXPECT(sell.colLabel == "Vendor", "the heading reads " .. tostring(sell.colLabel))
+    local lines, title = {}, nil
+    rawset(GameTooltip, "SetText", function(_, t) title = t end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    sell:GetScript("OnEnter")(sell)
+    rawset(GameTooltip, "SetText", nil); rawset(GameTooltip, "AddLine", nil)
+    EXPECT(title == "Vendor" and (lines[1] or ""):find("What a vendor pays for what one craft makes", 1, true),
+           "Vendor tooltip: " .. tostring(title) .. " / " .. tostring(lines[1]))
+    -- switching the view closes an open list, both ways
+    SP.whoDD.listFrame:Show()
+    SP.viewBtns.crates:GetScript("OnClick")(SP.viewBtns.crates); FLUSH()
+    EXPECT(SP.view == "crates" and not SP.whoDD.listFrame:IsShown(), "the Who list stayed open on Crates and writs")
+    CV.typeDD.listFrame:Show()
+    SP.viewBtns.shuffle:GetScript("OnClick")(SP.viewBtns.shuffle); FLUSH()
+    EXPECT(SP.view == "shuffle" and not CV.typeDD.listFrame:IsShown(), "the Type list stayed open on Vendor shuffle")
+    UI:Hide(); FLUSH()
+end
+F106()
+print("  PASS F106 2.2.0 TEST-c6: the main window is the profession window's 740 x 540; every list fills it with no row below the window; Shuffle, Crates and writs and Guild columns spread out and stop short of the scroll bar; side panels keep its height; Vendor heading and tooltip; a view switch closes an open list")
+
+-- F107 2.2.0 TEST-c7 (m4ru, TEST-c6 step 2): the two windows had their own
+-- size and their own place, so going Back or to a bottom tab moved and
+-- resized PB. They share the profession window's size setting and its
+-- position (the profession window's win, his call), every open, also with
+-- keeping off; the main window's own size setting is gone
+local function F107()
+    local PB = ProfBuddy
+    local UI, TSF, S = PB.UI, PB.TradeSkillFrame, PB.db.settings
+    local function open() C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if UI.frame:IsShown() then UI.frame:Hide(); FLUSH() end
+    C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    EXPECT(S.mainWindowScale == nil, "the main window still has its own size setting")
+    -- frames that keep a scale and report where they are put
+    rawset(UIParent, "GetWidth", function() return 1920 end)
+    rawset(UIParent, "GetHeight", function() return 1080 end)
+    local frames = { TSF.frame, UI.frame }
+    for _, f in ipairs(frames) do
+        rawset(f, "GetWidth", function() return 740 end)
+        rawset(f, "GetHeight", function() return 540 end)
+        rawset(f, "SetScale", function(self, v) rawset(self, "_scale", v) end)
+        rawset(f, "GetScale", function(self) return rawget(self, "_scale") or 1 end)
+        rawset(f, "GetLeft", function(self) local p = rawget(self, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[4] or 100 end)
+        rawset(f, "GetTop", function(self) local p = rawget(self, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[5] or 800 end)
+    end
+    local T, M = TSF.frame, UI.frame
+    local function placed(f) local p = rawget(f, "_lastPoint"); return p and p[1] == "TOPLEFT" and p[4], p and p[5] end
+    local keepScale, keepKeep, keepRemember = S.professionWindowScale, S.keepWindowState, S.rememberWindowState
+    S.rememberWindowState = true
+    for _, keep in ipairs({ true, false }) do
+        S.keepWindowState = keep
+        UI._livePos = nil
+        S.professionWindowScale = 1.2
+        -- Leatherworking at 1.2, moved to (300, 900) on screen
+        open()
+        T:ClearAllPoints(); T:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 300 / 1.2, 900 / 1.2)
+        T:GetScript("OnDragStop")(T)
+        EXPECT(math.abs(T:GetScale() - 1.2) < 0.001, "keep " .. tostring(keep) .. ": the profession window's size")
+        -- the Characters bottom tab: the main window in the same space
+        TSF.navTabs[1]:GetScript("OnClick")(TSF.navTabs[1]); FLUSH()
+        local x, y = placed(M)
+        EXPECT(M:IsShown() and math.abs(M:GetScale() - 1.2) < 0.001 and x and math.abs(x * 1.2 - 300) < 0.01
+               and math.abs(y * 1.2 - 900) < 0.01,
+               "keep " .. tostring(keep) .. ": the main window is not where Leatherworking was: "
+               .. tostring(x) .. "," .. tostring(y) .. " at " .. tostring(M:GetScale()))
+        -- moved, and the grip right-clicked back to 100%: Back opens
+        -- Leatherworking there, at 100%
+        M:ClearAllPoints(); M:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 120, 760)
+        M:GetScript("OnDragStop")(M)
+        UI.scaleGrip:GetScript("OnClick")(UI.scaleGrip)
+        EXPECT(S.professionWindowScale == 1, "keep " .. tostring(keep) .. ": the main window's grip did not set the shared size")
+        UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+        x, y = placed(T)
+        -- the grip keeps the corner on the screen: (120, 760) at 1.2 is
+        -- (144, 912) at 100%
+        EXPECT(T:IsShown() and math.abs(T:GetScale() - 1) < 0.001 and math.abs(x - 144) < 0.01 and math.abs(y - 912) < 0.01,
+               "keep " .. tostring(keep) .. ": Back did not open Leatherworking where the main window was: "
+               .. tostring(x) .. "," .. tostring(y) .. " at " .. tostring(T:GetScale()))
+        T:Hide(); FLUSH()
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+    end
+    -- after a reload, keeping on: the main window opens where the profession
+    -- window was kept; an older build's own main position is not used
+    S.keepWindowState = true
+    local w = PB.db.windows[PB:PlayerKey()]
+    w.pos = { profession = { x = 400, y = 950 }, main = { x = 10, y = 300 } }
+    UI._livePos = nil
+    rawset(M, "_pbPosRestored", false)
+    UI:Show(); FLUSH()
+    local x, y = placed(M)
+    EXPECT(x == 400 and y == 950, "after a reload the main window is not at the kept position: " .. tostring(x) .. "," .. tostring(y))
+    UI:Hide(); FLUSH()
+    for _, f in ipairs(frames) do
+        for _, k in ipairs({ "GetWidth", "GetHeight", "SetScale", "GetScale", "GetLeft", "GetTop" }) do rawset(f, k, nil) end
+    end
+    rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
+    S.professionWindowScale, S.keepWindowState, S.rememberWindowState = keepScale, keepKeep, keepRemember
+    w.pos = nil
+    UI._livePos = nil
+end
+F107()
+print("  PASS F107 2.2.0 TEST-c7: the main and profession windows share one size (the profession window's setting, either grip sets it) and one place: a bottom tab and Back open each in the other's space, keeping on or off; after a reload both use the profession window's kept position")
+
+-- F108 2.2.0 TEST-c8 (m4ru, TEST-c7 re-scan and step 6): (1) the shared
+-- size gave the two windows different sizes near the screen's limit: each
+-- counted only its own side panels (the main window Order history, the
+-- profession window the Material Calculator); both count all of them.
+-- (2) the Characters tab's profession rows, 15 px in, had the bars' width
+-- and ran 15 px past them to the scroll bar; every row ends at the scroll
+-- child's right edge, and the scroll bar ends where every other tab's does
+local function F108()
+    local PB = ProfBuddy
+    local UI, TSF, OP, CP = PB.UI, PB.TradeSkillFrame, PB.OrdersPanel, PB.CharacterPanel
+    TSF:EnsureFrame()
+    OP:BuildHistoryPanel(); OP:BuildFindPanel()
+    local sized = { [TSF.frame] = 740, [UI.frame] = 740, [TSF.calcPanel] = 280, [OP.histFrame] = 470, [OP.findFrame] = 470 }
+    for f, w in pairs(sized) do
+        rawset(f, "GetWidth", function() return w end)
+        rawset(f, "GetHeight", function() return 540 end)
+    end
+    local function screen(w, h)
+        rawset(UIParent, "GetWidth", function() return w end)
+        rawset(UIParent, "GetHeight", function() return h end)
+    end
+    for _, case in ipairs({ { 1366, 768, 1.5, 1.12 }, { 1024, 768, 1, 0.84 }, { 1920, 768, 1.3, 1.3 } }) do
+        screen(case[1], case[2])
+        local lw = UI:FitScale(TSF.frame, case[3], { TSF.calcPanel })
+        local main = UI:FitScale(UI.frame, case[3], UI.scaleFollowers)
+        EXPECT(lw == main and math.abs(lw - case[4]) < 0.001,
+               case[1] .. "x" .. case[2] .. " at " .. case[3] .. ": profession window " .. lw .. ", main window " .. main)
+    end
+    for f in pairs(sized) do rawset(f, "GetWidth", nil); rawset(f, "GetHeight", nil) end
+    rawset(UIParent, "GetWidth", nil); rawset(UIParent, "GetHeight", nil)
+    -- the Characters tab: every row, bar and line ends at the same edge
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "characters" then UI:SelectTab(i) end end
+    FLUSH()
+    local W = CP.scrollChild:GetWidth()
+    local kinds = {}
+    local function edges(label)
+        local checked = 0
+        for kind, pool in pairs(CP._pools) do
+            for i = 1, pool.n do
+                local o = pool.objs[i]
+                local sz, p = rawget(o, "_size"), rawget(o, "_lastPoint")
+                if sz and type(sz[1]) == "number" and p and p[1] == "TOPLEFT" and type(p[2]) == "number" then
+                    EXPECT(math.abs(p[2] + sz[1] - W) < 0.001, label .. ": " .. kind .. " at x " .. p[2]
+                           .. " ends at " .. (p[2] + sz[1]) .. ", not at " .. W)
+                    checked = checked + 1
+                    kinds[kind] = true
+                end
+            end
+        end
+        EXPECT(checked >= 3, label .. ": no rows checked: " .. checked)
+    end
+    CP._searchText = nil
+    CP:Refresh()
+    edges("Characters")
+    -- a search: its section lines and result rows too
+    CP._searchText = "light leather"
+    local keepFold = CP._searchFactionCollapsed
+    CP._searchFactionCollapsed = setmetatable({}, { __index = function() return false end })   -- every result open
+    CP:Refresh()
+    -- the stand-in's textures record no size or place: the section lines
+    -- get recorders, and the search draws again
+    for _, t in ipairs(CP._pools.divider and CP._pools.divider.objs or {}) do
+        rawset(t, "SetSize", function(self, w, h) rawset(self, "_size", { w, h }) end)
+        rawset(t, "SetPoint", function(self, ...) rawset(self, "_lastPoint", { ... }) end)
+    end
+    CP:Refresh()
+    edges("Characters search")
+    CP._searchFactionCollapsed = keepFold
+    CP._searchText = nil
+    CP:Refresh()
+    for _, k in ipairs({ "profRow", "divider", "searchCharRow" }) do
+        EXPECT(kinds[k], "no " .. k .. " checked")
+    end
+    UI:Hide(); FLUSH()
+    -- unopened crates and writs: under Prof: All only
+    local SP, CV = PB.ShufflePanel, PB.CratesView
+    UI:Show()
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    local S = PB.db.settings
+    local keepShow = S.showPrices
+    S.showPrices = true   -- the list is empty with prices off
+    SP:SetView("crates")
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly = "All", nil, false, false
+    CV:Refresh()
+    local unopened = 0
+    for _, e in ipairs(CV.list) do if e.unopened then unopened = unopened + 1 end end
+    EXPECT(unopened == 6, "Prof: All lists " .. unopened .. " unopened")
+    CV.profFilter = "Not crafted"; CV:Repaint()
+    for _, e in ipairs(CV.list) do EXPECT(not e.unopened, "Prof: Not crafted lists an unopened one") end
+    CV.profFilter = nil
+    S.showPrices = keepShow
+    SP:SetView("shuffle")
+    UI:Hide(); FLUSH()
+end
+F108()
+print("  PASS F108 2.2.0 TEST-c8: windows on one size setting count each other's side panels, so they get one size at every screen; the Characters tab's rows all end at the same edge")
+
+-- F109 2.2.0 TEST-c9 (m4ru, TEST-c8 step 5): the 740-wide window moved
+-- the Friends row's controls right by 96, all but Order, which sat over
+-- Sync and the Auto-sync box. No two controls in a row overlap.
+local function rowControls(FP)
+    -- the stand-in's textures and font strings record no width: a fresh
+    -- row is built with recorders, then each control's left and right edge
+    local F = getmetatable(UIParent)
+    rawset(F, "CreateTexture", function(self) return CreateFrame("Texture", nil, self) end)
+    rawset(F, "SetWidth", function(self, w) local sz = rawget(self, "_size") or {}; sz[1] = w; rawset(self, "_size", sz) end)
+    local row = FP:CreateRow(CreateFrame("Frame", nil, UIParent), 1)
+    rawset(F, "CreateTexture", nil); rawset(F, "SetWidth", nil)
+    local list = { { "favorite star", row.favBtn }, { "name", row.nameText }, { "last sync", row.syncText },
+                   { "Auto-sync box", row.autoCB }, { "Sync", row.syncBtn }, { "Remove", row.removeBtn },
+                   { "Order", row.orderBtn } }
+    for i, icon in ipairs(row.profIcons) do list[#list + 1] = { "profession icon " .. i, icon } end
+    local out = {}
+    for _, c in ipairs(list) do
+        local p, sz = rawget(c[2], "_lastPoint"), rawget(c[2], "_size")
+        EXPECT(p and p[1] == "LEFT" and type(p[2]) == "number" and sz and type(sz[1]) == "number",
+               "the Friends row's " .. c[1] .. " has no left point and width")
+        out[#out + 1] = { name = c[1], l = p[2], r = p[2] + sz[1] }
+    end
+    return out
+end
+local function F109()
+    local PB = ProfBuddy
+    -- every control, Order included (it shows for a friend with a
+    -- profession to order from), ends before the next one starts, and all
+    -- end before the scroll bar: 720 px of content less 16
+    local c = rowControls(PB.FriendsPanel)
+    for i = 1, #c do
+        EXPECT(c[i].r <= 704, "the Friends row's " .. c[i].name .. " ends at " .. c[i].r .. ", under the scroll bar")
+        for j = i + 1, #c do
+            EXPECT(c[i].r <= c[j].l or c[j].r <= c[i].l, "the Friends row's " .. c[i].name .. " (" .. c[i].l .. " to "
+                   .. c[i].r .. ") overlaps its " .. c[j].name .. " (" .. c[j].l .. " to " .. c[j].r .. ")")
+        end
+    end
+end
+F109()
+print("  PASS F109 2.2.0 TEST-c9: no two controls in a Friends row overlap, Order included, and none runs under the scroll bar")
+
+-- F110 2.2.0 (Lucido): Can make counting your bank. The recipe list's
+-- "[6] [10]" and the detail panel's "Can make: 6, 10 with bank", the bank
+-- part in the Reagents list's azure; none where it would be wrong; the
+-- counts draw again when the bank changes with the profession open
+local function F110()
+    local PB = ProfBuddy
+    if not (TSF.frame and TSF.frame:IsShown()) then C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local TSF, DS = PB.TradeSkillFrame, PB.DataStore
+    local st = TSF.state
+    local inv = DS:GetCharacter().inventory
+    local keepBank, keepScanned, keepOff, keepView = inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey
+    local keepSel = st.selected
+    ITEM_COUNT = {}
+    inv.bank, inv.bankScanned = {}, true
+    st._viewCharKey = nil
+    -- a known craft that takes 1 of a material, the game's count = the bags'
+    local kit = { name = "PB Test Kit", isKnown = true, numAvail = 4, itemID = 2304, spellID = 2152,
+                  category = "Armor Kit", reagents = { { itemID = 2318, count = 1, name = "Light Leather" } } }
+    table.insert(st.recipes, 1, kit)
+    st.scrollOffset, st.selected = 0, kit.name
+    local row = TSF.listRows[1]
+    local function draw() TSF:UpdateListRows(); TSF:RefreshDetailPanel() end
+    local function list() return row.rightText:GetText() or "" end
+    local function can() return TSF.detCanMake:GetText() or "" end
+    local function nameAtCounts()
+        local p = rawget(row.nameText, "_lastPoint")
+        return p and p[1] == "RIGHT" and p[2] == row.rightText
+    end
+    -- bags make 4, the bank holds 6 more: [4] [10], "4, 10 with bank"
+    ITEM_COUNT[2318], inv.bank[2318] = 4, 6
+    draw()
+    EXPECT(list():find("|cff00ff00[4]|r |cff3fc7ff[10]|r", 1, true), "list: " .. list())
+    EXPECT(can():find("|cff00ff00Can make: 4|r|cff3fc7ff, 10 with bank|r", 1, true), "Can make: " .. can())
+    EXPECT(nameAtCounts(), "the name does not stop at the counts")
+    -- Colorblind markers on: "[10 bank]" in the list; in the Reagents list
+    -- azure reads "0/1 bank" (yellow's "x/need" reads the same without it),
+    -- and the material's name stops short of it; off: as before
+    local S = PB.db.settings
+    local keepCBM, keepBag = S.colorblindMarkers, inv.bags[2318]
+    S.colorblindMarkers = "on"
+    inv.bags[2318] = 0
+    draw()
+    local rrow = TSF.reagentRows[1]
+    local function rpoint() return rawget(rrow.nameText, "_lastPoint") or {} end
+    EXPECT(list():find("|cff3fc7ff[10 bank]|r", 1, true), "markers, list: " .. list())
+    EXPECT((rrow.countText:GetText() or "") == "|cff3fc7ff0/1 bank|r", "markers, Reagents: " .. tostring(rrow.countText:GetText()))
+    EXPECT(rpoint()[1] == "RIGHT" and rpoint()[2] == rrow.countText, "markers: the material's name does not stop at its count")
+    S.colorblindMarkers = "off"
+    draw()
+    EXPECT(list():find("|cff3fc7ff[10]|r", 1, true) and (rrow.countText:GetText() or "") == "|cff3fc7ff0/1|r",
+           "markers off: " .. list() .. " / " .. tostring(rrow.countText:GetText()))
+    EXPECT(rpoint()[1] == "RIGHT" and rpoint()[2] == rrow and rpoint()[4] == -36, "markers off: the material's name is not back at -36")
+    S.colorblindMarkers, inv.bags[2318] = keepCBM, keepBag
+    -- the bags make none: the azure count alone, red 0, not "missing"
+    ITEM_COUNT[2318], kit.numAvail = 0, 0
+    draw()
+    EXPECT(list():find("|cff3fc7ff[6]|r", 1, true) and not list():find("cff00ff00[", 1, true), "bank only list: " .. list())
+    EXPECT(can():find("|cffff4444Can make: 0|r|cff3fc7ff, 6 with bank|r", 1, true) and not can():find("missing", 1, true),
+           "bank only Can make: " .. can())
+    -- the bank adds nothing: no azure, the name back at its own edge
+    ITEM_COUNT[2318], kit.numAvail, inv.bank[2318] = 4, 4, nil
+    draw()
+    EXPECT(not list():find("3fc7ff", 1, true) and not can():find("with bank", 1, true), "no bank part: " .. list() .. " / " .. can())
+    EXPECT(not nameAtCounts() or PB.Prices:ListProfitOn(), "the name stops at the counts with no bank count")
+    -- two of a material: the bank's 3 make 1 more, a leftover 1 makes none
+    kit.reagents = { { itemID = 2318, count = 2, name = "Light Leather" } }
+    ITEM_COUNT[2318], kit.numAvail, inv.bank[2318] = 4, 2, 3
+    draw()
+    EXPECT(list():find("|cff3fc7ff[3]|r", 1, true) and can():find(", 3 with bank", 1, true), "two each: " .. list() .. " / " .. can())
+    -- no bank part: never seen the bank, the game's count is not the bags'
+    -- (something else limits it), on cooldown, another character's list
+    inv.bankScanned = false
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "a bank PB never saw counted")
+    inv.bankScanned = true
+    EXPECT(TSF:BankCraftCount(kit, 1) == nil, "counted when the game's count is not the bags'")
+    local keepCD = TSF.CooldownSuffix
+    TSF.CooldownSuffix = function() return "\n|cffff8800On cooldown: ready in 3h|r" end
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "counted on cooldown")
+    TSF.CooldownSuffix = keepCD
+    st._viewCharKey = "Alt-Realm"
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "counted on another character's list")
+    st._viewCharKey = nil
+    kit.reagents[2] = { name = "No ID", count = 1 }
+    EXPECT(TSF:BankCraftCount(kit, 2) == nil, "counted with a material that has no item ID")
+    kit.reagents[2] = nil
+    EXPECT(TSF:BankCraftCount(kit, 2) == 3, "the count back: " .. tostring(TSF:BankCraftCount(kit, 2)))
+    -- a craft that makes 2: the items after each count
+    local hide = { name = "Cured Rugged Hide", isKnown = true, numAvail = 3, itemID = 15407, spellID = 19047,
+                   category = "Leather", reagents = { { itemID = 8171, count = 1, name = "Rugged Hide" } } }
+    table.insert(st.recipes, 1, hide)
+    st.selected = hide.name
+    ITEM_COUNT[8171], inv.bank[8171] = 3, 2
+    draw()
+    EXPECT(can():find("Can make: 3 (6)|r|cff3fc7ff, 5 (10) with bank|r", 1, true), "makes 2: " .. can())
+    table.remove(st.recipes, 1)
+    -- a recipe as the game lists it (not a test entry): its materials
+    -- carry item IDs. Light Leather, 3 scraps each, the game's count 14
+    local live
+    for _, e in ipairs(st.recipes) do if e.name == "Light Leather" and e.isKnown then live = e end end
+    EXPECT(live and live.reagents and live.reagents[1] and live.reagents[1].itemID == 2934, "the game's Light Leather has no material ID")
+    ITEM_COUNT[2934], inv.bank[2934] = 44, 6
+    EXPECT(TSF:BankCraftCount(live, live.numAvail) == 16, "the game's Light Leather with the bank: "
+           .. tostring(TSF:BankCraftCount(live, live.numAvail)) .. " (game count " .. tostring(live.numAvail) .. ")")
+    ITEM_COUNT[2934], inv.bank[2934] = nil, nil
+    -- the bank opened with the profession open: the counts draw again
+    st.selected = kit.name
+    kit.reagents = { { itemID = 2318, count = 1, name = "Light Leather" } }
+    ITEM_COUNT[2318], kit.numAvail, inv.bank = 4, 4, {}
+    draw()
+    EXPECT(not list():find("3fc7ff", 1, true), "a bank count before the bank opened: " .. list())
+    Enum.BankType = Enum.BankType or { Character = 0, Account = 2 }
+    local keepCB = C_Bank
+    C_Bank = { FetchPurchasedBankTabIDs = function(t) return t == 0 and { 6 } or {} end }
+    BAGS[6] = { [1] = { id = 2318, count = 5 } }
+    FIRE("BANKFRAME_OPENED")
+    EXPECT(list():find("|cff3fc7ff[9]|r", 1, true) and can():find(", 9 with bank", 1, true),
+           "the bank's visit did not redraw: " .. list() .. " / " .. can())
+    FIRE("BANKFRAME_CLOSED")
+    BAGS[6], C_Bank = nil, keepCB
+    table.remove(st.recipes, 1)
+    inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey, st.selected = keepBank, keepScanned, keepOff, keepView, keepSel
+    ITEM_COUNT = nil
+    TSF:UpdateListRows(); TSF:RefreshDetailPanel()
+end
+F110()
+print("  PASS F110 2.2.0: Can make counts your bank: [4] [10] and 'Can make: 4, 10 with bank' in azure, the bank alone as [6] and 'Can make: 0, 6 with bank', the items after each count, the name stops at the counts; none with no bank, an unseen bank, a game count not the bags', a cooldown, another character's list, a material with no ID; the bank's visit redraws")
+
+-- F111 2.2.0 (GitHub #13, philippeop): click a material to go to the
+-- recipe that makes it, with the crafts you still need in the box (bags
+-- only; the bank's count in light blue on the hover line), "Back" under
+-- Share to return (its tooltip names the recipe); another of your professions opens on WoW: Forever;
+-- someone's saved list jumps within it and fills the order box; the
+-- Material Calculator's rows do the same
+local function F111()
+    local PB = ProfBuddy
+    local TSF, DS, RDB = PB.TradeSkillFrame, PB.DataStore, PB.RecipeDB
+    local st = TSF.state
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.profName == "Leatherworking" and not st._viewCharKey, "Leatherworking did not open")
+    local inv = DS:GetCharacter().inventory
+    local keepBank, keepScanned = inv.bank, inv.bankScanned
+    ITEM_COUNT = { [2318] = 4 }
+    inv.bank, inv.bankScanned = { [2318] = 2 }, true
+    local function lines(row)
+        local out = {}
+        rawset(GameTooltip, "AddLine", function(_, t) out[#out + 1] = tostring(t) end)
+        rawset(GameTooltip, "Show", function() end)
+        row:GetScript("OnEnter")(row)
+        rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "Show", nil)
+        return table.concat(out, "\n")
+    end
+    local function click(row) row:GetScript("OnMouseUp")(row) end
+    local function rowFor(itemID)
+        for _, r in ipairs(TSF.reagentRows) do if r:IsShown() and r.itemID == itemID then return r end end
+    end
+    for _, r in ipairs(TSF.reagentRows) do
+        rawset(r.hover, "Show", function(x) rawset(x, "_on", true) end)
+        rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
+    end
+    local function back() TSF.detBack:GetScript("OnClick")(TSF.detBack) end
+    -- a recipe you pick yourself in the list, as a click on its row
+    local function pick(name)
+        for idx, e in ipairs(st.recipes) do
+            if not e.isHeader and e.name == name then
+                st.scrollOffset = idx - 1
+                TSF.listRows[1]:GetScript("OnClick")(TSF.listRows[1], "LeftButton")
+                return st.selected == name
+            end
+        end
+        return false
+    end
+    -- the Back button's tooltip
+    local function backTip()
+        local out = {}
+        rawset(GameTooltip, "SetText", function(_, t) out[#out + 1] = tostring(t) end)
+        rawset(GameTooltip, "AddLine", function(_, t) out[#out + 1] = tostring(t) end)
+        rawset(GameTooltip, "Show", function() end)
+        TSF.detBack:GetScript("OnEnter")(TSF.detBack)
+        rawset(GameTooltip, "SetText", nil); rawset(GameTooltip, "AddLine", nil); rawset(GameTooltip, "Show", nil)
+        return table.concat(out, "\n")
+    end
+    -- a craft that makes more than one: Coarse Dynamite makes 2 (1-3), so
+    -- 5 with none in bags is 3 crafts
+    local c3 = TSF:CraftsForMaterial({ prof = "Engineering", name = "Coarse Dynamite" }, 4365, 5)
+    EXPECT(c3 == 3, "crafts for 5 Coarse Dynamite: " .. tostring(c3))
+    local cloak = "Handstitched Leather Cloak"
+    EXPECT(TSF:SelectRecipeForView(cloak, false), "no Handstitched Leather Cloak in the list")
+    TSF.qtyBox:SetText("5")
+    -- 2 Light Leather a cloak, 5 cloaks: 10; 4 in bags, 2 more in the bank
+    local t = lines(rowFor(2318))
+    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Needs 6 crafted|cff3fc7ff, 4 with bank|r", 1, true), "hover:\n" .. t)
+    EXPECT(rawget(rowFor(2318).hover, "_on"), "the Light Leather row is not lit")
+    click(rowFor(2318))
+    EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "6", "jump: " .. tostring(st.selected) .. " x" .. tostring(TSF.qtyBox:GetText()))
+    EXPECT(TSF.detBack:IsShown() and TSF.detBack:GetText() == "Back", "no Back: " .. tostring(TSF.detBack:GetText()))
+    EXPECT(backTip() == "Back to " .. cloak, "Back's tooltip: " .. backTip())
+    -- under Share, right of the Difficulty line, one size for every recipe
+    local bp = rawget(TSF.detBack, "_lastPoint")
+    EXPECT(bp and bp[1] == "TOPRIGHT" and bp[2] == TSF.shareBtn and bp[3] == "BOTTOMRIGHT" and bp[4] == 0 and bp[5] == -13
+           and (rawget(TSF.detBack, "_size") or {})[1] == 56 and rawget(TSF.detBack, "_points") == 1
+           and TSF:CanMakeBottom() ~= TSF.detBack, "Back is not under Share")
+    back()
+    EXPECT(st.selected == cloak and TSF.qtyBox:GetText() == "5" and not TSF.detBack:IsShown(), "Back: " .. tostring(st.selected))
+    -- a batch running keeps its count
+    -- (3 left: a jump would put 2 there, 6 Light Leather less the 4 in bags)
+    TSF._craftingActive = true
+    TSF.qtyBox:SetText("3")
+    click(rowFor(2318))
+    EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "3", "a jump during a batch changed the count")
+    TSF._craftingActive = false
+    back()
+    -- a modifier click links, no jump; a vendor material has no click
+    MODIFIER_DOWN = true
+    click(rowFor(2318))
+    MODIFIER_DOWN = nil
+    EXPECT(st.selected == cloak, "a shift-click jumped")
+    EXPECT(not lines(rowFor(2320)):find("Click", 1, true) and not rawget(rowFor(2320).hover, "_on"), "a hint on Coarse Thread")
+    click(rowFor(2320))
+    EXPECT(st.selected == cloak, "a click on Coarse Thread jumped")
+    -- hidden by the search: the jump clears it
+    st.searchText = "cloak"
+    if TSF.searchBox then TSF.searchBox:SetText("cloak") end
+    TSF:RefreshRecipeList()
+    TSF:RefreshDetailPanel()
+    click(rowFor(2318))
+    EXPECT(st.selected == "Light Leather" and (st.searchText or "") == "", "the search kept Light Leather hidden")
+    -- picking another recipe yourself drops the trail, and the quantity
+    -- starts at 1, as Blizzard's window does; the same recipe again keeps it
+    TSF.qtyBox:SetText("7")
+    EXPECT(pick("Light Armor Kit"), "no Light Armor Kit to pick")
+    EXPECT(not TSF.detBack:IsShown() and TSF._jumpStack == nil, "the trail stayed")
+    EXPECT(TSF.qtyBox:GetText() == "1", "a recipe picked kept the quantity " .. tostring(TSF.qtyBox:GetText()))
+    TSF.qtyBox:SetText("4")
+    TSF:RefreshDetailPanel()
+    pick("Light Armor Kit")
+    EXPECT(TSF.qtyBox:GetText() == "4", "a refresh or the same recipe reset the quantity")
+    -- a batch running keeps its count when you pick another recipe
+    TSF._craftingActive = true
+    TSF.qtyBox:SetText("3")
+    pick(cloak)
+    EXPECT(st.selected == cloak and TSF.qtyBox:GetText() == "3", "a pick during a batch changed the count")
+    TSF._craftingActive = false
+    -- closed and opened again on the same recipe (Remember window state
+    -- on): 1, as Blizzard's OnShow sets it
+    local keepRemember = PB.db.settings.rememberWindowState
+    PB.db.settings.rememberWindowState = true
+    TSF.qtyBox:SetText("8")
+    TSF.frame:Hide(); FLUSH()
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.selected == cloak and TSF.qtyBox:GetText() == "1",
+           "reopened on " .. tostring(st.selected) .. " with the quantity " .. tostring(TSF.qtyBox:GetText()))
+    PB.db.settings.rememberWindowState = keepRemember
+    for _, r in ipairs(TSF.reagentRows) do
+        rawset(r.hover, "Show", function(x) rawset(x, "_on", true) end)
+        rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
+    end
+    -- the bank covers it all: "none with bank"
+    TSF:SelectRecipeForView(cloak, false)
+    TSF.qtyBox:SetText("5")
+    inv.bank = { [2318] = 8 }
+    t = lines(rowFor(2318))
+    EXPECT(t:find("Needs 6 crafted|cff3fc7ff, none with bank|r", 1, true), "bank covers it:\n" .. t)
+    ITEM_COUNT[2318] = 10
+    t = lines(rowFor(2318))
+    EXPECT(t:find("You have enough", 1, true) and not t:find("with bank", 1, true), "bags cover it:\n" .. t)
+    ITEM_COUNT[2318] = 4
+    inv.bank = { [2318] = 2 }
+    -- another of your professions (a stand-in: Cooking's Charred Wolf
+    -- Meat makes Coarse Thread): WoW: Forever opens Cooking on it
+    local keepItr = RDB.itemToRecipe[2320]
+    RDB.itemToRecipe[2320] = { { recipeName = "Charred Wolf Meat", profName = "Cooking" } }
+    local me = DS:GetCharacter()
+    local keepCookProf = me.professions.Cooking
+    me.professions.Cooking = keepCookProf or { skillLevel = 1, recipes = {} }
+    me.professions.Cooking.recipes = me.professions.Cooking.recipes or {}
+    local keepWolf = me.professions.Cooking.recipes["Charred Wolf Meat"]
+    me.professions.Cooking.recipes["Charred Wolf Meat"] = keepWolf or {}
+    TSF:SelectRecipeForView(cloak, false)
+    TSF.qtyBox:SetText("3")
+    ITEM_COUNT[2320] = 1    -- 3 cloaks take 3 Coarse Thread, 1 in bags: 2 crafts
+    t = lines(rowFor(2320))
+    EXPECT(t:find("Click: go to Charred Wolf Meat (Cooking)", 1, true) and t:find("Needs 2 crafted", 1, true), "other profession hover:\n" .. t)
+    TS_CALLS = {}
+    click(rowFor(2320))
+    local opened = false
+    for _, c in ipairs(TS_CALLS) do if c == "OpenTradeSkill:185" then opened = true end end
+    EXPECT(opened, "Cooking was not opened: " .. table.concat(TS_CALLS, ","))
+    TS_LIST_READY(); FLUSH()
+    EXPECT(st.profName == "Cooking" and st.selected == "Charred Wolf Meat" and TSF.qtyBox:GetText() == "2",
+           "in Cooking: " .. tostring(st.profName) .. " / " .. tostring(st.selected) .. " x" .. tostring(TSF.qtyBox:GetText()))
+    EXPECT(TSF.detBack:IsShown() and backTip() == "Back to " .. cloak, "no Back in Cooking")
+    back()
+    TS_LIST_READY(); FLUSH()
+    EXPECT(st.profName == "Leatherworking" and st.selected == cloak and TSF.qtyBox:GetText() == "3",
+           "back in Leatherworking: " .. tostring(st.profName) .. " / " .. tostring(st.selected) .. " x" .. tostring(TSF.qtyBox:GetText()))
+    -- the Material Calculator's rows: its own count for the quantity
+    TSF.qtyBox:SetText("5")
+    if not (TSF.calcPanel and TSF.calcPanel:IsShown()) then TSF:ToggleCalcPanel() end
+    TSF:RefreshCalcPanel()
+    local crow
+    for _, r in ipairs(TSF.calcRows or {}) do
+        rawset(r.hover, "Show", function(x) rawset(x, "_on", true) end)
+        rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
+        if r:IsShown() and r.itemID == 2318 and r.calcNeed == 10 then crow = r end
+    end
+    EXPECT(crow, "no Light Leather row of 10 in the Material Calculator")
+    -- the stand-in answers an unset field with a stub; the game answers nil
+    local pr = rawget(crow, "price")
+    if pr == nil or getmetatable(pr) then rawset(crow, "price", false) end
+    t = lines(crow)
+    EXPECT(t:find("Click: go to Light Leather", 1, true) and t:find("Needs 6 crafted", 1, true) and rawget(crow.hover, "_on"), "calculator hover:\n" .. t)
+    click(crow)
+    EXPECT(st.selected == "Light Leather" and TSF.qtyBox:GetText() == "6", "calculator jump: " .. tostring(st.selected))
+    back()
+    TSF:ToggleCalcPanel()
+    -- someone's saved list: the jump stays in it, never another profession,
+    -- and fills the order box
+    local fk = "Pal Jump-Forever"
+    PB.db.characters[fk] = { isRemote = true, faction = UnitFactionGroup("player"), class = "WARRIOR",
+        professions = { Leatherworking = { skillLevel = 50, maxSkill = 75,
+            recipes = { ["Light Leather"] = {}, [cloak] = {} } } } }
+    TSF:OpenWithCharacter(fk, "Leatherworking"); FLUSH()
+    EXPECT(st._viewCharKey == fk, "the friend's list did not open")
+    for _, r in ipairs(TSF.reagentRows) do
+        rawset(r.hover, "Show", function(x) rawset(x, "_on", true) end)
+        rawset(r.hover, "Hide", function(x) rawset(x, "_on", false) end)
+    end
+    TSF:SelectRecipeForView(cloak, false)
+    TSF.composerQty:SetText("3")
+    EXPECT(TSF:MaterialTarget(2320) == nil, "a friend's list offered your other profession")
+    click(rowFor(2318))
+    EXPECT(st.selected == "Light Leather" and st._viewCharKey == fk and TSF.composerQty:GetText() == "2",
+           "friend jump: " .. tostring(st.selected) .. " x" .. tostring(TSF.composerQty:GetText()))
+    back()
+    EXPECT(st.selected == cloak and TSF.composerQty:GetText() == "3", "friend Back")
+    -- on someone's list the order box starts at 1 for a recipe you pick
+    EXPECT(pick("Light Leather") and TSF.composerQty:GetText() == "1", "friend pick kept the order quantity " .. tostring(TSF.composerQty:GetText()))
+    TSF.frame:Hide(); FLUSH()
+    PB.db.characters[fk] = nil
+    RDB.itemToRecipe[2320] = keepItr
+    me.professions.Cooking.recipes["Charred Wolf Meat"] = keepWolf
+    me.professions.Cooking = keepCookProf
+    inv.bank, inv.bankScanned = keepBank, keepScanned
+    ITEM_COUNT = nil
+    TSF._jumpStack = nil
+end
+F111()
+print("  PASS F111 2.2.0 #13: a click on a material goes to its recipe with 'Needs N crafted' (bags; bank in light blue, 'none with bank'), Back under Share returns with the quantity; a recipe you pick or a reopened window starts at 1; a batch keeps its count; shift-click links; vendor materials don't jump; a search is cleared; another of your professions opens; the calculator's rows; a friend's list jumps within it and fills the order box")
+
+-- F112 2.2.0 (Lucido, Kluga): the craft strip. From a craft's first cast to
+-- its end, both windows show a strip across the bottom: the current cast
+-- (UnitCastingInfo) and the whole batch with its time left, each with its
+-- own Settings switch; the recipe list, the craft bar, the detail panel and
+-- every main-window tab rise above it and show the rows that still fit. A
+-- craft the game refuses shows nothing; in combat the change waits.
+local function F112()
+    local PB = ProfBuddy
+    local TSF, UI, P, S = PB.TradeSkillFrame, PB.UI, PB.Prices, PB.db.settings
+    local st = TSF.state
+    local keepArm = TSF.ArmCraftWatchdog
+    TSF.ArmCraftWatchdog = function() end
+    local keepICL = InCombatLockdown
+    local function cast(event) FIRE(event or "UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 2881) end
+    local function clean()
+        InCombatLockdown = keepICL
+        CAST_INFO = nil
+        if TSF.frame:IsShown() then TSF.frame:Hide() end
+        if UI.frame:IsShown() then UI.frame:Hide() end
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+        TSF:StopCraftTracking()
+    end
+    local function shownRows()
+        local n = 0
+        for _, r in ipairs(TSF.listRows) do if r:IsShown() then n = n + 1 end end
+        return n
+    end
+    local function y(frame) local p = rawget(frame, "_lastPoint"); return p and p[#p] end
+    local strip = function() return TSF.craftStrip end
+    for _, s0 in ipairs({ TSF.craftStrip, TSF:MainStrip() }) do
+        for _, k in ipairs({ "cast", "batch" }) do
+            rawset(s0[k], "SetValue", function(b, v) rawset(b, "_v", v) end)
+        end
+    end
+    clean()
+    S.craftBarCast, S.craftBarBatch = true, true
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    -- the All view: more than 20 rows to fit
+    local keepTab = st.showTab
+    st.showTab = "all"; TSF:RefreshRecipeList()
+    EXPECT(#st.recipes >= 20 and shownRows() == 20 and TSF:ListRows() == 20, "the list before a craft: " .. shownRows() .. " of " .. #st.recipes .. " tab " .. tostring(st.showTab))
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    -- clicked, not cast yet: no strip
+    TSF:DoCraftImmediate(5)
+    EXPECT(TSF._craftingActive and not strip():IsShown() and y(TSF.listPanel) == 30, "a strip before the first cast")
+    TSF:UpdateCraftStrip()   -- a Settings click before the cast
+    EXPECT(not strip():IsShown() and TSF:StripLift() == 0, "a strip before the first cast, after a refresh")
+    -- the first cast: both bars, 2 x 14 + 3 between, 4 above: everything up 35
+    CAST_INFO = { "Light Leather", "", 0, 999000, 1001000, true, nil, false, 2881 }
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(strip():IsShown() and strip().cast:IsShown() and strip().batch:IsShown()
+           and TSF:StripLift() == 35, "no strip at the first cast: lift " .. TSF:StripLift())
+    EXPECT(y(TSF.listPanel) == 65 and y(TSF.craftBar) == 65 and y(TSF.composerBar) == 65 and y(TSF.ownHintBar) == 65
+           and y(TSF.detailFrame) == 65 + 58 + 2 and y(TSF.enchantCraftBtn) == 65 + 58 - 6
+           and y(TSF.settingsScroll) == 65,
+           "the window did not rise: list " .. tostring(y(TSF.listPanel)) .. ", detail " .. tostring(y(TSF.detailFrame)))
+    -- 540 - 106 - 65 = 369 px of list, 4 of it border: 18 rows of 20
+    EXPECT(TSF:ListRows() == 18 and shownRows() == 18, "rows over the strip: " .. shownRows())
+    -- halfway through a 2 s cast (GetTime 1000 s): the cast bar half full,
+    -- the batch 0.5 of 5 crafts
+    TSF:PaintStrip(strip())
+    local per = P:CraftSeconds(2881)
+    EXPECT(per >= 1.5, "seconds a craft: " .. tostring(per))
+    local function want(n, left) return string.format("Crafting %d of 5, about %s left", n, (function(s0)
+        s0 = math.floor(s0 + 0.5); return s0 >= 60 and string.format("%dm %02ds", math.floor(s0 / 60), s0 % 60) or (s0 .. "s") end)(left)) end
+    EXPECT(rawget(strip().cast, "_v") == 0.5 and strip().cast.text:GetText() == "Light Leather",
+           "cast bar: " .. tostring(rawget(strip().cast, "_v")) .. " " .. tostring(strip().cast.text:GetText()))
+    EXPECT(math.abs(rawget(strip().batch, "_v") - 0.1) < 1e-9 and strip().batch.text:GetText() == want(1, 1 + 4 * per),
+           "batch bar: " .. tostring(rawget(strip().batch, "_v")) .. " " .. tostring(strip().batch.text:GetText()))
+    -- one done, between casts: 2 of 5, four crafts' time
+    CAST_INFO = nil
+    cast()
+    TSF:PaintStrip(strip())
+    EXPECT(strip():IsShown() and rawget(strip().cast, "_v") == 0 and math.abs(rawget(strip().batch, "_v") - 0.2) < 1e-9
+           and strip().batch.text:GetText() == want(2, 4 * per), "after one craft: " .. tostring(strip().batch.text:GetText()))
+    -- another spell casting is not the craft
+    CAST_INFO = { "Hearthstone", "", 0, 999000, 1001000, false, nil, false, 8690 }
+    TSF:PaintStrip(strip())
+    EXPECT(rawget(strip().cast, "_v") == 0, "the cast bar filled for another spell")
+    CAST_INFO = nil
+    -- Settings: the cast bar off leaves the batch bar, 14 + 4 = 18 up, 19 rows
+    S.craftBarCast = false; TSF:UpdateCraftStrip()
+    EXPECT(strip():IsShown() and not strip().cast:IsShown() and strip().batch:IsShown() and TSF:StripLift() == 18
+           and y(TSF.listPanel) == 48 and shownRows() == 19, "the batch bar alone: " .. TSF:StripLift() .. " " .. shownRows())
+    -- a bar alone also carries the other's text: the batch bar the name,
+    -- the cast bar the count
+    TSF:PaintStrip(strip())
+    EXPECT(strip().batch.text:GetText() == "Light Leather: " .. want(2, 4 * per):gsub("^Crafting ", ""),
+           "the batch bar alone reads " .. tostring(strip().batch.text:GetText()))
+    S.craftBarCast, S.craftBarBatch = true, false; TSF:UpdateCraftStrip()
+    EXPECT(strip().cast:IsShown() and not strip().batch:IsShown() and TSF:StripLift() == 18, "the cast bar alone")
+    TSF:PaintStrip(strip())
+    EXPECT(strip().cast.text:GetText() == "Light Leather, 2 of 5",
+           "the cast bar alone reads " .. tostring(strip().cast.text:GetText()))
+    S.craftBarCast = false; TSF:UpdateCraftStrip()
+    EXPECT(not strip():IsShown() and y(TSF.listPanel) == 30 and shownRows() == 20, "both off: a strip")
+    S.craftBarCast, S.craftBarBatch = true, true; TSF:UpdateCraftStrip()
+    EXPECT(strip():IsShown() and TSF:StripLift() == 35, "both back on")
+    -- parked: the main window shows it, its tabs rise, Friends fits 2 rows
+    -- fewer (22 px rows), Shuffle 2 fewer (20 px)
+    for i = 1, 22 do PB.db.contacts["Pal" .. i .. "-Forever"] = { trusted = true, autoSync = false, lastSync = 0 } end
+    TSF.navTabs[2]:GetScript("OnClick")(TSF.navTabs[2]); FLUSH()
+    EXPECT(TSF._parked and UI.frame:IsShown() and TSF:MainStrip():IsShown(), "no strip in the main window")
+    EXPECT(y(UI.frame.tabs[2].content) == 45 and UI:FitRows(19, 22) == 17 and UI:FitRows(12, 36) == 11,
+           "the main window did not rise: " .. tostring(y(UI.frame.tabs[2].content)))
+    local FP = PB.FriendsPanel
+    local fr = 0
+    for _, r in ipairs(FP.rows) do if r:IsShown() then fr = fr + 1 end end
+    EXPECT(fr == 17, "Friends rows over the strip: " .. fr)
+    -- every main-window list: its rows fit the space less the strip (F106's
+    -- spaces), none hangs over it
+    local SP, CV, GP, OP = PB.ShufflePanel, PB.CratesView, PB.GuildPanel, PB.OrdersPanel
+    local contentH = 540 - UI.CONTENT_TOP - 10 - 35
+    local function fits(label, n, rowH, space)
+        EXPECT(n * rowH <= space and (n + 1) * rowH > space - rowH,
+               label .. ": " .. n .. " rows of " .. rowH .. " in " .. space .. " px")
+    end
+    fits("Shuffle", SP.VisibleRows(), 20, contentH - 52 - 18 - 2)
+    fits("Guild", GP.VisibleRows(), 20, contentH - 52 - 18 - 2)
+    fits("Crates and writs", CV.VisibleRows(), 20, contentH - 26 - 26 - 18 - 2 - 18)
+    fits("Friends", FP.VisibleRows(), 22, contentH - 28 - 4 - 18 - 2)
+    -- the two Orders lists paint the rows that fit; the side panel's keep all
+    local fake = {}
+    for i = 1, 30 do fake[i] = { kind = "empty", text = "x" } end
+    local function painted(ctx, paint)
+        local keepItems, keepOff = ctx.items, ctx.scrollOffset
+        ctx.items, ctx.scrollOffset = fake, 0
+        paint(OP, ctx)
+        local n = 0
+        for _, r in ipairs(ctx.rows) do if r:IsShown() then n = n + 1 end end
+        ctx.items, ctx.scrollOffset = keepItems, keepOff
+        paint(OP, ctx)
+        return n
+    end
+    EXPECT(painted(OP.activeCtx, OP.PaintList) == 11 and 11 * 36 <= contentH - 24 - 2, "Orders rows over the strip")
+    EXPECT(painted(OP.boardCtx, OP.PaintBoardList) == 8, "Guild Board rows over the strip")
+    OP:BuildHistoryPanel()
+    EXPECT(painted(OP.histCtx, OP.PaintList) == #OP.histCtx.rows, "the history side panel lost rows")
+    -- Crates and writs, painted
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then UI:SelectTab(i) end end
+    FLUSH()
+    -- (the harness's crate data is 5 rows: 30 unopened stand-ins)
+    SP:SetView("crates")
+    local keepList, keepCOff = CV.list, CV.scrollOffset
+    CV.list, CV.scrollOffset = {}, 0
+    for i = 1, 30 do CV.list[i] = { id = 900100 + i, name = "Crate " .. i, unopened = true } end
+    CV:UpdateRows()
+    local cr = 0
+    for _, r in ipairs(CV.rows) do if r:IsShown() then cr = cr + 1 end end
+    EXPECT(cr == CV.VisibleRows() and cr == 17, "Crates and writs rows over the strip: " .. cr)
+    CV.list, CV.scrollOffset = keepList, keepCOff
+    CV:Refresh()
+    SP:SetView("shuffle")
+    -- the Settings switches themselves (a stand-in check box keeps its tick)
+    for _, cb in ipairs({ TSF.craftCastCB, TSF.craftBatchCB }) do
+        rawset(cb, "SetChecked", function(x, v) rawset(x, "_ck", v and true or false) end)
+        rawset(cb, "GetChecked", function(x) return rawget(x, "_ck") end)
+    end
+    TSF.craftCastCB:SetChecked(false)
+    TSF.craftCastCB:GetScript("OnClick")(TSF.craftCastCB)
+    EXPECT(S.craftBarCast == false and TSF:StripLift() == 18 and y(UI.frame.tabs[2].content) == 28
+           and not TSF:MainStrip().cast:IsShown(), "the cast switch: " .. TSF:StripLift())
+    TSF.craftCastCB:SetChecked(true)
+    TSF.craftCastCB:GetScript("OnClick")(TSF.craftCastCB)
+    TSF.craftBatchCB:SetChecked(false)
+    TSF.craftBatchCB:GetScript("OnClick")(TSF.craftBatchCB)
+    EXPECT(S.craftBarBatch == false and TSF:StripLift() == 18 and not TSF:MainStrip().batch:IsShown(), "the batch switch")
+    TSF.craftBatchCB:SetChecked(true)
+    TSF.craftBatchCB:GetScript("OnClick")(TSF.craftBatchCB)
+    EXPECT(TSF:StripLift() == 35 and y(UI.frame.tabs[2].content) == 45, "both switches back")
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "friends" then UI:SelectTab(i) end end
+    FLUSH()
+    -- the batch ends while parked: gone from both, everything back down
+    cast(); cast(); cast(); cast()
+    EXPECT(not TSF._craftingActive and not TSF:MainStrip():IsShown() and not strip():IsShown()
+           and y(UI.frame.tabs[2].content) == 10 and UI:FitRows(19, 22) == 19, "the strip stayed after the batch")
+    fr = 0
+    for _, r in ipairs(FP.rows) do if r:IsShown() then fr = fr + 1 end end
+    EXPECT(fr == 19, "Friends rows after the batch: " .. fr)
+    for i = 1, 22 do PB.db.contacts["Pal" .. i .. "-Forever"] = nil end
+    UI.backBtn:GetScript("OnClick")(UI.backBtn); FLUSH()
+    EXPECT(TSF.frame:IsShown() and y(TSF.listPanel) == 30 and TSF:ListRows() == 20 and shownRows() == math.min(20, #st.recipes),
+           "the list after the batch: " .. shownRows())
+    -- a craft the game refuses never casts: no strip
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    TSF:DoCraftImmediate(5)
+    cast("UNIT_SPELLCAST_FAILED")
+    EXPECT(not TSF._craftingActive and not strip():IsShown(), "a strip for a refused craft")
+    -- in combat the strip waits for combat's end
+    TSF:DoCraftImmediate(5)
+    InCombatLockdown = function() return true end
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(not strip():IsShown() and y(TSF.listPanel) == 30, "the strip moved the window in combat")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED"); FLUSH()
+    EXPECT(strip():IsShown() and y(TSF.listPanel) == 65, "no strip after combat")
+    clean()
+    EXPECT(not strip():IsShown() and not TSF:MainStrip():IsShown() and y(TSF.listPanel) == 30, "the strip after the stop")
+    st.showTab = keepTab
+    TSF.ArmCraftWatchdog = keepArm
+end
+F112()
+print("  PASS F112 2.2.0: the craft strip from the first cast to the end in both windows: the cast bar (UnitCastingInfo, only the craft's), the batch bar 'Crafting 2 of 5, about 8s left', each switch on its own; the list, craft bar, detail panel and main-window tabs rise and fit their rows; none for a refused craft; held in combat")
+
+print("ALL FOREVER TESTS PASS (112)")
