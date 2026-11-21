@@ -14,7 +14,7 @@ A fix for the craft bars, reported by Bran: they went away partway through a lon
 
 **Changes**
 
-- WoW: Forever recipe data is from game build 1.60.1.71037. Orcish War Leggings now names its teaching item, Plans: Orcish War Leggings, and you still learn it at 205. The disenchant estimates add 72 dungeon set pieces from nine sets, such as Beastmaster's, Feralheart and Heroism. Gathering, vendor and trainer data come from VMaNGOS a28c514, with nothing else changed.
+- WoW: Forever recipe data is from game build 1.60.1.71037. Orcish War Leggings names its teaching item, Plans: Orcish War Leggings, and you still learn it at 205. The disenchant estimates add 72 dungeon set pieces from nine sets, such as Beastmaster's, Feralheart and Heroism. Gathering, vendor and trainer data come from VMaNGOS a28c514, with nothing else changed.
 
 **Fixes**
 
