@@ -2,6 +2,24 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.2.1 - 2026-11-20
+
+A fix for the craft bars, reported by Bran: they went away partway through a long craft.
+
+**Highlights**
+
+- **Craft bars for long crafts:** a craft that takes longer than 10 seconds to cast kept its bars for only its first 10 seconds.
+
+<!-- more -->
+
+**Changes**
+
+- WoW: Forever recipe data is from game build 1.60.1.71037. Orcish War Leggings names its teaching item, Plans: Orcish War Leggings, and you still learn it at 205. The disenchant estimates add 72 dungeon set pieces from nine sets, such as Beastmaster's, Feralheart and Heroism. Gathering, vendor and trainer data come from VMaNGOS a28c514, with nothing else changed.
+
+**Fixes**
+
+- The craft bars went away 10 seconds into any craft that takes longer to cast, and the Craft quantity box stopped counting down for the rest of the batch, reported by Bran. Runecloth Belt takes 60 seconds on WoW: Forever, and Silk Headband takes longer than 10 seconds on TBC Anniversary. PB gave up on a batch when no craft finished within 10 seconds of the last one. From 2.2.1, each cast gives it until that cast ends, plus 10 seconds. A craft the game refuses still ends after 10 seconds.
+
 ## 2.2.0 - 2026-11-19
 
 The vendor shuffle, asked for by Skeleton: which crafts a vendor pays more for than their materials cost, for your characters, your friends and your guildmates.

@@ -8257,4 +8257,70 @@ end
 F112()
 print("  PASS F112 2.2.0: the craft strip from the first cast to the end in both windows: the cast bar (UnitCastingInfo, only the craft's), the batch bar 'Crafting 2 of 5, about 8s left', each switch on its own; the list, craft bar, detail panel and main-window tabs rise and fit their rows; none for a refused craft; held in combat")
 
-print("ALL FOREVER TESTS PASS (112)")
+-- F113 2.2.1 (Bran): a craft whose cast outlasts the 10-second watchdog.
+-- Until 2.2.1 the watchdog fired 10 s into a Runecloth Belt (60 s on WoW:
+-- Forever) and the strip went for the rest of the batch. Each cast now moves
+-- it to that cast's end plus 10 s; a refused craft still stops at 10 s.
+local function F113()
+    local PB = ProfBuddy
+    local TSF, P, S = PB.TradeSkillFrame, PB.Prices, PB.db.settings
+    local st = TSF.state
+    -- the real watchdog, its timers kept instead of run
+    local arms = {}
+    local realArm = TSF.ArmCraftWatchdog
+    TSF.ArmCraftWatchdog = function(self, sec)
+        local keep = C_Timer.After
+        C_Timer.After = function(d, fn) arms[#arms + 1] = { sec = d, fn = fn } end
+        realArm(self, sec)
+        C_Timer.After = keep
+    end
+    local function cast(event) FIRE(event, "player", "Cast-guid", 2881) end
+    local function last() return arms[#arms].sec end
+    local strip = function() return TSF.craftStrip end
+    local function clean()
+        CAST_INFO = nil
+        if TSF.frame:IsShown() then TSF.frame:Hide() end
+        C_TradeSkillUI.CloseTradeSkill(); FLUSH()
+        TSF:StopCraftTracking()
+    end
+    clean()
+    S.craftBarCast, S.craftBarBatch = true, true
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    -- three 60 s casts (GetTime 1000 s)
+    TSF:DoCraftImmediate(3)
+    EXPECT(#arms == 1 and last() == 10, "the watchdog at the click: " .. tostring(arms[1] and arms[1].sec))
+    CAST_INFO = { "Light Leather", "", 0, 1000000, 1060000, true, nil, false, 2881 }
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(last() == 70, "the watchdog at the first cast: " .. tostring(last()))
+    arms[1].fn()   -- 10 s after the click, mid-cast
+    EXPECT(TSF._craftingActive and strip():IsShown(), "the strip went 10 s into the first cast")
+    cast("UNIT_SPELLCAST_SUCCEEDED")
+    EXPECT(last() == 10 and TSF._craftRemaining == 2, "between casts: " .. tostring(last()))
+    local between = arms[#arms]
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(last() == 70, "the watchdog at the second cast: " .. tostring(last()))
+    between.fn(); arms[2].fn()   -- 10 s into the second cast, and the first's
+    EXPECT(TSF._craftingActive and strip():IsShown(), "the strip went 10 s into the second cast")
+    cast("UNIT_SPELLCAST_SUCCEEDED"); cast("UNIT_SPELLCAST_START")
+    EXPECT(last() == 70 and TSF._craftingActive and strip():IsShown(), "the third cast")
+    cast("UNIT_SPELLCAST_SUCCEEDED")
+    EXPECT(not TSF._craftingActive and not strip():IsShown(), "the strip after the batch")
+    -- no cast bar data: the recipe's cast time
+    TSF:DoCraftImmediate(2)
+    CAST_INFO = nil
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(math.abs(last() - (P:CraftSeconds(2881) + 10)) < 1e-9, "the watchdog without cast data: " .. tostring(last()))
+    TSF:StopCraftTracking()
+    -- a craft the game refuses: no cast, stopped 10 s after the click
+    TSF:DoCraftImmediate(2)
+    EXPECT(last() == 10, "the watchdog for a refused craft: " .. tostring(last()))
+    arms[#arms].fn()
+    EXPECT(not TSF._craftingActive and not strip():IsShown(), "a refused craft still tracked")
+    clean()
+    TSF.ArmCraftWatchdog = realArm
+end
+F113()
+print("  PASS F113 2.2.1 (Bran): a 60 s cast keeps the strip past the 10-second watchdog, every cast of the batch; without cast data the recipe's cast time; a refused craft still stops at 10 s")
+
+print("ALL FOREVER TESTS PASS (113)")

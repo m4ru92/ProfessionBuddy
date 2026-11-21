@@ -1494,4 +1494,62 @@ end
 U29()
 print("  PASS " .. TAG .. "29 2.2.0: the craft strip on TBC Anniversary from the first cast: the window and the Enchant button rise, 18 rows, 'Crafting 2 of 5, about 6s left', the main window's strip while parked; gone after the batch")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 29)")
+-- U30 2.2.1 (Bran): on TBC Anniversary a 25 s cast (Runecloth Belt) kept
+-- the strip only 10 s until 2.2.1. Each cast moves the watchdog to that
+-- cast's end plus 10 s; a refused craft still stops at 10 s.
+local function U30()
+    local TSF, S = PB.TradeSkillFrame, PB.db.settings
+    local st = TSF.state
+    local keepName = SPELL_NAMES[2881]
+    SPELL_NAMES[2881] = "Light Leather"   -- TBC Anniversary matches the craft by name
+    local arms = {}
+    local realArm = TSF.ArmCraftWatchdog
+    TSF.ArmCraftWatchdog = function(self, sec)
+        local keep = C_Timer.After
+        C_Timer.After = function(d, fn) arms[#arms + 1] = { sec = d, fn = fn } end
+        realArm(self, sec)
+        C_Timer.After = keep
+    end
+    local row = TBC.tradeRows[2]
+    local keepAvail = row[3]
+    row[3] = 10
+    local function cast(ev) FIRE(ev, "player", "Cast-guid", 2881) end
+    local function last() return arms[#arms].sec end
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    TSF:StopCraftTracking()
+    S.craftBarCast, S.craftBarBatch = true, true
+    OPEN_TRADE()
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    TSF:DoCraftImmediate(2)
+    EXPECT(last() == 10, "the watchdog at the click: " .. tostring(last()))
+    local click = arms[#arms]
+    CAST_INFO = { "Light Leather", "", 0, 1000000, 1025000, true, nil, false, 2881 }
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(last() == 35, "the watchdog at the first cast: " .. tostring(last()))
+    click.fn()   -- 10 s after the click, mid-cast
+    EXPECT(TSF._craftingActive and TSF.craftStrip:IsShown(), "the strip went 10 s into the cast")
+    cast("UNIT_SPELLCAST_SUCCEEDED")
+    local between = arms[#arms]
+    cast("UNIT_SPELLCAST_START")
+    EXPECT(last() == 35, "the watchdog at the second cast: " .. tostring(last()))
+    between.fn()
+    EXPECT(TSF._craftingActive and TSF.craftStrip:IsShown(), "the strip went 10 s into the second cast")
+    cast("UNIT_SPELLCAST_SUCCEEDED")
+    EXPECT(not TSF._craftingActive and not TSF.craftStrip:IsShown(), "the strip after the batch")
+    CAST_INFO = nil
+    -- a craft the game refuses: stopped 10 s after the click
+    TSF:DoCraftImmediate(2)
+    EXPECT(last() == 10, "the watchdog for a refused craft: " .. tostring(last()))
+    arms[#arms].fn()
+    EXPECT(not TSF._craftingActive, "a refused craft still tracked")
+    if TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() end
+    row[3] = keepAvail
+    SPELL_NAMES[2881] = keepName
+    TSF.ArmCraftWatchdog = realArm
+end
+U30()
+print("  PASS " .. TAG .. "30 2.2.1 (Bran): a 25 s cast keeps the strip past the 10-second watchdog on TBC Anniversary, every cast of the batch; a refused craft still stops at 10 s")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 30)")
