@@ -12,9 +12,13 @@ A fix for the craft bars, reported by Bran: they went away partway through a lon
 
 <!-- more -->
 
+**Changes**
+
+- WoW: Forever recipe data is from game build 1.60.1.71037. Orcish War Leggings now names its teaching item, Plans: Orcish War Leggings, and you still learn it at 205. The disenchant estimates add 72 dungeon set pieces from nine sets, such as Beastmaster's, Feralheart and Heroism. Gathering, vendor and trainer data come from VMaNGOS a28c514, with nothing else changed.
+
 **Fixes**
 
-- The craft bars went away 10 seconds into any craft that takes longer to cast, and the Craft quantity box stopped counting down for the rest of the batch, reported by Bran. Runecloth Belt takes 60 seconds on WoW: Forever and 25 on TBC Anniversary. Most Leatherworking recipes on WoW: Forever, and most Tailoring and Blacksmithing recipes on TBC Anniversary, take longer than 10 seconds. PB gave up on a batch when no craft finished within 10 seconds of the last one. From 2.2.1, each cast gives it until that cast ends, plus 10 seconds. A craft the game refuses still ends after 10 seconds.
+- The craft bars went away 10 seconds into any craft that takes longer to cast, and the Craft quantity box stopped counting down for the rest of the batch, reported by Bran. Runecloth Belt takes 60 seconds on WoW: Forever, and Silk Headband takes longer than 10 seconds on TBC Anniversary. PB gave up on a batch when no craft finished within 10 seconds of the last one. From 2.2.1, each cast gives it until that cast ends, plus 10 seconds. A craft the game refuses still ends after 10 seconds.
 
 ## 2.2.0 - 2026-11-19
 
