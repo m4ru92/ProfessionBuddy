@@ -8437,6 +8437,9 @@ local function F115()
     }
     local KIT = nil
     local spellAsks, itemAsks = {}, {}
+    -- far from every world object with a camp name (F116 covers those)
+    local realPos = UnitPosition
+    UnitPosition = function() return 9000, 9000, 0, 1 end
     local real = { C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Item.RequestLoadItemDataByID,
                    C_Spell.GetSpellDescription, C_Spell.RequestLoadSpellData }
     C_Item.GetItemSpell = function(id) if USE[id] then return "Use", USE[id] end end
@@ -8480,8 +8483,80 @@ local function F115()
 
     C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Item.RequestLoadItemDataByID,
         C_Spell.GetSpellDescription, C_Spell.RequestLoadSpellData = unpack(real)
+    UnitPosition = realPos
 end
 F115()
 print("  PASS F115 2.2.2: a placed camp item's tooltip gets its benefit from the game, the first paragraph without 'Requires a Campfire nearby.', green and wrapped, once; nothing until the text loads, then it fills in; the recipe's name and the kit's own name; no line on items, units or other objects; the gathering setting does not hide it")
 
-print("ALL FOREVER TESTS PASS (115)")
+-- F116 2.2.2 TEST-c (m4ru): a town Anvil got the camp Anvil's line in
+-- TEST-b, as the game shows both as the name alone. Within 60 yards of a
+-- world object with that name (Data/Forever/CampWorld.lua) there is no
+-- line; farther away, on another map, or for a name no world object has,
+-- the line shows. With no position from the game, a name that world
+-- objects have gets no line.
+local function F116()
+    local CW = ProfBuddy.CampWorld
+    local n = 0
+    for _, maps in pairs(CW or {}) do for _, pts in pairs(maps) do n = n + #pts / 2 end end
+    EXPECT(CW and CW["Anvil"] and CW["Basic Campfire"] and n == 233, "CampWorld table: " .. n)
+    local found
+    for i = 1, #CW["Anvil"][1], 2 do
+        if math.abs(CW["Anvil"][1][i] + 339.2) < 1 and math.abs(CW["Anvil"][1][i + 1] + 2573.7) < 1 then found = true end
+    end
+    EXPECT(found, "the Crossroads Anvil is not in CampWorld")
+
+    local lines = {}
+    for i = 1, 30 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] end)
+    end
+    rawset(GameTooltip, "GetUnit", function() end)
+    rawset(GameTooltip, "GetItem", function() end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    local onUpdate = GameTooltip._h.OnUpdate
+    local function hover(name)
+        lines = { name }
+        onUpdate(GameTooltip, 1)
+        return #lines
+    end
+    local USE = { [279988] = 1263041, [279979] = 1307229 }
+    local real = { C_Item.GetItemSpell, C_Spell.GetSpellDescription }
+    C_Item.GetItemSpell = function(id) if USE[id] then return "Use", USE[id] end end
+    C_Spell.GetSpellDescription = function(id)
+        if id == 1263041 then return "Places an anvil, and provides all of the benefits of a Sharpening Wheel." end
+        if id == 1307229 then return "Assembles a camp chair." end
+    end
+    local realPos = UnitPosition
+    local px, py, pmap = -340, -2573.9, 1
+    UnitPosition = function() return px, py, 0, pmap end
+
+    -- m4ru's spot on the Crossroads Anvil: no line
+    EXPECT(hover("Anvil") == 1, "the Crossroads Anvil got the camp line")
+    -- from across the smithy, 50 yards off: still none
+    px = -340 + 50
+    EXPECT(hover("Anvil") == 1, "an Anvil 50 yards off got the camp line")
+    -- out in the Barrens, far from any town: the camp Anvil gets its line
+    px, py = 400, -1500
+    EXPECT(hover("Anvil") == 2 and lines[2] == "Places an anvil, and provides all of the benefits of a Sharpening Wheel.",
+           "a camp Anvil in the open: " .. table.concat(lines, " / "))
+    -- the same spot on another map
+    px, py, pmap = -340, -2573.9, 13
+    EXPECT(hover("Anvil") == 2, "the Crossroads spot on another map hid the line")
+    -- a name no world object has shows at the Crossroads Anvil too
+    pmap = 1
+    EXPECT(hover("Camp Chair") == 2, "a Camp Chair by a town Anvil lost its line")
+    -- no position from the game: no line for Anvil, Camp Chair still has one
+    UnitPosition = function() return nil end
+    EXPECT(hover("Anvil") == 1, "Anvil without a position got the line")
+    EXPECT(hover("Camp Chair") == 2, "Camp Chair without a position lost its line")
+
+    UnitPosition = realPos
+    C_Item.GetItemSpell, C_Spell.GetSpellDescription = unpack(real)
+end
+F116()
+print("  PASS F116 2.2.2 TEST-c: no camp line on a world object that shares a camp item's name (the Crossroads Anvil, and from 50 yards off); the line on a camp Anvil out in the open, on another map, and on names no world object has; no position from the game hides only the shared names; the CampWorld table holds 233 spawns")
+
+print("ALL FOREVER TESTS PASS (116)")

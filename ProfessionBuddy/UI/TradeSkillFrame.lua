@@ -1199,6 +1199,29 @@ function TSF:HookNodeTooltip()
         return text
     end
 
+    -- A camp name can also be a world object's: every town smithy has an
+    -- Anvil (m4ru 2026-11-22), and the game shows both as the name alone.
+    -- Data/Forever/CampWorld.lua has where those world objects stand
+    -- (VMaNGOS), so the line is skipped within CAMP_NEAR yards of one; a
+    -- tooltip can come up from across a smithy. Where the game gives no
+    -- position, such a name gets no line.
+    local CAMP_NEAR = 60
+    local function nearWorldTwin(name)
+        local spots = addon.CampWorld and addon.CampWorld[name]
+        if not spots then return false end
+        local x, y, _, map
+        if UnitPosition then x, y, _, map = UnitPosition("player") end
+        if type(x) ~= "number" or type(y) ~= "number" or IsSecret(x) or IsSecret(y) then return true end
+        local pts = spots[map]
+        if not pts then return false end
+        local r2 = CAMP_NEAR * CAMP_NEAR
+        for i = 1, #pts - 1, 2 do
+            local dx, dy = pts[i] - x, pts[i + 1] - y
+            if dx * dx + dy * dy <= r2 then return true end
+        end
+        return false
+    end
+
     local function tryCamp(tip)
         if tip:GetUnit() then return end
         if tip.GetItem and tip:GetItem() then return end
@@ -1208,7 +1231,7 @@ function TSF:HookNodeTooltip()
         local name = fs and fs:GetText()
         if not name or IsSecret(name) or name == "" then return end
         local itemID = campItem(name)
-        if not itemID then return end
+        if not itemID or nearWorldTwin(name) then return end
         local text = campBenefit(itemID)
         if not text then return end
         for i = 2, tip:NumLines() do
