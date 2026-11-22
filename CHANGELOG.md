@@ -9,7 +9,7 @@ A popup that asks which look PB's windows use, an idea of mine that Zorden asked
 **Highlights**
 
 - **Look picker:** at login, PB asks once which look its windows use: Classic, Modern or Match the game. Everyone sees it once, including players who already use PB. On WoW: Forever, Match the game shows greyed out until a later update brings that look. A look other than the one in use reloads your interface, and Escape asks again at the next login.
-- **Camp item tooltips:** on WoW: Forever, hovering a placed camp item such as a Camp Chair or a First Aid Kit shows what it gives, with the numbers for your level. The text comes from the game, without the campfire and cooldown lines. A town Anvil, or another world object that shares a camp item's name, does not get the line.
+- **Camp item tooltips:** on WoW: Forever, hovering a placed camp item such as a Camp Chair or a First Aid Kit shows what it gives, with the numbers for your level. The text comes from the game, without the campfire and cooldown lines. A town Anvil, or another world object that shares a camp item's name, does not get the line. To turn it off, untick Settings > Camp item benefits on tooltips.
 
 <!-- more -->
 

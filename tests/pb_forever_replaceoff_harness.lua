@@ -129,4 +129,9 @@ local src = assert(io.open(PB_BASE .. "/UI/TradeSkillFrame.lua")):read("*a")
 local replBlock = src:match('local replCB = MakeCheckbox.-yLeft = yLeft %- 30')
 EXPECT(replBlock and not replBlock:find("ReloadUI", 1, true), "the Replace checkbox still reloads directly")
 print("  PASS W9 unticking Replace offers Reload / Later; the sub-setting greys with Replace on and saves")
-print("ALL FOREVER REPLACE-OFF TESTS PASS (9)")
+-- W10 2.2.2 TEST-d: the same saved settings, from before 2.2.2, get
+-- "Camp item benefits on tooltips" on
+EXPECT(ProfBuddyDB.settings.campBenefitTooltip == true, "old settings: Camp item benefits "
+       .. tostring(ProfBuddyDB.settings.campBenefitTooltip))
+print("  PASS W10 2.2.2: settings saved before 2.2.2 get Camp item benefits on tooltips on")
+print("ALL FOREVER REPLACE-OFF TESTS PASS (10)")

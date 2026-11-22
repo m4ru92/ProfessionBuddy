@@ -1624,4 +1624,15 @@ do
 end
 print("  PASS " .. TAG .. "32 2.2.2: no camp item tooltip line on TBC Anniversary (no Camping recipes)")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 32)")
+-- U33/C33 2.2.2 TEST-d: TBC Anniversary has no camping, so Settings does
+-- not show "Camp item benefits on tooltips".
+do
+    EXPECT(PB.CampWorld == nil, "CampWorld loads on TBC Anniversary")
+    TSF:OpenSettings("main")
+    for _, cb in ipairs(TSF.settingsCheckboxes or {}) do
+        EXPECT(cb.settingKey ~= "campBenefitTooltip", "the camp box shows on TBC Anniversary")
+    end
+end
+print("  PASS " .. TAG .. "33 2.2.2: no Camp item benefits box in Settings on TBC Anniversary")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 33)")

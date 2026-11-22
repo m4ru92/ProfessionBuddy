@@ -1223,6 +1223,8 @@ function TSF:HookNodeTooltip()
     end
 
     local function tryCamp(tip)
+        local S = addon.db and addon.db.settings
+        if not S or S.campBenefitTooltip == false then return end
         if tip:GetUnit() then return end
         if tip.GetItem and tip:GetItem() then return end
         local tname = tip:GetName()
@@ -7568,6 +7570,14 @@ function TSF:BuildSettingsPanel(parent)
     end)
     lootUnlearnedCB:SetScript("OnLeave", function() GameTooltip:Hide() end)
     yRight = yRight - 24
+
+    -- A placed camp item's benefit on its tooltip (2.2.2, m4ru). Only WoW:
+    -- Forever has camping, so TBC Anniversary does not show the box.
+    if addon.CampWorld then
+        yRight = yRight - 2
+        MakeCheckbox("Camp item benefits on tooltips", "campBenefitTooltip", yRight, COL_RIGHT)
+        yRight = yRight - 24
+    end
 
     -- "Show for unlearned professions" and "Skinning yield" are SUB-options of
     -- "Gather skill on tooltips" -- disable/grey them when the parent is off

@@ -8410,6 +8410,8 @@ print("  PASS F113 2.2.1 (Bran): a 60 s cast keeps the strip past the 10-second 
 -- on the gathering setting.
 local function F115()
     local S = ProfBuddy.db.settings
+    -- F93 clicks every Settings box, this one too
+    S.campBenefitTooltip = true
     local lines, wraps = {}, {}
     for i = 1, 30 do
         local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
@@ -8496,6 +8498,7 @@ print("  PASS F115 2.2.2: a placed camp item's tooltip gets its benefit from the
 -- objects have gets no line.
 local function F116()
     local CW = ProfBuddy.CampWorld
+    ProfBuddy.db.settings.campBenefitTooltip = true
     local n = 0
     for _, maps in pairs(CW or {}) do for _, pts in pairs(maps) do n = n + #pts / 2 end end
     EXPECT(CW and CW["Anvil"] and CW["Basic Campfire"] and n == 233, "CampWorld table: " .. n)
@@ -8559,4 +8562,62 @@ end
 F116()
 print("  PASS F116 2.2.2 TEST-c: no camp line on a world object that shares a camp item's name (the Crossroads Anvil, and from 50 yards off); the line on a camp Anvil out in the open, on another map, and on names no world object has; no position from the game hides only the shared names; the CampWorld table holds 233 spawns")
 
-print("ALL FOREVER TESTS PASS (116)")
+-- F117 2.2.2 TEST-d (m4ru): "Camp item benefits on tooltips" in Settings,
+-- on by default, turns the camp line off. The gathering setting does not
+-- touch it. W10 covers a player from before 2.2.2.
+local function F117()
+    local S = ProfBuddy.db.settings
+    EXPECT(ProfBuddyDB.settings == S, "settings table")
+    S.campBenefitTooltip = true
+    local found
+    TSF:OpenSettings("main")
+    for _, cb in ipairs(TSF.settingsCheckboxes) do if cb.settingKey == "campBenefitTooltip" then found = cb end end
+    EXPECT(found, "no Camp item benefits on tooltips box in Settings")
+
+    local lines = {}
+    for i = 1, 30 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] end)
+    end
+    rawset(GameTooltip, "GetUnit", function() end)
+    rawset(GameTooltip, "GetItem", function() end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    local onUpdate = GameTooltip._h.OnUpdate
+    local function hover(name)
+        lines = { name }
+        onUpdate(GameTooltip, 1)
+        return #lines
+    end
+    local real = { C_Item.GetItemSpell, C_Spell.GetSpellDescription, UnitPosition }
+    C_Item.GetItemSpell = function(id) if id == 279979 then return "Use", 1307229 end end
+    C_Spell.GetSpellDescription = function() return "Assembles a camp chair." end
+    UnitPosition = function() return 9000, 9000, 0, 1 end
+
+    EXPECT(hover("Camp Chair") == 2, "Camp Chair with the box on")
+    -- untick it the way a player does (the test frame's GetChecked is
+    -- always false, so this box gets its own)
+    local ticked = true
+    rawset(found, "GetChecked", function() return ticked end)
+    ticked = false
+    found:GetScript("OnClick")(found)
+    EXPECT(S.campBenefitTooltip == false, "unticking did not save")
+    EXPECT(hover("Camp Chair") == 1, "Camp Chair with the box off got the line")
+    -- the gathering setting on and off does not bring it back
+    S.gatherSkillTooltip = false
+    EXPECT(hover("Camp Chair") == 1, "the line came back with Gathering skill off")
+    S.gatherSkillTooltip = true
+    ticked = true
+    found:GetScript("OnClick")(found)
+    local n2 = hover("Camp Chair")
+    EXPECT(S.campBenefitTooltip == true and n2 == 2, "ticking it again: " .. tostring(S.campBenefitTooltip) .. " " .. n2)
+
+
+    C_Item.GetItemSpell, C_Spell.GetSpellDescription, UnitPosition = unpack(real)
+end
+F117()
+print("  PASS F117 2.2.2 TEST-d: Camp item benefits on tooltips is in Settings and on by default; unticking it removes the camp line and ticking brings it back; the gathering setting does not change it")
+
+print("ALL FOREVER TESTS PASS (117)")
