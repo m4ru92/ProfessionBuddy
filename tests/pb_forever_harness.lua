@@ -8401,4 +8401,87 @@ end
 F113()
 print("  PASS F113 2.2.1 (Bran): a 60 s cast keeps the strip past the 10-second watchdog, every cast of the batch; without cast data the recipe's cast time; a refused craft still stops at 10 s")
 
-print("ALL FOREVER TESTS PASS (114)")
+-- F115 2.2.2 (m4ru): placed camp items. Their tooltip shows the item's
+-- name; PB adds the benefit, the item's use spell text read from the game,
+-- up to its first blank line and without "Requires a Campfire nearby.".
+-- Empty text (the spell not loaded yet) adds nothing and asks the game to
+-- load it; the line comes on a later pass, once per tooltip. The kit's own
+-- name works too, item and unit tooltips get nothing, and it does not hang
+-- on the gathering setting.
+local function F115()
+    local S = ProfBuddy.db.settings
+    local lines, wraps = {}, {}
+    for i = 1, 30 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] end)
+    end
+    local unit, item
+    rawset(GameTooltip, "GetUnit", function() return unit end)
+    rawset(GameTooltip, "GetItem", function() return item end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t, r, g, b, wrap)
+        lines[#lines + 1] = t; wraps[#lines] = { r, g, b, wrap } end)
+    rawset(GameTooltip, "Show", function() end)
+    local onUpdate = GameTooltip._h.OnUpdate
+    local function hover(name, passes)
+        lines, wraps = { name }, {}
+        for _ = 1, passes or 1 do onUpdate(GameTooltip, 1) end
+        return lines
+    end
+    local USE = { [279979] = 1307229, [279968] = 1307244, [279981] = 1307227 }
+    local DESC = {
+        [1307229] = "",
+        [1307244] = "Lays out a first aid kit. Party members nearby gain 8 increased Stamina, mutually exclusive with Power Word: Fortitude. Requires a Campfire nearby. Lasts 1 hour.",
+        [1307227] = "Builds a basic campfire. Cooking nearby is faster.\r\n\r\nAll camping features share a cooldown of 1 hour.",
+    }
+    local KIT = nil
+    local spellAsks, itemAsks = {}, {}
+    local real = { C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Item.RequestLoadItemDataByID,
+                   C_Spell.GetSpellDescription, C_Spell.RequestLoadSpellData }
+    C_Item.GetItemSpell = function(id) if USE[id] then return "Use", USE[id] end end
+    C_Item.GetItemNameByID = function(id) if id == 279981 then return KIT end end
+    C_Item.RequestLoadItemDataByID = function(id) itemAsks[id] = (itemAsks[id] or 0) + 1 end
+    C_Spell.GetSpellDescription = function(id) return DESC[id] end
+    C_Spell.RequestLoadSpellData = function(id) spellAsks[id] = (spellAsks[id] or 0) + 1 end
+
+    -- Camp Chair before its text loads: nothing, one load request
+    local got = hover("Camp Chair", 3)
+    EXPECT(#got == 1 and spellAsks[1307229] == 1, "Camp Chair before its text: " .. table.concat(got, " / "))
+    -- the text arrives: the first paragraph, green and wrapped, once
+    DESC[1307229] = "Assembles a camp chair. Party members nearby gain 2% increased critical strike chance with all spells and attacks, mutually exclusive with Moonkin Aura.\n\nRequires a Campfire nearby. All camping features share a cooldown of 1 hour."
+    got = hover("Camp Chair", 4)
+    EXPECT(#got == 2 and got[2] == "Assembles a camp chair. Party members nearby gain 2% increased critical strike chance with all spells and attacks, mutually exclusive with Moonkin Aura."
+           and wraps[2][4] == true and wraps[2][2] == 1, "Camp Chair: " .. table.concat(got, " / "))
+    -- the Requires sentence inside the first paragraph goes
+    got = hover("First Aid Kit", 2)
+    EXPECT(#got == 2 and got[2] == "Lays out a first aid kit. Party members nearby gain 8 increased Stamina, mutually exclusive with Power Word: Fortitude. Lasts 1 hour.",
+           "First Aid Kit: " .. table.concat(got, " / "))
+    -- the recipe's name, then the kit's own name once the game has it
+    got = hover("Basic Campfire")
+    EXPECT(#got == 2 and got[2] == "Builds a basic campfire. Cooking nearby is faster.", "Basic Campfire: " .. table.concat(got, " / "))
+    EXPECT(#hover("Basic Campfire Kit") == 1 and (itemAsks[279981] or 0) == 1, "the kit before its name loads")
+    hover("Basic Campfire Kit", 3)
+    EXPECT(itemAsks[279981] == 1, "asked for the kit's name more than once: " .. tostring(itemAsks[279981]))
+    KIT = "Basic Campfire Kit"
+    got = hover("Basic Campfire Kit")
+    EXPECT(#got == 2 and got[2] == "Builds a basic campfire. Cooking nearby is faster.", "the kit's own name: " .. table.concat(got, " / "))
+    -- not a camp item, an item tooltip, a unit: nothing
+    EXPECT(#hover("Mailbox") == 1, "a Mailbox got a line")
+    item = "Camp Chair"
+    EXPECT(#hover("Camp Chair") == 1, "an item tooltip got the line")
+    item, unit = nil, "mouseover"
+    EXPECT(#hover("Camp Chair") == 1, "a unit tooltip got the line")
+    unit = nil
+    -- the gathering setting does not hide it
+    S.gatherSkillTooltip = false
+    EXPECT(#hover("Camp Chair") == 2, "the line went with Gathering skill off")
+    S.gatherSkillTooltip = true
+
+    C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Item.RequestLoadItemDataByID,
+        C_Spell.GetSpellDescription, C_Spell.RequestLoadSpellData = unpack(real)
+end
+F115()
+print("  PASS F115 2.2.2: a placed camp item's tooltip gets its benefit from the game, the first paragraph without 'Requires a Campfire nearby.', green and wrapped, once; nothing until the text loads, then it fills in; the recipe's name and the kit's own name; no line on items, units or other objects; the gathering setting does not hide it")
+
+print("ALL FOREVER TESTS PASS (115)")

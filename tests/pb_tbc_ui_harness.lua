@@ -1590,4 +1590,38 @@ do
 end
 print("  PASS " .. TAG .. "31 2.2.2 look picker: once at login, Match the game pickable on TBC Anniversary (Classic), a new look reloads and the same look does not")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 31)")
+-- U32/C32 2.2.2: camp item tooltips are WoW: Forever only. TBC
+-- Anniversary's data has no Camping recipes, so a "Camp Chair" tooltip gets
+-- nothing even with a game that would answer.
+do
+    for prof, recipes in pairs(PB.RecipeDB.data) do
+        for name, r in pairs(recipes) do
+            EXPECT(r.category ~= "Camping", "a Camping recipe on TBC Anniversary: " .. prof .. " " .. name)
+        end
+    end
+    local onUpdate = GameTooltip._h.OnUpdate
+    EXPECT(type(onUpdate) == "function", "no GameTooltip OnUpdate hook")
+    local lines, asked = {}, 0
+    for i = 1, 5 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] end)
+    end
+    rawset(GameTooltip, "GetUnit", function() return nil end)
+    rawset(GameTooltip, "GetItem", function() return nil end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    C_Item = C_Item or {}
+    C_Spell = C_Spell or {}
+    local keepIS, keepIN, keepSD = C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Spell.GetSpellDescription
+    C_Item.GetItemSpell = function() asked = asked + 1; return "Use", 1307229 end
+    C_Item.GetItemNameByID = function() asked = asked + 1; return "Camp Chair" end
+    C_Spell.GetSpellDescription = function() asked = asked + 1; return "Assembles a camp chair." end
+    lines = { "Camp Chair" }
+    for _ = 1, 3 do onUpdate(GameTooltip, 1) end
+    EXPECT(#lines == 1 and asked == 0, "Camp Chair on TBC Anniversary: " .. table.concat(lines, " / ") .. ", " .. asked .. " calls")
+    C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Spell.GetSpellDescription = keepIS, keepIN, keepSD
+end
+print("  PASS " .. TAG .. "32 2.2.2: no camp item tooltip line on TBC Anniversary (no Camping recipes)")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 32)")

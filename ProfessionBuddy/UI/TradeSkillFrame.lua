@@ -1132,12 +1132,101 @@ function TSF:HookNodeTooltip()
                      why = "node table", gameLine = gameLine, loot = loot })
     end
 
+    -- Placed camp items (WoW: Forever, 2.2.2): the object's tooltip shows
+    -- the item's name (First Aid Kit, Camp Tent; m4ru 2026-11-20). Its
+    -- benefit is the item's use spell text, read from the game, which fills
+    -- in the numbers for your level. Only the benefit (m4ru): the text stops
+    -- at its first blank line, without "Requires a Campfire nearby.". The
+    -- names come from PB's Camping recipes, so TBC Anniversary has none.
+    local campByName, campNameless, campText, campAsked
+    local function campItem(name)
+        if not campByName then
+            campByName, campNameless, campText, campAsked = {}, {}, {}, {}
+            local RDB = addon.RecipeDB
+            for _, recipes in pairs(RDB and RDB.data or {}) do
+                for rname, r in pairs(recipes) do
+                    if r.category == "Camping" and (r.itemID or 0) > 0 then
+                        campByName[rname] = r.itemID
+                        campNameless[r.itemID] = true
+                    end
+                end
+            end
+        end
+        if campByName[name] then return campByName[name] end
+        -- the item's own name, in the game's language ("Basic Campfire Kit"
+        -- is made by "Basic Campfire")
+        if next(campNameless) and C_Item and C_Item.GetItemNameByID then
+            for itemID in pairs(campNameless) do
+                local iname = C_Item.GetItemNameByID(itemID)
+                if type(iname) == "string" and not IsSecret(iname) and iname ~= "" then
+                    campByName[iname] = itemID
+                    campNameless[itemID] = nil
+                elseif C_Item.RequestLoadItemDataByID and not campAsked[itemID] then
+                    campAsked[itemID] = true
+                    C_Item.RequestLoadItemDataByID(itemID)
+                end
+            end
+        end
+        return campByName[name]
+    end
+
+    -- nil until the game has the text: the next pass asks again
+    local function campBenefit(itemID)
+        if campText[itemID] then return campText[itemID] end
+        if not (C_Item and C_Item.GetItemSpell and C_Spell and C_Spell.GetSpellDescription) then return end
+        local _, spellID = C_Item.GetItemSpell(itemID)
+        if not spellID then
+            if C_Item.RequestLoadItemDataByID and not campAsked[itemID] then
+                campAsked[itemID] = true
+                C_Item.RequestLoadItemDataByID(itemID)
+            end
+            return
+        end
+        local text = C_Spell.GetSpellDescription(spellID)
+        if type(text) ~= "string" or IsSecret(text) or text == "" then
+            -- empty until the spell's data loads (Camp Chair, m4ru 11-21)
+            if C_Spell.RequestLoadSpellData and not campAsked[-spellID] then
+                campAsked[-spellID] = true
+                C_Spell.RequestLoadSpellData(spellID)
+            end
+            return
+        end
+        text = text:gsub("\r", ""):match("^(.-)\n%s*\n") or text
+        text = text:gsub("%s*Requires a Campfire nearby%.", "")
+        text = text:match("^%s*(.-)%s*$")
+        if text == "" then return end
+        campText[itemID] = text
+        return text
+    end
+
+    local function tryCamp(tip)
+        if tip:GetUnit() then return end
+        if tip.GetItem and tip:GetItem() then return end
+        local tname = tip:GetName()
+        if not tname then return end
+        local fs = _G[tname .. "TextLeft1"]
+        local name = fs and fs:GetText()
+        if not name or IsSecret(name) or name == "" then return end
+        local itemID = campItem(name)
+        if not itemID then return end
+        local text = campBenefit(itemID)
+        if not text then return end
+        for i = 2, tip:NumLines() do
+            local line = _G[tname .. "TextLeft" .. i]
+            local txt = line and line:GetText()
+            if txt and not IsSecret(txt) and txt == text then return end
+        end
+        tip:AddLine(text, 0.1, 1, 0.1, true)
+        tip:Show()
+    end
+
     local acc = 0
     GameTooltip:HookScript("OnUpdate", function(tip, elapsed)
         acc = acc + (elapsed or 0)
         if acc < 0.05 then return end        -- ~20x/sec; re-adds fast if the client wipes it
         acc = 0
         tryAppend(tip)
+        tryCamp(tip)
     end)
 end
 
