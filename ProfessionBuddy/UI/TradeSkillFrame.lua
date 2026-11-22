@@ -7025,8 +7025,7 @@ function TSF:BuildSettingsPanel(parent)
 
     -- Window style (UI/Theme.lua). The windows are built once per session,
     -- so a new style applies after a reload; changing it offers one.
-    local WS_LABELS = { classic = "Classic", modern = "Modern", game = "Match the game" }
-    local WS_ORDER = { "classic", "modern", "game" }
+    local WS_LABELS, WS_ORDER = Theme.LOOK_LABELS, Theme.LOOK_ORDER
     local wsOpts = {}
     for i, k in ipairs(WS_ORDER) do wsOpts[i] = WS_LABELS[k] end
     local styleDD = CreateDropdown(content, 322, wsOpts,
@@ -7044,7 +7043,7 @@ function TSF:BuildSettingsPanel(parent)
     -- WoW: Forever has no look of its own yet (ui-themes phase 3), so Match
     -- the game shows there but cannot be picked.
     if addon.Source.flavor == "forever" then
-        styleDD:SetOptionDisabled(WS_LABELS.game, "Coming to WoW: Forever in a later update.")
+        styleDD:SetOptionDisabled(WS_LABELS.game, Theme.GAME_LOOK_NOTE)
     end
     self.windowStyleDD = styleDD
     yLeft = yLeft - 34

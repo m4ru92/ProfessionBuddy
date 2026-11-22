@@ -449,7 +449,9 @@ def cf_upload(token, project_id, zip_path, metadata):
 def main():
     ap = argparse.ArgumentParser(description="Build, verify, and release ProfessionBuddy.")
     ap.add_argument("--addon-dir", default=default_addon_dir())
-    ap.add_argument("--out", default=None, help="output zip path (default: <addon-dir>/../%s.zip)" % ADDON_NAME)
+    ap.add_argument("--out", default=None,
+                    help="output zip path (default: <addon-dir>/../%s-<version>.zip); an upload "
+                    "needs that file name, since CurseForge shows it" % ADDON_NAME)
     ap.add_argument("--dry-run", action="store_true", help="build + verify only; no upload")
     ap.add_argument("--project-id", default=os.environ.get("CF_PROJECT_ID", CF_PROJECT_ID_DEFAULT))
     # No default here on purpose: with --list-game-versions, omitting it is the
@@ -496,6 +498,15 @@ def main():
     if corev is not None and corev != tocv:
         die("version mismatch: .toc says %s but Core.lua says %s -- bump both before releasing" % (tocv, corev))
 
+    # CurseForge shows the uploaded file under the zip's own name, so a real
+    # upload must be ProfessionBuddy-<version>.zip (2.2.1 went up as
+    # ProfessionBuddy-2.2.1-uploaded.zip). Checked before the gates so a wrong
+    # name fails at once.
+    zip_name = "%s-%s.zip" % (ADDON_NAME, tocv)
+    if not args.dry_run and args.out and os.path.basename(args.out) != zip_name:
+        die("--out must be named %s for an upload: CurseForge shows the file under "
+            "that name (got %s)" % (zip_name, os.path.basename(args.out)))
+
     assert_no_build_stamp(addon_dir)
     sync_license(root, addon_dir)
 
@@ -521,7 +532,7 @@ def main():
         run_gate(os.path.join(tools_dir(), "check_globals.py"),
                  ["--addon-dir", addon_dir], "tools/check_globals.py (global writes)")
 
-    out_zip = args.out or os.path.normpath(os.path.join(addon_dir, "..", ADDON_NAME + ".zip"))
+    out_zip = args.out or os.path.normpath(os.path.join(addon_dir, "..", zip_name))
     n = build_zip(addon_dir, out_zip, root)
     log("Built %s (%d files)" % (out_zip, len(n)))
 

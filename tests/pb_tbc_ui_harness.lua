@@ -28,9 +28,16 @@ ProfBuddyDB = { settings = { windowStyle = LOOK } }
 FIRE("ADDON_LOADED", "ProfessionBuddy")
 -- 2.1.1: the login line waits for PLAYER_LOGIN (ElvUI drops earlier lines)
 EXPECT(not PRINTED("loaded. Type /pb or /profbuddy."), "the loaded line printed at ADDON_LOADED")
+-- U31 (at the end) checks the look picker this login shows
+local loginPopups = {}
+local keepLoginDialogs, keepLoginShow = rawget(_G, "StaticPopupDialogs"), StaticPopup_Show
+StaticPopupDialogs = {}
+StaticPopup_Show = function(which) loginPopups[#loginPopups + 1] = which end
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
+local loginPicker = StaticPopupDialogs.PROFBUDDY_PICK_LOOK
+StaticPopupDialogs, StaticPopup_Show = keepLoginDialogs, keepLoginShow
 for _, l in ipairs(PRINTS) do EXPECT(not l:find("failed to load", 1, true), "module init error: " .. l) end
 EXPECT(PRINTED("loaded. Type /pb or /profbuddy."), "no loaded line")
 local PB = ProfBuddy
@@ -1552,4 +1559,35 @@ end
 U30()
 print("  PASS " .. TAG .. "30 2.2.1 (Bran): a 25 s cast keeps the strip past the 10-second watchdog on TBC Anniversary, every cast of the batch; a refused craft still stops at 10 s")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 30)")
+-- U31: 2.2.2 look picker on TBC Anniversary. Shown once at login, Match
+-- the game pickable (Classic here); a pick that changes the look in use
+-- reloads, the same look does not
+do
+    local Theme, S = PB.Theme, PB.db.settings
+    EXPECT(#loginPopups == 1 and loginPopups[1] == "PROFBUDDY_PICK_LOOK",
+           "login popups: " .. table.concat(loginPopups, ", "))
+    local dlg = loginPicker
+    EXPECT(dlg.button1 == "Classic" and dlg.button2 == "Modern" and dlg.button3 == "Match the game", "picker buttons")
+    EXPECT(dlg.text:find("Match the game: the game's own look, Classic on TBC Anniversary.", 1, true), "picker text: " .. dlg.text)
+    local disabled = false
+    dlg.OnShow({ GetButton = function() return { Disable = function() disabled = true end } end })
+    EXPECT(not disabled, "Match the game greyed on TBC Anniversary")
+    local reloads = 0
+    local keepReload = ReloadUI
+    ReloadUI = function() reloads = reloads + 1 end
+    dlg.OnButton3()
+    EXPECT(S.lookAsked == 1 and S.windowStyle == "game", "Match the game not saved: " .. tostring(S.windowStyle))
+    EXPECT(reloads == (LOOK == "classic" and 0 or 1), "Match the game over " .. LOOK .. ": " .. reloads .. " reloads")
+    reloads = 0
+    Theme._lookReloading = nil
+    dlg[LOOK == "classic" and "OnButton1" or "OnButton2"]()
+    EXPECT(reloads == 0 and S.windowStyle == LOOK, "the same look reloaded")
+    dlg[LOOK == "classic" and "OnButton2" or "OnButton1"]()
+    EXPECT(reloads == 1 and S.windowStyle ~= LOOK, "another look did not reload")
+    ReloadUI = keepReload
+    S.windowStyle, Theme._lookReloading = LOOK, nil
+    EXPECT(Theme:Name() == LOOK, "the session look changed before the reload")
+end
+print("  PASS " .. TAG .. "31 2.2.2 look picker: once at login, Match the game pickable on TBC Anniversary (Classic), a new look reloads and the same look does not")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 31)")

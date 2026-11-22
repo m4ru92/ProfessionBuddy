@@ -444,9 +444,14 @@ end
 local PROMPT = "PROFBUDDY_FOREVER_RECIPES"
 
 -- Asked once a session until the player picks. Escape leaves it unpicked
--- (Show everything meanwhile) and it asks again next session.
+-- (Show everything meanwhile) and it asks again next session. The look
+-- picker goes first: this waits until it closes (UI/Theme.lua).
 function KN:AskRecipeMode()
     if self._asked or addon.db.settings.foreverRecipes ~= nil then return end
+    if addon.Theme:LookPending() then
+        self._recipeAfterLook = true
+        return
+    end
     self._asked = true
     if not StaticPopupDialogs[PROMPT] then
         StaticPopupDialogs[PROMPT] = {

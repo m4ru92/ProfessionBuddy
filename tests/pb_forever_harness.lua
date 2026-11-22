@@ -35,6 +35,10 @@ ProfBuddyDB = nil
 FIRE("ADDON_LOADED", "ProfessionBuddy")
 -- 2.1.1: the login line waits for PLAYER_LOGIN (ElvUI drops earlier lines)
 EXPECT(not PRINTED("loaded. Type /pb or /profbuddy."), "the loaded line printed at ADDON_LOADED")
+-- F114 (below) checks the look picker this login shows
+local loginPopups = {}
+StaticPopupDialogs = {}
+StaticPopup_Show = function(which) loginPopups[#loginPopups + 1] = which end
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
@@ -57,6 +61,80 @@ EXPECT(lw and lw.skillLevel == 1 and lw.maxSkill == 75, "Leatherworking 1/75 not
 EXPECT(sk and sk.skillLevel == 43, "Skinning 43 not recorded")
 EXPECT(DS:GetProfession(nil, "Cooking"), "Cooking not recorded")
 print("  PASS F2 startup: every module starts, no not-supported line, professions and skill levels recorded")
+
+-- F114: 2.2.2 look picker. At login PB asks once which look its windows
+-- use (Classic, Modern, Match the game; Match the game greyed on
+-- Forever). The Forever recipe question waits until it closes; Escape
+-- leaves it unpicked for the next login; a pick that changes the look in
+-- use reloads, the same look does not; it waits out combat; Settings'
+-- Window style follows the pick
+do
+    local Theme, KN, S = ProfBuddy.Theme, ProfBuddy.Knowledge, ProfBuddy.db.settings
+    local TSF = ProfBuddy.TradeSkillFrame
+    EXPECT(#loginPopups == 1 and loginPopups[1] == "PROFBUDDY_PICK_LOOK",
+           "login popups: " .. table.concat(loginPopups, ", "))
+    local dlg = StaticPopupDialogs.PROFBUDDY_PICK_LOOK
+    EXPECT(dlg.button1 == "Classic" and dlg.button2 == "Modern" and dlg.button3 == "Match the game", "picker buttons")
+    EXPECT(dlg.text:find("Match the game: coming to WoW: Forever in a later update.", 1, true)
+           and dlg.text:find("reloads your interface", 1, true)
+           and dlg.text:find("You can change it later in Settings, Window style.", 1, true), "picker text: " .. dlg.text)
+    EXPECT(dlg.selectCallbackByIndex and dlg.noCancelOnEscape and not dlg.OnCancel and not dlg.OnAccept,
+           "a button or Escape could reach the wrong pick")
+    local disabled = false
+    local b3 = { Disable = function() disabled = true end }
+    dlg.OnShow({ GetButton = function(_, i) return i == 3 and b3 or nil end })
+    EXPECT(disabled, "Match the game is pickable on Forever")
+    -- the recipe question waits for the picker, then follows it
+    local shown = {}
+    StaticPopup_Show = function(which) shown[#shown + 1] = which end
+    S.foreverRecipes, KN._asked = nil, nil
+    KN:AskRecipeMode()
+    EXPECT(#shown == 0 and KN._recipeAfterLook, "the recipe question stacked on the picker")
+    dlg.OnEscape()
+    dlg.OnHide()
+    EXPECT(shown[1] == "PROFBUDDY_FOREVER_RECIPES" and #shown == 1, "no recipe question after the picker: " .. table.concat(shown, ", "))
+    EXPECT(S.lookAsked == nil and S.windowStyle == "modern", "Escape picked a look")
+    EXPECT(not Theme:LookPending(), "the picker still pending this session after Escape")
+    -- the next login asks again; in combat it waits for combat to end
+    Theme._lookShown, Theme._lookClosed, KN._asked = nil, nil, nil
+    shown = {}
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    Theme:AskLook()
+    EXPECT(#shown == 0, "the picker showed in combat")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED")
+    EXPECT(shown[1] == "PROFBUDDY_PICK_LOOK", "the picker did not show after combat")
+    -- the same look: saved, no reload; Settings follows
+    local reloads = 0
+    local keepReload = ReloadUI
+    ReloadUI = function() reloads = reloads + 1 end
+    TSF:OpenSettings("main")
+    local dd = TSF.windowStyleDD
+    dlg.OnButton2()
+    EXPECT(S.lookAsked == 1 and S.windowStyle == "modern" and reloads == 0, "Modern over Modern: " .. reloads .. " reloads")
+    -- Match the game can't be picked on Forever, even by a call
+    dlg.OnButton3()
+    EXPECT(S.windowStyle == "modern" and reloads == 0, "Match the game picked on Forever")
+    -- another look: saved, Settings shows it, reload; no recipe question before it
+    shown = {}
+    KN._asked, KN._recipeAfterLook = nil, true
+    dlg.OnButton1()
+    EXPECT(S.windowStyle == "classic" and reloads == 1, "Classic: " .. tostring(S.windowStyle) .. ", " .. reloads .. " reloads")
+    EXPECT(dd.selectedValue == "Classic", "Settings reads " .. tostring(dd.selectedValue))
+    dlg.OnHide()
+    EXPECT(#shown == 0, "a popup before the reload: " .. table.concat(shown, ", "))
+    EXPECT(Theme:Name() == "modern", "the session look changed before the reload")
+    TSF:CloseSettings()
+    -- after the reload: asked, so no picker
+    Theme._lookShown, Theme._lookClosed, Theme._lookReloading = nil, nil, nil
+    Theme:AskLook()
+    EXPECT(#shown == 0 and not Theme:LookPending(), "asked again after a pick")
+    ReloadUI = keepReload
+    S.windowStyle, S.foreverRecipes, KN._asked, KN._recipeAfterLook = "modern", nil, nil, nil
+    dd:SetValue("Modern")   -- the reload would have rebuilt it
+end
+print("  PASS F114 2.2.2 look picker: once at login, Match the game greyed on Forever, the recipe question after it, Escape asks next login, a new look reloads and the same look does not, waits out combat, Settings follows")
 
 -- F3: Source/Forever.lua meets the contract with the modern events and frame
 local S = ProfBuddy.Source
@@ -8323,4 +8401,4 @@ end
 F113()
 print("  PASS F113 2.2.1 (Bran): a 60 s cast keeps the strip past the 10-second watchdog, every cast of the batch; without cast data the recipe's cast time; a refused craft still stops at 10 s")
 
-print("ALL FOREVER TESTS PASS (113)")
+print("ALL FOREVER TESTS PASS (114)")

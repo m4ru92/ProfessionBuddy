@@ -2,6 +2,16 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.2.2 - unreleased
+
+A popup that asks which look PB's windows use, an idea of mine that Zorden asked for too.
+
+**Highlights**
+
+- **Look picker:** at login, PB asks once which look its windows use: Classic, Modern or Match the game. Everyone sees it once, including players who already use PB. On WoW: Forever, Match the game shows greyed out until a later update brings that look. A look other than the one in use reloads your interface, and Escape asks again at the next login.
+
+<!-- more -->
+
 ## 2.2.1 - 2026-11-20
 
 A fix for the craft bars, reported by Bran: they went away partway through a long craft.
