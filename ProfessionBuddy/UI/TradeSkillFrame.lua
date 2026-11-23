@@ -3198,7 +3198,7 @@ function TSF:BuildToolbar(parent)
         return "Sort: " .. state.sortBy .. arrow
     end
     self.sortDropdown = CreateDropdown(parent, 140,
-        {"Category", "Skill-ups", "Name", "Profit"}, "Category",
+        {"Category", "Skill-ups", "Name", "Profit", "Rarity"}, "Category",
         function(val)
             if state.sortBy == val then
                 state.sortAsc = not state.sortAsc
@@ -3624,7 +3624,7 @@ function TSF:UpdateListRows()
                 row.headerBg:Show()
             else
                 -- Indent recipes under subcategories (only in Category sort)
-                local recipeIndent = (state.sortBy == "Category" and entry.subcategory) and 14 or 0
+                local recipeIndent = ((state.sortBy == "Category" or state.sortBy == "Rarity") and entry.subcategory) and 14 or 0
 
                 -- Icons resolve lazily, HERE, for the ~20 rows actually on
                 -- screen: the item icon for a missing recipe (LoadRecipes used
@@ -8241,7 +8241,9 @@ function TSF:LoadRecipes(unknown)
     -- Sort (v6: secondary sort for all modes; v9: ascending/descending toggle)
     local sortBy = state.sortBy
     local asc = state.sortAsc
-    local useCategories = (sortBy == "Category") and not vendorView
+    -- Rarity keeps the category headers and sorts inside each one
+    local byRarity = (sortBy == "Rarity") and not vendorView
+    local useCategories = (sortBy == "Category" or byRarity) and not vendorView
 
     -- Skill Ups duration helper (shared by Category and Skill Ups sorts)
     local sk = state.skillLevel or 0
@@ -8255,18 +8257,51 @@ function TSF:LoadRecipes(unknown)
         else return 0 end
     end
 
+    -- Sort: Rarity. The baked table (Data/Rarity.lua, Data/Forever/Rarity.lua)
+    -- first, then the game's own once it has the item. A recipe that makes
+    -- no item (an enchant) has none and sorts last either way.
+    local rarity
+    if byRarity then
+        rarity = {}
+        local R = addon.Rarity
+        local dbProf = RDB and RDB.data[state.profName]
+        for _, r in ipairs(filtered) do
+            -- A known recipe whose link was not read has no itemID: the data's
+            local id = r.itemID
+            if not id and dbProf and dbProf[r.name] then id = dbProf[r.name].itemID end
+            if id and id ~= 0 then
+                local q = R and R[id]
+                if q == nil and GetItemInfo then q = select(3, GetItemInfo(id)) end
+                if type(q) == "number" then rarity[r] = q end
+            end
+        end
+    end
+
     if useCategories then
         -- Category > subcategory > (known: difficulty > duration | missing: skillReq) > name
+        -- Rarity: category > subcategory (both A to Z) > rarity > known > name
+        local catAsc = asc or byRarity
         table.sort(filtered, function(a, b)
             if a.category ~= b.category then
-                if asc then return (a.category or "") < (b.category or "")
+                if catAsc then return (a.category or "") < (b.category or "")
                 else return (a.category or "") > (b.category or "") end
             end
             if a.subcategory ~= b.subcategory then
-                if not a.subcategory then return asc end
-                if not b.subcategory then return not asc end
-                if asc then return a.subcategory < b.subcategory
+                if not a.subcategory then return catAsc end
+                if not b.subcategory then return not catAsc end
+                if catAsc then return a.subcategory < b.subcategory
                 else return a.subcategory > b.subcategory end
+            end
+            if byRarity then
+                -- Best first (^), worst first (v); no rarity last either way
+                local qa, qb = rarity[a], rarity[b]
+                if qa ~= qb then
+                    if qa == nil then return false end
+                    if qb == nil then return true end
+                    if asc then return qa > qb else return qa < qb end
+                end
+                if a.isKnown ~= b.isKnown then return a.isKnown end
+                return a.name < b.name
             end
             -- Known recipes sort above missing within same category
             if a.isKnown ~= b.isKnown then return a.isKnown end

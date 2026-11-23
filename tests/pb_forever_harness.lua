@@ -4867,6 +4867,9 @@ do
            "price settings defaults")
     for _, toc in ipairs({ "ProfessionBuddy_Forever.toc", "ProfessionBuddy_Mainline.toc" }) do
         local src = assert(io.open(PB_BASE .. "/" .. toc)):read("*a")
+        -- 2.2.2 TEST-e: the rarity table for Sort: Rarity, Forever's own
+        EXPECT(src:find("\nData/Forever/Rarity.lua", 1, true) and not src:find("\nData/Rarity.lua", 1, true),
+               toc .. ": Forever rarity table")
         EXPECT(src:find("## OptionalDeps: Auctionator, TradeSkillMaster", 1, true)
                and src:find("\nData/Forever/VendorPrices.lua", 1, true) and src:find("\nPrices.lua", 1, true)
                and not src:find("\nData/VendorPrices.lua", 1, true), toc .. ": prices files or OptionalDeps")
@@ -8620,4 +8623,117 @@ end
 F117()
 print("  PASS F117 2.2.2 TEST-d: Camp item benefits on tooltips is in Settings and on by default; unticking it removes the camp line and ticking brings it back; the gathering setting does not change it")
 
-print("ALL FOREVER TESTS PASS (117)")
+-- F118 2.2.2 TEST-e (m4ru 11-21): Sort: Rarity keeps the category headers
+-- and sorts inside each one: best first, choosing it again worst first; a
+-- recipe with no rarity (an enchant) last either way; same rarity, known
+-- first, then name. Rarity is baked (Data/Forever/Rarity.lua).
+local function F118()
+    local R = ProfBuddy.Rarity
+    local n = 0
+    for _ in pairs(R or {}) do n = n + 1 end
+    EXPECT(R and R[1251] == 1 and R[4239] == 2 and R[277025] == 2 and n > 1900,
+           "Forever rarity table: " .. n .. " items")
+    C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH()
+    st.showTab, st.searchText, st.filterCat, st.filterDiff = "all", "", "All", "All"
+    st.collapsed = {}
+    st.sortBy, st.sortAsc = "Category", true
+    TSF:RefreshRecipeList()
+    -- pick Rarity from the Sort menu, then again to reverse it
+    local dd, btn = TSF.sortDropdown, nil
+    for _, b in ipairs(dd.optionBtns) do if b.value == "Rarity" then btn = b end end
+    EXPECT(btn, "no Rarity in the Sort menu")
+    btn:GetScript("OnClick")(btn)
+    EXPECT(st.sortBy == "Rarity" and st.sortAsc == true and dd.btnText:GetText() == "Sort: Rarity ^",
+           "picking Rarity: " .. tostring(st.sortBy) .. " " .. tostring(dd.btnText:GetText()))
+
+    local function q(e)
+        local id = e.itemID
+        if not id then local d = ProfBuddy.RecipeDB.data[st.profName][e.name]; id = d and d.itemID end
+        local v = id and id ~= 0 and R[id]
+        if not v and id and id ~= 0 then v = select(3, C_Item.GetItemInfo(id)) end
+        return type(v) == "number" and v or nil
+    end
+    -- walk the list: headers in A to Z order; inside each header the rule
+    local function check(asc, what)
+        local cats, heads, rows, lastCat, prev = {}, 0, 0, nil, nil
+        local nilSeen, rarities = false, {}
+        for _, e in ipairs(st.recipes) do
+            if e.isHeader then
+                heads = heads + 1
+                if e.headerType ~= "subcategory" then
+                    EXPECT(not lastCat or lastCat < e.name, what .. ": category order " .. tostring(lastCat) .. " / " .. e.name)
+                    lastCat = e.name
+                end
+                prev, nilSeen = nil, false
+            else
+                rows = rows + 1
+                local qe = q(e)
+                if qe then rarities[qe] = true end
+                if prev then
+                    local qp = q(prev)
+                    EXPECT(not (nilSeen and qe), what .. ": " .. e.name .. " after a recipe with no rarity")
+                    if qp and qe and qp ~= qe then
+                        EXPECT((asc and qp > qe) or (not asc and qp < qe), what .. ": " .. prev.name .. " (" .. qp .. ") before " .. e.name .. " (" .. qe .. ")")
+                    elseif qp == qe then
+                        if prev.isKnown ~= e.isKnown then
+                            EXPECT(prev.isKnown, what .. ": missing " .. prev.name .. " before known " .. e.name)
+                        else
+                            EXPECT(prev.name < e.name, what .. ": name order " .. prev.name .. " / " .. e.name)
+                        end
+                    end
+                end
+                if not qe then nilSeen = true end
+                prev = e
+            end
+        end
+        local kinds = 0
+        for _ in pairs(rarities) do kinds = kinds + 1 end
+        EXPECT(heads > 1 and rows > 10 and kinds >= 2, what .. ": " .. heads .. " headers, " .. rows .. " rows, " .. kinds .. " rarities")
+    end
+    check(true, "best first")
+    btn:GetScript("OnClick")(btn)
+    EXPECT(st.sortBy == "Rarity" and st.sortAsc == false and dd.btnText:GetText() == "Sort: Rarity v", "Rarity again")
+    check(false, "worst first")
+
+    -- a recipe with no rarity (an enchant makes no item, or the game has
+    -- not loaded it) sorts last, either way. U34 covers the game's own.
+    local first
+    for _, e in ipairs(st.recipes) do
+        if not e.isHeader and q(e) then first = e; break end
+    end
+    local id = first.itemID or ProfBuddy.RecipeDB.data[st.profName][first.name].itemID
+    local keepQ = R[id]
+    R[id] = nil
+    for _, asc in ipairs({ true, false }) do
+        st.sortAsc = asc
+        TSF:RefreshRecipeList()
+        local last
+        for i, e in ipairs(st.recipes) do
+            if e == first or (not e.isHeader and e.name == first.name) then
+                local nxt = st.recipes[i + 1]
+                EXPECT(not nxt or nxt.isHeader or not q(nxt), first.name .. " with no rarity is not last (" .. tostring(asc) .. "), before " .. (nxt and nxt.name or "?"))
+                last = true
+            end
+        end
+        EXPECT(last, first.name .. " not listed")
+    end
+    R[id] = keepQ
+
+    -- Category is unchanged, and the saved window state keeps Rarity
+    local S = ProfBuddy.db.settings
+    local keepRem = S.rememberWindowState
+    S.rememberWindowState = true
+    st.sortBy, st.sortAsc = "Rarity", true
+    TSF:SaveWindowState()
+    st.sortBy = "Category"
+    TSF:RestoreWindowState(st.profName)
+    EXPECT(st.sortBy == "Rarity", "saved window state lost Rarity: " .. tostring(st.sortBy))
+    S.rememberWindowState = keepRem
+    st.sortBy, st.sortAsc = "Category", true
+    dd:SetValue("Sort: Category ^", "Category")
+    TSF:RefreshRecipeList()
+end
+F118()
+print("  PASS F118 2.2.2 TEST-e: Sort: Rarity is in the Sort menu and keeps the category headers; best first, then worst first when picked again; same rarity known first, then by name; a recipe with no rarity last both ways; the saved window state keeps Rarity")
+
+print("ALL FOREVER TESTS PASS (118)")

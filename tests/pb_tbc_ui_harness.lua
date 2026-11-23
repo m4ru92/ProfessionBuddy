@@ -1635,4 +1635,122 @@ do
 end
 print("  PASS " .. TAG .. "33 2.2.2: no Camp item benefits box in Settings on TBC Anniversary")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 33)")
+-- U34/C34 2.2.2 TEST-e: Sort: Rarity on TBC Anniversary, from the baked
+-- table (Data/Rarity.lua) and the game's own for an item it lacks:
+-- category headers kept, best first and then worst first, no rarity last
+-- (Enchanting's enchants make no item), same rarity known first, then name.
+do
+    local st = TSF.state
+    local R = PB.Rarity
+    local n = 0
+    for _ in pairs(R or {}) do n = n + 1 end
+    EXPECT(R and R[1251] == 1 and R[4239] == 1 and R[29525] == 4 and n > 1900,
+           "TBC Anniversary rarity table: " .. n .. " items")
+    local function q(e)
+        local id = e.itemID
+        if not id then local d = PB.RecipeDB.data[st.profName] and PB.RecipeDB.data[st.profName][e.name]; id = d and d.itemID end
+        if not id or id == 0 then return nil end
+        local v = R[id]
+        if v == nil then v = select(3, GetItemInfo(id)) end
+        return type(v) == "number" and v or nil
+    end
+    local function check(asc, what)
+        local heads, rows, kinds, seen, lastCat, prev, nilSeen, nilRows = 0, 0, 0, {}, nil, nil, false, 0
+        for _, e in ipairs(st.recipes) do
+            if e.isHeader then
+                heads = heads + 1
+                if e.headerType ~= "subcategory" then
+                    EXPECT(not lastCat or lastCat < e.name, what .. ": category order " .. tostring(lastCat) .. " / " .. e.name)
+                    lastCat = e.name
+                end
+                prev, nilSeen = nil, false
+            else
+                rows = rows + 1
+                local qe = q(e)
+                if qe and not seen[qe] then seen[qe] = true; kinds = kinds + 1 end
+                if not qe then nilRows = nilRows + 1 end
+                if prev then
+                    local qp = q(prev)
+                    EXPECT(not (nilSeen and qe), what .. ": " .. e.name .. " after a recipe with no rarity")
+                    if qp and qe and qp ~= qe then
+                        EXPECT((asc and qp > qe) or (not asc and qp < qe), what .. ": " .. prev.name .. " before " .. e.name)
+                    elseif qp == qe then
+                        if prev.isKnown ~= e.isKnown then
+                            EXPECT(prev.isKnown, what .. ": missing " .. prev.name .. " before known " .. e.name)
+                        else
+                            EXPECT(prev.name < e.name, what .. ": name order " .. prev.name .. " / " .. e.name)
+                        end
+                    end
+                end
+                if not qe then nilSeen = true end
+                prev = e
+            end
+        end
+        EXPECT(heads > 1 and rows > 10 and kinds >= 2, what .. ": " .. heads .. " headers, " .. rows .. " rows, " .. kinds .. " rarities")
+        return nilRows
+    end
+    local function pick()
+        local dd, btn = TSF.sortDropdown, nil
+        for _, b in ipairs(dd.optionBtns) do if b.value == "Rarity" then btn = b end end
+        EXPECT(btn, "no Rarity in the Sort menu")
+        btn:GetScript("OnClick")(btn)
+        return dd, btn
+    end
+
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    OPEN_TRADE()
+    st.showTab, st.searchText, st.filterCat, st.filterDiff, st.collapsed = "all", "", "All", "All", {}
+    st.sortBy, st.sortAsc = "Category", true
+    TSF:RefreshRecipeList()
+    local dd, btn = pick()
+    EXPECT(st.sortBy == "Rarity" and st.sortAsc and dd.btnText:GetText() == "Sort: Rarity ^", "picking Rarity: " .. tostring(dd.btnText:GetText()))
+    check(true, "Leatherworking best first")
+    btn:GetScript("OnClick")(btn)
+    EXPECT(not st.sortAsc and dd.btnText:GetText() == "Sort: Rarity v", "Rarity again: " .. tostring(dd.btnText:GetText()))
+    check(false, "Leatherworking worst first")
+
+    -- an item the table lacks: last until the game has it, then with its rarity
+    st.sortAsc = true
+    TSF:RefreshRecipeList()
+    local epic
+    for _, e in ipairs(st.recipes) do if not e.isHeader and q(e) == 4 then epic = e; break end end
+    EXPECT(epic, "no Epic in the Leatherworking list")
+    local eid = epic.itemID or PB.RecipeDB.data[st.profName][epic.name].itemID
+    local keep = R[eid]
+    R[eid] = nil
+    TSF:RefreshRecipeList()
+    local function after(name)
+        for i, e in ipairs(st.recipes) do if not e.isHeader and e.name == name then return st.recipes[i + 1] end end
+    end
+    local nx = after(epic.name)
+    EXPECT(not nx or nx.isHeader or not q(nx), epic.name .. " with no rarity is not last in its group")
+    ITEM_NAMES[eid] = epic.name   -- the game now has it, as Common (the test client's)
+    TSF:RefreshRecipeList()
+    EXPECT(q(epic) == 1, "the game's rarity not read: " .. tostring(q(epic)))
+    check(true, "the game's own rarity")
+    ITEM_NAMES[eid], R[eid] = nil, keep
+
+    -- Enchanting: enchants make no item, so they go last, both ways
+    st.sortBy, st.sortAsc = "Category", true
+    dd:SetValue("Sort: Category ^", "Category")
+    TSF.frame:Hide(); FLUSH()
+    CLOSE_TRADE()
+    OPEN_CRAFT()
+    st.showTab, st.searchText, st.filterCat, st.filterDiff, st.collapsed = "all", "", "All", "All", {}
+    TSF:RefreshRecipeList()
+    pick()
+    local nils = check(true, "Enchanting best first")
+    EXPECT(nils > 0, "no enchant in the Enchanting list")
+    btn = nil
+    for _, b in ipairs(dd.optionBtns) do if b.value == "Rarity" then btn = b end end
+    btn:GetScript("OnClick")(btn)
+    check(false, "Enchanting worst first")
+    st.sortBy, st.sortAsc = "Category", true
+    dd:SetValue("Sort: Category ^", "Category")
+    TSF:RefreshRecipeList()
+    TSF.frame:Hide(); FLUSH()
+    CLOSE_CRAFT()
+end
+print("  PASS " .. TAG .. "34 2.2.2 TEST-e: Sort: Rarity on TBC Anniversary: category headers kept, best first then worst first, same rarity known first then by name, enchants last both ways; an item the table lacks is last until the game has it, then sorts by the game's rarity")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 34)")

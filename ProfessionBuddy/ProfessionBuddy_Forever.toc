@@ -46,6 +46,7 @@ Data/Forever/VendorPrices.lua
 Data/Forever/Waylaid.lua
 Data/Forever/Writs.lua
 Data/Forever/CampWorld.lua
+Data/Forever/Rarity.lua
 Knowledge.lua
 MaterialCalc.lua
 Prices.lua

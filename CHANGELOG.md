@@ -4,12 +4,13 @@ Every ProfessionBuddy release, newest first. Each entry lists what is new, what 
 
 ## 2.2.2 - unreleased
 
-A popup that asks which look PB's windows use, an idea of mine that Zorden asked for too. Placed camp items show what they give on WoW: Forever.
+A popup that asks which look PB's windows use, an idea of mine that Zorden asked for too. Placed camp items show what they give on WoW: Forever, and the recipe list sorts by rarity.
 
 **Highlights**
 
 - **Look picker:** at login, PB asks once which look its windows use: Classic, Modern or Match the game. Everyone sees it once, including players who already use PB. On WoW: Forever, Match the game shows greyed out until a later update brings that look. A look other than the one in use reloads your interface, and Escape asks again at the next login.
 - **Camp item tooltips:** on WoW: Forever, hovering a placed camp item such as a Camp Chair or a First Aid Kit shows what it gives, with the numbers for your level. The text comes from the game, without the campfire and cooldown lines. A town Anvil, or another world object that shares a camp item's name, does not get the line. To turn it off, untick Settings > Camp item benefits on tooltips.
+- **Sort by rarity:** the recipe list's Sort menu has Rarity. It keeps the category headers and puts the best items first inside each one, and choosing it again puts the worst first. Recipes that make no item, such as enchants, go last.
 
 <!-- more -->
 
