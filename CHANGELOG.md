@@ -4,11 +4,12 @@ Every ProfessionBuddy release, newest first. Each entry lists what is new, what 
 
 ## 2.2.3 - unreleased
 
-A Craftsman's Writ you already turned in today shows as done.
+A Craftsman's Writ you already turned in today shows as done, and Can make can leave out what a vendor sells.
 
 **Highlights**
 
 - **Writs done today:** on WoW: Forever, a Craftsman's Writ this character turned in today shows greyed out in the Shuffle tab's Crates and writs, and its tooltip says Done today on this character. Writs reset daily, and the row shows as usual again after the reset. Hircus checked in game when the game marks a writ done and when it clears.
+- **Skip vendor items:** a new checkbox left of the search box in the profession window leaves materials a vendor sells, such as thread, vials and salt, out of Can make. The counts then show what your leather, cloth, bars and other materials cover. On a recipe that uses a vendor item, the detail panel's Can make line ends in (vendor items skipped). A recipe made only of vendor items keeps the game's count, and crafting still needs every material. PB remembers the checkbox for all your professions. Lucido asked for it.
 
 <!-- more -->
 

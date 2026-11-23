@@ -8852,4 +8852,191 @@ end
 F119()
 print("  PASS F119 2.2.3: a writ this character turned in today greys out in Crates and writs with Done today in its tooltip; a turn-in with the list open shows at once; other writs and crates stay plain; reused rows follow their entry; plain again after the daily reset; no quest API, no grey")
 
-print("ALL FOREVER TESTS PASS (119)")
+-- F120 2.2.3 (Lucido): Skip vendor items. The checkbox left of the
+-- search box leaves vendor-sold materials (Data/Forever/VendorPrices.lua)
+-- out of Can make: the list's count, the detail panel's line with
+-- "(vendor items skipped)" at its end, the bank count, and another
+-- character's list. Only on a recipe that uses a vendor item and
+-- something else; a recipe of vendor items only keeps the game's count.
+-- Craft and the quantity box keep the game's count. Kept in the settings.
+local function F120()
+    local PB = ProfBuddy
+    if not (TSF.frame and TSF.frame:IsShown()) then C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local TSF, DS = PB.TradeSkillFrame, PB.DataStore
+    local st = TSF.state
+    local S = PB.db.settings
+    local inv = DS:GetCharacter().inventory
+    local keepBank, keepScanned, keepOff, keepView, keepSel = inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey, st.selected
+    local keepSkip = S.skipVendorReagents
+    EXPECT(S.skipVendorReagents == false, "default: " .. tostring(S.skipVendorReagents))
+    EXPECT(PB.VendorPrices[2320] and not PB.VendorPrices[2318], "Coarse Thread is not a vendor item, or Light Leather is")
+    ITEM_COUNT = {}
+    inv.bank, inv.bankScanned = {}, true
+    st._viewCharKey = nil
+    -- 2 Light Leather and 1 Coarse Thread a craft; 10 leather, no thread:
+    -- the game makes none
+    local kit = { name = "PB Test Belt", isKnown = true, numAvail = 0, itemID = 4239, spellID = 3753,
+                  category = "Belt", reagents = { { itemID = 2318, count = 2, name = "Light Leather" },
+                                                  { itemID = 2320, count = 1, name = "Coarse Thread" } } }
+    table.insert(st.recipes, 1, kit)
+    st.scrollOffset, st.selected = 0, kit.name
+    local row = TSF.listRows[1]
+    local cb = TSF.skipVendorCB
+    local function draw() TSF:UpdateListRows(); TSF:RefreshDetailPanel() end
+    local function list() return row.rightText:GetText() or "" end
+    local function can() return TSF.detCanMake:GetText() or "" end
+    local function click(on) rawset(cb, "GetChecked", function() return on end); cb:GetScript("OnClick")(cb) end
+    ITEM_COUNT[2318] = 10
+    -- the checkbox: left of the search box, off
+    local p = rawget(cb, "_lastPoint")
+    EXPECT(p and p[1] == "RIGHT" and p[2] == TSF.searchBox and p[3] == "LEFT", "the checkbox is not left of the search box")
+    EXPECT(cb.text:GetText() == "Skip vendor items", "checkbox: " .. tostring(cb.text:GetText()))
+    -- off: as before
+    draw()
+    EXPECT(not list():find("[", 1, true) and can() == "|cffff4444Can make: 0 (missing reagents)|r", "off: " .. list() .. " / " .. can())
+    -- on: 10 leather make 5, said at the end of the line
+    click(true)
+    EXPECT(S.skipVendorReagents == true, "the checkbox did not save")
+    EXPECT(list():find("|cff00ff00[5]|r", 1, true), "on, list: " .. list())
+    EXPECT(can() == "|cff00ff00Can make: 5|r|cffa0a0a0 (vendor items skipped)|r", "on, Can make: " .. can())
+    -- too long for the panel: the note on a line of its own
+    local line = TSF.detCanMake
+    local sc = line:GetParent()
+    rawset(line, "GetUnboundedStringWidth", function() return 380 end)
+    rawset(line, "GetLeft", function() return 20 end)
+    rawset(sc, "GetLeft", function() return 0 end)
+    rawset(sc, "GetWidth", function() return 400 end)
+    draw()
+    local just
+    rawset(line, "SetJustifyH", function(_, j) just = j end)
+    rawset(line, "GetJustifyH", function() return "CENTER" end)
+    TSF._canMakeJustify = nil   -- read again from the stub
+    draw()
+    EXPECT(can() == "|cff00ff00Can make: 5|r\n|cffa0a0a0(vendor items skipped)|r" and just == "LEFT", "too long: " .. can() .. " " .. tostring(just))
+    rawset(line, "GetUnboundedStringWidth", function() return 300 end)
+    draw()
+    EXPECT(can() == "|cff00ff00Can make: 5|r|cffa0a0a0 (vendor items skipped)|r" and just == "CENTER", "fits again: " .. can() .. " " .. tostring(just))
+    -- a recipe of another kind next: the line's own setting back
+    rawset(line, "GetUnboundedStringWidth", function() return 380 end)
+    draw()
+    TSF:ClearDetailPanel()
+    EXPECT(just == "CENTER", "the left edge stayed after the panel cleared: " .. tostring(just))
+    rawset(line, "GetUnboundedStringWidth", nil); rawset(line, "GetLeft", nil)
+    rawset(line, "SetJustifyH", nil); rawset(line, "GetJustifyH", nil)
+    TSF._canMakeJustify = nil
+    rawset(sc, "GetLeft", nil); rawset(sc, "GetWidth", nil)
+    -- the game's count stays: Craft stays off, the box's limit is the game's
+    -- (Settings may still be up from an earlier test: the craft bar hides under it)
+    local sp = TSF.settingsPanel
+    local keepSP = sp and sp:IsShown()
+    if keepSP then sp:Hide() end
+    kit.gameIndex = 1
+    TSF:UpdateCraftBar()
+    EXPECT(kit.numAvail == 0 and TSF.craftBar:IsShown() and not TSF.craftBtns[1]:IsEnabled(), "Craft is on with no thread")
+    kit.gameIndex = nil
+    if keepSP then sp:Show() end
+    -- the leather runs short: 0, missing reagents, with the note
+    ITEM_COUNT[2318] = 1
+    draw()
+    EXPECT(not list():find("[", 1, true) and can() == "|cffff4444Can make: 0 (missing reagents)|r|cffa0a0a0 (vendor items skipped)|r",
+           "short: " .. list() .. " / " .. can())
+    -- the bank: 1 in the bags and 9 there make 5, the thread left out
+    inv.bank[2318] = 9
+    draw()
+    EXPECT(list():find("|cff3fc7ff[5]|r", 1, true), "bank, list: " .. list())
+    EXPECT(can() == "|cffff4444Can make: 0|r|cff3fc7ff, 5 with bank|r|cffa0a0a0 (vendor items skipped)|r", "bank, Can make: " .. can())
+    ITEM_COUNT[2318] = 4
+    draw()
+    EXPECT(list():find("|cff00ff00[2]|r |cff3fc7ff[6]|r", 1, true)
+           and can() == "|cff00ff00Can make: 2|r|cff3fc7ff, 6 with bank|r|cffa0a0a0 (vendor items skipped)|r",
+           "bags and bank: " .. list() .. " / " .. can())
+    EXPECT(TSF:BankCraftCount(kit, 2, true) == 6 and TSF:BankCraftCount(kit, 2) == nil, "the bank count with the thread")
+    inv.bank[2318] = nil
+    -- the thread bought: the game's count and PB's agree, the note stays
+    ITEM_COUNT[2318], ITEM_COUNT[2320], kit.numAvail = 10, 5, 5
+    draw()
+    EXPECT(can() == "|cff00ff00Can make: 5|r|cffa0a0a0 (vendor items skipped)|r", "thread bought: " .. can())
+    ITEM_COUNT[2320], kit.numAvail = nil, 0
+    -- no vendor item: no note, the game's count
+    kit.reagents = { { itemID = 2318, count = 2, name = "Light Leather" } }
+    kit.numAvail = 5
+    draw()
+    EXPECT(can() == "|cff00ff00Can make: 5|r", "no vendor item: " .. can())
+    -- vendor items only: the game's count, no note
+    kit.reagents = { { itemID = 2320, count = 1, name = "Coarse Thread" } }
+    kit.numAvail = 0
+    draw()
+    EXPECT(not list():find("[", 1, true) and can() == "|cffff4444Can make: 0 (missing reagents)|r", "vendor items only: " .. list() .. " / " .. can())
+    -- a material with no item ID: nothing to count, the game's count
+    kit.reagents = { { itemID = 2318, count = 2, name = "Light Leather" }, { name = "No ID", count = 1 },
+                     { itemID = 2320, count = 1, name = "Coarse Thread" } }
+    draw()
+    EXPECT(can() == "|cffff4444Can make: 0 (missing reagents)|r", "a material with no ID: " .. can())
+    kit.reagents = { { itemID = 2318, count = 2, name = "Light Leather" }, { itemID = 2320, count = 1, name = "Coarse Thread" } }
+    -- on cooldown: the game's 0 stays
+    local keepCD = TSF.CooldownSuffix
+    TSF.CooldownSuffix = function() return "\n|cffff8800On cooldown: ready in 3h|r" end
+    draw()
+    EXPECT(not can():find("skipped", 1, true) and not list():find("[5]", 1, true), "on cooldown: " .. list() .. " / " .. can())
+    TSF.CooldownSuffix = keepCD
+    -- another character's list: its own count with the vendor items left out
+    st._viewCharKey = "Alt-Realm"
+    kit.numAvail, kit.numAvailSkip = 1, 7
+    draw()
+    EXPECT(list():find("|cff00ff00[7]|r", 1, true) and can() == "|cff00ff00Can make: 7|r|cffa0a0a0 (vendor items skipped)|r",
+           "another character: " .. list() .. " / " .. can())
+    kit.numAvailSkip = nil
+    draw()
+    EXPECT(can() == "|cff00ff00Can make: 1|r", "another character, nothing skipped: " .. can())
+    st._viewCharKey = nil
+    kit.numAvail = 0
+    -- the count follows the bags mid-batch (UpdateCraftableCounts redraws)
+    ITEM_COUNT[2318] = 6
+    TSF:UpdateListRows()
+    EXPECT(list():find("|cff00ff00[3]|r", 1, true), "a bag change: " .. list())
+    -- off again: as before, saved
+    click(false)
+    EXPECT(S.skipVendorReagents == false and not list():find("[", 1, true)
+           and can() == "|cffff4444Can make: 0 (missing reagents)|r", "off again: " .. list() .. " / " .. can())
+    table.remove(st.recipes, 1)
+    -- an alt's saved list, built by OpenWithCharacter: a Leatherworking
+    -- recipe of Light Leather and Coarse Thread, 8 leather in the bags and
+    -- 4 in the bank, no thread
+    local RDB, pick = PB.RecipeDB, nil
+    for name, e in pairs(RDB.data.Leatherworking or {}) do
+        local lea, thr, other = false, false, false
+        for _, r in ipairs(e.reagents or {}) do
+            if r.itemID == 2318 then lea = r.count elseif r.itemID == 2320 then thr = true else other = true end
+        end
+        if lea and thr and not other and (not pick or name < pick) then pick = name end
+    end
+    EXPECT(pick, "no Leatherworking recipe of Light Leather and Coarse Thread")
+    local need
+    for _, r in ipairs(RDB.data.Leatherworking[pick].reagents) do if r.itemID == 2318 then need = r.count end end
+    ProfBuddyDB.characters["Skipalt-Forever"] = { class = "ROGUE", faction = "Horde",
+        inventory = { bags = { [2318] = 8 }, bank = { [2318] = 4 } },
+        professions = { Leatherworking = { skillLevel = 100, maxSkill = 150, recipes = { [pick] = {} } } } }
+    TSF:OpenWithCharacter("Skipalt-Forever", "Leatherworking"); FLUSH()
+    local saved = st.allRecipes[pick]
+    EXPECT(saved and saved.numAvail == 0 and saved.numAvailSkip == math.floor(12 / need),
+           "the alt's counts: " .. tostring(saved and saved.numAvail) .. " / " .. tostring(saved and saved.numAvailSkip))
+    local entry
+    for _, e in ipairs(st.recipes) do if e.name == pick then entry = e end end
+    EXPECT(entry and entry.numAvailSkip == saved.numAvailSkip, "the alt's list entry lost its count")
+    ProfBuddyDB.characters["Skipalt-Forever"] = nil
+    -- the checkbox hides and shows with the search box
+    TSF:HideContentPanels()
+    EXPECT(not cb:IsShown(), "the checkbox shows with the panels hidden")
+    TSF:RestoreContentPanels()
+    EXPECT(cb:IsShown(), "the checkbox did not come back")
+    TSF.frame:Hide()
+    C_TradeSkillUI.OpenTradeSkill(165); FLUSH(); TS_LIST_READY(); FLUSH()
+    S.skipVendorReagents = keepSkip
+    inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey, st.selected = keepBank, keepScanned, keepOff, keepView, keepSel
+    ITEM_COUNT = nil
+    TSF:UpdateListRows(); TSF:RefreshDetailPanel()
+end
+F120()
+print("  PASS F120 2.2.3: Skip vendor items, left of the search box and off by default, leaves vendor items out of Can make in the list, the detail panel with (vendor items skipped), the bank count and an alt's list; only on a recipe with a vendor item and something else; vendor items only, a cooldown or a material with no ID keep the game's count; Craft keeps the game's count; saved; hides with the panels")
+
+print("ALL FOREVER TESTS PASS (120)")

@@ -1753,4 +1753,61 @@ do
 end
 print("  PASS " .. TAG .. "34 2.2.2 TEST-e: Sort: Rarity on TBC Anniversary: category headers kept, best first then worst first, same rarity known first then by name, enchants last both ways; an item the table lacks is last until the game has it, then sorts by the game's rarity")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 34)")
+-- U35/C35 2.2.3 (Lucido): Skip vendor items on TBC Anniversary, from
+-- Data/VendorPrices.lua: the checkbox left of the search box, the list's
+-- count and the detail panel's line with the thread left out, the bank
+-- count, nothing on a recipe without a vendor item, off as before
+do
+    if TBC.open ~= "trade" then OPEN_TRADE() end
+    local TSF, DS = PB.TradeSkillFrame, PB.DataStore
+    local st = TSF.state
+    local S = PB.db.settings
+    local inv = DS:GetCharacter().inventory
+    local keepBank, keepScanned, keepOff, keepView, keepSel = inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey, st.selected
+    EXPECT(PB.VendorPrices and PB.VendorPrices[2320] and not PB.VendorPrices[2318], "TBC: Coarse Thread is not a vendor item, or Light Leather is")
+    EXPECT(not S.skipVendorReagents, "TBC: on by default")
+    ITEM_COUNT = {}
+    inv.bank, inv.bankScanned = {}, true
+    st._viewCharKey = nil
+    local kit = { name = "PB Test Belt", isKnown = true, numAvail = 0, itemID = 4239, spellID = 3753,
+                  category = "Belt", reagents = { { itemID = 2318, count = 2, name = "Light Leather" },
+                                                  { itemID = 2320, count = 1, name = "Coarse Thread" } } }
+    table.insert(st.recipes, 1, kit)
+    st.scrollOffset, st.selected = 0, kit.name
+    local row = TSF.listRows[1]
+    local cb = TSF.skipVendorCB
+    local function draw() TSF:UpdateListRows(); TSF:RefreshDetailPanel() end
+    local function list() return row.rightText:GetText() or "" end
+    local function can() return TSF.detCanMake:GetText() or "" end
+    local function click(on) rawset(cb, "GetChecked", function() return on end); cb:GetScript("OnClick")(cb) end
+    local p = rawget(cb, "_lastPoint")
+    EXPECT(p and p[1] == "RIGHT" and p[2] == TSF.searchBox and p[3] == "LEFT" and cb:IsShown(),
+           "TBC: the checkbox is not left of the search box")
+    ITEM_COUNT[2318] = 10
+    draw()
+    EXPECT(not list():find("[", 1, true) and can() == "|cffff4444Can make: 0 (missing reagents)|r", "TBC off: " .. list() .. " / " .. can())
+    click(true)
+    EXPECT(S.skipVendorReagents == true and list():find("|cff00ff00[5]|r", 1, true)
+           and can() == "|cff00ff00Can make: 5|r|cffa0a0a0 (vendor items skipped)|r", "TBC on: " .. list() .. " / " .. can())
+    inv.bank[2318] = 4
+    draw()
+    EXPECT(list():find("|cff00ff00[5]|r |cff3fc7ff[7]|r", 1, true)
+           and can() == "|cff00ff00Can make: 5|r|cff3fc7ff, 7 with bank|r|cffa0a0a0 (vendor items skipped)|r",
+           "TBC bank: " .. list() .. " / " .. can())
+    inv.bank[2318] = nil
+    kit.reagents, kit.numAvail = { { itemID = 2318, count = 2, name = "Light Leather" } }, 5
+    draw()
+    EXPECT(can() == "|cff00ff00Can make: 5|r", "TBC no vendor item: " .. can())
+    kit.reagents, kit.numAvail = { { itemID = 2318, count = 2, name = "Light Leather" }, { itemID = 2320, count = 1, name = "Coarse Thread" } }, 0
+    click(false)
+    EXPECT(S.skipVendorReagents == false and can() == "|cffff4444Can make: 0 (missing reagents)|r", "TBC off again: " .. can())
+    table.remove(st.recipes, 1)
+    inv.bank, inv.bankScanned, st.scrollOffset, st._viewCharKey, st.selected = keepBank, keepScanned, keepOff, keepView, keepSel
+    ITEM_COUNT = nil
+    TSF:UpdateListRows(); TSF:RefreshDetailPanel()
+    TSF.frame:Hide(); FLUSH()
+    CLOSE_TRADE()
+end
+print("  PASS " .. TAG .. "35 2.2.3: Skip vendor items on TBC Anniversary: left of the search box, off by default; on, Can make leaves Coarse Thread out in the list, the detail panel with (vendor items skipped) and the bank count; nothing on a recipe without a vendor item; off as before")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 35)")

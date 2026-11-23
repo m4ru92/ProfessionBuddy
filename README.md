@@ -89,6 +89,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 - **Recipe tools.** Every tool a recipe needs shows in the detail panel, from Enchanting rods to a Blacksmith Hammer, green when a character has one and red when not, with the crafting station it needs, such as a Tanning Rack or an Anvil.
 - **Batch crafting.** Craft 1, 5, 10, 20, or all, with a live countdown and skill-bar updates. While a batch runs, bars across the bottom of the window show the current cast and the whole batch: "Crafting 12 of 47, about 1m 05s left".
 - **Can make with your bank.** The recipe list counts what you can make from your bags, and a second count adds your bank when it holds more of the materials. Click a material one of your recipes makes to go to its recipe, with the crafts you need in the quantity box.
+- **Skip vendor items.** Tick the checkbox left of the search box and Can make leaves out thread, vials and other materials a vendor sells, so the counts show what your rarer materials cover.
 - **Share a recipe.** Open the chat box on guild, party, raid, or say with a recipe's link typed.
 - **State preservation.** Window position, filters, sort, search, and selection persist between sessions.
 
