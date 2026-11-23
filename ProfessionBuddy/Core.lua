@@ -6,7 +6,7 @@
 ProfBuddy = ProfBuddy or {}
 
 local addon = ProfBuddy
-addon.version = "2.2.1"
+addon.version = "2.2.2"
 addon.modules = {}
 
 -- Professions with a browsable recipe list in the static DB. The gathering
@@ -684,6 +684,7 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
         gatherShowUnlearned = true,  -- show gather info for professions you have not learned
         gatherYieldTooltip  = true,  -- "Yields: Leather/Scale" line on skinnable mob tooltips
         gatherLootUnlearned = false, -- that loot (and node loot) for professions you have not learned
+        campBenefitTooltip  = true,  -- WoW: Forever: a placed camp item's benefit on its tooltip
         skillReqNotify      = false, -- dev-only: chat alert when a trainer learn-level correction is found
         tooltipMaxOwn       = 16,   -- 16 = "All" (uncapped)
         tooltipMaxAlt       = 16,   -- 16 = "All" (uncapped)
@@ -760,6 +761,9 @@ addon:RegisterEvent("ADDON_LOADED", function(_, loadedName)
     end
     if ProfBuddyDB.settings.gatherShowUnlearned == nil then
         ProfBuddyDB.settings.gatherShowUnlearned = true
+    end
+    if ProfBuddyDB.settings.campBenefitTooltip == nil then
+        ProfBuddyDB.settings.campBenefitTooltip = true
     end
     if ProfBuddyDB.settings.gatherYieldTooltip == nil then
         ProfBuddyDB.settings.gatherYieldTooltip = true

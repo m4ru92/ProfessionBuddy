@@ -1132,12 +1132,126 @@ function TSF:HookNodeTooltip()
                      why = "node table", gameLine = gameLine, loot = loot })
     end
 
+    -- Placed camp items (WoW: Forever, 2.2.2): the object's tooltip shows
+    -- the item's name (First Aid Kit, Camp Tent; m4ru 2026-11-20). Its
+    -- benefit is the item's use spell text, read from the game, which fills
+    -- in the numbers for your level. Only the benefit (m4ru): the text stops
+    -- at its first blank line, without "Requires a Campfire nearby.". The
+    -- names come from PB's Camping recipes, so TBC Anniversary has none.
+    local campByName, campNameless, campText, campAsked
+    local function campItem(name)
+        if not campByName then
+            campByName, campNameless, campText, campAsked = {}, {}, {}, {}
+            local RDB = addon.RecipeDB
+            for _, recipes in pairs(RDB and RDB.data or {}) do
+                for rname, r in pairs(recipes) do
+                    if r.category == "Camping" and (r.itemID or 0) > 0 then
+                        campByName[rname] = r.itemID
+                        campNameless[r.itemID] = true
+                    end
+                end
+            end
+        end
+        if campByName[name] then return campByName[name] end
+        -- the item's own name, in the game's language ("Basic Campfire Kit"
+        -- is made by "Basic Campfire")
+        if next(campNameless) and C_Item and C_Item.GetItemNameByID then
+            for itemID in pairs(campNameless) do
+                local iname = C_Item.GetItemNameByID(itemID)
+                if type(iname) == "string" and not IsSecret(iname) and iname ~= "" then
+                    campByName[iname] = itemID
+                    campNameless[itemID] = nil
+                elseif C_Item.RequestLoadItemDataByID and not campAsked[itemID] then
+                    campAsked[itemID] = true
+                    C_Item.RequestLoadItemDataByID(itemID)
+                end
+            end
+        end
+        return campByName[name]
+    end
+
+    -- nil until the game has the text: the next pass asks again
+    local function campBenefit(itemID)
+        if campText[itemID] then return campText[itemID] end
+        if not (C_Item and C_Item.GetItemSpell and C_Spell and C_Spell.GetSpellDescription) then return end
+        local _, spellID = C_Item.GetItemSpell(itemID)
+        if not spellID then
+            if C_Item.RequestLoadItemDataByID and not campAsked[itemID] then
+                campAsked[itemID] = true
+                C_Item.RequestLoadItemDataByID(itemID)
+            end
+            return
+        end
+        local text = C_Spell.GetSpellDescription(spellID)
+        if type(text) ~= "string" or IsSecret(text) or text == "" then
+            -- empty until the spell's data loads (Camp Chair, m4ru 11-21)
+            if C_Spell.RequestLoadSpellData and not campAsked[-spellID] then
+                campAsked[-spellID] = true
+                C_Spell.RequestLoadSpellData(spellID)
+            end
+            return
+        end
+        text = text:gsub("\r", ""):match("^(.-)\n%s*\n") or text
+        text = text:gsub("%s*Requires a Campfire nearby%.", "")
+        text = text:match("^%s*(.-)%s*$")
+        if text == "" then return end
+        campText[itemID] = text
+        return text
+    end
+
+    -- A camp name can also be a world object's: every town smithy has an
+    -- Anvil (m4ru 2026-11-22), and the game shows both as the name alone.
+    -- Data/Forever/CampWorld.lua has where those world objects stand
+    -- (VMaNGOS), so the line is skipped within CAMP_NEAR yards of one; a
+    -- tooltip can come up from across a smithy. Where the game gives no
+    -- position, such a name gets no line.
+    local CAMP_NEAR = 60
+    local function nearWorldTwin(name)
+        local spots = addon.CampWorld and addon.CampWorld[name]
+        if not spots then return false end
+        local x, y, _, map
+        if UnitPosition then x, y, _, map = UnitPosition("player") end
+        if type(x) ~= "number" or type(y) ~= "number" or IsSecret(x) or IsSecret(y) then return true end
+        local pts = spots[map]
+        if not pts then return false end
+        local r2 = CAMP_NEAR * CAMP_NEAR
+        for i = 1, #pts - 1, 2 do
+            local dx, dy = pts[i] - x, pts[i + 1] - y
+            if dx * dx + dy * dy <= r2 then return true end
+        end
+        return false
+    end
+
+    local function tryCamp(tip)
+        local S = addon.db and addon.db.settings
+        if not S or S.campBenefitTooltip == false then return end
+        if tip:GetUnit() then return end
+        if tip.GetItem and tip:GetItem() then return end
+        local tname = tip:GetName()
+        if not tname then return end
+        local fs = _G[tname .. "TextLeft1"]
+        local name = fs and fs:GetText()
+        if not name or IsSecret(name) or name == "" then return end
+        local itemID = campItem(name)
+        if not itemID or nearWorldTwin(name) then return end
+        local text = campBenefit(itemID)
+        if not text then return end
+        for i = 2, tip:NumLines() do
+            local line = _G[tname .. "TextLeft" .. i]
+            local txt = line and line:GetText()
+            if txt and not IsSecret(txt) and txt == text then return end
+        end
+        tip:AddLine(text, 0.1, 1, 0.1, true)
+        tip:Show()
+    end
+
     local acc = 0
     GameTooltip:HookScript("OnUpdate", function(tip, elapsed)
         acc = acc + (elapsed or 0)
         if acc < 0.05 then return end        -- ~20x/sec; re-adds fast if the client wipes it
         acc = 0
         tryAppend(tip)
+        tryCamp(tip)
     end)
 end
 
@@ -3084,7 +3198,7 @@ function TSF:BuildToolbar(parent)
         return "Sort: " .. state.sortBy .. arrow
     end
     self.sortDropdown = CreateDropdown(parent, 140,
-        {"Category", "Skill-ups", "Name", "Profit"}, "Category",
+        {"Category", "Skill-ups", "Name", "Profit", "Rarity"}, "Category",
         function(val)
             if state.sortBy == val then
                 state.sortAsc = not state.sortAsc
@@ -3510,7 +3624,7 @@ function TSF:UpdateListRows()
                 row.headerBg:Show()
             else
                 -- Indent recipes under subcategories (only in Category sort)
-                local recipeIndent = (state.sortBy == "Category" and entry.subcategory) and 14 or 0
+                local recipeIndent = ((state.sortBy == "Category" or state.sortBy == "Rarity") and entry.subcategory) and 14 or 0
 
                 -- Icons resolve lazily, HERE, for the ~20 rows actually on
                 -- screen: the item icon for a missing recipe (LoadRecipes used
@@ -7025,8 +7139,7 @@ function TSF:BuildSettingsPanel(parent)
 
     -- Window style (UI/Theme.lua). The windows are built once per session,
     -- so a new style applies after a reload; changing it offers one.
-    local WS_LABELS = { classic = "Classic", modern = "Modern", game = "Match the game" }
-    local WS_ORDER = { "classic", "modern", "game" }
+    local WS_LABELS, WS_ORDER = Theme.LOOK_LABELS, Theme.LOOK_ORDER
     local wsOpts = {}
     for i, k in ipairs(WS_ORDER) do wsOpts[i] = WS_LABELS[k] end
     local styleDD = CreateDropdown(content, 322, wsOpts,
@@ -7044,7 +7157,7 @@ function TSF:BuildSettingsPanel(parent)
     -- WoW: Forever has no look of its own yet (ui-themes phase 3), so Match
     -- the game shows there but cannot be picked.
     if addon.Source.flavor == "forever" then
-        styleDD:SetOptionDisabled(WS_LABELS.game, "Coming to WoW: Forever in a later update.")
+        styleDD:SetOptionDisabled(WS_LABELS.game, Theme.GAME_LOOK_NOTE)
     end
     self.windowStyleDD = styleDD
     yLeft = yLeft - 34
@@ -7457,6 +7570,14 @@ function TSF:BuildSettingsPanel(parent)
     end)
     lootUnlearnedCB:SetScript("OnLeave", function() GameTooltip:Hide() end)
     yRight = yRight - 24
+
+    -- A placed camp item's benefit on its tooltip (2.2.2, m4ru). Only WoW:
+    -- Forever has camping, so TBC Anniversary does not show the box.
+    if addon.CampWorld then
+        yRight = yRight - 2
+        MakeCheckbox("Camp item benefits on tooltips", "campBenefitTooltip", yRight, COL_RIGHT)
+        yRight = yRight - 24
+    end
 
     -- "Show for unlearned professions" and "Skinning yield" are SUB-options of
     -- "Gather skill on tooltips" -- disable/grey them when the parent is off
@@ -8120,7 +8241,9 @@ function TSF:LoadRecipes(unknown)
     -- Sort (v6: secondary sort for all modes; v9: ascending/descending toggle)
     local sortBy = state.sortBy
     local asc = state.sortAsc
-    local useCategories = (sortBy == "Category") and not vendorView
+    -- Rarity keeps the category headers and sorts inside each one
+    local byRarity = (sortBy == "Rarity") and not vendorView
+    local useCategories = (sortBy == "Category" or byRarity) and not vendorView
 
     -- Skill Ups duration helper (shared by Category and Skill Ups sorts)
     local sk = state.skillLevel or 0
@@ -8134,18 +8257,51 @@ function TSF:LoadRecipes(unknown)
         else return 0 end
     end
 
+    -- Sort: Rarity. The baked table (Data/Rarity.lua, Data/Forever/Rarity.lua)
+    -- first, then the game's own once it has the item. A recipe that makes
+    -- no item (an enchant) has none and sorts last either way.
+    local rarity
+    if byRarity then
+        rarity = {}
+        local R = addon.Rarity
+        local dbProf = RDB and RDB.data[state.profName]
+        for _, r in ipairs(filtered) do
+            -- A known recipe whose link was not read has no itemID: the data's
+            local id = r.itemID
+            if not id and dbProf and dbProf[r.name] then id = dbProf[r.name].itemID end
+            if id and id ~= 0 then
+                local q = R and R[id]
+                if q == nil and GetItemInfo then q = select(3, GetItemInfo(id)) end
+                if type(q) == "number" then rarity[r] = q end
+            end
+        end
+    end
+
     if useCategories then
         -- Category > subcategory > (known: difficulty > duration | missing: skillReq) > name
+        -- Rarity: category > subcategory (both A to Z) > rarity > known > name
+        local catAsc = asc or byRarity
         table.sort(filtered, function(a, b)
             if a.category ~= b.category then
-                if asc then return (a.category or "") < (b.category or "")
+                if catAsc then return (a.category or "") < (b.category or "")
                 else return (a.category or "") > (b.category or "") end
             end
             if a.subcategory ~= b.subcategory then
-                if not a.subcategory then return asc end
-                if not b.subcategory then return not asc end
-                if asc then return a.subcategory < b.subcategory
+                if not a.subcategory then return catAsc end
+                if not b.subcategory then return not catAsc end
+                if catAsc then return a.subcategory < b.subcategory
                 else return a.subcategory > b.subcategory end
+            end
+            if byRarity then
+                -- Best first (^), worst first (v); no rarity last either way
+                local qa, qb = rarity[a], rarity[b]
+                if qa ~= qb then
+                    if qa == nil then return false end
+                    if qb == nil then return true end
+                    if asc then return qa > qb else return qa < qb end
+                end
+                if a.isKnown ~= b.isKnown then return a.isKnown end
+                return a.name < b.name
             end
             -- Known recipes sort above missing within same category
             if a.isKnown ~= b.isKnown then return a.isKnown end

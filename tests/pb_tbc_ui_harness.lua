@@ -28,9 +28,16 @@ ProfBuddyDB = { settings = { windowStyle = LOOK } }
 FIRE("ADDON_LOADED", "ProfessionBuddy")
 -- 2.1.1: the login line waits for PLAYER_LOGIN (ElvUI drops earlier lines)
 EXPECT(not PRINTED("loaded. Type /pb or /profbuddy."), "the loaded line printed at ADDON_LOADED")
+-- U31 (at the end) checks the look picker this login shows
+local loginPopups = {}
+local keepLoginDialogs, keepLoginShow = rawget(_G, "StaticPopupDialogs"), StaticPopup_Show
+StaticPopupDialogs = {}
+StaticPopup_Show = function(which) loginPopups[#loginPopups + 1] = which end
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
+local loginPicker = StaticPopupDialogs.PROFBUDDY_PICK_LOOK
+StaticPopupDialogs, StaticPopup_Show = keepLoginDialogs, keepLoginShow
 for _, l in ipairs(PRINTS) do EXPECT(not l:find("failed to load", 1, true), "module init error: " .. l) end
 EXPECT(PRINTED("loaded. Type /pb or /profbuddy."), "no loaded line")
 local PB = ProfBuddy
@@ -1552,4 +1559,198 @@ end
 U30()
 print("  PASS " .. TAG .. "30 2.2.1 (Bran): a 25 s cast keeps the strip past the 10-second watchdog on TBC Anniversary, every cast of the batch; a refused craft still stops at 10 s")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 30)")
+-- U31: 2.2.2 look picker on TBC Anniversary. Shown once at login, Match
+-- the game pickable (Classic here); a pick that changes the look in use
+-- reloads, the same look does not
+do
+    local Theme, S = PB.Theme, PB.db.settings
+    EXPECT(#loginPopups == 1 and loginPopups[1] == "PROFBUDDY_PICK_LOOK",
+           "login popups: " .. table.concat(loginPopups, ", "))
+    local dlg = loginPicker
+    EXPECT(dlg.button1 == "Classic" and dlg.button2 == "Modern" and dlg.button3 == "Match the game", "picker buttons")
+    EXPECT(dlg.text:find("Match the game: the game's own look, Classic on TBC Anniversary.", 1, true), "picker text: " .. dlg.text)
+    local disabled = false
+    dlg.OnShow({ GetButton = function() return { Disable = function() disabled = true end } end })
+    EXPECT(not disabled, "Match the game greyed on TBC Anniversary")
+    local reloads = 0
+    local keepReload = ReloadUI
+    ReloadUI = function() reloads = reloads + 1 end
+    dlg.OnButton3()
+    EXPECT(S.lookAsked == 1 and S.windowStyle == "game", "Match the game not saved: " .. tostring(S.windowStyle))
+    EXPECT(reloads == (LOOK == "classic" and 0 or 1), "Match the game over " .. LOOK .. ": " .. reloads .. " reloads")
+    reloads = 0
+    Theme._lookReloading = nil
+    dlg[LOOK == "classic" and "OnButton1" or "OnButton2"]()
+    EXPECT(reloads == 0 and S.windowStyle == LOOK, "the same look reloaded")
+    dlg[LOOK == "classic" and "OnButton2" or "OnButton1"]()
+    EXPECT(reloads == 1 and S.windowStyle ~= LOOK, "another look did not reload")
+    ReloadUI = keepReload
+    S.windowStyle, Theme._lookReloading = LOOK, nil
+    EXPECT(Theme:Name() == LOOK, "the session look changed before the reload")
+end
+print("  PASS " .. TAG .. "31 2.2.2 look picker: once at login, Match the game pickable on TBC Anniversary (Classic), a new look reloads and the same look does not")
+
+-- U32/C32 2.2.2: camp item tooltips are WoW: Forever only. TBC
+-- Anniversary's data has no Camping recipes, so a "Camp Chair" tooltip gets
+-- nothing even with a game that would answer.
+do
+    for prof, recipes in pairs(PB.RecipeDB.data) do
+        for name, r in pairs(recipes) do
+            EXPECT(r.category ~= "Camping", "a Camping recipe on TBC Anniversary: " .. prof .. " " .. name)
+        end
+    end
+    local onUpdate = GameTooltip._h.OnUpdate
+    EXPECT(type(onUpdate) == "function", "no GameTooltip OnUpdate hook")
+    local lines, asked = {}, 0
+    for i = 1, 5 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] end)
+    end
+    rawset(GameTooltip, "GetUnit", function() return nil end)
+    rawset(GameTooltip, "GetItem", function() return nil end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    C_Item = C_Item or {}
+    C_Spell = C_Spell or {}
+    local keepIS, keepIN, keepSD = C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Spell.GetSpellDescription
+    C_Item.GetItemSpell = function() asked = asked + 1; return "Use", 1307229 end
+    C_Item.GetItemNameByID = function() asked = asked + 1; return "Camp Chair" end
+    C_Spell.GetSpellDescription = function() asked = asked + 1; return "Assembles a camp chair." end
+    lines = { "Camp Chair" }
+    for _ = 1, 3 do onUpdate(GameTooltip, 1) end
+    EXPECT(#lines == 1 and asked == 0, "Camp Chair on TBC Anniversary: " .. table.concat(lines, " / ") .. ", " .. asked .. " calls")
+    C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Spell.GetSpellDescription = keepIS, keepIN, keepSD
+end
+print("  PASS " .. TAG .. "32 2.2.2: no camp item tooltip line on TBC Anniversary (no Camping recipes)")
+
+-- U33/C33 2.2.2 TEST-d: TBC Anniversary has no camping, so Settings does
+-- not show "Camp item benefits on tooltips".
+do
+    EXPECT(PB.CampWorld == nil, "CampWorld loads on TBC Anniversary")
+    TSF:OpenSettings("main")
+    for _, cb in ipairs(TSF.settingsCheckboxes or {}) do
+        EXPECT(cb.settingKey ~= "campBenefitTooltip", "the camp box shows on TBC Anniversary")
+    end
+end
+print("  PASS " .. TAG .. "33 2.2.2: no Camp item benefits box in Settings on TBC Anniversary")
+
+-- U34/C34 2.2.2 TEST-e: Sort: Rarity on TBC Anniversary, from the baked
+-- table (Data/Rarity.lua) and the game's own for an item it lacks:
+-- category headers kept, best first and then worst first, no rarity last
+-- (Enchanting's enchants make no item), same rarity known first, then name.
+do
+    local st = TSF.state
+    local R = PB.Rarity
+    local n = 0
+    for _ in pairs(R or {}) do n = n + 1 end
+    EXPECT(R and R[1251] == 1 and R[4239] == 1 and R[29525] == 4 and n > 1900,
+           "TBC Anniversary rarity table: " .. n .. " items")
+    local function q(e)
+        local id = e.itemID
+        if not id then local d = PB.RecipeDB.data[st.profName] and PB.RecipeDB.data[st.profName][e.name]; id = d and d.itemID end
+        if not id or id == 0 then return nil end
+        local v = R[id]
+        if v == nil then v = select(3, GetItemInfo(id)) end
+        return type(v) == "number" and v or nil
+    end
+    local function check(asc, what)
+        local heads, rows, kinds, seen, lastCat, prev, nilSeen, nilRows = 0, 0, 0, {}, nil, nil, false, 0
+        for _, e in ipairs(st.recipes) do
+            if e.isHeader then
+                heads = heads + 1
+                if e.headerType ~= "subcategory" then
+                    EXPECT(not lastCat or lastCat < e.name, what .. ": category order " .. tostring(lastCat) .. " / " .. e.name)
+                    lastCat = e.name
+                end
+                prev, nilSeen = nil, false
+            else
+                rows = rows + 1
+                local qe = q(e)
+                if qe and not seen[qe] then seen[qe] = true; kinds = kinds + 1 end
+                if not qe then nilRows = nilRows + 1 end
+                if prev then
+                    local qp = q(prev)
+                    EXPECT(not (nilSeen and qe), what .. ": " .. e.name .. " after a recipe with no rarity")
+                    if qp and qe and qp ~= qe then
+                        EXPECT((asc and qp > qe) or (not asc and qp < qe), what .. ": " .. prev.name .. " before " .. e.name)
+                    elseif qp == qe then
+                        if prev.isKnown ~= e.isKnown then
+                            EXPECT(prev.isKnown, what .. ": missing " .. prev.name .. " before known " .. e.name)
+                        else
+                            EXPECT(prev.name < e.name, what .. ": name order " .. prev.name .. " / " .. e.name)
+                        end
+                    end
+                end
+                if not qe then nilSeen = true end
+                prev = e
+            end
+        end
+        EXPECT(heads > 1 and rows > 10 and kinds >= 2, what .. ": " .. heads .. " headers, " .. rows .. " rows, " .. kinds .. " rarities")
+        return nilRows
+    end
+    local function pick()
+        local dd, btn = TSF.sortDropdown, nil
+        for _, b in ipairs(dd.optionBtns) do if b.value == "Rarity" then btn = b end end
+        EXPECT(btn, "no Rarity in the Sort menu")
+        btn:GetScript("OnClick")(btn)
+        return dd, btn
+    end
+
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    OPEN_TRADE()
+    st.showTab, st.searchText, st.filterCat, st.filterDiff, st.collapsed = "all", "", "All", "All", {}
+    st.sortBy, st.sortAsc = "Category", true
+    TSF:RefreshRecipeList()
+    local dd, btn = pick()
+    EXPECT(st.sortBy == "Rarity" and st.sortAsc and dd.btnText:GetText() == "Sort: Rarity ^", "picking Rarity: " .. tostring(dd.btnText:GetText()))
+    check(true, "Leatherworking best first")
+    btn:GetScript("OnClick")(btn)
+    EXPECT(not st.sortAsc and dd.btnText:GetText() == "Sort: Rarity v", "Rarity again: " .. tostring(dd.btnText:GetText()))
+    check(false, "Leatherworking worst first")
+
+    -- an item the table lacks: last until the game has it, then with its rarity
+    st.sortAsc = true
+    TSF:RefreshRecipeList()
+    local epic
+    for _, e in ipairs(st.recipes) do if not e.isHeader and q(e) == 4 then epic = e; break end end
+    EXPECT(epic, "no Epic in the Leatherworking list")
+    local eid = epic.itemID or PB.RecipeDB.data[st.profName][epic.name].itemID
+    local keep = R[eid]
+    R[eid] = nil
+    TSF:RefreshRecipeList()
+    local function after(name)
+        for i, e in ipairs(st.recipes) do if not e.isHeader and e.name == name then return st.recipes[i + 1] end end
+    end
+    local nx = after(epic.name)
+    EXPECT(not nx or nx.isHeader or not q(nx), epic.name .. " with no rarity is not last in its group")
+    ITEM_NAMES[eid] = epic.name   -- the game now has it, as Common (the test client's)
+    TSF:RefreshRecipeList()
+    EXPECT(q(epic) == 1, "the game's rarity not read: " .. tostring(q(epic)))
+    check(true, "the game's own rarity")
+    ITEM_NAMES[eid], R[eid] = nil, keep
+
+    -- Enchanting: enchants make no item, so they go last, both ways
+    st.sortBy, st.sortAsc = "Category", true
+    dd:SetValue("Sort: Category ^", "Category")
+    TSF.frame:Hide(); FLUSH()
+    CLOSE_TRADE()
+    OPEN_CRAFT()
+    st.showTab, st.searchText, st.filterCat, st.filterDiff, st.collapsed = "all", "", "All", "All", {}
+    TSF:RefreshRecipeList()
+    pick()
+    local nils = check(true, "Enchanting best first")
+    EXPECT(nils > 0, "no enchant in the Enchanting list")
+    btn = nil
+    for _, b in ipairs(dd.optionBtns) do if b.value == "Rarity" then btn = b end end
+    btn:GetScript("OnClick")(btn)
+    check(false, "Enchanting worst first")
+    st.sortBy, st.sortAsc = "Category", true
+    dd:SetValue("Sort: Category ^", "Category")
+    TSF:RefreshRecipeList()
+    TSF.frame:Hide(); FLUSH()
+    CLOSE_CRAFT()
+end
+print("  PASS " .. TAG .. "34 2.2.2 TEST-e: Sort: Rarity on TBC Anniversary: category headers kept, best first then worst first, same rarity known first then by name, enchants last both ways; an item the table lacks is last until the game has it, then sorts by the game's rarity")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 34)")

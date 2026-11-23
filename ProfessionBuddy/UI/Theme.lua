@@ -260,6 +260,101 @@ function Theme:OfferReload()
     StaticPopup_Show("PROFBUDDY_RELOAD_STYLE")
 end
 
+-- The names the look picker and the Settings dropdown show.
+Theme.LOOK_LABELS = { classic = "Classic", modern = "Modern", game = "Match the game" }
+Theme.LOOK_ORDER = { "classic", "modern", "game" }
+Theme.GAME_LOOK_NOTE = "Coming to WoW: Forever in a later update."
+
+-- The look picker (m4ru's idea; Zorden asked for it too): a popup at login
+-- that asks everyone once which look PB's windows use. LOOK_ASK goes up
+-- when an update should ask everyone again; windowStyle can't tell, since
+-- Core.lua fills it in for every player. Escape leaves it unpicked, and it
+-- asks again at the next login. It waits out combat, and the Forever
+-- recipe question (Knowledge.lua) waits for it, so the two never stack.
+local LOOK_ASK = 1
+local PICKER = "PROFBUDDY_PICK_LOOK"
+
+-- True while the picker has yet to show or answer this session.
+function Theme:LookPending()
+    local s = addon.db and addon.db.settings
+    return s ~= nil and (s.lookAsked or 0) < LOOK_ASK and not self._lookClosed
+end
+
+-- Saves the pick; a pick that changes the look in use reloads, as the
+-- picker's text warns.
+function Theme:PickLook(key)
+    local s = addon.db.settings
+    if key == "game" and addon.Source.flavor == "forever" then return end
+    s.lookAsked = LOOK_ASK
+    local before = self:Name()
+    s.windowStyle = key
+    local tsf = addon.TradeSkillFrame
+    if tsf and tsf.windowStyleDD then tsf.windowStyleDD:SetValue(self.LOOK_LABELS[key]) end
+    if resolve() ~= before then
+        self._lookReloading = true
+        ReloadUI()
+    end
+end
+
+function Theme:AskLook()
+    if not addon.started or not self:LookPending() or self._lookShown then return end
+    if InCombatLockdown() then
+        self._lookAfterCombat = true
+        return
+    end
+    self._lookShown = true
+    local forever = addon.Source.flavor == "forever"
+    if not StaticPopupDialogs[PICKER] then
+        StaticPopupDialogs[PICKER] = {
+            text = "Pick a look for ProfessionBuddy's windows.\n\n"
+                .. "Classic: drawn with the game's own art.\n\n"
+                .. "Modern: PB's look so far.\n\n"
+                .. (forever and ("Match the game: " .. self.GAME_LOOK_NOTE:gsub("^%u", string.lower))
+                    or "Match the game: the game's own look, Classic on TBC Anniversary.")
+                .. "\n\nA look other than the one in use reloads your interface. "
+                .. "You can change it later in Settings, Window style.",
+            button1 = self.LOOK_LABELS.classic,
+            button2 = self.LOOK_LABELS.modern,
+            button3 = self.LOOK_LABELS.game,
+            selectCallbackByIndex = true,
+            OnButton1 = function() Theme:PickLook("classic") end,
+            OnButton2 = function() Theme:PickLook("modern") end,
+            OnButton3 = function() Theme:PickLook("game") end,
+            -- Match the game shows on Forever but can't be picked there
+            OnShow = function(dialog)
+                if not forever then return end
+                local b = dialog.GetButton and dialog:GetButton(3) or dialog.button3
+                if b then b:Disable() end
+            end,
+            OnHide = function()
+                Theme._lookClosed = true
+                if not Theme._lookReloading and addon.Knowledge and addon.Knowledge._recipeAfterLook then
+                    addon.Knowledge._recipeAfterLook = nil
+                    addon.Knowledge:AskRecipeMode()
+                end
+            end,
+            noCancelOnEscape = true,
+            OnEscape = function() end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3,
+        }
+    end
+    StaticPopup_Show(PICKER)
+end
+
+-- After the login screen, so the popup sits over the game, not the load.
+addon:RegisterEvent("PLAYER_LOGIN", function()
+    C_Timer.After(2, function() Theme:AskLook() end)
+end)
+addon:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+    if Theme._lookAfterCombat then
+        Theme._lookAfterCombat = nil
+        Theme:AskLook()
+    end
+end)
+
 -- A role missing from the look is a typo in PB, never a player's state:
 -- fail at the call site instead of drawing nothing.
 local function look(kind, role)

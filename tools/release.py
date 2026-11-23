@@ -47,6 +47,7 @@ Before a real upload (not --dry-run), also:
   tools/waylaid_db.py --check         Waylaid crates baked from the Forever recipe data's build
   tools/writs_db.py --check           the writ harvest matches the game's Craftsman's Writs
   tools/yield_db.py --check           every recipe's count per craft is the game's
+  tools/rarity_db.py --check          every crafted item's rarity is the game's
   tools/bake_forever_db2.py --check   Forever recipe data is the newest client build
   Core.lua             refuses to build while a dev addon.BUILD stamp is set
   LICENSE              the addon folder's copy is refreshed from the root copy
@@ -449,7 +450,9 @@ def cf_upload(token, project_id, zip_path, metadata):
 def main():
     ap = argparse.ArgumentParser(description="Build, verify, and release ProfessionBuddy.")
     ap.add_argument("--addon-dir", default=default_addon_dir())
-    ap.add_argument("--out", default=None, help="output zip path (default: <addon-dir>/../%s.zip)" % ADDON_NAME)
+    ap.add_argument("--out", default=None,
+                    help="output zip path (default: <addon-dir>/../%s-<version>.zip); an upload "
+                    "needs that file name, since CurseForge shows it" % ADDON_NAME)
     ap.add_argument("--dry-run", action="store_true", help="build + verify only; no upload")
     ap.add_argument("--project-id", default=os.environ.get("CF_PROJECT_ID", CF_PROJECT_ID_DEFAULT))
     # No default here on purpose: with --list-game-versions, omitting it is the
@@ -496,6 +499,15 @@ def main():
     if corev is not None and corev != tocv:
         die("version mismatch: .toc says %s but Core.lua says %s -- bump both before releasing" % (tocv, corev))
 
+    # CurseForge shows the uploaded file under the zip's own name, so a real
+    # upload must be ProfessionBuddy-<version>.zip (2.2.1 went up as
+    # ProfessionBuddy-2.2.1-uploaded.zip). Checked before the gates so a wrong
+    # name fails at once.
+    zip_name = "%s-%s.zip" % (ADDON_NAME, tocv)
+    if not args.dry_run and args.out and os.path.basename(args.out) != zip_name:
+        die("--out must be named %s for an upload: CurseForge shows the file under "
+            "that name (got %s)" % (zip_name, os.path.basename(args.out)))
+
     assert_no_build_stamp(addon_dir)
     sync_license(root, addon_dir)
 
@@ -521,7 +533,7 @@ def main():
         run_gate(os.path.join(tools_dir(), "check_globals.py"),
                  ["--addon-dir", addon_dir], "tools/check_globals.py (global writes)")
 
-    out_zip = args.out or os.path.normpath(os.path.join(addon_dir, "..", ADDON_NAME + ".zip"))
+    out_zip = args.out or os.path.normpath(os.path.join(addon_dir, "..", zip_name))
     n = build_zip(addon_dir, out_zip, root)
     log("Built %s (%d files)" % (out_zip, len(n)))
 
@@ -556,6 +568,8 @@ def main():
                  "tools/writs_db.py --check (Craftsman's Writs harvest matches the game's writs)")
         run_gate(os.path.join(tools_dir(), "yield_db.py"), ["--check", "--addon-dir", addon_dir],
                  "tools/yield_db.py --check (items per craft: the game's spell table, both clients)")
+        run_gate(os.path.join(tools_dir(), "rarity_db.py"), ["--check", "--addon-dir", addon_dir],
+                 "tools/rarity_db.py --check (crafted item rarity: the game's item table, both clients)")
         forever = os.path.join(tools_dir(), "bake_forever_db2.py")
         if args.allow_older_forever_data:
             log("Gate: tools/bake_forever_db2.py --check (Forever recipe data build)")

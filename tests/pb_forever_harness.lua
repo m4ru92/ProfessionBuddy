@@ -35,6 +35,10 @@ ProfBuddyDB = nil
 FIRE("ADDON_LOADED", "ProfessionBuddy")
 -- 2.1.1: the login line waits for PLAYER_LOGIN (ElvUI drops earlier lines)
 EXPECT(not PRINTED("loaded. Type /pb or /profbuddy."), "the loaded line printed at ADDON_LOADED")
+-- F114 (below) checks the look picker this login shows
+local loginPopups = {}
+StaticPopupDialogs = {}
+StaticPopup_Show = function(which) loginPopups[#loginPopups + 1] = which end
 FIRE("PLAYER_LOGIN")
 FIRE("PLAYER_ENTERING_WORLD", true, false)
 FLUSH()
@@ -57,6 +61,80 @@ EXPECT(lw and lw.skillLevel == 1 and lw.maxSkill == 75, "Leatherworking 1/75 not
 EXPECT(sk and sk.skillLevel == 43, "Skinning 43 not recorded")
 EXPECT(DS:GetProfession(nil, "Cooking"), "Cooking not recorded")
 print("  PASS F2 startup: every module starts, no not-supported line, professions and skill levels recorded")
+
+-- F114: 2.2.2 look picker. At login PB asks once which look its windows
+-- use (Classic, Modern, Match the game; Match the game greyed on
+-- Forever). The Forever recipe question waits until it closes; Escape
+-- leaves it unpicked for the next login; a pick that changes the look in
+-- use reloads, the same look does not; it waits out combat; Settings'
+-- Window style follows the pick
+do
+    local Theme, KN, S = ProfBuddy.Theme, ProfBuddy.Knowledge, ProfBuddy.db.settings
+    local TSF = ProfBuddy.TradeSkillFrame
+    EXPECT(#loginPopups == 1 and loginPopups[1] == "PROFBUDDY_PICK_LOOK",
+           "login popups: " .. table.concat(loginPopups, ", "))
+    local dlg = StaticPopupDialogs.PROFBUDDY_PICK_LOOK
+    EXPECT(dlg.button1 == "Classic" and dlg.button2 == "Modern" and dlg.button3 == "Match the game", "picker buttons")
+    EXPECT(dlg.text:find("Match the game: coming to WoW: Forever in a later update.", 1, true)
+           and dlg.text:find("reloads your interface", 1, true)
+           and dlg.text:find("You can change it later in Settings, Window style.", 1, true), "picker text: " .. dlg.text)
+    EXPECT(dlg.selectCallbackByIndex and dlg.noCancelOnEscape and not dlg.OnCancel and not dlg.OnAccept,
+           "a button or Escape could reach the wrong pick")
+    local disabled = false
+    local b3 = { Disable = function() disabled = true end }
+    dlg.OnShow({ GetButton = function(_, i) return i == 3 and b3 or nil end })
+    EXPECT(disabled, "Match the game is pickable on Forever")
+    -- the recipe question waits for the picker, then follows it
+    local shown = {}
+    StaticPopup_Show = function(which) shown[#shown + 1] = which end
+    S.foreverRecipes, KN._asked = nil, nil
+    KN:AskRecipeMode()
+    EXPECT(#shown == 0 and KN._recipeAfterLook, "the recipe question stacked on the picker")
+    dlg.OnEscape()
+    dlg.OnHide()
+    EXPECT(shown[1] == "PROFBUDDY_FOREVER_RECIPES" and #shown == 1, "no recipe question after the picker: " .. table.concat(shown, ", "))
+    EXPECT(S.lookAsked == nil and S.windowStyle == "modern", "Escape picked a look")
+    EXPECT(not Theme:LookPending(), "the picker still pending this session after Escape")
+    -- the next login asks again; in combat it waits for combat to end
+    Theme._lookShown, Theme._lookClosed, KN._asked = nil, nil, nil
+    shown = {}
+    local keepICL = InCombatLockdown
+    InCombatLockdown = function() return true end
+    Theme:AskLook()
+    EXPECT(#shown == 0, "the picker showed in combat")
+    InCombatLockdown = keepICL
+    FIRE("PLAYER_REGEN_ENABLED")
+    EXPECT(shown[1] == "PROFBUDDY_PICK_LOOK", "the picker did not show after combat")
+    -- the same look: saved, no reload; Settings follows
+    local reloads = 0
+    local keepReload = ReloadUI
+    ReloadUI = function() reloads = reloads + 1 end
+    TSF:OpenSettings("main")
+    local dd = TSF.windowStyleDD
+    dlg.OnButton2()
+    EXPECT(S.lookAsked == 1 and S.windowStyle == "modern" and reloads == 0, "Modern over Modern: " .. reloads .. " reloads")
+    -- Match the game can't be picked on Forever, even by a call
+    dlg.OnButton3()
+    EXPECT(S.windowStyle == "modern" and reloads == 0, "Match the game picked on Forever")
+    -- another look: saved, Settings shows it, reload; no recipe question before it
+    shown = {}
+    KN._asked, KN._recipeAfterLook = nil, true
+    dlg.OnButton1()
+    EXPECT(S.windowStyle == "classic" and reloads == 1, "Classic: " .. tostring(S.windowStyle) .. ", " .. reloads .. " reloads")
+    EXPECT(dd.selectedValue == "Classic", "Settings reads " .. tostring(dd.selectedValue))
+    dlg.OnHide()
+    EXPECT(#shown == 0, "a popup before the reload: " .. table.concat(shown, ", "))
+    EXPECT(Theme:Name() == "modern", "the session look changed before the reload")
+    TSF:CloseSettings()
+    -- after the reload: asked, so no picker
+    Theme._lookShown, Theme._lookClosed, Theme._lookReloading = nil, nil, nil
+    Theme:AskLook()
+    EXPECT(#shown == 0 and not Theme:LookPending(), "asked again after a pick")
+    ReloadUI = keepReload
+    S.windowStyle, S.foreverRecipes, KN._asked, KN._recipeAfterLook = "modern", nil, nil, nil
+    dd:SetValue("Modern")   -- the reload would have rebuilt it
+end
+print("  PASS F114 2.2.2 look picker: once at login, Match the game greyed on Forever, the recipe question after it, Escape asks next login, a new look reloads and the same look does not, waits out combat, Settings follows")
 
 -- F3: Source/Forever.lua meets the contract with the modern events and frame
 local S = ProfBuddy.Source
@@ -4789,6 +4867,9 @@ do
            "price settings defaults")
     for _, toc in ipairs({ "ProfessionBuddy_Forever.toc", "ProfessionBuddy_Mainline.toc" }) do
         local src = assert(io.open(PB_BASE .. "/" .. toc)):read("*a")
+        -- 2.2.2 TEST-e: the rarity table for Sort: Rarity, Forever's own
+        EXPECT(src:find("\nData/Forever/Rarity.lua", 1, true) and not src:find("\nData/Rarity.lua", 1, true),
+               toc .. ": Forever rarity table")
         EXPECT(src:find("## OptionalDeps: Auctionator, TradeSkillMaster", 1, true)
                and src:find("\nData/Forever/VendorPrices.lua", 1, true) and src:find("\nPrices.lua", 1, true)
                and not src:find("\nData/VendorPrices.lua", 1, true), toc .. ": prices files or OptionalDeps")
@@ -6965,6 +7046,20 @@ local function F101()
     TS_LIST_READY(); FLUSH()
     EXPECT(TSF.frame:IsShown() and st.profName == "Cooking" and not TSF._craftingActive and not TSF._parked,
            "another profession: " .. tostring(st.profName) .. " tracking " .. tostring(TSF._craftingActive))
+    -- interrupted in PB's own window, then another profession opens there:
+    -- the box keeps what was left, the other profession starts at 1, and so
+    -- does the first one opened again (2.2.2, m4ru in game 11-23: 2 left of
+    -- 3 Cured Medium Hide, then Skinning read 1)
+    start("interrupted, then another profession")
+    cast("UNIT_SPELLCAST_INTERRUPTED")
+    EXPECT(not TSF._craftingActive and TSF.qtyBox:GetText() == "4",
+           "interrupted: the box reads " .. tostring(TSF.qtyBox:GetText()))
+    TS_REOPEN(185); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.profName == "Cooking" and TSF.qtyBox:GetText() == "1",
+           "interrupted, then Cooking: " .. tostring(st.profName) .. " x" .. tostring(TSF.qtyBox:GetText()))
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    EXPECT(st.profName == "Leatherworking" and TSF.qtyBox:GetText() == "1",
+           "interrupted, then back in Leatherworking: x" .. tostring(TSF.qtyBox:GetText()))
     -- the same name on the other channel is not the batch's window
     start("other channel")
     EXPECT(TSF:IsCraftingIn("Leatherworking", false) and not TSF:IsCraftingIn("Leatherworking", true)
@@ -6974,7 +7069,7 @@ local function F101()
     TSF.ArmCraftWatchdog = keepArm
 end
 F101()
-print("  PASS F101 2.2.0 TEST-c: a batch keeps counting down through every way back into its profession (Back after each bottom tab and each /pb command, the parked icon, your own Shuffle row, Back in combat); a batch that ends or is interrupted while parked, or another profession opening, stops it")
+print("  PASS F101 2.2.0 TEST-c: a batch keeps counting down through every way back into its profession (Back after each bottom tab and each /pb command, the parked icon, your own Shuffle row, Back in combat); a batch that ends or is interrupted while parked, or another profession opening, stops it; after an interrupt the next profession opened, and the same one again, start at 1")
 
 -- F102 2.2.0 TEST-c (m4ru): every column of the Shuffle tab and of Crates
 -- and writs sorts, a second click the other way, the header shows ^ or v,
@@ -8323,4 +8418,336 @@ end
 F113()
 print("  PASS F113 2.2.1 (Bran): a 60 s cast keeps the strip past the 10-second watchdog, every cast of the batch; without cast data the recipe's cast time; a refused craft still stops at 10 s")
 
-print("ALL FOREVER TESTS PASS (113)")
+-- F115 2.2.2 (m4ru): placed camp items. Their tooltip shows the item's
+-- name; PB adds the benefit, the item's use spell text read from the game,
+-- up to its first blank line and without "Requires a Campfire nearby.".
+-- Empty text (the spell not loaded yet) adds nothing and asks the game to
+-- load it; the line comes on a later pass, once per tooltip. The kit's own
+-- name works too, item and unit tooltips get nothing, and it does not hang
+-- on the gathering setting.
+local function F115()
+    local S = ProfBuddy.db.settings
+    -- F93 clicks every Settings box, this one too
+    S.campBenefitTooltip = true
+    local lines, wraps = {}, {}
+    for i = 1, 30 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] end)
+    end
+    local unit, item
+    rawset(GameTooltip, "GetUnit", function() return unit end)
+    rawset(GameTooltip, "GetItem", function() return item end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t, r, g, b, wrap)
+        lines[#lines + 1] = t; wraps[#lines] = { r, g, b, wrap } end)
+    rawset(GameTooltip, "Show", function() end)
+    local onUpdate = GameTooltip._h.OnUpdate
+    local function hover(name, passes)
+        lines, wraps = { name }, {}
+        for _ = 1, passes or 1 do onUpdate(GameTooltip, 1) end
+        return lines
+    end
+    local USE = { [279979] = 1307229, [279968] = 1307244, [279981] = 1307227 }
+    local DESC = {
+        [1307229] = "",
+        [1307244] = "Lays out a first aid kit. Party members nearby gain 8 increased Stamina, mutually exclusive with Power Word: Fortitude. Requires a Campfire nearby. Lasts 1 hour.",
+        [1307227] = "Builds a basic campfire. Cooking nearby is faster.\r\n\r\nAll camping features share a cooldown of 1 hour.",
+    }
+    local KIT = nil
+    local spellAsks, itemAsks = {}, {}
+    -- far from every world object with a camp name (F116 covers those)
+    local realPos = UnitPosition
+    UnitPosition = function() return 9000, 9000, 0, 1 end
+    local real = { C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Item.RequestLoadItemDataByID,
+                   C_Spell.GetSpellDescription, C_Spell.RequestLoadSpellData }
+    C_Item.GetItemSpell = function(id) if USE[id] then return "Use", USE[id] end end
+    C_Item.GetItemNameByID = function(id) if id == 279981 then return KIT end end
+    C_Item.RequestLoadItemDataByID = function(id) itemAsks[id] = (itemAsks[id] or 0) + 1 end
+    C_Spell.GetSpellDescription = function(id) return DESC[id] end
+    C_Spell.RequestLoadSpellData = function(id) spellAsks[id] = (spellAsks[id] or 0) + 1 end
+
+    -- Camp Chair before its text loads: nothing, one load request
+    local got = hover("Camp Chair", 3)
+    EXPECT(#got == 1 and spellAsks[1307229] == 1, "Camp Chair before its text: " .. table.concat(got, " / "))
+    -- the text arrives: the first paragraph, green and wrapped, once
+    DESC[1307229] = "Assembles a camp chair. Party members nearby gain 2% increased critical strike chance with all spells and attacks, mutually exclusive with Moonkin Aura.\n\nRequires a Campfire nearby. All camping features share a cooldown of 1 hour."
+    got = hover("Camp Chair", 4)
+    EXPECT(#got == 2 and got[2] == "Assembles a camp chair. Party members nearby gain 2% increased critical strike chance with all spells and attacks, mutually exclusive with Moonkin Aura."
+           and wraps[2][4] == true and wraps[2][2] == 1, "Camp Chair: " .. table.concat(got, " / "))
+    -- the Requires sentence inside the first paragraph goes
+    got = hover("First Aid Kit", 2)
+    EXPECT(#got == 2 and got[2] == "Lays out a first aid kit. Party members nearby gain 8 increased Stamina, mutually exclusive with Power Word: Fortitude. Lasts 1 hour.",
+           "First Aid Kit: " .. table.concat(got, " / "))
+    -- the recipe's name, then the kit's own name once the game has it
+    got = hover("Basic Campfire")
+    EXPECT(#got == 2 and got[2] == "Builds a basic campfire. Cooking nearby is faster.", "Basic Campfire: " .. table.concat(got, " / "))
+    EXPECT(#hover("Basic Campfire Kit") == 1 and (itemAsks[279981] or 0) == 1, "the kit before its name loads")
+    hover("Basic Campfire Kit", 3)
+    EXPECT(itemAsks[279981] == 1, "asked for the kit's name more than once: " .. tostring(itemAsks[279981]))
+    KIT = "Basic Campfire Kit"
+    got = hover("Basic Campfire Kit")
+    EXPECT(#got == 2 and got[2] == "Builds a basic campfire. Cooking nearby is faster.", "the kit's own name: " .. table.concat(got, " / "))
+    -- not a camp item, an item tooltip, a unit: nothing
+    EXPECT(#hover("Mailbox") == 1, "a Mailbox got a line")
+    item = "Camp Chair"
+    EXPECT(#hover("Camp Chair") == 1, "an item tooltip got the line")
+    item, unit = nil, "mouseover"
+    EXPECT(#hover("Camp Chair") == 1, "a unit tooltip got the line")
+    unit = nil
+    -- the gathering setting does not hide it
+    S.gatherSkillTooltip = false
+    EXPECT(#hover("Camp Chair") == 2, "the line went with Gathering skill off")
+    S.gatherSkillTooltip = true
+
+    C_Item.GetItemSpell, C_Item.GetItemNameByID, C_Item.RequestLoadItemDataByID,
+        C_Spell.GetSpellDescription, C_Spell.RequestLoadSpellData = unpack(real)
+    UnitPosition = realPos
+end
+F115()
+print("  PASS F115 2.2.2: a placed camp item's tooltip gets its benefit from the game, the first paragraph without 'Requires a Campfire nearby.', green and wrapped, once; nothing until the text loads, then it fills in; the recipe's name and the kit's own name; no line on items, units or other objects; the gathering setting does not hide it")
+
+-- F116 2.2.2 TEST-c (m4ru): a town Anvil got the camp Anvil's line in
+-- TEST-b, as the game shows both as the name alone. Within 60 yards of a
+-- world object with that name (Data/Forever/CampWorld.lua) there is no
+-- line; farther away, on another map, or for a name no world object has,
+-- the line shows. With no position from the game, a name that world
+-- objects have gets no line.
+local function F116()
+    local CW = ProfBuddy.CampWorld
+    ProfBuddy.db.settings.campBenefitTooltip = true
+    local n = 0
+    for _, maps in pairs(CW or {}) do for _, pts in pairs(maps) do n = n + #pts / 2 end end
+    EXPECT(CW and CW["Anvil"] and CW["Basic Campfire"] and n == 233, "CampWorld table: " .. n)
+    local found
+    for i = 1, #CW["Anvil"][1], 2 do
+        if math.abs(CW["Anvil"][1][i] + 339.2) < 1 and math.abs(CW["Anvil"][1][i + 1] + 2573.7) < 1 then found = true end
+    end
+    EXPECT(found, "the Crossroads Anvil is not in CampWorld")
+
+    local lines = {}
+    for i = 1, 30 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] end)
+    end
+    rawset(GameTooltip, "GetUnit", function() end)
+    rawset(GameTooltip, "GetItem", function() end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    local onUpdate = GameTooltip._h.OnUpdate
+    local function hover(name)
+        lines = { name }
+        onUpdate(GameTooltip, 1)
+        return #lines
+    end
+    local USE = { [279988] = 1263041, [279979] = 1307229 }
+    local real = { C_Item.GetItemSpell, C_Spell.GetSpellDescription }
+    C_Item.GetItemSpell = function(id) if USE[id] then return "Use", USE[id] end end
+    C_Spell.GetSpellDescription = function(id)
+        if id == 1263041 then return "Places an anvil, and provides all of the benefits of a Sharpening Wheel." end
+        if id == 1307229 then return "Assembles a camp chair." end
+    end
+    local realPos = UnitPosition
+    local px, py, pmap = -340, -2573.9, 1
+    UnitPosition = function() return px, py, 0, pmap end
+
+    -- m4ru's spot on the Crossroads Anvil: no line
+    EXPECT(hover("Anvil") == 1, "the Crossroads Anvil got the camp line")
+    -- from across the smithy, 50 yards off: still none
+    px = -340 + 50
+    EXPECT(hover("Anvil") == 1, "an Anvil 50 yards off got the camp line")
+    -- out in the Barrens, far from any town: the camp Anvil gets its line
+    px, py = 400, -1500
+    EXPECT(hover("Anvil") == 2 and lines[2] == "Places an anvil, and provides all of the benefits of a Sharpening Wheel.",
+           "a camp Anvil in the open: " .. table.concat(lines, " / "))
+    -- the same spot on another map
+    px, py, pmap = -340, -2573.9, 13
+    EXPECT(hover("Anvil") == 2, "the Crossroads spot on another map hid the line")
+    -- a name no world object has shows at the Crossroads Anvil too
+    pmap = 1
+    EXPECT(hover("Camp Chair") == 2, "a Camp Chair by a town Anvil lost its line")
+    -- no position from the game: no line for Anvil, Camp Chair still has one
+    UnitPosition = function() return nil end
+    EXPECT(hover("Anvil") == 1, "Anvil without a position got the line")
+    EXPECT(hover("Camp Chair") == 2, "Camp Chair without a position lost its line")
+
+    UnitPosition = realPos
+    C_Item.GetItemSpell, C_Spell.GetSpellDescription = unpack(real)
+end
+F116()
+print("  PASS F116 2.2.2 TEST-c: no camp line on a world object that shares a camp item's name (the Crossroads Anvil, and from 50 yards off); the line on a camp Anvil out in the open, on another map, and on names no world object has; no position from the game hides only the shared names; the CampWorld table holds 233 spawns")
+
+-- F117 2.2.2 TEST-d (m4ru): "Camp item benefits on tooltips" in Settings,
+-- on by default, turns the camp line off. The gathering setting does not
+-- touch it. W10 covers a player from before 2.2.2.
+local function F117()
+    local S = ProfBuddy.db.settings
+    EXPECT(ProfBuddyDB.settings == S, "settings table")
+    S.campBenefitTooltip = true
+    local found
+    TSF:OpenSettings("main")
+    for _, cb in ipairs(TSF.settingsCheckboxes) do if cb.settingKey == "campBenefitTooltip" then found = cb end end
+    EXPECT(found, "no Camp item benefits on tooltips box in Settings")
+
+    local lines = {}
+    for i = 1, 30 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] end)
+    end
+    rawset(GameTooltip, "GetUnit", function() end)
+    rawset(GameTooltip, "GetItem", function() end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    local onUpdate = GameTooltip._h.OnUpdate
+    local function hover(name)
+        lines = { name }
+        onUpdate(GameTooltip, 1)
+        return #lines
+    end
+    local real = { C_Item.GetItemSpell, C_Spell.GetSpellDescription, UnitPosition }
+    C_Item.GetItemSpell = function(id) if id == 279979 then return "Use", 1307229 end end
+    C_Spell.GetSpellDescription = function() return "Assembles a camp chair." end
+    UnitPosition = function() return 9000, 9000, 0, 1 end
+
+    EXPECT(hover("Camp Chair") == 2, "Camp Chair with the box on")
+    -- untick it the way a player does (the test frame's GetChecked is
+    -- always false, so this box gets its own)
+    local ticked = true
+    rawset(found, "GetChecked", function() return ticked end)
+    ticked = false
+    found:GetScript("OnClick")(found)
+    EXPECT(S.campBenefitTooltip == false, "unticking did not save")
+    EXPECT(hover("Camp Chair") == 1, "Camp Chair with the box off got the line")
+    -- the gathering setting on and off does not bring it back
+    S.gatherSkillTooltip = false
+    EXPECT(hover("Camp Chair") == 1, "the line came back with Gathering skill off")
+    S.gatherSkillTooltip = true
+    ticked = true
+    found:GetScript("OnClick")(found)
+    local n2 = hover("Camp Chair")
+    EXPECT(S.campBenefitTooltip == true and n2 == 2, "ticking it again: " .. tostring(S.campBenefitTooltip) .. " " .. n2)
+
+
+    C_Item.GetItemSpell, C_Spell.GetSpellDescription, UnitPosition = unpack(real)
+end
+F117()
+print("  PASS F117 2.2.2 TEST-d: Camp item benefits on tooltips is in Settings and on by default; unticking it removes the camp line and ticking brings it back; the gathering setting does not change it")
+
+-- F118 2.2.2 TEST-e (m4ru 11-21): Sort: Rarity keeps the category headers
+-- and sorts inside each one: best first, choosing it again worst first; a
+-- recipe with no rarity (an enchant) last either way; same rarity, known
+-- first, then name. Rarity is baked (Data/Forever/Rarity.lua).
+local function F118()
+    local R = ProfBuddy.Rarity
+    local n = 0
+    for _ in pairs(R or {}) do n = n + 1 end
+    EXPECT(R and R[1251] == 1 and R[4239] == 2 and R[277025] == 2 and n > 1900,
+           "Forever rarity table: " .. n .. " items")
+    C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH()
+    st.showTab, st.searchText, st.filterCat, st.filterDiff = "all", "", "All", "All"
+    st.collapsed = {}
+    st.sortBy, st.sortAsc = "Category", true
+    TSF:RefreshRecipeList()
+    -- pick Rarity from the Sort menu, then again to reverse it
+    local dd, btn = TSF.sortDropdown, nil
+    for _, b in ipairs(dd.optionBtns) do if b.value == "Rarity" then btn = b end end
+    EXPECT(btn, "no Rarity in the Sort menu")
+    btn:GetScript("OnClick")(btn)
+    EXPECT(st.sortBy == "Rarity" and st.sortAsc == true and dd.btnText:GetText() == "Sort: Rarity ^",
+           "picking Rarity: " .. tostring(st.sortBy) .. " " .. tostring(dd.btnText:GetText()))
+
+    local function q(e)
+        local id = e.itemID
+        if not id then local d = ProfBuddy.RecipeDB.data[st.profName][e.name]; id = d and d.itemID end
+        local v = id and id ~= 0 and R[id]
+        if not v and id and id ~= 0 then v = select(3, C_Item.GetItemInfo(id)) end
+        return type(v) == "number" and v or nil
+    end
+    -- walk the list: headers in A to Z order; inside each header the rule
+    local function check(asc, what)
+        local cats, heads, rows, lastCat, prev = {}, 0, 0, nil, nil
+        local nilSeen, rarities = false, {}
+        for _, e in ipairs(st.recipes) do
+            if e.isHeader then
+                heads = heads + 1
+                if e.headerType ~= "subcategory" then
+                    EXPECT(not lastCat or lastCat < e.name, what .. ": category order " .. tostring(lastCat) .. " / " .. e.name)
+                    lastCat = e.name
+                end
+                prev, nilSeen = nil, false
+            else
+                rows = rows + 1
+                local qe = q(e)
+                if qe then rarities[qe] = true end
+                if prev then
+                    local qp = q(prev)
+                    EXPECT(not (nilSeen and qe), what .. ": " .. e.name .. " after a recipe with no rarity")
+                    if qp and qe and qp ~= qe then
+                        EXPECT((asc and qp > qe) or (not asc and qp < qe), what .. ": " .. prev.name .. " (" .. qp .. ") before " .. e.name .. " (" .. qe .. ")")
+                    elseif qp == qe then
+                        if prev.isKnown ~= e.isKnown then
+                            EXPECT(prev.isKnown, what .. ": missing " .. prev.name .. " before known " .. e.name)
+                        else
+                            EXPECT(prev.name < e.name, what .. ": name order " .. prev.name .. " / " .. e.name)
+                        end
+                    end
+                end
+                if not qe then nilSeen = true end
+                prev = e
+            end
+        end
+        local kinds = 0
+        for _ in pairs(rarities) do kinds = kinds + 1 end
+        EXPECT(heads > 1 and rows > 10 and kinds >= 2, what .. ": " .. heads .. " headers, " .. rows .. " rows, " .. kinds .. " rarities")
+    end
+    check(true, "best first")
+    btn:GetScript("OnClick")(btn)
+    EXPECT(st.sortBy == "Rarity" and st.sortAsc == false and dd.btnText:GetText() == "Sort: Rarity v", "Rarity again")
+    check(false, "worst first")
+
+    -- a recipe with no rarity (an enchant makes no item, or the game has
+    -- not loaded it) sorts last, either way. U34 covers the game's own.
+    local first
+    for _, e in ipairs(st.recipes) do
+        if not e.isHeader and q(e) then first = e; break end
+    end
+    local id = first.itemID or ProfBuddy.RecipeDB.data[st.profName][first.name].itemID
+    local keepQ = R[id]
+    R[id] = nil
+    for _, asc in ipairs({ true, false }) do
+        st.sortAsc = asc
+        TSF:RefreshRecipeList()
+        local last
+        for i, e in ipairs(st.recipes) do
+            if e == first or (not e.isHeader and e.name == first.name) then
+                local nxt = st.recipes[i + 1]
+                EXPECT(not nxt or nxt.isHeader or not q(nxt), first.name .. " with no rarity is not last (" .. tostring(asc) .. "), before " .. (nxt and nxt.name or "?"))
+                last = true
+            end
+        end
+        EXPECT(last, first.name .. " not listed")
+    end
+    R[id] = keepQ
+
+    -- Category is unchanged, and the saved window state keeps Rarity
+    local S = ProfBuddy.db.settings
+    local keepRem = S.rememberWindowState
+    S.rememberWindowState = true
+    st.sortBy, st.sortAsc = "Rarity", true
+    TSF:SaveWindowState()
+    st.sortBy = "Category"
+    TSF:RestoreWindowState(st.profName)
+    EXPECT(st.sortBy == "Rarity", "saved window state lost Rarity: " .. tostring(st.sortBy))
+    S.rememberWindowState = keepRem
+    st.sortBy, st.sortAsc = "Category", true
+    dd:SetValue("Sort: Category ^", "Category")
+    TSF:RefreshRecipeList()
+end
+F118()
+print("  PASS F118 2.2.2 TEST-e: Sort: Rarity is in the Sort menu and keeps the category headers; best first, then worst first when picked again; same rarity known first, then by name; a recipe with no rarity last both ways; the saved window state keeps Rarity")
+
+print("ALL FOREVER TESTS PASS (118)")
