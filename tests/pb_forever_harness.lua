@@ -7046,6 +7046,20 @@ local function F101()
     TS_LIST_READY(); FLUSH()
     EXPECT(TSF.frame:IsShown() and st.profName == "Cooking" and not TSF._craftingActive and not TSF._parked,
            "another profession: " .. tostring(st.profName) .. " tracking " .. tostring(TSF._craftingActive))
+    -- interrupted in PB's own window, then another profession opens there:
+    -- the box keeps what was left, the other profession starts at 1, and so
+    -- does the first one opened again (2.2.2, m4ru in game 11-23: 2 left of
+    -- 3 Cured Medium Hide, then Skinning read 1)
+    start("interrupted, then another profession")
+    cast("UNIT_SPELLCAST_INTERRUPTED")
+    EXPECT(not TSF._craftingActive and TSF.qtyBox:GetText() == "4",
+           "interrupted: the box reads " .. tostring(TSF.qtyBox:GetText()))
+    TS_REOPEN(185); TS_LIST_READY(); FLUSH()
+    EXPECT(TSF.frame:IsShown() and st.profName == "Cooking" and TSF.qtyBox:GetText() == "1",
+           "interrupted, then Cooking: " .. tostring(st.profName) .. " x" .. tostring(TSF.qtyBox:GetText()))
+    TS_REOPEN(165); TS_LIST_READY(); FLUSH()
+    EXPECT(st.profName == "Leatherworking" and TSF.qtyBox:GetText() == "1",
+           "interrupted, then back in Leatherworking: x" .. tostring(TSF.qtyBox:GetText()))
     -- the same name on the other channel is not the batch's window
     start("other channel")
     EXPECT(TSF:IsCraftingIn("Leatherworking", false) and not TSF:IsCraftingIn("Leatherworking", true)
@@ -7055,7 +7069,7 @@ local function F101()
     TSF.ArmCraftWatchdog = keepArm
 end
 F101()
-print("  PASS F101 2.2.0 TEST-c: a batch keeps counting down through every way back into its profession (Back after each bottom tab and each /pb command, the parked icon, your own Shuffle row, Back in combat); a batch that ends or is interrupted while parked, or another profession opening, stops it")
+print("  PASS F101 2.2.0 TEST-c: a batch keeps counting down through every way back into its profession (Back after each bottom tab and each /pb command, the parked icon, your own Shuffle row, Back in combat); a batch that ends or is interrupted while parked, or another profession opening, stops it; after an interrupt the next profession opened, and the same one again, start at 1")
 
 -- F102 2.2.0 TEST-c (m4ru): every column of the Shuffle tab and of Crates
 -- and writs sorts, a second click the other way, the header shows ^ or v,
