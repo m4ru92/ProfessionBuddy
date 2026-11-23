@@ -1139,6 +1139,7 @@ function TSF:HookNodeTooltip()
     -- at its first blank line, without "Requires a Campfire nearby.". The
     -- names come from PB's Camping recipes, so TBC Anniversary has none.
     local campByName, campNameless, campText, campAsked
+    local campAdded = {}  -- per tooltip: the name and its line count after PB's line
     local function campItem(name)
         if not campByName then
             campByName, campNameless, campText, campAsked = {}, {}, {}, {}
@@ -1195,6 +1196,14 @@ function TSF:HookNodeTooltip()
         text = text:gsub("%s*Requires a Campfire nearby%.", "")
         text = text:match("^%s*(.-)%s*$")
         if text == "" then return end
+        -- A duration comes with the game's word code: the Fishing Rack's
+        -- "for 1 |4hour:hrs;" (m4ru's /run, 2026-11-23). The tooltip line
+        -- reads back without it, so PB never found its own line and added
+        -- it again 20 times a second (Hircus, 2.2.2). The number before
+        -- the code picks the word, the first for 1.
+        text = text:gsub("(%d*)(%s*)|4([^:;]*):([^:;]*)[^;]*;", function(n, sp, one, many)
+            return n .. sp .. (tonumber(n) == 1 and one or many)
+        end)
         campText[itemID] = text
         return text
     end
@@ -1236,12 +1245,19 @@ function TSF:HookNodeTooltip()
         if not itemID or nearWorldTwin(name) then return end
         local text = campBenefit(itemID)
         if not text then return end
-        for i = 2, tip:NumLines() do
+        local n = tip:NumLines()
+        for i = 2, n do
             local line = _G[tname .. "TextLeft" .. i]
             local txt = line and line:GetText()
             if txt and not IsSecret(txt) and txt == text then return end
         end
+        -- Once per showing, even when the line does not read back: added
+        -- again only after the tooltip lost lines (the game rebuilt it, or
+        -- it was shown anew) or names something else.
+        local mark = campAdded[tip]
+        if mark and mark.name == name and n >= mark.lines then return end
         tip:AddLine(text, 0.1, 1, 0.1, true)
+        campAdded[tip] = { name = name, lines = tip:NumLines() }
         tip:Show()
     end
 

@@ -9039,4 +9039,86 @@ end
 F120()
 print("  PASS F120 2.2.3: Skip vendor items, left of the search box and off by default, leaves vendor items out of Can make in the list, the detail panel with (vendor items skipped), the bank count and an alt's list; only on a recipe with a vendor item and something else; vendor items only, a cooldown or a material with no ID keep the game's count; Craft keeps the game's count; saved; hides with the panels")
 
-print("ALL FOREVER TESTS PASS (120)")
+-- F121 2.2.3 (Hircus, 2.2.2 live, 11-23): a placed Fishing Rack's tooltip
+-- grew a line 20 times a second until it vanished. Its text has a
+-- duration with the game's word code ("for 1 |4hour:hrs;", m4ru's /run);
+-- the tooltip reads the line back as words, so PB never found its own
+-- line. Here the tooltip reads back like the game: PB writes the word
+-- itself, the line comes once, and even a line that never reads back is
+-- added once per showing, again after the tooltip is rebuilt.
+local function F121()
+    local S = ProfBuddy.db.settings
+    S.campBenefitTooltip = true
+    local lines, garble = {}, false
+    local function shown(t)            -- the game's word for the number
+        return (t:gsub("(%d*)(%s*)|4([^:;]*):([^:;]*)[^;]*;", function(n, sp, one, many)
+            return n .. sp .. (tonumber(n) == 1 and one or many) end))
+    end
+    for i = 1, 30 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function()
+            local t = lines[i]
+            if t and garble and i > 1 then return t .. " " end
+            return t and shown(t)
+        end)
+    end
+    rawset(GameTooltip, "GetUnit", function() end)
+    rawset(GameTooltip, "GetItem", function() end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    rawset(GameTooltip, "Show", function() end)
+    local onUpdate = GameTooltip._h.OnUpdate
+    local function passes(k) for _ = 1, k do onUpdate(GameTooltip, 1) end return lines end
+    local function hover(name, k) lines = { name }; return passes(k or 1) end
+    local USE = { [279965] = 1307247, [279966] = 1307246, [279967] = 1307245 }
+    local DESC = {
+        [1307247] = "Places a Fishing Rack that grants the ability to catch uncommon fish for 1 |4hour:hrs;, provides Fishing Skill lures, and provides all of the benefits of a Fish Bowl. Requires a Campfire nearby.\n\nMay be placed over a Fish Bowl to replace it. All camping features share a cooldown of 1 |4hour:hrs;.",
+        [1307246] = "Places a Fishing Hut that grants the ability to catch rare fish for 2 |4hour:hrs;, provides Fishing Skill lures, and provides all of the benefits of a Fish Bowl. Requires a Campfire nearby.\n\nMay be placed over a Fish Bowl to replace it.",
+        [1307245] = "Places a small fish bowl that allows you and others sitting nearby to gain 2% increased stats, mutually exclusive with Blessing of Kings.\n\nRequires a Campfire nearby.",
+    }
+    local realPos = UnitPosition
+    UnitPosition = function() return 9000, 9000, 0, 1 end
+    local real = { C_Item.GetItemSpell, C_Spell.GetSpellDescription }
+    C_Item.GetItemSpell = function(id) if USE[id] then return "Use", USE[id] end end
+    C_Spell.GetSpellDescription = function(id) return DESC[id] end
+
+    -- the Rack: one line, "1 hour" in words, after many passes
+    local got = hover("Fishing Rack", 200)
+    EXPECT(#got == 2 and got[2] == "Places a Fishing Rack that grants the ability to catch uncommon fish for 1 hour, provides Fishing Skill lures, and provides all of the benefits of a Fish Bowl.",
+           "Fishing Rack: " .. #got .. " lines: " .. tostring(got[2]))
+    -- the Hut: the plural word
+    got = hover("Fishing Hut", 50)
+    EXPECT(#got == 2 and got[2]:find("catch rare fish for 2 hrs, provides", 1, true), "Fishing Hut: " .. #got .. " lines: " .. tostring(got[2]))
+    -- no code: as before
+    got = hover("Fish Bowl", 50)
+    EXPECT(#got == 2 and got[2] == "Places a small fish bowl that allows you and others sitting nearby to gain 2% increased stats, mutually exclusive with Blessing of Kings.",
+           "Fish Bowl: " .. #got .. " lines")
+    -- a line that never reads back: still once per showing
+    garble = true
+    got = hover("Fish Bowl", 200)
+    EXPECT(#got == 2, "a line that does not read back piled up: " .. #got .. " lines")
+    -- the game rebuilds the tooltip: back once, not twice
+    lines = { "Fish Bowl" }
+    passes(100)
+    EXPECT(#lines == 2, "after a rebuild: " .. #lines .. " lines")
+    -- the game adds its own line after PB's: still no second copy
+    lines[3] = "Fishing Skill lures"
+    passes(100)
+    EXPECT(#lines == 3, "a game line after PB's: " .. #lines .. " lines")
+    -- another camp item in the same tooltip: its own line, once
+    lines = { "Fishing Rack", "x", "y", "z" }
+    passes(100)
+    EXPECT(#lines == 5 and lines[5]:find("Fishing Rack", 1, true), "another item: " .. #lines .. " lines")
+    -- shown anew: the line again
+    got = hover("Fish Bowl", 100)
+    EXPECT(#got == 2, "shown anew: " .. #got .. " lines")
+    garble = false
+
+    C_Item.GetItemSpell, C_Spell.GetSpellDescription = unpack(real)
+    UnitPosition = realPos
+end
+F121()
+print("  PASS F121 2.2.3 (Hircus): a Fishing Rack's tooltip gets its line once, its duration in words (1 hour, a Hut's 2 hrs); a line that never reads back is still added once per showing, again after the tooltip is rebuilt or names another camp item")
+
+print("ALL FOREVER TESTS PASS (121)")
