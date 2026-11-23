@@ -2,6 +2,16 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.2.3 - unreleased
+
+A Craftsman's Writ you already turned in today shows as done.
+
+**Highlights**
+
+- **Writs done today:** on WoW: Forever, a Craftsman's Writ this character turned in today shows greyed out in the Shuffle tab's Crates and writs, and its tooltip says Done today on this character. Writs reset daily, and the row shows as usual again after the reset. Hircus checked in game when the game marks a writ done and when it clears.
+
+<!-- more -->
+
 ## 2.2.2 - 2026-11-22
 
 A popup that asks which look PB's windows use, an idea of mine that Zorden asked for too. Placed camp items show what they give on WoW: Forever, and the recipe list sorts by rarity.

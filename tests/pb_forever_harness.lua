@@ -8750,4 +8750,106 @@ end
 F118()
 print("  PASS F118 2.2.2 TEST-e: Sort: Rarity is in the Sort menu and keeps the category headers; best first, then worst first when picked again; same rarity known first, then by name; a recipe with no rarity last both ways; the saved window state keeps Rarity")
 
-print("ALL FOREVER TESTS PASS (118)")
+-- F119 2.2.3 (m4ru 11-23; decided 11-13, Hircus checked 11-21/23): a writ
+-- this character turned in today greys out in Crates and writs, with Done
+-- today in its tooltip. The game flags the writ's quest done until the
+-- daily reset; asked on every draw, so a turn-in with the list open and
+-- the reset both show; crates never grey; rows reused for another entry
+-- come back
+local function F119()
+    local PB = ProfBuddy
+    local SP, CV, UI, S = PB.ShufflePanel, PB.CratesView, PB.UI, PB.db.settings
+    local keepW, keepWr, keepWB, keepWU = PB.Waylaid, PB.Writs, PB.WaylaidBundles, PB.WaylaidUnopened
+    local keepAuc, keepAucOn, keepShow = Auctionator, S.priceAuctionator, S.showPrices
+    local keepQL = rawget(_G, "C_QuestLog")
+    PB.WaylaidBundles, PB.WaylaidUnopened = nil, nil
+    PB.Waylaid = { [900001] = { 2318, 14, 94000, "Light Leather" } }
+    PB.Writs = { [900002] = { 2304, 1, 94000, "Light Armor Kit" }, [900005] = { 765, 1, 94001, "Silverleaf" } }
+    S.priceAuctionator, S.showPrices = true, true
+    Auctionator = { API = { v1 = {
+        GetAuctionPriceByItemID = function(_, id) return ({ [2318] = 50, [2304] = 200 })[id] end,
+        GetAuctionAgeByItemID = function() return 0 end } } }
+    PB.Prices:ResetListCache()
+    local done = {}
+    C_QuestLog = { IsQuestFlaggedCompleted = function(q) return done[q] == true end }
+
+    UI:Show()
+    local idx
+    for i, tab in ipairs(UI.frame.tabs) do if tab.name == "shuffle" then idx = i end end
+    UI:SelectTab(idx); FLUSH()
+    SP.viewBtns.crates:GetScript("OnClick")(SP.viewBtns.crates); FLUSH()
+    EXPECT(SP.view == "crates" and CV.frame:IsShown(), "Crates and writs did not show")
+    CV.typeFilter, CV.profFilter, CV.bagsOnly, CV.readyOnly, CV.sortKey, CV.sortAsc = "All", nil, false, false, "cost", true
+    for _, row in ipairs(CV.rows) do
+        rawset(row.icon, "SetDesaturated", function(self, v) rawset(self, "_desat", v) end)
+    end
+    CV:Refresh()
+    local function rowOf(id)
+        for _, row in ipairs(CV.rows) do
+            if row._entry and row._entry.id == id and row:IsShown() then return row end
+        end
+    end
+    local function tip(row)
+        local lines = {}
+        local keepADL, keepAL, keepSID = GameTooltip.AddDoubleLine, GameTooltip.AddLine, GameTooltip.SetItemByID
+        rawset(GameTooltip, "AddDoubleLine", function(_, l, r) lines[#lines + 1] = tostring(l) .. " " .. tostring(r) end)
+        rawset(GameTooltip, "AddLine", function(_, l) lines[#lines + 1] = tostring(l) end)
+        rawset(GameTooltip, "SetItemByID", function() end)
+        row:GetScript("OnEnter")(row)
+        rawset(GameTooltip, "AddDoubleLine", keepADL); rawset(GameTooltip, "AddLine", keepAL); rawset(GameTooltip, "SetItemByID", keepSID)
+        return table.concat(lines, " | ")
+    end
+    local function grey(row) return row:GetAlpha() < 1 and rawget(row.icon, "_desat") == true end
+    local function plain(row) return row:GetAlpha() == 1 and rawget(row.icon, "_desat") ~= true end
+    local DONE = "Done today on this character."
+    local w2, w5, c1 = rowOf(900002), rowOf(900005), rowOf(900001)
+    EXPECT(w2 and w5 and c1, "rows missing")
+
+    -- nothing turned in: every row plain, no Done today
+    EXPECT(plain(w2) and plain(w5) and plain(c1), "a row is grey with nothing turned in")
+    EXPECT(not tip(w2):find(DONE, 1, true), "Done today with nothing turned in: " .. tip(w2))
+
+    -- turned in with the list open: the event greys it at once
+    done[94000] = true
+    FIRE("QUEST_TURNED_IN", 94000, 0, 0)
+    w2, w5, c1 = rowOf(900002), rowOf(900005), rowOf(900001)
+    EXPECT(grey(w2), "the turned-in writ is not grey: alpha " .. w2:GetAlpha())
+    EXPECT(plain(w5), "the other writ greyed")
+    -- a crate is never a done writ, even sharing the quest field
+    EXPECT(plain(c1), "a crate greyed")
+    EXPECT(tip(w2):find(DONE, 1, true), "no Done today on the turned-in writ: " .. tip(w2))
+    EXPECT(not tip(w5):find(DONE, 1, true), "Done today on the other writ")
+    EXPECT(not tip(c1):find(DONE, 1, true), "Done today on a crate")
+
+    -- sorted the other way, the rows are reused: each follows its own entry
+    CV.sortAsc = false
+    CV:Repaint()
+    w2, w5, c1 = rowOf(900002), rowOf(900005), rowOf(900001)
+    EXPECT(grey(w2) and plain(w5) and plain(c1), "reused rows kept the wrong look")
+
+    -- the daily reset clears the flag: plain again on the next draw
+    done[94000] = nil
+    CV:Refresh()
+    w2 = rowOf(900002)
+    EXPECT(plain(w2) and not tip(w2):find(DONE, 1, true), "still grey after the reset")
+
+    -- no quest API: nothing greys, no error
+    C_QuestLog = {}   -- no IsQuestFlaggedCompleted (a missing global reads as a stub here)
+    EXPECT(CV:WritDone(900002) == false, "WritDone without the API")
+    CV:Refresh()
+    EXPECT(plain(rowOf(900002)), "grey without the quest API")
+    -- an id that is not a writ
+    C_QuestLog = { IsQuestFlaggedCompleted = function() return true end }
+    EXPECT(CV:WritDone(900001) == false and CV:WritDone(123) == false, "WritDone on a crate or an unknown id")
+
+    C_QuestLog = keepQL
+    PB.Waylaid, PB.Writs, PB.WaylaidBundles, PB.WaylaidUnopened = keepW, keepWr, keepWB, keepWU
+    Auctionator, S.priceAuctionator, S.showPrices = keepAuc, keepAucOn, keepShow
+    PB.Prices:ResetListCache()
+    SP:SetView("shuffle")
+    if UI.frame:IsShown() then UI:Hide(); FLUSH() end
+end
+F119()
+print("  PASS F119 2.2.3: a writ this character turned in today greys out in Crates and writs with Done today in its tooltip; a turn-in with the list open shows at once; other writs and crates stay plain; reused rows follow their entry; plain again after the daily reset; no quest API, no grey")
+
+print("ALL FOREVER TESTS PASS (119)")

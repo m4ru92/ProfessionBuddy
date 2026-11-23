@@ -10,7 +10,9 @@
 -- Unopened ones (a plain Waylaid Crate, the Sealed writs; TEST-c5) ask
 -- for nothing until used: their row shows only what they sell for.
 -- Rewards (money, experience, reputation) have no Forever source yet, so
--- they come in a later update (WAYLAID-WRITS-PLANNING-scope.md). Data:
+-- they come in a later update (WAYLAID-WRITS-PLANNING-scope.md).
+-- A writ this character turned in today shows greyed out, with Done
+-- today in its tooltip (2.2.3): writs reset daily (Hircus, 11-21/23). Data:
 -- Data/Forever/Waylaid.lua and Writs.lua, Forever tocs only.
 
 local addon = ProfBuddy
@@ -120,6 +122,16 @@ function CV:CraftedBy(itemID)
         end
     end
     return best, refs[1] and refs[1].profName or nil
+end
+
+-- This character turned this writ in today: the game flags its quest
+-- done until the daily reset. Asked on every draw, not kept in the list
+-- (/pbt writs done fakes it here)
+function CV:WritDone(id)
+    local w = addon.Writs and addon.Writs[id]
+    local q = w and w[3]
+    if not q or not (C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) then return false end
+    return C_QuestLog.IsQuestFlaggedCompleted(q) and true or false
 end
 
 -- One row per crate and writ
@@ -308,6 +320,9 @@ function CV:CreateRow(parent)
         GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(e.id)   -- the crate's or writ's own tooltip, with its fill cost
         GameTooltip:AddLine(" ")
+        if e.kind == "writ" and not e.unopened and self:WritDone(e.id) then
+            GameTooltip:AddLine("Done today on this character.", 1, 0.5, 0.25)
+        end
         if e.unopened then
             GameTooltip:AddLine("You and your alts hold " .. self:HeldByYou(e.id) .. ".", 0.8, 0.8, 0.8, true)
             GameTooltip:Show()
@@ -466,6 +481,12 @@ function CV:Create(parent)
     rewards:SetText("Reward details (money, experience, reputation) come in a later update.")
     self.rewardsLine = rewards
 
+    -- a writ turned in with the list open greys out at once
+    f:RegisterEvent("QUEST_TURNED_IN")
+    f:SetScript("OnEvent", function()
+        if f:IsVisible() then CV:UpdateRows() end
+    end)
+
     self.scrollOffset = 0
 end
 
@@ -536,6 +557,9 @@ function CV:UpdateRows()
         local e = i <= shown and self.list and self.list[i + (self.scrollOffset or 0)] or nil
         row._entry = e
         if e and P then
+            local done = e.kind == "writ" and not e.unopened and self:WritDone(e.id)
+            row:SetAlpha(done and 0.45 or 1)
+            row.icon:SetDesaturated(done and true or false)
             row.icon:SetTexture(ItemIcon(e.id) or "Interface\\Icons\\INV_Misc_QuestionMark")
             row.nameText:SetText(e.name)
             if e.unopened then
