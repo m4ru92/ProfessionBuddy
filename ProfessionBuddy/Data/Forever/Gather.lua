@@ -16,7 +16,7 @@
 -- MOBS: Forever uses Classic NPC IDs, and the game's tooltip does not say
 -- which live mobs are skinnable, so SkinnableMobs (npcID set) and the
 -- skinning loot (SkinItems, SkinLootTables, SkinLoot; same shapes as
--- Data/GatherMobs.lua) come from VMaNGOS db a28c514, a 1.12 emulator
+-- Data/GatherMobs.lua) come from VMaNGOS db 34aeaa8, a 1.12 emulator
 -- database, read at its 1.12 patch (regen via tools/gather_db.py --regen
 -- --source classic). On a corpse the game's own "Skinnable" line has the
 -- final say. A wrong value gets fixed from a player's report (m4ru's

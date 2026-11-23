@@ -2,7 +2,7 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
-## 2.2.2 - unreleased
+## 2.2.2 - 2026-11-22
 
 A popup that asks which look PB's windows use, an idea of mine that Zorden asked for too. Placed camp items show what they give on WoW: Forever, and the recipe list sorts by rarity.
 
@@ -13,6 +13,10 @@ A popup that asks which look PB's windows use, an idea of mine that Zorden asked
 - **Sort by rarity:** the recipe list's Sort menu has Rarity. It keeps the category headers and puts the best items first inside each one, and choosing it again puts the worst first. Recipes that make no item, such as enchants, go last.
 
 <!-- more -->
+
+**Changes**
+
+- WoW: Forever recipe data stays on game build 1.60.1.71037. Gathering, vendor and trainer data come from VMaNGOS 34aeaa8, with nothing else changed.
 
 ## 2.2.1 - 2026-11-20
 

@@ -28,7 +28,7 @@ The screenshots are from WoW: Forever. TBC Classic Anniversary uses the same win
 | ![Profession window, Modern look](media/MainWindow.png) | ![Profession window, Classic look](media/MainWindow_Classic.png) |
 | Modern, the default: recipe browser with difficulty colors from client data | Classic, drawn with the game's own art |
 
-Pick a look under Settings, Window style. The other screenshots show Modern.
+ProfessionBuddy asks once which look to use, and Settings, Window style changes it later. The other screenshots show Modern.
 
 ### Profession window
 
@@ -84,6 +84,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 - **Guild board.** Post an order to your whole guild, claim what others post, and get a chat line when someone posts a recipe you know. Find a crafter searches your guild by recipe or item.
 - **Friends and guild data sharing.** See your contacts', group members' and guildmates' professions, recipes, and materials. On TBC Classic Anniversary, your Battle.net friends' characters can join your contacts as they log in.
 - **Search by name or material.** The Search box finds recipes by name or by any material they use. Learnable now lists what you can learn at your current skill.
+- **Sort the recipe list.** Sort by category, skill-ups, name, profit, or rarity. Rarity keeps the categories and puts the best items first in each.
 - **Tooltips.** "Craftable by" shows who can make an item, "Used in" shows which recipes use a reagent, and gathering nodes and skinnable mobs show the skill they need and what they drop.
 - **Recipe tools.** Every tool a recipe needs shows in the detail panel, from Enchanting rods to a Blacksmith Hammer, green when a character has one and red when not, with the crafting station it needs, such as a Tanning Rack or an Anvil.
 - **Batch crafting.** Craft 1, 5, 10, 20, or all, with a live countdown and skill-bar updates. While a batch runs, bars across the bottom of the window show the current cast and the whole batch: "Crafting 12 of 47, about 1m 05s left".
@@ -96,6 +97,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 - **Show everything or Learn as you go.** List every recipe in the game, or only the ones you, your alts, or your friends have seen at a trainer, at a vendor, or as a recipe item in your bags. ProfessionBuddy asks the first time a profession opens, and Settings changes it later.
 - **Trainers and vendors.** ProfessionBuddy records each trainer and vendor you visit, with learn levels, prices, and stock, and shares them with your friends.
 - **Waylaid Supplies and Craftsman's Writs.** Their tooltips show what filling one costs, and the Shuffle tab's "Crates and writs" lists every crate and writ with what it asks for, what you and your alts hold, and what the rest costs.
+- **Camp item tooltips.** Hover a placed camp item, such as a Camp Chair or a First Aid Kit, to see what it gives at your level.
 - **Gathering loot from play.** Ore veins, herbs, and skinnable mobs start from Classic data and switch to what you and your friends gathered once you have gathered them 10 times together.
 
 The profession window covers Blacksmithing, Leatherworking, Tailoring, Engineering, Alchemy, Enchanting, Cooking, First Aid, and Mining and Smelting. Rogues get Poisons on both games. TBC Classic Anniversary adds Jewelcrafting. WoW: Forever adds Herbalism, Skinning, and Fishing. Gathering tooltips cover Mining, Herbalism, and Skinning on both games.
