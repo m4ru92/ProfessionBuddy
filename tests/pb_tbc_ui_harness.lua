@@ -1810,4 +1810,88 @@ do
 end
 print("  PASS " .. TAG .. "35 2.2.3: Skip vendor items on TBC Anniversary: left of the search box, off by default; on, Can make leaves Coarse Thread out in the list, the detail panel with (vendor items skipped) and the bank count; nothing on a recipe without a vendor item; off as before")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 35)")
+-- U36/C36 2.2.3 (m4ru 11-23): "Est." under the quantity box on TBC
+-- Anniversary, at the batch bar's rate (no cast time here: 1 s plus 0.5),
+-- hidden while the batch bar is on screen and back after the batch; and a
+-- node's lines once per showing when PB cannot read its own lines back
+do
+    local TSF, S = PB.TradeSkillFrame, PB.db.settings
+    local st = TSF.state
+    local keepArm, keepName = TSF.ArmCraftWatchdog, SPELL_NAMES[2881]
+    local keepCast, keepBatch = S.craftBarCast, S.craftBarBatch
+    TSF.ArmCraftWatchdog = function() end
+    SPELL_NAMES[2881] = "Light Leather"
+    local row = TBC.tradeRows[2]
+    local keepAvail = row[3]
+    row[3] = 10
+    if TSF.frame and TSF.frame:IsShown() then TSF.frame:Hide(); FLUSH() end
+    if TBC.open == "trade" then CLOSE_TRADE() elseif TBC.open == "craft" then CLOSE_CRAFT() end
+    TSF:StopCraftTracking()
+    S.craftBarCast, S.craftBarBatch = true, true
+    OPEN_TRADE()
+    st.selected = "Light Leather"; TSF:UpdateCraftBar()
+    local est, box = TSF.craftEstimate, TSF.qtyBox
+    local function qty(v) box:SetText(v); box:GetScript("OnTextChanged")(box, false) end
+    local function txt() return est:IsShown() and est:GetText() or "<hidden>" end
+    local pt = rawget(est, "_lastPoint")
+    EXPECT(pt and pt[1] == "CENTER" and pt[2] == TSF.craftBar, "TBC: the estimate is not on the craft bar")
+    EXPECT(txt() == "Est. 2s", "TBC first draw: " .. txt())
+    qty("5");  EXPECT(txt() == "Est. 8s", "TBC 5 crafts: " .. txt())
+    qty("60"); EXPECT(txt() == "Est. 1m 30s", "TBC 60 crafts: " .. txt())
+    qty("");   EXPECT(txt() == "<hidden>", "TBC empty box: " .. txt())
+    qty("5")
+    TSF:DoCraftImmediate(5)
+    EXPECT(TSF._craftingActive and not TSF.craftStrip:IsShown() and txt() == "Est. 8s", "TBC before the first cast: " .. txt())
+    CAST_INFO = { "Light Leather", "", 0, 999000, 1001000, true, nil, false, 2881 }
+    FIRE("UNIT_SPELLCAST_START", "player", "Cast-guid", 2881)
+    EXPECT(TSF.craftStrip:IsShown() and TSF.craftStrip.batch:IsShown() and txt() == "<hidden>", "TBC batch bar on screen: " .. txt())
+    CAST_INFO = nil
+    for _ = 1, 5 do FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 2881) end
+    EXPECT(not TSF._craftingActive and not TSF.craftStrip:IsShown() and txt() == "Est. 2s", "TBC after the batch: " .. txt())
+    TSF.frame:Hide(); FLUSH()
+    CLOSE_TRADE()
+    row[3] = keepAvail
+    SPELL_NAMES[2881] = keepName
+    TSF.ArmCraftWatchdog = keepArm
+    S.craftBarCast, S.craftBarBatch = keepCast, keepBatch
+
+    -- the node: every line after the name reads back as something else,
+    -- so PB never finds the game's Requires line or its own lines
+    local keepLoot, keepUnl, keepYield, keepSkill = S.gatherLootUnlearned, S.gatherShowUnlearned, S.gatherYieldTooltip, S.gatherSkillTooltip
+    S.gatherLootUnlearned, S.gatherShowUnlearned, S.gatherYieldTooltip, S.gatherSkillTooltip = true, true, true, true
+    local keepGather = PB.db.lastGather
+    local lines = {}
+    for i = 1, 40 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function() return lines[i] and (i > 1 and "?" or lines[i]) end)
+    end
+    rawset(GameTooltip, "GetUnit", function() return nil end)
+    rawset(GameTooltip, "GetItem", function() return nil end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    rawset(GameTooltip, "AddDoubleLine", function(_, a) lines[#lines + 1] = a end)
+    rawset(GameTooltip, "Show", function() end)
+    local onUpdate = GameTooltip._h.OnUpdate
+    lines = { "Copper Vein", "Requires Mining" }
+    onUpdate(GameTooltip, 1)
+    local n = #lines
+    local found
+    for i = 3, n do if lines[i]:find("Requires Mining (1)", 1, true) then found = true end end
+    EXPECT(n >= 3 and found, "TBC Copper Vein: " .. table.concat(lines, " / "))
+    for _ = 1, 200 do onUpdate(GameTooltip, 1) end
+    EXPECT(#lines == n, "TBC node lines piled up: " .. #lines .. " vs " .. n)
+    lines = { "Copper Vein", "Requires Mining" }
+    for _ = 1, 50 do onUpdate(GameTooltip, 1) end
+    EXPECT(#lines == n, "TBC node after a rebuild: " .. #lines .. " vs " .. n)
+    for _, k in ipairs({ "GetUnit", "GetItem", "NumLines", "AddLine", "AddDoubleLine", "Show" }) do rawset(GameTooltip, k, nil) end
+    for i = 1, 40 do
+        local fs = _G["GameTooltipTextLeft" .. i]
+        if fs then rawset(fs, "SetText", nil); rawset(fs, "GetText", nil) end
+    end
+    PB.db.lastGather = keepGather
+    S.gatherLootUnlearned, S.gatherShowUnlearned, S.gatherYieldTooltip, S.gatherSkillTooltip = keepLoot, keepUnl, keepYield, keepSkill
+end
+print("  PASS " .. TAG .. "36 2.2.3: Est. under the quantity box on TBC Anniversary (2s, 8s, 1m 30s, none for an empty box); hidden while the batch bar is on screen, back after the batch; a node's lines once per showing when PB cannot read them back")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 36)")

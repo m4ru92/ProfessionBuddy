@@ -4,18 +4,20 @@ Every ProfessionBuddy release, newest first. Each entry lists what is new, what 
 
 ## 2.2.3 - unreleased
 
-A Craftsman's Writ you already turned in today shows as done, Can make can leave out what a vendor sells, and a Fishing Rack's tooltip no longer runs away.
+A Craftsman's Writ you already turned in today shows as done, Can make can leave out what a vendor sells, the craft bar estimates how long a batch takes, and a Fishing Rack's tooltip no longer runs away.
 
 **Highlights**
 
 - **Writs done today:** on WoW: Forever, a Craftsman's Writ this character turned in today shows greyed out in the Shuffle tab's Crates and writs, and its tooltip says Done today on this character. Writs reset daily, and the row shows as usual again after the reset. Hircus checked in game when the game marks a writ done and when it clears.
 - **Skip vendor items:** a new checkbox left of the search box in the profession window leaves materials a vendor sells, such as thread, vials and salt, out of Can make. The counts then show what your leather, cloth, bars and other materials cover. On a recipe that uses a vendor item, the detail panel's Can make line ends in (vendor items skipped). A recipe made only of vendor items keeps the game's count, and crafting still needs every material. PB remembers the checkbox for all your professions. Lucido asked for it.
+- **Batch time estimate:** under the quantity box, the craft bar shows how long the crafts in the box take, such as Est. 1m 30s, at the same rate as the batch bar. It shows before you craft whatever your settings, and hides while the batch bar is on screen. With the batch bar turned off in Settings, it counts down a craft at a time as the quantity box does.
 
 <!-- more -->
 
 **Fixes**
 
 - WoW: Forever: hovering a placed Fishing Rack made its tooltip grow a line 20 times a second until it filled the screen and vanished, reported by Hircus. The Rack's benefit has a duration, which the game hands over with a hidden code that picks the word (hour or hrs). The tooltip showed the word, so PB never recognised its own line and kept adding it. PB now writes the word itself, as "for 1 hour", and adds the benefit at most once each time a tooltip is shown. The Fishing Hut's text has a duration too and is fixed the same way. Until you update, unticking Settings > Camp item benefits on tooltips stops it.
+- Ore vein and herb tooltips get the same limit: the skill line, Your skill line and the loot list are added at most once each time a tooltip is shown, even if the game ever stops PB from reading them back.
 
 ## 2.2.2 - 2026-11-22
 

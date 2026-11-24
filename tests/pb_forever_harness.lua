@@ -9121,4 +9121,148 @@ end
 F121()
 print("  PASS F121 2.2.3 (Hircus): a Fishing Rack's tooltip gets its line once, its duration in words (1 hour, a Hut's 2 hrs); a line that never reads back is still added once per showing, again after the tooltip is rebuilt or names another camp item")
 
-print("ALL FOREVER TESTS PASS (121)")
+-- F122 2.2.3 (m4ru 11-23, after the Fishing Rack): the node hook adds its
+-- Requires line, Your line and loot list at most once per showing. Here
+-- every line PB adds reads back as a secret, so PB never finds its own;
+-- the tooltip still gets them once, again after a rebuild, a new showing
+-- or another node, and nothing is ever compared by its secret.
+local function F122()
+    local S = ProfBuddy.db.settings
+    local keepLoot, keepUnl, keepYield = S.gatherLootUnlearned, S.gatherShowUnlearned, S.gatherYieldTooltip
+    S.gatherLootUnlearned, S.gatherShowUnlearned, S.gatherYieldTooltip = true, true, true
+    local SECRET = newproxy(true)
+    getmetatable(SECRET).__eq = function() error("a secret was compared", 2) end
+    local lines, secret = {}, false
+    for i = 1, 40 do
+        local fs = _G["GameTooltipTextLeft" .. i] or CreateFrame("Frame", "GameTooltipTextLeft" .. i)
+        rawset(fs, "SetText", function(_, t) lines[i] = t end)
+        rawset(fs, "GetText", function()
+            if secret and i > 1 and lines[i] then return SECRET end
+            return lines[i]
+        end)
+    end
+    rawset(GameTooltip, "GetUnit", function() end)
+    rawset(GameTooltip, "GetItem", function() end)
+    rawset(GameTooltip, "NumLines", function() return #lines end)
+    rawset(GameTooltip, "AddLine", function(_, t) lines[#lines + 1] = t end)
+    rawset(GameTooltip, "AddDoubleLine", function(_, a) lines[#lines + 1] = a end)
+    rawset(GameTooltip, "Show", function() end)
+    local keepSecret = issecretvalue
+    issecretvalue = function(v) return rawequal(v, SECRET) end
+    local onUpdate = GameTooltip._h.OnUpdate
+    local function passes(k) for _ = 1, k do onUpdate(GameTooltip, 1) end return #lines end
+    local function hover(name, k) lines = { name, "Requires Mining" }; return passes(k or 1) end
+    local function has(word)
+        for i = 2, #lines do if type(lines[i]) == "string" and lines[i]:find(word, 1, true) then return true end end
+    end
+
+    -- readable: the lines once, the same after many passes
+    local keepGather = ProfBuddyDB.lastGather
+    local n = hover("Tin Vein", 1)
+    EXPECT(n > 4 and has("Requires Mining (65)") and has("Your Mining") and has("Mines into") and has("Tin Ore"),
+           "Tin Vein: " .. n .. " lines")
+    EXPECT(passes(200) == n, "readable lines piled up: " .. #lines .. " vs " .. n)
+    -- unreadable: still once per showing. The game's own Requires line
+    -- cannot be read, so PB adds its line under it: one line more
+    secret = true
+    local m = hover("Tin Vein", 1)
+    EXPECT(m == n + 1, "secret lines, first pass: " .. m .. " vs " .. n)
+    EXPECT(passes(200) == m, "secret lines piled up: " .. #lines .. " vs " .. m)
+    -- the game rebuilds it: back once
+    lines = { "Tin Vein", "Requires Mining" }
+    EXPECT(passes(100) == m, "after a rebuild: " .. #lines .. " vs " .. m)
+    -- the game adds a line of its own after PB's: no second copy
+    lines[#lines + 1] = "Game line"
+    EXPECT(passes(100) == m + 1, "a game line after PB's: " .. #lines)
+    -- another node in the same tooltip: its own lines, once
+    lines = { "Copper Vein" }
+    for i = 2, m + 1 do lines[i] = "x" end
+    local c = passes(1)
+    EXPECT(c > m + 1 and passes(100) == c, "another node: " .. c .. " then " .. #lines)
+    -- shown anew: the lines again
+    EXPECT(hover("Tin Vein", 100) == m, "shown anew: " .. #lines)
+    secret = false
+
+    issecretvalue = keepSecret
+    ProfBuddyDB.lastGather = keepGather
+    S.gatherLootUnlearned, S.gatherShowUnlearned, S.gatherYieldTooltip = keepLoot, keepUnl, keepYield
+    for _, k in ipairs({ "GetUnit", "GetItem", "NumLines", "AddLine", "AddDoubleLine", "Show" }) do rawset(GameTooltip, k, nil) end
+end
+F122()
+print("  PASS F122 2.2.3: a node's Requires line, Your line and loot list come once per showing even when every line PB adds reads back as a secret; again after the tooltip is rebuilt, shown anew or names another node")
+
+-- F123 2.2.3 (m4ru 11-23): "Est. 1m 30s" under the quantity box: the box's
+-- crafts at the batch bar's rate (Prices CraftSeconds), in the batch bar's
+-- time format. It shows before crafting whatever the settings, follows the
+-- box as a batch counts it down, and hides only while the batch bar is on
+-- screen. An unknown recipe, an empty box or no box (an enchant): none.
+local function F123()
+    local PB = ProfBuddy
+    if not (TSF.frame and TSF.frame:IsShown()) then C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local st, S, P = TSF.state, PB.db.settings, PB.Prices
+    local keepSel, keepPanel = st.selected, TSF.settingsPanel and TSF.settingsPanel:IsShown()
+    local keepCast, keepBatch = S.craftBarCast, S.craftBarBatch
+    if TSF.settingsPanel then TSF.settingsPanel:Hide() end
+    local realCS = P.CraftSeconds
+    local asked
+    P.CraftSeconds = function(_, id) asked = id; return 2.5 end
+    local r = { name = "PB Test Estimate", isKnown = true, gameIndex = 1, numAvail = 40, itemID = 4239,
+                spellID = 3753, category = "Belt", reagents = {} }
+    table.insert(st.recipes, 1, r)
+    st.selected = r.name
+    local est, box = TSF.craftEstimate, TSF.qtyBox
+    -- the game runs OnTextChanged on SetText; the mock does not
+    local function qty(v) box:SetText(v); box:GetScript("OnTextChanged")(box, false) end
+    local function txt() return est:IsShown() and est:GetText() or "<hidden>" end
+    TSF:UpdateCraftBar()
+    -- the box starts at 1
+    EXPECT(box:IsShown() and box:GetText() == "1" and txt() == "Est. 3s",
+           "first draw: " .. tostring(box:GetText()) .. " / " .. txt())
+    EXPECT(asked == 3753, "asked CraftSeconds for " .. tostring(asked))
+    -- the slot under the box, row 2
+    local pt = rawget(est, "_lastPoint")
+    EXPECT(pt and pt[1] == "CENTER" and pt[2] == TSF.craftBar and pt[3] == "TOPLEFT", "the estimate is not in row 2's slot")
+    qty("3");  EXPECT(txt() == "Est. 8s", "3 crafts: " .. txt())
+    qty("36"); EXPECT(txt() == "Est. 1m 30s", "36 crafts: " .. txt())
+    qty("");   EXPECT(txt() == "<hidden>", "empty box: " .. txt())
+    qty("0");  EXPECT(txt() == "<hidden>", "0: " .. txt())
+    -- the batch bar's setting on, before crafting: still shown
+    S.craftBarCast, S.craftBarBatch = true, true
+    qty("10"); EXPECT(txt() == "Est. 25s", "batch bar setting on, not crafting: " .. txt())
+    -- a batch with the batch bar on screen: hidden, back when it ends
+    TSF:BeginCraftTracking(r.name, 10, nil, r.spellID)
+    EXPECT(txt() == "Est. 25s", "before the first cast: " .. txt())
+    TSF._craftCastSeen = true; TSF:UpdateCraftStrip()
+    EXPECT((TSF.craftStrip:IsShown() and TSF.craftStrip.batch:IsShown()) and txt() == "<hidden>", "batch bar on screen: " .. txt())
+    qty("9");  EXPECT(txt() == "<hidden>", "counting down under the batch bar: " .. txt())
+    TSF:StopCraftTracking(); qty("1")
+    EXPECT(not (TSF.craftStrip:IsShown() and TSF.craftStrip.batch:IsShown()) and txt() == "Est. 3s", "after the batch: " .. txt())
+    -- batch bar off: shown all through, a craft less after each
+    S.craftBarBatch = false
+    qty("10")
+    TSF:BeginCraftTracking(r.name, 10, nil, r.spellID)
+    TSF._craftCastSeen = true; TSF:UpdateCraftStrip()
+    EXPECT((TSF.craftStrip:IsShown() and TSF.craftStrip.cast:IsShown()) and not (TSF.craftStrip:IsShown() and TSF.craftStrip.batch:IsShown()) and txt() == "Est. 25s", "cast bar only: " .. txt())
+    qty("9");  EXPECT(txt() == "Est. 23s", "a craft done: " .. txt())
+    TSF:StopCraftTracking(); qty("1")
+    EXPECT(txt() == "Est. 3s", "after the second batch: " .. txt())
+    -- an unknown recipe: Recipe unknown, no estimate
+    r.isKnown = false; TSF:UpdateCraftBar()
+    EXPECT(TSF.craftNotLearned:IsShown() and txt() == "<hidden>", "unknown recipe: " .. txt())
+    r.isKnown = true
+    -- no quantity box: none
+    TSF:SetQtyShown(false); TSF:UpdateCraftEstimate()
+    EXPECT(txt() == "<hidden>", "no quantity box: " .. txt())
+    TSF:SetQtyShown(true)
+
+    P.CraftSeconds = realCS
+    S.craftBarCast, S.craftBarBatch = keepCast, keepBatch
+    table.remove(st.recipes, 1)
+    st.selected = keepSel
+    if keepPanel then TSF.settingsPanel:Show() end
+    TSF:UpdateCraftBar()
+end
+F123()
+print("  PASS F123 2.2.3: Est. under the quantity box: the box's crafts at the batch bar's rate in its format (8s, 1m 30s); shown before crafting with the batch bar setting on; hidden only while the batch bar is on screen; counts down a craft at a time with the bar off; none for an unknown recipe, an empty box or no box")
+
+print("ALL FOREVER TESTS PASS (123)")

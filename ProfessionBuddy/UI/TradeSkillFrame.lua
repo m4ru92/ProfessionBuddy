@@ -1070,6 +1070,8 @@ function TSF:HookNodeTooltip()
 
     -- Re-append our line if it's not currently in the tooltip (the client
     -- rebuilds node tooltips across frames and wipes appended lines).
+    -- per tooltip: the node and its line count after PB's lines
+    local nodeAdded = {}
     local function tryAppend(tip)
         if not (addon.db and addon.db.settings) then return end
         if addon.db.settings.gatherSkillTooltip == false then return end
@@ -1108,8 +1110,16 @@ function TSF:HookNodeTooltip()
                 end
             end
         end
-        if not reqDone then tip:AddLine(requires) end
-        if yours and not yourDone then tip:AddLine(yours) end
+        -- Once per showing, even when PB cannot read its lines back (a
+        -- secret line, say): the same cap as the camp line (m4ru 11-23,
+        -- after the Fishing Rack). Added again only after the tooltip lost
+        -- lines (the game rebuilt it, or it was shown anew) or names
+        -- another node.
+        local n = tip:NumLines()
+        local mark = nodeAdded[tip]
+        local capped = mark and mark.name == nodeName and n >= mark.lines
+        if not reqDone and not capped then tip:AddLine(requires) end
+        if yours and not yourDone and not capped then tip:AddLine(yours) end
         -- the loot list, once: the client's rebuild wipes it with our
         -- other lines, so its heading marks whether it is still there
         local loot
@@ -1121,11 +1131,14 @@ function TSF:HookNodeTooltip()
                 local txt = fs and fs:GetText()
                 if txt and not IsSecret(txt) and txt:sub(1, #word) == word then present = true; break end
             end
-            if present then
+            if present or capped then
                 loot = addon.db.lastGather and addon.db.lastGather.name == nodeName and addon.db.lastGather.loot
             else
                 loot = AddNodeLoot(tip, nodeName, prof)
             end
+        end
+        if not capped and tip:NumLines() > n then
+            nodeAdded[tip] = { name = nodeName, lines = tip:NumLines() }
         end
         tip:Show()
         NoteGather({ kind = "node", name = nodeName, shown = requires, yours = yours,
@@ -5767,6 +5780,7 @@ function TSF:BuildCraftBar(parent)
         if self.calcPanel and self.calcPanel:IsShown() then
             self:RefreshCalcPanel()
         end
+        self:UpdateCraftEstimate()
     end)
     qtyBox:SetScript("OnEditFocusGained", function(eb)
         eb:HighlightText()
@@ -5807,6 +5821,13 @@ function TSF:BuildCraftBar(parent)
     notLearned:SetText("|cffff2020Recipe unknown|r")
     notLearned:Hide()
     self.craftNotLearned = notLearned
+
+    -- the batch's time under the quantity box, in row 2's empty slot
+    -- (TSF:UpdateCraftEstimate)
+    local estimate = craftBar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    estimate:SetPoint("CENTER", craftBar, "TOPLEFT", x2 + BTN_W / 2, ROW2_Y - BTN_H / 2)
+    estimate:Hide()
+    self.craftEstimate = estimate
 
     self.craftBar = craftBar
     craftBar:Hide()
@@ -6065,6 +6086,29 @@ function TSF:PaintStrip(strip)
     end
 end
 
+-- The craft bar's "Est. 1m 30s" under the quantity box (m4ru 11-23): the
+-- box's crafts at the batch bar's rate, so it drops one craft's time as
+-- the box counts a batch down. It shows before you craft whatever the
+-- settings, and hides only while the batch bar is on screen, which
+-- counts down itself. No box (an enchant), no line.
+function TSF:UpdateCraftEstimate()
+    local est = self.craftEstimate
+    if not est then return end
+    local recipe = self:GetSelectedRecipe()
+    local box = self.qtyBox
+    local qty = box and tonumber(box:GetText() or "")
+    local P = addon.Prices
+    local strip = self.craftStrip
+    if not (recipe and recipe.isKnown and recipe.gameIndex and qty and qty > 0
+            and box:IsShown() and P and P.CraftSeconds)
+       or (strip and strip:IsShown() and strip.batch and strip.batch:IsShown()) then
+        est:Hide()
+        return
+    end
+    est:SetText("Est. " .. StripTime(qty * P:CraftSeconds(recipe.spellID)))
+    est:Show()
+end
+
 -- Stack the bars switched on, top to bottom
 function TSF:LayoutStrip(strip)
     strip.cast:Hide()
@@ -6115,6 +6159,7 @@ function TSF:UpdateCraftStrip()
     end
     self:ApplyStripLayout(L)
     if addon.UI and addon.UI.ApplyStripLayout then addon.UI:ApplyStripLayout(L) end
+    self:UpdateCraftEstimate()
 end
 
 -- The recipe list's rows that fit above the strip
@@ -6626,6 +6671,7 @@ function TSF:UpdateCraftBar()
             self.craftNotLearned:Show()
         end
     end
+    self:UpdateCraftEstimate()
 end
 
 ----------------------------------------------------------------------
