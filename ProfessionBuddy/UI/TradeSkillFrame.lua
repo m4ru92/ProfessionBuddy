@@ -1070,6 +1070,8 @@ function TSF:HookNodeTooltip()
 
     -- Re-append our line if it's not currently in the tooltip (the client
     -- rebuilds node tooltips across frames and wipes appended lines).
+    -- per tooltip: the node and its line count after PB's lines
+    local nodeAdded = {}
     local function tryAppend(tip)
         if not (addon.db and addon.db.settings) then return end
         if addon.db.settings.gatherSkillTooltip == false then return end
@@ -1108,8 +1110,16 @@ function TSF:HookNodeTooltip()
                 end
             end
         end
-        if not reqDone then tip:AddLine(requires) end
-        if yours and not yourDone then tip:AddLine(yours) end
+        -- Once per showing, even when PB cannot read its lines back (a
+        -- secret line, say): the same cap as the camp line (m4ru 11-23,
+        -- after the Fishing Rack). Added again only after the tooltip lost
+        -- lines (the game rebuilt it, or it was shown anew) or names
+        -- another node.
+        local n = tip:NumLines()
+        local mark = nodeAdded[tip]
+        local capped = mark and mark.name == nodeName and n >= mark.lines
+        if not reqDone and not capped then tip:AddLine(requires) end
+        if yours and not yourDone and not capped then tip:AddLine(yours) end
         -- the loot list, once: the client's rebuild wipes it with our
         -- other lines, so its heading marks whether it is still there
         local loot
@@ -1121,11 +1131,14 @@ function TSF:HookNodeTooltip()
                 local txt = fs and fs:GetText()
                 if txt and not IsSecret(txt) and txt:sub(1, #word) == word then present = true; break end
             end
-            if present then
+            if present or capped then
                 loot = addon.db.lastGather and addon.db.lastGather.name == nodeName and addon.db.lastGather.loot
             else
                 loot = AddNodeLoot(tip, nodeName, prof)
             end
+        end
+        if not capped and tip:NumLines() > n then
+            nodeAdded[tip] = { name = nodeName, lines = tip:NumLines() }
         end
         tip:Show()
         NoteGather({ kind = "node", name = nodeName, shown = requires, yours = yours,
@@ -1139,6 +1152,7 @@ function TSF:HookNodeTooltip()
     -- at its first blank line, without "Requires a Campfire nearby.". The
     -- names come from PB's Camping recipes, so TBC Anniversary has none.
     local campByName, campNameless, campText, campAsked
+    local campAdded = {}  -- per tooltip: the name and its line count after PB's line
     local function campItem(name)
         if not campByName then
             campByName, campNameless, campText, campAsked = {}, {}, {}, {}
@@ -1195,6 +1209,14 @@ function TSF:HookNodeTooltip()
         text = text:gsub("%s*Requires a Campfire nearby%.", "")
         text = text:match("^%s*(.-)%s*$")
         if text == "" then return end
+        -- A duration comes with the game's word code: the Fishing Rack's
+        -- "for 1 |4hour:hrs;" (m4ru's /run, 2026-11-23). The tooltip line
+        -- reads back without it, so PB never found its own line and added
+        -- it again 20 times a second (Hircus, 2.2.2). The number before
+        -- the code picks the word, the first for 1.
+        text = text:gsub("(%d*)(%s*)|4([^:;]*):([^:;]*)[^;]*;", function(n, sp, one, many)
+            return n .. sp .. (tonumber(n) == 1 and one or many)
+        end)
         campText[itemID] = text
         return text
     end
@@ -1236,12 +1258,19 @@ function TSF:HookNodeTooltip()
         if not itemID or nearWorldTwin(name) then return end
         local text = campBenefit(itemID)
         if not text then return end
-        for i = 2, tip:NumLines() do
+        local n = tip:NumLines()
+        for i = 2, n do
             local line = _G[tname .. "TextLeft" .. i]
             local txt = line and line:GetText()
             if txt and not IsSecret(txt) and txt == text then return end
         end
+        -- Once per showing, even when the line does not read back: added
+        -- again only after the tooltip lost lines (the game rebuilt it, or
+        -- it was shown anew) or names something else.
+        local mark = campAdded[tip]
+        if mark and mark.name == name and n >= mark.lines then return end
         tip:AddLine(text, 0.1, 1, 0.1, true)
+        campAdded[tip] = { name = name, lines = tip:NumLines() }
         tip:Show()
     end
 
@@ -2525,6 +2554,34 @@ function TSF:BuildHeader(parent)
     search:SetScript("OnMouseDown", function() CloseAllDropdowns() end)
     self.searchBox = search
 
+    -- Skip vendor items (2.2.3, Lucido): left of the search box, the only
+    -- room on the title line (the toolbar below is full). One switch for
+    -- every profession, kept between opens in the settings.
+    local skipCB = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
+    skipCB:SetSize(22, 22)
+    skipCB:SetPoint("RIGHT", search, "LEFT", -8, 0)
+    local skipText = skipCB:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    skipText:SetPoint("RIGHT", skipCB, "LEFT", -2, 0)
+    skipText:SetText("Skip vendor items")
+    skipText:SetTextColor(0.9, 0.9, 0.9)
+    skipCB.text = skipText
+    skipCB:SetChecked(TSF:SkipVendorOn())
+    skipCB:SetScript("OnClick", function(cb)
+        addon.db.settings.skipVendorReagents = cb:GetChecked() and true or false
+        TSF:UpdateListRows()
+        if state.selected then TSF:RefreshDetailPanel(true) end
+    end)
+    skipCB:SetScript("OnEnter", function(cb)
+        GameTooltip:SetOwner(cb, "ANCHOR_BOTTOM")
+        GameTooltip:SetText("Skip vendor items")
+        GameTooltip:AddLine("Can make counts only the materials a vendor does not sell, "
+            .. "such as leather, cloth or bars. Thread, vials, salt and other vendor "
+            .. "items are left out of the count.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    skipCB:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.skipVendorCB = skipCB
+
     -- Row 2: skill bar. On WoW: Forever it leaves room on the right for the
     -- profession link button and never changes width: the button shows or
     -- hides in that space, as in Blizzard's own profession window.
@@ -3666,6 +3723,8 @@ function TSF:UpdateListRows()
                        and (not entry.itemID or entry.itemID == 0) then
                         avail = self:ReagentCraftCount(entry)
                     end
+                    local skipped
+                    avail, skipped = self:ShownCount(entry, avail)
                     local rangeStr = ""
                     local sr = GetSkillRange(entry)
 
@@ -3702,7 +3761,7 @@ function TSF:UpdateListRows()
                     -- bank makes any. Colorblind markers: "[10 bank]", as
                     -- "[300 low]" below (Blizzard's rule: text where a color
                     -- alone carries meaning)
-                    local bankAvail = self:BankCraftCount(entry, avail)
+                    local bankAvail = self:BankCraftCount(entry, avail, skipped)
                     local bankStr = bankAvail and ("|cff3fc7ff[" .. bankAvail
                         .. (addon:ColorblindMarkers() and " bank" or "") .. "]|r") or ""
                     longRight = bankAvail ~= nil
@@ -4300,6 +4359,8 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.detSource:SetText("")
     if self.detSourceHover then self.detSourceHover.spellID = nil end
     self.detCanMake:SetText("")
+    -- a wrapped Skip vendor items note set it left (SetCanMake)
+    if self._canMakeJustify then self.detCanMake:SetJustifyH(self._canMakeJustify) end
     self.detPrice:SetText("")
     self.detPrice:Hide()
     self.detPriceHover.result = nil
@@ -4486,6 +4547,11 @@ function TSF:RefreshDetailPanel(preserveScroll)
            and (not recipe.itemID or recipe.itemID == 0) then
             avail = self:ReagentCraftCount(recipe)
         end
+        local skipped
+        avail, skipped = self:ShownCount(recipe, avail)
+        -- Skip vendor items on: said at the end of the line, only on a
+        -- recipe that uses a vendor item (m4ru 11-23)
+        local skipNote = skipped and " (vendor items skipped)" or ""
         local cdSuffix = self:CooldownSuffix(recipe)
         -- crafts, then the items they make: "Can make: 54 (108)"
         local function items(n)
@@ -4495,18 +4561,20 @@ function TSF:RefreshDetailPanel(preserveScroll)
         end
         -- with your bank (2.2.0, Lucido), in the Reagents list's azure:
         -- "Can make: 6 (12), 10 (20) with bank"
-        local bankAvail = self:BankCraftCount(recipe, avail)
+        local bankAvail = self:BankCraftCount(recipe, avail, skipped)
         local bankPart = bankAvail and ("|cff3fc7ff, " .. bankAvail .. items(bankAvail) .. " with bank|r") or ""
         if avail > 0 then
-            self.detCanMake:SetText("|cff00ff00Can make: " .. avail .. items(avail) .. "|r" .. bankPart .. cdSuffix)
+            self:SetCanMake("|cff00ff00Can make: " .. avail .. items(avail) .. "|r" .. bankPart, skipNote, cdSuffix)
         elseif bankAvail then
             -- the bags make none, the bank has the rest: not "missing"
-            self.detCanMake:SetText("|cffff4444Can make: 0|r" .. bankPart)
+            self:SetCanMake("|cffff4444Can make: 0|r" .. bankPart, skipNote)
         elseif cdSuffix ~= "" then
             -- A recipe on cooldown reports 0 whatever is in the bags, so
             -- naming reagents as the reason would contradict the very next
             -- line ("On cooldown: ready in ...").
             self.detCanMake:SetText("|cffff4444Can make: 0|r" .. cdSuffix)
+        elseif skipped then
+            self:SetCanMake("|cffff4444Can make: 0 (missing reagents)|r", skipNote)
         else
             self.detCanMake:SetText("|cffff4444Can make: 0 (missing reagents)|r")
         end
@@ -4684,6 +4752,26 @@ function TSF:AppendRandomEnchantLine(tip, itemID)
         end
     end
     tip:AddLine(RANDOM_LINE, 0, 1, 0)
+end
+
+-- The Can make line with Skip vendor items' note at its end, grey; on a
+-- line of its own when the end of the panel would cut it off (a long
+-- bank count)
+function TSF:SetCanMake(text, note, suffix)
+    local line = self.detCanMake
+    suffix = suffix or ""
+    -- two lines centre on each other by default: a wrapped note starts at
+    -- the left edge instead (ClearDetailPanel puts the line's own back)
+    self._canMakeJustify = self._canMakeJustify or line:GetJustifyH()
+    if not note or note == "" then line:SetText(text .. suffix); return end
+    line:SetText(text .. "|cffa0a0a0" .. note .. "|r" .. suffix)
+    local parent = line:GetParent()
+    local used = line.GetUnboundedStringWidth and line:GetUnboundedStringWidth() or line.GetStringWidth and line:GetStringWidth()
+    local l, pl, pw = line:GetLeft(), parent and parent:GetLeft(), parent and parent:GetWidth()
+    if used and l and pl and pw and (l - pl) + used > pw - 8 then
+        line:SetText(text .. "\n|cffa0a0a0" .. (note:gsub("^ ", "")) .. "|r" .. suffix)
+        line:SetJustifyH("LEFT")
+    end
 end
 
 -- The lowest line of the Can make block: the price line when it shows
@@ -5692,6 +5780,7 @@ function TSF:BuildCraftBar(parent)
         if self.calcPanel and self.calcPanel:IsShown() then
             self:RefreshCalcPanel()
         end
+        self:UpdateCraftEstimate()
     end)
     qtyBox:SetScript("OnEditFocusGained", function(eb)
         eb:HighlightText()
@@ -5732,6 +5821,13 @@ function TSF:BuildCraftBar(parent)
     notLearned:SetText("|cffff2020Recipe unknown|r")
     notLearned:Hide()
     self.craftNotLearned = notLearned
+
+    -- the batch's time under the quantity box, in row 2's empty slot
+    -- (TSF:UpdateCraftEstimate)
+    local estimate = craftBar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    estimate:SetPoint("CENTER", craftBar, "TOPLEFT", x2 + BTN_W / 2, ROW2_Y - BTN_H / 2)
+    estimate:Hide()
+    self.craftEstimate = estimate
 
     self.craftBar = craftBar
     craftBar:Hide()
@@ -5990,6 +6086,29 @@ function TSF:PaintStrip(strip)
     end
 end
 
+-- The craft bar's "Est. 1m 30s" under the quantity box (m4ru 11-23): the
+-- box's crafts at the batch bar's rate, so it drops one craft's time as
+-- the box counts a batch down. It shows before you craft whatever the
+-- settings, and hides only while the batch bar is on screen, which
+-- counts down itself. No box (an enchant), no line.
+function TSF:UpdateCraftEstimate()
+    local est = self.craftEstimate
+    if not est then return end
+    local recipe = self:GetSelectedRecipe()
+    local box = self.qtyBox
+    local qty = box and tonumber(box:GetText() or "")
+    local P = addon.Prices
+    local strip = self.craftStrip
+    if not (recipe and recipe.isKnown and recipe.gameIndex and qty and qty > 0
+            and box:IsShown() and P and P.CraftSeconds)
+       or (strip and strip:IsShown() and strip.batch and strip.batch:IsShown()) then
+        est:Hide()
+        return
+    end
+    est:SetText("Est. " .. StripTime(qty * P:CraftSeconds(recipe.spellID)))
+    est:Show()
+end
+
 -- Stack the bars switched on, top to bottom
 function TSF:LayoutStrip(strip)
     strip.cast:Hide()
@@ -6040,6 +6159,7 @@ function TSF:UpdateCraftStrip()
     end
     self:ApplyStripLayout(L)
     if addon.UI and addon.UI.ApplyStripLayout then addon.UI:ApplyStripLayout(L) end
+    self:UpdateCraftEstimate()
 end
 
 -- The recipe list's rows that fit above the strip
@@ -6308,6 +6428,56 @@ function TSF:ReagentCraftCount(recipe)
     return minMake or 0
 end
 
+-- Skip vendor items (2.2.3, Lucido; the checkbox left of the search box):
+-- Can make leaves out the materials a vendor sells without limit
+-- (Data/VendorPrices.lua, Data/Forever/VendorPrices.lua), so the count
+-- says what the rest cover. It changes only what Can make shows: the
+-- quantity box and Craft keep the game's count.
+function TSF:SkipVendorOn()
+    local s = addon.db and addon.db.settings
+    return s and s.skipVendorReagents == true or false
+end
+
+-- The crafts the materials cover with the vendor items left out, each
+-- counted by have(itemID). nil when there is nothing to leave out, when
+-- every material is a vendor item (the game's count stands, m4ru 11-23),
+-- or when a material has no item ID.
+function TSF:VendorSkipCount(reagents, have)
+    local vp = addon.VendorPrices
+    if not (vp and reagents and #reagents > 0) then return nil end
+    local minMake, skipped
+    for _, r in ipairs(reagents) do
+        if not (r.itemID and r.count and r.count > 0) then return nil end
+        if vp[r.itemID] then
+            skipped = true
+        else
+            local n = math.floor((have(r.itemID) or 0) / r.count)
+            if minMake == nil or n < minMake then minMake = n end
+        end
+    end
+    if skipped and minMake then return minMake end
+    return nil
+end
+
+local function BagCount(itemID) return GetItemCount(itemID) end
+
+-- The count Can make shows, and true when vendor items were left out of
+-- it. Another character's list carries its own count (OpenWithCharacter);
+-- a recipe on cooldown keeps the game's 0.
+function TSF:ShownCount(recipe, avail)
+    if not (self:SkipVendorOn() and recipe and recipe.isKnown) or state._isLinkedView then
+        return avail, false
+    end
+    if state._viewCharKey then
+        if recipe.numAvailSkip then return recipe.numAvailSkip, true end
+        return avail, false
+    end
+    if self:CooldownSuffix(recipe) ~= "" then return avail, false end
+    local n = self:VendorSkipCount(recipe.reagents, BagCount)
+    if n then return n, true end
+    return avail, false
+end
+
 -- The Classic look's banner behind a material's name: Blizzard's quest
 -- item name frame (Interface\QuestFrame\UI-QuestItemNameFrame, file
 -- 136796), whose bar is texels 11 to 116 of 128. Cropped to the bar, it
@@ -6332,7 +6502,7 @@ end
 -- game count that isn't the bags' reagent count (something else limits
 -- the craft, or the game already counts the bank). Bank = PB's copy from
 -- your last bank visit, as the Reagents list's azure counts.
-function TSF:BankCraftCount(recipe, avail)
+function TSF:BankCraftCount(recipe, avail, skip)
     if state._viewCharKey or not recipe or not recipe.isKnown then return nil end
     local reagents = recipe.reagents
     if not reagents or #reagents == 0 then return nil end
@@ -6340,12 +6510,17 @@ function TSF:BankCraftCount(recipe, avail)
     local inv = char and char.inventory
     if not (inv and inv.bankScanned and inv.bank) then return nil end
     avail = avail or 0
-    if avail ~= self:ReagentCraftCount(recipe) or self:CooldownSuffix(recipe) ~= "" then return nil end
+    -- skip: Skip vendor items left the vendor items out of avail
+    local bags = skip and self:VendorSkipCount(reagents, BagCount) or self:ReagentCraftCount(recipe)
+    if avail ~= bags or self:CooldownSuffix(recipe) ~= "" then return nil end
+    local vp = skip and addon.VendorPrices or {}
     local total
     for _, r in ipairs(reagents) do
         if not (r.itemID and r.count and r.count > 0) then return nil end
-        local n = math.floor(((GetItemCount(r.itemID) or 0) + (inv.bank[r.itemID] or 0)) / r.count)
-        if total == nil or n < total then total = n end
+        if not vp[r.itemID] then
+            local n = math.floor(((GetItemCount(r.itemID) or 0) + (inv.bank[r.itemID] or 0)) / r.count)
+            if total == nil or n < total then total = n end
+        end
     end
     if total and total > avail then return total end
     return nil
@@ -6496,6 +6671,7 @@ function TSF:UpdateCraftBar()
             self.craftNotLearned:Show()
         end
     end
+    self:UpdateCraftEstimate()
 end
 
 ----------------------------------------------------------------------
@@ -7772,6 +7948,7 @@ function TSF:RestoreContentPanels()
     if self.bottomBar then self.bottomBar:Show() end
     if self.skillBar then self.skillBar:Show() end
     if self.searchBox then self.searchBox:Show() end
+    if self.skipVendorCB then self.skipVendorCB:Show() end
     if self.catDropdown then self.catDropdown:Show() end
     self:UpdateFilterVisibility()
     if self.sortDropdown then self.sortDropdown:Show() end
@@ -7803,6 +7980,7 @@ function TSF:HideContentPanels()
     if self.bottomBar then self.bottomBar:Hide() end
     if self.skillBar then self.skillBar:Hide() end
     if self.searchBox then self.searchBox:Hide() end
+    if self.skipVendorCB then self.skipVendorCB:Hide() end
     if self.catDropdown then self.catDropdown:Hide() end
     if self.diffDropdown then self.diffDropdown:Hide() end
     if self.sourceDropdown then self.sourceDropdown:Hide() end
@@ -8066,6 +8244,7 @@ function TSF:LoadRecipes(unknown)
                     itemID      = data.itemID,
                     itemLink    = data.itemLink,
                     numAvail    = data.numAvail or 0,
+                    numAvailSkip = data.numAvailSkip,
                     reagents    = data.reagents,
                     skillReq    = LearnLevelFor(name, sReq or data.skillReq, data.spellID),
                     reqLevel    = rLvl,
@@ -9131,6 +9310,10 @@ function TSF:OpenWithCharacter(charKey, profName)
                 end
             end
             if numAvail == 999999 then numAvail = 0 end
+            -- Skip vendor items: the same count with the vendor items left out
+            local numAvailSkip = TSF:VendorSkipCount(reagents, function(id)
+                return (charBags[id] or 0) + (charBank[id] or 0)
+            end)
 
             state.allRecipes[recipeName] = {
                 difficulty  = diff,
@@ -9138,6 +9321,7 @@ function TSF:OpenWithCharacter(charKey, profName)
                 itemID      = itemID,
                 itemLink    = itemLink,
                 numAvail    = numAvail,
+                numAvailSkip = numAvailSkip,
                 reagents    = reagents,
                 skillReq    = LearnLevelFor(recipeName, staticEntry and staticEntry.skillReq or nil,
                                             recipeSpellID or (staticEntry and staticEntry.spellID)),
