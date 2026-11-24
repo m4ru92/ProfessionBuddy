@@ -48,6 +48,7 @@ Before a real upload (not --dry-run), also:
   tools/writs_db.py --check           the writ harvest matches the game's Craftsman's Writs
   tools/yield_db.py --check           every recipe's count per craft is the game's
   tools/rarity_db.py --check          every crafted item's rarity is the game's
+  tools/cooldown_db.py --check        every recipe's cooldown and shared timer are the game's
   tools/bake_forever_db2.py --check   Forever recipe data is the newest client build
   Core.lua             refuses to build while a dev addon.BUILD stamp is set
   LICENSE              the addon folder's copy is refreshed from the root copy
@@ -570,6 +571,8 @@ def main():
                  "tools/yield_db.py --check (items per craft: the game's spell table, both clients)")
         run_gate(os.path.join(tools_dir(), "rarity_db.py"), ["--check", "--addon-dir", addon_dir],
                  "tools/rarity_db.py --check (crafted item rarity: the game's item table, both clients)")
+        run_gate(os.path.join(tools_dir(), "cooldown_db.py"), ["--check", "--addon-dir", addon_dir],
+                 "tools/cooldown_db.py --check (recipe cooldowns: the game's spell tables, both clients)")
         forever = os.path.join(tools_dir(), "bake_forever_db2.py")
         if args.allow_older_forever_data:
             log("Gate: tools/bake_forever_db2.py --check (Forever recipe data build)")

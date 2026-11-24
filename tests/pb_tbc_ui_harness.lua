@@ -1894,4 +1894,31 @@ do
 end
 print("  PASS " .. TAG .. "36 2.2.3: Est. under the quantity box on TBC Anniversary (2s, 8s, 1m 30s, none for an empty box); hidden while the batch bar is on screen, back after the batch; a node's lines once per showing when PB cannot read them back")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 36)")
+-- U37/C37 2.2.4 CD-A (m4ru 11-24): the baked cooldown table on TBC
+-- Anniversary (Data/Cooldowns.lua, tools/cooldown_db.py): every entry a
+-- recipe PB knows, seconds and a named shared timer or none. Anchors from
+-- the game's spell tables.
+do
+    local C, G = PB.Cooldowns, PB.CooldownGroups
+    EXPECT(type(C) == "table" and type(G) == "table", "no TBC cooldown table")
+    local tocSrc = assert(io.open(PB_BASE .. "/ProfessionBuddy_TBC.toc")):read("*a")
+    EXPECT(tocSrc:find("\nData/Cooldowns.lua", 1, true) and not tocSrc:find("\nData/Forever/Cooldowns.lua", 1, true),
+           "TBC toc: cooldown table")
+    local n = 0
+    for sid, e in pairs(C) do
+        n = n + 1
+        EXPECT(PB.RecipeDB:GetRecipeBySpell(sid), "cooldown for spell " .. sid .. ", not a recipe")
+        EXPECT(type(e[1]) == "number" and e[1] > 0 and (e[2] == nil or G[e[2]]),
+               "cooldown entry for spell " .. sid)
+    end
+    EXPECT(n == 29, "TBC cooldown recipes: " .. n)
+    -- every transmute 20h shared, the spheres 48h on their own shared
+    -- timer, Primal Mooncloth 92h own
+    EXPECT(C[11479][1] == 72000 and C[11479][2] == 310 and C[28566][2] == 310
+           and C[28027][1] == 172800 and C[28027][2] == 1174 and C[28028][2] == 1174
+           and C[26751][1] == 331200 and C[26751][2] == nil
+           and G[310] == "Transmute - Alchemy" and G[1174] == "Enchanting", "TBC cooldown anchors")
+end
+print("  PASS " .. TAG .. "37 2.2.4 CD-A: TBC Anniversary's baked cooldown table loads from the TBC toc; 29 recipes, each a known recipe with seconds and a named shared timer or none (transmutes 20h shared, spheres 48h shared, Primal Mooncloth 92h)")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 37)")

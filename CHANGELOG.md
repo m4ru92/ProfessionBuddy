@@ -2,6 +2,16 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
+## 2.2.4 - unreleased
+
+Groundwork for profession cooldowns.
+
+<!-- more -->
+
+**Changes**
+
+- ProfessionBuddy knows which recipes have a cooldown, how long it lasts, and which recipes share one timer, from each game's own spell data: 29 recipes on TBC Classic Anniversary and 15 on WoW: Forever. On TBC Classic Anniversary every transmute shares one 20 hour timer, and Prismatic Sphere and Void Sphere share a 48 hour one. On WoW: Forever, Transmute: Arcanite and Transmute: Legionite take 47 hours on the shared transmute timer, while Iron to Gold and Mithril to Truesilver have 1 hour timers of their own. Nothing shows this yet; the next cooldown changes use it.
+
 ## 2.2.3 - 2026-11-24
 
 A Craftsman's Writ you already turned in today shows as done, Can make can leave out what a vendor sells, the craft bar estimates how long a batch takes, and a Fishing Rack's tooltip no longer runs away.

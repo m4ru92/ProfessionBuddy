@@ -3,7 +3,7 @@
 ## Notes: Cross-character profession management, recipe tracking, and material calculator for TBC Classic Anniversary
 ## IconTexture: Interface\Icons\Spell_Fire_Fire
 ## Author: m4ru
-## Version: 2.2.3
+## Version: 2.2.4
 ## SavedVariables: ProfBuddyDB
 ## OptionalDeps: Auctionator, TradeSkillMaster
 ## DefaultState: enabled
@@ -41,6 +41,7 @@ Data/RandomEnchant.lua
 Data/Tools.lua
 Data/VendorPrices.lua
 Data/Rarity.lua
+Data/Cooldowns.lua
 MaterialCalc.lua
 Prices.lua
 AuctionPrices.lua

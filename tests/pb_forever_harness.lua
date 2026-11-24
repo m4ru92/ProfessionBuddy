@@ -9265,4 +9265,33 @@ end
 F123()
 print("  PASS F123 2.2.3: Est. under the quantity box: the box's crafts at the batch bar's rate in its format (8s, 1m 30s); shown before crafting with the batch bar setting on; hidden only while the batch bar is on screen; counts down a craft at a time with the bar off; none for an unknown recipe, an empty box or no box")
 
-print("ALL FOREVER TESTS PASS (123)")
+-- F124 2.2.4 CD-A (m4ru 11-24): the baked cooldown table, Forever's own
+-- (Data/Forever/Cooldowns.lua, tools/cooldown_db.py): every entry is a
+-- recipe PB knows, with seconds and, for a shared timer, a category that
+-- has a name. Anchors from the game's spell tables.
+do
+    local PB = ProfBuddy
+    local C, G = PB.Cooldowns, PB.CooldownGroups
+    EXPECT(type(C) == "table" and type(G) == "table", "no Forever cooldown table")
+    for _, toc in ipairs({ "ProfessionBuddy_Forever.toc", "ProfessionBuddy_Mainline.toc" }) do
+        local src = assert(io.open(PB_BASE .. "/" .. toc)):read("*a")
+        EXPECT(src:find("\nData/Forever/Cooldowns.lua", 1, true) and not src:find("\nData/Cooldowns.lua", 1, true),
+               toc .. ": Forever cooldown table")
+    end
+    local n = 0
+    for sid, e in pairs(C) do
+        n = n + 1
+        EXPECT(PB.RecipeDB:GetRecipeBySpell(sid), "cooldown for spell " .. sid .. ", not a recipe")
+        EXPECT(type(e[1]) == "number" and e[1] > 0 and (e[2] == nil or G[e[2]]),
+               "cooldown entry for spell " .. sid)
+    end
+    EXPECT(n == 15, "Forever cooldown recipes: " .. n)
+    -- Legionite and Arcanite 47h shared, Iron to Gold 1h own, Mooncloth 95h own
+    EXPECT(C[1317279][1] == 169200 and C[1317279][2] == 310 and C[17187][2] == 310
+           and C[11479][1] == 3600 and C[11479][2] == nil and C[18560][1] == 342000
+           and G[310] == "Transmute - Alchemy", "Forever cooldown anchors")
+    EXPECT(C[2881] == nil, "Light Leather has no cooldown")
+end
+print("  PASS F124 2.2.4 CD-A: Forever's baked cooldown table loads from both Forever tocs; 15 recipes, each a known recipe with seconds and a named shared timer or none (Legionite 47h shared, Iron to Gold 1h own, Mooncloth 95h)")
+
+print("ALL FOREVER TESTS PASS (124)")
