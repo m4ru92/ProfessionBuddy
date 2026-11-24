@@ -97,7 +97,7 @@ The first time a profession opens, ProfessionBuddy asks how to show the recipes 
 
 - **Show everything or Learn as you go.** List every recipe in the game, or only the ones you, your alts, or your friends have seen at a trainer, at a vendor, or as a recipe item in your bags. ProfessionBuddy asks the first time a profession opens, and Settings changes it later.
 - **Trainers and vendors.** ProfessionBuddy records each trainer and vendor you visit, with learn levels, prices, and stock, and shares them with your friends.
-- **Waylaid Supplies and Craftsman's Writs.** Their tooltips show what filling one costs, and the Shuffle tab's "Crates and writs" lists every crate and writ with what it asks for, what you and your alts hold, and what the rest costs.
+- **Waylaid Supplies and Craftsman's Writs.** Their tooltips show what filling one costs, and the Shuffle tab's "Crates and writs" lists every crate and writ with what it asks for, what you and your alts hold, and what the rest costs. A writ this character turned in today shows greyed out until the daily reset.
 - **Camp item tooltips.** Hover a placed camp item, such as a Camp Chair or a First Aid Kit, to see what it gives at your level.
 - **Gathering loot from play.** Ore veins, herbs, and skinnable mobs start from Classic data and switch to what you and your friends gathered once you have gathered them 10 times together.
 

@@ -2,7 +2,7 @@
 
 Every ProfessionBuddy release, newest first. Each entry lists what is new, what changed and what was fixed, and whether it works with older versions.
 
-## 2.2.3 - unreleased
+## 2.2.3 - 2026-11-24
 
 A Craftsman's Writ you already turned in today shows as done, Can make can leave out what a vendor sells, the craft bar estimates how long a batch takes, and a Fishing Rack's tooltip no longer runs away.
 
@@ -13,6 +13,10 @@ A Craftsman's Writ you already turned in today shows as done, Can make can leave
 - **Batch time estimate:** under the quantity box, the craft bar shows how long the crafts in the box take, such as Est. 1m 30s, at the same rate as the batch bar. It shows before you craft whatever your settings, and hides while the batch bar is on screen. With the batch bar turned off in Settings, it counts down a craft at a time as the quantity box does.
 
 <!-- more -->
+
+**Changes**
+
+- WoW: Forever recipe data stays on game build 1.60.1.71037. Gathering, vendor and trainer data come from VMaNGOS 34aeaa8, with nothing else changed.
 
 **Fixes**
 
