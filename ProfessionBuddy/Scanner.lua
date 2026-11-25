@@ -195,6 +195,49 @@ function Scanner:Init()
 
     -- Level-up
     addon:RegisterEvent("PLAYER_LEVEL_UP",   function() DS:EnsureCharacter() end)
+
+    -- A cooldown craft cast from any window, PB's or the game's.
+    addon:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(_, unit, _, spellID)
+        if unit == "player" then self:OnCooldownCast(spellID) end
+    end)
+end
+
+----------------------------------------------------------------------
+-- Cooldown crafts
+----------------------------------------------------------------------
+
+-- A cooldown craft just succeeded: start its timer now, and the timer of
+-- every recipe this character knows on the same shared timer, without
+-- waiting for the profession window to be read again. The cast recipe's
+-- length counts for the whole shared timer (the game locks them all for
+-- it). The live read still replaces these times on the next scan.
+-- Lengths and shared timers: the baked addon.Cooldowns (Data/Cooldowns.lua,
+-- Data/Forever/Cooldowns.lua). Returns how many recipes it set.
+function Scanner:OnCooldownCast(spellID)
+    local C = addon.Cooldowns
+    local cd = C and spellID and C[spellID]
+    if not cd then return 0 end
+    local char = DS and DS:GetCharacter()
+    if not (char and char.professions) then return 0 end
+
+    local readyAt, group, set = time() + cd[1], cd[2], 0
+    for _, prof in pairs(char.professions) do
+        for _, rec in pairs(type(prof) == "table" and prof.recipes or {}) do
+            local sid = type(rec) == "table" and rec.spellID
+            local other = sid and C[sid]
+            if sid == spellID or (group and other and other[2] == group) then
+                rec.cooldownReadyAt = readyAt
+                set = set + 1
+            end
+        end
+    end
+
+    -- The detail panel's cooldown line, if the panel is open
+    local TSF = addon.TradeSkillFrame
+    if set > 0 and TSF and TSF.frame and TSF.frame:IsShown() and TSF.RefreshDetailPanel then
+        TSF:RefreshDetailPanel(true)
+    end
+    return set
 end
 
 ----------------------------------------------------------------------
@@ -411,6 +454,10 @@ function Scanner:ScanCurrentCraft()
             })
         end
 
+        -- The sphere cooldowns: GetCraftCooldown, as Blizzard's CraftFrame
+        -- reads it. Without it every Enchanting scan dropped the ready time.
+        local cd = row.cooldown
+
         recipes[row.name] = {
             index    = row.index,
             itemID   = addon:ItemIDFromLink(row.itemLink),
@@ -420,6 +467,7 @@ function Scanner:ScanCurrentCraft()
             difficulty = row.difficulty,
             numAvail = row.numAvail,
             reagents = reagents,
+            cooldownReadyAt = (cd and cd > 0) and (time() + cd) or nil,
         }
     end
 

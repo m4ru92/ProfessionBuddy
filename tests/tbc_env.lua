@@ -122,6 +122,7 @@ function GetCraftInfo(i) local r = TBC.craftRows[i]; if r then return r[1], "sub
 function GetCraftItemLink() return nil end
 function GetCraftRecipeLink() return nil end
 function GetCraftIcon() return "icon" end
+function GetCraftCooldown(i) local r = TBC.craftRows[i]; return r and r.cooldown end
 function GetCraftReagentInfo(i, j)
     local g = TBC.craftRows[i] and TBC.craftRows[i].reagents and TBC.craftRows[i].reagents[j]
     if g then return g[1], "icon", g[2], 0 end

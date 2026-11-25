@@ -163,6 +163,7 @@ function Source:ReadOpenWindow(isCraft)
                     }
                 end
                 local recipeLink = GetCraftRecipeLink and GetCraftRecipeLink(i)
+                local cooldown   = GetCraftCooldown and GetCraftCooldown(i)
                 win.rows[#win.rows + 1] = {
                     name       = craftName,
                     index      = i,
@@ -171,6 +172,7 @@ function Source:ReadOpenWindow(isCraft)
                     itemLink   = GetCraftItemLink(i),
                     recipeLink = recipeLink,
                     icon       = GetCraftIcon(i),
+                    cooldown   = cooldown,
                     reagents   = reagents,
                 }
             end

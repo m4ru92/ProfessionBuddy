@@ -4,13 +4,18 @@ Every ProfessionBuddy release, newest first. Each entry lists what is new, what 
 
 ## 2.2.4 - unreleased
 
-Groundwork for profession cooldowns.
+Profession cooldowns start the moment you craft.
 
 <!-- more -->
 
 **Changes**
 
-- ProfessionBuddy knows which recipes have a cooldown, how long it lasts, and which recipes share one timer, from each game's own spell data: 29 recipes on TBC Classic Anniversary and 15 on WoW: Forever. On TBC Classic Anniversary every transmute shares one 20 hour timer, and Prismatic Sphere and Void Sphere share a 48 hour one. On WoW: Forever, Transmute: Arcanite and Transmute: Legionite take 47 hours on the shared transmute timer, while Iron to Gold and Mithril to Truesilver have 1 hour timers of their own. Nothing shows this yet; the next cooldown changes use it.
+- ProfessionBuddy knows which recipes have a cooldown, how long it lasts, and which recipes share one timer, from each game's own spell data: 29 recipes on TBC Classic Anniversary and 15 on WoW: Forever. On TBC Classic Anniversary every transmute shares one 20 hour timer, and Prismatic Sphere and Void Sphere share a 48 hour one. On WoW: Forever, Transmute: Arcanite and Transmute: Legionite take 47 hours on the shared transmute timer, while Iron to Gold and Mithril to Truesilver have 1 hour timers of their own.
+- When you craft a recipe with a cooldown, ProfessionBuddy starts its timer straight away, along with every other recipe you know on the same shared timer. On TBC Classic Anniversary, for example, one transmute starts the timer on all your transmutes. This works whether you craft from ProfessionBuddy's window or the game's own.
+
+**Fixes**
+
+- TBC Classic Anniversary: opening Enchanting cleared the cooldown on Prismatic Sphere and Void Sphere, so ProfessionBuddy never showed when they would be ready. It now reads each sphere's cooldown from the Enchanting window, as the game's own window does.
 
 ## 2.2.3 - 2026-11-24
 

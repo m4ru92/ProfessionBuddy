@@ -1921,4 +1921,85 @@ do
 end
 print("  PASS " .. TAG .. "37 2.2.4 CD-A: TBC Anniversary's baked cooldown table loads from the TBC toc; 29 recipes, each a known recipe with seconds and a named shared timer or none (transmutes 20h shared, spheres 48h shared, Primal Mooncloth 92h)")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 37)")
+-- U38/C38 2.2.4 CD-D (m4ru 11-24/25): on TBC Anniversary a cooldown craft's
+-- cast success starts the timer for every known recipe on its shared timer
+-- at the cast's length: a transmute locks every transmute 20h (Iron to Gold
+-- too), a sphere both spheres 48h; Primal Mooncloth only itself.
+do
+    local DS, SC, TSF = PB.DataStore, PB.Scanner, PB.TradeSkillFrame
+    local me = DS:GetCharacter()
+    local keepA, keepE, keepT = me.professions.Alchemy, me.professions.Enchanting, me.professions.Tailoring
+    me.professions.Alchemy = { skillLevel = 375, maxSkill = 375, recipes = {
+        ["Transmute: Primal Air to Fire"] = { spellID = 28566 },
+        ["Transmute: Iron to Gold"]       = { spellID = 11479 },
+        ["Transmute: Earthstorm Diamond"] = { spellID = 32765 },
+    } }
+    me.professions.Enchanting = { skillLevel = 375, maxSkill = 375, recipes = {
+        ["Prismatic Sphere"] = { spellID = 28027 },
+        ["Void Sphere"]      = { spellID = 28028 },
+    } }
+    me.professions.Tailoring = { skillLevel = 375, maxSkill = 375, recipes = {
+        ["Primal Mooncloth"] = { spellID = 26751 },
+        ["Spellcloth"]       = { spellID = 31373 },
+    } }
+    local function ready(p, n) return me.professions[p].recipes[n].cooldownReadyAt end
+    local keepRefresh, keepFrame = TSF.RefreshDetailPanel, TSF.frame
+    local refreshed = 0
+    TSF.RefreshDetailPanel = function() refreshed = refreshed + 1 end
+    TSF.frame = { IsShown = function() return true end }
+
+    local t = time()
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 11479)
+    for _, n in ipairs({ "Transmute: Primal Air to Fire", "Transmute: Iron to Gold", "Transmute: Earthstorm Diamond" }) do
+        local r = ready("Alchemy", n)
+        EXPECT(r and r >= t + 72000 and r <= time() + 72000, "CD-D: " .. n .. " " .. tostring(r))
+    end
+    EXPECT(not ready("Enchanting", "Prismatic Sphere") and not ready("Tailoring", "Primal Mooncloth"),
+           "CD-D: a transmute set another shared timer")
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 28028)
+    EXPECT(ready("Enchanting", "Prismatic Sphere") and ready("Enchanting", "Prismatic Sphere") >= t + 172800
+           and ready("Enchanting", "Void Sphere") == ready("Enchanting", "Prismatic Sphere"),
+           "CD-D: Void Sphere did not lock both spheres")
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 26751)
+    EXPECT(ready("Tailoring", "Primal Mooncloth") and ready("Tailoring", "Primal Mooncloth") >= t + 331200
+           and not ready("Tailoring", "Spellcloth"), "CD-D: Primal Mooncloth is its own timer")
+    EXPECT(refreshed == 3, "CD-D: detail panel refreshed " .. refreshed)
+
+    TSF.RefreshDetailPanel, TSF.frame = keepRefresh, keepFrame
+    me.professions.Alchemy, me.professions.Enchanting, me.professions.Tailoring = keepA, keepE, keepT
+end
+print("  PASS " .. TAG .. "38 2.2.4 CD-D: TBC Anniversary cast success: Iron to Gold locks every known transmute 20h, Void Sphere both spheres 48h, Primal Mooncloth only itself 92h; the open detail panel refreshes")
+
+-- U39/C39 2.2.4 (m4ru 11-25): the Enchanting (Craft API) scan reads each
+-- sphere's cooldown with GetCraftCooldown, as Blizzard's CraftFrame does,
+-- so opening Enchanting keeps a sphere's ready time instead of dropping it.
+do
+    local DS = PB.DataStore
+    local keepRows, keepCraft = TBC.craftRows, TBC.craft
+    TBC.craft = { "Enchanting", 375, 375 }
+    TBC.craftRows = {
+        { "Prismatic Sphere", "optimal", 0, cooldown = 90000 },
+        { "Void Sphere",      "optimal", 0, cooldown = 90000 },
+        { "Enchant Bracer - Minor Health", "trivial", 1 },
+    }
+    local t = time()
+    OPEN_CRAFT()
+    local rec = DS:GetCharacter().professions.Enchanting.recipes
+    for _, n in ipairs({ "Prismatic Sphere", "Void Sphere" }) do
+        local r = rec[n] and rec[n].cooldownReadyAt
+        EXPECT(r and r >= t + 90000 and r <= time() + 90000, "craft scan cooldown: " .. n .. " " .. tostring(r))
+    end
+    EXPECT(rec["Enchant Bracer - Minor Health"] and not rec["Enchant Bracer - Minor Health"].cooldownReadyAt,
+           "craft scan: a recipe with no cooldown got one")
+    -- ready again: the next scan clears it
+    TBC.craftRows[1].cooldown, TBC.craftRows[2].cooldown = nil, nil
+    FIRE("CRAFT_UPDATE"); FLUSH()
+    rec = DS:GetCharacter().professions.Enchanting.recipes
+    EXPECT(not rec["Prismatic Sphere"].cooldownReadyAt, "craft scan: a ready sphere kept its old time")
+    CLOSE_CRAFT()
+    TBC.craftRows, TBC.craft = keepRows, keepCraft
+    OPEN_CRAFT(); CLOSE_CRAFT()
+end
+print("  PASS " .. TAG .. "39 2.2.4: TBC Anniversary Enchanting scan reads sphere cooldowns with GetCraftCooldown and clears them when ready")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 39)")

@@ -9294,4 +9294,71 @@ do
 end
 print("  PASS F124 2.2.4 CD-A: Forever's baked cooldown table loads from both Forever tocs; 15 recipes, each a known recipe with seconds and a named shared timer or none (Legionite 47h shared, Iron to Gold 1h own, Mooncloth 95h)")
 
-print("ALL FOREVER TESTS PASS (124)")
+-- F125 2.2.4 CD-D (m4ru 11-24/25): a cooldown craft's cast success starts
+-- the timer for it and every recipe the character knows on the same shared
+-- timer, at the cast recipe's length; its own-timer recipes and other
+-- characters are untouched. Any window counts (no craft tracked here).
+do
+    local PB = ProfBuddy
+    local DS, SC, TSF = PB.DataStore, PB.Scanner, PB.TradeSkillFrame
+    local me = DS:GetCharacter()
+    local keepAlch = me.professions.Alchemy
+    me.professions.Alchemy = { skillLevel = 300, maxSkill = 300, recipes = {
+        ["Transmute: Arcanite"]       = { spellID = 17187 },
+        ["Transmute: Air to Fire"]    = { spellID = 17559 },
+        ["Transmute: Elemental Fire"] = { spellID = 25146 },
+        ["Transmute: Iron to Gold"]   = { spellID = 11479 },
+        ["Elixir of Lion's Strength"] = { spellID = 2329 },
+    } }
+    local A = me.professions.Alchemy.recipes
+    local function ready(n) return A[n].cooldownReadyAt end
+    local refreshed = 0
+    local keepRefresh, keepFrame = TSF.RefreshDetailPanel, TSF.frame
+    TSF.RefreshDetailPanel = function() refreshed = refreshed + 1 end
+    TSF.frame = { IsShown = function() return true end }
+
+    -- not the player, or not a cooldown recipe: nothing
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "party1", "Cast-1", 17187)
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-2", 2329)
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-3", 2881)
+    EXPECT(not ready("Transmute: Arcanite") and not ready("Elixir of Lion's Strength")
+           and refreshed == 0, "CD-D: a cast that is not a cooldown craft set a time")
+
+    -- Arcanite: 47h on all three shared transmutes, Iron to Gold (own) not
+    local t = time()
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-4", 17187)
+    for _, n in ipairs({ "Transmute: Arcanite", "Transmute: Air to Fire", "Transmute: Elemental Fire" }) do
+        EXPECT(ready(n) and ready(n) >= t + 169200 and ready(n) <= time() + 169200,
+               "CD-D: " .. n .. " ready time " .. tostring(ready(n)))
+    end
+    EXPECT(not ready("Transmute: Iron to Gold") and not ready("Elixir of Lion's Strength"),
+           "CD-D: an own-timer recipe was set by a shared-timer cast")
+    EXPECT(refreshed == 1, "CD-D: detail panel refreshed " .. refreshed)
+
+    -- Iron to Gold: 1h on itself only
+    local arc = ready("Transmute: Arcanite")
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-5", 11479)
+    EXPECT(ready("Transmute: Iron to Gold") and ready("Transmute: Iron to Gold") <= time() + 3600
+           and ready("Transmute: Iron to Gold") >= t + 3600 and ready("Transmute: Arcanite") == arc,
+           "CD-D: Iron to Gold set only itself")
+
+    -- it returns how many recipes it set
+    EXPECT(SC:OnCooldownCast(17559) == 3, "CD-D: recipes set by Air to Fire")
+
+    -- another character's Alchemy is never touched; a closed window is not refreshed
+    TSF.frame = { IsShown = function() return false end }
+    local other = { professions = { Alchemy = { recipes = { ["Transmute: Arcanite"] = { spellID = 17187 } } } } }
+    PB.db.characters["Testalt-TestRealm"] = other
+    refreshed = 0
+    FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-6", 17187)
+    EXPECT(other.professions.Alchemy.recipes["Transmute: Arcanite"].cooldownReadyAt == nil,
+           "CD-D: another character's recipe was set")
+    EXPECT(refreshed == 0, "CD-D: refreshed a hidden window")
+    PB.db.characters["Testalt-TestRealm"] = nil
+
+    TSF.RefreshDetailPanel, TSF.frame = keepRefresh, keepFrame
+    me.professions.Alchemy = keepAlch
+end
+print("  PASS F125 2.2.4 CD-D: a cooldown craft's cast success sets the ready time on it and every known recipe on its shared timer at the cast's length (Arcanite: 3 transmutes 47h, Iron to Gold untouched; Iron to Gold: itself 1h); other casts, other units and other characters untouched; the open detail panel refreshes")
+
+print("ALL FOREVER TESTS PASS (125)")
