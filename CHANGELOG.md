@@ -4,7 +4,7 @@ Every ProfessionBuddy release, newest first. Each entry lists what is new, what 
 
 ## 2.2.4 - unreleased
 
-Profession cooldowns start the moment you craft.
+Profession cooldowns start the moment you craft, and the profession window shows which ones are ready.
 
 <!-- more -->
 
@@ -12,10 +12,12 @@ Profession cooldowns start the moment you craft.
 
 - ProfessionBuddy knows which recipes have a cooldown, how long it lasts, and which recipes share one timer, from each game's own spell data: 29 recipes on TBC Classic Anniversary and 15 on WoW: Forever. On TBC Classic Anniversary every transmute shares one 20 hour timer, and Prismatic Sphere and Void Sphere share a 48 hour one. On WoW: Forever, Transmute: Arcanite and Transmute: Legionite take 47 hours on the shared transmute timer, while Iron to Gold and Mithril to Truesilver have 1 hour timers of their own.
 - When you craft a recipe with a cooldown, ProfessionBuddy starts its timer straight away, along with every other recipe you know on the same shared timer. On TBC Classic Anniversary, for example, one transmute starts the timer on all your transmutes. This works whether you craft from ProfessionBuddy's window or the game's own.
+- The profession window shows which cooldown crafts are ready. In the detail panel, a recipe with a cooldown that is not running says Cooldown ready in green under Can make. While a recipe is on cooldown, its Can make count is red, because you have the materials but not the time, and a pocket watch shows after its counts in the recipe list. For an alt or a friend, these show the cooldown as of their last update.
 
 **Fixes**
 
 - TBC Classic Anniversary: opening Enchanting cleared the cooldown on Prismatic Sphere and Void Sphere, so ProfessionBuddy never showed when they would be ready. It now reads each sphere's cooldown from the Enchanting window, as the game's own window does.
+- With a cooldown line under it, Can make moved right to the middle of that line. Every line under Can make now starts at the left edge.
 
 ## 2.2.3 - 2026-11-24
 

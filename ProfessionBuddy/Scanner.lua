@@ -232,10 +232,13 @@ function Scanner:OnCooldownCast(spellID)
         end
     end
 
-    -- The detail panel's cooldown line, if the panel is open
+    -- The list's pocket watches and the detail panel's cooldown line, if
+    -- the window is open (a list viewed from the Characters tab is never
+    -- scanned again)
     local TSF = addon.TradeSkillFrame
-    if set > 0 and TSF and TSF.frame and TSF.frame:IsShown() and TSF.RefreshDetailPanel then
-        TSF:RefreshDetailPanel(true)
+    if set > 0 and TSF and TSF.frame and TSF.frame:IsShown() then
+        if TSF.UpdateListRows then TSF:UpdateListRows() end
+        if TSF.RefreshDetailPanel then TSF:RefreshDetailPanel(true) end
     end
     return set
 end

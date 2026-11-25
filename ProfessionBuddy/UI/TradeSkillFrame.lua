@@ -325,6 +325,9 @@ local function LearnedDiff(recipe, skill)
 end
 -- A name with no known color
 local NO_DIFF_COLOR = { r = 1, g = 1, b = 1 }
+-- The recipe list's mark for a recipe on cooldown (CD-B, m4ru 11-25): a
+-- pocket watch after the counts, as tall as the text. None when it is ready.
+local COOLDOWN_MARK = " |TInterface\\Icons\\INV_Misc_PocketWatch_01:0|t"
 
 -- knownDiff (optional): the recipe's ACTUAL difficulty tier -- from the live
 -- game for your own profession, or the best-known value for a friend/alt.
@@ -3765,11 +3768,16 @@ function TSF:UpdateListRows()
                     local bankStr = bankAvail and ("|cff3fc7ff[" .. bankAvail
                         .. (addon:ColorblindMarkers() and " bank" or "") .. "]|r") or ""
                     longRight = bankAvail ~= nil
+                    -- on cooldown: the pocket watch after the counts
+                    local cdMark = ""
+                    if self:CooldownSuffix(entry) ~= "" then
+                        cdMark, longRight = COOLDOWN_MARK, true
+                    end
                     if avail > 0 then
                         row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. "|cff00ff00[" .. avail .. "]|r"
-                            .. (bankAvail and " " or "") .. bankStr)
+                            .. (bankAvail and " " or "") .. bankStr .. cdMark)
                     else
-                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. bankStr)
+                        row.rightText:SetText(ProfitPrefix(entry) .. rangeStr .. bankStr .. cdMark)
                     end
                 else
                     local vis = ShownSources(entry)
@@ -3924,6 +3932,20 @@ function TSF:CooldownSuffix(recipe)
     return ""
 end
 
+-- Green "\nCooldown ready" for a known cooldown craft (the baked
+-- addon.Cooldowns, Data/Cooldowns.lua) with no cooldown running, or "".
+-- It only speaks of the timer, never the reagents (m4ru 11-25). For an alt
+-- or a friend it holds as of their last scan, as the orange line does.
+-- Not in a linked list: PB has no cooldown times for it.
+function TSF:CooldownReadySuffix(recipe)
+    local C = addon.Cooldowns
+    if not (C and recipe and recipe.isKnown and recipe.spellID and C[recipe.spellID])
+       or state._isLinkedView or self:CooldownSuffix(recipe) ~= "" then
+        return ""
+    end
+    return "\n|cff00ff00Cooldown ready|r"
+end
+
 function TSF:BuildDetailPanel(parent)
     local topOffset = -106
 
@@ -4064,6 +4086,10 @@ function TSF:BuildDetailPanel(parent)
 
     local detCanMake = sc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     detCanMake:SetPoint("TOPLEFT", detSource, "BOTTOMLEFT", 0, -8)
+    -- the lines of a font string centre on its widest one by default: every
+    -- line under Can make (the cooldown line, a wrapped Skip vendor items
+    -- note) starts at the left edge instead (m4ru 11-25)
+    detCanMake:SetJustifyH("LEFT")
     self.detCanMake = detCanMake
 
     -- Prices.lua: what one craft costs, sells for and makes, under Can make.
@@ -4359,8 +4385,6 @@ function TSF:ClearDetailPanel(preserveScroll)
     self.detSource:SetText("")
     if self.detSourceHover then self.detSourceHover.spellID = nil end
     self.detCanMake:SetText("")
-    -- a wrapped Skip vendor items note set it left (SetCanMake)
-    if self._canMakeJustify then self.detCanMake:SetJustifyH(self._canMakeJustify) end
     self.detPrice:SetText("")
     self.detPrice:Hide()
     self.detPriceHover.result = nil
@@ -4553,6 +4577,8 @@ function TSF:RefreshDetailPanel(preserveScroll)
         -- recipe that uses a vendor item (m4ru 11-23)
         local skipNote = skipped and " (vendor items skipped)" or ""
         local cdSuffix = self:CooldownSuffix(recipe)
+        -- a cooldown craft off cooldown: "Cooldown ready" under Can make
+        local readySuffix = self:CooldownReadySuffix(recipe)
         -- crafts, then the items they make: "Can make: 54 (108)"
         local function items(n)
             if not made then return "" end
@@ -4564,19 +4590,23 @@ function TSF:RefreshDetailPanel(preserveScroll)
         local bankAvail = self:BankCraftCount(recipe, avail, skipped)
         local bankPart = bankAvail and ("|cff3fc7ff, " .. bankAvail .. items(bankAvail) .. " with bank|r") or ""
         if avail > 0 then
-            self:SetCanMake("|cff00ff00Can make: " .. avail .. items(avail) .. "|r" .. bankPart, skipNote, cdSuffix)
+            -- red on cooldown: the reagents are there, the time is not
+            -- (m4ru 11-25)
+            local c = cdSuffix ~= "" and "|cffff4444" or "|cff00ff00"
+            self:SetCanMake(c .. "Can make: " .. avail .. items(avail) .. "|r" .. bankPart, skipNote,
+                cdSuffix .. readySuffix)
         elseif bankAvail then
             -- the bags make none, the bank has the rest: not "missing"
-            self:SetCanMake("|cffff4444Can make: 0|r" .. bankPart, skipNote)
+            self:SetCanMake("|cffff4444Can make: 0|r" .. bankPart, skipNote, readySuffix)
         elseif cdSuffix ~= "" then
             -- A recipe on cooldown reports 0 whatever is in the bags, so
             -- naming reagents as the reason would contradict the very next
             -- line ("On cooldown: ready in ...").
             self.detCanMake:SetText("|cffff4444Can make: 0|r" .. cdSuffix)
         elseif skipped then
-            self:SetCanMake("|cffff4444Can make: 0 (missing reagents)|r", skipNote)
+            self:SetCanMake("|cffff4444Can make: 0 (missing reagents)|r", skipNote, readySuffix)
         else
-            self.detCanMake:SetText("|cffff4444Can make: 0 (missing reagents)|r")
+            self.detCanMake:SetText("|cffff4444Can make: 0 (missing reagents)|r" .. readySuffix)
         end
     end
 
@@ -4760,9 +4790,6 @@ end
 function TSF:SetCanMake(text, note, suffix)
     local line = self.detCanMake
     suffix = suffix or ""
-    -- two lines centre on each other by default: a wrapped note starts at
-    -- the left edge instead (ClearDetailPanel puts the line's own back)
-    self._canMakeJustify = self._canMakeJustify or line:GetJustifyH()
     if not note or note == "" then line:SetText(text .. suffix); return end
     line:SetText(text .. "|cffa0a0a0" .. note .. "|r" .. suffix)
     local parent = line:GetParent()
@@ -4770,7 +4797,6 @@ function TSF:SetCanMake(text, note, suffix)
     local l, pl, pw = line:GetLeft(), parent and parent:GetLeft(), parent and parent:GetWidth()
     if used and l and pl and pw and (l - pl) + used > pw - 8 then
         line:SetText(text .. "\n|cffa0a0a0" .. (note:gsub("^ ", "")) .. "|r" .. suffix)
-        line:SetJustifyH("LEFT")
     end
 end
 

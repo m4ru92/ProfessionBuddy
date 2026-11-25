@@ -8907,23 +8907,16 @@ local function F120()
     rawset(sc, "GetLeft", function() return 0 end)
     rawset(sc, "GetWidth", function() return 400 end)
     draw()
-    local just
-    rawset(line, "SetJustifyH", function(_, j) just = j end)
-    rawset(line, "GetJustifyH", function() return "CENTER" end)
-    TSF._canMakeJustify = nil   -- read again from the stub
-    draw()
-    EXPECT(can() == "|cff00ff00Can make: 5|r\n|cffa0a0a0(vendor items skipped)|r" and just == "LEFT", "too long: " .. can() .. " " .. tostring(just))
+    -- the wrapped note starts at the left edge: the whole line is left
+    -- aligned from its creation (2.2.4 CD-B)
+    EXPECT(can() == "|cff00ff00Can make: 5|r\n|cffa0a0a0(vendor items skipped)|r" and line:GetJustifyH() == "LEFT",
+           "too long: " .. can() .. " " .. tostring(line:GetJustifyH()))
     rawset(line, "GetUnboundedStringWidth", function() return 300 end)
     draw()
-    EXPECT(can() == "|cff00ff00Can make: 5|r|cffa0a0a0 (vendor items skipped)|r" and just == "CENTER", "fits again: " .. can() .. " " .. tostring(just))
-    -- a recipe of another kind next: the line's own setting back
-    rawset(line, "GetUnboundedStringWidth", function() return 380 end)
-    draw()
+    EXPECT(can() == "|cff00ff00Can make: 5|r|cffa0a0a0 (vendor items skipped)|r", "fits again: " .. can())
     TSF:ClearDetailPanel()
-    EXPECT(just == "CENTER", "the left edge stayed after the panel cleared: " .. tostring(just))
+    EXPECT(line:GetJustifyH() == "LEFT", "the left edge went after the panel cleared: " .. tostring(line:GetJustifyH()))
     rawset(line, "GetUnboundedStringWidth", nil); rawset(line, "GetLeft", nil)
-    rawset(line, "SetJustifyH", nil); rawset(line, "GetJustifyH", nil)
-    TSF._canMakeJustify = nil
     rawset(sc, "GetLeft", nil); rawset(sc, "GetWidth", nil)
     -- the game's count stays: Craft stays off, the box's limit is the game's
     -- (Settings may still be up from an earlier test: the craft bar hides under it)
@@ -9312,9 +9305,10 @@ do
     } }
     local A = me.professions.Alchemy.recipes
     local function ready(n) return A[n].cooldownReadyAt end
-    local refreshed = 0
-    local keepRefresh, keepFrame = TSF.RefreshDetailPanel, TSF.frame
+    local refreshed, listed = 0, 0
+    local keepRefresh, keepFrame, keepList = TSF.RefreshDetailPanel, TSF.frame, TSF.UpdateListRows
     TSF.RefreshDetailPanel = function() refreshed = refreshed + 1 end
+    TSF.UpdateListRows = function() listed = listed + 1 end
     TSF.frame = { IsShown = function() return true end }
 
     -- not the player, or not a cooldown recipe: nothing
@@ -9334,6 +9328,7 @@ do
     EXPECT(not ready("Transmute: Iron to Gold") and not ready("Elixir of Lion's Strength"),
            "CD-D: an own-timer recipe was set by a shared-timer cast")
     EXPECT(refreshed == 1, "CD-D: detail panel refreshed " .. refreshed)
+    EXPECT(listed == 1, "CD-D: list redrawn " .. listed .. " times (CD-B's pocket watches)")
 
     -- Iron to Gold: 1h on itself only
     local arc = ready("Transmute: Arcanite")
@@ -9349,16 +9344,95 @@ do
     TSF.frame = { IsShown = function() return false end }
     local other = { professions = { Alchemy = { recipes = { ["Transmute: Arcanite"] = { spellID = 17187 } } } } }
     PB.db.characters["Testalt-TestRealm"] = other
-    refreshed = 0
+    refreshed, listed = 0, 0
     FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-6", 17187)
     EXPECT(other.professions.Alchemy.recipes["Transmute: Arcanite"].cooldownReadyAt == nil,
            "CD-D: another character's recipe was set")
-    EXPECT(refreshed == 0, "CD-D: refreshed a hidden window")
+    EXPECT(refreshed == 0 and listed == 0, "CD-D: refreshed a hidden window")
     PB.db.characters["Testalt-TestRealm"] = nil
 
-    TSF.RefreshDetailPanel, TSF.frame = keepRefresh, keepFrame
+    TSF.RefreshDetailPanel, TSF.frame, TSF.UpdateListRows = keepRefresh, keepFrame, keepList
     me.professions.Alchemy = keepAlch
 end
-print("  PASS F125 2.2.4 CD-D: a cooldown craft's cast success sets the ready time on it and every known recipe on its shared timer at the cast's length (Arcanite: 3 transmutes 47h, Iron to Gold untouched; Iron to Gold: itself 1h); other casts, other units and other characters untouched; the open detail panel refreshes")
+print("  PASS F125 2.2.4 CD-D: a cooldown craft's cast success sets the ready time on it and every known recipe on its shared timer at the cast's length (Arcanite: 3 transmutes 47h, Iron to Gold untouched; Iron to Gold: itself 1h); other casts, other units and other characters untouched; the open list and detail panel refresh")
 
-print("ALL FOREVER TESTS PASS (125)")
+-- F126 2.2.4 CD-B (m4ru 11-25): a cooldown craft off cooldown says
+-- "Cooldown ready" in green under Can make; on cooldown its Can make is red
+-- (reagents yes, time no) and the list row ends with a pocket watch; the
+-- Can make lines start at the left edge. Its own function: the main
+-- chunk is at Lua's 200-local limit.
+;(function()
+    local PB = ProfBuddy
+    if not (TSF.frame and TSF.frame:IsShown()) then C_TradeSkillUI.OpenTradeSkill(165); TS_LIST_READY(); FLUSH() end
+    local TSF, DS = PB.TradeSkillFrame, PB.DataStore
+    local st = TSF.state
+    local keepOff, keepView, keepSel, keepLinked = st.scrollOffset, st._viewCharKey, st.selected, st._isLinkedView
+    st._viewCharKey, st._isLinkedView = nil, nil
+    EXPECT(PB.Cooldowns[17187] and not PB.Cooldowns[3753], "Arcanite is not a cooldown recipe, or PB Test Belt's spell is")
+    local prof = DS:GetProfession(PB:PlayerKey(), st.profName)
+    EXPECT(prof and prof.recipes, "no saved " .. tostring(st.profName))
+    -- a cooldown craft and a plain one, no reagents (no bank count)
+    local cdRec = { name = "Transmute: Arcanite", isKnown = true, numAvail = 0, itemID = 12360, spellID = 17187, reagents = {} }
+    local plain = { name = "PB Test Belt", isKnown = true, numAvail = 0, itemID = 4239, spellID = 3753, reagents = {} }
+    local saved = { [cdRec.name] = { spellID = 17187 }, [plain.name] = { spellID = 3753 } }
+    for n, r in pairs(saved) do prof.recipes[n] = r end
+    table.insert(st.recipes, 1, cdRec)
+    st.scrollOffset = 0
+    local row = TSF.listRows[1]
+    local WATCH = "|TInterface\\Icons\\INV_Misc_PocketWatch_01:0|t"
+    local function show(rec) st.recipes[1], st.selected = rec, rec.name; TSF:UpdateListRows(); TSF:RefreshDetailPanel() end
+    local function list() return row.rightText:GetText() or "" end
+    local function can() return TSF.detCanMake:GetText() or "" end
+    local READY = "\n|cff00ff00Cooldown ready|r"
+
+    -- ready, no reagents: the timer line only, no watch
+    show(cdRec)
+    EXPECT(can() == "|cffff4444Can make: 0 (missing reagents)|r" .. READY, "ready, none: " .. can())
+    EXPECT(not list():find(WATCH, 1, true), "ready: a watch in the list " .. list())
+    -- ready, reagents for 3: green count, the ready line under it
+    cdRec.numAvail = 3
+    show(cdRec)
+    EXPECT(can():find("^|cff00ff00Can make: 3") and can():sub(-#READY) == READY, "ready, 3: " .. can())
+    -- on cooldown: red count, the orange line, no ready line, the watch
+    saved[cdRec.name].cooldownReadyAt = time() + 5 * 3600
+    show(cdRec)
+    EXPECT(can():find("^|cffff4444Can make: 3") and can():find("\n|cffff8800On cooldown: ready in 5h 0m|r", 1, true)
+           and not can():find("Cooldown ready", 1, true), "on cooldown, 3: " .. can())
+    EXPECT(list():sub(-#WATCH - 1) == " " .. WATCH, "on cooldown: no watch at the end of the list row " .. list())
+    EXPECT(TSF.detCanMake:GetJustifyH() == "LEFT", "Can make is not left aligned")
+    -- on cooldown, none made: as before, plus the watch
+    cdRec.numAvail = 0
+    show(cdRec)
+    EXPECT(can() == "|cffff4444Can make: 0|r\n|cffff8800On cooldown: ready in 5h 0m|r", "on cooldown, 0: " .. can())
+    EXPECT(list() == " " .. WATCH or list():sub(-#WATCH - 1) == " " .. WATCH, "on cooldown, 0: " .. list())
+    -- the time passed: ready again, no watch
+    saved[cdRec.name].cooldownReadyAt = time() - 10
+    show(cdRec)
+    EXPECT(can():sub(-#READY) == READY and not list():find(WATCH, 1, true), "expired: " .. can() .. " / " .. list())
+    -- a linked list: no ready line
+    st._isLinkedView = true
+    show(cdRec)
+    EXPECT(not can():find("Cooldown ready", 1, true), "linked: " .. can())
+    st._isLinkedView = nil
+    -- not a cooldown craft: never "Cooldown ready"; a cooldown the game
+    -- reports on it still shows, with the watch, and the count turns red
+    plain.numAvail = 2
+    show(plain)
+    EXPECT(can() == "|cff00ff00Can make: 2 (2)|r" or can() == "|cff00ff00Can make: 2|r", "plain: " .. can())
+    EXPECT(not list():find(WATCH, 1, true), "plain: " .. list())
+    saved[plain.name].cooldownReadyAt = time() + 600
+    show(plain)
+    EXPECT(can():find("^|cffff4444Can make: 2") and can():find("On cooldown", 1, true)
+           and not can():find("Cooldown ready", 1, true) and list():find(WATCH, 1, true), "plain on cooldown: " .. can() .. " / " .. list())
+    saved[plain.name].cooldownReadyAt = time() - 10
+    show(plain)
+    EXPECT(not can():find("ooldown", 1, true) and not list():find(WATCH, 1, true), "plain expired: " .. can() .. " / " .. list())
+
+    table.remove(st.recipes, 1)
+    for n in pairs(saved) do prof.recipes[n] = nil end
+    st.scrollOffset, st._viewCharKey, st.selected, st._isLinkedView = keepOff, keepView, keepSel, keepLinked
+    TSF:UpdateListRows(); TSF:RefreshDetailPanel()
+end)()
+print("  PASS F126 2.2.4 CD-B: a cooldown craft off cooldown shows Cooldown ready in green under Can make (with or without reagents, and once its time has passed; not in a linked list); on cooldown its Can make is red, the orange line shows, and its list row ends with a pocket watch; a recipe that is no cooldown craft never says Cooldown ready but shows a cooldown the game reports; Can make is left aligned")
+
+print("ALL FOREVER TESTS PASS (126)")

@@ -1943,9 +1943,10 @@ do
         ["Spellcloth"]       = { spellID = 31373 },
     } }
     local function ready(p, n) return me.professions[p].recipes[n].cooldownReadyAt end
-    local keepRefresh, keepFrame = TSF.RefreshDetailPanel, TSF.frame
-    local refreshed = 0
+    local keepRefresh, keepFrame, keepList = TSF.RefreshDetailPanel, TSF.frame, TSF.UpdateListRows
+    local refreshed, listed = 0, 0
     TSF.RefreshDetailPanel = function() refreshed = refreshed + 1 end
+    TSF.UpdateListRows = function() listed = listed + 1 end
     TSF.frame = { IsShown = function() return true end }
 
     local t = time()
@@ -1963,12 +1964,12 @@ do
     FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-guid", 26751)
     EXPECT(ready("Tailoring", "Primal Mooncloth") and ready("Tailoring", "Primal Mooncloth") >= t + 331200
            and not ready("Tailoring", "Spellcloth"), "CD-D: Primal Mooncloth is its own timer")
-    EXPECT(refreshed == 3, "CD-D: detail panel refreshed " .. refreshed)
+    EXPECT(refreshed == 3 and listed == 3, "CD-D: detail panel refreshed " .. refreshed .. ", list redrawn " .. listed)
 
-    TSF.RefreshDetailPanel, TSF.frame = keepRefresh, keepFrame
+    TSF.RefreshDetailPanel, TSF.frame, TSF.UpdateListRows = keepRefresh, keepFrame, keepList
     me.professions.Alchemy, me.professions.Enchanting, me.professions.Tailoring = keepA, keepE, keepT
 end
-print("  PASS " .. TAG .. "38 2.2.4 CD-D: TBC Anniversary cast success: Iron to Gold locks every known transmute 20h, Void Sphere both spheres 48h, Primal Mooncloth only itself 92h; the open detail panel refreshes")
+print("  PASS " .. TAG .. "38 2.2.4 CD-D: TBC Anniversary cast success: Iron to Gold locks every known transmute 20h, Void Sphere both spheres 48h, Primal Mooncloth only itself 92h; the open list and detail panel refresh")
 
 -- U39/C39 2.2.4 (m4ru 11-25): the Enchanting (Craft API) scan reads each
 -- sphere's cooldown with GetCraftCooldown, as Blizzard's CraftFrame does,
@@ -2002,4 +2003,44 @@ do
 end
 print("  PASS " .. TAG .. "39 2.2.4: TBC Anniversary Enchanting scan reads sphere cooldowns with GetCraftCooldown and clears them when ready")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 39)")
+-- U40/C40 2.2.4 CD-B (m4ru 11-25): on TBC Anniversary a sphere off
+-- cooldown says "Cooldown ready" in green under Can make; on cooldown its
+-- Can make is red and its list row ends with a pocket watch, the name
+-- stopping short of it; the Can make lines start at the left edge.
+do
+    if TBC.open ~= "trade" then OPEN_TRADE() end
+    local TSF, DS = PB.TradeSkillFrame, PB.DataStore
+    local st = TSF.state
+    local keepOff, keepView, keepSel = st.scrollOffset, st._viewCharKey, st.selected
+    st._viewCharKey = nil
+    EXPECT(PB.Cooldowns[28027], "Prismatic Sphere is not a cooldown recipe")
+    local prof = DS:GetProfession(PB:PlayerKey(), st.profName)
+    local sphere = { name = "Prismatic Sphere", isKnown = true, numAvail = 2, itemID = 22459, spellID = 28027, reagents = {} }
+    prof.recipes[sphere.name] = { spellID = 28027 }
+    table.insert(st.recipes, 1, sphere)
+    st.scrollOffset, st.selected = 0, sphere.name
+    local row = TSF.listRows[1]
+    local WATCH = " |TInterface\\Icons\\INV_Misc_PocketWatch_01:0|t"
+    local READY = "\n|cff00ff00Cooldown ready|r"
+    local function draw() TSF:UpdateListRows(); TSF:RefreshDetailPanel() end
+    local list = function() return row.rightText:GetText() or "" end
+    local can = function() return TSF.detCanMake:GetText() or "" end
+    draw()
+    EXPECT(can():find("^|cff00ff00Can make: 2") and can():sub(-#READY) == READY and not list():find("PocketWatch", 1, true),
+           "ready: " .. can() .. " / " .. list())
+    prof.recipes[sphere.name].cooldownReadyAt = time() + 30 * 3600
+    draw()
+    EXPECT(can():find("^|cffff4444Can make: 2") and can():find("\n|cffff8800On cooldown: ready in 1d 6h|r", 1, true)
+           and not can():find("Cooldown ready", 1, true), "on cooldown: " .. can())
+    EXPECT(list():sub(-#WATCH) == WATCH, "on cooldown: no watch at the end of the list row " .. list())
+    local p = rawget(row.nameText, "_lastPoint")
+    EXPECT(p and p[1] == "RIGHT" and p[2] == row.rightText, "the name does not stop short of the watch")
+    EXPECT(TSF.detCanMake:GetJustifyH() == "LEFT", "Can make is not left aligned")
+    table.remove(st.recipes, 1)
+    prof.recipes[sphere.name] = nil
+    st.scrollOffset, st._viewCharKey, st.selected = keepOff, keepView, keepSel
+    draw()
+end
+print("  PASS " .. TAG .. "40 2.2.4 CD-B: TBC Anniversary sphere: Cooldown ready in green off cooldown; on cooldown a red Can make, the orange line, and a pocket watch at the end of its list row with the name stopping short of it; Can make left aligned")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 40)")

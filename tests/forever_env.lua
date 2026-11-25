@@ -143,6 +143,9 @@ function F:GetText() return rawget(self, "_text") or "" end
 function F:AddLine(text) local l = rawget(self, "_lines"); if l then l[#l + 1] = text end end
 function F:AddDoubleLine(left, right) local l = rawget(self, "_lines"); if l then l[#l + 1] = tostring(left) .. " | " .. tostring(right) end end
 function F:SetText(t) self._text = t end
+-- a font string's lines centre on each other until it is set otherwise
+function F:SetJustifyH(j) rawset(self, "_justH", j) end
+function F:GetJustifyH() return rawget(self, "_justH") or "CENTER" end
 -- A font string keeps its text, so a harness can read a label back
 function F:CreateFontString(name) return CreateFrame("FontString", name, self) end
 function F:GetWidth() return 100 end
