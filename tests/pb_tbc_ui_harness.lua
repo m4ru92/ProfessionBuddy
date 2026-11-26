@@ -2020,7 +2020,7 @@ do
     table.insert(st.recipes, 1, sphere)
     st.scrollOffset, st.selected = 0, sphere.name
     local row = TSF.listRows[1]
-    local WATCH = " |TInterface\\Icons\\INV_Misc_PocketWatch_01:0|t"
+    local WATCH = " |TInterface\\Icons\\INV_Misc_PocketWatch_01:14:14|t"
     local READY = "\n|cff00ff00Cooldown ready|r"
     local function draw() TSF:UpdateListRows(); TSF:RefreshDetailPanel() end
     local list = function() return row.rightText:GetText() or "" end

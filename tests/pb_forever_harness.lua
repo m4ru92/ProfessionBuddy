@@ -9379,7 +9379,7 @@ print("  PASS F125 2.2.4 CD-D: a cooldown craft's cast success sets the ready ti
     table.insert(st.recipes, 1, cdRec)
     st.scrollOffset = 0
     local row = TSF.listRows[1]
-    local WATCH = "|TInterface\\Icons\\INV_Misc_PocketWatch_01:0|t"
+    local WATCH = "|TInterface\\Icons\\INV_Misc_PocketWatch_01:14:14|t"
     local function show(rec) st.recipes[1], st.selected = rec, rec.name; TSF:UpdateListRows(); TSF:RefreshDetailPanel() end
     local function list() return row.rightText:GetText() or "" end
     local function can() return TSF.detCanMake:GetText() or "" end

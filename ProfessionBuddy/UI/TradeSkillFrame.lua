@@ -326,8 +326,9 @@ end
 -- A name with no known color
 local NO_DIFF_COLOR = { r = 1, g = 1, b = 1 }
 -- The recipe list's mark for a recipe on cooldown (CD-B, m4ru 11-25): a
--- pocket watch after the counts, as tall as the text. None when it is ready.
-local COOLDOWN_MARK = " |TInterface\\Icons\\INV_Misc_PocketWatch_01:0|t"
+-- pocket watch after the counts. None when it is ready. 14 px, not the
+-- text's height, which drew it too small to read (TEST-d, m4ru 11-26).
+local COOLDOWN_MARK = " |TInterface\\Icons\\INV_Misc_PocketWatch_01:14:14|t"
 
 -- knownDiff (optional): the recipe's ACTUAL difficulty tier -- from the live
 -- game for your own profession, or the best-known value for a friend/alt.
