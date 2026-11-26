@@ -2036,11 +2036,15 @@ do
     local p = rawget(row.nameText, "_lastPoint")
     EXPECT(p and p[1] == "RIGHT" and p[2] == row.rightText, "the name does not stop short of the watch")
     EXPECT(TSF.detCanMake:GetJustifyH() == "LEFT", "Can make is not left aligned")
+    -- the counts and watch end 8 px in on Classic (4 px off its scroll bar)
+    local rp, gap = rawget(row.rightText, "_lastPoint"), LOOK == "classic" and -8 or -4
+    EXPECT(rp and rp[1] == "RIGHT" and rp[2] == gap and rp[3] == 0,
+           "list counts not " .. gap .. " px in for the " .. LOOK .. " look: " .. tostring(rp and rp[2]))
     table.remove(st.recipes, 1)
     prof.recipes[sphere.name] = nil
     st.scrollOffset, st._viewCharKey, st.selected = keepOff, keepView, keepSel
     draw()
 end
-print("  PASS " .. TAG .. "40 2.2.4 CD-B: TBC Anniversary sphere: Cooldown ready in green off cooldown; on cooldown a red Can make, the orange line, and a pocket watch at the end of its list row with the name stopping short of it; Can make left aligned")
+print("  PASS " .. TAG .. "40 2.2.4 CD-B: TBC Anniversary sphere: Cooldown ready in green off cooldown; on cooldown a red Can make, the orange line, and a pocket watch at the end of its list row with the name stopping short of it, 8 px in on Classic; Can make left aligned")
 
 print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 40)")

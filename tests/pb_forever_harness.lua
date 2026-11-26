@@ -9400,6 +9400,10 @@ print("  PASS F125 2.2.4 CD-D: a cooldown craft's cast success sets the ready ti
            and not can():find("Cooldown ready", 1, true), "on cooldown, 3: " .. can())
     EXPECT(list():sub(-#WATCH - 1) == " " .. WATCH, "on cooldown: no watch at the end of the list row " .. list())
     EXPECT(TSF.detCanMake:GetJustifyH() == "LEFT", "Can make is not left aligned")
+    -- the counts and watch end 8 px in on Classic (4 px off its scroll bar)
+    local rp, gap = rawget(row.rightText, "_lastPoint"), ProfBuddy.Theme:IsClassic() and -8 or -4
+    EXPECT(rp and rp[1] == "RIGHT" and rp[2] == gap and rp[3] == 0,
+           "list counts not " .. gap .. " px in: " .. tostring(rp and rp[2]))
     -- on cooldown, none made: as before, plus the watch
     cdRec.numAvail = 0
     show(cdRec)

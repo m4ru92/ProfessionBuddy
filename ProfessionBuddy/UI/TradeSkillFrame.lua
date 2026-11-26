@@ -3447,7 +3447,10 @@ function TSF:BuildRecipeList(parent)
         row.nameText = nameText
 
         local rightText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        rightText:SetPoint("RIGHT", -4, 0)
+        -- Classic: 8 px in, so the pocket watch keeps 4 px off the classic
+        -- scroll bar, which starts where the row's text used to end (TEST-e,
+        -- m4ru 11-26). A style change needs a reload, so this holds.
+        rightText:SetPoint("RIGHT", Theme:IsClassic() and -8 or -4, 0)
         rightText:SetJustifyH("RIGHT")
         row.rightText = rightText
 
