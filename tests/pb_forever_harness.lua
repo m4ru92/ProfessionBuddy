@@ -4383,7 +4383,8 @@ do
     rawset(menu, "SetScale", function(self, v) rawset(self, "_scale", v) end)
     UI:MatchScale(menu, anchor)
     EXPECT(rawget(menu, "_scale") == 1.3, "a menu does not take its window's size")
-    for file, n in pairs({ ["UI/TradeSkillFrame.lua"] = 1, ["UI/GuildPanel.lua"] = 1, ["UI/OrdersPanel.lua"] = 1,
+    -- TradeSkillFrame: Share, and the enchant target menu (2.2.4)
+    for file, n in pairs({ ["UI/TradeSkillFrame.lua"] = 2, ["UI/GuildPanel.lua"] = 1, ["UI/OrdersPanel.lua"] = 1,
                            ["UI/FriendsPanel.lua"] = 1, ["UI/MailHelper.lua"] = 1 }) do
         local fsrc = assert(io.open(PB_BASE .. "/" .. file)):read("*a")
         local _, c = fsrc:gsub("UI:MatchScale%(m, ", "")
@@ -9439,4 +9440,154 @@ print("  PASS F125 2.2.4 CD-D: a cooldown craft's cast success sets the ready ti
 end)()
 print("  PASS F126 2.2.4 CD-B: a cooldown craft off cooldown shows Cooldown ready in green under Can make (with or without reagents, and once its time has passed; not in a linked list); on cooldown its Can make is red, the orange line shows, and its list row ends with a pocket watch; a recipe that is no cooldown craft never says Cooldown ready but shows a cooldown the game reports; Can make is left aligned")
 
-print("ALL FOREVER TESTS PASS (126)")
+-- F127 2.2.4 enchant target (rokartm's CurseForge request, m4ru 11-26):
+-- a slot where Craft 1 to Craft 20 sit picks a bag or worn item, and Craft
+-- enchants it with CraftEnchant. The target stays across recipes, goes
+-- when it leaves bags and gear, and the "replace this enchant?" prompt is
+-- the player's once per target; then PB answers Yes itself, only to the
+-- one prompt after its own Craft.
+;(function()
+    local st = TSF.state
+    C_TradeSkillUI.OpenTradeSkill(333)
+    TS_LIST_READY()
+    FLUSH()
+    EXPECT(st.profName == "Enchanting", "Enchanting did not open")
+    local slot, label = TSF.enchantSlot, TSF.enchantLabel
+    EXPECT(slot and label, "no enchant target slot on Forever")
+    rawset(slot.icon, "SetTexture", function(t, v) rawset(t, "_tex", v) end)
+    rawset(slot.icon, "SetDesaturated", function(t, v) rawset(t, "_desat", v and true or false) end)
+    local hides = 0
+    local keepHide = rawget(_G, "StaticPopup_Hide")
+    StaticPopup_Hide = function(which) if which == "REPLACE_TRADESKILL_ENCHANT" then hides = hides + 1 end end
+    local BAG = "|cff1eff00|Hitem:2000::::::::|h[Green Bracers]|h|r"
+    local WORN = "|cffffffff|Hitem:2001::::::::|h[Worn Bracers]|h|r"
+    ITEM_GUIDS["G-bag"] = { link = BAG, icon = 111 }
+    ITEM_GUIDS["G-worn"] = { link = WORN, icon = 222, worn = true }
+    ENCHANT_ITEMS[7457] = { "G-bag", "G-worn" }
+    TSF:SetEnchantTarget(nil)
+    st.selected = "Enchant Bracer - Minor Stamina"; TSF:UpdateCraftBar()
+    EXPECT(slot:IsShown() and label:IsShown() and label:GetText():find("No target picked", 1, true),
+           "no empty slot: " .. tostring(label:GetText()))
+    EXPECT(TSF.craftBtns[1]:IsShown() and not TSF.craftBtns[2]:IsShown() and not TSF.craftBtns[6]:IsShown()
+           and not TSF.qtyBox:IsShown(), "the enchant bar is not Craft and the slot only")
+    -- no target: the enchant goes on the cursor, as before
+    TS_CALLS = {}
+    TSF:DoCraft()
+    EXPECT(called("CraftRecipe:7457x1") and #TS_CALLS == 1, "no target did not cast as before: " .. table.concat(TS_CALLS, ", "))
+    TSF:StopCraftTracking()
+
+    -- the menu: worn first, then bags; a pick sets the target
+    slot:GetScript("OnClick")(slot, "LeftButton")
+    local m = TSF._targetMenu
+    EXPECT(m and m:IsShown() and m.buttons[1].text:GetText() == WORN .. " |cff9d9d9d(equipped)|r"
+           and m.buttons[2].text:GetText() == BAG, "menu rows wrong: " .. tostring(m and m.buttons[1].text:GetText()))
+    m.buttons[2]:GetScript("OnClick")(m.buttons[2])
+    EXPECT(not m:IsShown() and TSF.enchantTarget and TSF.enchantTarget.guid == "G-bag", "the pick did not set the target")
+    EXPECT(label:GetText() == BAG .. "\n(bags)" and rawget(slot.icon, "_tex") == 111 and not rawget(slot.icon, "_desat"), "slot shows " .. tostring(label:GetText()))
+
+    -- a Yes to a prompt PB's Craft did not raise approves nothing
+    C_Item.ReplaceTradeskillEnchant()
+    EXPECT(not TSF._replaceOK, "a Yes to someone else's prompt approved the target")
+    -- Craft enchants it: one CraftEnchant on that item, tracked
+    TS_CALLS = {}
+    TSF:DoCraft()
+    EXPECT(#TS_CALLS == 1 and called("CraftEnchant:7457x1:G-bag") and TSF._craftingActive,
+           "Craft did not enchant the target: " .. table.concat(TS_CALLS, ", "))
+    TSF:StopCraftTracking()
+
+    -- the first prompt is the player's: PB answers nothing
+    TS_CALLS = {}
+    FIRE("REPLACE_TRADESKILL_ENCHANT", "Minor Health", "Minor Stamina")
+    FLUSH()
+    EXPECT(#TS_CALLS == 0 and hides == 0 and TSF._askGuid == "G-bag" and not TSF._replaceOK, "PB answered the first prompt")
+    -- the player's Yes in the game's prompt covers this target from now on
+    C_Item.ReplaceTradeskillEnchant()
+    EXPECT(TSF._replaceOK == "G-bag" and not TSF._askGuid, "the player's Yes was not kept")
+    -- next Craft: PB answers Yes itself, hides the prompt, says what it replaced
+    TS_CALLS = {}
+    TSF:DoCraft()
+    FIRE("REPLACE_TRADESKILL_ENCHANT", "Minor Health", "Minor Stamina")
+    FLUSH()
+    EXPECT(called("ReplaceTradeskillEnchant") and hides == 2, "PB did not answer: " .. table.concat(TS_CALLS, ", ") .. " hides " .. hides)
+    EXPECT(PRINTED("Replaced Minor Health with Minor Stamina on " .. BAG .. "."), "no Replaced line")
+    EXPECT(TSF._replaceOK == "G-bag", "PB's own Yes lost the approval")
+    TSF:StopCraftTracking()
+    -- the cap: one prompt per Craft; a prompt with no Craft before it, or
+    -- one after the window, is never answered
+    TS_CALLS = {}
+    FIRE("REPLACE_TRADESKILL_ENCHANT", "Minor Health", "Minor Stamina")
+    EXPECT(not called("ReplaceTradeskillEnchant"), "PB answered a prompt it did not cause")
+    TSF:DoCraft()
+    local keepTime = GetTime
+    GetTime = function() return keepTime() + 6 end
+    TS_CALLS = {}
+    FIRE("REPLACE_TRADESKILL_ENCHANT", "Minor Health", "Minor Stamina")
+    GetTime = keepTime
+    EXPECT(not called("ReplaceTradeskillEnchant"), "PB answered a prompt after its window")
+    TSF:StopCraftTracking()
+
+    -- the target stays across recipes: hidden on the wand, back on the enchant
+    st.selected = "Lesser Magic Wand"; TSF:UpdateCraftBar()
+    EXPECT(not slot:IsShown() and TSF.craftBtns[2]:IsShown() and TSF.enchantTarget, "the wand shows the slot or lost the target")
+    ENCHANT_ITEMS[14293] = { "G-bag" }
+    TS_CALLS = {}
+    TSF:DoCraftImmediate(2)
+    ENCHANT_ITEMS[14293] = nil
+    EXPECT(called("CraftRecipe:14293x2") and not called("CraftEnchant"), "the wand went to the enchant target: " .. table.concat(TS_CALLS, ", "))
+    TSF:StopCraftTracking()
+    st.selected = "Enchant Bracer - Minor Stamina"; TSF:UpdateCraftBar()
+    EXPECT(slot:IsShown() and label:GetText() == BAG .. "\n(bags)", "the target did not stay")
+    -- an enchant that cannot take it: says so, greys it, Craft uses the cursor
+    ENCHANT_ITEMS[7457] = { "G-worn" }
+    TSF:UpdateCraftBar()
+    EXPECT(label:GetText() == BAG .. "\n|cffff2020can't take this enchant|r" and rawget(slot.icon, "_desat"), "unfit target shows " .. tostring(label:GetText()))
+    TS_CALLS = {}
+    TSF:DoCraft()
+    EXPECT(called("CraftRecipe:7457x1") and not called("CraftEnchant"), "an unfit target was enchanted")
+    TSF:StopCraftTracking()
+    ENCHANT_ITEMS[7457] = { "G-bag", "G-worn" }
+
+    -- a new target needs its own Yes
+    TSF:SetEnchantTarget("G-worn")
+    EXPECT(not TSF._replaceOK and label:GetText() == WORN .. "\n(equipped)", "a new target kept the old Yes")
+    -- right-click clears
+    slot:GetScript("OnClick")(slot, "RightButton")
+    EXPECT(not TSF.enchantTarget and label:GetText():find("No target picked", 1, true), "right-click did not clear")
+
+    -- gone from bags and gear: cleared at the bag event, and before a Craft
+    TSF:SetEnchantTarget("G-bag")
+    ITEM_GUIDS["G-bag"] = nil
+    FIRE("BAG_UPDATE_DELAYED")
+    EXPECT(not TSF.enchantTarget and PRINTED(BAG .. " is no longer in your bags or gear, so the enchant target is cleared."),
+           "a gone target stayed")
+    ITEM_GUIDS["G-bag"] = { link = BAG, icon = 111 }
+    TSF:SetEnchantTarget("G-bag")
+    ITEM_GUIDS["G-bag"] = nil
+    TS_CALLS = {}
+    TSF:DoCraft()
+    EXPECT(#TS_CALLS == 0 and not TSF.enchantTarget, "Craft cast onto a gone target: " .. table.concat(TS_CALLS, ", "))
+    -- equipping it from the bags keeps it (same GUID) and says (equipped)
+    ITEM_GUIDS["G-bag"] = { link = BAG, icon = 111 }
+    TSF:SetEnchantTarget("G-bag")
+    ITEM_GUIDS["G-bag"].worn = true
+    FIRE("PLAYER_EQUIPMENT_CHANGED", 9, true)
+    EXPECT(TSF.enchantTarget and TSF.enchantTarget.guid == "G-bag" and label:GetText() == BAG .. "\n(equipped)",
+           "equipping the target: " .. tostring(label:GetText()))
+
+    -- nothing can take it: the menu says so
+    ENCHANT_ITEMS[7457] = {}
+    TSF:ShowEnchantTargetMenu(slot)
+    EXPECT(m.buttons[1].text:GetText():find("Nothing in your bags or gear can take this enchant", 1, true)
+           and not m.buttons[2]:IsShown(), "empty menu wrong")
+    m:Hide()
+
+    TSF:SetEnchantTarget(nil)
+    ENCHANT_ITEMS, ITEM_GUIDS = {}, {}
+    StaticPopup_Hide = keepHide
+    C_TradeSkillUI.OpenTradeSkill(165)
+    TS_LIST_READY()
+    FLUSH()
+end)()
+print("  PASS F127 2.2.4 enchant target: a slot where Craft 1 to Craft 20 sit; the menu lists worn items then bags; Craft enchants the pick with CraftEnchant, or uses the cursor with none or an unfit pick; the target stays across recipes, is cleared with a chat line when it leaves bags and gear (at the bag event and before a Craft), says (equipped) once worn, and right-click clears it; a Yes to a prompt PB did not raise approves nothing; the replace prompt is the player's once per target, then PB answers Yes itself only to the one prompt after its own Craft, within 5 s, and says what it replaced")
+
+print("ALL FOREVER TESTS PASS (127)")

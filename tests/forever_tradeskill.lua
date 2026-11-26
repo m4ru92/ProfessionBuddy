@@ -158,6 +158,24 @@ function T.CraftRecipe(id, n)
     TS_CALLS[#TS_CALLS + 1] = "CraftRecipe:" .. tostring(id) .. "x" .. tostring(n)
 end
 
+-- Enchant targets (2.2.4, TradeSkillUIDocumentation and ItemDocumentation,
+-- `forever` branch). ENCHANT_ITEMS[recipeID] lists the GUIDs an enchant can
+-- go on; ITEM_GUIDS[guid] = { link, icon, worn } is what is in bags and gear.
+ENCHANT_ITEMS, ITEM_GUIDS = {}, {}
+function T.GetEnchantItems(id) return ENCHANT_ITEMS[id] or {} end
+function T.CraftEnchant(id, n, reagents, loc)
+    TS_CALLS[#TS_CALLS + 1] = "CraftEnchant:" .. tostring(id) .. "x" .. tostring(n) .. ":" .. tostring(loc and loc.guid)
+end
+C_Item.IsItemGUIDInInventory = function(g) return ITEM_GUIDS[g] ~= nil end
+C_Item.GetItemLocation = function(g)
+    local e = ITEM_GUIDS[g]
+    if not e then return nil end
+    return { guid = g, IsEquipmentSlot = function() return e.worn and true or false end }
+end
+C_Item.GetItemLinkByGUID = function(g) local e = ITEM_GUIDS[g]; return e and e.link end
+C_Item.GetItemIcon = function(loc) local e = loc and ITEM_GUIDS[loc.guid]; return e and e.icon end
+C_Item.ReplaceTradeskillEnchant = function() TS_CALLS[#TS_CALLS + 1] = "ReplaceTradeskillEnchant" end
+
 C_Item.GetItemInfo = function(id)
     if UNCACHED[id] then return nil end
     local name = FX.items[id]

@@ -2047,4 +2047,15 @@ do
 end
 print("  PASS " .. TAG .. "40 2.2.4 CD-B: TBC Anniversary sphere: Cooldown ready in green off cooldown; on cooldown a red Can make, the orange line, and a pocket watch at the end of its list row with the name stopping short of it, 8 px in on Classic; Can make left aligned")
 
-print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 40)")
+-- U41/C41 2.2.4 enchant target (rokartm's request): Forever only. TBC
+-- Anniversary's DoCraft takes no target, so no slot is built, no target
+-- event is registered, and an enchant still goes through the secure button.
+do
+    EXPECT(not PB.Source.ENCHANT_TARGET, "TBC Anniversary claims enchant targets")
+    EXPECT(rawget(TSF, "enchantSlot") == nil and rawget(TSF, "enchantLabel") == nil, "TBC Anniversary built the enchant target slot")
+    EXPECT(not REGISTERED["REPLACE_TRADESKILL_ENCHANT"], "TBC Anniversary registered the replace prompt event")
+    EXPECT(TSF:CraftOnEnchantTarget({ name = "x", gameIndex = 1 }) == false, "TBC Anniversary took the enchant target path")
+end
+print("  PASS " .. TAG .. "41 2.2.4 enchant target: none on TBC Anniversary; no slot, no replace prompt event, and Craft never takes the target path")
+
+print("ALL TBC WINDOW TESTS PASS (" .. LOOK .. ", 41)")

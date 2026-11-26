@@ -371,6 +371,57 @@ function Source:Craft(index, qty, isCraft)
     C_TradeSkillUI.CraftRecipe(index, qty or 1)
 end
 
+-- Enchant targets (2.2.4, rokartm's CurseForge request): pick an item once
+-- and Craft enchants it each press, as Blizzard's own window does with an
+-- item in its enchant slot (Blizzard_ProfessionsCrafting.lua CreateInternal
+-- -> C_TradeSkillUI.CraftEnchant). Items are held by GUID; the location is
+-- looked up at each cast, so moving the item between bags is fine.
+Source.ENCHANT_TARGET        = true
+
+-- GUIDs of the bag and equipped items this enchant can go on (the list
+-- Blizzard's enchant slot offers)
+function Source:EnchantTargets(recipeID)
+    local T = C_TradeSkillUI
+    if not (T and T.GetEnchantItems and recipeID) then return {} end
+    local ok, items = pcall(T.GetEnchantItems, recipeID)
+    return (ok and type(items) == "table") and items or {}
+end
+
+-- Still in your bags or gear (Blizzard clears its slot on the same test)
+function Source:TargetInInventory(guid)
+    return guid and C_Item.IsItemGUIDInInventory(guid) and true or false
+end
+
+-- link, icon, and whether it is worn; nil when the item is gone
+function Source:TargetInfo(guid)
+    local loc = guid and C_Item.GetItemLocation(guid)
+    if not loc then return nil end
+    return C_Item.GetItemLinkByGUID(guid), C_Item.GetItemIcon(loc), loc:IsEquipmentSlot()
+end
+
+-- One cast onto the item; false when it cannot be found
+function Source:CraftEnchantOn(recipeID, guid)
+    local loc = guid and C_Item.GetItemLocation(guid)
+    if not loc then return false end
+    C_TradeSkillUI.CraftEnchant(recipeID, 1, nil, loc)
+    return true
+end
+
+-- The Yes of the game's "replace this enchant?" prompt
+-- (StaticPopupDialogs.REPLACE_TRADESKILL_ENCHANT, Mainline/GameDialogDefs.lua)
+Source.REPLACE_EVENT         = "REPLACE_TRADESKILL_ENCHANT"
+Source.REPLACE_POPUP         = "REPLACE_TRADESKILL_ENCHANT"
+function Source:ConfirmReplaceEnchant()
+    C_Item.ReplaceTradeskillEnchant()
+end
+
+-- fn runs after anything answers Yes to that prompt
+function Source:OnReplaceConfirmed(fn)
+    if C_Item and C_Item.ReplaceTradeskillEnchant then
+        hooksecurefunc(C_Item, "ReplaceTradeskillEnchant", fn)
+    end
+end
+
 -- What a known recipe needs, as Blizzard's window reads it
 -- (Blizzard_ProfessionsRecipeSchematicForm: "Required tools: Tanning
 -- Rack", red when not met). The 09-22 probe: it answers for learned

@@ -53,6 +53,11 @@
 --                                 craft by spell ID, not spell name
 --   Source.ENCHANT_BY_CRAFT       true: an enchant is cast through Craft,
 --                                 not the secure macro button
+--   Source.ENCHANT_TARGET         true: an enchant can be cast onto an item
+--                                 picked in the craft bar (EnchantTargets,
+--                                 TargetInInventory, TargetInfo,
+--                                 CraftEnchantOn, ConfirmReplaceEnchant,
+--                                 OnReplaceConfirmed)
 --   Source.HAS_REAGENT_BAG        true: the bag scan includes the equipped
 --                                 reagent bag (NUM_TOTAL_EQUIPPED_BAG_SLOTS)
 --   Source.TOOLTIP_DATA           true: item tooltips are extended through

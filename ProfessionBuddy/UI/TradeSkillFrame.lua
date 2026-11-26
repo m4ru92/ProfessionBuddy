@@ -5844,6 +5844,59 @@ function TSF:BuildCraftBar(parent)
     -- Store button references for enable/disable in UpdateCraftBar
     self.craftBtns = { craftBtn, craft1, craft5, craft10, craft20, craftAll }
 
+    -- Enchant target (2.2.4, rokartm's CurseForge request; WoW: Forever):
+    -- a slot where Craft 1 to Craft 20 sit, which those hide for an enchant.
+    -- Pick an item once and each Craft enchants it, as the game's own
+    -- enchant slot does (TSF:UpdateEnchantSlot, TSF:StartCraft).
+    if addon.Source.ENCHANT_TARGET then
+        local SLOT = 2 * BTN_H + 2
+        local slot = CreateFrame("Button", nil, craftBar, "BackdropTemplate")
+        slot:SetSize(SLOT, SLOT)
+        slot:SetPoint("TOPRIGHT", craftBar, "TOPLEFT", x4 + BTN_W, ROW1_Y)
+        Theme:SetBackdrop(slot, "input")
+        Theme:BackdropColor(slot, "input")
+        Theme:BorderColor(slot, "input")
+        slot:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        local icon = slot:CreateTexture(nil, "ARTWORK")
+        icon:SetPoint("TOPLEFT", 3, -3)
+        icon:SetPoint("BOTTOMRIGHT", -3, 3)
+        slot.icon = icon
+        local hl = slot:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints(icon)
+        Theme:Fill(hl, "menuHover")
+        slot:SetScript("OnClick", function(btn, mouse)
+            if mouse == "RightButton" then
+                self:SetEnchantTarget(nil)
+            else
+                self:ShowEnchantTargetMenu(btn)
+            end
+        end)
+        slot:SetScript("OnEnter", function(btn)
+            GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+            local t = self.enchantTarget
+            if t and t.link then
+                GameTooltip:SetHyperlink(t.link)
+                GameTooltip:AddLine(" ")
+            else
+                GameTooltip:AddLine("Enchant target")
+            end
+            GameTooltip:AddLine("Left-click: pick the item Craft enchants", 1, 1, 1)
+            GameTooltip:AddLine("Right-click: clear it", 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        slot:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        slot:Hide()
+        self.enchantSlot = slot
+
+        local label = craftBar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        label:SetPoint("LEFT", craftBar, "TOPLEFT", x2, ROW1_Y - SLOT / 2)
+        label:SetPoint("RIGHT", slot, "LEFT", -6, 0)
+        label:SetJustifyH("RIGHT")
+        label:SetWordWrap(true)
+        label:Hide()
+        self.enchantLabel = label
+    end
+
     -- "Recipe unknown" label shown below qty box for unlearned recipes
     local notLearned = craftBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     notLearned:SetPoint("TOP", qtyBox, "BOTTOM", 0, 0)
@@ -6243,6 +6296,7 @@ end
 function TSF:RegisterCraftEvents()
     if self._craftEventsRegistered then return end
     self._craftEventsRegistered = true
+    self:RegisterEnchantTargetEvents()
 
     -- Track craft completion to decrement qty counter.
     -- Filter by spell name so non-craft casts don't decrement.
@@ -6692,6 +6746,7 @@ function TSF:UpdateCraftBar()
         end
         self:SetQtyShown(true)
     end
+    self:ShowEnchantSlot(itemLess and addon.Source.ENCHANT_BY_CRAFT and recipe or nil)
 
     if self.craftNotLearned then
         if isKnown then
@@ -6986,10 +7041,250 @@ function TSF:StartCraft(recipe, qty)
     if state.isCraftWindow then
         self:BeginCraftTracking(recipe.name, 1, recipe.gameIndex)
         addon.Source:Craft(recipe.gameIndex, 1, true)
+    elseif (not recipe.itemID or recipe.itemID == 0) and self:CraftOnEnchantTarget(recipe) then
+        return
     else
         self:BeginCraftTracking(recipe.name, qty, nil, recipe.spellID)
         addon.Source:Craft(recipe.gameIndex, qty, false)
     end
+end
+
+----------------------------------------------------------------------
+-- Enchant target (2.2.4, rokartm's CurseForge request; WoW: Forever)
+-- self.enchantTarget = { guid, link }: stays picked across recipes and
+-- shows on every enchant that can take it. The game's own window clears
+-- its slot on each recipe change; keeping it is m4ru's call (11-26).
+-- The "replace this enchant?" prompt is the player's to answer once per
+-- target (self._askGuid -> self._replaceOK); after that PB answers Yes
+-- itself, but only to the one prompt that follows its own Craft onto
+-- that target (self._enchantPending, cleared by the first prompt).
+----------------------------------------------------------------------
+local ENCHANT_PENDING_S = 5     -- how long after Craft a prompt counts as ours
+local ENCHANT_MENU_MAX  = 25    -- rows in the target menu
+
+local function PBPrint(msg)
+    print("|cff00ccffProfessionBuddy:|r " .. msg)
+end
+
+-- The target, when this recipe can take it; nil otherwise
+function TSF:FittingEnchantTarget(recipe)
+    local t = self.enchantTarget
+    if not (t and recipe and recipe.gameIndex) then return nil end
+    for _, guid in ipairs(addon.Source:EnchantTargets(recipe.gameIndex)) do
+        if guid == t.guid then return t end
+    end
+    return nil
+end
+
+function TSF:SetEnchantTarget(guid)
+    if guid then
+        local link = addon.Source:TargetInfo(guid)
+        self.enchantTarget = { guid = guid, link = link }
+    else
+        self.enchantTarget = nil
+    end
+    -- a new target gets its own "replace this enchant?" answer
+    self._replaceOK, self._askGuid, self._enchantPending = nil, nil, nil
+    self:UpdateCraftBar()
+end
+
+-- Clears a target that left your bags and gear, and says why. True if it did.
+function TSF:DropGoneEnchantTarget()
+    local t = self.enchantTarget
+    if not t or addon.Source:TargetInInventory(t.guid) then return false end
+    PBPrint((t.link or "Your enchant target") .. " is no longer in your bags or gear, so the enchant target is cleared.")
+    self:SetEnchantTarget(nil)
+    return true
+end
+
+-- Shows or hides the slot and its label for the selected recipe
+function TSF:ShowEnchantSlot(recipe)
+    local slot, label = self.enchantSlot, self.enchantLabel
+    if not slot then return end
+    if not recipe then
+        slot:Hide()
+        label:Hide()
+        return
+    end
+    local t = self.enchantTarget
+    local fit = self:FittingEnchantTarget(recipe)
+    local icon
+    if t then
+        local _, ic, worn = addon.Source:TargetInfo(t.guid)
+        icon = ic
+        if fit then
+            label:SetText((t.link or "?") .. "\n" .. (worn and "(equipped)" or "(bags)"))
+        else
+            label:SetText((t.link or "?") .. "\n|cffff2020can't take this enchant|r")
+        end
+    else
+        label:SetText("|cff9d9d9dNo target picked|r")
+    end
+    if icon then
+        slot.icon:SetTexture(icon)
+        slot.icon:SetDesaturated(not fit)
+        slot.icon:Show()
+    else
+        slot.icon:Hide()
+    end
+    slot:Show()
+    label:Show()
+end
+
+-- Left-click on the slot: the items this enchant can go on, worn first
+function TSF:ShowEnchantTargetMenu(anchorBtn)
+    local recipe = self:GetSelectedRecipe()
+    if not (recipe and recipe.gameIndex) then return end
+    local m = self._targetMenu
+    if not m then
+        m = CreateFrame("Frame", "ProfBuddyEnchantTargetMenu", UIParent, "BackdropTemplate")
+        m:SetFrameStrata("FULLSCREEN_DIALOG")
+        Theme:SetBackdrop(m, "menu")
+        Theme:BackdropColor(m, "menu")
+        Theme:BorderColor(m, "menu")
+        m:EnableMouse(true)
+        m:SetClampedToScreen(true)
+        m:Hide()
+        m.title = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        m.title:SetPoint("TOPLEFT", 8, -7)
+        m.title:SetTextColor(1, 0.82, 0)
+        m.title:SetText("Enchant target")
+        m.buttons = {}
+        local catcher = CreateFrame("Button", nil, UIParent)
+        catcher:SetAllPoints(UIParent)
+        catcher:SetFrameStrata("DIALOG")
+        catcher:RegisterForClicks("AnyUp")
+        catcher:Hide()
+        catcher:SetScript("OnClick", function() m:Hide() end)
+        m:SetScript("OnShow", function() catcher:Show() end)
+        m:SetScript("OnHide", function() catcher:Hide() end)
+        table.insert(UISpecialFrames, "ProfBuddyEnchantTargetMenu")
+        self._targetMenu = m
+    end
+
+    local items = {}
+    for _, guid in ipairs(addon.Source:EnchantTargets(recipe.gameIndex)) do
+        local link, icon, worn = addon.Source:TargetInfo(guid)
+        if link then
+            local name = link:match("%[(.-)%]") or link
+            items[#items + 1] = { guid = guid, link = link, icon = icon, worn = worn, name = name }
+        end
+    end
+    table.sort(items, function(a, b)
+        if a.worn ~= b.worn then return a.worn and true or false end
+        return a.name < b.name
+    end)
+    local shown = math.min(#items, ENCHANT_MENU_MAX)
+
+    local ROW_H = 18
+    local rows = math.max(shown, 1)
+    for i = 1, rows do
+        local b = m.buttons[i]
+        if not b then
+            b = CreateFrame("Button", nil, m)
+            b:SetHeight(ROW_H)
+            local hl = b:CreateTexture(nil, "HIGHLIGHT")
+            hl:SetAllPoints()
+            Theme:Fill(hl, "menuHover")
+            b.icon = b:CreateTexture(nil, "ARTWORK")
+            b.icon:SetSize(14, 14)
+            b.icon:SetPoint("LEFT", 6, 0)
+            b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            b.text:SetPoint("LEFT", 24, 0)
+            b.text:SetPoint("RIGHT", -6, 0)
+            b.text:SetJustifyH("LEFT")
+            b:SetPoint("TOPLEFT", m, "TOPLEFT", 4, -24 - (i - 1) * ROW_H)
+            b:SetPoint("RIGHT", m, "RIGHT", -4, 0)
+            m.buttons[i] = b
+        end
+        local it = items[i]
+        if it then
+            b.icon:SetTexture(it.icon)
+            b.icon:Show()
+            b.text:SetText(it.link .. (it.worn and " |cff9d9d9d(equipped)|r" or ""))
+            b:Enable()
+            b:SetScript("OnClick", function()
+                m:Hide()
+                TSF:SetEnchantTarget(it.guid)
+            end)
+        else
+            b.icon:Hide()
+            b.text:SetText("|cff9d9d9dNothing in your bags or gear can take this enchant|r")
+            b:Disable()
+            b:SetScript("OnClick", nil)
+        end
+        b:Show()
+    end
+    for i = rows + 1, #m.buttons do m.buttons[i]:Hide() end
+    m:SetWidth(280)
+    m:SetHeight(24 + rows * ROW_H + 8)
+    m:ClearAllPoints()
+    if addon.UI and addon.UI.MatchScale then addon.UI:MatchScale(m, anchorBtn) end
+    m:SetPoint("BOTTOMRIGHT", anchorBtn, "TOPRIGHT", 0, 2)
+    m:Show()
+end
+
+-- Craft onto the picked target. False when there is none to use, so the
+-- enchant goes on the cursor as before.
+function TSF:CraftOnEnchantTarget(recipe)
+    if not (addon.Source.ENCHANT_TARGET and self.enchantTarget) then return false end
+    -- gone since the last bag or gear event: say so and cast nothing
+    if self:DropGoneEnchantTarget() then return true end
+    local t = self:FittingEnchantTarget(recipe)
+    if not t then return false end
+    self:BeginCraftTracking(recipe.name, 1, nil, recipe.spellID)
+    self._enchantPending = { guid = t.guid, untilT = GetTime() + ENCHANT_PENDING_S }
+    if not addon.Source:CraftEnchantOn(recipe.gameIndex, t.guid) then
+        self._enchantPending = nil
+    end
+    return true
+end
+
+-- The game asks before an enchant replaces another one
+function TSF:OnReplaceEnchantPrompt(existing, replacement)
+    local p, t = self._enchantPending, self.enchantTarget
+    -- one prompt per Craft press: the cap does not depend on reading
+    -- anything back from the game
+    self._enchantPending = nil
+    if not (p and t and p.guid == t.guid and GetTime() <= p.untilT) then return end
+    if self._replaceOK == t.guid then
+        addon.Source:ConfirmReplaceEnchant()
+        StaticPopup_Hide(addon.Source.REPLACE_POPUP)
+        C_Timer.After(0, function() StaticPopup_Hide(addon.Source.REPLACE_POPUP) end)
+        PBPrint("Replaced " .. tostring(existing) .. " with " .. tostring(replacement)
+            .. " on " .. (t.link or "your enchant target") .. ".")
+    else
+        -- the player answers this one; a Yes covers this target from now on
+        self._askGuid = t.guid
+    end
+end
+
+-- Anything answered Yes to the prompt (the player, or PB itself)
+function TSF:OnReplaceYes()
+    local t = self.enchantTarget
+    if self._askGuid and t and self._askGuid == t.guid then
+        self._replaceOK = t.guid
+    end
+    self._askGuid = nil
+end
+
+function TSF:RegisterEnchantTargetEvents()
+    if self._enchantEventsRegistered or not addon.Source.ENCHANT_TARGET then return end
+    self._enchantEventsRegistered = true
+    addon:RegisterEvent(addon.Source.REPLACE_EVENT, function(_, existing, replacement)
+        self:OnReplaceEnchantPrompt(existing, replacement)
+    end)
+    addon.Source:OnReplaceConfirmed(function() self:OnReplaceYes() end)
+    -- gone: cleared; still here: redraw, since equipping it from the bags
+    -- turns (bags) into (equipped)
+    local function gone()
+        if self:DropGoneEnchantTarget() then return end
+        if self.enchantTarget and self.enchantSlot:IsShown() then
+            self:ShowEnchantSlot(self:GetSelectedRecipe())
+        end
+    end
+    addon:RegisterEvent("BAG_UPDATE_DELAYED", gone)
+    addon:RegisterEvent("PLAYER_EQUIPMENT_CHANGED", gone)
 end
 
 ----------------------------------------------------------------------
