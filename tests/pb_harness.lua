@@ -3054,7 +3054,7 @@ do
         assert(not src:find(":SetColorTexture%(%s*[%d.]+"), "T101: " .. f .. " still sets a color by number")
         assert(not src:find(":SetBackdrop%(%s*{"), "T101: " .. f .. " still builds its own backdrop")
     end
-    assert(calls == 158, "T101: " .. calls .. " Theme calls, expected 158")   -- +8: the enchant target slot and menu (2.2.4), +3: the own-list hint bar, +2: the material hover, +1: the craft strip (2.2.0)
+    assert(calls == 160, "T101: " .. calls .. " Theme calls, expected 160")   -- +2: the enchant slot's red border, +8: the enchant target slot and menu (2.2.4), +3: the own-list hint bar, +2: the material hover, +1: the craft strip (2.2.0)
     local got = {}
     local tex = { SetColorTexture = function(_, r, g, b, a) got = { r, g, b, a } end }
     Theme:Fill(tex, "menuHover")

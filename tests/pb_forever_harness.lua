@@ -9456,6 +9456,8 @@ print("  PASS F126 2.2.4 CD-B: a cooldown craft off cooldown shows Cooldown read
     EXPECT(slot and label, "no enchant target slot on Forever")
     rawset(slot.icon, "SetTexture", function(t, v) rawset(t, "_tex", v) end)
     rawset(slot.icon, "SetDesaturated", function(t, v) rawset(t, "_desat", v and true or false) end)
+    local BAD, OK = ProfBuddy.Theme:Style().border.enchantTargetBad, ProfBuddy.Theme:Style().border.input
+    rawset(slot, "SetBackdropBorderColor", function(t, r) rawset(t, "_edge", r) end)
     local hides = 0
     local keepHide = rawget(_G, "StaticPopup_Hide")
     StaticPopup_Hide = function(which) if which == "REPLACE_TRADESKILL_ENCHANT" then hides = hides + 1 end end
@@ -9483,7 +9485,7 @@ print("  PASS F126 2.2.4 CD-B: a cooldown craft off cooldown shows Cooldown read
            and m.buttons[2].text:GetText() == BAG, "menu rows wrong: " .. tostring(m and m.buttons[1].text:GetText()))
     m.buttons[2]:GetScript("OnClick")(m.buttons[2])
     EXPECT(not m:IsShown() and TSF.enchantTarget and TSF.enchantTarget.guid == "G-bag", "the pick did not set the target")
-    EXPECT(label:GetText() == BAG .. "\n(bags)" and rawget(slot.icon, "_tex") == 111 and not rawget(slot.icon, "_desat"), "slot shows " .. tostring(label:GetText()))
+    EXPECT(label:GetText() == BAG .. "\n(bags)" and rawget(slot.icon, "_tex") == 111 and not rawget(slot.icon, "_desat") and rawget(slot, "_edge") == OK[1], "slot shows " .. tostring(label:GetText()))
 
     -- a Yes to a prompt PB's Craft did not raise approves nothing
     C_Item.ReplaceTradeskillEnchant()
@@ -9540,19 +9542,21 @@ print("  PASS F126 2.2.4 CD-B: a cooldown craft off cooldown shows Cooldown read
     -- an enchant that cannot take it: says so, greys it, Craft uses the cursor
     ENCHANT_ITEMS[7457] = { "G-worn" }
     TSF:UpdateCraftBar()
-    EXPECT(label:GetText() == BAG .. "\n|cffff2020can't take this enchant|r" and rawget(slot.icon, "_desat"), "unfit target shows " .. tostring(label:GetText()))
+    EXPECT(label:GetText() == BAG .. "\n|cffff2020can't take this enchant|r" and rawget(slot.icon, "_desat") and rawget(slot, "_edge") == BAD[1], "unfit target shows " .. tostring(label:GetText()))
     TS_CALLS = {}
     TSF:DoCraft()
     EXPECT(called("CraftRecipe:7457x1") and not called("CraftEnchant"), "an unfit target was enchanted")
     TSF:StopCraftTracking()
     ENCHANT_ITEMS[7457] = { "G-bag", "G-worn" }
+    TSF:UpdateCraftBar()
+    EXPECT(rawget(slot, "_edge") == OK[1] and not rawget(slot.icon, "_desat"), "the red border stayed on a fitting target")
 
     -- a new target needs its own Yes
     TSF:SetEnchantTarget("G-worn")
     EXPECT(not TSF._replaceOK and label:GetText() == WORN .. "\n(equipped)", "a new target kept the old Yes")
     -- right-click clears
     slot:GetScript("OnClick")(slot, "RightButton")
-    EXPECT(not TSF.enchantTarget and label:GetText():find("No target picked", 1, true), "right-click did not clear")
+    EXPECT(not TSF.enchantTarget and label:GetText():find("No target picked", 1, true) and rawget(slot, "_edge") == OK[1], "right-click did not clear, or left the slot red")
 
     -- gone from bags and gear: cleared at the bag event, and before a Craft
     TSF:SetEnchantTarget("G-bag")
@@ -9588,6 +9592,6 @@ print("  PASS F126 2.2.4 CD-B: a cooldown craft off cooldown shows Cooldown read
     TS_LIST_READY()
     FLUSH()
 end)()
-print("  PASS F127 2.2.4 enchant target: a slot where Craft 1 to Craft 20 sit; the menu lists worn items then bags; Craft enchants the pick with CraftEnchant, or uses the cursor with none or an unfit pick; the target stays across recipes, is cleared with a chat line when it leaves bags and gear (at the bag event and before a Craft), says (equipped) once worn, and right-click clears it; a Yes to a prompt PB did not raise approves nothing; the replace prompt is the player's once per target, then PB answers Yes itself only to the one prompt after its own Craft, within 5 s, and says what it replaced")
+print("  PASS F127 2.2.4 enchant target: a slot where Craft 1 to Craft 20 sit; the menu lists worn items then bags; Craft enchants the pick with CraftEnchant, or uses the cursor with none or an unfit pick; an unfit pick is greyed with a red border, an empty or fitting slot keeps the plain one; the target stays across recipes, is cleared with a chat line when it leaves bags and gear (at the bag event and before a Craft), says (equipped) once worn, and right-click clears it; a Yes to a prompt PB did not raise approves nothing; the replace prompt is the player's once per target, then PB answers Yes itself only to the one prompt after its own Craft, within 5 s, and says what it replaced")
 
 print("ALL FOREVER TESTS PASS (127)")

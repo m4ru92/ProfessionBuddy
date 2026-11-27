@@ -7127,6 +7127,13 @@ function TSF:ShowEnchantSlot(recipe)
     else
         slot.icon:Hide()
     end
+    -- A red border when the item can't take it: grey alone did not show on
+    -- icons that are grey already (TEST-g, m4ru 11-26).
+    if t and not fit then
+        Theme:BorderColor(slot, "enchantTargetBad")
+    else
+        Theme:BorderColor(slot, "input")
+    end
     slot:Show()
     label:Show()
 end
