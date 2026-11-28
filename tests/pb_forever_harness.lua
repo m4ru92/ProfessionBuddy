@@ -4129,7 +4129,7 @@ do
     m:Hide()
     UnitInParty, UnitInRaid = keepUIP, keepUIR
     local csrc = assert(io.open(PB_BASE .. "/Core.lua")):read("*a")
-    EXPECT(csrc:find('title:SetText("ProfessionBuddy Bug Report")', 1, true)
+    EXPECT(csrc:find('self:ShowCopyBox("ProfessionBuddy Bug Report",', 1, true)
            and csrc:find('"== ProfessionBuddy Bug Report =="', 1, true), "bug report window title and text differ")
     local osrc = assert(io.open(PB_BASE .. "/UI/OrdersPanel.lua")):read("*a")
     EXPECT(osrc:find('split     = "Split or discuss"', 1, true), "order details do not say Split or discuss")
@@ -9594,4 +9594,142 @@ print("  PASS F126 2.2.4 CD-B: a cooldown craft off cooldown shows Cooldown read
 end)()
 print("  PASS F127 2.2.4 enchant target: a slot where Craft 1 to Craft 20 sit; the menu lists worn items then bags; Craft enchants the pick with CraftEnchant, or uses the cursor with none or an unfit pick; an unfit pick is greyed with a red border, an empty or fitting slot keeps the plain one; the target stays across recipes, is cleared with a chat line when it leaves bags and gear (at the bag event and before a Craft), says (equipped) once worn, and right-click clears it; a Yes to a prompt PB did not raise approves nothing; the replace prompt is the player's once per target, then PB answers Yes itself only to the one prompt after its own Craft, within 5 s, and says what it replaced")
 
-print("ALL FOREVER TESTS PASS (127)")
+-- F128: SRC-A, recipe drops. Any loot window with a recipe item records
+-- the mob it came from (by NPC ID, named by the game's tooltip, else the
+-- target or mouseover, else no name) or, with no mob, the zone. One chat
+-- line per new item and source; the same corpse looted again counts once.
+-- The Source line shows up to 3 then "and N more"; drops are not shared yet.
+;(function()
+    local KN = ProfBuddy.Knowledge
+    local names = { "GetNumLootItems", "GetLootSlotLink", "GetLootSlotInfo", "GetLootSourceInfo",
+                    "C_TooltipInfo", "UnitGUID", "UnitName", "GetRealZoneText", "GetSubZoneText",
+                    "issecretvalue", "type" }
+    local real = {}
+    for _, k in ipairs(names) do real[k] = rawget(_G, k) end
+    local ITEM = 252772
+    local rid = KN:TeachIndex()[ITEM] and KN:TeachIndex()[ITEM][1]
+    EXPECT(rid == 1255135, "pattern 252772 does not teach Trapper's Leather Armor: " .. tostring(rid))
+    local keep = ProfBuddyDB.knowledge and ProfBuddyDB.knowledge[rid]
+    ProfBuddyDB.knowledge = ProfBuddyDB.knowledge or {}
+    ProfBuddyDB.knowledge[rid] = nil
+    KN._lootSeen, KN._lootSeenN = nil, nil
+    KN._skinDone, KN._skinStart = nil, nil
+    local slots, src, tipName, targetGUID, reads = {}, nil, nil, nil, 0
+    local link = "|cffffffff|Hitem:" .. ITEM .. "::::::::|h[Pattern: Trapper's Leather Armor]|h|r"
+    GetNumLootItems = function() return #slots end
+    GetLootSlotLink = function(i) reads = reads + 1; return slots[i] end
+    GetLootSlotInfo = function(i) return 134939, "x", 1, nil, 2 end
+    GetLootSourceInfo = function() return src, 1 end
+    C_TooltipInfo = { GetHyperlink = function(h)
+        if tipName and h == "unit:" .. tostring(src) then return { lines = { { leftText = tipName } } } end
+        return nil
+    end }
+    UnitGUID = function(u) if u == "target" then return targetGUID end return "Player-1-00000001" end
+    UnitName = function(u) if u == "target" then return "Targeted Mob" end return "Me" end
+    GetRealZoneText = function() return "Wailing Caverns" end
+    GetSubZoneText = function() return "" end
+    local function loot(guid, name, items)
+        src, tipName = guid, name
+        slots = items or { link }
+        FIRE("LOOT_OPENED", false, false)
+    end
+    local function said() local n = 0 for _, l in ipairs(PRINTS) do if l:find("Recorded: ", 1, true) then n = n + 1 end end return n end
+    PRINTS = {}
+    local KRESH = "Creature-0-1-2-3-3653-0000AAAA"
+    loot(KRESH, "Kresh")
+    local e = ProfBuddyDB.knowledge[rid]
+    local d = e and e.drops and e.drops[3653]
+    EXPECT(d and d.name == "Kresh" and d.zone == "Wailing Caverns" and d.n == 1 and d.itemID == ITEM,
+           "a drop not recorded under its NPC ID")
+    EXPECT(said() == 1 and PRINTED("Recorded: " .. link .. " drops from Kresh (Wailing Caverns)."),
+           "the chat line: " .. tostring(PRINTS[#PRINTS]))
+    loot(KRESH, "Kresh")
+    EXPECT(d.n == 1 and said() == 1, "the same corpse looted again counted twice or spoke")
+    loot("Creature-0-1-2-3-3653-0000BBBB", nil)
+    EXPECT(d.n == 2 and d.name == "Kresh" and said() == 1, "a second Kresh: n " .. tostring(d.n) .. ", name lost or a second line")
+    -- not a recipe item: nothing recorded
+    loot("Creature-0-1-2-3-9999-0000CCCC", "Rat", { "|cffffffff|Hitem:2934::::::::|h[Ruined Leather Scraps]|h|r" })
+    EXPECT(not e.drops[9999], "a non-recipe item recorded")
+    -- no tooltip name: the target's, when it is that mob
+    targetGUID = "Creature-0-1-2-3-3654-0000DDDD"
+    loot(targetGUID, nil)
+    EXPECT(e.drops[3654] and e.drops[3654].name == "Targeted Mob", "the target's name not used")
+    -- the target is another mob: no name, the zone stands in
+    loot("Creature-0-1-2-3-3655-0000EEEE", nil)
+    EXPECT(e.drops[3655] and e.drops[3655].name == nil, "a wrong unit's name used")
+    EXPECT(PRINTED("drops from Wailing Caverns."), "the zone-only chat line")
+    targetGUID = nil
+    -- a chest (no creature) and a secret source: keyed by zone
+    loot("GameObject-0-1-2-3-12345-0000FFFF", nil)
+    EXPECT(e.drops["z:Wailing Caverns"] and e.drops["z:Wailing Caverns"].n == 1, "a chest not recorded by zone")
+    local SECRET = newproxy(true)
+    getmetatable(SECRET).__index = function() error("secret indexed") end
+    issecretvalue = function(v) return rawequal(v, SECRET) end
+    local realType = type
+    type = function(v) if rawequal(v, SECRET) then return "string" end return realType(v) end
+    local okS = pcall(loot, SECRET, nil)
+    type, issecretvalue = realType, real.issecretvalue
+    EXPECT(okS and not PRINTED("Recipe drop record failed") and e.drops["z:Wailing Caverns"].n == 2,
+           "a secret source not recorded by zone")
+    -- Source line: 3 then "and N more", replacing Undetermined, on known recipes too
+    local m = KN:MergeSources({ { method = "undetermined" } }, rid, "Alliance")
+    local detail = m[1] and m[1].detail or ""
+    -- the unnamed mob and the chest both read "Wailing Caverns": once
+    EXPECT(#m == 1 and m[1].method == "drop" and select(2, detail:gsub("Wailing Caverns,", "")) == 1
+           and detail:find("Kresh (Wailing Caverns)", 1, true) and detail:find("Targeted Mob (Wailing Caverns)", 1, true)
+           and not detail:find("more", 1, true), "the Source line: " .. detail)
+    for i = 1, 3 do
+        loot("Creature-0-1-2-3-" .. (3700 + i) .. "-0000" .. i, "Mob " .. i)
+    end
+    m = KN:MergeSources({ { method = "undetermined" } }, rid, "Alliance")
+    detail = m[1] and m[1].detail or ""
+    EXPECT(detail:find(", and 3 more", 1, true) and select(2, detail:gsub(", ", "")) == 3
+           and not detail:find("Rat", 1, true), "3 then and N more: " .. detail)
+    for i = 1, 3 do ProfBuddyDB.knowledge[rid].drops[3700 + i] = nil end
+    local known = KN:MergeSources({}, rid, "Horde")
+    EXPECT(known[1] and known[1].method == "drop", "a known recipe's Source line lacks the drop")
+    local tip = table.concat(KN:TooltipLines(rid, "Horde") or {}, "\n")
+    EXPECT(tip:find("Drops", 1, true) and tip:find("Kresh - Wailing Caverns", 1, true)
+           and tip:find("x2", 1, true) and tip:find("Targeted Mob", 1, true), "the tooltip: " .. tip)
+    -- drops alone are not shared (no wire change before COMM_REV 13)
+    local prof = { Leatherworking = true }
+    local share = KN:BuildShare(0, prof, 9999, 10, 10, 10, 10)
+    EXPECT(not share.r[rid], "a drops-only record was shared")
+    e.learnLevel = 85
+    share = KN:BuildShare(0, prof, 9999, 10, 10, 10, 10)
+    EXPECT(share.r[rid] and share.r[rid].d == nil and share.r[rid].drops == nil, "drops went on the wire")
+    e.learnLevel = nil
+    -- the hard cap on slots read
+    reads, slots = 0, {}
+    for i = 1, 200 do slots[i] = "|cffffffff|Hitem:2934::::::::|h[x]|h|r" end
+    src = "Creature-0-1-2-3-9998-0000ABCD"
+    FIRE("LOOT_OPENED", false, false)
+    EXPECT(reads > 0 and reads <= 40 + 200, "loot reads: " .. reads)
+    reads = 0
+    EXPECT(KN:NoteLootRecipes() == 0 and reads == 40, "the 40-slot cap: " .. reads)
+    -- /pb drops: the copy box with every source
+    local rep = KN:DropsReport()
+    EXPECT(rep:find("recipe drops (WoW: Forever)", 1, true) and rep:find("Trapper's Leather Armor (Leatherworking, recipe 1255135, item 252772)", 1, true)
+           and rep:find("  Kresh (NPC 3653), Wailing Caverns, x2, ", 1, true)
+           and rep:find("  ? (NPC 3655), Wailing Caverns, x1", 1, true)
+           and rep:find("  no mob named, Wailing Caverns, x2", 1, true), "the report: " .. rep)
+    PRINTS = {}
+    SlashCmdList.PROFBUDDY("drops"); FLUSH()
+    local f = ProfBuddy.bugFrame
+    EXPECT(f and f:IsShown() and f.title:GetText() == "ProfessionBuddy Recipe Drops", "the /pb drops box")
+    f:Hide()
+    SlashCmdList.PROFBUDDY("bug"); FLUSH()
+    EXPECT(f:IsShown() and f.title:GetText() == "ProfessionBuddy Bug Report", "the /pb bug box after /pb drops")
+    f:Hide()
+    for _, k in ipairs(names) do _G[k] = real[k] end
+    ProfBuddyDB.knowledge[rid] = keep
+    KN._lootSeen, KN._lootSeenN = nil, nil
+    -- a fresh account: the report says none yet
+    local all = ProfBuddyDB.knowledge
+    ProfBuddyDB.knowledge = {}
+    EXPECT(KN:DropsReport():find("(none yet:", 1, true), "the empty report")
+    ProfBuddyDB.knowledge = all
+end)()
+print("  PASS F128 SRC-A recipe drops: a recipe item in any loot window is recorded under its mob's NPC ID, named by the game's tooltip, else the target, else no name; a chest or secret source by zone; one chat line per new item and source, the same corpse counted once; the Source line shows 3 then and N more over Undetermined, known recipes too; drops-only records are not shared; 40 loot slots at most; /pb drops shows every source and /pb bug still works")
+
+print("ALL FOREVER TESTS PASS (128)")

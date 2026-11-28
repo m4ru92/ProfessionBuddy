@@ -1096,6 +1096,16 @@ SlashCmdList["PROFBUDDY"] = function(msg)
     elseif msg == "bug" or msg == "report" then
         addon:ShowBugReport()
 
+    elseif msg == "drops" then
+        -- recipe drops this account recorded (WoW: Forever, Knowledge.lua)
+        if addon.Knowledge and addon.Knowledge.DropsReport then
+            addon:ShowCopyBox("ProfessionBuddy Recipe Drops",
+                "Press |cffffd100Ctrl+C|r to copy, then paste it into a comment on ProfessionBuddy's CurseForge page or a new issue at:\n|cff33ccffgithub.com/m4ru92/ProfessionBuddy/issues|r",
+                addon.Knowledge:DropsReport())
+        else
+            print("|cff00ccffProfessionBuddy:|r /pb drops is for WoW: Forever only.")
+        end
+
     elseif msg == "skillreq" then
         local ov = ProfBuddyDB.skillReqOverrides or {}
         local RDB = addon.RecipeDB
@@ -1230,7 +1240,9 @@ local function BuildBugReport()
 end
 addon.BuildBugReport = BuildBugReport
 
-function addon:ShowBugReport()
+-- The copy box /pb bug and /pb drops share: `title` on top, `instr`
+-- under it, `text` selected in a scrolling editbox.
+function addon:ShowCopyBox(title, instr, text)
     local f = addon.bugFrame
     if not f then
         f = CreateFrame("Frame", "PBBugReportFrame", UIParent, "BackdropTemplate")
@@ -1247,15 +1259,13 @@ function addon:ShowBugReport()
         f:SetScript("OnDragStart", f.StartMoving)
         f:SetScript("OnDragStop", f.StopMovingOrSizing)
 
-        local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-        title:SetPoint("TOP", 0, -14)
-        title:SetText("ProfessionBuddy Bug Report")
+        f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        f.title:SetPoint("TOP", 0, -14)
 
-        local instr = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        instr:SetPoint("TOPLEFT", 16, -40)
-        instr:SetPoint("TOPRIGHT", -16, -40)
-        instr:SetJustifyH("LEFT")
-        instr:SetText("Fill in the blanks, press |cffffd100Ctrl+C|r to copy, then paste into a new issue at:\n|cff33ccffgithub.com/m4ru92/ProfessionBuddy/issues|r")
+        f.instr = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        f.instr:SetPoint("TOPLEFT", 16, -40)
+        f.instr:SetPoint("TOPRIGHT", -16, -40)
+        f.instr:SetJustifyH("LEFT")
 
         local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
         close:SetPoint("TOPRIGHT", -4, -4)
@@ -1311,13 +1321,21 @@ function addon:ShowBugReport()
         tinsert(UISpecialFrames, "PBBugReportFrame") -- Esc closes it
     end
 
-    f.eb:SetText(BuildBugReport())
+    f.title:SetText(title)
+    f.instr:SetText(instr)
+    f.eb:SetText(text)
     f:Show()
     -- open at the top: the cursor would sit at the end of the text
     f.eb:SetCursorPosition(0)
     f.sf:SetVerticalScroll(0)
     f.eb:SetFocus()
     f.eb:HighlightText()
+end
+
+function addon:ShowBugReport()
+    self:ShowCopyBox("ProfessionBuddy Bug Report",
+        "Fill in the blanks, press |cffffd100Ctrl+C|r to copy, then paste into a new issue at:\n|cff33ccffgithub.com/m4ru92/ProfessionBuddy/issues|r",
+        BuildBugReport())
 end
 
 ----------------------------------------------------------------------

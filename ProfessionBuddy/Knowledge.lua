@@ -12,6 +12,8 @@
 --       vendors    = { [npcID] = { name, zone, subZone, faction, seen,
 --                                  itemID, price, stock } },
 --       items      = { [itemID] = true },  -- recipe items seen in your bags
+--       drops      = { [npcID or "z:<zone>"] = { name, zone, subZone,
+--                                  seen, itemID, n } },  -- loot windows
 --       seenBy     = { [charKey] = true },  -- who saw it; "*" = everyone
 --       at         = time(),                -- last written, for sharing
 --   }
@@ -54,7 +56,11 @@
 --     including the ones far above your skill (moved from ForeverProbe
 --     1.9.3, which read these values at 11 Thunder Bluff trainers);
 --   * vendor windows: every recipe item a vendor sells;
---   * your bags: every recipe item the bag scan finds.
+--   * your bags: every recipe item the bag scan finds;
+--   * loot windows: every recipe item in one, with the mob it came from
+--     (the game's loot source, named through its tooltip, else your
+--     target or mouseover), or the zone when the game names no mob.
+--     Local only: drops are not shared yet.
 -- A vendor's or a bag's item is matched to its recipe through the
 -- teachItems in Data/Forever.
 --
@@ -81,6 +87,14 @@ local CAPTURE_DELAY = 1.0
 -- Trainers or vendors named on the Source line before "and N more". The
 -- full list is in the Source line's tooltip.
 local MAX_NAMES_SHOWN = 2
+-- Mobs named on the Source line's Drop part before "and N more" (m4ru
+-- 2026-11-27). The tooltip lists every one.
+local MAX_DROPS_SHOWN = 3
+-- Loot slots read for recipe items in one loot window: a hard cap.
+local MAX_LOOT_SLOTS = 40
+-- Corpse and item pairs remembered this session so a corpse looted twice
+-- counts once; past this many the memory starts over.
+local MAX_LOOT_REMEMBERED = 200
 -- Skins of one mob, yours and peers' together, before what they yielded
 -- replaces the Classic list on its tooltip (m4ru's decision C, 2026-10-02).
 local LEARNED_MIN = 10
@@ -134,6 +148,10 @@ function KN:Init()
         end)
     end
     addon:RegisterEvent("LOOT_OPENED", function()
+        local okDrop, errDrop = pcall(self.NoteLootRecipes, self)
+        if not okDrop then
+            print("|cff00ccffProfessionBuddy:|r Recipe drop record failed: " .. tostring(errDrop))
+        end
         local ok, err = pcall(self.OnLootOpened, self)
         if not ok then
             print("|cff00ccffProfessionBuddy:|r Skinning loot record failed: " .. tostring(err))
@@ -271,18 +289,32 @@ local function Sorted(list, faction)
 end
 
 local function Label(npc)
+    if not npc.name and npc.zone and npc.zone ~= "" then return npc.zone end
     local label = npc.name or "?"
     if npc.zone and npc.zone ~= "" then label = label .. " (" .. npc.zone .. ")" end
     return label
 end
 
 -- "Mak (Thunder Bluff), Vhan (Thunder Bluff), and 3 more", or nil.
-local function Names(list, faction)
+-- With `plus`, at most MAX_DROPS_SHOWN names.
+local function Names(list, faction, plus)
     local npcs = Sorted(list, faction)
     if #npcs == 0 then return nil end
+    local max = plus and MAX_DROPS_SHOWN or MAX_NAMES_SHOWN
+    local labels = {}
+    if plus then
+        -- unnamed drops in one zone all read as that zone: list it once
+        local had = {}
+        for _, npc in ipairs(npcs) do
+            local label = Label(npc)
+            if not had[label] then had[label] = true; labels[#labels + 1] = label end
+        end
+    else
+        for i, npc in ipairs(npcs) do labels[i] = Label(npc) end
+    end
     local names = {}
-    for i = 1, math.min(#npcs, MAX_NAMES_SHOWN) do names[i] = Label(npcs[i]) end
-    local more = #npcs - MAX_NAMES_SHOWN
+    for i = 1, math.min(#labels, max) do names[i] = labels[i] end
+    local more = #labels - max
     if more > 0 then names[#names + 1] = "and " .. more .. " more" end
     return table.concat(names, ", ")
 end
@@ -337,16 +369,19 @@ function KN:MergeSources(sources, recipeID, faction)
     local e = self:Get(recipeID)
     local trainers = Names(Combined(recipeID, "teachers"), faction)
     local vendors = Names(Combined(recipeID, "vendors"), faction)
+    -- a mob serves no side: drops are never hidden by faction
+    local drops = Names(Combined(recipeID, "drops"), nil, true)
     local inBags = (e and e.items and next(e.items) ~= nil) or PeerItems(recipeID) ~= nil
-    if not (trainers or vendors or inBags) then return sources end
+    if not (trainers or vendors or drops or inBags) then return sources end
     local out = {}
     if trainers then out[#out + 1] = { method = "trainer", detail = trainers } end
     if vendors then out[#out + 1] = { method = "vendor", detail = vendors } end
+    if drops then out[#out + 1] = { method = "drop", detail = drops } end
     for _, s in ipairs(sources or {}) do
         if s.method == "trainer" then
             if not trainers then out[#out + 1] = s end
-        elseif s.method == "undetermined" and (vendors or inBags) then
-            if not vendors then
+        elseif s.method == "undetermined" and (vendors or drops or inBags) then
+            if not (vendors or drops) then
                 out[#out + 1] = { method = "undetermined", label = "Recipe item", detail = s.detail }
             end
         else
@@ -384,6 +419,21 @@ function KN:TooltipLines(recipeID, faction)
         for _, npc in ipairs(vendors) do
             local price = Money(npc.price)
             lines[#lines + 1] = "  " .. place(npc) .. (price and ("  " .. price) or "")
+        end
+    end
+    local drops = Sorted(Combined(recipeID, "drops"), nil)
+    if #drops > 0 then
+        lines[#lines + 1] = "|cffff8800Drops|r"
+        for _, npc in ipairs(drops) do
+            local times = (npc.n or 1) > 1 and ("  |cff888888x" .. npc.n .. "|r") or ""
+            local line
+            if npc.name then
+                line = place(npc)
+            else
+                line = npc.zone or "?"
+                if npc.subZone and npc.subZone ~= "" then line = line .. ", " .. npc.subZone end
+            end
+            lines[#lines + 1] = "  " .. line .. times
         end
     end
     if e and e.items and next(e.items) then
@@ -544,6 +594,128 @@ local function LootSource(slots)
         end
     end
     return NpcIDOf(KN._skinGUID)
+end
+
+----------------------------------------------------------------------
+-- Recipe items in loot windows
+----------------------------------------------------------------------
+
+-- The name of the mob with this GUID: the game's own tooltip for it (no
+-- target needed; m4ru checked on Forever 2026-11-27), else your target or
+-- mouseover when it is that mob. nil when neither names it.
+local function MobName(guid)
+    if C_TooltipInfo and C_TooltipInfo.GetHyperlink then
+        local ok, data = pcall(C_TooltipInfo.GetHyperlink, "unit:" .. guid)
+        local line = ok and type(data) == "table" and type(data.lines) == "table" and data.lines[1]
+        local text = type(line) == "table" and line.leftText
+        if type(text) == "string" and not IsSecret(text) and text ~= "" then return text end
+    end
+    for _, unit in ipairs({ "target", "mouseover" }) do
+        local g = UnitGUID(unit)
+        if g and not IsSecret(g) and g == guid then
+            local name = UnitName(unit)
+            if type(name) == "string" and not IsSecret(name) and name ~= "" then return name end
+        end
+    end
+    return nil
+end
+
+-- Where slot `slot`'s item came from: the key to record it under and
+-- what to record. A mob is keyed by its NPC ID; anything else (a chest,
+-- a secret GUID in a dungeon, no answer) by the zone.
+local function DropSource(slot, guid)
+    local zone, subZone = GetRealZoneText(), GetSubZoneText()
+    local npcID = NpcIDOf(guid)
+    if npcID then
+        return npcID, { name = MobName(guid), zone = zone, subZone = subZone }
+    end
+    return "z:" .. (zone or "?"), { zone = zone, subZone = subZone }
+end
+
+-- The recipe drops this account recorded, as text to copy and send in:
+-- one block per recipe, one line per mob or zone. Peers' are left out.
+function KN:DropsReport()
+    local RDB = addon.RecipeDB
+    local rows = {}
+    for id, e in pairs(addon.db and addon.db.knowledge or {}) do
+        if e.drops and next(e.drops) then
+            local r = RDB and RDB.spellToRecipe and RDB.spellToRecipe[id]
+            local lines = {}
+            for key, d in pairs(e.drops) do
+                local who = type(key) == "number"
+                    and ((d.name or "?") .. " (NPC " .. key .. ")") or "no mob named"
+                local where = d.zone or "?"
+                if d.subZone and d.subZone ~= "" then where = where .. ", " .. d.subZone end
+                lines[#lines + 1] = "  " .. who .. ", " .. where .. ", x" .. (d.n or 1)
+                    .. ", " .. date("%Y-%m-%d", d.seen or 0)
+            end
+            table.sort(lines)
+            local item
+            for _, d in pairs(e.drops) do item = item or d.itemID end
+            rows[#rows + 1] = { (r and r.recipeName or "?") .. " (" .. (r and r.profName or "?")
+                .. ", recipe " .. id .. ", item " .. tostring(item) .. ")", lines }
+        end
+    end
+    table.sort(rows, function(a, b) return a[1] < b[1] end)
+    local out = { "ProfessionBuddy " .. tostring(addon.version) .. " recipe drops (WoW: Forever)" }
+    for _, row in ipairs(rows) do
+        out[#out + 1] = row[1]
+        for _, l in ipairs(row[2]) do out[#out + 1] = l end
+    end
+    if #rows == 0 then out[#out + 1] = "(none yet: PB records a recipe item when it is in a loot window)" end
+    return table.concat(out, "\n")
+end
+
+-- Record every recipe item in the open loot window against the mob (or
+-- zone) it came from, and say so in chat the first time for each item
+-- and source. Returns how many recipes were recorded.
+function KN:NoteLootRecipes()
+    if not addon.db then return 0 end
+    local index = self:TeachIndex()
+    self._lootSeen = self._lootSeen or {}
+    self._lootSeenN = self._lootSeenN or 0
+    local recorded = 0
+    for slot = 1, math.min(GetNumLootItems() or 0, MAX_LOOT_SLOTS) do
+        local link = GetLootSlotLink(slot)
+        local itemID = type(link) == "string" and not IsSecret(link)
+            and tonumber(link:match("item:(%d+)"))
+        local recipes = itemID and index[itemID]
+        local guid = recipes and GetLootSourceInfo and GetLootSourceInfo(slot)
+        if type(guid) ~= "string" or IsSecret(guid) then guid = nil end
+        local once = guid and (guid .. "|" .. itemID)
+        if recipes and not (once and self._lootSeen[once]) then
+            if once then
+                -- the same corpse looted again counts once
+                self._lootSeenN = self._lootSeenN + 1
+                if self._lootSeenN > MAX_LOOT_REMEMBERED then
+                    self._lootSeen, self._lootSeenN = {}, 1
+                end
+                self._lootSeen[once] = true
+            end
+            local key, src = DropSource(slot, guid)
+            local new = false
+            for _, id in ipairs(recipes) do
+                local e = Entry(id)
+                e.drops = e.drops or {}
+                local d = e.drops[key]
+                if not d then
+                    d = { n = 0 }
+                    e.drops[key] = d
+                    new = true
+                end
+                d.name = src.name or d.name
+                d.zone, d.subZone = src.zone, src.subZone
+                d.itemID, d.seen, d.n = itemID, time(), d.n + 1
+                recorded = recorded + 1
+            end
+            if new then
+                local where = src.name and (src.name .. " (" .. (src.zone or "?") .. ")")
+                    or (src.zone or "an unknown place")
+                print("|cff00ccffProfessionBuddy:|r Recorded: " .. link .. " drops from " .. where .. ".")
+            end
+        end
+    end
+    return recorded
 end
 
 function KN:OnLootOpened()
@@ -783,7 +955,9 @@ function KN:BuildShare(since, profs, maxRecipes, maxPerRecipe, maxMobs, maxItems
     for id, e in pairs(addon.db.knowledge or {}) do
         local recipe = RDB and RDB.spellToRecipe[id]
         local at = e.at or 1
-        if recipe and profs[recipe.profName] and at > since then
+        -- a record with only drops has nothing to share yet (no wire change)
+        local any = e.learnLevel or e.teachers or e.vendors or e.items
+        if recipe and profs[recipe.profName] and at > since and any then
             n = n + 1
             if n > maxRecipes then break end
             local out = { a = at, l = e.learnLevel }

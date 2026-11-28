@@ -3128,8 +3128,26 @@ do
 end
 passed("T102 Window style: Modern by default; Classic and Match the game give Classic here; kept for the session; every role in both looks; reload offer")
 
+-- T103: /pb drops is for WoW: Forever only (Knowledge.lua is not in the
+-- TBC toc): here it says so and opens nothing.
+do
+    assert(addon.Knowledge == nil, "T103: Knowledge loaded on TBC")
+    local lines, realPrint = {}, print
+    print = function(m) lines[#lines + 1] = tostring(m) end
+    local ok, err = pcall(SlashCmdList.PROFBUDDY, "drops")
+    print = realPrint
+    assert(ok, "T103: /pb drops errored: " .. tostring(err))
+    assert(#lines == 1 and lines[1]:find("/pb drops is for WoW: Forever only.", 1, true), "T103: line: " .. tostring(lines[1]))
+    assert(not (addon.bugFrame and addon.bugFrame:IsShown()), "T103: /pb drops opened a box on TBC")
+    -- this mock has no full frame API: the /pb bug box itself is checked
+    -- in the Forever harness (F128) and in game; here, that it is the same
+    assert(type(addon.ShowCopyBox) == "function" and type(addon.ShowBugReport) == "function",
+           "T103: the copy box or /pb bug is missing")
+end
+passed("T103 /pb drops on TBC Anniversary: says it is for WoW: Forever only and opens nothing")
+
 leaveGuild()
-print("ALL 102 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
+print("ALL 103 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T15 cooldown"
     .. " + T16 no-recipes guard + T17 guild-board model + T18 crafterless-terminal prune"
     .. " + T19-T23 INCR delta sync + T24-T29 canonical key, distribution gating and guild scope"
     .. " + T30-T36 board lifecycle + T37-T44 delta hardening, priorities and session hygiene"
@@ -3145,6 +3163,6 @@ print("ALL 102 HARNESS TESTS PASS (T1-T13 trust/order/sanitize + T14 decline + T
     .. " T80 the trainer learn level read from the rank, T81 Forever knowledge sharing ignored,"
     .. " T82 bank bags rescanned while the bank is open, T83 AceComm kept for long messages,"
     .. " T84 accented board ids, T85 offline only when silent, T86 every offline line of one push hidden,"
-    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting, T100 Colorblind markers, T101 the theme roles, T102 the window style; "
+    .. " T87 the last gathering tooltip in /pb bug, T88 the TBC tool data, T89 board-post alerts, T90 late chunks keep their offline line hidden, T91 the TBC launcher files, T92 the player's own whispers, T93 Battle.net auto-add, T94 the 2026-10-13 fix wave, T95 board posts re-sent to a guildmate who announces themselves, T96 learned professions announced to the guild, T97 unlearned professions removed, T98 a HELLO removes unlearned professions, T99 the opposite-faction friends setting, T100 Colorblind markers, T101 the theme roles, T102 the window style, T103 /pb drops on TBC; "
     .. pass .. " of them print a PASS line above)")
 
