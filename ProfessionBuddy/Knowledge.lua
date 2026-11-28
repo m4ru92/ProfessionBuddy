@@ -12,8 +12,9 @@
 --       vendors    = { [npcID] = { name, zone, subZone, faction, seen,
 --                                  itemID, price, stock } },
 --       items      = { [itemID] = true },  -- recipe items seen in your bags
---       drops      = { [npcID or "z:<zone>"] = { name, zone, subZone,
---                                  seen, itemID, n } },  -- loot windows
+--       drops      = { [npcID, "e:<encounterID>" or "z:<zone>"] = { name,
+--                                  zone, subZone, seen, itemID, n } },
+--                                  -- loot windows and loot rolls
 --       seenBy     = { [charKey] = true },  -- who saw it; "*" = everyone
 --       at         = time(),                -- last written, for sharing
 --   }
@@ -60,7 +61,10 @@
 --   * loot windows: every recipe item in one, with the mob it came from
 --     (the game's loot source, named through its tooltip, else your
 --     target or mouseover), or the zone when the game names no mob.
---     Local only: drops are not shared yet.
+--   * loot rolls: a recipe item rolled on in a group, with the boss the
+--     game's loot history names for it, else the zone (a roll names no
+--     mob).
+--     Drops are local only: they are not shared yet.
 -- A vendor's or a bag's item is matched to its recipe through the
 -- teachItems in Data/Forever.
 --
@@ -95,6 +99,14 @@ local MAX_LOOT_SLOTS = 40
 -- Corpse and item pairs remembered this session so a corpse looted twice
 -- counts once; past this many the memory starts over.
 local MAX_LOOT_REMEMBERED = 200
+-- Loot rolls on a recipe item waiting for their roll to end: a hard cap.
+local MAX_ROLLS_PENDING = 20
+-- How long PB waits after a roll starts before recording it: the roll's
+-- own time, kept between these, so the loot history can name the boss.
+local ROLL_WAIT_MIN, ROLL_WAIT_MAX = 5, 180
+-- A roll on an item your own loot window had this many seconds before the
+-- roll started (or any time after) is that window's, already recorded.
+local ROLL_OWN_WINDOW = 10
 -- Skins of one mob, yours and peers' together, before what they yielded
 -- replaces the Classic list on its tooltip (m4ru's decision C, 2026-10-02).
 local LEARNED_MIN = 10
@@ -158,6 +170,20 @@ function KN:Init()
         end
     end)
     addon:RegisterEvent("MERCHANT_UPDATE", function() self:ScanMerchant() end)
+    -- Loot rolls. Registering an event the client lacks is a Lua error, so
+    -- each is guarded: without it PB still records loot windows.
+    pcall(addon.RegisterEvent, addon, "START_LOOT_ROLL", function(_, rollID, rollTime)
+        local ok, err = pcall(self.NoteRollStart, self, rollID, rollTime)
+        if not ok then
+            print("|cff00ccffProfessionBuddy:|r Recipe roll record failed: " .. tostring(err))
+        end
+    end)
+    pcall(addon.RegisterEvent, addon, "LOOT_HISTORY_UPDATE_DROP", function(_, encounterID, lootListKey)
+        local ok, err = pcall(self.NoteRollBoss, self, encounterID, lootListKey)
+        if not ok then
+            print("|cff00ccffProfessionBuddy:|r Recipe roll record failed: " .. tostring(err))
+        end
+    end)
 
     -- Note recipe items after every bag scan. Wrapped here, not added to
     -- Scanner.lua, because TBC Anniversary does not record them.
@@ -642,8 +668,10 @@ function KN:DropsReport()
             local r = RDB and RDB.spellToRecipe and RDB.spellToRecipe[id]
             local lines = {}
             for key, d in pairs(e.drops) do
-                local who = type(key) == "number"
-                    and ((d.name or "?") .. " (NPC " .. key .. ")") or "no mob named"
+                local enc = type(key) == "string" and key:match("^e:(%d+)$")
+                local who = type(key) == "number" and ((d.name or "?") .. " (NPC " .. key .. ")")
+                    or enc and ((d.name or "?") .. " (boss encounter " .. enc .. ")")
+                    or "no mob named"
                 local where = d.zone or "?"
                 if d.subZone and d.subZone ~= "" then where = where .. ", " .. d.subZone end
                 lines[#lines + 1] = "  " .. who .. ", " .. where .. ", x" .. (d.n or 1)
@@ -666,9 +694,40 @@ function KN:DropsReport()
     return table.concat(out, "\n")
 end
 
+-- Record recipe item `itemID` (`link`, teaching `recipes`) under drop
+-- source `key`, and say so in chat the first time for that item and
+-- source. Returns how many recipes were recorded.
+local function RecordDrop(recipes, itemID, link, key, src)
+    local new = false
+    for _, id in ipairs(recipes) do
+        local e = Entry(id)
+        e.drops = e.drops or {}
+        local d = e.drops[key]
+        if not d then
+            d = { n = 0 }
+            e.drops[key] = d
+            new = true
+        end
+        d.name = src.name or d.name
+        d.zone, d.subZone = src.zone, src.subZone
+        d.itemID, d.seen, d.n = itemID, time(), d.n + 1
+    end
+    if new then
+        local where = src.name and (src.name .. " (" .. (src.zone or "?") .. ")")
+            or (src.zone or "an unknown place")
+        print("|cff00ccffProfessionBuddy:|r Recorded: " .. link .. " drops from " .. where .. ".")
+    end
+    return #recipes
+end
+
+-- The item ID in an item link, or nil.
+local function LinkItemID(link)
+    return type(link) == "string" and not IsSecret(link)
+        and tonumber(link:match("item:(%d+)")) or nil
+end
+
 -- Record every recipe item in the open loot window against the mob (or
--- zone) it came from, and say so in chat the first time for each item
--- and source. Returns how many recipes were recorded.
+-- zone) it came from. Returns how many recipes were recorded.
 function KN:NoteLootRecipes()
     if not addon.db then return 0 end
     local index = self:TeachIndex()
@@ -677,9 +736,13 @@ function KN:NoteLootRecipes()
     local recorded = 0
     for slot = 1, math.min(GetNumLootItems() or 0, MAX_LOOT_SLOTS) do
         local link = GetLootSlotLink(slot)
-        local itemID = type(link) == "string" and not IsSecret(link)
-            and tonumber(link:match("item:(%d+)"))
+        local itemID = LinkItemID(link)
         local recipes = itemID and index[itemID]
+        if recipes then
+            -- a loot roll on this item is this window's: already recorded
+            self._lootItemAt = self._lootItemAt or {}
+            self._lootItemAt[itemID] = GetTime()
+        end
         local guid = recipes and GetLootSourceInfo and GetLootSourceInfo(slot)
         if type(guid) ~= "string" or IsSecret(guid) then guid = nil end
         local once = guid and (guid .. "|" .. itemID)
@@ -693,29 +756,86 @@ function KN:NoteLootRecipes()
                 self._lootSeen[once] = true
             end
             local key, src = DropSource(slot, guid)
-            local new = false
-            for _, id in ipairs(recipes) do
-                local e = Entry(id)
-                e.drops = e.drops or {}
-                local d = e.drops[key]
-                if not d then
-                    d = { n = 0 }
-                    e.drops[key] = d
-                    new = true
-                end
-                d.name = src.name or d.name
-                d.zone, d.subZone = src.zone, src.subZone
-                d.itemID, d.seen, d.n = itemID, time(), d.n + 1
-                recorded = recorded + 1
-            end
-            if new then
-                local where = src.name and (src.name .. " (" .. (src.zone or "?") .. ")")
-                    or (src.zone or "an unknown place")
-                print("|cff00ccffProfessionBuddy:|r Recorded: " .. link .. " drops from " .. where .. ".")
-            end
+            recorded = recorded + RecordDrop(recipes, itemID, link, key, src)
         end
     end
     return recorded
+end
+
+----------------------------------------------------------------------
+-- Recipe items in loot rolls
+----------------------------------------------------------------------
+
+-- A roll starts on an item in a group (Group Loot, Need Before Greed):
+-- every player who can roll gets it, whoever opened the corpse. The roll
+-- names no mob, so a recipe item's roll waits for the roll to end; the
+-- loot history (LOOT_HISTORY_UPDATE_DROP, NoteRollBoss) may name its boss
+-- meanwhile. Returns true when the roll is a recipe item's.
+function KN:NoteRollStart(rollID, rollTime)
+    if not addon.db or type(rollID) ~= "number" or IsSecret(rollID) then return false end
+    if not GetLootRollItemLink then return false end
+    local link = GetLootRollItemLink(rollID)
+    local itemID = LinkItemID(link)
+    local recipes = itemID and self:TeachIndex()[itemID]
+    if not recipes then return false end
+    self._rolls = self._rolls or {}
+    self._rollsN = self._rollsN or 0
+    if self._rolls[rollID] or self._rollsN >= MAX_ROLLS_PENDING then return false end
+    self._rolls[rollID] = { itemID = itemID, link = link, recipes = recipes, at = GetTime(),
+                            zone = GetRealZoneText(), subZone = GetSubZoneText() }
+    self._rollsN = self._rollsN + 1
+    -- the roll's time is in milliseconds; a number this small is seconds
+    local wait = (type(rollTime) == "number" and not IsSecret(rollTime)) and rollTime or 0
+    if wait > 1000 then wait = wait / 1000 end
+    wait = math.min(math.max(wait, ROLL_WAIT_MIN), ROLL_WAIT_MAX)
+    C_Timer.After(wait, function()
+        local ok, err = pcall(self.FinishRoll, self, rollID)
+        if not ok then
+            print("|cff00ccffProfessionBuddy:|r Recipe roll record failed: " .. tostring(err))
+        end
+    end)
+    return true
+end
+
+-- The loot history names the boss a rolled item dropped from. Give its
+-- name to the oldest waiting roll on that item that has none yet.
+function KN:NoteRollBoss(encounterID, lootListKey)
+    if not (self._rolls and next(self._rolls)) then return false end
+    if type(encounterID) ~= "number" or IsSecret(encounterID) then return false end
+    local H = C_LootHistory
+    if not (H and H.GetSortedInfoForDrop and H.GetInfoForEncounter) then return false end
+    local drop = H.GetSortedInfoForDrop(encounterID, lootListKey)
+    local itemID = type(drop) == "table" and LinkItemID(drop.itemHyperlink)
+    if not itemID then return false end
+    local enc = H.GetInfoForEncounter(encounterID)
+    local name = type(enc) == "table" and enc.encounterName
+    if type(name) ~= "string" or IsSecret(name) or name == "" then return false end
+    local pick
+    for _, r in pairs(self._rolls) do
+        if r.itemID == itemID and not r.encounterID and (not pick or r.at < pick.at) then pick = r end
+    end
+    if not pick then return false end
+    pick.encounterID, pick.boss = encounterID, name
+    return true
+end
+
+-- The roll is over: record it under its boss, else its zone, unless your
+-- own loot window had the item (that window recorded it, by its mob).
+-- Returns how many recipes were recorded.
+function KN:FinishRoll(rollID)
+    local r = self._rolls and self._rolls[rollID]
+    if not r then return 0 end
+    self._rolls[rollID] = nil
+    self._rollsN = math.max((self._rollsN or 1) - 1, 0)
+    local own = self._lootItemAt and self._lootItemAt[r.itemID]
+    if own and own >= r.at - ROLL_OWN_WINDOW then return 0 end
+    local key, src
+    if r.encounterID then
+        key, src = "e:" .. r.encounterID, { name = r.boss, zone = r.zone, subZone = r.subZone }
+    else
+        key, src = "z:" .. (r.zone or "?"), { zone = r.zone, subZone = r.subZone }
+    end
+    return RecordDrop(r.recipes, r.itemID, r.link, key, src)
 end
 
 function KN:OnLootOpened()

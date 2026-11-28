@@ -9732,4 +9732,169 @@ print("  PASS F127 2.2.4 enchant target: a slot where Craft 1 to Craft 20 sit; t
 end)()
 print("  PASS F128 SRC-A recipe drops: a recipe item in any loot window is recorded under its mob's NPC ID, named by the game's tooltip, else the target, else no name; a chest or secret source by zone; one chat line per new item and source, the same corpse counted once; the Source line shows 3 then and N more over Undetermined, known recipes too; drops-only records are not shared; 40 loot slots at most; /pb drops shows every source and /pb bug still works")
 
-print("ALL FOREVER TESTS PASS (128)")
+-- F129: SRC-c, recipe items in loot rolls. A roll on a recipe item waits
+-- for the roll's time, then records the boss the loot history named, else
+-- the zone; a roll on an item your own loot window had is skipped.
+;(function()
+    local KN = ProfBuddy.Knowledge
+    local names = { "GetLootRollItemLink", "C_LootHistory", "GetRealZoneText", "GetSubZoneText",
+                    "GetTime", "GetNumLootItems", "GetLootSlotLink", "GetLootSlotInfo",
+                    "GetLootSourceInfo", "C_TooltipInfo", "issecretvalue" }
+    local real = {}
+    for _, k in ipairs(names) do real[k] = rawget(_G, k) end
+    local keepAfter = C_Timer.After
+    local timers = {}
+    C_Timer.After = function(sec, fn) timers[#timers + 1] = { sec = sec, fn = fn } end
+    local function runTimers()
+        local t = timers
+        timers = {}
+        for _, x in ipairs(t) do x.fn() end
+    end
+    local ITEM = 252772
+    local rid = KN:TeachIndex()[ITEM][1]
+    local keep = ProfBuddyDB.knowledge[rid]
+    ProfBuddyDB.knowledge[rid] = nil
+    KN._rolls, KN._rollsN, KN._lootItemAt, KN._lootSeen, KN._lootSeenN = nil, nil, nil, nil, nil
+    KN._skinDone, KN._skinStart = nil, nil
+    local link = "|cffffffff|Hitem:" .. ITEM .. "::::::::|h[Pattern: Trapper's Leather Armor]|h|r"
+    local junk = "|cffffffff|Hitem:2934::::::::|h[Ruined Leather Scraps]|h|r"
+    local rollLinks, now = {}, 1000
+    GetLootRollItemLink = function(id) return rollLinks[id] end
+    GetTime = function() return now end
+    GetRealZoneText = function() return "Wailing Caverns" end
+    GetSubZoneText = function() return "" end
+    local drops = {}
+    C_LootHistory = {
+        GetSortedInfoForDrop = function(enc, key) return drops[enc .. ":" .. key] end,
+        GetInfoForEncounter = function(enc)
+            if enc == 585 then return { encounterName = "Lord Cobrahn", encounterID = 585 } end
+        end,
+    }
+    local function said() local n = 0 for _, l in ipairs(PRINTS) do if l:find("Recorded: ", 1, true) then n = n + 1 end end return n end
+    PRINTS = {}
+    -- a roll on something else: nothing waits
+    rollLinks[1] = junk
+    FIRE("START_LOOT_ROLL", 1, 60000)
+    EXPECT(#timers == 0 and not (KN._rolls and KN._rolls[1]), "a non-recipe roll waited")
+    -- a boss's pattern: the history names the boss, recorded when the roll ends
+    rollLinks[2] = link
+    FIRE("START_LOOT_ROLL", 2, 60000)
+    EXPECT(#timers == 1 and timers[1].sec == 60, "the roll's wait: " .. tostring(timers[1] and timers[1].sec))
+    EXPECT(not (ProfBuddyDB.knowledge[rid] and ProfBuddyDB.knowledge[rid].drops), "recorded before the roll ended")
+    FIRE("START_LOOT_ROLL", 2, 60000)
+    EXPECT(#timers == 1, "the same roll started twice waited twice")
+    drops["585:1"] = { itemHyperlink = link }
+    FIRE("LOOT_HISTORY_UPDATE_DROP", 585, 1)
+    EXPECT(KN._rolls[2].boss == "Lord Cobrahn", "the loot history's boss not taken")
+    runTimers()
+    local e = ProfBuddyDB.knowledge[rid]
+    local d = e and e.drops and e.drops["e:585"]
+    EXPECT(d and d.name == "Lord Cobrahn" and d.zone == "Wailing Caverns" and d.n == 1 and d.itemID == ITEM,
+           "a boss roll not recorded under its encounter")
+    EXPECT(said() == 1 and PRINTED("Recorded: " .. link .. " drops from Lord Cobrahn (Wailing Caverns)."),
+           "the boss roll's chat line: " .. tostring(PRINTS[#PRINTS]))
+    EXPECT(not KN._rolls[2] and KN._rollsN == 0, "a finished roll still waits")
+    -- trash: no history, the zone
+    now = 2000
+    rollLinks[3] = link
+    FIRE("START_LOOT_ROLL", 3, 60000)
+    runTimers()
+    EXPECT(e.drops["z:Wailing Caverns"] and e.drops["z:Wailing Caverns"].n == 1 and said() == 2
+           and PRINTED("drops from Wailing Caverns."), "a trash roll not recorded by zone")
+    -- a history entry for another boss or item names nothing
+    rollLinks[4] = link
+    FIRE("START_LOOT_ROLL", 4, 60000)
+    drops["586:1"] = { itemHyperlink = link }
+    drops["585:2"] = { itemHyperlink = junk }
+    FIRE("LOOT_HISTORY_UPDATE_DROP", 586, 1)
+    FIRE("LOOT_HISTORY_UPDATE_DROP", 585, 2)
+    EXPECT(KN._rolls[4].encounterID == nil, "an unnamed encounter or another item named the roll")
+    runTimers()
+    EXPECT(e.drops["z:Wailing Caverns"].n == 2 and not e.drops["e:586"], "the unnamed roll")
+    -- your own loot window had it, before the roll or after: skipped
+    local slots = { link }
+    GetNumLootItems = function() return #slots end
+    GetLootSlotLink = function(i) return slots[i] end
+    GetLootSlotInfo = function() return 134939, "x", 1, nil, 2 end
+    GetLootSourceInfo = function() return "Creature-0-1-2-3-3653-0000AAAA", 1 end
+    C_TooltipInfo = { GetHyperlink = function() return { lines = { { leftText = "Kresh" } } } end }
+    now = 3000
+    FIRE("LOOT_OPENED", false, false)
+    now = 3002
+    rollLinks[5] = link
+    FIRE("START_LOOT_ROLL", 5, 60000)
+    now = 3005
+    rollLinks[6] = link
+    FIRE("START_LOOT_ROLL", 6, 60000)
+    GetLootSourceInfo = function() return "Creature-0-1-2-3-3653-0000BBBB", 1 end
+    now = 3006
+    FIRE("LOOT_OPENED", false, false)
+    local before = said()
+    runTimers()
+    EXPECT(said() == before and e.drops["z:Wailing Caverns"].n == 2 and e.drops[3653].n == 2,
+           "a roll on your own loot window's item recorded again")
+    -- a loot window long before the roll does not count
+    now = 4000
+    rollLinks[7] = link
+    FIRE("START_LOOT_ROLL", 7, 60000)
+    runTimers()
+    EXPECT(e.drops["z:Wailing Caverns"].n == 3, "an old loot window hid a new roll")
+    -- the wait: seconds, none, or too long are kept between 5 and 180
+    for id, t in pairs({ [8] = 30, [9] = 0, [10] = 9999999 }) do
+        rollLinks[id] = link
+        timers = {}
+        FIRE("START_LOOT_ROLL", id, t)
+        local want = ({ [8] = 30, [9] = 5, [10] = 180 })[id]
+        EXPECT(timers[1] and timers[1].sec == want, "roll time " .. t .. " waited " .. tostring(timers[1] and timers[1].sec))
+        runTimers()
+    end
+    -- the hard cap on waiting rolls
+    timers = {}
+    for id = 100, 124 do rollLinks[id] = link; FIRE("START_LOOT_ROLL", id, 60000) end
+    EXPECT(#timers == 20 and KN._rollsN == 20, "waiting rolls past the cap: " .. #timers)
+    FIRE("START_LOOT_ROLL", 125, 60000)
+    EXPECT(#timers == 20, "a roll past the cap waited")
+    runTimers()
+    EXPECT(KN._rollsN == 0 and not next(KN._rolls), "the cap's rolls still wait")
+    EXPECT(KN:FinishRoll(999) == 0, "an unknown roll recorded")
+    -- a secret roll ID: nothing, no error
+    local SECRET = newproxy(true)
+    issecretvalue = function(v) return rawequal(v, SECRET) end
+    EXPECT(KN:NoteRollStart(SECRET, 60000) == false, "a secret roll ID")
+    issecretvalue = real.issecretvalue
+    EXPECT(not PRINTED("Recipe roll record failed"), "a roll handler failed")
+    -- the Source line, tooltip and /pb drops name the boss
+    local m = KN:MergeSources({ { method = "undetermined" } }, rid, "Alliance")
+    local detail = m[1] and m[1].detail or ""
+    EXPECT(m[1] and m[1].method == "drop" and detail:find("Lord Cobrahn (Wailing Caverns)", 1, true)
+           and detail:find("Kresh (Wailing Caverns)", 1, true), "the Source line: " .. detail)
+    local tip = table.concat(KN:TooltipLines(rid, "Horde") or {}, "\n")
+    EXPECT(tip:find("Lord Cobrahn - Wailing Caverns", 1, true), "the tooltip: " .. tip)
+    local rep = KN:DropsReport()
+    EXPECT(rep:find("  Lord Cobrahn (boss encounter 585), Wailing Caverns, x1, ", 1, true)
+           and rep:find("  Kresh (NPC 3653), Wailing Caverns, x2, ", 1, true), "the report: " .. rep)
+    -- drops from rolls are not shared either
+    local share = KN:BuildShare(0, { Leatherworking = true }, 9999, 10, 10, 10, 10)
+    EXPECT(not share.r[rid], "a drops-only record was shared")
+    C_Timer.After = keepAfter
+    for _, k in ipairs(names) do _G[k] = real[k] end
+    ProfBuddyDB.knowledge[rid] = keep
+    KN._rolls, KN._rollsN, KN._lootItemAt, KN._lootSeen, KN._lootSeenN = nil, nil, nil, nil, nil
+    -- a client without the roll events: Init still finishes (last: this
+    -- registers every handler a second time)
+    local f = _G.ProfBuddyEventFrame
+    local reg = f.RegisterEvent
+    local asked = {}
+    f.RegisterEvent = function(fr, ev)
+        asked[ev] = true
+        if ev == "START_LOOT_ROLL" or ev == "LOOT_HISTORY_UPDATE_DROP" then error("unknown event " .. ev) end
+        return reg(fr, ev)
+    end
+    local okI, errI = pcall(KN.Init, KN)
+    f.RegisterEvent = reg
+    EXPECT(okI and asked.MERCHANT_UPDATE and asked.START_LOOT_ROLL and asked.LOOT_HISTORY_UPDATE_DROP,
+           "Init without the roll events: " .. tostring(errI))
+end)()
+print("  PASS F129 SRC-c recipe rolls: a roll on a recipe item waits for the roll's time (5 to 180 seconds), then records the boss the loot history named, else the zone; one chat line per new item and source; a roll on an item your own loot window had is skipped; 20 waiting rolls at most; the Source line, tooltip and /pb drops name the boss; not shared")
+
+print("ALL FOREVER TESTS PASS (129)")
